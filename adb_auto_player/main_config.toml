@@ -1,0 +1,9 @@
+[device]
+id = '127.0.0.1:5555'
+
+[adb]
+host = '127.0.0.1'
+port = 5037
+
+[logging]
+level = 'DEBUG'

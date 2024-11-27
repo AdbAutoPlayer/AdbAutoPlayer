@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "adb-auto-player"
+version = "0.1.0"
+description = ""
+authors = ["yulesxoxo <https://github.com/yulesxoxo/yulesxoxo>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pure-python-adb = "^0.3.0.dev0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.10.0"
+pre-commit = "^4.0.1"
+flake8 = "^7.1.1"
+mypy = "^1.13.0"
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
