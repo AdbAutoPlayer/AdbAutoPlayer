@@ -1,5 +1,5 @@
 [device]
-id = '127.0.0.1:5555'
+id = 'emulator-5554'
 
 [adb]
 host = '127.0.0.1'

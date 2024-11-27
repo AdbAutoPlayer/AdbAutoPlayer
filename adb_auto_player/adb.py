@@ -14,9 +14,23 @@ def get_device(main_config: Dict[str, Any]) -> Device:
         host=adb_config.get("host", "127.0.0.1"),
         port=adb_config.get("port", 5037),
     )
-    device = client.device(f"{device_id}")
 
     try:
+        devices = client.devices()
+        if len(devices) == 0:
+            raise RuntimeError("No devices found")
+
+        devices_str = "Devices:"
+        for device in devices:
+            devices_str += f"\n{device.serial}"
+
+        logging.info(devices_str)
+
+        device = client.device(f"{device_id}")
+
+        if device is None:
+            LookupError(f"{device_id} not found")
+
         device.get_state()
         logging.info(f"Successfully connected to device {device_id}")
         return device
