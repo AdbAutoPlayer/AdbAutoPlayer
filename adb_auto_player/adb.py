@@ -1,10 +1,10 @@
 import adb_auto_player.logger as logging
-from typing import Dict, Any, NoReturn, Union
+from typing import Dict, Any, NoReturn
 from adbutils._device import AdbDevice
 from adbutils import AdbClient
 
 
-def get_device(main_config: Dict[str, Any]) -> Union[AdbDevice, NoReturn]:
+def get_device(main_config: Dict[str, Any]) -> AdbDevice | NoReturn:
     device_id = main_config.get("device", {}).get("id", "127.0.0.1:5555")
 
     adb_config = main_config.get("adb", {})
@@ -37,7 +37,7 @@ def get_device(main_config: Dict[str, Any]) -> Union[AdbDevice, NoReturn]:
         logging.critical_and_exit(f"Failed to connect to device: {e}")
 
 
-def get_currently_running_app(device: AdbDevice) -> Union[str, NoReturn]:
+def get_currently_running_app(device: AdbDevice) -> str | NoReturn:
     try:
         app = str(
             device.shell(
@@ -55,7 +55,7 @@ def get_currently_running_app(device: AdbDevice) -> Union[str, NoReturn]:
         logging.critical_and_exit(f"Error while retrieving currently running app: {e}")
 
 
-def get_screen_resolution(device: AdbDevice) -> Union[str, NoReturn]:
+def get_screen_resolution(device: AdbDevice) -> str | NoReturn:
     try:
         result = str(device.shell("wm size"))
 
@@ -65,6 +65,6 @@ def get_screen_resolution(device: AdbDevice) -> Union[str, NoReturn]:
 
             return str(resolution_str)
 
-        raise ValueError("No display information found.")
+        raise ValueError("No display information found")
     except Exception as e:
         logging.critical_and_exit(f"Error while retrieving screen resolution: {e}")

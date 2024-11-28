@@ -1,5 +1,5 @@
 import adb_auto_player.logger as logging
-from typing import Optional, Tuple, NoReturn, Union
+from typing import Optional, Tuple, NoReturn
 
 from PIL import Image
 import io
@@ -18,7 +18,7 @@ def find_center(
     )
 
 
-def get_screenshot(device: AdbDevice) -> Union[Image.Image, NoReturn]:
+def get_screenshot(device: AdbDevice) -> Image.Image | NoReturn:
     screenshot_data = device.shell("screencap -p", encoding=None)
     if isinstance(screenshot_data, bytes):
         return Image.open(io.BytesIO(screenshot_data))
@@ -47,12 +47,12 @@ def __find_template_center(
     return None
 
 
-def __load_image(image_path: str) -> Union[Image.Image, NoReturn]:
+def __load_image(image_path: str) -> Image.Image | NoReturn:
     try:
         image = Image.open(image_path)
         image.load()
         return image
     except FileNotFoundError:
-        logging.critical_and_exit(f"The file '{image_path}' does not exist.")
+        logging.critical_and_exit(f"The file '{image_path}' does not exist")
     except IOError:
-        logging.critical_and_exit(f"The file '{image_path}' is not a valid image.")
+        logging.critical_and_exit(f"The file '{image_path}' is not a valid image")
