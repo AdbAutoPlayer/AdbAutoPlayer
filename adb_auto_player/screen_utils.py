@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Tuple
+from typing import Optional, Tuple, NoReturn, Union
 
 from PIL import Image
 import io
@@ -18,7 +18,7 @@ def find_center(
     )
 
 
-def get_screenshot(device: AdbDevice) -> Image.Image:
+def get_screenshot(device: AdbDevice) -> Union[Image.Image, NoReturn]:
     screenshot_data = device.shell("screencap -p", encoding=None)
     if isinstance(screenshot_data, bytes):
         return Image.open(io.BytesIO(screenshot_data))
@@ -45,7 +45,7 @@ def __find_template_center(
     return None
 
 
-def __load_image(image_path: str) -> Image.Image:
+def __load_image(image_path: str) -> Union[Image.Image, NoReturn]:
     try:
         image = Image.open(image_path)
         image.load()

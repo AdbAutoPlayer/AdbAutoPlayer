@@ -1,7 +1,7 @@
 from time import sleep
+from typing import Dict, Any
 
 from adbutils._device import AdbDevice
-from typing import Dict, Any
 
 import adb_auto_player.screen_utils as screen_utils
 from adb_auto_player.plugin import Plugin

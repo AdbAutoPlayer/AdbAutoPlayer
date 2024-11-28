@@ -1,10 +1,10 @@
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, NoReturn, Union
 from adbutils._device import AdbDevice
 from adbutils import AdbClient
 
 
-def get_device(main_config: Dict[str, Any]) -> AdbDevice:
+def get_device(main_config: Dict[str, Any]) -> Union[AdbDevice, NoReturn]:
     device_id = main_config.get("device", {}).get("id", "127.0.0.1:5555")
 
     adb_config = main_config.get("adb", {})
@@ -37,7 +37,7 @@ def get_device(main_config: Dict[str, Any]) -> AdbDevice:
         logging.critical(f"Failed to connect to device: {e}")
 
 
-def get_currently_running_app(device: AdbDevice) -> str:
+def get_currently_running_app(device: AdbDevice) -> Union[str, NoReturn]:
     try:
         app = str(
             device.shell(
@@ -55,7 +55,7 @@ def get_currently_running_app(device: AdbDevice) -> str:
         logging.critical(f"Error while retrieving currently running app: {e}")
 
 
-def get_screen_resolution(device: AdbDevice) -> str:
+def get_screen_resolution(device: AdbDevice) -> Union[str, NoReturn]:
     try:
         result = str(device.shell("wm size"))
 

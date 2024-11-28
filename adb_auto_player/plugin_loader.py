@@ -2,7 +2,7 @@ import logging
 import os
 import tomllib
 import json
-from typing import List, Dict, Any, cast
+from typing import List, Dict, Any, cast, NoReturn, Union
 import hashlib
 import importlib.util
 import sys
@@ -84,7 +84,7 @@ def load_config(plugin_name: str) -> Dict[str, Any]:
         return tomllib.load(f)
 
 
-def load_plugin_module(plugin_name: str) -> types.ModuleType:
+def load_plugin_module(plugin_name: str) -> Union[types.ModuleType, NoReturn]:
     plugin_main_path = os.path.join(get_plugins_dir(), plugin_name, "run.py")
     logging.debug(f"Loading plugin module: {plugin_main_path}")
 
