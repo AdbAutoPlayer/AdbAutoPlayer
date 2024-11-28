@@ -1,8 +1,8 @@
 import logging
 
-from ppadb.device import Device
-from typing import Dict
+from adbutils._device import AdbDevice
+from typing import Dict, Any
 
 
-def execute(device: Device, config: Dict[str, str]) -> None:
+def execute(device: AdbDevice, config: Dict[str, Any]) -> None:
     logging.critical("WIP")

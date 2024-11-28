@@ -1,11 +1,10 @@
 import logging
 from typing import Dict, Any
+from adbutils._device import AdbDevice
+from adbutils import AdbClient
 
-from ppadb.client import Client as AdbClient
-from ppadb.device import Device
 
-
-def get_device(main_config: Dict[str, Any]) -> Device:
+def get_device(main_config: Dict[str, Any]) -> AdbDevice:
     device_id = main_config.get("device", {}).get("id", "127.0.0.1:5555")
 
     adb_config = main_config.get("adb", {})
@@ -16,13 +15,13 @@ def get_device(main_config: Dict[str, Any]) -> Device:
     )
 
     try:
-        devices = client.devices()
+        devices = client.list()
         if len(devices) == 0:
             raise RuntimeError("No devices found")
 
         devices_str = "Devices:"
-        for device in devices:
-            devices_str += f"\n{device.serial}"
+        for device_info in devices:
+            devices_str += f"\n{device_info.serial}"
 
         logging.info(devices_str)
 
@@ -38,11 +37,13 @@ def get_device(main_config: Dict[str, Any]) -> Device:
         logging.critical(f"Failed to connect to device: {e}")
 
 
-def get_currently_running_app(device: Device) -> str:
+def get_currently_running_app(device: AdbDevice) -> str:
     try:
-        app = device.shell(
-            "dumpsys activity activities | grep mResumedActivity | "
-            'cut -d "{" -f2 | cut -d \' \' -f3 | cut -d "/" -f1'
+        app = str(
+            device.shell(
+                "dumpsys activity activities | grep mResumedActivity | "
+                'cut -d "{" -f2 | cut -d \' \' -f3 | cut -d "/" -f1'
+            )
         ).strip()
 
         if app:
@@ -54,9 +55,9 @@ def get_currently_running_app(device: Device) -> str:
         logging.critical(f"Error while retrieving currently running app: {e}")
 
 
-def get_screen_resolution(device: Device) -> str:
+def get_screen_resolution(device: AdbDevice) -> str:
     try:
-        result = device.shell("wm size")
+        result = str(device.shell("wm size"))
 
         if result:
             resolution_str = result.split("Physical size: ")[-1].strip()

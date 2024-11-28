@@ -1,7 +1,8 @@
-import adb_auto_player.adb as adb
-from adb_auto_player.logging_setup import update_logging_from_config, setup_logging
-import adb_auto_player.plugin_loader as plugin_loader
 import logging
+
+import adb_auto_player.adb as adb
+import adb_auto_player.plugin_loader as plugin_loader
+from adb_auto_player.logging_setup import update_logging_from_config, setup_logging
 
 setup_logging()
 

@@ -42,8 +42,6 @@ def setup_logging(level: int = logging.DEBUG) -> None:
 
     handler = StreamHandler()
     handler.setFormatter(formatter)
-    unbuffered_stdout = open(sys.stdout.fileno(), "w", buffering=0)
-    handler.setStream(unbuffered_stdout)
     logger = logging.getLogger()
     logger.setLevel(level)
 
