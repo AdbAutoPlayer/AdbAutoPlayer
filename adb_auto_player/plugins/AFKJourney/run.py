@@ -1,9 +1,7 @@
 import adb_auto_player.logger as logging
 from time import sleep
 from typing import Dict, Any, NoReturn
-
 from adbutils._device import AdbDevice
-
 from adb_auto_player.plugin import Plugin
 
 
@@ -60,6 +58,27 @@ class AFKJourney(Plugin):
         self.device.click(x, y)
         logging.info("Formation copied")
 
+    def test(self) -> None | NoReturn:
+        self.wait_for_any_template(
+            ["first_clear.png", "retry.png"], timeout=self.BATTLE_TIMEOUT
+        )
+        # need to refactor this here so
+        # the wait_for_any_template function should not take separate screencaps
+        template, x, y = self.wait_for_any_template(
+            ["first_clear.png", "retry.png"], timeout=self.BATTLE_TIMEOUT
+        )
+        match template:
+            case "first_clear.png":
+                # return True
+                logging.critical_and_exit("Congrats :) Feature WIP")
+            case "retry.png":
+                self.device.click(x, y)
+            case _:
+                # return True
+                logging.critical_and_exit("Congrats :) Feature WIP")
+
+        return None
+
     def handle_battle(self, is_multi_stage: bool = False) -> bool | NoReturn:
         _, attempts, _ = self.get_afk_stage_config()
         spend_gold = self.get_duras_trials_config()
@@ -88,21 +107,25 @@ class AFKJourney(Plugin):
                 logging.critical_and_exit("Not Implemented :(")
 
             template, x, y = self.wait_for_any_template(
-                ["retry.png"], timeout=self.BATTLE_TIMEOUT
+                ["first_clear.png", "retry.png"], timeout=self.BATTLE_TIMEOUT
             )
 
-            if template == "retry.png":
-                self.device.click(x, y)
-            else:
-                # return True
-                logging.critical_and_exit("Congrats :) Feature WIP")
+            match template:
+                case "first_clear.png":
+                    # return True
+                    logging.critical_and_exit("Congrats :) Feature WIP")
+                case "retry.png":
+                    self.device.click(x, y)
+                case _:
+                    # return True
+                    logging.critical_and_exit("Congrats :) Feature WIP")
 
         logging.info("Lost all Battles with current Formation")
         return False
 
     def handle_battle_screen(
         self, use_your_own_formation: bool = False
-    ) -> None | NoReturn:
+    ) -> bool | NoReturn:
         formations, _, _ = self.get_afk_stage_config()
         formation_num: int = 0
 
@@ -120,7 +143,8 @@ class AFKJourney(Plugin):
             if not use_your_own_formation:
                 self.copy_formation(formation_num)
 
-            self.handle_battle(is_multi_stage)
+            if self.handle_battle(is_multi_stage):
+                return True
 
         logging.critical_and_exit("Tried all attempts for all Formations")
 
@@ -144,11 +168,13 @@ class AFKJourney(Plugin):
         _, _, push_both_modes = self.get_afk_stage_config()
 
         self.navigate_to_afk_stages_screen(season=season)
-        self.handle_battle_screen()
+        while self.handle_battle_screen():
+            pass
 
         if push_both_modes:
             self.navigate_to_afk_stages_screen(season=not season)
-            self.handle_battle_screen()
+            while self.handle_battle_screen():
+                pass
 
 
 def execute(device: AdbDevice, config: Dict[str, Any]) -> None:
@@ -165,8 +191,9 @@ def menu(game: AFKJourney) -> None:
     print("Select an option:")
     print("[1] Push AFK Stages (DOES NOT WORK YET)")
     print("[2] Push Season Talent Stages (DOES NOT WORK YET)")
-    print("[3] Handle Battle Screen use suggested Formations")
-    print("[4] Handle Battle Screen use your own Formation")
+    print("[3] Fight Battle - use suggested Formations")
+    print("[4] Fight Battle - use your own Formation")
+    print("[5] Test - Ignore This")
     print("[0] Exit")
 
     choice = input(">> ")
@@ -182,6 +209,9 @@ def menu(game: AFKJourney) -> None:
         return
     elif choice == "4":
         game.handle_battle_screen(use_your_own_formation=True)
+        return
+    elif choice == "5":
+        game.test()
         return
     elif choice == "0":
         print("Exiting...")
