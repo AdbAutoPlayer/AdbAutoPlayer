@@ -1,4 +1,4 @@
-import logging
+import adb_auto_player.logger as logging
 from typing import Optional, Tuple, NoReturn, Union
 
 from PIL import Image
@@ -23,7 +23,9 @@ def get_screenshot(device: AdbDevice) -> Union[Image.Image, NoReturn]:
     if isinstance(screenshot_data, bytes):
         return Image.open(io.BytesIO(screenshot_data))
 
-    logging.critical(f"Screenshots cannot be recorded from device: {device.serial}")
+    logging.critical_and_exit(
+        f"Screenshots cannot be recorded from device: {device.serial}"
+    )
 
 
 def __find_template_center(
@@ -51,6 +53,6 @@ def __load_image(image_path: str) -> Union[Image.Image, NoReturn]:
         image.load()
         return image
     except FileNotFoundError:
-        logging.critical(f"The file '{image_path}' does not exist.")
+        logging.critical_and_exit(f"The file '{image_path}' does not exist.")
     except IOError:
-        logging.critical(f"The file '{image_path}' is not a valid image.")
+        logging.critical_and_exit(f"The file '{image_path}' is not a valid image.")

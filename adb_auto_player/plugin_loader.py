@@ -1,4 +1,4 @@
-import logging
+import adb_auto_player.logger as logging
 import os
 import tomllib
 import json
@@ -105,4 +105,4 @@ def load_plugin_module(plugin_name: str) -> Union[types.ModuleType, NoReturn]:
 
         return module
     except Exception as e:
-        logging.critical(f"Error loading plugin {plugin_name}: {e}")
+        logging.critical_and_exit(f"Error loading plugin {plugin_name}: {e}")

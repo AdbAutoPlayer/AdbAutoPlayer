@@ -9,3 +9,10 @@
    poetry install
    poetry run pre-commit install
    ```
+
+## Supported Games
+- AFKJourney
+
+## Planned Future Support
+- Infinity Nikki
+- Pokemon TCG Pocket

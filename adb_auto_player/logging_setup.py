@@ -1,6 +1,6 @@
 import logging
-from typing import Dict, Any, Optional, TextIO
-import sys
+from logging import StreamHandler
+from typing import Dict, Any, Optional
 
 # \033[97m White
 LOG_COLORS = {
@@ -23,16 +23,6 @@ class ColoredFormatter(logging.Formatter):
 
         formatted_message = super().format(record)
         return f"{log_color}{formatted_message}{RESET_COLOR}"
-
-
-class StreamHandler(logging.StreamHandler[TextIO]):
-    def emit(self, record: logging.LogRecord) -> None:
-        if record.levelname == "CRITICAL":
-            record.msg = "[EXITING] " + record.msg
-            super().emit(record)
-            sys.exit(1)
-        else:
-            super().emit(record)
 
 
 def setup_logging(level: int = logging.DEBUG) -> None:

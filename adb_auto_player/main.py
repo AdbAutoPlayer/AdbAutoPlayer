@@ -1,4 +1,4 @@
-import logging
+import adb_auto_player.logger as logging
 
 import adb_auto_player.adb as adb
 import adb_auto_player.plugin_loader as plugin_loader
@@ -14,9 +14,6 @@ if __name__ == "__main__":
     device = adb.get_device(main_config)
     app = adb.get_currently_running_app(device)
 
-    if not app:
-        raise SystemError
-
     plugins = plugin_loader.load_plugin_configs()
     plugin_name = None
 
@@ -26,16 +23,16 @@ if __name__ == "__main__":
             break
 
     if plugin_name is None:
-        logging.critical(f"No config found for: {app}")
+        logging.critical_and_exit(f"No config found for: {app}")
 
-    config = plugin_loader.load_config(plugin_name)  # type: ignore
+    config = plugin_loader.load_config(plugin_name)
 
     if config is None:
-        logging.critical(f"Could not load config for: {plugin_name}")
+        logging.critical_and_exit(f"Could not load config for: {plugin_name}")
 
-    module = plugin_loader.load_plugin_module(plugin_name)  # type: ignore
+    module = plugin_loader.load_plugin_module(plugin_name)
 
     if not module:
-        logging.critical(f"Could not load module for: {plugin_name}")
+        logging.critical_and_exit(f"Could not load module for: {plugin_name}")
 
     module.execute(device, config)

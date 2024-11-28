@@ -1,4 +1,4 @@
-import logging
+import adb_auto_player.logger as logging
 from typing import Dict, Any, NoReturn, Union
 from adbutils._device import AdbDevice
 from adbutils import AdbClient
@@ -28,13 +28,13 @@ def get_device(main_config: Dict[str, Any]) -> Union[AdbDevice, NoReturn]:
         device = client.device(f"{device_id}")
 
         if device is None:
-            LookupError(f"{device_id} not found")
+            raise LookupError(f"{device_id} not found")
 
         device.get_state()
         logging.info(f"Successfully connected to device {device_id}")
         return device
     except Exception as e:
-        logging.critical(f"Failed to connect to device: {e}")
+        logging.critical_and_exit(f"Failed to connect to device: {e}")
 
 
 def get_currently_running_app(device: AdbDevice) -> Union[str, NoReturn]:
@@ -52,7 +52,7 @@ def get_currently_running_app(device: AdbDevice) -> Union[str, NoReturn]:
 
         raise ValueError("Unable to determine the currently running app")
     except Exception as e:
-        logging.critical(f"Error while retrieving currently running app: {e}")
+        logging.critical_and_exit(f"Error while retrieving currently running app: {e}")
 
 
 def get_screen_resolution(device: AdbDevice) -> Union[str, NoReturn]:
@@ -67,4 +67,4 @@ def get_screen_resolution(device: AdbDevice) -> Union[str, NoReturn]:
 
         raise ValueError("No display information found.")
     except Exception as e:
-        logging.critical(f"Error while retrieving screen resolution: {e}")
+        logging.critical_and_exit(f"Error while retrieving screen resolution: {e}")
