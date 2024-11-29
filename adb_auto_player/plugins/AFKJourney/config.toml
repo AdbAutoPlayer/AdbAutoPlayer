@@ -10,3 +10,4 @@ spend_gold = false # will not spend gold to keep trying by default
 [plugin]
 package = 'com.farlightgames.igame.gp'
 supported_resolution = '1080x1920'
+min_adb_auto_player_version = '0.0.3'
