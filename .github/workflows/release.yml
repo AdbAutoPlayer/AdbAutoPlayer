@@ -15,7 +15,7 @@ jobs:
           - os: windows-latest
             zip_file: "AdbAutoPlayer_Windows.zip"
             spec_file: "windows.spec"
-            zip_command: "Compress-Archive -Path .\\dist\\* -DestinationPath ${{ matrix.zip_file }}"
+            zip_command: "Compress-Archive -Path .\\dist\\* -DestinationPath AdbAutoPlayer_Windows.zip"
           - os: macos-latest
             zip_file: "AdbAutoPlayer_MacOS.zip"
             spec_file: "macos.spec"
