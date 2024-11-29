@@ -31,12 +31,6 @@ class AFKJourney(Plugin):
 
         return spend_gold
 
-    def click_confirm(self) -> None:
-        result = self.find_template_center("confirm.png")
-        if result:
-            x, y = result
-            self.device.click(x, y)
-
     def navigate_to_default_state(self) -> None:
         while True:
             if self.find_template_center("time_of_day.png") is None:
@@ -80,7 +74,10 @@ class AFKJourney(Plugin):
         if self.find_template_center("spend.png") and not spend_gold:
             logging.critical_and_exit("Stopping attempts config: spend_gold=false")
 
-        self.click_confirm()
+        result = self.find_template_center("confirm.png")
+        if result:
+            x, y = result
+            self.device.click(x, y)
         return None
 
     def handle_multi_stage(self) -> bool | NoReturn:
@@ -134,9 +131,11 @@ class AFKJourney(Plugin):
                     self.device.click(x, y)
 
             if count_stage_2 >= attempts:
+                self.wait_for_template("records.png")
+                sleep(1)
                 self.press_back_button()
-                sleep(3)
-                self.click_confirm()
+                x, y = self.wait_for_template("confirm.button")
+                self.device.click(x, y)
                 self.select_afk_stage()
                 return False
 
