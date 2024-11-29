@@ -1,10 +1,10 @@
 [afk_stages]
-formations = 7 # how many suggested formations to copy, 7 is the max
-attempts = 5 # how many times to attempt each formation
-push_both_modes = true # try the other mode after failing all attempts on all formations
+formations = 7
+attempts = 5
+push_both_modes = true
 
 [duras_trials]
-spend_gold = false # will not spend gold to keep trying by default
+spend_gold = false
 
 # Do not change anything under this unless you are developing.
 [plugin]

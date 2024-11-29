@@ -270,6 +270,7 @@ class AFKJourney(Plugin):
         if self.store.get("season", False):
             stages_name = "Season Talent Stages"
 
+        logging.info(f"Pushing: {stages_name}")
         self.navigate_to_afk_stages_screen()
         while self.handle_battle_screen():
             stages_pushed += 1
