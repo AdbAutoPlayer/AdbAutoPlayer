@@ -131,13 +131,14 @@ class AFKJourney(Plugin):
                     logging.info(f"Lost Battle #{count_stage_2} vs Team 2")
                     self.device.click(950, 1800)
 
-            if count_stage_2 >= attempts and not count >= attempts:
+            if count_stage_2 >= attempts:
                 self.press_back_button()
                 sleep(3)
                 self.click_confirm()
                 self.select_afk_stage()
+                return False
 
-            if count_stage_2 >= attempts and count >= attempts:
+            if count >= attempts:
                 return False
 
     def handle_single_stage(self) -> bool | NoReturn:
