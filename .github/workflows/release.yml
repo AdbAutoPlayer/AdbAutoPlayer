@@ -24,6 +24,7 @@ jobs:
 
     - name: Create the executable
       run: |
+        poetry --version
         python -m poetry poetry shell
         python -m poetry poetry install
         python -m poetry poetry run pyinstaller --clean main.spec
