@@ -24,7 +24,7 @@
     ```
 
 ## AdbAutoPlayer
-1. Open `main_config.toml` and change the id `'emulator-5554'` to the id from your `adb devices` output
+1. Open `main_config.toml`,change id `'emulator-5554'` to an id from your `adb devices` output
 2. Open a new terminal and navigate to the `AdbAutoPlayer_MacOS` directory
    ![new_terminal_at_folder.png](images/new_terminal_at_folder.png)
 3. You can now execute AdbAutoPlayer
