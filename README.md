@@ -1,6 +1,6 @@
 # AdbAutoPlayer
 
-TODO mdbook link
+[Click Here for Documentation and how to use](https://yulesxoxo.github.io/AdbAutoPlayer/)
 
 ## Windows Native Setup
 1. Install [Python](https://www.python.org/downloads/)
