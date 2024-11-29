@@ -24,10 +24,9 @@ jobs:
 
     - name: Create the executable
       run: |
-        poetry --version
-        python -m poetry poetry shell
-        python -m poetry poetry install
-        python -m poetry poetry run pyinstaller --clean main.spec
+        poetry shell
+        poetry install
+        poetry run pyinstaller --clean main.spec
         cp adb_auto_player/main_config.toml dist
         cp -r adb_auto_player/plugins dist/plugins
 
