@@ -19,11 +19,15 @@ jobs:
         python-version: '3.12'
         cache: 'poetry'
 
+    - name: Install poetry
+      run: |
+        python -m pip install poetry
+
     - name: Create the executable
       run: |
-        poetry shell
-        poetry install
-        poetry run pyinstaller --clean main.spec
+        python -m poetry poetry shell
+        python -m poetry poetry install
+        python -m poetry poetry run pyinstaller --clean main.spec
         cp adb_auto_player/main_config.toml dist
         cp -r adb_auto_player/plugins dist/plugins
 
