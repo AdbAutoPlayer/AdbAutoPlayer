@@ -4,4 +4,4 @@
 
 # User Guide
 - [Windows Setup](./windows-setup.md)
-- [MacOS Setup](./macos-setup.md)
+- [macOS Setup](./macos-setup.md)
