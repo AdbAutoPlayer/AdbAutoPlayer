@@ -21,5 +21,5 @@
 ```shell
 poetry run pyinstaller --clean main.spec
 cp adb_auto_player/main_config.toml dist
-cp -r adb_auto_player/plugins dist
+cp -r adb_auto_player/plugins dist/plugins
 ```
