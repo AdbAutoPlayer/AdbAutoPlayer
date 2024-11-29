@@ -134,7 +134,7 @@ class AFKJourney(Plugin):
                 self.wait_for_template("records.png")
                 sleep(1)
                 self.press_back_button()
-                x, y = self.wait_for_template("confirm.button")
+                x, y = self.wait_for_template("confirm.png")
                 self.device.click(x, y)
                 self.select_afk_stage()
                 return False
