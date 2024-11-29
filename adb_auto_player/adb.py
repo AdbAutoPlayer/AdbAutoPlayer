@@ -46,6 +46,18 @@ def get_currently_running_app(device: AdbDevice) -> str | NoReturn:
             )
         ).strip()
 
+        # Not sure why this happens
+        # encountered when running on Apple M1 Max using MuMu Player
+        if not app:
+            app = str(
+                device.shell(
+                    "dumpsys activity activities | grep ResumedActivity | "
+                    'cut -d "{" -f2 | cut -d \' \' -f3 | cut -d "/" -f1'
+                )
+            ).strip()
+            if "\n" in app:
+                app = app.split("\n")[0]
+
         if app:
             logging.info(f"Currently running app: {app}")
             return str(app)
