@@ -1,2 +1,4 @@
 [plugin]
 package = 'com.papergames.infinite'
+supported_resolution = '1080x1920'
+min_adb_auto_player_version = '0.0.3'

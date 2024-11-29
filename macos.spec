@@ -6,7 +6,7 @@ a = Analysis(
     pathex=['adb_auto_player'],
     binaries=[],
     datas=[
-        ('adb_auto_player/main_config.toml', 'main_config.toml')
+        ('pyproject.toml', '.')
     ],
     hiddenimports=['adb_auto_player.plugin'],
     hookspath=[],

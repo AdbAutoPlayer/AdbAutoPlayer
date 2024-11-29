@@ -1,5 +1,5 @@
 import adb_auto_player.logger as logging
-from typing import Optional, Tuple, NoReturn
+from typing import Tuple, NoReturn
 
 from PIL import Image
 import io
@@ -14,7 +14,7 @@ def find_center(
     template_image_path: str,
     threshold: float = 0.9,
     grayscale: bool = False,
-) -> Optional[Tuple[int, int]]:
+) -> Tuple[int, int] | None:
     return __find_template_center(
         base_image=get_screenshot(device),
         template_image=__load_image(image_path=template_image_path),
@@ -38,7 +38,7 @@ def __find_template_center(
     template_image: Image.Image,
     threshold: float = 0.9,
     grayscale: bool = False,
-) -> Optional[Tuple[int, int]]:
+) -> Tuple[int, int] | None:
     base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
     template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
 

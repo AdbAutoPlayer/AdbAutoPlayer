@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "adb-auto-player"
-version = "0.1.0"
+version = "0.0.0"
 description = ""
 authors = ["yulesxoxo <https://github.com/yulesxoxo/yulesxoxo>"]
 readme = "README.md"
@@ -18,6 +18,7 @@ pre-commit = "^4.0.1"
 flake8 = "^7.1.1"
 mypy = "^1.13.0"
 pyinstaller = "^6.11.1"
+types-requests = "^2.32.0.20241016"
 
 [tool.black]
 line-length = 88
