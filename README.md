@@ -31,16 +31,5 @@ While it should work on Apple silicon I do not plan to officially support it or 
 - Infinity Nikki
 - Pokemon TCG Pocket
 
-## Build .exe
-```shell
-poetry run pyinstaller --clean windows.spec
-cp adb_auto_player/main_config.toml dist
-cp -r adb_auto_player/plugins dist/plugins
-```
-
-## Build macos binary
-```
-poetry run pyinstaller --clean macos.spec
-cp adb_auto_player/main_config.toml dist
-cp -r adb_auto_player/plugins dist/plugins
-```
+## Contact
+[Discord](https://discord.com/users/518169167048998913)
