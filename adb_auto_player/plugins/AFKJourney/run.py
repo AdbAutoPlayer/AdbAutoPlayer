@@ -31,15 +31,45 @@ class AFKJourney(Plugin):
 
         return spend_gold
 
-    def navigate_to_default_state(self) -> None:
-        while True:
-            if self.find_template_center("time_of_day.png") is None:
-                self.press_back_button()
-                sleep(3)
-            else:
-                break
+    def test(self) -> NoReturn:
+        self.__handle_multi_stage()
+        logging.critical_and_exit(":)")
 
-    def copy_formation(self, formation_num: int = 1) -> None | NoReturn:
+    def handle_battle_screen(
+        self, use_your_own_formation: bool = False
+    ) -> bool | NoReturn:
+        """
+        Handles logic for battle screen
+        :param use_your_own_formation: if False use suggested formations from records
+        :return:
+        """
+        formations, _, _ = self.get_afk_stage_config()
+        formation_num: int = 0
+        if use_your_own_formation:
+            formations = 1
+
+        logging.info("Starting new Stage or Trial")
+
+        while formation_num < formations:
+            formation_num += 1
+            self.wait_for_template("records.png")
+
+            is_multi_stage: bool = True
+            if self.find_template_center("formation_swap.png") is None:
+                is_multi_stage = False
+
+            if not use_your_own_formation:
+                self.__copy_suggested_formation(formation_num)
+
+            if is_multi_stage and self.__handle_multi_stage():
+                return True
+
+            if not is_multi_stage and self.__handle_single_stage():
+                return True
+
+        logging.critical_and_exit("Tried all attempts for all Formations")
+
+    def __copy_suggested_formation(self, formation_num: int = 1) -> None | NoReturn:
         logging.info(f"Copying Formation #{formation_num}")
         x, y = self.wait_for_template("records.png")
         self.device.click(x, y)
@@ -59,30 +89,8 @@ class AFKJourney(Plugin):
         logging.debug("Formation copied")
         return None
 
-    def test(self) -> NoReturn:
-        self.handle_multi_stage()
-        logging.critical_and_exit(":)")
-
-    def start_battle(self) -> None | NoReturn:
-        spend_gold = self.get_duras_trials_config()
-
-        self.wait_for_template("records.png")
-        self.device.click(850, 1780)
-        self.wait_until_template_disappears("records.png")
-        sleep(1)
-
-        if self.find_template_center("spend.png") and not spend_gold:
-            logging.critical_and_exit("Stopping attempts config: spend_gold=false")
-
-        result = self.find_template_center("confirm.png")
-        if result:
-            x, y = result
-            self.device.click(x, y)
-        return None
-
-    def handle_multi_stage(self) -> bool | NoReturn:
+    def __handle_multi_stage(self) -> bool | NoReturn:
         _, attempts, _ = self.get_afk_stage_config()
-
         count: int = 0
         count_stage_2: int = 0
 
@@ -91,9 +99,9 @@ class AFKJourney(Plugin):
                 "records.png",
                 timeout=self.BATTLE_TIMEOUT,
             )
-            result = self.find_template_center("multi_stage_first_victory.png")
 
             is_stage_2: bool = False
+            result = self.find_template_center("multi_stage_first_victory.png")
             if result is None:
                 count += 1
                 logging.info(f"Starting Battle #{count} vs Team 1")
@@ -130,18 +138,43 @@ class AFKJourney(Plugin):
                     logging.info(f"Lost Battle #{count_stage_2} vs Team 2")
                     self.device.click(x, y)
                     if count_stage_2 >= attempts:
-                        self.wait_for_template("records.png")
-                        sleep(1)
-                        logging.info("Returning to AFK Stages select")
-                        self.press_back_button()
-                        x, y = self.wait_for_template("confirm.png")
-                        self.device.click(x, y)
-                        self.select_afk_stage()
+                        self.__return_to_afk_select_to_clear_first_win_formation()
+                        self.__select_afk_stage()
                         return False
 
-    def handle_single_stage(self) -> bool | NoReturn:
-        _, attempts, _ = self.get_afk_stage_config()
+    def start_battle(self) -> None | NoReturn:
+        spend_gold = self.get_duras_trials_config()
 
+        self.wait_for_template("records.png")
+        self.device.click(850, 1780)
+        self.wait_until_template_disappears("records.png")
+        sleep(1)
+
+        if self.find_template_center("spend.png") and not spend_gold:
+            logging.critical_and_exit("Stopping attempts config: spend_gold=false")
+
+        self.__click_confirm_on_popup()
+        self.__click_confirm_on_popup()
+
+        return None
+
+    def __click_confirm_on_popup(self) -> None:
+        result = self.find_template_center("confirm.png")
+        if result:
+            x, y = result
+            self.device.click(x, y)
+            sleep(1)
+
+    def __return_to_afk_select_to_clear_first_win_formation(self) -> None:
+        self.wait_for_template("records.png")
+        sleep(1)
+        logging.info("Returning to AFK Stages select")
+        self.press_back_button()
+        x, y = self.wait_for_template("confirm.png")
+        self.device.click(x, y)
+
+    def __handle_single_stage(self) -> bool | NoReturn:
+        _, attempts, _ = self.get_afk_stage_config()
         count: int = 0
 
         while count < attempts:
@@ -157,6 +190,7 @@ class AFKJourney(Plugin):
 
             match template:
                 case "first_clear.png":
+                    # TODO
                     # return True
                     logging.critical_and_exit("Congrats :) Feature WIP")
                 case "retry.png":
@@ -164,49 +198,61 @@ class AFKJourney(Plugin):
                     self.device.click(x, y)
                     return False
                 case _:
+                    # TODO
                     # return True
                     logging.critical_and_exit("Congrats :) Feature WIP")
-
-        logging.info("Lost all Battles with current Formation")
         return False
 
-    def handle_battle_screen(
-        self, use_your_own_formation: bool = False
-    ) -> bool | NoReturn:
-        formations, _, _ = self.get_afk_stage_config()
-        formation_num: int = 0
-        if use_your_own_formation:
-            formations = 1
+    def push_afk_stages(self, season: bool) -> None | NoReturn:
+        """
+        Entry for pushing AFK Stages
+        :param season: Push Season Stage if True otherwise push regular AFK Stages
+        """
+        _, _, push_both_modes = self.get_afk_stage_config()
+        self.store["season"] = season
 
-        logging.info("Starting new Stage or Trial")
+        self.__start_afk_stage()
+        if push_both_modes:
+            self.store["season"] = not season
+            self.__start_afk_stage()
 
-        while formation_num < formations:
-            formation_num += 1
-            self.wait_for_template("records.png")
+        return None
 
-            is_multi_stage: bool = True
-            if self.find_template_center("formation_swap.png") is None:
-                is_multi_stage = False
+    def __start_afk_stage(self) -> None | NoReturn:
+        stages_pushed: int = 0
+        stages_name = self.__get_current_afk_stages_name()
 
-            if not use_your_own_formation:
-                self.copy_formation(formation_num)
+        logging.info(f"Pushing: {stages_name}")
+        self.__navigate_to_afk_stages_screen()
+        while self.handle_battle_screen():
+            stages_pushed += 1
+            logging.info(f"{stages_name} pushed: {stages_pushed}")
 
-            if is_multi_stage and self.handle_multi_stage():
-                return True
+        return None
 
-            if not is_multi_stage and self.handle_single_stage():
-                return True
+    def __get_current_afk_stages_name(self) -> str:
+        season = self.store.get("season", False)
+        if season:
+            return "Season Talent Stages"
 
-        logging.critical_and_exit("Tried all attempts for all Formations")
+        return "AFK Stages"
 
-    def navigate_to_afk_stages_screen(self) -> None:
+    def __navigate_to_afk_stages_screen(self) -> None:
         logging.info("Navigating to default state")
-        self.navigate_to_default_state()
+        self.__navigate_to_default_state()
         logging.info("Navigating to AFK Stage Battle screen")
         self.device.click(90, 1830)
-        self.select_afk_stage()
+        self.__select_afk_stage()
 
-    def select_afk_stage(self) -> None:
+    def __navigate_to_default_state(self) -> None:
+        while True:
+            if self.find_template_center("time_of_day.png") is None:
+                self.press_back_button()
+                sleep(3)
+            else:
+                break
+
+    def __select_afk_stage(self) -> None:
         self.wait_for_template("resonating_hall.png")
         self.device.click(550, 1080)  # click rewards popup
         sleep(1)
@@ -219,9 +265,20 @@ class AFKJourney(Plugin):
 
         return None
 
-    def navigate_to_duras_trials_screen(self) -> None | NoReturn:
+    def push_duras_trials(self) -> NoReturn:
+        """
+        Entry for pushing Dura's Trials
+        :return:
+        """
+        self.__navigate_to_duras_trials_screen()
+        self.__handle_dura_screen(y=1300)
+        # TODO
+        self.press_back_button()
+        self.__handle_dura_screen(y=1550)
+
+    def __navigate_to_duras_trials_screen(self) -> None | NoReturn:
         logging.info("Navigating to default state")
-        self.navigate_to_default_state()
+        self.__navigate_to_default_state()
         logging.info("Clicking Battle Modes button")
         self.device.click(460, 1830)
         x, y = self.wait_for_template(
@@ -230,7 +287,7 @@ class AFKJourney(Plugin):
         self.device.click(x, y)
         return None
 
-    def handle_dura_screen(self, y: int) -> NoReturn:
+    def __handle_dura_screen(self, y: int) -> NoReturn:
         x, _ = self.wait_for_template("rate_up.png", grayscale=True)
         self.device.click(x, y)
         sleep(3)
@@ -238,45 +295,6 @@ class AFKJourney(Plugin):
         # TODO check if max yes return
         # TODO press battle button
         # self.handle_single_stage()
-
-    def push_duras_trials(self) -> NoReturn:
-        self.navigate_to_duras_trials_screen()
-        self.handle_dura_screen(y=1300)
-
-        self.press_back_button()
-        self.handle_dura_screen(y=1550)
-
-    def get_current_afk_stages_name(self) -> str:
-        season = self.store.get("season", False)
-        if season:
-            return "Season Talent Stages"
-
-        return "AFK Stages"
-
-    def push_afk_stages(self, season: bool) -> None | NoReturn:
-        _, _, push_both_modes = self.get_afk_stage_config()
-        self.store["season"] = season
-
-        self.start_afk_stage()
-        if push_both_modes:
-            self.store["season"] = not season
-            self.start_afk_stage()
-
-        return None
-
-    def start_afk_stage(self) -> None | NoReturn:
-        stages_pushed: int = 0
-        stages_name = "AFK Stages"
-        if self.store.get("season", False):
-            stages_name = "Season Talent Stages"
-
-        logging.info(f"Pushing: {stages_name}")
-        self.navigate_to_afk_stages_screen()
-        while self.handle_battle_screen():
-            stages_pushed += 1
-            logging.info(f"{stages_name} pushed: {stages_pushed}")
-
-        return None
 
 
 def execute(device: AdbDevice, config: Dict[str, Any]) -> None | NoReturn:
