@@ -10,11 +10,16 @@ from adbutils._device import AdbDevice
 
 
 def find_center(
-    device: AdbDevice, template_image_path: str
+    device: AdbDevice,
+    template_image_path: str,
+    threshold: float = 0.9,
+    grayscale: bool = False,
 ) -> Optional[Tuple[int, int]]:
     return __find_template_center(
         base_image=get_screenshot(device),
         template_image=__load_image(image_path=template_image_path),
+        threshold=threshold,
+        grayscale=grayscale,
     )
 
 
@@ -29,10 +34,17 @@ def get_screenshot(device: AdbDevice) -> Image.Image | NoReturn:
 
 
 def __find_template_center(
-    base_image: Image.Image, template_image: Image.Image, threshold: float = 0.9
+    base_image: Image.Image,
+    template_image: Image.Image,
+    threshold: float = 0.9,
+    grayscale: bool = False,
 ) -> Optional[Tuple[int, int]]:
     base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
     template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
+
+    if grayscale:
+        base_cv = cv2.cvtColor(base_cv, cv2.COLOR_BGR2GRAY)
+        template_cv = cv2.cvtColor(template_cv, cv2.COLOR_BGR2GRAY)
 
     result = cv2.matchTemplate(base_cv, template_cv, cv2.TM_CCOEFF_NORMED)
     _, max_val, _, max_loc = cv2.minMaxLoc(result)

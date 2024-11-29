@@ -15,6 +15,7 @@ class Plugin:
     def __init__(self, device: AdbDevice, config: Dict[str, Any]) -> None:
         self.device = device
         self.config = config
+        self.store: Dict[str, Any] = {}
 
     @abstractmethod
     def get_template_dir_path(self) -> str:
@@ -31,24 +32,34 @@ class Plugin:
             )
         return None
 
-    def find_template_center(self, template: str) -> tuple[int, int] | None:
+    def find_template_center(
+        self, template: str, grayscale: bool = False
+    ) -> tuple[int, int] | None:
         template_path = os.path.join(
             self.get_template_dir_path(),
             template,
         )
 
-        return screen_utils.find_center(self.device, template_path)
+        return screen_utils.find_center(
+            self.device,
+            template_path,
+            grayscale=grayscale,
+        )
 
     def wait_for_template(
         self,
         template: str,
+        grayscale: bool = False,
         delay: int = 1,
         timeout: int = 30,
         exit_message: Optional[str] = None,
     ) -> tuple[int, int] | NoReturn:
         elapsed_time = 0
         while True:
-            result = self.find_template_center(template)
+            result = self.find_template_center(
+                template,
+                grayscale=grayscale,
+            )
             if result is not None:
                 logging.debug(f"{template} found")
                 return result
@@ -97,3 +108,6 @@ class Plugin:
                     f"None of the templates {templates}"
                     f" were found after {timeout} seconds"
                 )
+
+    def press_back_button(self) -> None:
+        self.device.keyevent(4)
