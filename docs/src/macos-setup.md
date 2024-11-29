@@ -11,23 +11,23 @@
 2. Settings => Other => Enable ADB: "Try to use the default port (5555)"
 3. Start the Android Device
 4. Install and start any supported game
-5. Start a Terminal and type
+5. Start a Terminal and type  
     ```shell
     adb devices
     ```
-6. If no devices are listed go to MuMuPlayer and Open ADB
+6. If no devices are listed go to MuMuPlayer and Open ADB  
     ![mumu_player_open_adb.png](images/mumu_player_open_adb.png)
 7. Minimize and ignore the Terminal that MuMuPlayer
-8. Start a Terminal and type check if there should be a device now.
+8. Start a Terminal and type check if there should be a device now.  
     ```shell
     adb devices
     ```
 
 ## AdbAutoPlayer
 1. Open `main_config.toml`,change id `'emulator-5554'` to an id from your `adb devices` output
-2. Open a new terminal and navigate to the `AdbAutoPlayer_MacOS` directory
+2. Open a new terminal and navigate to the `AdbAutoPlayer_MacOS` directory  
    ![new_terminal_at_folder.png](images/new_terminal_at_folder.png)
-3. You can now execute AdbAutoPlayer
+3. You can now execute AdbAutoPlayer  
     ```shell
     ./AdbAutoPlayer
     ```

@@ -1,9 +1,9 @@
 # Introduction
 AdbAutoPlayer exists to automate boring tasks and dailies in games I play.
 
-It's only tested on Windows using [LDPlayer](https://www.ldplayer.net/)
-I have tried it once on an Apple M1 Max using [MuMuPlayer Pro](https://www.mumuplayer.com/mac/)
-While it should work on Apple Silicon I do not plan to officially support it or deal with any issues personally.
+It's only tested on Windows using [LDPlayer](https://www.ldplayer.net/)  
+I have tried it once on an Apple M1 Max using [MuMuPlayer Pro](https://www.mumuplayer.com/mac/)  
+While it should work on Apple Silicon I do not plan to officially support it or deal with any issues personally.  
 
 
 You can contact me on Discord [@yules](https://discord.com/users/518169167048998913)
