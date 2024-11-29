@@ -113,8 +113,8 @@ class AFKJourney(Plugin):
                 self.wait_for_template("records.png")
                 if self.find_template_center("multi_stage_first_victory.png") is None:
                     logging.info(f"Lost Battle #{count} vs Team 1")
-                if count >= attempts:
-                    return False
+                    if count >= attempts:
+                        return False
                 continue
 
             template, x, y = self.wait_for_any_template(
@@ -129,15 +129,15 @@ class AFKJourney(Plugin):
                 case "continue.png":
                     logging.info(f"Lost Battle #{count_stage_2} vs Team 2")
                     self.device.click(x, y)
-
-            if count_stage_2 >= attempts:
-                self.wait_for_template("records.png")
-                sleep(1)
-                self.press_back_button()
-                x, y = self.wait_for_template("confirm.png")
-                self.device.click(x, y)
-                self.select_afk_stage()
-                return False
+                    if count_stage_2 >= attempts:
+                        self.wait_for_template("records.png")
+                        sleep(1)
+                        logging.info("Returning to AFK Stages select")
+                        self.press_back_button()
+                        x, y = self.wait_for_template("confirm.png")
+                        self.device.click(x, y)
+                        self.select_afk_stage()
+                        return False
 
     def handle_single_stage(self) -> bool | NoReturn:
         _, attempts, _ = self.get_afk_stage_config()
