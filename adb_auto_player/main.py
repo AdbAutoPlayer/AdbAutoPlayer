@@ -1,6 +1,7 @@
 import adb_auto_player.logger as logging
 
 import adb_auto_player.adb as adb
+import adb_auto_player.update_manager as update_manager
 import adb_auto_player.plugin_loader as plugin_loader
 from adb_auto_player.logging_setup import update_logging_from_config, setup_logging
 
@@ -10,6 +11,9 @@ if __name__ == "__main__":
     main_config = plugin_loader.get_main_config()
 
     update_logging_from_config(main_config)
+
+    version = update_manager.get_version_from_pyproject()
+    logging.info(f"Using Version: {version}")
 
     device = adb.get_device(main_config)
     app = adb.get_currently_running_app(device)

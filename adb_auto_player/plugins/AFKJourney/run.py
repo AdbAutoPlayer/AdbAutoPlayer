@@ -116,6 +116,8 @@ class AFKJourney(Plugin):
                 self.wait_for_template("records.png")
                 if self.find_template_center("multi_stage_first_victory.png") is None:
                     logging.info(f"Lost Battle #{count} vs Team 1")
+                if count >= attempts:
+                    return False
                 continue
 
             template, x, y = self.wait_for_any_template(
@@ -136,9 +138,6 @@ class AFKJourney(Plugin):
                 sleep(3)
                 self.click_confirm()
                 self.select_afk_stage()
-                return False
-
-            if count >= attempts:
                 return False
 
     def handle_single_stage(self) -> bool | NoReturn:
@@ -211,6 +210,7 @@ class AFKJourney(Plugin):
     def select_afk_stage(self) -> None:
         self.wait_for_template("resonating_hall.png")
         self.device.click(550, 1080)  # click rewards popup
+        sleep(1)
         if self.store.get("season", False):
             logging.debug("Clicking Talent Trials button")
             self.device.click(300, 1610)
