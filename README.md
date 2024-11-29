@@ -1,7 +1,6 @@
 # AdbAutoPlayer
-App is only tested on Windows using [LDPlayer](https://www.ldplayer.net/)
-I have tried it once on an Apple M1 Max using [MuMuPlayer Pro](https://www.mumuplayer.com/mac/)
-While it should work on Apple silicon I do not plan to officially support it or deal with any issues personally.
+
+TODO mdbook link
 
 ## Windows Native Setup
 1. Install [Python](https://www.python.org/downloads/)
@@ -23,13 +22,6 @@ While it should work on Apple silicon I do not plan to officially support it or 
    poetry install
    poetry run pre-commit install
    ```
-
-## Supported Games
-- AFKJourney
-
-## Planned Future Support
-- Infinity Nikki
-- Pokemon TCG Pocket
 
 ## Contact
 [Discord](https://discord.com/users/518169167048998913)
