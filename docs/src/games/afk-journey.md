@@ -44,5 +44,3 @@ Config can be found under `plugins/AFKJourney/config.toml`.
 - **supported_resolution**: 
   - Specifies the resolution supported by the plugin.
   - Value: `'1080x1920'`
-
----
