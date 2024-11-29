@@ -6,7 +6,6 @@ push_both_modes = true
 [duras_trials]
 spend_gold = false
 
-# Do not change anything under this unless you are developing.
 [plugin]
 package = 'com.farlightgames.igame.gp'
 supported_resolution = '1080x1920'
