@@ -14,6 +14,11 @@ if __name__ == "__main__":
 
     version = update_manager.get_version_from_pyproject()
     logging.info(f"Using Version: {version}")
+    if update_manager.is_new_version_available():
+        logging.info(
+            "New Version available: "
+            "https://github.com/yulesxoxo/AdbAutoPlayer/releases/latest"
+        )
 
     device = adb.get_device(main_config)
     app = adb.get_currently_running_app(device)

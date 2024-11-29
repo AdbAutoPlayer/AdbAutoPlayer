@@ -2,7 +2,9 @@ import os
 import sys
 import requests
 import tomllib
+import adb_auto_player.logger as logging
 from pathlib import Path
+from packaging.version import Version
 
 REPO_OWNER: str = "yulesxoxo"
 REPO_NAME: str = "AdbAutoPlayer"
@@ -29,9 +31,18 @@ def get_latest_version() -> str | None:
     if response.status_code == 200:
         return str(response.json()["tag_name"])
     else:
-        print("Could not fetch the latest release information.")
+        logging.error("Could not fetch the latest release information")
         return None
 
 
-# if __name__ == "__main__":
-# print(get_version_from_pyproject())
+def is_new_version_available() -> bool:
+    pyproject_version = get_version_from_pyproject()
+    # return false for local dev
+    if pyproject_version == "0.0.0":
+        return False
+
+    latest_version = get_latest_version()
+    if latest_version is None:
+        return False
+
+    return Version(pyproject_version) < Version(latest_version)
