@@ -1,13 +1,14 @@
-name: Build on Release (Windows)
+name: Build on Release (MacOS)
 
 on:
   release:
     types:
       - published
+  workflow_dispatch:
 
 jobs:
   build-and-release:
-    runs-on: windows-latest
+    runs-on: macos-latest
     permissions:
       contents: write
       id-token: write
@@ -27,14 +28,14 @@ jobs:
       run: |
         poetry shell
         poetry install
-        poetry run pyinstaller --clean windows.spec
+        poetry run pyinstaller --clean macos.spec
         cp adb_auto_player/main_config.toml dist
         cp -r adb_auto_player/plugins dist/
 
     - name: Zip the dist directory
-      run: Compress-Archive -Path .\dist\* -DestinationPath AdbAutoPlayer_Windows.zip
+      run: Compress-Archive -Path .\dist\* -DestinationPath AdbAutoPlayer_MacOS.zip
 
     - name: Upload the ZIP to the release
       uses: softprops/action-gh-release@v2
       with:
-        files: AdbAutoPlayer_Windows.zip
+        files: AdbAutoPlayer_MacOS.zip
