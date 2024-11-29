@@ -1,6 +1,6 @@
 [afk_stages]
 formations = 7
-attempts = 5
+attempts = 2
 push_both_modes = true
 
 [duras_trials]
