@@ -131,7 +131,7 @@ class AFKJourney(Plugin):
                     return True
                 case "continue.png":
                     logging.info(f"Lost Battle #{count_stage_2} vs Team 2")
-                    self.device.click(950, 1800)
+                    self.device.click(x, y)
 
             if count_stage_2 >= attempts:
                 self.press_back_button()
