@@ -66,7 +66,7 @@ class AFKJourney(Plugin):
         return None
 
     def test(self) -> NoReturn:
-        print(self.find_template_center("resonating_hall.png"))
+        self.handle_multi_stage()
         logging.critical_and_exit(":)")
 
     def start_battle(self) -> None | NoReturn:
@@ -119,7 +119,7 @@ class AFKJourney(Plugin):
                 continue
 
             template, x, y = self.wait_for_any_template(
-                ["result.png", "records.png"],
+                ["result.png", "continue.png"],
                 timeout=self.BATTLE_TIMEOUT,
             )
 
@@ -127,8 +127,9 @@ class AFKJourney(Plugin):
                 case "result.png":
                     self.device.click(950, 1800)
                     return True
-                case "records.png":
+                case "continue.png":
                     logging.info(f"Lost Battle #{count_stage_2} vs Team 2")
+                    self.device.click(950, 1800)
 
             if count_stage_2 >= attempts and not count >= attempts:
                 self.press_back_button()
