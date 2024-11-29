@@ -3,7 +3,7 @@ from time import sleep
 import adb_auto_player.logger as logging
 import os.path
 from abc import abstractmethod
-from typing import Dict, Any, NoReturn, Optional
+from typing import Dict, Any, NoReturn
 
 from adbutils._device import AdbDevice
 
@@ -52,7 +52,7 @@ class Plugin:
         grayscale: bool = False,
         delay: int = 1,
         timeout: int = 30,
-        exit_message: Optional[str] = None,
+        exit_message: str | None = None,
     ) -> tuple[int, int] | NoReturn:
         elapsed_time = 0
         while True:

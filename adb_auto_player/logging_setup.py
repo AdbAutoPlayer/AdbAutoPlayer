@@ -1,6 +1,6 @@
 import logging
 from logging import StreamHandler
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 # \033[97m White
 LOG_COLORS = {
@@ -15,7 +15,7 @@ RESET_COLOR = "\033[0m"  # Reset to default color
 
 
 class ColoredFormatter(logging.Formatter):
-    def __init__(self, fmt: str, datefmt: Optional[str] = None) -> None:
+    def __init__(self, fmt: str, datefmt: str | None = None) -> None:
         super().__init__(fmt, datefmt)
 
     def format(self, record: logging.LogRecord) -> str:
