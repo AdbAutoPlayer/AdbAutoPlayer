@@ -26,14 +26,15 @@ jobs:
 
     - name: Create the executable
       run: |
-        poetry shell
         poetry install
         poetry run pyinstaller --clean macos.spec
         cp adb_auto_player/main_config.toml dist
         cp -r adb_auto_player/plugins dist/
 
     - name: Zip the dist directory
-      run: Compress-Archive -Path .\dist\* -DestinationPath AdbAutoPlayer_MacOS.zip
+      run: |
+        cd dist
+        zip -r ../AdbAutoPlayer_MacOS.zip .
 
     - name: Upload the ZIP to the release
       uses: softprops/action-gh-release@v2
