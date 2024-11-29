@@ -3,5 +3,5 @@
 - [Supported Games](./supported-games.md)
 
 # User Guide
-- [Windows Installation](./windows-setup)
-- [MacOS Installation](./macos-setup)
+- [Windows Setup](./windows-setup.md)
+- [MacOS Setup](./macos-setup.md)
