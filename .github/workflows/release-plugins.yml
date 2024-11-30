@@ -18,7 +18,9 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Zip the adb_auto_player/plugins dir
-      run: zip -r plugins.zip adb_auto_player/plugins
+      run: |
+        cd adb_auto_player/plugins
+        zip -r ../../plugins.zip ./*
 
     - name: Upload the ZIP to the release
       uses: softprops/action-gh-release@v2
