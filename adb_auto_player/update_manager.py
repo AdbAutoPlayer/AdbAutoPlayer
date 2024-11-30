@@ -17,20 +17,19 @@ PYPROJECT_VERSION: str | None = None
 LATEST_RELEASE_JSON: Dict[str, Any] | None = None
 
 
+def __get_pyproject_toml_path() -> str:
+    if getattr(sys, "frozen", False):
+        return os.path.join(sys._MEIPASS, "pyproject.toml")  # type: ignore
+    else:
+        return os.path.join(Path(os.getcwd()).parent, "pyproject.toml")
+
+
 def get_version_from_pyproject() -> str:
     global PYPROJECT_VERSION
     if PYPROJECT_VERSION is not None:
         return PYPROJECT_VERSION
 
-    if getattr(sys, "frozen", False):
-        pyproject_toml_path = os.path.join(
-            sys._MEIPASS,  # type: ignore
-            "pyproject.toml",
-        )
-    else:
-        pyproject_toml_path = os.path.join(Path(os.getcwd()).parent, "pyproject.toml")
-
-    with open(pyproject_toml_path, "rb") as f:
+    with open(__get_pyproject_toml_path(), "rb") as f:
         pyproject_toml_file = tomllib.load(f)
 
     PYPROJECT_VERSION = str(pyproject_toml_file["tool"]["poetry"]["version"])
@@ -38,6 +37,7 @@ def get_version_from_pyproject() -> str:
 
 
 def __get_latest_release_json() -> Dict[str, Any] | None:
+    """Fetch the latest release information from the GitHub API"""
     global LATEST_RELEASE_JSON
     if LATEST_RELEASE_JSON is not None:
         return LATEST_RELEASE_JSON
@@ -51,15 +51,15 @@ def __get_latest_release_json() -> Dict[str, Any] | None:
 
 
 def __get_latest_version() -> str | None:
-    json = __get_latest_release_json()
-    if json is None:
+    release_json = __get_latest_release_json()
+    if release_json is None:
         logging.error("Could not fetch the latest release")
         return None
 
-    return str(json["tag_name"])
+    return str(release_json["tag_name"])
 
 
-def __get_browser_download_url() -> str | None:
+def __get_plugins_zip_url() -> str | None:
     release_json = __get_latest_release_json()
     if release_json is None:
         logging.error("Could not fetch the latest release")
@@ -82,16 +82,20 @@ def __get_version_from_version_check_file() -> str | None:
 
 
 def __get_last_checked_version() -> str:
+    """Get the version from the VERSION_CHECK file or fallback to pyproject version."""
     version_check = __get_version_from_version_check_file()
     pyproject_version = get_version_from_pyproject()
     if version_check is None:
         return pyproject_version
-    if Version(version_check) > Version(pyproject_version):
-        return version_check
-    return pyproject_version
+    return (
+        version_check
+        if Version(version_check) > Version(pyproject_version)
+        else pyproject_version
+    )
 
 
 def __is_new_version_available() -> bool:
+    """Check if a new version of the software is available."""
     last_checked_version = __get_last_checked_version()
     latest_version = __get_latest_version()
     if latest_version is None:
@@ -101,10 +105,11 @@ def __is_new_version_available() -> bool:
 
 
 def __download_and_extract_plugins(url: str) -> bool:
+    """Download and extract plugins from the given URL."""
     response = requests.get(url)
     if response.status_code != 200:
-        logging.error("Could not fetch the latest release")
         return False
+
     with zipfile.ZipFile(BytesIO(response.content)) as zip_ref:
         zip_ref.extractall("./tmp")
         return True
@@ -119,24 +124,21 @@ def __install_compatible_plugins() -> bool | None:
     all_plugins_installed: bool = True
     for dir_name in os.listdir(base_dir):
         dir_path = os.path.join(base_dir, dir_name)
-
         config_path = os.path.join(dir_path, "config.toml")
-        if os.path.exists(config_path):
-            try:
-                with open(config_path, "rb") as f:
-                    config_data = tomllib.load(f)
-            except Exception as e:
-                logging.debug(f"Exception in install_compatible_plugins: {e}")
-                continue
-        else:
+
+        if not os.path.exists(config_path):
             logging.debug(f"Config missing: {config_path}")
             continue
 
-        if config_data is None:
+        try:
+            with open(config_path, "rb") as f:
+                config_data = tomllib.load(f)
+        except Exception as e:
+            logging.debug(f"Exception while installing plugin: {e}")
             continue
 
         min_adb_auto_player_version: str | None = config_data.get("plugin", {}).get(
-            "min_adb_auto_player_version", None
+            "min_adb_auto_player_version"
         )
         if min_adb_auto_player_version is None:
             continue
@@ -153,13 +155,16 @@ def __install_compatible_plugins() -> bool | None:
 def __install_plugin_from_tmp(dir_path: str, dir_name: str) -> None:
     plugin_dir = f"./plugins/{dir_name}"
     os.makedirs(plugin_dir, exist_ok=True)
+
     for item in os.listdir(dir_path):
         source_item = os.path.join(dir_path, item)
         dest_item = os.path.join(plugin_dir, item)
+
         if os.path.isdir(source_item):
             shutil.copytree(source_item, dest_item, dirs_exist_ok=True)
         else:
             shutil.copy2(source_item, dest_item)
+
     logging.info(f"Plugin updated: {dir_name}")
 
 
@@ -168,7 +173,8 @@ def update_plugins() -> None | bool:
         return None
 
     latest_version = __get_latest_version()
-    browser_download_url = __get_browser_download_url()
+    browser_download_url = __get_plugins_zip_url()
+
     if latest_version is None or browser_download_url is None:
         return None
 
@@ -177,6 +183,7 @@ def update_plugins() -> None | bool:
 
     with open("VERSION_CHECK", "w") as version_file:
         version_file.write(latest_version)
+
     all_plugins_installed = __install_compatible_plugins()
     shutil.rmtree("./tmp")
     return all_plugins_installed
