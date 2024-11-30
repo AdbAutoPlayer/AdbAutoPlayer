@@ -19,8 +19,8 @@ jobs:
 
     - name: Zip the adb_auto_player/plugins dir
       run: |
-        cd adb_auto_player/plugins
-        zip -r ../../plugins.zip ./*
+        cd adb_auto_player
+        zip -r ../plugins.zip ./*
 
     - name: Upload the ZIP to the release
       uses: softprops/action-gh-release@v2
