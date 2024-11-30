@@ -37,5 +37,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='adb_auto_player/static/koko.ico',
+    icon='koko.ico',
 )
