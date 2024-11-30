@@ -7,18 +7,36 @@ from adb_auto_player.logging_setup import update_logging_from_config, setup_logg
 
 setup_logging()
 
+
+def __setup() -> None:
+    update_logging_from_config(main_config)
+
+
+def __version_updater() -> None:
+    version = update_manager.get_version_from_pyproject()
+    if version == "0.0.0":
+        logging.info("Skipping updater for dev")
+        return
+    logging.info(f"Using Version: {version}")
+
+    logging.info("Checking for updates")
+    result = update_manager.update_plugins()
+    if result is None:
+        logging.info("No new updates")
+    elif result is not None and not result:
+        logging.info(
+            ".exe or binary needs to be updated: "
+            "https://github.com/yulesxoxo/AdbAutoPlayer/releases/latest"
+        )
+    else:
+        logging.info("Plugins updated successfully")
+
+
 if __name__ == "__main__":
     main_config = plugin_loader.get_main_config()
 
-    update_logging_from_config(main_config)
-
-    version = update_manager.get_version_from_pyproject()
-    logging.info(f"Using Version: {version}")
-    if update_manager.is_new_version_available():
-        logging.info(
-            "New Version available: "
-            "https://github.com/yulesxoxo/AdbAutoPlayer/releases/latest"
-        )
+    __setup()
+    __version_updater()
 
     device = adb.get_device(main_config)
     app = adb.get_currently_running_app(device)
