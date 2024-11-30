@@ -65,3 +65,5 @@ Configuration is only loaded once when the App starts you need to restart it to 
 
 - **supported_resolution**: Specifies the resolution supported by the plugin.
   - Value: `'1080x1920'`
+
+- **min_adb_auto_player_version**: Specifies the minimum required version of AdbAutoPlayer for this plugin.
