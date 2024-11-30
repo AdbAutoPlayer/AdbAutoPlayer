@@ -1,3 +1,32 @@
+[general]
+# Add a hashtag to remove them from the list adding any will just crash the App
+# You can also add the template in templates/heroes/ yourself
+excluded_heroes = [
+    #Hashtag before the name "comments out" the line so it is not applied.
+    #"Berial",
+    #"Dionel",
+    #"Dunlingr",
+    #"Fae",
+    #"Harak",
+    #"Hodgkin",
+    #"Kafra",
+    #"Lenya",
+    #"Lucca",
+    #"Ludovic",
+    #"Lumont",
+    #"Mikola",
+    #"Phraesto",
+    #"Scarlita",
+    #"Sinbad",
+    #"Sonja",
+    #"Soren",
+    #"Talene",
+    #"Tasi",
+    #"Ulmus",
+    #"Valen",
+    #"Walker",
+]
+
 [afk_stages]
 formations = 7
 attempts = 5

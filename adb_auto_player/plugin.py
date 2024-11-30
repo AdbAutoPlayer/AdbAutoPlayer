@@ -95,11 +95,10 @@ class Plugin:
     ) -> tuple[str, int, int] | NoReturn:
         elapsed_time = 0
         while True:
-            for template in templates:
-                result = self.find_template_center(template)
-                if result is not None:
-                    x, y = result
-                    return template, x, y
+            result = self.find_any_template_center(templates)
+
+            if result is not None:
+                return result
 
             sleep(delay)
             elapsed_time += delay
@@ -108,6 +107,16 @@ class Plugin:
                     f"None of the templates {templates}"
                     f" were found after {timeout} seconds"
                 )
+
+    def find_any_template_center(
+        self, templates: list[str]
+    ) -> tuple[str, int, int] | None:
+        for template in templates:
+            result = self.find_template_center(template)
+            if result is not None:
+                x, y = result
+                return template, x, y
+        return None
 
     def press_back_button(self) -> None:
         self.device.keyevent(4)

@@ -1,6 +1,6 @@
 import adb_auto_player.logger as logging
 from time import sleep
-from typing import Dict, Any, NoReturn
+from typing import Dict, Any, NoReturn, List
 from adbutils._device import AdbDevice
 from adb_auto_player.plugin import Plugin
 
@@ -10,6 +10,12 @@ class AFKJourney(Plugin):
 
     def get_template_dir_path(self) -> str:
         return "plugins/AFKJourney/templates"
+
+    def get_general_config(self) -> list[str]:
+        excluded_heroes: List[str] = self.config.get("general", {}).get(
+            "excluded_heroes", []
+        )
+        return excluded_heroes
 
     def get_afk_stage_config(self) -> tuple[int, int, bool]:
         formations = int(self.config.get("afk_stages", {}).get("formations", 7))
@@ -23,7 +29,6 @@ class AFKJourney(Plugin):
         push_both_modes = bool(
             self.config.get("afk_stages", {}).get("push_both_modes", True)
         )
-
         return formations, attempts, push_both_modes
 
     def get_duras_trials_config(self) -> tuple[bool, bool]:
@@ -60,8 +65,10 @@ class AFKJourney(Plugin):
             if self.find_template_center("formation_swap.png") is None:
                 is_multi_stage = False
 
-            if use_suggested_formations:
-                self.__copy_suggested_formation(formation_num)
+            if use_suggested_formations and not self.__copy_suggested_formation(
+                formation_num
+            ):
+                continue
 
             if is_multi_stage and self.__handle_multi_stage():
                 return True
@@ -72,7 +79,7 @@ class AFKJourney(Plugin):
         logging.info("Stopping Battle, tried all attempts for all Formations")
         return False
 
-    def __copy_suggested_formation(self, formation_num: int = 1) -> None | NoReturn:
+    def __copy_suggested_formation(self, formation_num: int = 1) -> int | NoReturn:
         logging.info(f"Copying Formation #{formation_num}")
         x, y = self.wait_for_template("records.png")
         self.device.click(x, y)
@@ -88,9 +95,38 @@ class AFKJourney(Plugin):
             formation_num -= 1
 
         x, y = self.wait_for_template("copy.png", timeout=5)
+
+        excluded_hero = self.__formation_contains_excluded_hero()
+
         self.device.click(x, y)
         logging.debug("Formation copied")
-        return None
+        sleep(1)
+
+        if self.__click_confirm_on_popup():
+            logging.info("Formation contains locked Artifacts or Heroes skipping.")
+            return False
+
+        if excluded_hero is not None:
+            logging.info(
+                f"Formation contains excluded Hero: '{excluded_hero}' skipping."
+            )
+            return False
+
+        return True
+
+    def __formation_contains_excluded_hero(self) -> str | None:
+        excluded_heroes = self.get_general_config()
+        excluded_heroes_dict = {
+            f"heroes/{name.lower()}.png": name for name in excluded_heroes
+        }
+
+        result = self.find_any_template_center(list(excluded_heroes_dict.keys()))
+
+        if result is None:
+            return None
+
+        template, _, _ = result
+        return excluded_heroes_dict.get(template)
 
     def __handle_multi_stage(self) -> bool | NoReturn:
         _, attempts, _ = self.get_afk_stage_config()
@@ -162,12 +198,14 @@ class AFKJourney(Plugin):
 
         return True
 
-    def __click_confirm_on_popup(self) -> None:
-        result = self.find_template_center("confirm.png")
+    def __click_confirm_on_popup(self) -> bool:
+        result = self.find_any_template_center(["confirm.png", "confirm_text.png"])
         if result:
-            x, y = result
+            _, x, y = result
             self.device.click(x, y)
             sleep(1)
+            return True
+        return False
 
     def __return_to_afk_select_to_clear_first_win_formation(self) -> None:
         self.wait_for_template("records.png")

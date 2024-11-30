@@ -17,7 +17,18 @@
 
 ## Configuration Details
 
-Configuration can be found under `plugins/AFKJourney/config.toml`.
+Configuration can be found under `plugins/AFKJourney/config.toml`.  
+Configuration is only loaded once when the App starts you need to restart it to apply changes.
+
+### [general]
+
+- **excluded_heroes**:  
+  - Formations using any Hero listed here will be skipped.
+  - Adding a hashtag before a hero name will comment them out, effectively removing them from the exclusion list. 
+  - Be cautious when modifying this list, as adding any hero without proper formatting may crash the app.
+  - To add new Heroes can also add the template directly in the `templates/heroes/` directory.
+
+---
 
 ### [afk_stages]
 
