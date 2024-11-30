@@ -11,6 +11,7 @@ python = ">=3.12,<3.14"
 pillow = "^11.0.0"
 adbutils = "^2.8.0"
 opencv-python = "^4.10.0.84"
+eel = "^0.18.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.10.0"
