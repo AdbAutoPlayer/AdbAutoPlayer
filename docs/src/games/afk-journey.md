@@ -29,6 +29,10 @@ Config can be found under `plugins/AFKJourney/config.toml`.
   - If set to `false`, no gold will be spent to keep retrying the trials.
   - If set to `true`, gold will be spent to continue retrying after failure.
 
+- **use_suggested_formations**: 
+  - If set to `false`, will use your currently setup formation.
+  - If set to `true`, will use suggested formations from `Records` button.
+
 ---
 
 ## [plugin]

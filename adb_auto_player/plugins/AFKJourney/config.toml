@@ -5,6 +5,7 @@ push_both_modes = true
 
 [duras_trials]
 spend_gold = false
+use_suggested_formations = true
 
 [plugin]
 package = 'com.farlightgames.igame.gp'

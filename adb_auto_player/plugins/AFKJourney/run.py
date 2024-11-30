@@ -26,29 +26,31 @@ class AFKJourney(Plugin):
 
         return formations, attempts, push_both_modes
 
-    def get_duras_trials_config(self) -> bool:
+    def get_duras_trials_config(self) -> tuple[bool, bool]:
         spend_gold = bool(self.config.get("duras_trials", {}).get("spend_gold", False))
+        use_suggested_formations = bool(
+            self.config.get("duras_trials", {}).get("use_suggested_formations", True)
+        )
 
-        return spend_gold
+        return spend_gold, use_suggested_formations
 
     def test(self) -> NoReturn:
         self.__handle_multi_stage()
         logging.critical_and_exit(":)")
 
     def handle_battle_screen(
-        self, use_your_own_formation: bool = False
+        self, use_suggested_formations: bool = True
     ) -> bool | NoReturn:
         """
         Handles logic for battle screen
-        :param use_your_own_formation: if False use suggested formations from records
+        :param use_suggested_formations: if False use suggested formations from records
         :return:
         """
         formations, _, _ = self.get_afk_stage_config()
         formation_num: int = 0
-        if use_your_own_formation:
+        if not use_suggested_formations:
+            logging.info("Not using suggested Formations")
             formations = 1
-
-        logging.info("Starting new Stage or Trial")
 
         while formation_num < formations:
             formation_num += 1
@@ -58,7 +60,7 @@ class AFKJourney(Plugin):
             if self.find_template_center("formation_swap.png") is None:
                 is_multi_stage = False
 
-            if not use_your_own_formation:
+            if use_suggested_formations:
                 self.__copy_suggested_formation(formation_num)
 
             if is_multi_stage and self.__handle_multi_stage():
@@ -67,7 +69,8 @@ class AFKJourney(Plugin):
             if not is_multi_stage and self.__handle_single_stage():
                 return True
 
-        logging.critical_and_exit("Tried all attempts for all Formations")
+        logging.info("Stopping Battle, tried all attempts for all Formations")
+        return False
 
     def __copy_suggested_formation(self, formation_num: int = 1) -> None | NoReturn:
         logging.info(f"Copying Formation #{formation_num}")
@@ -110,7 +113,8 @@ class AFKJourney(Plugin):
                 logging.info(f"Starting Battle #{count_stage_2} vs Team 2")
                 is_stage_2 = True
 
-            self.start_battle()
+            if not self.start_battle():
+                return False
 
             if not is_stage_2:
                 x, y = self.wait_for_template(
@@ -142,8 +146,8 @@ class AFKJourney(Plugin):
                         self.__select_afk_stage()
                         return False
 
-    def start_battle(self) -> None | NoReturn:
-        spend_gold = self.get_duras_trials_config()
+    def start_battle(self) -> bool | NoReturn:
+        spend_gold, _ = self.get_duras_trials_config()
 
         self.wait_for_template("records.png")
         self.device.click(850, 1780)
@@ -151,12 +155,12 @@ class AFKJourney(Plugin):
         sleep(1)
 
         if self.find_template_center("spend.png") and not spend_gold:
-            logging.critical_and_exit("Stopping attempts config: spend_gold=false")
+            return False
 
         self.__click_confirm_on_popup()
         self.__click_confirm_on_popup()
 
-        return None
+        return True
 
     def __click_confirm_on_popup(self) -> None:
         result = self.find_template_center("confirm.png")
@@ -181,7 +185,8 @@ class AFKJourney(Plugin):
             count += 1
 
             logging.info(f"Starting Battle #{count}")
-            self.start_battle()
+            if not self.start_battle():
+                return False
 
             template, x, y = self.wait_for_any_template(
                 ["first_clear.png", "retry.png"],
@@ -190,17 +195,10 @@ class AFKJourney(Plugin):
 
             match template:
                 case "first_clear.png":
-                    # TODO
-                    # return True
-                    logging.critical_and_exit("Congrats :) Feature WIP")
+                    return True
                 case "retry.png":
                     logging.info(f"Lost Battle #{count}")
                     self.device.click(x, y)
-                    return False
-                case _:
-                    # TODO
-                    # return True
-                    logging.critical_and_exit("Congrats :) Feature WIP")
         return False
 
     def push_afk_stages(self, season: bool) -> None | NoReturn:
@@ -265,16 +263,17 @@ class AFKJourney(Plugin):
 
         return None
 
-    def push_duras_trials(self) -> NoReturn:
+    def push_duras_trials(self) -> None | NoReturn:
         """
         Entry for pushing Dura's Trials
         :return:
         """
         self.__navigate_to_duras_trials_screen()
         self.__handle_dura_screen(y=1300)
-        # TODO
-        self.press_back_button()
+        logging.info("Trying other Trial.")
+        self.__navigate_to_duras_trials_screen()
         self.__handle_dura_screen(y=1550)
+        return None
 
     def __navigate_to_duras_trials_screen(self) -> None | NoReturn:
         logging.info("Navigating to default state")
@@ -287,14 +286,21 @@ class AFKJourney(Plugin):
         self.device.click(x, y)
         return None
 
-    def __handle_dura_screen(self, y: int) -> NoReturn:
+    def __handle_dura_screen(self, y: int) -> None | NoReturn:
+        _, use_suggested_formations = self.get_duras_trials_config()
         x, _ = self.wait_for_template("rate_up.png", grayscale=True)
         self.device.click(x, y)
-        sleep(3)
-        logging.critical_and_exit("WIP")
-        # TODO check if max yes return
-        # TODO press battle button
-        # self.handle_single_stage()
+        template, x, y = self.wait_for_any_template(["battle.png", "sweep.png"])
+
+        match template:
+            case "sweep.png":
+                logging.info("Dura Trial already finished returning.")
+                return None
+            case "battle.png":
+                self.device.click(x, y)
+                self.handle_battle_screen(use_suggested_formations)
+
+        return None
 
 
 def execute(device: AdbDevice, config: Dict[str, Any]) -> None | NoReturn:
@@ -310,33 +316,36 @@ def execute(device: AdbDevice, config: Dict[str, Any]) -> None | NoReturn:
 
 
 def menu(game: AFKJourney) -> None | NoReturn:
-    print("Select an option:")
-    print("[1] Push Season Talent Stages")
-    print("[2] Push AFK Stages")
-    print("[3] Push Duras Trials (WIP)")
-    print("[4] Fight Battle - use suggested Formations")
-    print("[5] Fight Battle - use your own Formation")
-    print("[9] Test")
-    print("[0] Exit")
+    while True:
+        print("Select an option:")
+        print("[1] Push Season Talent Stages")
+        print("[2] Push AFK Stages")
+        print("[3] Push Duras Trials")
+        print("[4] Fight Battle - use suggested Formations")
+        print("[5] Fight Battle - use your own Formation")
+        print("[9] Test")
+        print("[0] Exit")
 
-    choice = input(">> ")
+        choice = input(">> ")
 
-    match choice:
-        case "1":
-            game.push_afk_stages(season=True)
-        case "2":
-            game.push_afk_stages(season=False)
-        case "3":
-            game.push_duras_trials()
-        case "4":
-            game.handle_battle_screen()
-        case "5":
-            game.handle_battle_screen(use_your_own_formation=True)
-        case "9":
-            game.test()
-        case "0":
-            print("Exiting...")
-        case _:
-            print("Invalid choice, please try again")
+        match choice:
+            case "1":
+                game.push_afk_stages(season=True)
+            case "2":
+                game.push_afk_stages(season=False)
+            case "3":
+                game.push_duras_trials()
+            case "4":
+                game.handle_battle_screen(use_suggested_formations=True)
+            case "5":
+                game.handle_battle_screen(use_suggested_formations=False)
+            case "9":
+                game.test()
+            case "0":
+                print("Exiting...")
+                break
+            case _:
+                print("Invalid choice, please try again")
+        sleep(3)
 
     return None
