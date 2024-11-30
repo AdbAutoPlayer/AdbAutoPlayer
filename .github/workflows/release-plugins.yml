@@ -1,0 +1,26 @@
+name: Upload plugins on Release
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest  # Running on an Ubuntu VM
+
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+    - name: Check out the repository
+      uses: actions/checkout@v4
+
+    - name: Zip the adb_auto_player/plugins dir
+      run: zip -r plugins.zip adb_auto_player/plugins
+
+    - name: Upload the ZIP to the release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: plugins.zip
