@@ -323,6 +323,7 @@ def menu(game: AFKJourney) -> None | NoReturn:
         print("[3] Push Duras Trials")
         print("[4] Fight Battle - use suggested Formations")
         print("[5] Fight Battle - use your own Formation")
+        print("[6] Season Legend Trial")
         print("[9] Test")
         print("[0] Exit")
 
@@ -339,6 +340,9 @@ def menu(game: AFKJourney) -> None | NoReturn:
                 game.handle_battle_screen(use_suggested_formations=True)
             case "5":
                 game.handle_battle_screen(use_suggested_formations=False)
+            case "6":
+                print("I already finished this so I can't test to implement it.")
+                print("I'll implement it when they add new levels or next season :(")
             case "9":
                 game.test()
             case "0":
