@@ -3,6 +3,4 @@ Just showing WIP Features
 
 ---
 
-## GUI
-Using Eel + Svelte
-![gui.png](images/gui.png)
+Nothing :)

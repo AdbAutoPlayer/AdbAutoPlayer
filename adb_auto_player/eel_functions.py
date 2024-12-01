@@ -12,7 +12,7 @@ from adb_auto_player.plugin import Plugin
 
 main_config = plugin_loader.get_main_config()
 plugins = plugin_loader.load_plugin_configs()
-device: AdbDevice | None = None
+global_device: AdbDevice | None = None
 global_plugin: dict[str, Any] | None = None
 menu_options: list[dict[str, Any]] | None = None
 
@@ -22,17 +22,24 @@ def init() -> None:
     return None
 
 
-def get_device() -> AdbDevice:
-    global device
-    if device is None:
-        device = adb.get_device(main_config)
-    return device
+def get_device() -> AdbDevice | None:
+    global global_device
+    if global_device is None:
+        try:
+            global_device = adb.get_device(main_config)
+        except SystemExit:
+            return None
+    return global_device
 
 
 def get_plugin() -> dict[str, Any] | None:
     global global_plugin, menu_options
 
-    app = adb.get_currently_running_app(get_device())
+    device = get_device()
+    if device is None:
+        return None
+
+    app = adb.get_currently_running_app(device)
     if global_plugin is not None:
         if app != global_plugin.get("package"):
             global_plugin = None
@@ -50,6 +57,9 @@ def get_plugin() -> dict[str, Any] | None:
 
 
 def get_game_object() -> Plugin | None:
+    device = get_device()
+    if device is None:
+        return None
     plugin = get_plugin()
     if plugin is None:
         return None
