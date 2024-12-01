@@ -10,7 +10,6 @@
 ---
 
 ## Upcoming/Pending Features
-- **Hero Exclusion List**: Skip suggested formations when they include specific heroes.
 - **Season Legend Trial Automation**: Will only happen if they add new stages or next season.
 
 ---
