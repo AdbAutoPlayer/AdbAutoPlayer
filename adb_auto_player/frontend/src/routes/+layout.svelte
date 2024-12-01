@@ -6,13 +6,17 @@
 
     window.addEventListener('keydown', function(e) {
         if ((e.key === 'F5') || (e.ctrlKey && e.key === 'r')) {
-            e.preventDefault(); // Prevent page refresh
+            e.preventDefault();
         }
     });
 
-    window.onbeforeunload = function(event) {
+    window.addEventListener('beforeunload', function(event) {
+        event.preventDefault();
+    });
+
+    window.addEventListener('onunload', async function () {
         window.eel.shutdown()
-    };
+    });
 </script>
 
 {@render children()}

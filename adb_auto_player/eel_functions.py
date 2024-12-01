@@ -138,10 +138,6 @@ def run_action_in_process(
     log_queue: multiprocessing.Queue,  # type: ignore
     log_level: int,
 ) -> None:
-    print(type(action))
-    print(type(kwargs))
-    print(type(log_queue))
-    print(type(log_level))
     child_logger = logging.getLogger()
     child_logger.addHandler(QueueHandler(log_queue))
     child_logger.setLevel(log_level)

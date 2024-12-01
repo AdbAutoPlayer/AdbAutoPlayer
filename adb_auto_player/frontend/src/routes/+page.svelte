@@ -100,7 +100,7 @@
 <style>
     .container {
         margin: 0;
-        padding-top: 2vh;
+        padding-top: 0;
         display: flex;
         flex-direction: column;
         justify-content: center;
