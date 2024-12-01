@@ -17,6 +17,10 @@
 </div>
 
 <style>
+    :root {
+        color-scheme: dark;
+    }
+
     .mdbook-sticky {
         user-select: none;
         position: fixed;
