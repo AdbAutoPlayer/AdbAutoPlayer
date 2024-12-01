@@ -40,7 +40,6 @@ class AFKJourney(Plugin):
         return spend_gold, use_suggested_formations
 
     def test(self) -> NoReturn:
-        self.__handle_multi_stage()
         logging.critical_and_exit(":)")
 
     def handle_battle_screen(
@@ -62,7 +61,7 @@ class AFKJourney(Plugin):
             self.wait_for_template("records.png")
 
             is_multi_stage: bool = True
-            if self.find_template_center("formation_swap.png") is None:
+            if self.find_first_template_center("formation_swap.png") is None:
                 is_multi_stage = False
 
             if use_suggested_formations and not self.__copy_suggested_formation(
@@ -140,7 +139,7 @@ class AFKJourney(Plugin):
             )
 
             is_stage_2: bool = False
-            result = self.find_template_center("multi_stage_first_victory.png")
+            result = self.find_first_template_center("multi_stage_first_victory.png")
             if result is None:
                 count += 1
                 logging.info(f"Starting Battle #{count} vs Team 1")
@@ -159,7 +158,10 @@ class AFKJourney(Plugin):
                 )
                 self.device.click(x, y)
                 self.wait_for_template("records.png")
-                if self.find_template_center("multi_stage_first_victory.png") is None:
+                if (
+                    self.find_first_template_center("multi_stage_first_victory.png")
+                    is None
+                ):
                     logging.info(f"Lost Battle #{count} vs Team 1")
                     if count >= attempts:
                         return False
@@ -190,7 +192,7 @@ class AFKJourney(Plugin):
         self.wait_until_template_disappears("records.png")
         sleep(1)
 
-        if self.find_template_center("spend.png") and not spend_gold:
+        if self.find_first_template_center("spend.png") and not spend_gold:
             return False
 
         self.__click_confirm_on_popup()
@@ -282,7 +284,7 @@ class AFKJourney(Plugin):
 
     def __navigate_to_default_state(self) -> None:
         while True:
-            if self.find_template_center("time_of_day.png") is None:
+            if self.find_first_template_center("time_of_day.png") is None:
                 self.press_back_button()
                 sleep(3)
             else:
@@ -307,10 +309,39 @@ class AFKJourney(Plugin):
         :return:
         """
         self.__navigate_to_duras_trials_screen()
-        self.__handle_dura_screen(y=1300)
-        logging.info("Trying other Trial.")
-        self.__navigate_to_duras_trials_screen()
-        self.__handle_dura_screen(y=1550)
+
+        self.wait_for_template("rate_up.png", grayscale=True)
+        rate_up_banners = self.find_all_template_centers("rate_up.png", grayscale=True)
+
+        if rate_up_banners is None:
+            logging.warning(
+                "Dura's Trials Rate Up banners could not be found, Stopping."
+            )
+            return None
+
+        for banner in rate_up_banners:
+            if self.find_first_template_center("rate_up.png", grayscale=True) is None:
+                self.__navigate_to_duras_trials_screen()
+                self.wait_for_template("rate_up.png", grayscale=True)
+
+            current_banners = self.find_all_template_centers(
+                "rate_up.png", grayscale=True
+            )
+
+            if current_banners is None:
+                logging.warning(
+                    "Dura's Trials Rate Up banners could not be found, Stopping."
+                )
+                return None
+
+            if len(current_banners) != len(rate_up_banners):
+                logging.warning("Dura's Trials schedule changed, Stopping.")
+                return None
+
+            x, y = banner
+            # y+100 clicks closer to center of the button instead of rate up text
+            self.__handle_dura_screen(x, y + 100)
+
         return None
 
     def __navigate_to_duras_trials_screen(self) -> None | NoReturn:
@@ -324,9 +355,8 @@ class AFKJourney(Plugin):
         self.device.click(x, y)
         return None
 
-    def __handle_dura_screen(self, y: int) -> None | NoReturn:
+    def __handle_dura_screen(self, x: int, y: int) -> None | NoReturn:
         _, use_suggested_formations = self.get_duras_trials_config()
-        x, _ = self.wait_for_template("rate_up.png", grayscale=True)
         self.device.click(x, y)
         template, x, y = self.wait_for_any_template(["battle.png", "sweep.png"])
 

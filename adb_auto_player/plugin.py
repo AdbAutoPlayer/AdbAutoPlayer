@@ -32,7 +32,7 @@ class Plugin:
             )
         return None
 
-    def find_template_center(
+    def find_first_template_center(
         self, template: str, grayscale: bool = False
     ) -> tuple[int, int] | None:
         template_path = os.path.join(
@@ -41,6 +41,20 @@ class Plugin:
         )
 
         return screen_utils.find_center(
+            self.device,
+            template_path,
+            grayscale=grayscale,
+        )
+
+    def find_all_template_centers(
+        self, template: str, grayscale: bool = False
+    ) -> list[tuple[int, int]] | None:
+        template_path = os.path.join(
+            self.get_template_dir_path(),
+            template,
+        )
+
+        return screen_utils.find_all_centers(
             self.device,
             template_path,
             grayscale=grayscale,
@@ -56,7 +70,7 @@ class Plugin:
     ) -> tuple[int, int] | NoReturn:
         elapsed_time = 0
         while True:
-            result = self.find_template_center(
+            result = self.find_first_template_center(
                 template,
                 grayscale=grayscale,
             )
@@ -79,7 +93,7 @@ class Plugin:
     ) -> None | NoReturn:
         elapsed_time = 0
         while True:
-            if self.find_template_center(template) is None:
+            if self.find_first_template_center(template) is None:
                 logging.debug(f"{template} no longer visible")
                 return None
 
@@ -112,7 +126,7 @@ class Plugin:
         self, templates: list[str]
     ) -> tuple[str, int, int] | None:
         for template in templates:
-            result = self.find_template_center(template)
+            result = self.find_first_template_center(template)
             if result is not None:
                 x, y = result
                 return template, x, y
