@@ -23,7 +23,7 @@ class AFKJourney(Plugin):
         formations = max(formations, 1)
 
         attempts = int(self.config.get("afk_stages", {}).get("attempts", 5))
-        attempts = min(attempts, 5)
+        attempts = min(attempts, 100)
         attempts = max(attempts, 1)
 
         push_both_modes = bool(
