@@ -18,7 +18,6 @@ def __version_updater() -> None:
         logging.info("Skipping updater for dev")
         return
     logging.info(f"Using Version: {version}")
-
     logging.info("Checking for updates")
     result = update_manager.update_plugins()
     if result is None:
@@ -30,6 +29,7 @@ def __version_updater() -> None:
         )
     else:
         logging.info("Plugins updated successfully")
+        logging.warning("Your plugin configs have been reset")
 
 
 if __name__ == "__main__":
