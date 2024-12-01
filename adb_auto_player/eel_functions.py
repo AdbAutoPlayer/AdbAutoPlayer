@@ -1,6 +1,7 @@
 import inspect
+import sys
 import threading
-from typing import Any
+from typing import Any, NoReturn
 
 import eel
 from adbutils._device import AdbDevice
@@ -15,6 +16,7 @@ plugins = plugin_loader.load_plugin_configs()
 global_device: AdbDevice | None = None
 global_plugin: dict[str, Any] | None = None
 menu_options: list[dict[str, Any]] | None = None
+action_thread: threading.Thread | None = None
 
 
 def init() -> None:
@@ -96,7 +98,7 @@ def get_menu() -> list[str] | None:
 
 @eel.expose
 def execute(i: int) -> None:
-    global menu_options
+    global menu_options, action_thread
     if global_plugin is None or menu_options is None:
         logging.warning("No plugin loaded")
         return None
@@ -110,9 +112,22 @@ def execute(i: int) -> None:
     kwargs = option.get("kwargs")
     if callable(action) and isinstance(kwargs, dict):
         action_thread = threading.Thread(target=action, kwargs=kwargs)
+        action_thread.daemon = True
         action_thread.start()
-        action_thread.join()
     else:
         logging.warning("Something went wrong executing the task")
 
     return None
+
+
+@eel.expose
+def action_is_running() -> bool:
+    global action_thread
+    if action_thread is None:
+        return False
+    return action_thread.is_alive()
+
+
+@eel.expose
+def shutdown() -> NoReturn:
+    sys.exit(0)

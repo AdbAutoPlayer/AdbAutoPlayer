@@ -339,6 +339,11 @@ class AFKJourney(Plugin):
 
     def __navigate_to_default_state(self) -> None:
         while True:
+            notice = self.find_first_template_center("notice.png")
+            if notice is not None:
+                self.device.click(530, 1630)
+                sleep(3)
+                continue
             if self.find_first_template_center("time_of_day.png") is None:
                 self.press_back_button()
                 sleep(3)

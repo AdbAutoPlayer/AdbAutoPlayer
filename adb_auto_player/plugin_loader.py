@@ -15,11 +15,16 @@ MAIN_CONFIG_FILE = "main_config.toml"
 
 
 def get_plugins_dir() -> str:
+    if getattr(sys, "frozen", False):
+        return os.path.join(os.path.dirname(sys.executable), "plugins")
     return os.path.join("plugins")
 
 
 def get_main_config() -> dict[str, Any]:
-    config_file = os.path.join(MAIN_CONFIG_FILE)
+    if getattr(sys, "frozen", False):
+        config_file = os.path.join(os.path.dirname(sys.executable), MAIN_CONFIG_FILE)
+    else:
+        config_file = os.path.join(MAIN_CONFIG_FILE)
     with open(config_file, "rb") as f:
         return tomllib.load(f)
 
