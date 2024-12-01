@@ -1,3 +1,4 @@
+import os.path
 from time import sleep
 from typing import Any, NoReturn
 
@@ -5,13 +6,14 @@ from adbutils._device import AdbDevice
 
 import adb_auto_player.logger as logging
 from adb_auto_player.plugin import Plugin
+from adb_auto_player.plugin_loader import get_plugins_dir
 
 
 class AFKJourney(Plugin):
     BATTLE_TIMEOUT: int = 180
 
     def get_template_dir_path(self) -> str:
-        return "plugins/AFKJourney/templates"
+        return os.path.join(get_plugins_dir(), "AFKJourney", "templates")
 
     def get_menu_options(self) -> list[dict[str, Any]]:
         return [

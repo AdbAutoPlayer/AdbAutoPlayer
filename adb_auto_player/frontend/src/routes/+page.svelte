@@ -19,7 +19,7 @@
             logEntry.style.color = 'green';
         } else if (message.includes('[WARNING]')) {
             logEntry.style.color = 'yellow';
-        } else if (message.includes('[ERROR]')) {
+        } else if (messpycage.includes('[ERROR]')) {
             logEntry.style.color = 'red';
         } else if (message.includes('[CRITICAL]')) {
             logEntry.style.color = 'darkred';
