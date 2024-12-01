@@ -22,31 +22,31 @@ def close(page: str, sockets: list[WebSocketT]) -> NoReturn:
     sys.exit(0)
 
 
-def __init_dev() -> None:
-    eel.init("frontend/src", [".svelte"])
-    eel.start(
-        {"port": 5173},  # type: ignore
-        port=8888,
-        host="localhost",
-        mode="chrome",
-        close_callback=close,
-    )
-    return None
+def init() -> None:
+    if getattr(sys, "frozen", False):
+        path = os.path.join(sys._MEIPASS, "frontend", "build")  # type: ignore
+        eel.init(path, [".svelte", ".html", ".js"])
+    else:
+        eel.init("frontend/src", [".svelte"])
 
 
-def __init() -> None:
-    path = os.path.join(sys._MEIPASS, "frontend", "build")  # type: ignore
-    eel.init(path, [".svelte", ".html", ".js"])
-    eel.start("", port=8888, host="localhost", mode="chrome", close_callback=close)
-    return None
+def start() -> None:
+    if getattr(sys, "frozen", False):
+        eel.start("", port=8888, host="localhost", mode="chrome", close_callback=close)
+    else:
+        eel.start(
+            {"port": 5173},  # type: ignore
+            port=8888,
+            host="localhost",
+            mode="chrome",
+            close_callback=close,
+        )
 
 
 def __start_eel() -> None:
     eel_functions.init()
-    if getattr(sys, "frozen", False):
-        __init()
-    else:
-        __init_dev()
+    init()
+    start()
 
 
 if __name__ == "__main__":

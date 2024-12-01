@@ -68,6 +68,11 @@
         disableActions = true;
         window.eel?.execute(index);
     }
+
+    function stopAction(event: Event) {
+        event.preventDefault()
+        window.eel?.stop_action()
+    }
 </script>
 
 <main class="container">
@@ -80,6 +85,9 @@
                     {label}
                 </button>
             {/each}
+                <button on:click={(event) => stopAction(event)}>
+                    Stop Action
+                </button>
         {:else}
             <p>No menu items available.</p>
         {/if}

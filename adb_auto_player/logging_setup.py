@@ -1,4 +1,7 @@
 import logging
+import multiprocessing
+from logging.handlers import QueueHandler
+
 import eel
 from logging import StreamHandler, Formatter
 from typing import Any
@@ -54,7 +57,7 @@ class FrontendHandler(logging.Handler):
         log_entry = self.format(record)
         if "HTTP/" in log_entry:
             return None
-
+        print("wow")
         if hasattr(eel, "append_to_log"):
             eel.append_to_log(log_entry)
         return None
@@ -66,6 +69,11 @@ def enable_frontend_logs() -> None:
         fmt="[%(asctime)s] [%(levelname)s] %(message)s", datefmt="%H:%M:%S"
     )
     handler.setFormatter(formatter)
+
+    log_queue = multiprocessing.Queue()
+    queue_handler = QueueHandler(log_queue)
     logger = logging.getLogger()
-    logger.addHandler(handler)
+    logger.addHandler(queue_handler)
+    listener = logging.handlers.QueueListener(log_queue, handler)
+    listener.start()
     logging.debug("Initialized Logging FrontendHandler")
