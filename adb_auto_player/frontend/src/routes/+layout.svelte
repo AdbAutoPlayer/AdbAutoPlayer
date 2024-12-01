@@ -11,7 +11,7 @@
     });
 
     window.onbeforeunload = function(event) {
-        event.preventDefault();
+        window.eel.shutdown()
     };
 </script>
 

@@ -44,27 +44,29 @@
         });
     }
 
-    function updateGame() {
+    function updateState() {
         if (disableActions) {
-            return;
+            window.eel?.action_is_running()((response: boolean) => {
+                disableActions = response;
+            })
+        } else {
+            window.eel?.get_running_supported_game()((response: null | string) => {
+                if (game !== response) {
+                    game = response;
+                    updateMenu();
+                }
+            });
         }
-        window.eel?.get_running_supported_game()((response: null | string) => {
-            if (game !== response) {
-                game = response;
-                updateMenu();
-            }
-        });
+
     }
 
-    updateGame();
-    setInterval(updateGame, 3000);
+    updateState();
+    setInterval(updateState, 3000);
 
     function executeMenuItem(event: Event, index: number) {
         event.preventDefault();
         disableActions = true;
-        window.eel?.execute(index)(() => {
-            disableActions = false;
-        });
+        window.eel?.execute(index);
     }
 </script>
 
