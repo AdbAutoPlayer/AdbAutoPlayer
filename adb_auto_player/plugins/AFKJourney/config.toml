@@ -34,4 +34,4 @@ use_suggested_formations = true
 name = 'AFK Journey'
 package = 'com.farlightgames.igame.gp'
 supported_resolution = '1080x1920'
-min_adb_auto_player_version = "0.0.11"
+min_adb_auto_player_version = "0.0.18"
