@@ -3,6 +3,16 @@
         e.preventDefault();
     });
     let { children } = $props();
+
+    window.addEventListener('keydown', function(e) {
+        if ((e.key === 'F5') || (e.ctrlKey && e.key === 'r')) {
+            e.preventDefault(); // Prevent page refresh
+        }
+    });
+
+    window.onbeforeunload = function(event) {
+        event.preventDefault();
+    };
 </script>
 
 {@render children()}

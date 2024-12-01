@@ -31,12 +31,12 @@ class AFKJourney(Plugin):
                 "kwargs": {},
             },
             {
-                "label": "Fight Battle - use suggested Formations",
+                "label": "Fight Battle using suggested Formations",
                 "action": self.handle_battle_screen,
                 "kwargs": {"use_suggested_formations": True},
             },
             {
-                "label": "Fight Battle - use your own Formation",
+                "label": "Fight Battle using your own Formation",
                 "action": self.handle_battle_screen,
                 "kwargs": {"use_suggested_formations": False},
             },
