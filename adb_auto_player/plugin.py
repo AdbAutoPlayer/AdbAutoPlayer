@@ -123,10 +123,15 @@ class Plugin:
                 )
 
     def find_any_template_center(
-        self, templates: list[str]
+        self,
+        templates: list[str],
+        grayscale: bool = False,
     ) -> tuple[str, int, int] | None:
         for template in templates:
-            result = self.find_first_template_center(template)
+            result = self.find_first_template_center(
+                template,
+                grayscale=grayscale,
+            )
             if result is not None:
                 x, y = result
                 return template, x, y

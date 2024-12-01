@@ -102,12 +102,12 @@ class AFKJourney(Plugin):
         sleep(1)
 
         if self.__click_confirm_on_popup():
-            logging.info("Formation contains locked Artifacts or Heroes skipping.")
+            logging.info("Formation contains locked Artifacts or Heroes skipping")
             return False
 
         if excluded_hero is not None:
             logging.info(
-                f"Formation contains excluded Hero: '{excluded_hero}' skipping."
+                f"Formation contains excluded Hero: '{excluded_hero}' skipping"
             )
             return False
 
@@ -315,7 +315,7 @@ class AFKJourney(Plugin):
 
         if rate_up_banners is None:
             logging.warning(
-                "Dura's Trials Rate Up banners could not be found, Stopping."
+                "Dura's Trials Rate Up banners could not be found, Stopping"
             )
             return None
 
@@ -330,12 +330,12 @@ class AFKJourney(Plugin):
 
             if current_banners is None:
                 logging.warning(
-                    "Dura's Trials Rate Up banners could not be found, Stopping."
+                    "Dura's Trials Rate Up banners could not be found, Stopping"
                 )
                 return None
 
             if len(current_banners) != len(rate_up_banners):
-                logging.warning("Dura's Trials schedule changed, Stopping.")
+                logging.warning("Dura's Trials schedule changed, Stopping")
                 return None
 
             x, y = banner
@@ -345,14 +345,27 @@ class AFKJourney(Plugin):
         return None
 
     def __navigate_to_duras_trials_screen(self) -> None | NoReturn:
-        logging.info("Navigating to default state")
-        self.__navigate_to_default_state()
-        logging.info("Clicking Battle Modes button")
-        self.device.click(460, 1830)
-        x, y = self.wait_for_template(
-            "duras_trials.png", exit_message="Could not find Dura's Trials"
-        )
-        self.device.click(x, y)
+        logging.info("Navigating to Dura's Trial select")
+        while True:
+            result = self.find_any_template_center(
+                ["time_of_day.png", "rate_up.png"], grayscale=True
+            )
+            if result is not None:
+                template, _, _ = result
+                break
+            self.press_back_button()
+            sleep(3)
+
+        match template:
+            case "time_of_day.png":
+                logging.info("Clicking Battle Modes button")
+                self.device.click(460, 1830)
+                x, y = self.wait_for_template(
+                    "duras_trials.png", exit_message="Could not find Dura's Trials"
+                )
+                self.device.click(x, y)
+            case "rate_up.png":
+                pass
         return None
 
     def __handle_dura_screen(self, x: int, y: int) -> None | NoReturn:
@@ -362,7 +375,7 @@ class AFKJourney(Plugin):
 
         match template:
             case "sweep.png":
-                logging.info("Dura Trial already finished returning.")
+                logging.info("Dura Trial already finished returning")
                 return None
             case "battle.png":
                 self.device.click(x, y)
@@ -409,7 +422,7 @@ def menu(game: AFKJourney) -> None | NoReturn:
             case "5":
                 game.handle_battle_screen(use_suggested_formations=False)
             case "6":
-                print("I already finished this so I can't test to implement it.")
+                print("I already finished this so I can't test to implement it")
                 print("I'll implement it when they add new levels or next season :(")
             case "9":
                 game.test()

@@ -118,7 +118,7 @@ def __download_and_extract_plugins(url: str) -> bool:
 def __install_compatible_plugins() -> bool | None:
     base_dir = "tmp/plugins/"
     if not os.path.exists(base_dir):
-        logging.debug(f"The directory {base_dir} does not exist.")
+        logging.debug(f"The directory {base_dir} does not exist")
         return None
 
     all_plugins_installed: bool = True
