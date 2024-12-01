@@ -1,13 +1,15 @@
 [general]
 excluded_heroes = [
     #Hashtag before the name "comments out" the line so it is not applied.
+    #"Arden",
     #"Berial",
+    #"Carolina",
     #"Dionel", "Dunlingr",
     #"Eironn",
     #"Fae", "Florabelle",
     #"Harak", "Hewynn", "Hodgkin",
-    #"Kafra",
-    #"Lenya", "Lucca", "Ludovic", "Lumont",
+    #"Kafra", "Korin",
+    #"Lenya", "Lily May", "Lucca", "Lucius", "Ludovic", "Lumont",
     #"Mikola",
     #"Nara",
     #"Rowan",

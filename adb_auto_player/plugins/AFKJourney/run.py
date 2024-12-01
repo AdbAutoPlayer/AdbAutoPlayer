@@ -80,24 +80,24 @@ class AFKJourney(Plugin):
 
     def __copy_suggested_formation(self, formation_num: int = 1) -> int | NoReturn:
         logging.info(f"Copying Formation #{formation_num}")
-        x, y = self.wait_for_template("records.png")
-        self.device.click(x, y)
+        records = self.wait_for_template("records.png")
+        self.device.click(*records)
 
         while formation_num > 1:
-            x, y = self.wait_for_template(
+            formation_next = self.wait_for_template(
                 "formation_next.png",
                 timeout=5,
                 exit_message=f"Formation #{formation_num} not found",
             )
-            self.device.click(x, y)
+            self.device.click(*formation_next)
             sleep(1)
             formation_num -= 1
 
-        x, y = self.wait_for_template("copy.png", timeout=5)
+        copy = self.wait_for_template("copy.png", timeout=5)
 
         excluded_hero = self.__formation_contains_excluded_hero()
 
-        self.device.click(x, y)
+        self.device.click(*copy)
         logging.debug("Formation copied")
         sleep(1)
 
@@ -116,16 +116,29 @@ class AFKJourney(Plugin):
     def __formation_contains_excluded_hero(self) -> str | None:
         excluded_heroes = self.get_general_config()
         excluded_heroes_dict = {
-            f"heroes/{name.lower()}.png": name for name in excluded_heroes
+            f"heroes/{name.lower().replace(" ", "")}.png": name
+            for name in excluded_heroes
         }
 
-        result = self.find_any_template_center(list(excluded_heroes_dict.keys()))
+        if not excluded_heroes_dict:
+            return None
 
+        return self.__find_any_excluded_hero(excluded_heroes_dict)
+
+    def __find_any_excluded_hero(self, excluded_heroes: dict[str, str]) -> str | None:
+        result = self.find_any_template_center(list(excluded_heroes.keys()))
+        if result is None:
+            second_formation_button = self.find_first_template_center(
+                "second_formation.png"
+            )
+            if second_formation_button:
+                self.device.click(*second_formation_button)
+                result = self.find_any_template_center(list(excluded_heroes.keys()))
         if result is None:
             return None
 
         template, _, _ = result
-        return excluded_heroes_dict.get(template)
+        return excluded_heroes.get(template)
 
     def __handle_multi_stage(self) -> bool | NoReturn:
         _, attempts, _ = self.get_afk_stage_config()
@@ -152,11 +165,11 @@ class AFKJourney(Plugin):
                 return False
 
             if not is_stage_2:
-                x, y = self.wait_for_template(
+                continue_button = self.wait_for_template(
                     "continue.png",
                     timeout=self.BATTLE_TIMEOUT,
                 )
-                self.device.click(x, y)
+                self.device.click(*continue_button)
                 self.wait_for_template("records.png")
                 if (
                     self.find_first_template_center("multi_stage_first_victory.png")
@@ -214,8 +227,8 @@ class AFKJourney(Plugin):
         sleep(1)
         logging.info("Returning to AFK Stages select")
         self.press_back_button()
-        x, y = self.wait_for_template("confirm.png")
-        self.device.click(x, y)
+        confirm = self.wait_for_template("confirm.png")
+        self.device.click(*confirm)
 
     def __handle_single_stage(self) -> bool | NoReturn:
         _, attempts, _ = self.get_afk_stage_config()
@@ -338,9 +351,7 @@ class AFKJourney(Plugin):
                 logging.warning("Dura's Trials schedule changed, Stopping")
                 return None
 
-            x, y = banner
-            # y+100 clicks closer to center of the button instead of rate up text
-            self.__handle_dura_screen(x, y + 100)
+            self.__handle_dura_screen(*banner)
 
         return None
 
@@ -360,17 +371,18 @@ class AFKJourney(Plugin):
             case "time_of_day.png":
                 logging.info("Clicking Battle Modes button")
                 self.device.click(460, 1830)
-                x, y = self.wait_for_template(
+                duras_trials_label = self.wait_for_template(
                     "duras_trials.png", exit_message="Could not find Dura's Trials"
                 )
-                self.device.click(x, y)
+                self.device.click(*duras_trials_label)
             case "rate_up.png":
                 pass
         return None
 
     def __handle_dura_screen(self, x: int, y: int) -> None | NoReturn:
         _, use_suggested_formations = self.get_duras_trials_config()
-        self.device.click(x, y)
+        # y+100 clicks closer to center of the button instead of rate up text
+        self.device.click(x, y + 100)
         template, x, y = self.wait_for_any_template(["battle.png", "sweep.png"])
 
         match template:
