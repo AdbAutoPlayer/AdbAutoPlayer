@@ -32,13 +32,21 @@ def init() -> None:
 
 def start() -> None:
     if getattr(sys, "frozen", False):
-        eel.start("", port=8888, host="localhost", mode="chrome", close_callback=close)
+        eel.start(
+            "",
+            port=8888,
+            host="localhost",
+            mode="chrome",
+            size=(1280, 720),
+            close_callback=close,
+        )
     else:
         eel.start(
             {"port": 5173},  # type: ignore
             port=8888,
             host="localhost",
             mode="chrome",
+            size=(1280, 720),
             close_callback=close,
         )
 
