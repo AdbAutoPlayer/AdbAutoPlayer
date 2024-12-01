@@ -39,7 +39,10 @@ def get_plugin() -> dict[str, Any] | None:
     if device is None:
         return None
 
-    app = adb.get_currently_running_app(device)
+    try:
+        app = adb.get_currently_running_app(device)
+    except SystemExit:
+        return None
     if global_plugin is not None:
         if app != global_plugin.get("package"):
             global_plugin = None
