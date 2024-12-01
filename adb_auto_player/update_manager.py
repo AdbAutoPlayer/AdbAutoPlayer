@@ -197,3 +197,26 @@ def update_plugins() -> None | bool:
     all_plugins_installed = __install_compatible_plugins()
     shutil.rmtree("./tmp")
     return all_plugins_installed
+
+
+def version_updater() -> None:
+    version = get_version_from_pyproject()
+    if version == "0.0.0":
+        logging.info("Skipping updater for dev")
+        return
+    logging.info(f"Using Version: {version}")
+    logging.info("Checking for updates")
+    result = update_plugins()
+    if result is None:
+        logging.info("No new updates")
+    elif result is not None and not result:
+        logging.warning(
+            ".exe or binary needs to be updated: "
+            "https://github.com/yulesxoxo/AdbAutoPlayer/releases/latest"
+        )
+    else:
+        logging.info("Plugins updated successfully")
+        logging.warning(
+            "Your plugin configs have been reset, "
+            "backups were saved as 'config_backup.toml'"
+        )

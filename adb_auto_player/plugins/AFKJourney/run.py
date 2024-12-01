@@ -403,12 +403,12 @@ def execute(device: AdbDevice, config: Dict[str, Any]) -> None | NoReturn:
 
     sleep(1)
 
-    menu(game)
+    __menu(game)
 
     return None
 
 
-def menu(game: AFKJourney) -> None | NoReturn:
+def __menu(game: AFKJourney) -> None | NoReturn:
     while True:
         print("Select an option:")
         print("[1] Push Season Talent Stages")
