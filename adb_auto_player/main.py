@@ -21,8 +21,8 @@ if __name__ == "__main__":
     )
     if plugin is None:
         logging.critical_and_exit(f"No config found for: {app}")
-    plugin_dir = str(plugin.get("dir"))
 
+    plugin_dir = str(plugin.get("dir"))
     config = plugin_loader.load_config(plugin_dir)
 
     if config is None:

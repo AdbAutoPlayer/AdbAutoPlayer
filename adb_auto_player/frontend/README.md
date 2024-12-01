@@ -11,5 +11,5 @@ pnpm run dev -- --open
 To create a production version of your app:
 
 ```bash
-pnpm build
+pnpm build --minify false
 ```

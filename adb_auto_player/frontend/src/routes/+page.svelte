@@ -6,6 +6,30 @@
     let games: string[] | null = null;
     let buttons: { label: string, index: number }[] = [];
 
+    function append_to_log(message: string) {
+        const log = document.getElementById('log') as HTMLDivElement | null;
+        if (log === null) {
+            return;
+        }
+        const logEntry = document.createElement('div');
+        logEntry.style.color = 'white';
+        if (message.includes('[DEBUG]')) {
+            logEntry.style.color = 'blue';
+        } else if (message.includes('[INFO]')) {
+            logEntry.style.color = 'green';
+        } else if (message.includes('[WARNING]')) {
+            logEntry.style.color = 'yellow';
+        } else if (message.includes('[ERROR]')) {
+            logEntry.style.color = 'red';
+        } else if (message.includes('[CRITICAL]')) {
+            logEntry.style.color = 'darkred';
+        }
+        logEntry.textContent = message;
+        log.appendChild(logEntry);
+        log.scrollTop = log.scrollHeight;
+    }
+    window.eel.expose(append_to_log);
+
     function updateMenu() {
         window.eel?.get_menu()((response: string[] | null) => {
             if (JSON.stringify(games) !== JSON.stringify(response)) {
@@ -41,30 +65,6 @@
         window.eel?.execute(index)(() => {
             disableActions = false;
         });
-    }
-    const eel = window.eel
-    eel.expose(append_to_log);
-    function append_to_log(message: string) {
-        const log = document.getElementById('log') as HTMLDivElement | null;
-        if (log === null) {
-            return;
-        }
-        const logEntry = document.createElement('div');
-        logEntry.style.color = 'white';
-        if (message.includes('[DEBUG]')) {
-            logEntry.style.color = 'blue';
-        } else if (message.includes('[INFO]')) {
-            logEntry.style.color = 'green';
-        } else if (message.includes('[WARNING]')) {
-            logEntry.style.color = 'yellow';
-        } else if (message.includes('[ERROR]')) {
-            logEntry.style.color = 'red';
-        } else if (message.includes('[CRITICAL]')) {
-            logEntry.style.color = 'darkred';
-        }
-        logEntry.textContent = message;
-        log.appendChild(logEntry);
-        log.scrollTop = log.scrollHeight;
     }
 </script>
 

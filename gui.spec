@@ -2,13 +2,14 @@
 
 
 a = Analysis(
-    ['adb_auto_player\\main.py'],
+    ['adb_auto_player/eel_main.py'],
     pathex=['adb_auto_player'],
     binaries=[],
     datas=[
-        ('pyproject.toml', '.')
+        ('pyproject.toml', '.'),
+        ('adb_auto_player/frontend/build', './frontend/build')
     ],
-    hiddenimports=['adb_auto_player.plugin'],
+    hiddenimports=['adb_auto_player.plugin', 'bottle_websocket'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -31,7 +32,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

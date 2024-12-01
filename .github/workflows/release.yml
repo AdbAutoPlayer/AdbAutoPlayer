@@ -13,13 +13,15 @@ jobs:
         os: [windows-latest, macos-latest]
         include:
           - os: windows-latest
-            zip_file: "AdbAutoPlayer_Windows.zip"
-            spec_file: "windows.spec"
-            zip_command: "Compress-Archive -Path .\\dist\\* -DestinationPath AdbAutoPlayer_Windows.zip"
+            zip_files: "AdbAutoPlayer_CLI_Windows.zip, AdbAutoPlayer_Windows.zip"
+            cli_zip_command: "Compress-Archive -Path .\\dist\\* -DestinationPath AdbAutoPlayer_CLI_Windows.zip"
+            gui_zip_command: "Compress-Archive -Path .\\dist\\* -DestinationPath AdbAutoPlayer_Windows.zip"
           - os: macos-latest
-            zip_file: "AdbAutoPlayer_MacOS.zip"
-            spec_file: "macos.spec"
-            zip_command: |
+            zip_files: "AdbAutoPlayer_CLI_MacOS.zip, AdbAutoPlayer_MacOS.zip"
+            cli_zip_command: |
+              cd dist
+              zip -r ../AdbAutoPlayer_CLI_MacOS.zip .
+            gui_zip_command: |
               cd dist
               zip -r ../AdbAutoPlayer_MacOS.zip .
 
@@ -43,17 +45,36 @@ jobs:
       run: |
         poetry version "${{ github.event.release.tag_name }}"
 
-    - name: Create the executable
+    - name: Create the CLI executable
       run: |
         poetry install
-        poetry run pyinstaller --clean ${{ matrix.spec_file }}
+        poetry run pyinstaller --clean cli.spec
         cp adb_auto_player/main_config.toml dist
         cp -r adb_auto_player/plugins dist/
 
-    - name: Zip the dist directory
-      run: ${{ matrix.zip_command }}
+    - name: Zip the CLI dist directory
+      run: ${{ matrix.cli_zip_command }}
+
+    - name: Set up pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
+
+    - name: Build the frontend
+      run: |
+        cd adb_auto_player/frontend
+        pnpm install
+        pnpm build --minify false
+
+    - name: Create the GUI executable
+      run: |
+        poetry install
+        poetry run pyinstaller --clean gui.spec
+
+    - name: Zip the GUI dist directory
+      run: ${{ matrix.gui_zip_command }}
 
     - name: Upload the ZIP to the release
       uses: softprops/action-gh-release@v2
       with:
-        files: ${{ matrix.zip_file }}
+        files: ${{ matrix.zip_files }}

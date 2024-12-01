@@ -1,6 +1,10 @@
+import os
 import sys
+from typing import NoReturn
 
 import eel
+from eel.types import WebSocketT
+
 import adb_auto_player.eel_functions as eel_functions
 
 import adb_auto_player.update_manager as update_manager
@@ -14,17 +18,26 @@ from adb_auto_player.logging_setup import (
 setup_logging()
 
 
+def close(page: str, sockets: list[WebSocketT]) -> NoReturn:
+    sys.exit(0)
+
+
 def __init_dev() -> None:
     eel.init("frontend/src", [".svelte"])
     eel.start(
-        {"port": 5173}, port=8888, host="localhost", mode="chrome"  # type: ignore
+        {"port": 5173},  # type: ignore
+        port=8888,
+        host="localhost",
+        mode="chrome",
+        close_callback=close,
     )
     return None
 
 
 def __init() -> None:
-    eel.init("frontend/build", [".svelte"])
-    eel.start("", port=8888, mode="chrome")
+    path = os.path.join(sys._MEIPASS, "frontend", "build")  # type: ignore
+    eel.init(path, [".svelte", ".html", ".js"])
+    eel.start("", port=8888, host="localhost", mode="chrome", close_callback=close)
     return None
 
 

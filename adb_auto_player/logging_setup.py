@@ -52,6 +52,9 @@ def update_logging_from_config(config: dict[str, Any]) -> None:
 class FrontendHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
         log_entry = self.format(record)
+        if "HTTP/" in log_entry:
+            return None
+
         if hasattr(eel, "append_to_log"):
             eel.append_to_log(log_entry)
         return None
