@@ -1,12 +1,12 @@
-import adb_auto_player.logger as logging
+import io
 from typing import Tuple, NoReturn
 
-from PIL import Image
-import io
 import cv2
 import numpy as np
-
+from PIL import Image
 from adbutils._device import AdbDevice
+
+import adb_auto_player.logger as logging
 
 
 def get_screenshot(device: AdbDevice) -> Image.Image | NoReturn:

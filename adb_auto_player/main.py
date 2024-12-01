@@ -15,25 +15,22 @@ if __name__ == "__main__":
     device = adb.get_device(main_config)
     app = adb.get_currently_running_app(device)
 
-    plugins = plugin_loader.load_plugin_configs()
-    plugin_name = None
-
-    for plugin in plugins:
-        if plugin.get("package") == app:
-            plugin_name = str(plugin.get("name"))
-            break
-
-    if plugin_name is None:
+    plugin = plugin_loader.get_plugin_for_app(
+        plugin_loader.load_plugin_configs(),
+        app,
+    )
+    if plugin is None:
         logging.critical_and_exit(f"No config found for: {app}")
+    plugin_dir = str(plugin.get("dir"))
 
-    config = plugin_loader.load_config(plugin_name)
+    config = plugin_loader.load_config(plugin_dir)
 
     if config is None:
-        logging.critical_and_exit(f"Could not load config for: {plugin_name}")
+        logging.critical_and_exit(f"Could not load config for: {plugin_dir}")
 
-    module = plugin_loader.load_plugin_module(plugin_name)
+    module = plugin_loader.load_plugin_module(plugin_dir)
 
     if not module:
-        logging.critical_and_exit(f"Could not load module for: {plugin_name}")
+        logging.critical_and_exit(f"Could not load module for: {plugin_dir}")
 
     module.execute(device, config)

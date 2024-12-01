@@ -1,12 +1,13 @@
-import adb_auto_player.logger as logging
-import os
-import tomllib
-import json
-from typing import List, Dict, Any, cast, NoReturn
 import hashlib
 import importlib.util
+import json
+import os
 import sys
+import tomllib
 import types
+from typing import Any, cast, NoReturn
+
+import adb_auto_player.logger as logging
 
 PLUGIN_LIST_FILE = "plugin_list.json"
 PLUGIN_CONFIG_FILE = "config.toml"
@@ -17,24 +18,26 @@ def get_plugins_dir() -> str:
     return os.path.join("plugins")
 
 
-def get_main_config() -> Dict[str, Any]:
+def get_main_config() -> dict[str, Any]:
     config_file = os.path.join(MAIN_CONFIG_FILE)
     with open(config_file, "rb") as f:
         return tomllib.load(f)
 
 
-def scan_plugins() -> List[Dict[str, Any]]:
+def scan_plugins() -> list[dict[str, Any]]:
     plugins = []
 
-    for plugin_name in os.listdir(get_plugins_dir()):
-        config = load_config(plugin_name)
+    for plugin_dir in os.listdir(get_plugins_dir()):
+        config = load_config(plugin_dir)
 
         if config:
             plugin_config = config.get("plugin", {})
             package = plugin_config.get("package")
+            name = plugin_config.get("name")
             plugin = {
                 "package": package,
-                "name": plugin_name,
+                "name": name,
+                "dir": plugin_dir,
             }
             plugins.append(plugin)
 
@@ -57,13 +60,13 @@ def generate_plugin_list_hash() -> str:
     return hash_md5.hexdigest()
 
 
-def load_plugin_configs() -> List[Dict[str, Any]]:
+def load_plugin_configs() -> list[dict[str, Any]]:
     if os.path.exists(PLUGIN_LIST_FILE):
         with open(PLUGIN_LIST_FILE, "r") as f:
             cached_plugins = json.load(f)
 
         if cached_plugins.get("hash") == generate_plugin_list_hash():
-            return cast(List[Dict[str, Any]], cached_plugins["plugins"])
+            return cast(list[dict[str, Any]], cached_plugins["plugins"])
 
     plugins = scan_plugins()
     create_plugin_list_file(plugins)
@@ -71,14 +74,14 @@ def load_plugin_configs() -> List[Dict[str, Any]]:
     return plugins
 
 
-def create_plugin_list_file(plugins: List[Dict[str, Any]]) -> None:
+def create_plugin_list_file(plugins: list[dict[str, Any]]) -> None:
     plugin_data = {"hash": generate_plugin_list_hash(), "plugins": plugins}
 
     with open(PLUGIN_LIST_FILE, "w") as f:
         json.dump(plugin_data, f, indent=4)
 
 
-def load_config(plugin_name: str) -> Dict[str, Any]:
+def load_config(plugin_name: str) -> dict[str, Any]:
     config_file = os.path.join(get_plugins_dir(), plugin_name, PLUGIN_CONFIG_FILE)
     with open(config_file, "rb") as f:
         return tomllib.load(f)
@@ -106,3 +109,12 @@ def load_plugin_module(plugin_name: str) -> types.ModuleType | NoReturn:
         return module
     except Exception as e:
         logging.critical_and_exit(f"Error loading plugin {plugin_name}: {e}")
+
+
+def get_plugin_for_app(
+    plugins: list[dict[str, Any]], app: str
+) -> dict[str, Any] | None:
+    for plugin in plugins:
+        if plugin.get("package") == app:
+            return plugin
+    return None

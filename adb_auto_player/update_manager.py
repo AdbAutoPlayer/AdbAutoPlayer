@@ -1,20 +1,21 @@
-import shutil
 import os
+import shutil
 import sys
+import tomllib
 import zipfile
 from io import BytesIO
-from typing import Any, Dict
+from pathlib import Path
+from typing import Any
 
 import requests
-import tomllib
-import adb_auto_player.logger as logging
-from pathlib import Path
 from packaging.version import Version
+
+import adb_auto_player.logger as logging
 
 GITHUB_REPO: str = "yulesxoxo/AdbAutoPlayer"
 RELEASE_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 PYPROJECT_VERSION: str | None = None
-LATEST_RELEASE_JSON: Dict[str, Any] | None = None
+LATEST_RELEASE_JSON: dict[str, Any] | None = None
 
 
 def __get_pyproject_toml_path() -> str:
@@ -36,7 +37,7 @@ def get_version_from_pyproject() -> str:
     return PYPROJECT_VERSION
 
 
-def __get_latest_release_json() -> Dict[str, Any] | None:
+def __get_latest_release_json() -> dict[str, Any] | None:
     """Fetch the latest release information from the GitHub API"""
     global LATEST_RELEASE_JSON
     if LATEST_RELEASE_JSON is not None:

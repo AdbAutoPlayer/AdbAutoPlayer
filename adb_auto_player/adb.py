@@ -1,10 +1,12 @@
-import adb_auto_player.logger as logging
-from typing import Dict, Any, NoReturn
-from adbutils._device import AdbDevice
+from typing import Any, NoReturn
+
 from adbutils import AdbClient
+from adbutils._device import AdbDevice
+
+import adb_auto_player.logger as logging
 
 
-def get_device(main_config: Dict[str, Any]) -> AdbDevice | NoReturn:
+def get_device(main_config: dict[str, Any]) -> AdbDevice | NoReturn:
     device_id = main_config.get("device", {}).get("id", "127.0.0.1:5555")
 
     adb_config = main_config.get("adb", {})
@@ -59,7 +61,7 @@ def get_currently_running_app(device: AdbDevice) -> str | NoReturn:
                 app = app.split("\n")[0]
 
         if app:
-            logging.info(f"Currently running app: {app}")
+            logging.debug(f"Currently running app: {app}")
             return str(app)
 
         raise ValueError("Unable to determine the currently running app")

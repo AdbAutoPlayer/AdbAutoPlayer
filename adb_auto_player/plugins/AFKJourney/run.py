@@ -1,7 +1,9 @@
-import adb_auto_player.logger as logging
 from time import sleep
-from typing import Dict, Any, NoReturn, List
+from typing import Any, NoReturn
+
 from adbutils._device import AdbDevice
+
+import adb_auto_player.logger as logging
 from adb_auto_player.plugin import Plugin
 
 
@@ -11,8 +13,48 @@ class AFKJourney(Plugin):
     def get_template_dir_path(self) -> str:
         return "plugins/AFKJourney/templates"
 
+    def get_menu_options(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "label": "Push Season Talent Stages",
+                "action": self.push_afk_stages,
+                "kwargs": {"season": True},
+            },
+            {
+                "label": "Push AFK Stages",
+                "action": self.push_afk_stages,
+                "kwargs": {"season": False},
+            },
+            {
+                "label": "Push Duras Trials",
+                "action": self.push_duras_trials,
+                "kwargs": {},
+            },
+            {
+                "label": "Fight Battle - use suggested Formations",
+                "action": self.handle_battle_screen,
+                "kwargs": {"use_suggested_formations": True},
+            },
+            {
+                "label": "Fight Battle - use your own Formation",
+                "action": self.handle_battle_screen,
+                "kwargs": {"use_suggested_formations": False},
+            },
+            # I already finished this so I can't test to implement it.
+            # {
+            #    "label": "Season Legend Trial",
+            #    "action": self.push_season_legend_trials,
+            #    "kwargs": {},
+            # },
+            {
+                "label": "Test",
+                "action": self.test,
+                "kwargs": {},
+            },
+        ]
+
     def get_general_config(self) -> list[str]:
-        excluded_heroes: List[str] = self.config.get("general", {}).get(
+        excluded_heroes: list[str] = self.config.get("general", {}).get(
             "excluded_heroes", []
         )
         return excluded_heroes
@@ -396,53 +438,13 @@ class AFKJourney(Plugin):
         return None
 
 
-def execute(device: AdbDevice, config: Dict[str, Any]) -> None | NoReturn:
+def execute(device: AdbDevice, config: dict[str, Any]) -> None | NoReturn:
     game = AFKJourney(device, config)
 
     game.check_requirements()
 
     sleep(1)
 
-    __menu(game)
-
-    return None
-
-
-def __menu(game: AFKJourney) -> None | NoReturn:
-    while True:
-        print("Select an option:")
-        print("[1] Push Season Talent Stages")
-        print("[2] Push AFK Stages")
-        print("[3] Push Duras Trials")
-        print("[4] Fight Battle - use suggested Formations")
-        print("[5] Fight Battle - use your own Formation")
-        print("[6] Season Legend Trial")
-        print("[9] Test")
-        print("[0] Exit")
-
-        choice = input(">> ")
-
-        match choice:
-            case "1":
-                game.push_afk_stages(season=True)
-            case "2":
-                game.push_afk_stages(season=False)
-            case "3":
-                game.push_duras_trials()
-            case "4":
-                game.handle_battle_screen(use_suggested_formations=True)
-            case "5":
-                game.handle_battle_screen(use_suggested_formations=False)
-            case "6":
-                print("I already finished this so I can't test to implement it")
-                print("I'll implement it when they add new levels or next season :(")
-            case "9":
-                game.test()
-            case "0":
-                print("Exiting...")
-                break
-            case _:
-                print("Invalid choice, please try again")
-        sleep(3)
+    game.run_cli_menu()
 
     return None

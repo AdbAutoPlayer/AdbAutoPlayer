@@ -1,11 +1,12 @@
 import logging
-from logging import StreamHandler
-from typing import Dict, Any
+import eel
+from logging import StreamHandler, Formatter
+from typing import Any
 
 # \033[97m White
 LOG_COLORS = {
     "DEBUG": "\033[94m",  # Blue
-    "INFO": "\033[96m",  # Cyan
+    "INFO": "\033[92m",  # Cyan
     "WARNING": "\033[93m",  # Yellow
     "ERROR": "\033[31m",  # Red (a bit orange)
     "CRITICAL": "\033[91m",  # Red
@@ -39,10 +40,29 @@ def setup_logging(level: int = logging.DEBUG) -> None:
     logger.propagate = False
 
 
-def update_logging_from_config(config: Dict[str, Any]) -> None:
+def update_logging_from_config(config: dict[str, Any]) -> None:
     logging_config = config.get("logging", {})
     log_level = logging_config.get("level", "DEBUG").upper()
     logger = logging.getLogger()
     level = getattr(logging, log_level, logging.DEBUG)
     logger.setLevel(level)
     logging.debug(f"Log level set to: {log_level}")
+
+
+class FrontendHandler(logging.Handler):
+    def emit(self, record: logging.LogRecord) -> None:
+        log_entry = self.format(record)
+        if hasattr(eel, "append_to_log"):
+            eel.append_to_log(log_entry)
+        return None
+
+
+def enable_frontend_logs() -> None:
+    handler = FrontendHandler()
+    formatter = Formatter(
+        fmt="[%(asctime)s] [%(levelname)s] %(message)s", datefmt="%H:%M:%S"
+    )
+    handler.setFormatter(formatter)
+    logger = logging.getLogger()
+    logger.addHandler(handler)
+    logging.debug("Initialized Logging FrontendHandler")

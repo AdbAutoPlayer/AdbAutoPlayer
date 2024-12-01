@@ -45,11 +45,25 @@
     const eel = window.eel
     eel.expose(append_to_log);
     function append_to_log(message: string) {
-        const log = document.getElementById('log') as HTMLTextAreaElement | null;
+        const log = document.getElementById('log') as HTMLDivElement | null;
         if (log === null) {
             return;
         }
-        log.value += message + '\n';
+        const logEntry = document.createElement('div');
+        logEntry.style.color = 'white';
+        if (message.includes('[DEBUG]')) {
+            logEntry.style.color = 'blue';
+        } else if (message.includes('[INFO]')) {
+            logEntry.style.color = 'green';
+        } else if (message.includes('[WARNING]')) {
+            logEntry.style.color = 'yellow';
+        } else if (message.includes('[ERROR]')) {
+            logEntry.style.color = 'red';
+        } else if (message.includes('[CRITICAL]')) {
+            logEntry.style.color = 'darkred';
+        }
+        logEntry.textContent = message;
+        log.appendChild(logEntry);
         log.scrollTop = log.scrollHeight;
     }
 </script>
@@ -69,7 +83,7 @@
         {/if}
     </CommandPanel>
     <CommandPanel title={"Logs"}>
-        <textarea id="log" readonly></textarea>
+        <div id="log" class="log-container"></div>
     </CommandPanel>
 </main>
 
@@ -83,14 +97,14 @@
         text-align: center;
     }
 
-    textarea {
-        width: 100%;
+    .log-container {
         height: 200px;
-        overflow-y: scroll;
-        overflow-x: scroll;
-        resize: none;
-        white-space: pre;
-        overflow-wrap: normal;
+        overflow-y: auto;
+        background-color: #0f0f0f98;
+        padding: 10px;
+        white-space: pre-wrap;
+        text-align: left;
+        font-family: Consolas,monospace;
     }
 
     button {

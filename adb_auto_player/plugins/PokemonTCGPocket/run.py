@@ -1,8 +1,9 @@
-import adb_auto_player.logger as logging
+from typing import Any, NoReturn
 
 from adbutils._device import AdbDevice
-from typing import Dict, Any, NoReturn
+
+import adb_auto_player.logger as logging
 
 
-def execute(device: AdbDevice, config: Dict[str, Any]) -> NoReturn:
+def execute(device: AdbDevice, config: dict[str, Any]) -> NoReturn:
     logging.critical_and_exit("WIP")

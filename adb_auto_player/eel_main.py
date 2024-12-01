@@ -5,13 +5,17 @@ import adb_auto_player.eel_functions as eel_functions
 
 import adb_auto_player.update_manager as update_manager
 import adb_auto_player.plugin_loader as plugin_loader
-from adb_auto_player.logging_setup import update_logging_from_config, setup_logging
+from adb_auto_player.logging_setup import (
+    update_logging_from_config,
+    setup_logging,
+    enable_frontend_logs,
+)
 
 setup_logging()
 
 
 def __init_dev() -> None:
-    eel.init("frontend/src", [".tsx", ".ts", ".jsx", ".js", ".html", ".svelte"])
+    eel.init("frontend/src", [".svelte"])
     eel.start(
         {"port": 5173}, port=8888, host="localhost", mode="chrome"  # type: ignore
     )
@@ -19,7 +23,7 @@ def __init_dev() -> None:
 
 
 def __init() -> None:
-    eel.init("frontend/build", [".tsx", ".ts", ".jsx", ".js", ".html", ".svelte"])
+    eel.init("frontend/build", [".svelte"])
     eel.start("", port=8888, mode="chrome")
     return None
 
@@ -35,5 +39,6 @@ def __start_eel() -> None:
 if __name__ == "__main__":
     main_config = plugin_loader.get_main_config()
     update_logging_from_config(main_config)
+    enable_frontend_logs()
     update_manager.version_updater()
     __start_eel()

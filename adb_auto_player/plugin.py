@@ -1,25 +1,55 @@
-from time import sleep
-
-import adb_auto_player.logger as logging
 import os.path
+import sys
 from abc import abstractmethod
-from typing import Dict, Any, NoReturn
+from time import sleep
+from typing import Any, NoReturn
 
 from adbutils._device import AdbDevice
 
 import adb_auto_player.adb as adb
+import adb_auto_player.logger as logging
 import adb_auto_player.screen_utils as screen_utils
 
 
 class Plugin:
-    def __init__(self, device: AdbDevice, config: Dict[str, Any]) -> None:
+    def __init__(self, device: AdbDevice, config: dict[str, Any]) -> None:
         self.device = device
         self.config = config
-        self.store: Dict[str, Any] = {}
+        self.store: dict[str, Any] = {}
 
     @abstractmethod
     def get_template_dir_path(self) -> str:
         return ""
+
+    @abstractmethod
+    def get_menu_options(self) -> list[dict[str, Any]]:
+        return []
+
+    def run_cli_menu(self) -> None:
+        menu_options = self.get_menu_options()
+
+        while True:
+            print("Select an option:")
+            for index, option in enumerate(menu_options, 1):
+                print(f"[{index}] {option['label']}")
+            print("[0] Exit")
+            choice_input: str = input(">> ")
+
+            print(choice_input)
+            if not choice_input.isdigit():
+                print("Invalid input, please try again.")
+                continue
+            if choice_input == "0":
+                print("Exiting...")
+                sys.exit(0)
+
+            choice: int = int(choice_input) - 1
+            if len(menu_options) <= choice:
+                print("Invalid input, please try again.")
+                continue
+
+            option = menu_options[choice]
+            option["action"](**option["kwargs"])
 
     def check_requirements(self) -> None | NoReturn:
         resolution = adb.get_screen_resolution(self.device)
