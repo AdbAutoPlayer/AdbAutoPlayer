@@ -48,11 +48,6 @@ class AFKJourney(Plugin):
             #    "action": self.push_season_legend_trials,
             #    "kwargs": {},
             # },
-            {
-                "label": "Test",
-                "action": self.test,
-                "kwargs": {},
-            },
         ]
 
     def get_general_config(self) -> list[str]:
@@ -82,9 +77,6 @@ class AFKJourney(Plugin):
         )
 
         return spend_gold, use_suggested_formations
-
-    def test(self) -> NoReturn:
-        logging.critical_and_exit(":)")
 
     def handle_battle_screen(
         self, use_suggested_formations: bool = True
