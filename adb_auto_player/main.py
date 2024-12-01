@@ -29,7 +29,10 @@ def __version_updater() -> None:
         )
     else:
         logging.info("Plugins updated successfully")
-        logging.warning("Your plugin configs have been reset")
+        logging.warning(
+            "Your plugin configs have been reset, "
+            "backups were saved as 'config_backup.toml'"
+        )
 
 
 if __name__ == "__main__":

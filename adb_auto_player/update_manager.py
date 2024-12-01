@@ -152,9 +152,19 @@ def __install_compatible_plugins() -> bool | None:
     return all_plugins_installed
 
 
+def __backup_existing_config(plugin_dir: str) -> None:
+    config_path = os.path.join(plugin_dir, "config.toml")
+    backup_config_path = os.path.join(plugin_dir, "config_backup.toml")
+
+    if os.path.exists(config_path):
+        shutil.copy2(config_path, backup_config_path)
+
+
 def __install_plugin_from_tmp(dir_path: str, dir_name: str) -> None:
     plugin_dir = f"./plugins/{dir_name}"
     os.makedirs(plugin_dir, exist_ok=True)
+
+    __backup_existing_config(plugin_dir)
 
     for item in os.listdir(dir_path):
         source_item = os.path.join(dir_path, item)
