@@ -102,11 +102,11 @@ class AFKJourney(Plugin):
         sleep(1)
 
         if self.__click_confirm_on_popup():
-            logging.info("Formation contains locked Artifacts or Heroes skipping")
+            logging.warning("Formation contains locked Artifacts or Heroes skipping")
             return False
 
         if excluded_hero is not None:
-            logging.info(
+            logging.warning(
                 f"Formation contains excluded Hero: '{excluded_hero}' skipping"
             )
             return False
