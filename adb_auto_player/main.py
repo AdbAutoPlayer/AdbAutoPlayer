@@ -24,7 +24,7 @@ def __version_updater() -> None:
     if result is None:
         logging.info("No new updates")
     elif result is not None and not result:
-        logging.info(
+        logging.warning(
             ".exe or binary needs to be updated: "
             "https://github.com/yulesxoxo/AdbAutoPlayer/releases/latest"
         )
