@@ -90,17 +90,8 @@ jobs:
             adb_auto_player/main.py
 
       - name: Collect files into a single zip
-        run: |
-          chmod +x build_zip.sh
-          ./build_zip.sh
-
-      - name: Zip the contents of the release directory
         shell: pwsh
-        run: |
-          $ZipFile = "$env:GITHUB_WORKSPACE/${{ matrix.zip_files }}"
-          $SourceFolder = "$env:GITHUB_WORKSPACE/release_zip/"
-          Compress-Archive -Path $SourceFolder -DestinationPath $ZipFile -Force
-          Write-Output "ZIP file created at $ZipFile"
+        run: .github/scripts/build_zip.ps1
 
       - name: Upload the ZIP to the release
         uses: softprops/action-gh-release@v2
