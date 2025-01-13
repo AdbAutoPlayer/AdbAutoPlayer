@@ -13,7 +13,7 @@ jobs:
         os: [windows-latest]
         include:
           - os: windows-latest
-            zip_files: "AdbAutoPlayer_Windows.zip"
+            zip_files: "AdbAutoPlayer_Windows.zip,Patch_Windows.zip"
 
     permissions:
       contents: write
