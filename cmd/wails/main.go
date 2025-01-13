@@ -27,7 +27,7 @@ func main() {
 
 	logLevel := logger.DEBUG
 	mainConfig, err := config.LoadConfig[config.MainConfig]("config.toml")
-	if err == nil {
+	if err != nil {
 		switch mainConfig.Logging.Level {
 		case string(ipc.LogLevelTrace):
 			logLevel = logger.TRACE
