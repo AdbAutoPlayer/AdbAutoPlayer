@@ -54,6 +54,7 @@ func (a *App) SaveMainConfig(mainConfig config.MainConfig) error {
 	err := config.SaveConfig[config.MainConfig]("config.toml", &mainConfig)
 	if err == nil {
 		runtime.LogInfo(a.ctx, "Saved Main config")
+		GetProcessManager().logger.SetLogLevelFromString(mainConfig.Logging.Level)
 		return nil
 	}
 	return err

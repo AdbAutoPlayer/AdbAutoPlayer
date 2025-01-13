@@ -30,6 +30,31 @@ func NewFrontendLogger(logLevel uint8) *FrontendLogger {
 	}
 }
 
+func (l *FrontendLogger) SetLogLevelFromInt(logLevel uint8) {
+	l.logLevel = logLevel
+}
+
+func (l *FrontendLogger) SetLogLevelFromIPCLogLevel(logLevel LogLevel) {
+	l.logLevel = logLevelPriority[logLevel]
+}
+
+func (l *FrontendLogger) SetLogLevelFromString(logLevel string) {
+	switch logLevel {
+	case string(LogLevelTrace):
+		l.logLevel = logLevelPriority[LogLevelTrace]
+	case string(LogLevelDebug):
+		l.logLevel = logLevelPriority[LogLevelDebug]
+	case string(LogLevelWarning):
+		l.logLevel = logLevelPriority[LogLevelWarning]
+	case string(LogLevelError):
+		l.logLevel = logLevelPriority[LogLevelError]
+	case string(LogLevelFatal):
+		l.logLevel = logLevelPriority[LogLevelFatal]
+	default:
+		l.logLevel = logLevelPriority[LogLevelInfo]
+	}
+}
+
 func (l *FrontendLogger) Print(message string) {
 	l.buildLogMessage(LogLevelInfo, message)
 }

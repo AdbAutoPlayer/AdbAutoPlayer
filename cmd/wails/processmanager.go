@@ -31,10 +31,6 @@ func GetProcessManager() *Manager {
 	return instance
 }
 
-func (pm *Manager) SetLogger(logger *ipc.FrontendLogger) {
-	instance.logger = logger
-}
-
 func (pm *Manager) StartProcess(binaryPath string, args []string) error {
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()

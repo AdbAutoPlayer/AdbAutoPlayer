@@ -64,7 +64,7 @@ func main() {
 		},
 		OnDomReady: func(ctx context.Context) {
 			frontendLogger.Startup(ctx)
-			GetProcessManager().SetLogger(frontendLogger)
+			GetProcessManager().logger = frontendLogger
 		},
 		OnShutdown: func(ctx context.Context) {
 			app.shutdown(ctx)
