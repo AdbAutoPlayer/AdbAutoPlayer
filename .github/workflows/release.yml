@@ -67,16 +67,6 @@ jobs:
           cd cmd/wails
           wails build -devtools
 
-      - name: Cache Nuitka cache directory
-        uses: actions/cache@v4
-        with:
-          path: $GITHUB_WORKSPACE/nuitka-cache
-          key: ${{ runner.os }}-${{ runner.arch }}-python-${{ env.PYTHON_VERSION }}-nuitka-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-python-${{ env.PYTHON_VERSION }}-
-            ${{ runner.os }}-${{ runner.arch }}-python-
-            ${{ runner.os }}-${{ runner.arch }}-
-
       - name: Create Python binary
         run: |
           cd python
@@ -86,7 +76,6 @@ jobs:
             --output-filename=adb_auto_player.exe `
             --assume-yes-for-downloads `
             --windows-console-mode=disable `
-            --cache-dir=$GITHUB_WORKSPACE/nuitka-cache `
             adb_auto_player/main.py
 
       - name: Collect files into a single zip
