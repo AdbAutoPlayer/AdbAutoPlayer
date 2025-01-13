@@ -81,12 +81,12 @@ jobs:
         run: |
           cd python
           poetry install
-          poetry run nuitka --standalone \
-            --onefile \
-            --output-filename=adb_auto_player.exe \
-            --assume-yes-for-downloads \
-            --windows-console-mode=disable \
-            --cache-dir=$GITHUB_WORKSPACE/nuitka-cache \
+          poetry run nuitka --standalone `
+            --onefile `
+            --output-filename=adb_auto_player.exe `
+            --assume-yes-for-downloads `
+            --windows-console-mode=disable `
+            --cache-dir=$GITHUB_WORKSPACE/nuitka-cache `
             adb_auto_player/main.py
 
       - name: Collect files into a single zip
