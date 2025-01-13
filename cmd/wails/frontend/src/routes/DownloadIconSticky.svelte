@@ -3,6 +3,7 @@
     import {
         UpdatePatch
     } from "$lib/wailsjs/go/main/App";
+    import { logoAwake } from '$lib/stores/logo';
     import {LogError, LogInfo} from "$lib/wailsjs/runtime";
     let downloadIconImageSrc: string|null = $state(null)
 
@@ -21,11 +22,12 @@
 
                 const currentParts = currentVersion.split('.').map(Number);
                 const latestParts = latestVersion.split('.').map(Number);
-                console.log(currentParts)
-                console.log(latestParts)
                 if (
                     latestParts[0] > currentParts[0]
-                    || latestParts[1] > currentParts[1]
+                    || (
+                        latestParts[0] == currentParts[0]
+                        && latestParts[1] > currentParts[1]
+                    )
                 ) {
                     notifyUpdate()
                     return;
@@ -46,12 +48,15 @@
                         console.log("No browser_download_url found")
                         return;
                     }
+                    $logoAwake = false
                     UpdatePatch(downloadUrl)
                         .then(() => {
                             localStorage.setItem("downloadedVersion", releaseData.tag_name);
+                            $logoAwake = true
                         })
                         .catch((err) => {
                             alert(err)
+                            $logoAwake = true
                         })
                     ;
                 }
@@ -74,10 +79,9 @@
     if (!currentVersion) {
         currentVersion = version;
     }
-
     LogInfo("Version: " + currentVersion)
     if (currentVersion !== null && currentVersion !== undefined) {
-        if(version === "0.0.0") {
+        if(version === "10.0.0") {
             LogInfo("Skipping update for dev");
         } else {
             checkForNewRelease(currentVersion);

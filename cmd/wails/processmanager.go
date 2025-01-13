@@ -16,6 +16,7 @@ type Manager struct {
 	mutex   sync.Mutex
 	running *os.Process
 	logger  *ipc.FrontendLogger
+	blocked bool
 }
 
 var (
@@ -124,6 +125,9 @@ func (pm *Manager) TerminateProcess() (bool, error) {
 }
 
 func (pm *Manager) IsProcessRunning() bool {
+	if pm.blocked {
+		return true
+	}
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
 
