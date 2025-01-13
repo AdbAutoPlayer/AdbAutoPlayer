@@ -82,7 +82,7 @@ func getAFKJourneyConfigConstraints() map[string]interface{} {
 		"General": map[string]interface{}{
 			"Excluded Heroes": ipc.NewMultiCheckboxConstraint([]string{
 				"Alsa", "Antandra", "Arden", "Atalanta",
-				"Berial", "Brutus", "Bryon",
+				"Berial", "Bonnie", "Brutus", "Bryon",
 				"Carolina", "Cassadee", "Cecia",
 				"Damian", "Dionel", "Dunlingr",
 				"Eironn",
