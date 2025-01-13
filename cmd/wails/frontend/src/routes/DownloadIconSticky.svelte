@@ -48,7 +48,7 @@
                     }
                     UpdatePatch(downloadUrl)
                         .then(() => {
-                            localStorage.setItem("downloadedVersion", releaseData.latestVersion);
+                            localStorage.setItem("downloadedVersion", releaseData.tag_name);
                         })
                         .catch((err) => {
                             alert(err)
