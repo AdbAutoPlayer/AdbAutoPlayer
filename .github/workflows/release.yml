@@ -19,6 +19,9 @@ jobs:
       contents: write
       id-token: write
 
+    env:
+      NUITKA_CACHE_DIR: ${{ github.workspace }}/nuitka-cache
+
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
@@ -70,7 +73,17 @@ jobs:
           cd cmd/wails
           wails build -devtools
 
-      - name: Create Python binary
+      - name: Cache Nuitka cache directory
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.NUITKA_CACHE_DIR }}
+          key: ${{ runner.os }}-${{ runner.arch }}-python-3.12-nuitka-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-python-${{ env.PYTHON_VERSION }}-
+            ${{ runner.os }}-${{ runner.arch }}-python-
+            ${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Build Python binary using Nuitka
         run: |
           cd python
           poetry install
