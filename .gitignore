@@ -1,6 +1,1 @@
-plugin_list.json
-dist
-build
-AdbAutoPlayer.zip
-VERSION_CHECK
-/tmp/
+cmd/wails/build/bin

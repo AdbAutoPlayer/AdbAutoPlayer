@@ -1,0 +1,16 @@
+[general]
+excluded_heroes = []
+assist_limit = 20
+
+[afk_stages]
+attempts = 5
+formations = 7
+use_suggested_formations = true
+push_both_modes = true
+spend_gold = false
+
+[duras_trials]
+attempts = 5
+formations = 7
+use_suggested_formations = true
+spend_gold = false
