@@ -73,10 +73,10 @@ jobs:
           poetry install
           poetry run nuitka --standalone --onefile --output-filename=adb_auto_player.exe --assume-yes-for-downloads --windows-console-mode=disable adb_auto_player/main.py
 
-      - name: Collect files into a single directory
+      - name: Collect files into a single zip
         run: |
-          chmod +x collect_binaries.sh
-          ./collect_binaries.sh
+          chmod +x build_zip.sh
+          ./build_zip.sh
 
       - name: Zip the contents of the release directory
         run: |
