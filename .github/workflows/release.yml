@@ -95,10 +95,12 @@ jobs:
           ./build_zip.sh
 
       - name: Zip the contents of the release directory
+        shell: pwsh
         run: |
-          # Zip all the files inside the release_zip directory
-          zip -r $GITHUB_WORKSPACE/${{ matrix.zip_files }} $GITHUB_WORKSPACE/release_zip/
-          echo "ZIP file created at $GITHUB_WORKSPACE/${{ matrix.zip_files }}"
+          $ZipFile = "$env:GITHUB_WORKSPACE/${{ matrix.zip_files }}"
+          $SourceFolder = "$env:GITHUB_WORKSPACE/release_zip/"
+          Compress-Archive -Path $SourceFolder -DestinationPath $ZipFile -Force
+          Write-Output "ZIP file created at $ZipFile"
 
       - name: Upload the ZIP to the release
         uses: softprops/action-gh-release@v2
