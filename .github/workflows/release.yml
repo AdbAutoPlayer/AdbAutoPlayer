@@ -58,6 +58,7 @@ jobs:
       - name: Create Python binary
         run: |
           cd python
+          poetry install
           poetry run nuitka --standalone --onefile --output-filename=adb_auto_player.exe --assume-yes-for-downloads --windows-console-mode=disable adb_auto_player/main.py
 
       - name: Build Wails project
