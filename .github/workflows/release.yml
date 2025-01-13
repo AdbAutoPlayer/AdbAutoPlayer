@@ -36,9 +36,6 @@ jobs:
             cd cmd/wails/frontend
             npm version "${{ github.event.release.tag_name }}"
 
-      - name: Display package.json
-        run: cat cmd/wails/frontend/package.json
-
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
