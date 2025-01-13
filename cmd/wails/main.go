@@ -23,11 +23,10 @@ func main() {
 	useProdPath := changeWorkingDirForProd()
 
 	app := NewApp(useProdPath)
-	frontendLogger := ipc.NewFrontendLogger()
 
 	logLevel := logger.DEBUG
 	mainConfig, err := config.LoadConfig[config.MainConfig]("config.toml")
-	if err != nil {
+	if err == nil {
 		switch mainConfig.Logging.Level {
 		case string(ipc.LogLevelTrace):
 			logLevel = logger.TRACE
@@ -41,6 +40,10 @@ func main() {
 			logLevel = logger.INFO
 		}
 	}
+	frontendLogger := ipc.NewFrontendLogger(uint8(logLevel))
+
+	fmt.Println("Log Level:", logLevel)
+
 	err = wails.Run(&options.App{
 		Title:  "AdbAutoPlayer",
 		Width:  1024,

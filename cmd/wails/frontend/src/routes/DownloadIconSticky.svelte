@@ -70,6 +70,9 @@
         alert("New update available click the download button on the top right.")
     }
 
+    if (version !== "0.0.0") {
+        localStorage.setItem("downloadedVersion", "0.0.0");
+    }
     let currentVersion = localStorage.getItem("downloadedVersion");
     if (!currentVersion) {
         currentVersion = version;

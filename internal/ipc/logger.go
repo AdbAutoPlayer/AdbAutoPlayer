@@ -7,15 +7,27 @@ import (
 )
 
 type FrontendLogger struct {
-	ctx context.Context
+	ctx      context.Context
+	logLevel uint8
+}
+
+var logLevelPriority = map[LogLevel]uint8{
+	LogLevelTrace:   1,
+	LogLevelDebug:   2,
+	LogLevelInfo:    3,
+	LogLevelWarning: 4,
+	LogLevelError:   5,
+	LogLevelFatal:   6,
 }
 
 func (l *FrontendLogger) Startup(ctx context.Context) {
 	l.ctx = ctx
 }
 
-func NewFrontendLogger() *FrontendLogger {
-	return &FrontendLogger{}
+func NewFrontendLogger(logLevel uint8) *FrontendLogger {
+	return &FrontendLogger{
+		logLevel: logLevel,
+	}
 }
 
 func (l *FrontendLogger) Print(message string) {
@@ -60,5 +72,8 @@ func (l *FrontendLogger) buildLogMessage(level LogLevel, message string) {
 }
 
 func (l *FrontendLogger) LogMessage(message LogMessage) {
+	if l.logLevel > logLevelPriority[message.Level] {
+		return
+	}
 	runtime.EventsEmit(l.ctx, "log-message", message)
 }
