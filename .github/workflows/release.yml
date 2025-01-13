@@ -55,16 +55,24 @@ jobs:
           cd cmd/wails/frontend
           deno install --allow-scripts
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Build Wails project
+        run: |
+          cd cmd/wails
+          wails build -devtools
+
       - name: Create Python binary
         run: |
           cd python
           poetry install
           poetry run nuitka --standalone --onefile --output-filename=adb_auto_player.exe --assume-yes-for-downloads --windows-console-mode=disable adb_auto_player/main.py
 
-      - name: Build Wails project
-        run: |
-          cd cmd/wails
-          wails build -devtools
 
       - name: Collect files into a single directory
         run: |
