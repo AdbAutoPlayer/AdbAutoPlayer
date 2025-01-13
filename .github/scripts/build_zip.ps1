@@ -17,5 +17,13 @@ Get-ChildItem -Path $ReleaseZipDir -Recurse
 
 $ZipFile = Join-Path $Workspace "AdbAutoPlayer_Windows.zip"
 Compress-Archive -Path $ReleaseZipDir\* -DestinationPath $ZipFile -Force
-
 Write-Output "ZIP file created at ${ZipFile}"
+
+$PatchDir = Join-Path $Workspace "Patch_Windows"
+New-Item -ItemType Directory -Force -Path $PatchDir
+
+Copy-Item -Path (Join-Path $ReleaseZipDir "games") -Destination $PatchDir -Recurse -Force
+
+$PatchZipFile = Join-Path $Workspace "Patch_Windows.zip"
+Compress-Archive -Path $PatchDir\* -DestinationPath $PatchZipFile -Force
+Write-Output "Patch ZIP file created at ${PatchZipFile}"

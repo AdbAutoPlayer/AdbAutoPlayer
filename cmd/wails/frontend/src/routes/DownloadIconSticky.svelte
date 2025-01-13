@@ -35,7 +35,7 @@
                     && latestParts[1] === currentParts[1]
                     && latestParts[2] > currentParts[2]
                 ) {
-                    const asset = releaseData.assets.find((a: any) => a.name === 'patch.zip');
+                    const asset = releaseData.assets.find((a: any) => a.name === 'Patch_Windows.zip');
                     if (!asset) {
                         console.log("No asset found")
                         return;
