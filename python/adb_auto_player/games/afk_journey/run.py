@@ -265,6 +265,7 @@ class AFKJourney(Game):
                         self.__return_to_afk_select_to_clear_first_win_formation()
                         self.__select_afk_stage()
                         return False
+        return False
 
     def __start_battle(self) -> bool:
         if self.store.get(self.STORE_MODE, None) == self.MODE_DURAS_TRIALS:
@@ -285,7 +286,6 @@ class AFKJourney(Game):
 
         self.__click_confirm_on_popup()
         self.__click_confirm_on_popup()
-
         return True
 
     def __click_confirm_on_popup(self) -> bool:
@@ -363,7 +363,6 @@ class AFKJourney(Game):
         if self.config.afk_stages.push_both_modes:
             self.store[self.STORE_SEASON] = not season
             self.__start_afk_stage()
-
         return None
 
     def __start_afk_stage(self) -> None:
@@ -377,14 +376,12 @@ class AFKJourney(Game):
         ):
             stages_pushed += 1
             logging.info(f"{stages_name} pushed: {stages_pushed}")
-
         return None
 
     def __get_current_afk_stages_name(self) -> str:
         season = self.store.get(self.STORE_SEASON, False)
         if season:
             return "Season Talent Stages"
-
         return "AFK Stages"
 
     def __navigate_to_afk_stages_screen(self) -> None:
@@ -396,24 +393,34 @@ class AFKJourney(Game):
 
     def __navigate_to_default_state(self) -> None:
         while True:
-            notice = self.find_first_template_center("notice.png")
-            if notice is not None:
-                self.device.click(530, 1630)
-                sleep(3)
-                continue
-            confirm = self.find_first_template_center("confirm.png")
-            if confirm:
-                self.device.click(*confirm)
-                sleep(1)
-                continue
-            if self.find_first_template_center("time_of_day.png") is None:
+            result = self.find_any_template_center(
+                [
+                    "notice.png",
+                    "confirm.png",
+                    "time_of_day.png",
+                    "dotdotdot.png",
+                ]
+            )
+
+            if result is None:
                 self.press_back_button()
                 sleep(3)
-            elif self.find_first_template_center("dotdotdot.png") is not None:
-                self.press_back_button()
-                sleep(1)
-            else:
-                break
+                continue
+
+            template, x, y = result
+            match template:
+                case "notice.png":
+                    self.device.click(530, 1630)
+                    sleep(3)
+                case "confirm.png":
+                    self.device.click(x, y)
+                    sleep(1)
+                case "time_of_day.png":
+                    return None
+                case "dotdotdot.png":
+                    self.press_back_button()
+                    sleep(1)
+        return None
 
     def __select_afk_stage(self) -> None:
         self.wait_for_template("resonating_hall.png")
@@ -425,7 +432,6 @@ class AFKJourney(Game):
         else:
             logging.debug("Clicking Battle button")
             self.device.click(800, 1610)
-
         return None
 
     def push_duras_trials(self) -> None:
@@ -536,6 +542,7 @@ class AFKJourney(Game):
                     return None
             logging.info("Dura's Trial failed")
             return None
+        return None
 
     def assist_synergy_corrupt_creature(self) -> None:
         self.start_up()
@@ -549,43 +556,42 @@ class AFKJourney(Game):
         logging.info("Done assisting")
         return None
 
-    def __close_profile(self) -> None:
-        while self.find_first_template_center("my_formation.png"):
-            self.press_back_button()
-            sleep(1)
-        return None
-
     def __find_synergy_or_corrupt_creature(self) -> bool:
-        world_chat = self.find_first_template_center("world_chat.png")
-        if world_chat is None:
-            if self.find_first_template_center("my_formation.png"):
-                self.__close_profile()
-                return False
-            if self.find_any_template_center(["tap_to_enter.png", "team-up_chat.png"]):
-                logging.info("Switching to world chat")
-                self.device.click(110, 350)
-                return False
+        result = self.find_any_template_center(["world_chat.png", "tap_to_enter.png", "team-up_chat.png"])
+        if result is None:
             logging.info("Opening chat")
             self.__navigate_to_default_state()
             self.device.click(1010, 1080)
             sleep(1)
             self.device.click(110, 350)
             return False
-        self.device.click(260, 1400)
+
+        template, x, y = result
+        match template:
+            case "world_chat.png":
+                 self.device.click(260, 1400)
+            case "tap_to_enter.png", "team-up_chat.png":
+                logging.info("Switching to world chat")
+                self.device.click(110, 350)
+                return False
+
         try:
-            self.wait_for_template("chat_button.png", delay=0.1, timeout=1)
+            template, x ,y = self.wait_for_any_template(
+                [
+                    "join_now.png",
+                    "synergy.png",
+                    "chat_button.png"
+                ],
+                delay=0.1,
+                timeout=1,
+            )
         except TimeoutException:
             return False
-        result = self.find_any_template_center(["join_now.png", "synergy.png"])
-        if result is None:
+        if "chat_button.png" == template:
             if self.find_first_template_center("world_chat.png") is None:
-                if self.find_first_template_center("my_formation.png"):
-                    self.__close_profile()
-                else:
-                    self.press_back_button()
-                    sleep(1)
+                self.press_back_button()
+                sleep(1)
             return False
-        template, x, y = result
         self.device.click(x, y)
         match template:
             case "join_now.png":
@@ -635,7 +641,6 @@ class AFKJourney(Game):
         self.device.click(130, 900)
         sleep(1)
         self.device.click(630, 1800)
-
         return True
 
     def start_up(self) -> None:
@@ -643,3 +648,4 @@ class AFKJourney(Game):
             self.set_device()
         if self.config is None:
             self.load_config()
+        return None
