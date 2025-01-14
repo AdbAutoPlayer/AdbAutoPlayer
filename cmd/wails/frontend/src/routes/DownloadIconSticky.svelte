@@ -52,6 +52,7 @@
                     UpdatePatch(downloadUrl)
                         .then(() => {
                             localStorage.setItem("downloadedVersion", releaseData.tag_name);
+                            LogInfo("Version: " + releaseData.tag_name);
                             $logoAwake = true
                         })
                         .catch((err) => {
