@@ -82,7 +82,7 @@
     }
     LogInfo("Version: " + currentVersion)
     if (currentVersion !== null && currentVersion !== undefined) {
-        if(version === "10.0.0") {
+        if(version === "0.0.0") {
             LogInfo("Skipping update for dev");
         } else {
             checkForNewRelease(currentVersion);

@@ -12,7 +12,6 @@
     import {onDestroy, onMount} from "svelte";
     import CommandPanel from "./CommandPanel.svelte";
     import ConfigForm from "./ConfigForm.svelte";
-    import LogDisplay from "./LogDisplay.svelte";
     import Menu from "./Menu.svelte";
     import { logoAwake } from '$lib/stores/logo';
     import { afkjourney, config, games } from "$lib/wailsjs/go/models";
@@ -184,10 +183,6 @@
             <Menu buttons={activeGameMenuButtons ?? []} {defaultButtons} disableActions={!$logoAwake}></Menu>
         </CommandPanel>
     {/if}
-
-    <CommandPanel title={"Logs"}>
-        <LogDisplay/>
-    </CommandPanel>
 </main>
 
 <style>
@@ -196,7 +191,5 @@
         padding-top: 0;
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        text-align: center;
     }
 </style>
