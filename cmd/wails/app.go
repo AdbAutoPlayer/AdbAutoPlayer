@@ -51,13 +51,12 @@ func (a *App) GetEditableMainConfig() (map[string]interface{}, error) {
 }
 
 func (a *App) SaveMainConfig(mainConfig config.MainConfig) error {
-	err := config.SaveConfig[config.MainConfig]("config.toml", &mainConfig)
-	if err == nil {
-		runtime.LogInfo(a.ctx, "Saved Main config")
-		GetProcessManager().logger.SetLogLevelFromString(mainConfig.Logging.Level)
-		return nil
+	if err := config.SaveConfig[config.MainConfig]("config.toml", &mainConfig); err != nil {
+		return err
 	}
-	return err
+	runtime.LogInfo(a.ctx, "Saved Main config")
+	GetProcessManager().logger.SetLogLevelFromString(mainConfig.Logging.Level)
+	return nil
 }
 
 func (a *App) GetEditableGameConfig(game games.Game) (map[string]interface{}, error) {
@@ -82,12 +81,11 @@ func (a *App) GetEditableGameConfig(game games.Game) (map[string]interface{}, er
 }
 
 func (a *App) SaveAFKJourneyConfig(afkJourney games.Game, gameConfig afkjourney.Config) error {
-	err := config.SaveConfig[afkjourney.Config](afkJourney.ConfigPath, &gameConfig)
-	if err == nil {
-		runtime.LogInfo(a.ctx, "Saved AFK Journey config")
-		return nil
+	if err := config.SaveConfig[afkjourney.Config](afkJourney.ConfigPath, &gameConfig); err != nil {
+		return err
 	}
-	return err
+	runtime.LogInfo(a.ctx, "Saved AFK Journey config")
+	return nil
 }
 
 func getAllGames(useProdPath bool) []games.Game {
@@ -115,8 +113,7 @@ func (a *App) GetRunningSupportedGame() (*games.Game, error) {
 
 func (a *App) StartGameProcess(game games.Game, args []string) error {
 	pm := GetProcessManager()
-	err := pm.StartProcess(game.ExePath, args)
-	if err != nil {
+	if err := pm.StartProcess(game.ExePath, args); err != nil {
 		runtime.LogErrorf(a.ctx, "Starting process: %v", err)
 		return err
 	}
@@ -144,81 +141,67 @@ func (a *App) IsGameProcessRunning() bool {
 func (a *App) UpdatePatch(assetUrl string) error {
 	pm := GetProcessManager()
 	pm.blocked = true
+	defer func() { pm.blocked = false }()
 	runtime.LogInfo(a.ctx, "Downloading update")
 	response, err := http.Get(assetUrl)
 	if err != nil {
-		pm.blocked = false
 		return fmt.Errorf("failed to download file: %v", err)
 	}
 	defer response.Body.Close()
 
 	tempFile, err := os.CreateTemp("", "patch-*.zip")
 	if err != nil {
-		pm.blocked = false
 		return fmt.Errorf("failed to create temp file: %v", err)
 	}
 	defer tempFile.Close()
 
 	_, err = io.Copy(tempFile, response.Body)
 	if err != nil {
-		pm.blocked = false
 		return fmt.Errorf("failed to save downloaded file: %v", err)
 	}
 
 	zipReader, err := zip.OpenReader(tempFile.Name())
 	if err != nil {
-		pm.blocked = false
 		return fmt.Errorf("failed to open zip file: %v", err)
 	}
 	defer zipReader.Close()
 
-	targetDir := "."
-	err = os.MkdirAll(targetDir, 0755)
-	if err != nil {
-		pm.blocked = false
+	if err = os.MkdirAll(".", 0755); err != nil {
 		return fmt.Errorf("failed to create target directory: %v", err)
 	}
 
 	for _, file := range zipReader.File {
-		outputPath := filepath.Join(targetDir, file.Name)
+		outputPath := filepath.Join(".", file.Name)
 
 		if file.FileInfo().IsDir() {
-			err := os.MkdirAll(outputPath, file.Mode())
-			if err != nil {
-				pm.blocked = false
+			if err = os.MkdirAll(outputPath, file.Mode()); err != nil {
 				return fmt.Errorf("failed to create directory: %v", err)
 			}
 			continue
 		}
 
-		err := os.MkdirAll(filepath.Dir(outputPath), 0755)
-		if err != nil {
-			pm.blocked = false
+		if err = os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
 			return fmt.Errorf("failed to create directories: %v", err)
 		}
 
 		fileInZip, err := file.Open()
 		if err != nil {
-			pm.blocked = false
 			return fmt.Errorf("failed to open file in zip archive: %v", err)
 		}
 		defer fileInZip.Close()
 
 		outputFile, err := os.Create(outputPath)
 		if err != nil {
-			pm.blocked = false
 			return fmt.Errorf("failed to create extracted file: %v", err)
 		}
 		defer outputFile.Close()
 
 		_, err = io.Copy(outputFile, fileInZip)
 		if err != nil {
-			pm.blocked = false
 			return fmt.Errorf("failed to copy file data: %v", err)
 		}
 	}
 
 	runtime.LogInfo(a.ctx, "Update successful")
-	pm.blocked = false
 	return nil
 }

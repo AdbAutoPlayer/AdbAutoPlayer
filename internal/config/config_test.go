@@ -22,8 +22,7 @@ func TestSaveConfig(t *testing.T) {
 
 	mainConfig := NewMainConfig()
 
-	err := SaveConfig[MainConfig](testFilePath, &mainConfig)
-	if err != nil {
+	if err := SaveConfig[MainConfig](testFilePath, &mainConfig); err != nil {
 		t.Errorf("[Error SaveConfig()] %v", err)
 		return
 	}
@@ -38,7 +37,7 @@ func TestSaveConfig(t *testing.T) {
 
 func deleteFileIfExists(filePath string, t *testing.T) {
 	if _, err := os.Stat(filePath); err == nil {
-		err := os.Remove(filePath)
+		err = os.Remove(filePath)
 		if err != nil {
 			t.Errorf("[Error removing existing test file] %v", err)
 		}
