@@ -1,9 +1,9 @@
 <script lang="ts">
-  import {EventsOn} from "$lib/wailsjs/runtime";
+  import { EventsOn } from "$lib/wailsjs/runtime";
 
   let logs: string[] = $state([]);
-  EventsOn('log-message', (logMessage: LogMessage) => {
-    const message: string = `[${logMessage.level}] ${logMessage.message}`
+  EventsOn("log-message", (logMessage: LogMessage) => {
+    const message: string = `[${logMessage.level}] ${logMessage.message}`;
     logs.push(message);
   });
 

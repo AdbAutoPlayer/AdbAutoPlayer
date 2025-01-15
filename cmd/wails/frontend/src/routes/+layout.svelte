@@ -1,11 +1,11 @@
 <script lang="ts">
-    import LogoSticky from "./LogoSticky.svelte";
-    import DocumentationIconSticky from "./DocumentationIconSticky.svelte";
-    import DownloadIconSticky from "./DownloadIconSticky.svelte";
-    import CommandPanel from "./CommandPanel.svelte";
-    import LogDisplay from "./LogDisplay.svelte";
+  import LogoSticky from "./LogoSticky.svelte";
+  import DocumentationIconSticky from "./DocumentationIconSticky.svelte";
+  import DownloadIconSticky from "./DownloadIconSticky.svelte";
+  import CommandPanel from "./CommandPanel.svelte";
+  import LogDisplay from "./LogDisplay.svelte";
 
-    let { children } = $props();
+  let { children } = $props();
 </script>
 
 <DocumentationIconSticky></DocumentationIconSticky>
@@ -15,5 +15,5 @@
 {@render children()}
 
 <CommandPanel title={"Logs"}>
-    <LogDisplay/>
+  <LogDisplay />
 </CommandPanel>
