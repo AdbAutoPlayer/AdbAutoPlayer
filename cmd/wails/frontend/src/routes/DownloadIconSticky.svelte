@@ -75,8 +75,17 @@
     alert("New update available click the download button on the top right.");
   }
 
+  function isVersionGreater(v1: string, v2: string) {
+    const [major1, minor1, patch1] = v1.split('.').map(Number);
+    const [major2, minor2, patch2] = v2.split('.').map(Number);
+
+    if (major1 !== major2) return major1 > major2;
+    if (minor1 !== minor2) return minor1 > minor2;
+    return patch1 > patch2;
+  }
+
   let currentVersion = localStorage.getItem("downloadedVersion");
-  if (!currentVersion) {
+  if (!currentVersion || isVersionGreater(version, currentVersion)) {
     currentVersion = version;
   }
   LogInfo("Version: " + currentVersion);
