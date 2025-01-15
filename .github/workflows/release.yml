@@ -36,10 +36,6 @@ jobs:
             cd cmd/wails/frontend
             npm version "${{ github.event.release.tag_name }}"
 
-      - uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
-
       - uses: actions/setup-go@v5
         with:
           go-version: '1.23'
@@ -60,10 +56,10 @@ jobs:
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
-      - name: Deno install
+      - name: NPM install
         run: |
           cd cmd/wails/frontend
-          deno install --allow-scripts
+          npm install
 
       - name: Build Wails project
         run: |
