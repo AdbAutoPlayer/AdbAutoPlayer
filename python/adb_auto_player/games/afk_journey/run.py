@@ -681,8 +681,6 @@ class AFKJourney(Game):
         return None
 
     def __navigate_to_legend_trials_select_tower(self) -> None:
-        logging.info("Navigating to Legend Trials tower selection")
-
         def check_for_legend_trials_s_header() -> bool:
             header = self.find_template_match("legend_trials/s_header.png")
             return header is not None
@@ -691,6 +689,7 @@ class AFKJourney(Game):
             check_callable=check_for_legend_trials_s_header
         )
 
+        logging.info("Navigating to Legend Trials tower selection")
         s_header = self.find_template_match(
             "legend_trials/s_header.png", use_previous_screenshot=True
         )
