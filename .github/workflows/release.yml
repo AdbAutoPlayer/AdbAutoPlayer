@@ -24,15 +24,13 @@ jobs:
       PYTHON_VERSION: '3.12'
 
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 'latest'
 
-      - name: Update version in package.json using npm
+      - name: npm version tag_name
         run: |
             cd cmd/wails/frontend
             npm version "${{ github.event.release.tag_name }}"
@@ -45,30 +43,28 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install poetry
-        run: |
-          python -m pip install poetry
+      - name: install poetry
+        run: python -m pip install poetry
 
-      - name: Update version in pyproject.toml with release tag name
+      - name: poetry version tag_name
         run: |
           cd python
           poetry version "${{ github.event.release.tag_name }}"
 
-      - name: Install Wails
+      - name: install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
-      - name: NPM install
+      - name: npm install
         run: |
           cd cmd/wails/frontend
           npm install
 
-      - name: Build Wails project
+      - name: wails build
         run: |
           cd cmd/wails
           wails build -devtools
 
-      - name: Cache Nuitka cache directory
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: ${{ env.NUITKA_CACHE_DIR }}
           key: ${{ runner.os }}-${{ runner.arch }}-python-${{ env.PYTHON_VERSION }}-nuitka-${{ github.sha }}
@@ -77,7 +73,7 @@ jobs:
             ${{ runner.os }}-${{ runner.arch }}-python-
             ${{ runner.os }}-${{ runner.arch }}-
 
-      - name: Build Python binary using Nuitka
+      - name: poetry run nuitka
         run: |
           cd python
           poetry install
@@ -88,11 +84,10 @@ jobs:
             --windows-console-mode=disable `
             adb_auto_player/main.py
 
-      - name: Collect files into a single zip
+      - name: build_zip.ps1
         shell: pwsh
         run: .github/scripts/build_zip.ps1
 
-      - name: Upload the ZIP to the release
-        uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v2
         with:
           files: ${{ matrix.zip_files }}
