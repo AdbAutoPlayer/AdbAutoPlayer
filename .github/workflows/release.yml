@@ -28,7 +28,7 @@ jobs:
 
       - name: npm version tag_name
         run: |
-            cd cmd/wails/frontend
+            cd frontend
             npm version "${{ github.event.release.tag_name }}"
 
       - uses: actions/setup-go@v5
@@ -52,7 +52,7 @@ jobs:
 
       - name: npm install
         run: |
-          cd cmd/wails/frontend
+          cd frontend
           npm install
 
       - name: wails build

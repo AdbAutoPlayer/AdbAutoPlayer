@@ -19,7 +19,7 @@ pip install -r .\requirements-dev.txt
 
 ## [Python Build](python/README.md)
 
-## [Frontend Build](cmd/wails/frontend/README.md)
+## [Frontend Build](frontend/README.md)
 
 ## Contact
 [Discord](https://discord.com/users/518169167048998913)
