@@ -96,20 +96,13 @@ class AFKJourney(Game):
             self.store[self.STORE_FORMATION_NUM] += 1
             self.wait_for_template("records.png")
 
-            is_multi_stage: bool = True
-            if self.find_first_template_center("formation_swap.png") is None:
-                is_multi_stage = False
-
             if (
                 use_suggested_formations
                 and not self.__copy_suggested_formation_from_records(formations)
             ):
                 continue
 
-            if is_multi_stage and self.__handle_multi_stage():
-                return True
-
-            if not is_multi_stage and self.__handle_single_stage():
+            if self.__handle_single_stage():
                 return True
 
             if self.store.get(self.STORE_MAX_ATTEMPTS_REACHED, False):
@@ -199,74 +192,6 @@ class AFKJourney(Game):
         template, _, _ = result
         return excluded_heroes.get(template)
 
-    def __handle_multi_stage(self) -> bool:
-        logging.debug("__handle_multi_stage")
-        if self.store.get(self.STORE_MODE, None) == self.MODE_DURAS_TRIALS:
-            attempts = self.config.duras_trials.attempts
-        else:
-            attempts = self.config.afk_stages.attempts
-        count: int = 0
-        count_stage_2: int = 0
-
-        while True:
-            self.wait_for_template(
-                "records.png",
-                timeout=self.BATTLE_TIMEOUT,
-            )
-
-            is_stage_2: bool = False
-            result = self.find_first_template_center("multi_stage_first_victory.png")
-            if result is None:
-                count += 1
-                logging.info(f"Starting Battle #{count} vs Team 1")
-            else:
-                count_stage_2 += 1
-                logging.info(f"Starting Battle #{count_stage_2} vs Team 2")
-                is_stage_2 = True
-
-            if not self.__start_battle():
-                return False
-
-            if not is_stage_2:
-                continue_button = self.wait_for_template(
-                    "continue.png",
-                    timeout=self.BATTLE_TIMEOUT,
-                )
-                self.device.click(*continue_button)
-                self.wait_for_template("records.png")
-                if (
-                    self.find_first_template_center("multi_stage_first_victory.png")
-                    is None
-                ):
-                    logging.info(f"Lost Battle #{count} vs Team 1")
-                    if count >= attempts:
-                        return False
-                continue
-
-            template, x, y = self.wait_for_any_template(
-                ["result.png", "continue.png", "confirm.png"],
-                timeout=self.BATTLE_TIMEOUT,
-            )
-
-            match template:
-                case "confirm.png":
-                    logging.warning("Battle data differs between client and server")
-                    self.device.click(*template)
-                    sleep(3)
-                    self.__select_afk_stage()
-                    return False
-                case "result.png":
-                    self.device.click(950, 1800)
-                    return True
-                case "continue.png":
-                    logging.info(f"Lost Battle #{count_stage_2} vs Team 2")
-                    self.device.click(x, y)
-                    if count_stage_2 >= attempts:
-                        self.__return_to_afk_select_to_clear_first_win_formation()
-                        self.__select_afk_stage()
-                        return False
-        return False
-
     def __start_battle(self) -> bool:
         if self.store.get(self.STORE_MODE, None) == self.MODE_DURAS_TRIALS:
             spend_gold = self.config.duras_trials.spend_gold
@@ -296,14 +221,6 @@ class AFKJourney(Game):
             sleep(1)
             return True
         return False
-
-    def __return_to_afk_select_to_clear_first_win_formation(self) -> None:
-        self.wait_for_template("records.png")
-        sleep(1)
-        logging.info("Returning to AFK Stages select")
-        self.press_back_button()
-        confirm = self.wait_for_template("confirm.png")
-        self.device.click(*confirm)
 
     def __handle_single_stage(self) -> bool:
         logging.debug("__handle_single_stage")
@@ -439,6 +356,7 @@ class AFKJourney(Game):
         Entry for pushing Dura's Trials
         :return:
         """
+        logging.warning("Not updated for S3 run at your own risk")
         self.start_up()
         self.store[self.STORE_MODE] = self.MODE_DURAS_TRIALS
         self.__navigate_to_duras_trials_screen()
