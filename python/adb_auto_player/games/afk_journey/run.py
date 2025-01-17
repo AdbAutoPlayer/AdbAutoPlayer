@@ -425,12 +425,19 @@ class AFKJourney(Game):
 
     def __navigate_to_duras_trials_screen(self) -> None:
         logging.info("Navigating to Dura's Trial select")
-        self.__navigate_to_default_state()
-        logging.info("Clicking Battle Modes button")
-        self.device.click(460, 1830)
-        duras_trials_label = self.wait_for_template(
-            "duras_trials/label.png", timeout_message="Could not find Dura's Trials"
-        )
+        def check_for_duras_trials_label() -> bool:
+            label = self.find_template_match("duras_trials/label.png")
+            return label is not None
+
+        self.__navigate_to_default_state(check_callable=check_for_duras_trials_label)
+
+        duras_trials_label = self.find_template_match("duras_trials/label.png", use_previous_screenshot=True)
+        if duras_trials_label is None:
+            logging.info("Clicking Battle Modes button")
+            self.device.click(460, 1830)
+            duras_trials_label = self.wait_for_template(
+                "duras_trials/label.png", timeout_message="Could not find Dura's Trials"
+            )
         self.device.click(*duras_trials_label)
         return None
 
@@ -656,11 +663,12 @@ class AFKJourney(Game):
     def __navigate_to_legend_trials_select_tower(self) -> None:
         logging.info("Navigating to Legend Trials tower selection")
         def check_for_legend_trials_s_header() -> bool:
-            s_header = self.find_template_match("legend_trials/s_header.png")
-            return s_header is not None
+            header = self.find_template_match("legend_trials/s_header.png")
+            return header is not None
         self.__navigate_to_default_state(check_callable=check_for_legend_trials_s_header)
 
-        if not check_for_legend_trials_s_header():
+        s_header = self.find_template_match("legend_trials/s_header.png", use_previous_screenshot=True)
+        if not s_header:
             logging.info("Clicking Battle Modes button")
             self.device.click(460, 1830)
             label = self.wait_for_template(
