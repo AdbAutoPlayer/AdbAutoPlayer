@@ -12,6 +12,11 @@ cd .\cmd\wails\
 wails build -devtools
 ```
 
+## pre-commit
+```shell
+pip install -r .\requirements-dev.txt
+```
+
 ## [Python Build](python/README.md)
 
 ## [Frontend Build](cmd/wails/frontend/README.md)
