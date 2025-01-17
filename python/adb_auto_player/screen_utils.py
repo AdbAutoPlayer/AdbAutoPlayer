@@ -1,26 +1,24 @@
-import io
-import logging
+from enum import StrEnum, auto
 from pathlib import Path
-from typing import Tuple
 
 import cv2
 import numpy as np
 from PIL import Image
-from adbutils._device import AdbDevice
-from adb_auto_player.exceptions import AdbException
 
 
-def get_screenshot(device: AdbDevice) -> Image.Image:
-    """
-    :raises AdbException: Screenshot cannot be recorded
-    """
-    screenshot_data = device.shell("screencap -p", encoding=None)
-    if isinstance(screenshot_data, bytes):
-        return Image.open(io.BytesIO(screenshot_data))
-    raise AdbException(f"Screenshots cannot be recorded from device: {device.serial}")
+class MatchMode(StrEnum):
+    BEST = auto()
+    TOP_LEFT = auto()
+    TOP_RIGHT = auto()
+    BOTTOM_LEFT = auto()
+    BOTTOM_RIGHT = auto()
+    LEFT_TOP = auto()
+    LEFT_BOTTOM = auto()
+    RIGHT_TOP = auto()
+    RIGHT_BOTTOM = auto()
 
 
-def __load_image(image_path: Path) -> Image.Image:
+def load_image(image_path: Path) -> Image.Image:
     """
     :raises FileNotFoundError:
     :raises IOError:
@@ -30,44 +28,26 @@ def __load_image(image_path: Path) -> Image.Image:
     return image
 
 
-def find_center(
-    device: AdbDevice,
-    template_image_path: Path,
-    threshold: float = 0.9,
-    grayscale: bool = False,
-    base_image: Image.Image | None = None,
-) -> Tuple[int, int] | None:
-    if base_image is None:
-        base_image = get_screenshot(device)
-    return __find_template_center(
-        base_image=base_image,
-        template_image=__load_image(image_path=template_image_path),
-        threshold=threshold,
-        grayscale=grayscale,
-    )
-
-def find_center_bottom_right(
-    device: AdbDevice,
-    template_image_path: Path,
-    threshold: float = 0.9,
-    grayscale: bool = False,
-    base_image: Image.Image | None = None,
-) -> Tuple[int, int] | None:
-    if base_image is None:
-        base_image = get_screenshot(device)
-    return __find_template_center_bottom_right(
-        base_image=base_image,
-        template_image=__load_image(image_path=template_image_path),
-        threshold=threshold,
-        grayscale=grayscale,
-    )
-
-def __find_template_center_bottom_right(
+def find_template_match(
     base_image: Image.Image,
     template_image: Image.Image,
+    match_mode: MatchMode = MatchMode.BEST,
     threshold: float = 0.9,
     grayscale: bool = False,
-) -> Tuple[int, int] | None:
+) -> tuple[int, int] | None:
+    """
+    Find a template image within a base image with different matching modes.
+
+    Args:
+        base_image: The image to search in
+        template_image: The template to search for
+        match_mode: The mode determining which match to return if multiple are found
+        threshold: Minimum similarity threshold (0-1)
+        grayscale: Whether to convert images to grayscale before matching
+
+    Returns:
+        tuple of (center_x, center_y) coordinates or None if no match found
+    """
     base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
     template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
 
@@ -76,69 +56,49 @@ def __find_template_center_bottom_right(
         template_cv = cv2.cvtColor(template_cv, cv2.COLOR_BGR2GRAY)
 
     result = cv2.matchTemplate(base_cv, template_cv, cv2.TM_CCOEFF_NORMED)
+    if match_mode == MatchMode.BEST:
+        _, max_val, _, max_loc = cv2.minMaxLoc(result)
+        if max_val >= threshold:
+            template_height, template_width = template_cv.shape[:2]
+            center_x = max_loc[0] + template_width // 2
+            center_y = max_loc[1] + template_height // 2
+            return center_x, center_y
+        return None
 
     match_locations = np.where(result >= threshold)
     if len(match_locations[0]) == 0:
         return None
 
     template_height, template_width = template_cv.shape[:2]
-    bottom_right_loc = max(
-        zip(match_locations[1], match_locations[0]),
-        key=lambda loc: (loc[1], loc[0])  # Prioritize bottom (y) and then right (x)
-    )
+    matches = list(zip(match_locations[1], match_locations[0]))  # x, y coordinates
 
-    center_x = bottom_right_loc[0] + template_width // 2
-    center_y = bottom_right_loc[1] + template_height // 2
+
+    key_functions = {
+        MatchMode.TOP_LEFT: lambda loc: (loc[1], loc[0]),
+        MatchMode.TOP_RIGHT: lambda loc: (loc[1], -loc[0]),
+        MatchMode.BOTTOM_LEFT: lambda loc: (-loc[1], loc[0]),
+        MatchMode.BOTTOM_RIGHT: lambda loc: (-loc[1], -loc[0]),
+        MatchMode.LEFT_TOP: lambda loc: (loc[0], loc[1]),
+        MatchMode.LEFT_BOTTOM: lambda loc: (loc[0], -loc[1]),
+        MatchMode.RIGHT_TOP: lambda loc: (-loc[0], loc[1]),
+        MatchMode.RIGHT_BOTTOM: lambda loc: (-loc[0], -loc[1]),
+    }
+
+    selected_match = min(matches, key=key_functions[match_mode])
+
+    center_x = selected_match[0] + template_width // 2
+    center_y = selected_match[1] + template_height // 2
+
     return center_x, center_y
 
 
-
-def __find_template_center(
+def find_all_template_matches(
     base_image: Image.Image,
     template_image: Image.Image,
     threshold: float = 0.9,
     grayscale: bool = False,
-) -> Tuple[int, int] | None:
-    base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
-    template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
-
-    if grayscale:
-        base_cv = cv2.cvtColor(base_cv, cv2.COLOR_BGR2GRAY)
-        template_cv = cv2.cvtColor(template_cv, cv2.COLOR_BGR2GRAY)
-
-    result = cv2.matchTemplate(base_cv, template_cv, cv2.TM_CCOEFF_NORMED)
-    _, max_val, _, max_loc = cv2.minMaxLoc(result)
-
-    if max_val >= threshold:
-        template_height, template_width = template_cv.shape[:2]
-        center_x = max_loc[0] + template_width // 2
-        center_y = max_loc[1] + template_height // 2
-        return center_x, center_y
-
-    return None
-
-
-def find_all_centers(
-    device: AdbDevice,
-    template_image_path: Path,
-    threshold: float = 0.9,
-    grayscale: bool = False,
-) -> list[Tuple[int, int]]:
-    return __find_all_template_centers(
-        base_image=get_screenshot(device),
-        template_image=__load_image(image_path=template_image_path),
-        threshold=threshold,
-        grayscale=grayscale,
-    )
-
-
-def __find_all_template_centers(
-    base_image: Image.Image,
-    template_image: Image.Image,
-    threshold: float = 0.9,
-    grayscale: bool = False,
-    min_distance: int = 10,  # min distance between results
-) -> list[Tuple[int, int]]:
+    min_distance: int = 10,
+) -> list[tuple[int, int]]:
     base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
     template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
 
@@ -164,8 +124,8 @@ def __find_all_template_centers(
 
 
 def __suppress_close_matches(
-    matches: list[Tuple[int, int]], min_distance: int
-) -> list[Tuple[int, int]]:
+    matches: list[tuple[int, int]], min_distance: int
+) -> list[tuple[int, int]]:
     """
     Suppresses closely spaced matches to return distinct results.
     Uses a simple clustering method based on minimum distance.
@@ -174,7 +134,7 @@ def __suppress_close_matches(
         return []
 
     matches_array = np.array(matches)
-    suppressed: list[Tuple[int, int]] = []
+    suppressed: list[tuple[int, int]] = [] # type: ignore
 
     for match in matches_array:
         match_tuple = tuple(match)
@@ -182,6 +142,5 @@ def __suppress_close_matches(
             np.linalg.norm(match_tuple - np.array(s)) >= min_distance
             for s in suppressed
         ):
-            suppressed.append(match_tuple)
-
+            suppressed.append(match_tuple) # type: ignore
     return suppressed

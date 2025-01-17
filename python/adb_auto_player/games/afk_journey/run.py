@@ -9,6 +9,7 @@ from adb_auto_player.exceptions import TimeoutException, NotFoundException
 from adb_auto_player.games.afk_journey.config import Config
 from adb_auto_player.games.game import Game
 from adb_auto_player.config_loader import get_games_dir
+from adb_auto_player.screen_utils import MatchMode
 
 
 class AFKJourney(Game):
@@ -170,7 +171,7 @@ class AFKJourney(Game):
             self.device.click(*copy)
             sleep(1)
 
-            cancel = self.find_first_template_center("cancel.png")
+            cancel = self.find_template_match("cancel.png")
             if cancel:
                 logging.warning(
                     "Formation contains locked Artifacts or Heroes skipping"
@@ -214,7 +215,7 @@ class AFKJourney(Game):
     def __find_any_excluded_hero(self, excluded_heroes: dict[str, str]) -> str | None:
         result = self.find_any_template_center(list(excluded_heroes.keys()))
         if result is None:
-            second_formation_button = self.find_first_template_center(
+            second_formation_button = self.find_template_match(
                 "second_formation.png"
             )
             if second_formation_button:
@@ -392,21 +393,27 @@ class AFKJourney(Game):
         self.__navigate_to_duras_trials_screen()
 
         self.wait_for_template("duras_trials/rate_up.png", grayscale=True)
-        rate_up_banners = self.find_all_template_centers("duras_trials/rate_up.png", grayscale=True)
+        rate_up_banners = self.find_all_template_matches(
+            "duras_trials/rate_up.png",
+            grayscale=True,
+            use_previous_screenshot=True
+        )
 
-        if rate_up_banners is None:
+        if not rate_up_banners:
             logging.warning(
                 "Dura's Trials Rate Up banners could not be found, Stopping"
             )
             return None
 
         for banner in rate_up_banners:
-            if self.find_first_template_center("duras_trials/rate_up.png", grayscale=True) is None:
+            if self.find_template_match("duras_trials/rate_up.png", grayscale=True) is None:
                 self.__navigate_to_duras_trials_screen()
                 self.wait_for_template("duras_trials/rate_up.png", grayscale=True)
 
-            current_banners = self.find_all_template_centers(
-                "duras_trials/rate_up.png", grayscale=True
+            current_banners = self.find_all_template_matches(
+                "duras_trials/rate_up.png",
+                grayscale=True,
+                use_previous_screenshot=True
             )
 
             if current_banners is None:
@@ -459,7 +466,7 @@ class AFKJourney(Game):
 
             if result is True:
                 self.wait_for_template("duras_trials/first_clear.png")
-                next_button = self.find_first_template_center("next.png")
+                next_button = self.find_template_match("next.png")
                 if next_button is not None:
                     count += 1
                     logging.info(f"Trials pushed: {count}")
@@ -522,7 +529,7 @@ class AFKJourney(Game):
         except TimeoutException:
             return False
         if "assist/chat_button.png" == template:
-            if self.find_first_template_center("world_chat.png") is None:
+            if self.find_template_match("world_chat.png") is None:
                 self.press_back_button()
                 sleep(1)
             return False
@@ -547,15 +554,14 @@ class AFKJourney(Game):
 
         self.device.click(*ready)
         # Sometimes people wait forever for a third to join...
-        while self.find_first_template_center("assist/rewards_heart.png"):
-            sleep(1)
+        self.wait_until_template_disappears("assist/rewards_heart.png", timeout=self.BATTLE_TIMEOUT)
         self.wait_for_template("assist/bell.png")
         # click first 5 heroes in row 1 and 2
         for x in [110, 290, 470, 630, 800]:
             self.device.click(x, 1300)
             sleep(0.5)
         while True:
-            cc_ready = self.find_first_template_center("assist/cc_ready.png")
+            cc_ready = self.find_template_match("assist/cc_ready.png")
             if cc_ready:
                 self.device.click(*cc_ready)
                 sleep(1)
@@ -567,7 +573,7 @@ class AFKJourney(Game):
         return True
 
     def __handle_synergy(self) -> bool:
-        go = self.find_first_template_center("assist/go.png")
+        go = self.find_template_match("assist/go.png")
         if go is None:
             return False
         self.device.click(*go)
@@ -594,7 +600,7 @@ class AFKJourney(Game):
         except TimeoutException as e:
             logging.error(f"{e}")
             return None
-        results = self.find_all_template_centers("legend_trials/go_lightborn.png", grayscale=True)
+        results = self.find_all_template_matches("legend_trials/go_lightborn.png", grayscale=True)
         # TODO check wilder and graveborn tmrw
         for result in results:
             self.__navigate_to_legend_trials_select_tower()
@@ -639,7 +645,11 @@ class AFKJourney(Game):
             # "legend_trials/tower_icon_graveborn.png",
             "legend_trials/tower_icon_mauler.png",
         ])
-        result = self.find_template_center_bottom_right("legend_trials/info_icon.png")
+        sleep(1)
+        result = self.find_template_match(
+            "legend_trials/info_icon.png",
+            match_mode=MatchMode.BOTTOM_RIGHT,
+        )
         if result is None:
             raise NotFoundException("legend_trials/info_icon.png not found")
 
@@ -653,7 +663,7 @@ class AFKJourney(Game):
     def __navigate_to_legend_trials_select_tower(self) -> None:
         logging.info("Navigating to Legend Trials tower selection")
         def check_for_legend_trials_s_header() -> bool:
-            s_header = self.find_first_template_center("legend_trials/s_header.png")
+            s_header = self.find_template_match("legend_trials/s_header.png")
             return s_header is not None
         self.__navigate_to_default_state(check_callable=check_for_legend_trials_s_header)
 
