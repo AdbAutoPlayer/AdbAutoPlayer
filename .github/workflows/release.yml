@@ -21,6 +21,7 @@ jobs:
 
     env:
       NUITKA_CACHE_DIR: ${{ github.workspace }}/nuitka-cache
+      PYTHON_VERSION: '3.12'
 
     steps:
       - name: Check out the repository
@@ -42,7 +43,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install poetry
         run: |
@@ -70,7 +71,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.NUITKA_CACHE_DIR }}
-          key: ${{ runner.os }}-${{ runner.arch }}-python-3.12-nuitka-${{ github.sha }}
+          key: ${{ runner.os }}-${{ runner.arch }}-python-${{ env.PYTHON_VERSION }}-nuitka-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-${{ runner.arch }}-python-${{ env.PYTHON_VERSION }}-
             ${{ runner.os }}-${{ runner.arch }}-python-
