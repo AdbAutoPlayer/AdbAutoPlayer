@@ -20,7 +20,7 @@ jobs:
       id-token: write
 
     env:
-      NUITKA_CACHE_DIR: ${{ github.workspace }}/nuitka-cache
+      NUITKA_CACHE_DIR: ${{ github.action_path }}/nuitka/cache
       PYTHON_VERSION: '3.12'
 
     steps:
@@ -67,7 +67,7 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ${{ env.NUITKA_CACHE_DIR }}
-          key: ${{ runner.os }}-${{ runner.arch }}-python-${{ env.PYTHON_VERSION }}-nuitka-${{ github.sha }}
+          key: ${{ runner.os }}-${{ runner.arch }}-python-${{ env.PYTHON_VERSION }}-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-${{ runner.arch }}-python-${{ env.PYTHON_VERSION }}-
             ${{ runner.os }}-${{ runner.arch }}-python-
