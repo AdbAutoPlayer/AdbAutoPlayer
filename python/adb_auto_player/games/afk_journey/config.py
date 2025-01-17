@@ -23,10 +23,18 @@ class DurasTrialsConfig(BaseModel):
     spend_gold: bool = False
 
 
+class LegendTrialsConfig(BaseModel):
+    attempts: int = 5
+    formations: int = 7
+    use_suggested_formations: bool = True
+    spend_gold: bool = False
+
+
 class Config(BaseModel):
     general: GeneralConfig
     afk_stages: AFKStagesConfig
     duras_trials: DurasTrialsConfig
+    legend_trials: LegendTrialsConfig
 
     @classmethod
     def from_toml(cls, file_path: Path):

@@ -46,6 +46,52 @@ def find_center(
         grayscale=grayscale,
     )
 
+def find_center_bottom_right(
+    device: AdbDevice,
+    template_image_path: Path,
+    threshold: float = 0.9,
+    grayscale: bool = False,
+    base_image: Image.Image | None = None,
+) -> Tuple[int, int] | None:
+    if base_image is None:
+        base_image = get_screenshot(device)
+    return __find_template_center_bottom_right(
+        base_image=base_image,
+        template_image=__load_image(image_path=template_image_path),
+        threshold=threshold,
+        grayscale=grayscale,
+    )
+
+def __find_template_center_bottom_right(
+    base_image: Image.Image,
+    template_image: Image.Image,
+    threshold: float = 0.9,
+    grayscale: bool = False,
+) -> Tuple[int, int] | None:
+    base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
+    template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
+
+    if grayscale:
+        base_cv = cv2.cvtColor(base_cv, cv2.COLOR_BGR2GRAY)
+        template_cv = cv2.cvtColor(template_cv, cv2.COLOR_BGR2GRAY)
+
+    result = cv2.matchTemplate(base_cv, template_cv, cv2.TM_CCOEFF_NORMED)
+
+    match_locations = np.where(result >= threshold)
+    if len(match_locations[0]) == 0:
+        return None
+
+    template_height, template_width = template_cv.shape[:2]
+    bottom_right_loc = max(
+        zip(match_locations[1], match_locations[0]),
+        key=lambda loc: (loc[1], loc[0])  # Prioritize bottom (y) and then right (x)
+    )
+
+    center_x = bottom_right_loc[0] + template_width // 2
+    center_y = bottom_right_loc[1] + template_height // 2
+    return center_x, center_y
+
+
 
 def __find_template_center(
     base_image: Image.Image,

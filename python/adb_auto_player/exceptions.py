@@ -14,3 +14,6 @@ class AdbException(Exception):
     """Raised for any Adb related issues."""
 
     pass
+
+class NotFoundException(Exception):
+    pass

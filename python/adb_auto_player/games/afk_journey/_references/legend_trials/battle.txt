@@ -1,0 +1,1 @@
+2a and 2b next/retry button go back to battle_1_start

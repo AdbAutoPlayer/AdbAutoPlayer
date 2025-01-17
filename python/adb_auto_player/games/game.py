@@ -68,6 +68,23 @@ class Game:
             base_image=base_image,
         )
 
+    def find_template_center_bottom_right(
+        self,
+        template: str,
+        threshold: float = 0.9,
+        grayscale: bool = False,
+        base_image: Image.Image | None = None,
+    ) -> tuple[int, int] | None:
+        template_path = self.get_template_dir_path() / template
+
+        return screen_utils.find_center_bottom_right(
+            self.device,
+            template_path,
+            threshold=threshold,
+            grayscale=grayscale,
+            base_image=base_image,
+        )
+
     def find_all_template_centers(
         self, template: str, threshold: float = 0.9, grayscale: bool = False
     ) -> list[tuple[int, int]] | None:

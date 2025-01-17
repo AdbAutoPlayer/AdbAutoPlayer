@@ -2,9 +2,10 @@ import re
 from pathlib import Path
 from time import sleep
 import logging
+from typing import Callable
 
 from adb_auto_player.command import Command
-from adb_auto_player.exceptions import TimeoutException
+from adb_auto_player.exceptions import TimeoutException, NotFoundException
 from adb_auto_player.games.afk_journey.config import Config
 from adb_auto_player.games.game import Game
 from adb_auto_player.config_loader import get_games_dir
@@ -16,6 +17,7 @@ class AFKJourney(Game):
     STORE_MODE: str = "MODE"
     MODE_DURAS_TRIALS: str = "DURAS_TRIALS"
     MODE_AFK_STAGES: str = "AFK_STAGES"
+    MODE_LEGEND_TRIALS: str = "LEGEND_TRIALS"
     STORE_MAX_ATTEMPTS_REACHED: str = "MAX_ATTEMPTS_REACHED"
     STORE_FORMATION_NUM: str = "FORMATION_NUM"
     CONFIG_GENERAL: str = "general"
@@ -82,6 +84,15 @@ class AFKJourney(Game):
             )
         ]
 
+    def __get_config_attribute_from_mode(self, attribute: str):
+        match self.store.get(self.STORE_MODE, None):
+            case self.MODE_DURAS_TRIALS:
+                return getattr(self.config.duras_trials, attribute)
+            case self.MODE_LEGEND_TRIALS:
+                return getattr(self.config.legend_trials, attribute)
+            case _:
+                return getattr(self.config.afk_stages, attribute)
+
     def handle_battle_screen(self, use_suggested_formations: bool = True) -> bool:
         """
         Handles logic for battle screen
@@ -89,10 +100,9 @@ class AFKJourney(Game):
         :return: bool
         """
         self.start_up()
-        if self.store.get(self.STORE_MODE, None) == self.MODE_DURAS_TRIALS:
-            formations = self.config.duras_trials.formations
-        else:
-            formations = self.config.afk_stages.formations
+
+        formations = self.__get_config_attribute_from_mode("formations")
+
         self.store[self.STORE_FORMATION_NUM] = 0
         if not use_suggested_formations:
             logging.info("Not using suggested Formations")
@@ -100,13 +110,14 @@ class AFKJourney(Game):
 
         while self.store.get(self.STORE_FORMATION_NUM, 0) < formations:
             self.store[self.STORE_FORMATION_NUM] += 1
-            self.wait_for_template("records.png")
 
             if (
                 use_suggested_formations
                 and not self.__copy_suggested_formation_from_records(formations)
             ):
                 continue
+            else:
+                self.wait_for_template("records.png")
 
             if self.__handle_single_stage():
                 return True
@@ -198,7 +209,7 @@ class AFKJourney(Game):
             else:
                 filtered_dict[key] = value
 
-        return self.__find_any_excluded_hero(excluded_heroes_dict)
+        return self.__find_any_excluded_hero(filtered_dict)
 
     def __find_any_excluded_hero(self, excluded_heroes: dict[str, str]) -> str | None:
         result = self.find_any_template_center(list(excluded_heroes.keys()))
@@ -216,10 +227,7 @@ class AFKJourney(Game):
         return excluded_heroes.get(template)
 
     def __start_battle(self) -> bool:
-        if self.store.get(self.STORE_MODE, None) == self.MODE_DURAS_TRIALS:
-            spend_gold = self.config.duras_trials.spend_gold
-        else:
-            spend_gold = self.config.afk_stages.spend_gold
+        spend_gold = self.__get_config_attribute_from_mode("spend_gold")
 
         self.wait_for_template("records.png")
         self.device.click(850, 1780)
@@ -247,10 +255,7 @@ class AFKJourney(Game):
 
     def __handle_single_stage(self) -> bool:
         logging.debug("__handle_single_stage")
-        if self.store.get(self.STORE_MODE, None) == self.MODE_DURAS_TRIALS:
-            attempts = self.config.duras_trials.attempts
-        else:
-            attempts = self.config.afk_stages.attempts
+        attempts = self.__get_config_attribute_from_mode("attempts")
         count: int = 0
         while count < attempts:
             count += 1
@@ -262,7 +267,7 @@ class AFKJourney(Game):
             template, x, y = self.wait_for_any_template(
                 [
                     "next.png",
-                    "first_clear.png",
+                    "duras_trials/first_clear.png",
                     "retry.png",
                     "confirm.png",
                     "result.png",
@@ -277,7 +282,7 @@ class AFKJourney(Game):
                     sleep(3)
                     self.__select_afk_stage()
                     return False
-                case "next.png" | "first_clear.png":
+                case "next.png" | "duras_trials/first_clear.png":
                     return True
                 case "retry.png":
                     logging.info(f"Lost Battle #{count}")
@@ -331,8 +336,10 @@ class AFKJourney(Game):
         self.device.click(90, 1830)
         self.__select_afk_stage()
 
-    def __navigate_to_default_state(self) -> None:
+    def __navigate_to_default_state(self, check_callable: Callable[[], bool] = None) -> None:
         while True:
+            if check_callable and check_callable():
+                return None
             result = self.find_any_template_center(
                 [
                     "notice.png",
@@ -384,8 +391,8 @@ class AFKJourney(Game):
         self.store[self.STORE_MODE] = self.MODE_DURAS_TRIALS
         self.__navigate_to_duras_trials_screen()
 
-        self.wait_for_template("rate_up.png", grayscale=True)
-        rate_up_banners = self.find_all_template_centers("rate_up.png", grayscale=True)
+        self.wait_for_template("duras_trials/rate_up.png", grayscale=True)
+        rate_up_banners = self.find_all_template_centers("duras_trials/rate_up.png", grayscale=True)
 
         if rate_up_banners is None:
             logging.warning(
@@ -394,12 +401,12 @@ class AFKJourney(Game):
             return None
 
         for banner in rate_up_banners:
-            if self.find_first_template_center("rate_up.png", grayscale=True) is None:
+            if self.find_first_template_center("duras_trials/rate_up.png", grayscale=True) is None:
                 self.__navigate_to_duras_trials_screen()
-                self.wait_for_template("rate_up.png", grayscale=True)
+                self.wait_for_template("duras_trials/rate_up.png", grayscale=True)
 
             current_banners = self.find_all_template_centers(
-                "rate_up.png", grayscale=True
+                "duras_trials/rate_up.png", grayscale=True
             )
 
             if current_banners is None:
@@ -418,31 +425,13 @@ class AFKJourney(Game):
 
     def __navigate_to_duras_trials_screen(self) -> None:
         logging.info("Navigating to Dura's Trial select")
-        notice = self.find_first_template_center("notice.png")
-        if notice is not None:
-            self.device.click(530, 1630)
-            sleep(3)
-
-        while True:
-            result = self.find_any_template_center(
-                ["time_of_day.png", "rate_up.png"], grayscale=True
-            )
-            if result is not None:
-                template, _, _ = result
-                break
-            self.press_back_button()
-            sleep(3)
-
-        match template:
-            case "time_of_day.png":
-                logging.info("Clicking Battle Modes button")
-                self.device.click(460, 1830)
-                duras_trials_label = self.wait_for_template(
-                    "duras_trials.png", timeout_message="Could not find Dura's Trials"
-                )
-                self.device.click(*duras_trials_label)
-            case "rate_up.png":
-                pass
+        self.__navigate_to_default_state()
+        logging.info("Clicking Battle Modes button")
+        self.device.click(460, 1830)
+        duras_trials_label = self.wait_for_template(
+            "duras_trials/label.png", timeout_message="Could not find Dura's Trials"
+        )
+        self.device.click(*duras_trials_label)
         return None
 
     def __handle_dura_screen(self, x: int, y: int) -> None:
@@ -451,15 +440,15 @@ class AFKJourney(Game):
 
         count: int = 0
         while True:
-            self.wait_for_any_template(["records.png", "battle.png", "sweep.png"])
+            self.wait_for_any_template(["records.png", "duras_trials/battle.png", "duras_trials/sweep.png"])
             template, x, y = self.wait_for_any_template(
-                ["records.png", "battle.png", "sweep.png"]
+                ["records.png", "duras_trials/battle.png", "duras_trials/sweep.png"]
             )
             match template:
-                case "sweep.png":
+                case "duras_trials/sweep.png":
                     logging.info("Dura's Trial already cleared")
                     return None
-                case "battle.png":
+                case "duras_trials/battle.png":
                     self.device.click(x, y)
                 case "records.png":
                     pass
@@ -469,7 +458,7 @@ class AFKJourney(Game):
             )
 
             if result is True:
-                self.wait_for_template("first_clear.png")
+                self.wait_for_template("duras_trials/first_clear.png")
                 next_button = self.find_first_template_center("next.png")
                 if next_button is not None:
                     count += 1
@@ -498,7 +487,11 @@ class AFKJourney(Game):
         return None
 
     def __find_synergy_or_corrupt_creature(self) -> bool:
-        result = self.find_any_template_center(["world_chat.png", "tap_to_enter.png", "team-up_chat.png"])
+        result = self.find_any_template_center([
+            "assist/world_chat.png",
+            "assist/tap_to_enter.png",
+            "assist/team-up_chat.png",
+        ])
         if result is None:
             logging.info("Opening chat")
             self.__navigate_to_default_state()
@@ -509,9 +502,9 @@ class AFKJourney(Game):
 
         template, x, y = result
         match template:
-            case "world_chat.png":
+            case "assist/world_chat.png":
                  self.device.click(260, 1400)
-            case "tap_to_enter.png", "team-up_chat.png":
+            case "assist/tap_to_enter.png", "assist/team-up_chat.png":
                 logging.info("Switching to world chat")
                 self.device.click(110, 350)
                 return False
@@ -519,23 +512,23 @@ class AFKJourney(Game):
         try:
             template, x ,y = self.wait_for_any_template(
                 [
-                    "join_now.png",
-                    "synergy.png",
-                    "chat_button.png"
+                    "assist/join_now.png",
+                    "assist/synergy.png",
+                    "assist/chat_button.png"
                 ],
                 delay=0.1,
                 timeout=1,
             )
         except TimeoutException:
             return False
-        if "chat_button.png" == template:
+        if "assist/chat_button.png" == template:
             if self.find_first_template_center("world_chat.png") is None:
                 self.press_back_button()
                 sleep(1)
             return False
         self.device.click(x, y)
         match template:
-            case "join_now.png":
+            case "assist/join_now.png":
                 logging.info("Battling Corrupt Creature")
                 try:
                     return self.__handle_corrupt_creature()
@@ -544,37 +537,37 @@ class AFKJourney(Game):
                         "Something went wrong when trying to battle Corrupt Creature"
                     )
                     return False
-            case "synergy.png":
+            case "assist/synergy.png":
                 logging.info("Synergy")
                 return self.__handle_synergy()
         return False
 
     def __handle_corrupt_creature(self) -> bool:
-        ready = self.wait_for_template("ready.png", timeout=10)
+        ready = self.wait_for_template("assist/ready.png", timeout=10)
 
         self.device.click(*ready)
         # Sometimes people wait forever for a third to join...
-        while self.find_first_template_center("assist_rewards_heart.png"):
+        while self.find_first_template_center("assist/rewards_heart.png"):
             sleep(1)
-        self.wait_for_template("bell.png")
+        self.wait_for_template("assist/bell.png")
         # click first 5 heroes in row 1 and 2
         for x in [110, 290, 470, 630, 800]:
             self.device.click(x, 1300)
             sleep(0.5)
         while True:
-            cc_ready = self.find_first_template_center("cc_ready.png")
+            cc_ready = self.find_first_template_center("assist/cc_ready.png")
             if cc_ready:
                 self.device.click(*cc_ready)
                 sleep(1)
             else:
                 break
-        self.wait_for_template("assist_reward.png")
+        self.wait_for_template("assist/reward.png")
         logging.info("Corrupt Creature done")
         self.press_back_button()
         return True
 
     def __handle_synergy(self) -> bool:
-        go = self.find_first_template_center("go.png")
+        go = self.find_first_template_center("assist/go.png")
         if go is None:
             return False
         self.device.click(*go)
@@ -586,11 +579,95 @@ class AFKJourney(Game):
 
     def start_up(self) -> None:
         if self.device is None:
+            logging.debug("start_up")
             self.set_device()
         if self.config is None:
             self.load_config()
         return None
 
     def push_legend_trials(self) -> None:
-        logging.error("I'm working on it, will be part of Version 1.1.1")
+        self.start_up()
+        self.store[self.STORE_MODE] = self.MODE_LEGEND_TRIALS
+
+        try:
+            self.__navigate_to_legend_trials_select_tower()
+        except TimeoutException as e:
+            logging.error(f"{e}")
+            return None
+        results = self.find_all_template_centers("legend_trials/go_lightborn.png", grayscale=True)
+        # TODO check wilder and graveborn tmrw
+        for result in results:
+            self.__navigate_to_legend_trials_select_tower()
+            self.device.click(*result)
+            try:
+                self.__select_legend_trials_floor()
+            except TimeoutException|NotFoundException as e:
+                logging.error(f"{e}")
+                self.press_back_button()
+                sleep(3)
+                continue
+            self.__handle_legend_trials_battle()
+        logging.error("Not Implemented")
         return None
+
+    def __handle_legend_trials_battle(self) -> None:
+        count: int = 0
+        while True:
+            result = self.handle_battle_screen(
+                self.config.legend_trials.use_suggested_formations
+            )
+
+            if result is True:
+                next_btn = self.wait_for_template("next.png")
+                if next_btn is not None:
+                    count += 1
+                    logging.info(f"Trials pushed: {count}")
+                    self.device.click(*next_btn)
+                    continue
+                else:
+                    logging.warning("Not implemented assuming this shows up after the last floor?")
+                    return None
+            logging.info("Legend Trial failed")
+            return None
+        return None
+
+    def __select_legend_trials_floor(self) -> None:
+        logging.debug("__select_legend_trials_floor")
+        _, x, y = self.wait_for_any_template([
+            "legend_trials/tower_icon_lightborn.png",
+            # "legend_trials/tower_icon_wilder.png",
+            # "legend_trials/tower_icon_graveborn.png",
+            "legend_trials/tower_icon_mauler.png",
+        ])
+        result = self.find_template_center_bottom_right("legend_trials/info_icon.png")
+        if result is None:
+            raise NotFoundException("legend_trials/info_icon.png not found")
+
+        x, y = result
+        if x < 500:
+            self.device.click(x + 200, y - 50)
+        else:
+            self.device.click(x - 200, y - 50)
+        return None
+
+    def __navigate_to_legend_trials_select_tower(self) -> None:
+        logging.info("Navigating to Legend Trials tower selection")
+        def check_for_legend_trials_s_header() -> bool:
+            s_header = self.find_first_template_center("legend_trials/s_header.png")
+            return s_header is not None
+        self.__navigate_to_default_state(check_callable=check_for_legend_trials_s_header)
+
+        if not check_for_legend_trials_s_header():
+            logging.info("Clicking Battle Modes button")
+            self.device.click(460, 1830)
+            label = self.wait_for_template(
+                "legend_trials/label.png",
+                timeout_message="Could not find Legend Trial Label"
+            )
+            self.device.click(*label)
+            self.wait_for_template(
+                "legend_trials/s_header.png",
+                timeout_message="Could not find Season Legend Trial Header"
+            )
+        return None
+

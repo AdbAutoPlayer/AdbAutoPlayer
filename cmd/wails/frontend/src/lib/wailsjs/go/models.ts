@@ -20,6 +20,24 @@ export namespace afkjourney {
 	        this["Spend Gold"] = source["Spend Gold"];
 	    }
 	}
+	export class LegendTrialsConfig {
+	    Attempts: number;
+	    Formations: number;
+	    "Use suggested Formations": boolean;
+	    "Spend Gold": boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new LegendTrialsConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Attempts = source["Attempts"];
+	        this.Formations = source["Formations"];
+	        this["Use suggested Formations"] = source["Use suggested Formations"];
+	        this["Spend Gold"] = source["Spend Gold"];
+	    }
+	}
 	export class DurasTrialsConfig {
 	    Attempts: number;
 	    Formations: number;
@@ -56,6 +74,7 @@ export namespace afkjourney {
 	    General: GeneralConfig;
 	    "AFK Stages": AFKStagesConfig;
 	    "Duras Trials": DurasTrialsConfig;
+	    "Legend Trials": LegendTrialsConfig;
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -66,6 +85,7 @@ export namespace afkjourney {
 	        this.General = this.convertValues(source["General"], GeneralConfig);
 	        this["AFK Stages"] = this.convertValues(source["AFK Stages"], AFKStagesConfig);
 	        this["Duras Trials"] = this.convertValues(source["Duras Trials"], DurasTrialsConfig);
+	        this["Legend Trials"] = this.convertValues(source["Legend Trials"], LegendTrialsConfig);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -86,6 +106,7 @@ export namespace afkjourney {
 		    return a;
 		}
 	}
+	
 	
 
 }

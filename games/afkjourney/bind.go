@@ -6,9 +6,10 @@ import (
 )
 
 type Config struct {
-	General     GeneralConfig     `toml:"general"      json:"General"`
-	AFKStages   AFKStagesConfig   `toml:"afk_stages"   json:"AFK Stages"`
-	DurasTrials DurasTrialsConfig `toml:"duras_trials" json:"Duras Trials"`
+	General      GeneralConfig      `toml:"general"      json:"General"`
+	AFKStages    AFKStagesConfig    `toml:"afk_stages"   json:"AFK Stages"`
+	DurasTrials  DurasTrialsConfig  `toml:"duras_trials" json:"Duras Trials"`
+	LegendTrials LegendTrialsConfig `toml:"legend_trials" json:"Legend Trials"`
 }
 
 type GeneralConfig struct {
@@ -25,6 +26,13 @@ type AFKStagesConfig struct {
 }
 
 type DurasTrialsConfig struct {
+	Attempts               int  `toml:"attempts"                 json:"Attempts"`
+	Formations             int  `toml:"formations"               json:"Formations"`
+	UseSuggestedFormations bool `toml:"use_suggested_formations" json:"Use suggested Formations"`
+	SpendGold              bool `toml:"spend_gold"               json:"Spend Gold"`
+}
+
+type LegendTrialsConfig struct {
 	Attempts               int  `toml:"attempts"                 json:"Attempts"`
 	Formations             int  `toml:"formations"               json:"Formations"`
 	UseSuggestedFormations bool `toml:"use_suggested_formations" json:"Use suggested Formations"`
