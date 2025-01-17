@@ -22,3 +22,4 @@ repos:
         entry: poetry run mypy --strict
         language: system
         types: [python]
+        args: [--config, python/setup.cfg]

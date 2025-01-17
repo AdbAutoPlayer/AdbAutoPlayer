@@ -16,6 +16,7 @@ from adb_auto_player.exceptions import (
     UnsupportedResolutionException,
     TimeoutException,
     AdbException,
+    NotInitializedError,
 )
 
 
@@ -42,31 +43,41 @@ class Game:
     def get_supported_resolutions(self) -> list[str]:
         pass
 
+    @abstractmethod
+    def get_config(self) -> BaseModel:
+        pass
+
     def check_requirements(self) -> None:
         """
         :raises UnsupportedResolutionException:
         """
-        resolution = adb.get_screen_resolution(self.device)
+        resolution = adb.get_screen_resolution(self.get_device())
         supported_resolutions = self.get_supported_resolutions()
         if resolution not in supported_resolutions:
             raise UnsupportedResolutionException(
-                f"This plugin only supports these resolutions: {", ".join(supported_resolutions)}"
+                "This plugin only supports these resolutions: "
+                f"{', '.join(supported_resolutions)}"
             )
         return None
 
     def set_device(self) -> None:
         self.device = adb.get_device()
 
+    def get_device(self) -> AdbDevice:
+        if self.device is None:
+            raise NotInitializedError()
+        return self.device
+
     def get_screenshot(self) -> Image.Image:
         """
         :raises AdbException: Screenshot cannot be recorded
         """
-        screenshot_data = self.device.shell("screencap -p", encoding=None)
+        screenshot_data = self.get_device().shell("screencap -p", encoding=None)
         if isinstance(screenshot_data, bytes):
             self.previous_screenshot = Image.open(io.BytesIO(screenshot_data))
             return self.previous_screenshot
         raise AdbException(
-            f"Screenshots cannot be recorded from device: {self.device.serial}"
+            f"Screenshots cannot be recorded from device: {self.get_device().serial}"
         )
 
     def get_previous_screenshot(self) -> Image.Image:
@@ -239,7 +250,7 @@ class Game:
         return None
 
     def press_back_button(self) -> None:
-        self.device.keyevent(4)
+        self.get_device().keyevent(4)
 
     T = TypeVar("T")
 

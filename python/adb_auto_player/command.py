@@ -1,5 +1,8 @@
+from typing import Callable
+
+
 class Command:
-    def __init__(self, name: str, action: callable, kwargs: dict):
+    def __init__(self, name: str, action: Callable, kwargs: dict):
         """
         :param action: The function (callback) that will be executed for the command.
         :param kwargs: The keyword arguments to pass to the action function.

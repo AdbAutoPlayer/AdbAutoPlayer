@@ -18,3 +18,7 @@ class AdbException(Exception):
 
 class NotFoundException(Exception):
     pass
+
+
+class NotInitializedError(Exception):
+    pass
