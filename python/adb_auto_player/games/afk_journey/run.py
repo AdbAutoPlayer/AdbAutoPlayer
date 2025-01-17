@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from time import sleep
 import logging
@@ -173,12 +174,29 @@ class AFKJourney(Game):
 
     def __formation_contains_excluded_hero(self) -> str | None:
         excluded_heroes_dict = {
-            f"heroes/{name.lower().replace(" ", "")}.png": name
+            f"heroes/{re.sub(r"[\s&]", "", name.lower())}.png": name
             for name in self.config.general.excluded_heroes
         }
 
         if not excluded_heroes_dict:
             return None
+
+        excluded_heroes_missing_icon = {
+            "Valka",
+            "Callan"
+            "Cryonaia",
+            "Faramor",
+            "Cyran",
+            "Gerda",
+            "Shemira",
+        }
+        filtered_dict = {}
+
+        for key, value in excluded_heroes_dict.items():
+            if value in excluded_heroes_missing_icon:
+                logging.warning(f"Missing icon for Hero: {value}")
+            else:
+                filtered_dict[key] = value
 
         return self.__find_any_excluded_hero(excluded_heroes_dict)
 
