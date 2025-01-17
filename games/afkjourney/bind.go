@@ -71,6 +71,10 @@ func NewAFKJourney(useProdPath bool) games.Game {
 				Label: "Assist Synergy & CC",
 				Args:  []string{"AssistSynergyAndCC"},
 			},
+			{
+				Label: "Push Legend Trials",
+				Args:  []string{"LegendTrials"},
+			},
 		},
 		ConfigConstraints: getAFKJourneyConfigConstraints(),
 	}

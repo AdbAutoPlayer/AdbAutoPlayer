@@ -361,8 +361,8 @@ class AFKJourney(Game):
         Entry for pushing Dura's Trials
         :return:
         """
-        logging.warning("Not updated for S3 run at your own risk")
         self.start_up()
+        logging.warning("Not updated for S3 run at your own risk")
         self.store[self.STORE_MODE] = self.MODE_DURAS_TRIALS
         self.__navigate_to_duras_trials_screen()
 

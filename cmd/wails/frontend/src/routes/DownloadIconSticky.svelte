@@ -84,18 +84,22 @@
     return patch1 > patch2;
   }
 
-  let currentVersion = localStorage.getItem("downloadedVersion");
-  if (!currentVersion || isVersionGreater(version, currentVersion)) {
-    currentVersion = version;
-  }
-  LogInfo("Version: " + currentVersion);
-  if (currentVersion !== null && currentVersion !== undefined) {
-    if (version === "0.0.0") {
-      LogInfo("Skipping update for dev");
-    } else {
-      checkForNewRelease(currentVersion);
+  function runVersionUpdate() {
+    let currentVersion = localStorage.getItem("downloadedVersion");
+    if (!currentVersion || isVersionGreater(version, currentVersion)) {
+      currentVersion = version;
     }
+
+    if (version === "0.0.0") {
+      LogInfo("Version: dev");
+      LogInfo("Skipping update for dev");
+      return;
+    }
+    LogInfo("Version: " + currentVersion);
+    checkForNewRelease(currentVersion);
   }
+
+  runVersionUpdate()
 </script>
 
 {#if downloadIconImageSrc}
