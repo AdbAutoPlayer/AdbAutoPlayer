@@ -19,10 +19,6 @@ jobs:
       contents: write
       id-token: write
 
-    env:
-      NUITKA_CACHE_DIR: ${{ github.action_path }}/nuitka/cache
-      PYTHON_VERSION: '3.12'
-
     steps:
       - uses: actions/checkout@v4
 
@@ -41,7 +37,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: '3.12'
 
       - name: install poetry
         run: python -m pip install poetry
@@ -63,15 +59,6 @@ jobs:
         run: |
           cd cmd/wails
           wails build -devtools
-
-      - uses: actions/cache@v4
-        with:
-          path: ${{ env.NUITKA_CACHE_DIR }}
-          key: ${{ runner.os }}-${{ runner.arch }}-python-${{ env.PYTHON_VERSION }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-python-${{ env.PYTHON_VERSION }}-
-            ${{ runner.os }}-${{ runner.arch }}-python-
-            ${{ runner.os }}-${{ runner.arch }}-
 
       - name: poetry run nuitka
         run: |
