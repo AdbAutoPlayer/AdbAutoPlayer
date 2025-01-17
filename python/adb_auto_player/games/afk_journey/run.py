@@ -215,13 +215,6 @@ class AFKJourney(Game):
     def __find_any_excluded_hero(self, excluded_heroes: dict[str, str]) -> str | None:
         result = self.find_any_template_center(list(excluded_heroes.keys()))
         if result is None:
-            second_formation_button = self.find_template_match(
-                "second_formation.png"
-            )
-            if second_formation_button:
-                self.device.click(*second_formation_button)
-                result = self.find_any_template_center(list(excluded_heroes.keys()))
-        if result is None:
             return None
 
         template, _, _ = result
