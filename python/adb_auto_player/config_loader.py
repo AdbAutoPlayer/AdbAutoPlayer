@@ -8,6 +8,7 @@ import logging
 working_dir_path: Path | None = None
 games_dir_path: Path | None = None
 
+
 def __get_working_dir() -> Path:
     global working_dir_path
     if working_dir_path is not None:
@@ -16,6 +17,7 @@ def __get_working_dir() -> Path:
         working_dir_path = Path.cwd()
         logging.debug(f"Python working dir: {working_dir_path}")
         return working_dir_path
+
 
 def get_games_dir() -> Path:
     global games_dir_path
@@ -29,11 +31,12 @@ def get_games_dir() -> Path:
         games_dir_path = working_dir / "games"
     # dev
     if not games_dir_path or not games_dir_path.exists():
-        games_dir_path = working_dir.parent.parent / "python" / "adb_auto_player" / "games"
+        games_dir_path = (
+            working_dir.parent.parent / "python" / "adb_auto_player" / "games"
+        )
     # prod
     if not games_dir_path.exists():
         games_dir_path = working_dir / "games"
-
 
     logging.debug(f"Python games dir: {games_dir_path}")
     return games_dir_path

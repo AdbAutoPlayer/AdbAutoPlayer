@@ -72,7 +72,6 @@ def find_template_match(
     template_height, template_width = template_cv.shape[:2]
     matches = list(zip(match_locations[1], match_locations[0]))  # x, y coordinates
 
-
     key_functions = {
         MatchMode.TOP_LEFT: lambda loc: (loc[1], loc[0]),
         MatchMode.TOP_RIGHT: lambda loc: (loc[1], -loc[0]),
@@ -134,7 +133,7 @@ def __suppress_close_matches(
         return []
 
     matches_array = np.array(matches)
-    suppressed: list[tuple[int, int]] = [] # type: ignore
+    suppressed: list[tuple[int, int]] = []  # type: ignore
 
     for match in matches_array:
         match_tuple = tuple(match)
@@ -142,5 +141,5 @@ def __suppress_close_matches(
             np.linalg.norm(match_tuple - np.array(s)) >= min_distance
             for s in suppressed
         ):
-            suppressed.append(match_tuple) # type: ignore
+            suppressed.append(match_tuple)  # type: ignore
     return suppressed

@@ -9,9 +9,16 @@ class LogLevel:
     ERROR = "ERROR"
     FATAL = "FATAL"
 
+
 class LogMessage:
-    def __init__(self, level: str, message: str, timestamp: datetime,
-                 source_file: str | None = None, line_number: int | None = None):
+    def __init__(
+        self,
+        level: str,
+        message: str,
+        timestamp: datetime,
+        source_file: str | None = None,
+        line_number: int | None = None,
+    ):
         self.level = level
         self.message = message
         self.timestamp = timestamp
@@ -25,9 +32,8 @@ class LogMessage:
             "message": self.message,
             "timestamp": self.timestamp.astimezone(timezone.utc).isoformat(),
             "source_file": self.source_file,
-            "line_number": self.line_number
+            "line_number": self.line_number,
         }
-
 
     @classmethod
     def create_log_message(cls, level: str, message: str):

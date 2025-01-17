@@ -1,3 +1,5 @@
+exclude: (^|/)\.idea/
+files: ^python/
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -20,12 +22,3 @@ repos:
         entry: poetry run mypy --strict
         language: system
         types: [python]
-  - repo: local
-    hooks:
-      - id: prettier
-        name: Prettier (Frontend)
-        entry: pnpm --dir adb_auto_player/frontend exec prettier --write src/**/*.{js,ts,svelte,css,html}
-        pass_filenames: false
-        language: system
-        types: [file]
-        files: ^adb_auto_player/frontend/src/.*\.(js|ts|svelte|css|html)$

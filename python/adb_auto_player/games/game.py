@@ -12,15 +12,19 @@ import adb_auto_player.adb as adb
 import logging
 import adb_auto_player.screen_utils as screen_utils
 from adb_auto_player.command import Command
-from adb_auto_player.exceptions import UnsupportedResolutionException, TimeoutException, AdbException
+from adb_auto_player.exceptions import (
+    UnsupportedResolutionException,
+    TimeoutException,
+    AdbException,
+)
 
 
 class Game:
     def __init__(self) -> None:
-        self.device: AdbDevice|None  = None
-        self.config: BaseModel|None = None
+        self.device: AdbDevice | None = None
+        self.config: BaseModel | None = None
         self.store: dict[str, Any] = {}
-        self.previous_screenshot: Image.Image|None = None
+        self.previous_screenshot: Image.Image | None = None
 
     @abstractmethod
     def get_template_dir_path(self) -> Path:
@@ -61,7 +65,9 @@ class Game:
         if isinstance(screenshot_data, bytes):
             self.previous_screenshot = Image.open(io.BytesIO(screenshot_data))
             return self.previous_screenshot
-        raise AdbException(f"Screenshots cannot be recorded from device: {self.device.serial}")
+        raise AdbException(
+            f"Screenshots cannot be recorded from device: {self.device.serial}"
+        )
 
     def get_previous_screenshot(self) -> Image.Image:
         if self.previous_screenshot is not None:
@@ -86,7 +92,9 @@ class Game:
         template_path = self.get_template_dir_path() / template
 
         return screen_utils.find_template_match(
-            base_image=self.__get_screenshot(previous_screenshot=use_previous_screenshot),
+            base_image=self.__get_screenshot(
+                previous_screenshot=use_previous_screenshot
+            ),
             template_image=screen_utils.load_image(image_path=template_path),
             match_mode=match_mode,
             threshold=threshold,
@@ -104,7 +112,9 @@ class Game:
         template_path = self.get_template_dir_path() / template
 
         return screen_utils.find_all_template_matches(
-            base_image=self.__get_screenshot(previous_screenshot=use_previous_screenshot),
+            base_image=self.__get_screenshot(
+                previous_screenshot=use_previous_screenshot
+            ),
             template_image=screen_utils.load_image(image_path=template_path),
             threshold=threshold,
             grayscale=grayscale,

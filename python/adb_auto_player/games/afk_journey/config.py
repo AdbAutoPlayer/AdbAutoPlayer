@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 class GeneralConfig(BaseModel):
-    excluded_heroes: list[str] = Field(default_factory=[]) # type: ignore
+    excluded_heroes: list[str] = Field(default_factory=[])  # type: ignore
     assist_limit: int = 20
 
 

@@ -12,10 +12,12 @@ class JsonLogHandler(logging.Handler):
             logging.INFO: LogLevel.INFO,
             logging.WARNING: LogLevel.WARNING,
             logging.ERROR: LogLevel.ERROR,
-            logging.CRITICAL: LogLevel.FATAL
+            logging.CRITICAL: LogLevel.FATAL,
         }
 
-        log_message = LogMessage.create_log_message(level_mapping.get(record.levelno, LogLevel.DEBUG), record.getMessage())
+        log_message = LogMessage.create_log_message(
+            level_mapping.get(record.levelno, LogLevel.DEBUG), record.getMessage()
+        )
         log_dict = log_message.to_dict()
         log_json = json.dumps(log_dict)
         print(log_json)
