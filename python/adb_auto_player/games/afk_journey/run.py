@@ -74,6 +74,11 @@ class AFKJourney(Game):
                 action=self.assist_synergy_corrupt_creature,
                 kwargs={},
             ),
+            Command(
+                name="LegendTrials",
+                action=self.push_legend_trials,
+                kwargs={},
+            )
         ]
 
     def handle_battle_screen(self, use_suggested_formations: bool = True) -> bool:
@@ -566,4 +571,8 @@ class AFKJourney(Game):
             self.set_device()
         if self.config is None:
             self.load_config()
+        return None
+
+    def push_legend_trials(self) -> None:
+        logging.error("I'm working on it, will be part of Version 1.1.1")
         return None
