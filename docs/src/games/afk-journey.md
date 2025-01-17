@@ -1,7 +1,7 @@
 # AFK Journey
 
 ## Features
-- **Automated Stage Progression**: 
+- **Automated Stage Progression**:
   - Supports both *Season Talent Stages*, *AFK Stages* and *Dura's Trials*.
   - Loads suggested formations, starts battles, and progresses to the next stage automatically.
 
@@ -18,7 +18,7 @@
 ## Configuration Details
 > **Note**: Use the Edit Game Config button in the GUI to change the config!
 
-Configuration can be found under `plugins/AFKJourney/config.toml`.  
+Configuration can be found under `plugins/AFKJourney/config.toml`.
 Configuration is only loaded once when the App starts or the config is updated via the GUI if you change it directly you need to restart it to apply changes.
 
 ### [general]
@@ -35,13 +35,13 @@ Configuration is only loaded once when the App starts or the config is updated v
 
 - **formations**: Defines the number of suggested formations to copy.
 
-- **use_suggested_formations**: 
+- **use_suggested_formations**:
   - `true`: Uses suggested formations from the `Records` button.
   - `false`: Uses your current formation.
 
 - **push_both_modes**: If set to `true`, the app will try the other mode after failing all attempts on all formations.
 
-- **spend_gold**: 
+- **spend_gold**:
   - `true`: Gold will be spent to continue retrying after failure.
   - `false`: Gold will not be spent to keep retrying the trials.
 ---
@@ -52,11 +52,11 @@ Configuration is only loaded once when the App starts or the config is updated v
 
 - **formations**: Defines the number of suggested formations to copy.
 
-- **use_suggested_formations**: 
+- **use_suggested_formations**:
   - `true`: Uses suggested formations from the `Records` button.
   - `false`: Uses your currently setup formation.
 
-- **spend_gold**: 
+- **spend_gold**:
   - `true`: Gold will be spent to continue retrying after failure.
   - `false`: Gold will not be spent to keep retrying the trials.
 
