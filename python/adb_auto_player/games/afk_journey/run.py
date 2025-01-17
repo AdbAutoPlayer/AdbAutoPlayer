@@ -391,6 +391,10 @@ class AFKJourney(Game):
         else:
             logging.debug("Clicking Battle button")
             self.get_device().click(800, 1610)
+        sleep(2)
+        confirm = self.find_template_match("confirm.png")
+        if confirm:
+            self.get_device().click(*confirm)
         return None
 
     def push_duras_trials(self) -> None:
@@ -629,7 +633,7 @@ class AFKJourney(Game):
                 sleep(3)
                 continue
             self.__handle_legend_trials_battle()
-        logging.error("Not Implemented")
+        logging.info("Legend Trial finished")
         return None
 
     def __handle_legend_trials_battle(self) -> None:
