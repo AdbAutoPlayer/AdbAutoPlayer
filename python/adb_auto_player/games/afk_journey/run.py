@@ -13,7 +13,6 @@ from adb_auto_player.exceptions import (
 from adb_auto_player.games.afk_journey.config import Config, GeneralConfig
 from adb_auto_player.games.game import Game
 from adb_auto_player.config_loader import get_games_dir
-from adb_auto_player.screen_utils import MatchMode
 
 
 class AFKJourney(Game):
@@ -229,7 +228,7 @@ class AFKJourney(Game):
         return self.__find_any_excluded_hero(filtered_dict)
 
     def __find_any_excluded_hero(self, excluded_heroes: dict[str, str]) -> str | None:
-        result = self.find_any_template_center(list(excluded_heroes.keys()))
+        result = self.find_any_template(list(excluded_heroes.keys()))
         if result is None:
             return None
 
@@ -244,7 +243,7 @@ class AFKJourney(Game):
         self.wait_until_template_disappears("records.png")
         sleep(1)
 
-        if self.find_any_template_center(["spend.png", "gold.png"]) and not spend_gold:
+        if self.find_any_template(["spend.png", "gold.png"]) and not spend_gold:
             logging.warning("Not spending gold returning")
             self.store[self.STORE_MAX_ATTEMPTS_REACHED] = True
             self.press_back_button()
@@ -255,7 +254,7 @@ class AFKJourney(Game):
         return True
 
     def __click_confirm_on_popup(self) -> bool:
-        result = self.find_any_template_center(["confirm.png", "confirm_text.png"])
+        result = self.find_any_template(["confirm.png", "confirm_text.png"])
         if result:
             _, x, y = result
             self.get_device().click(x, y)
@@ -352,7 +351,7 @@ class AFKJourney(Game):
         while True:
             if check_callable and check_callable():
                 return None
-            result = self.find_any_template_center(
+            result = self.find_any_template(
                 [
                     "notice.png",
                     "confirm.png",
@@ -520,7 +519,7 @@ class AFKJourney(Game):
         return None
 
     def __find_synergy_or_corrupt_creature(self) -> bool:
-        result = self.find_any_template_center(
+        result = self.find_any_template(
             [
                 "assist/world_chat.png",
                 "assist/tap_to_enter.png",
@@ -621,7 +620,8 @@ class AFKJourney(Game):
         results = self.find_all_template_matches(
             "legend_trials/go_lightborn.png", grayscale=True
         )
-        # TODO check wilder and graveborn tmrw
+        # todo check 4 results on sunday
+        # print(results)
         for result in results:
             self.__navigate_to_legend_trials_select_tower()
             self.get_device().click(*result)
@@ -664,24 +664,21 @@ class AFKJourney(Game):
         _, x, y = self.wait_for_any_template(
             [
                 "legend_trials/tower_icon_lightborn.png",
-                # "legend_trials/tower_icon_wilder.png",
-                # "legend_trials/tower_icon_graveborn.png",
+                "legend_trials/tower_icon_wilder.png",
+                "legend_trials/tower_icon_graveborn.png",
                 "legend_trials/tower_icon_mauler.png",
             ]
         )
         sleep(1)
-        result = self.find_template_match(
-            "legend_trials/info_icon.png",
-            match_mode=MatchMode.BOTTOM_RIGHT,
-        )
-        if result is None:
-            raise NotFoundException("legend_trials/info_icon.png not found")
 
-        x, y = result
-        if x < 500:
-            self.get_device().click(x + 200, y - 50)
-        else:
-            self.get_device().click(x - 200, y - 50)
+        challenge_btn = self.wait_for_template(
+            "legend_trials/challenge_ch.png",
+            threshold=0.8,
+            grayscale=True,
+            delay=0.5,
+            timeout=6,
+        )
+        self.get_device().click(*challenge_btn)
         return None
 
     def __navigate_to_legend_trials_select_tower(self) -> None:

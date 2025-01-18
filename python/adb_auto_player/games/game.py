@@ -18,6 +18,7 @@ from adb_auto_player.exceptions import (
     AdbException,
     NotInitializedError,
 )
+from adb_auto_player.screen_utils import MatchMode
 
 
 class Game:
@@ -215,7 +216,7 @@ class Game:
         """
 
         def find_template() -> tuple[str, int, int] | None:
-            return self.find_any_template_center(
+            return self.find_any_template(
                 templates,
                 threshold=threshold,
                 grayscale=grayscale,
@@ -230,9 +231,10 @@ class Game:
             find_template, delay=delay, timeout=timeout, timeout_message=timeout_message
         )
 
-    def find_any_template_center(
+    def find_any_template(
         self,
         templates: list[str],
+        match_mode: MatchMode = MatchMode.BEST,
         threshold: float = 0.9,
         grayscale: bool = False,
     ) -> tuple[str, int, int] | None:
@@ -240,6 +242,7 @@ class Game:
         for template in templates:
             result = self.find_template_match(
                 template,
+                match_mode=match_mode,
                 threshold=threshold,
                 grayscale=grayscale,
                 use_previous_screenshot=True,
