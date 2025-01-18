@@ -671,14 +671,18 @@ class AFKJourney(Game):
         )
         sleep(1)
 
-        challenge_btn = self.wait_for_template(
-            "legend_trials/challenge_ch.png",
+        challenge_btn = self.wait_for_any_template(
+            [
+                "legend_trials/challenge_ch.png",
+                "legend_trials/challenge_ge.png",
+            ],
             threshold=0.8,
             grayscale=True,
             delay=0.5,
             timeout=6,
         )
-        self.get_device().click(*challenge_btn)
+        _, x, y = challenge_btn
+        self.get_device().click(x, y)
         return None
 
     def __navigate_to_legend_trials_select_tower(self) -> None:
