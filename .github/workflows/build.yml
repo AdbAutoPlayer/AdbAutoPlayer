@@ -10,6 +10,8 @@ on:
     paths:
       - '**/*'
       - '!docs/**'
+      - '!workflows/**'
+      - 'workflows/build.yml'
 
 jobs:
   build-and-release:
