@@ -82,7 +82,7 @@ jobs:
       - name: nuitka build macos
         if: matrix.os == 'macos-latest'
         working-directory: python
-        run: poetry run nuitka --standalone --onefile --output-filename=adb_auto_player --assume-yes-for-downloads adb_auto_player/main.py
+        run: poetry run nuitka --standalone --onefile --output-filename=adb_auto_player_py_app --assume-yes-for-downloads adb_auto_player/main.py
 
       - name: build zip windows
         if: matrix.os == 'windows-latest'

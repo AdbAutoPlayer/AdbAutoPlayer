@@ -9,7 +9,7 @@ mkdir -p "${RELEASE_ZIP_DIR}/games/afk_journey/templates"
 # Copy files
 cp "cmd/wails/build/bin/AdbAutoPlayer.app/Contents/MacOS/AdbAutoPlayer" "${RELEASE_ZIP_DIR}/"
 cp "cmd/wails/config.toml" "${RELEASE_ZIP_DIR}/"
-cp "python/adb_auto_player" "${RELEASE_ZIP_DIR}/games/"
+cp "python/adb_auto_player_py_app" "${RELEASE_ZIP_DIR}/games/"
 
 # Copy templates and config
 cp -r "python/adb_auto_player/games/afk_journey/templates/"* "${RELEASE_ZIP_DIR}/games/afk_journey/templates/"
