@@ -4,6 +4,19 @@
   import { logoAwake } from "$lib/stores/logo";
   import { LogError, LogInfo } from "$lib/wailsjs/runtime";
   let downloadIconImageSrc: string | null = $state(null);
+  let releaseHtmlDownloadUrl: string = $state(
+    "https://github.com/yulesxoxo/AdbAutoPlayer/releases",
+  );
+
+  interface Release {
+    html_url: string;
+    tag_name: string;
+    assets: Asset[];
+  }
+  interface Asset {
+    name: string;
+    browser_download_url: string;
+  }
 
   async function checkForNewRelease(currentVersion: string): Promise<void> {
     currentVersion = currentVersion.startsWith("v")
@@ -13,12 +26,21 @@
       const response = await fetch(
         "https://api.github.com/repos/yulesxoxo/AdbAutoPlayer/releases/latest",
       );
-      const releaseData = await response.json();
+      const release: Release = await response.json();
 
-      if (response.ok && releaseData.tag_name) {
-        const latestVersion = releaseData.tag_name.startsWith("v")
-          ? releaseData.tag_name.slice(1)
-          : releaseData.tag_name;
+      const asset = release.assets.find(
+        (a: Asset) => a.name === "AdbAutoPlayer_Windows.zip",
+      );
+
+      if (!asset) {
+        console.log("Release still building");
+        return;
+      }
+
+      if (response.ok && release.tag_name) {
+        const latestVersion = release.tag_name.startsWith("v")
+          ? release.tag_name.slice(1)
+          : release.tag_name;
 
         const currentParts = currentVersion.split(".").map(Number);
         const latestParts = latestVersion.split(".").map(Number);
@@ -27,32 +49,28 @@
           (latestParts[0] == currentParts[0] &&
             latestParts[1] > currentParts[1])
         ) {
-          notifyUpdate();
+          notifyUpdate(asset);
           return;
         }
+
         if (
           latestParts[0] === currentParts[0] &&
           latestParts[1] === currentParts[1] &&
           latestParts[2] > currentParts[2]
         ) {
-          const asset = releaseData.assets.find(
-            (a: any) => a.name === "Patch_Windows.zip",
+          const patch = release.assets.find(
+            (a: Asset) => a.name === "Patch_Windows.zip",
           );
-          if (!asset) {
+          if (!patch) {
             console.log("No asset found");
             return;
           }
 
-          const downloadUrl = asset.browser_download_url;
-          if (!downloadUrl) {
-            console.log("No browser_download_url found");
-            return;
-          }
           $logoAwake = false;
-          UpdatePatch(downloadUrl)
+          UpdatePatch(patch.browser_download_url)
             .then(() => {
-              localStorage.setItem("downloadedVersion", releaseData.tag_name);
-              LogInfo("Version: " + releaseData.tag_name);
+              localStorage.setItem("downloadedVersion", release.tag_name);
+              LogInfo("Version: " + release.tag_name);
               $logoAwake = true;
             })
             .catch((err) => {
@@ -70,8 +88,9 @@
     }
   }
 
-  function notifyUpdate() {
+  function notifyUpdate(asset: Asset) {
     downloadIconImageSrc = "/icons/download-cloud.svg";
+    releaseHtmlDownloadUrl = asset.browser_download_url;
     alert("New update available click the download button on the top right.");
   }
 
@@ -89,7 +108,6 @@
     if (!currentVersion || isVersionGreater(version, currentVersion)) {
       currentVersion = version;
     }
-
     if (version === "0.0.0") {
       LogInfo("Version: dev");
       LogInfo("Skipping update for dev");
@@ -103,11 +121,7 @@
 </script>
 
 {#if downloadIconImageSrc}
-  <a
-    href="https://github.com/yulesxoxo/AdbAutoPlayer/releases"
-    target="_blank"
-    class="download-icon-sticky"
-  >
+  <a href={releaseHtmlDownloadUrl} class="download-icon-sticky">
     <img
       src={downloadIconImageSrc}
       alt="Download"
