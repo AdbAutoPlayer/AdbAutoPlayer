@@ -2,7 +2,7 @@
 
 ## Features
 - **Automated Stage Progression**:
-  - Supports both *Season Talent Stages*, *AFK Stages* and *Dura's Trials*.
+  - Supports *Season Talent Stages*, *AFK Stages*, *Dura's Trials* and *Legend Trial*.
   - Loads suggested formations, starts battles, and progresses to the next stage automatically.
 
 - **Auto Battle**: Retries the current battle repeatedly until it is cleared.
@@ -11,65 +11,73 @@
 ---
 
 ## Upcoming/Pending Features
-- **Season Legend Trial Automation**: Will happen in Season 3
+- Nothing as of now
 
 ---
 
 ## Configuration Details
-> **Note**: Use the Edit Game Config button in the GUI to change the config!
+> [!NOTE]
+> Use the Edit Game Config button in the GUI to change the config!
 
-Configuration can be found under `plugins/AFKJourney/config.toml`.
-Configuration is only loaded once when the App starts or the config is updated via the GUI if you change it directly you need to restart it to apply changes.
+Configuration can be found under `games/afk_journey/AFKJourney.toml`.
+Configuration is loaded when you click any Action.
 
-### [general]
+### General
 
-- **excluded_heroes**: Formations using any Hero selected will be skipped.
+- **Excluded Heroes**: Formations using any Hero selected will be skipped.
 
-- **assist_limit**: After how many Synergy or CC assists to stop.
+- **Assist Limit**: After how many Synergy or CC assists to stop.
 ---
 
-### [afk_stages]
-> **Note**: Auto Battle also uses afk_stages config.
+### AFK Stages
 
-- **attempts**: Specifies how many times to attempt each formation.
+> [!NOTE]
+> Auto Battle also uses AFK Stages config.
 
-- **formations**: Defines the number of suggested formations to copy.
+- **Attempts**: Specifies how many times to attempt each formation.
 
-- **use_suggested_formations**:
+- **Formations**: Defines the number of suggested formations to copy.
+
+- **Use Suggested Formations**:
   - `true`: Uses suggested formations from the `Records` button.
   - `false`: Uses your current formation.
 
 - **push_both_modes**: If set to `true`, the app will try the other mode after failing all attempts on all formations.
 
-- **spend_gold**:
+- **Spend Gold**:
   - `true`: Gold will be spent to continue retrying after failure.
   - `false`: Gold will not be spent to keep retrying the trials.
 ---
 
-### [duras_trials]
+### Duras Trials
 
-- **attempts**: Specifies how many times to attempt each formation.
+- **Attempts**: Specifies how many times to attempt each formation.
 
-- **formations**: Defines the number of suggested formations to copy.
+- **Formations**: Defines the number of suggested formations to copy.
 
-- **use_suggested_formations**:
+- **Use Suggested Formations**:
   - `true`: Uses suggested formations from the `Records` button.
   - `false`: Uses your currently setup formation.
 
-- **spend_gold**:
+- **Spend Gold**:
   - `true`: Gold will be spent to continue retrying after failure.
   - `false`: Gold will not be spent to keep retrying the trials.
 
 ---
 
-### [plugin]
+### Legend Trials
 
-> **Note**: Do not modify this section unless you are actively developing or integrating the plugin. Changes here may break functionality.
+- **Attempts**: Specifies how many times to attempt each formation.
 
-- **package**: Defines the Android app package name.
-  - Value: `'com.farlightgames.igame.gp'`
+- **Formations**: Defines the number of suggested formations to copy.
 
-- **supported_resolution**: Specifies the resolution supported by the plugin.
-  - Value: `'1080x1920'`
+- **Use Suggested Formations**:
+  - `true`: Uses suggested formations from the `Records` button.
+  - `false`: Uses your currently setup formation.
 
-- **min_adb_auto_player_version**: Specifies the minimum required version of AdbAutoPlayer for this plugin.
+- **Spend Gold**:
+  - `true`: Gold will be spent to continue retrying after failure.
+  - `false`: Gold will not be spent to keep retrying the trials.
+
+- **Towers**: Any Tower not selected will be skipped, mainly for sundays.
+---
