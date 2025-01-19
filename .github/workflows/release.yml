@@ -70,6 +70,17 @@ jobs:
         working-directory: python
         run: poetry run nuitka --standalone --onefile --output-filename=adb_auto_player.bin --assume-yes-for-downloads adb_auto_player/main.py
 
+      - name: build zip windows
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: .github/scripts/build_zip.ps1
+
+      - name: build zip macos
+        if: matrix.os == 'macos-latest'
+        shell: bash
+        run: |
+          chmod +x .github/scripts/build_zip.sh
+          .github/scripts/build_zip.sh
 
       - name: run build script
         shell: ${{ matrix.os == 'macos-latest' && 'bash' || 'pwsh' }}
