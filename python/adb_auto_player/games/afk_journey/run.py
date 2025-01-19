@@ -60,7 +60,7 @@ class AFKJourney(Game):
         return self.config
 
     def get_supported_resolutions(self) -> list[str]:
-        return ["1080x1920"]
+        return ["1080x1920", "9:16"]
 
     def get_menu_commands(self) -> list[Command]:
         return [
@@ -162,7 +162,7 @@ class AFKJourney(Game):
                 timeout=5,
                 timeout_message=f"Formation #{formation_num} not found",
             )
-            self.get_device().click(*formation_next)
+            self.click(*formation_next)
             sleep(1)
             counter -= 1
         sleep(1)
@@ -177,14 +177,14 @@ class AFKJourney(Game):
 
     def __copy_suggested_formation_from_records(self, formations: int = 1) -> bool:
         records = self.wait_for_template("records.png")
-        self.get_device().click(*records)
+        self.click(*records)
         copy = self.wait_for_template("copy.png", timeout=5)
 
         start_count = 0
         while True:
             if not self.__copy_suggested_formation(formations, start_count):
                 return False
-            self.get_device().click(*copy)
+            self.click(*copy)
             sleep(1)
 
             cancel = self.find_template_match("cancel.png")
@@ -192,7 +192,7 @@ class AFKJourney(Game):
                 logging.warning(
                     "Formation contains locked Artifacts or Heroes skipping"
                 )
-                self.get_device().click(*cancel)
+                self.click(*cancel)
                 start_count = self.store.get(self.STORE_FORMATION_NUM, 1) - 1
                 self.store[self.STORE_FORMATION_NUM] += 1
             else:
@@ -239,7 +239,7 @@ class AFKJourney(Game):
         spend_gold = self.__get_config_attribute_from_mode("spend_gold")
 
         self.wait_for_template("records.png")
-        self.get_device().click(850, 1780)
+        self.click(850, 1780, scale=True)
         self.wait_until_template_disappears("records.png")
         sleep(1)
 
@@ -257,7 +257,7 @@ class AFKJourney(Game):
         result = self.find_any_template(["confirm.png", "confirm_text.png"])
         if result:
             _, x, y = result
-            self.get_device().click(x, y)
+            self.click(x, y)
             sleep(1)
             return True
         return False
@@ -287,7 +287,7 @@ class AFKJourney(Game):
             match template:
                 case "confirm.png":
                     logging.warning("Battle data differs between client and server")
-                    self.get_device().click(*template)
+                    self.click(*template)
                     sleep(3)
                     self.__select_afk_stage()
                     return False
@@ -295,9 +295,9 @@ class AFKJourney(Game):
                     return True
                 case "retry.png":
                     logging.info(f"Lost Battle #{count}")
-                    self.get_device().click(x, y)
+                    self.click(x, y)
                 case "result.png":
-                    self.get_device().click(950, 1800)
+                    self.click(950, 1800, scale=True)
                     return True
         return False
 
@@ -342,7 +342,7 @@ class AFKJourney(Game):
         logging.info("Navigating to default state")
         self.__navigate_to_default_state()
         logging.info("Navigating to AFK Stage Battle screen")
-        self.get_device().click(90, 1830)
+        self.click(90, 1830, scale=True)
         self.__select_afk_stage()
 
     def __navigate_to_default_state(
@@ -368,10 +368,10 @@ class AFKJourney(Game):
             template, x, y = result
             match template:
                 case "notice.png":
-                    self.get_device().click(530, 1630)
+                    self.click(530, 1630, scale=True)
                     sleep(3)
                 case "confirm.png":
-                    self.get_device().click(x, y)
+                    self.click(x, y)
                     sleep(1)
                 case "time_of_day.png":
                     return None
@@ -382,18 +382,18 @@ class AFKJourney(Game):
 
     def __select_afk_stage(self) -> None:
         self.wait_for_template("resonating_hall.png")
-        self.get_device().click(550, 1080)  # click rewards popup
+        self.click(550, 1080, scale=True)  # click rewards popup
         sleep(1)
         if self.store.get(self.STORE_SEASON, False):
             logging.debug("Clicking Talent Trials button")
-            self.get_device().click(300, 1610)
+            self.click(300, 1610, scale=True)
         else:
             logging.debug("Clicking Battle button")
-            self.get_device().click(800, 1610)
+            self.click(800, 1610, scale=True)
         sleep(2)
         confirm = self.find_template_match("confirm.png")
         if confirm:
-            self.get_device().click(*confirm)
+            self.click(*confirm)
         return None
 
     def push_duras_trials(self) -> None:
@@ -457,16 +457,16 @@ class AFKJourney(Game):
         )
         if duras_trials_label is None:
             logging.info("Clicking Battle Modes button")
-            self.get_device().click(460, 1830)
+            self.click(460, 1830, scale=True)
             duras_trials_label = self.wait_for_template(
                 "duras_trials/label.png", timeout_message="Could not find Dura's Trials"
             )
-        self.get_device().click(*duras_trials_label)
+        self.click(*duras_trials_label)
         return None
 
     def __handle_dura_screen(self, x: int, y: int) -> None:
         # y+100 clicks closer to center of the button instead of rate up text
-        self.get_device().click(x, y + 100)
+        self.click(x, y + 100, scale=True)
 
         count: int = 0
         while True:
@@ -481,7 +481,7 @@ class AFKJourney(Game):
                     logging.info("Dura's Trial already cleared")
                     return None
                 case "duras_trials/battle.png":
-                    self.get_device().click(x, y)
+                    self.click(x, y, scale=True)
                 case "records.png":
                     pass
 
@@ -495,8 +495,8 @@ class AFKJourney(Game):
                 if next_button is not None:
                     count += 1
                     logging.info(f"Trials pushed: {count}")
-                    self.get_device().click(*next_button)
-                    self.get_device().click(*next_button)
+                    self.click(*next_button)
+                    self.click(*next_button)
                     sleep(3)
                     continue
                 else:
@@ -529,18 +529,18 @@ class AFKJourney(Game):
         if result is None:
             logging.info("Opening chat")
             self.__navigate_to_default_state()
-            self.get_device().click(1010, 1080)
+            self.click(1010, 1080, scale=True)
             sleep(1)
-            self.get_device().click(110, 350)
+            self.click(110, 350, scale=True)
             return False
 
         template, x, y = result
         match template:
             case "assist/world_chat.png":
-                self.get_device().click(260, 1400)
+                self.click(260, 1400, scale=True)
             case "assist/tap_to_enter.png", "assist/team-up_chat.png":
                 logging.info("Switching to world chat")
-                self.get_device().click(110, 350)
+                self.click(110, 350, scale=True)
                 return False
 
         try:
@@ -556,7 +556,7 @@ class AFKJourney(Game):
                 self.press_back_button()
                 sleep(1)
             return False
-        self.get_device().click(x, y)
+        self.click(x, y)
         match template:
             case "assist/join_now.png":
                 logging.info("Battling Corrupt Creature")
@@ -575,7 +575,7 @@ class AFKJourney(Game):
     def __handle_corrupt_creature(self) -> bool:
         ready = self.wait_for_template("assist/ready.png", timeout=10)
 
-        self.get_device().click(*ready)
+        self.click(*ready)
         # Sometimes people wait forever for a third to join...
         self.wait_until_template_disappears(
             "assist/rewards_heart.png", timeout=self.BATTLE_TIMEOUT
@@ -583,12 +583,12 @@ class AFKJourney(Game):
         self.wait_for_template("assist/bell.png")
         # click first 5 heroes in row 1 and 2
         for x in [110, 290, 470, 630, 800]:
-            self.get_device().click(x, 1300)
+            self.click(x, 1300, scale=True)
             sleep(0.5)
         while True:
             cc_ready = self.find_template_match("assist/cc_ready.png")
             if cc_ready:
-                self.get_device().click(*cc_ready)
+                self.click(*cc_ready)
                 sleep(1)
             else:
                 break
@@ -601,11 +601,11 @@ class AFKJourney(Game):
         go = self.find_template_match("assist/go.png")
         if go is None:
             return False
-        self.get_device().click(*go)
+        self.click(*go)
         sleep(3)
-        self.get_device().click(130, 900)
+        self.click(130, 900, scale=True)
         sleep(1)
-        self.get_device().click(630, 1800)
+        self.click(630, 1800, scale=True)
         return True
 
     def push_legend_trials(self) -> None:
@@ -627,8 +627,6 @@ class AFKJourney(Game):
             "mauler": "legend_trials/swords_mauler.png",
         }
 
-        print(towers)
-        print(faction_paths)
         for faction, path in faction_paths.items():
             if faction.capitalize() in towers:
                 result = self.find_template_match(path, use_previous_screenshot=True)
@@ -644,7 +642,7 @@ class AFKJourney(Game):
         for faction, result in results.items():
             logging.info(f"Starting {faction.capitalize()} Tower")
             self.__navigate_to_legend_trials_select_tower()
-            self.get_device().click(*result)
+            self.click(*result)
             try:
                 self.__select_legend_trials_floor(faction)
             except (TimeoutException, NotFoundException) as e:
@@ -672,7 +670,7 @@ class AFKJourney(Game):
                 if next_btn is not None:
                     count += 1
                     logging.info(f"{faction.capitalize()} Trials pushed: {count}")
-                    self.get_device().click(*next_btn)
+                    self.click(*next_btn)
                     continue
                 else:
                     logging.warning(
@@ -697,7 +695,7 @@ class AFKJourney(Game):
             timeout=6,
         )
         _, x, y = challenge_btn
-        self.get_device().click(x, y)
+        self.click(x, y)
         return None
 
     def __navigate_to_legend_trials_select_tower(self) -> None:
@@ -715,12 +713,12 @@ class AFKJourney(Game):
         )
         if not s_header:
             logging.info("Clicking Battle Modes button")
-            self.get_device().click(460, 1830)
+            self.click(460, 1830, scale=True)
             label = self.wait_for_template(
                 "legend_trials/label.png",
                 timeout_message="Could not find Legend Trial Label",
             )
-            self.get_device().click(*label)
+            self.click(*label)
             self.wait_for_template(
                 "legend_trials/s_header.png",
                 timeout_message="Could not find Season Legend Trial Header",

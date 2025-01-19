@@ -27,6 +27,8 @@ class Game:
         self.config: BaseModel | None = None
         self.store: dict[str, Any] = {}
         self.previous_screenshot: Image.Image | None = None
+        self.resolution: tuple[int, int] | None = None
+        self.scale_factor: float | None = None
 
     @abstractmethod
     def get_template_dir_path(self) -> Path:
@@ -54,20 +56,82 @@ class Game:
         """
         resolution = adb.get_screen_resolution(self.get_device())
         supported_resolutions = self.get_supported_resolutions()
-        if resolution not in supported_resolutions:
+
+        try:
+            width, height = map(int, resolution.split("x"))
+        except ValueError:
             raise UnsupportedResolutionException(
-                "This plugin only supports these resolutions: "
+                f"Invalid resolution format: {resolution}"
+            )
+
+        is_supported = False
+        for supported_resolution in supported_resolutions:
+            if "x" in supported_resolution:
+                if resolution == supported_resolution:
+                    is_supported = True
+                    break
+            elif ":" in supported_resolution:
+                try:
+                    aspect_width, aspect_height = map(
+                        int, supported_resolution.split(":")
+                    )
+                    if width * aspect_height == height * aspect_width:
+                        is_supported = True
+                        break
+                except ValueError:
+                    raise UnsupportedResolutionException(
+                        f"Invalid aspect ratio format: {supported_resolution}"
+                    )
+
+        if not is_supported:
+            raise UnsupportedResolutionException(
+                "This bot only supports these resolutions: "
                 f"{', '.join(supported_resolutions)}"
             )
+
+        self.resolution = width, height
         return None
+
+    def get_scale_factor(self) -> float:
+        if self.scale_factor:
+            return self.scale_factor
+        reference_resolution = (1080, 1920)
+        if self.get_resolution() == reference_resolution:
+            self.scale_factor = 1.0
+        else:
+            self.scale_factor = self.get_resolution()[0] / reference_resolution[0]
+        return self.scale_factor
+
+    def get_resolution(self) -> tuple[int, int]:
+        if self.resolution is None:
+            raise NotInitializedError()
+        return self.resolution
 
     def set_device(self) -> None:
         self.device = adb.get_device()
+        self.check_requirements()
 
     def get_device(self) -> AdbDevice:
         if self.device is None:
             raise NotInitializedError()
         return self.device
+
+    def click(
+        self,
+        x: int,
+        y: int,
+        scale: bool = False,
+    ) -> None:
+        if not scale:
+            self.get_device().click(x, y)
+            return None
+        if self.get_scale_factor() == 1.0:
+            self.get_device().click(x, y)
+        else:
+            scaled_x = int(round(x * self.get_scale_factor()))
+            scaled_y = int(round(y * self.get_scale_factor()))
+            self.get_device().click(scaled_x, scaled_y)
+        return None
 
     def get_screenshot(self) -> Image.Image:
         """
@@ -107,7 +171,10 @@ class Game:
             base_image=self.__get_screenshot(
                 previous_screenshot=use_previous_screenshot
             ),
-            template_image=screen_utils.load_image(image_path=template_path),
+            template_image=screen_utils.load_image(
+                image_path=template_path,
+                image_scale_factor=self.get_scale_factor(),
+            ),
             match_mode=match_mode,
             threshold=threshold,
             grayscale=grayscale,
@@ -127,7 +194,10 @@ class Game:
             base_image=self.__get_screenshot(
                 previous_screenshot=use_previous_screenshot
             ),
-            template_image=screen_utils.load_image(image_path=template_path),
+            template_image=screen_utils.load_image(
+                image_path=template_path,
+                image_scale_factor=self.get_scale_factor(),
+            ),
             threshold=threshold,
             grayscale=grayscale,
             min_distance=min_distance,

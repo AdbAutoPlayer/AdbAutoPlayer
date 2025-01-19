@@ -18,14 +18,41 @@ class MatchMode(StrEnum):
     RIGHT_BOTTOM = auto()
 
 
-def load_image(image_path: Path) -> Image.Image:
+template_cache: dict[str, Image.Image] = {}
+
+
+def load_image(image_path: Path, image_scale_factor: float = 1.0) -> Image.Image:
     """
+    Loads an image from disk or returns the cached version if available.
+    Resizes the image if needed and stores it in the global template_cache.
+
+    :param image_path: Path to the template image.
+    :param image_scale_factor: Scale factor for resizing the image.
+    :return: PIL Image object.
+
     :raises FileNotFoundError:
     :raises IOError:
     """
+
+    cache_key = f"{str(image_path)}_{image_scale_factor}"
+    if cache_key in template_cache:
+        return template_cache[cache_key]
+
     image = Image.open(image_path)
     image.load()
+
+    if image_scale_factor != 1.0:
+        new_width = int(image.width * image_scale_factor)
+        new_height = int(image.height * image_scale_factor)
+        image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
+    template_cache[cache_key] = image
     return image
+
+
+def clear_template_cache() -> None:
+    global template_cache
+    template_cache.clear()
 
 
 def find_template_match(
