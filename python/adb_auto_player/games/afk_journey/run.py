@@ -627,6 +627,7 @@ class AFKJourney(Game):
             "mauler": "legend_trials/swords_mauler.png",
         }
 
+        self.get_screenshot()
         for faction, path in faction_paths.items():
             if faction.capitalize() in towers:
                 result = self.find_template_match(path, use_previous_screenshot=True)
@@ -723,4 +724,5 @@ class AFKJourney(Game):
                 "legend_trials/s_header.png",
                 timeout_message="Could not find Season Legend Trial Header",
             )
+        sleep(1)
         return None
