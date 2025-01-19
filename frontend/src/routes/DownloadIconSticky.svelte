@@ -24,19 +24,19 @@
   }
 
   function getFilenamesBasedOnPlatform() {
-    let app = "AdbAutoPlayer_Windows.zip";
-    let patch = "Patch_Windows.zip";
+    let appFileName = "AdbAutoPlayer_Windows.zip";
+    let patchFileName = "Patch_Windows.zip";
 
     let userAgent = navigator.userAgent.toLowerCase();
 
-    app = "AdbAutoPlayer_Windows.zip";
-    patch = "Patch_Windows.zip";
+    appFileName = "AdbAutoPlayer_Windows.zip";
+    patchFileName = "Patch_Windows.zip";
     if (userAgent.includes("mac")) {
-      app = "AdbAutoPlayer_Linux.zip";
-      patch = "Patch_Linux.zip";
+      appFileName = "AdbAutoPlayer_Linux.zip";
+      patchFileName = "Patch_Linux.zip";
     }
 
-    return { app, patch };
+    return { appFileName: appFileName, patchFileName: patchFileName };
   }
 
   async function checkForNewRelease(currentVersion: string): Promise<void> {
@@ -49,8 +49,10 @@
       );
       const releaseData: Release = await response.json();
 
-      const { app, patch } = getFilenamesBasedOnPlatform();
-      modalAsset = releaseData.assets.find((a: Asset) => a.name === app);
+      const { appFileName, patchFileName } = getFilenamesBasedOnPlatform();
+      modalAsset = releaseData.assets.find(
+        (a: Asset) => a.name === appFileName,
+      );
 
       if (!modalAsset) {
         console.log("Release still building");
@@ -79,7 +81,9 @@
           latestParts[1] === currentParts[1] &&
           latestParts[2] > currentParts[2]
         ) {
-          const patch = releaseData.assets.find((a: Asset) => a.name === patch);
+          const patch = releaseData.assets.find(
+            (a: Asset) => a.name === patchFileName,
+          );
           if (!patch) {
             console.log("No asset found");
             return;
@@ -127,7 +131,7 @@
     if (!currentVersion || isVersionGreater(version, currentVersion)) {
       currentVersion = version;
     }
-    if (version === "0.0.0") {
+    if (version === "0.0.2") {
       LogInfo("Version: dev");
       LogInfo("Skipping update for dev");
       return;

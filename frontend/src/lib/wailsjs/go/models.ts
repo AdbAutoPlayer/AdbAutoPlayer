@@ -209,7 +209,7 @@ export namespace games {
 	export class Game {
 	    GameTitle: string;
 	    ConfigPath: string;
-	    ExePath: string;
+	    BinaryPath: string;
 	    PackageNames: string[];
 	    MenuOptions: MenuOption[];
 	    ConfigConstraints: {[key: string]: any};
@@ -222,7 +222,7 @@ export namespace games {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.GameTitle = source["GameTitle"];
 	        this.ConfigPath = source["ConfigPath"];
-	        this.ExePath = source["ExePath"];
+	        this.BinaryPath = source["BinaryPath"];
 	        this.PackageNames = source["PackageNames"];
 	        this.MenuOptions = this.convertValues(source["MenuOptions"], MenuOption);
 	        this.ConfigConstraints = source["ConfigConstraints"];
