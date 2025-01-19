@@ -34,6 +34,7 @@ jobs:
           node-version: 'latest'
 
       - name: npm version tag_name
+        if: github.event_name == 'release' && github.event.action == 'published'
         working-directory: frontend
         run: npm version "${{ github.event.release.tag_name }}"
 
@@ -49,6 +50,7 @@ jobs:
         run: python -m pip install poetry
 
       - name: poetry version tag_name
+        if: github.event_name == 'release' && github.event.action == 'published'
         working-directory: python
         run: poetry version "${{ github.event.release.tag_name }}"
 
