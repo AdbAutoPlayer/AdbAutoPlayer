@@ -131,7 +131,7 @@
     if (!currentVersion || isVersionGreater(version, currentVersion)) {
       currentVersion = version;
     }
-    if (version === "0.0.2") {
+    if (version === "0.0.0") {
       LogInfo("Version: dev");
       LogInfo("Skipping update for dev");
       return;
