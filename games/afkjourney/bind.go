@@ -3,6 +3,7 @@ package afkjourney
 import (
 	"adb-auto-player/games"
 	"adb-auto-player/internal/ipc"
+	"runtime"
 )
 
 type Config struct {
@@ -42,15 +43,20 @@ type LegendTrialsConfig struct {
 
 func NewAFKJourney(useProdPath bool) games.Game {
 	configPath := "../../python/adb_auto_player/games/afk_journey/AFKJourney.toml"
-	exePath := "../../python/adb_auto_player.exe"
+	binaryPath := "../../python/adb_auto_player.exe"
 	if useProdPath {
-		configPath = "games/afk_journey/AFKJourney.toml"
-		exePath = "games/adb_auto_player.exe"
+		if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+			configPath = "games/afk_journey/AFKJourney.toml"
+			binaryPath = "games/adb_auto_player.bin"
+		} else {
+			configPath = "games/afk_journey/AFKJourney.toml"
+			binaryPath = "games/adb_auto_player.exe"
+		}
 	}
 	return games.Game{
 		GameTitle:  "AFK Journey",
 		ConfigPath: configPath,
-		ExePath:    exePath,
+		BinaryPath: binaryPath,
 		PackageNames: []string{
 			"com.farlightgames.igame.gp",
 			"com.farlightgames.igame.gp.vn",

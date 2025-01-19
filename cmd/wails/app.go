@@ -113,7 +113,7 @@ func (a *App) GetRunningSupportedGame() (*games.Game, error) {
 
 func (a *App) StartGameProcess(game games.Game, args []string) error {
 	pm := GetProcessManager()
-	if err := pm.StartProcess(game.ExePath, args); err != nil {
+	if err := pm.StartProcess(game.BinaryPath, args); err != nil {
 		runtime.LogErrorf(a.ctx, "Starting process: %v", err)
 		return err
 	}

@@ -8,7 +8,7 @@ type MenuOption struct {
 type Game struct {
 	GameTitle         string
 	ConfigPath        string
-	ExePath           string
+	BinaryPath        string
 	PackageNames      []string
 	MenuOptions       []MenuOption
 	ConfigConstraints map[string]interface{}
