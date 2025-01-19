@@ -650,22 +650,26 @@ class AFKJourney(Game):
                 self.press_back_button()
                 sleep(3)
                 continue
-            self.__handle_legend_trials_battle()
+            self.__handle_legend_trials_battle(faction)
         logging.info("Legend Trial finished")
         return None
 
-    def __handle_legend_trials_battle(self) -> None:
+    def __handle_legend_trials_battle(self, faction: str) -> None:
         count: int = 0
         while True:
-            result = self.handle_battle_screen(
-                self.get_config().legend_trials.use_suggested_formations
-            )
+            try:
+                result = self.handle_battle_screen(
+                    self.get_config().legend_trials.use_suggested_formations
+                )
+            except TimeoutException as e:
+                logging.warning(f"{e}")
+                return None
 
             if result is True:
                 next_btn = self.wait_for_template("next.png")
                 if next_btn is not None:
                     count += 1
-                    logging.info(f"Trials pushed: {count}")
+                    logging.info(f"{faction.capitalize()} Trials pushed: {count}")
                     self.get_device().click(*next_btn)
                     continue
                 else:
@@ -673,7 +677,7 @@ class AFKJourney(Game):
                         "Not implemented assuming this shows up after the last floor?"
                     )
                     return None
-            logging.info("Legend Trial failed")
+            logging.info(f"{faction.capitalize()}Trials failed")
             return None
         return None
 
