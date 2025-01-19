@@ -1,5 +1,11 @@
 # AFK Journey
 
+## Supported Resolutions:
+> [!IMPORTANT]
+> Use 1080x1920 if you can I am not testing any other resolution.
+
+- **9:16** e.g. **1080x1920**, **900x1600**, **720x1280**, ...
+
 ## Features
 - **Automated Stage Progression**:
   - Supports *Season Talent Stages*, *AFK Stages*, *Dura's Trials* and *Legend Trial*.
