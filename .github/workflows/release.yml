@@ -10,10 +10,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest]
+        os: [windows-latest, macos-latest]
         include:
           - os: windows-latest
             zip_files: "AdbAutoPlayer_Windows.zip,Patch_Windows.zip"
+            build_script: ".github/scripts/build_zip.ps1"
+          - os: macos-latest
+            zip_files: "AdbAutoPlayer_MacOS.zip,Patch_MacOS.zip"
+            build_script: ".github/scripts/build_zip.sh"
 
     permissions:
       contents: write
@@ -27,9 +31,8 @@ jobs:
           node-version: 'latest'
 
       - name: npm version tag_name
-        run: |
-            cd frontend
-            npm version "${{ github.event.release.tag_name }}"
+        working-directory: frontend
+        run: npm version "${{ github.event.release.tag_name }}"
 
       - uses: actions/setup-go@v5
         with:
@@ -43,37 +46,34 @@ jobs:
         run: python -m pip install poetry
 
       - name: poetry version tag_name
-        run: |
-          cd python
-          poetry version "${{ github.event.release.tag_name }}"
+        working-directory: python
+        run: poetry version "${{ github.event.release.tag_name }}"
 
       - name: install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: npm install
-        run: |
-          cd frontend
-          npm install
+        working-directory: frontend
+        run: npm install
 
       - name: wails build
-        run: |
-          cd cmd/wails
-          wails build -devtools
+        working-directory: cmd/wails
+        run: wails build -devtools
 
-      - name: poetry run nuitka
-        run: |
-          cd python
-          poetry install
-          poetry run nuitka --standalone `
-            --onefile `
-            --output-filename=adb_auto_player.exe `
-            --assume-yes-for-downloads `
-            --windows-console-mode=disable `
-            adb_auto_player/main.py
+      - name: nuitka build windows
+        if: matrix.os == 'windows-latest'
+        working-directory: python
+        run: poetry run nuitka --standalone --onefile --output-filename=adb_auto_player.exe --assume-yes-for-downloads --windows-console-mode=disable adb_auto_player/main.py
 
-      - name: build_zip.ps1
-        shell: pwsh
-        run: .github/scripts/build_zip.ps1
+      - name: nuitka build macos
+        if: matrix.os == 'macos-latest'
+        working-directory: python
+        run: poetry run nuitka --standalone --onefile --output-filename=adb_auto_player.bin --assume-yes-for-downloads adb_auto_player/main.py
+
+
+      - name: run build script
+        shell: ${{ matrix.os == 'macos-latest' && 'bash' || 'pwsh' }}
+        run: ${{ matrix.build_script }}
 
       - uses: softprops/action-gh-release@v2
         with:
