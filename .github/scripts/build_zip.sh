@@ -7,7 +7,7 @@ RELEASE_ZIP_DIR="${WORKSPACE}/release_zip"
 mkdir -p "${RELEASE_ZIP_DIR}/games/afk_journey/templates"
 
 # Copy files
-cp "cmd/wails/build/bin/AdbAutoPlayer" "${RELEASE_ZIP_DIR}/"
+cp "cmd/wails/build/bin/AdbAutoPlayer.app/Contents/MacOS/AdbAutoPlayer" "${RELEASE_ZIP_DIR}/"
 cp "cmd/wails/config.toml" "${RELEASE_ZIP_DIR}/"
 cp "python/adb_auto_player.bin" "${RELEASE_ZIP_DIR}/games/"
 
