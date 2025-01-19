@@ -10,7 +10,7 @@ on:
     paths:
       - '**/*'
       - '!docs/**'
-      - '!workflows/**'
+      - '!.github/workflows/**'
       - 'workflows/build.yml'
 
 jobs:
