@@ -47,7 +47,7 @@ func NewAFKJourney(useProdPath bool) games.Game {
 	if useProdPath {
 		if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
 			configPath = "games/afk_journey/AFKJourney.toml"
-			binaryPath = "games/adb_auto_player.bin"
+			binaryPath = "games/adb_auto_player"
 		} else {
 			configPath = "games/afk_journey/AFKJourney.toml"
 			binaryPath = "games/adb_auto_player.exe"
