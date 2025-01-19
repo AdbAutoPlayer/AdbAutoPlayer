@@ -143,7 +143,7 @@ func getAFKJourneyConfigConstraints() map[string]interface{} {
 			"Use suggested Formations": ipc.NewCheckboxConstraint(),
 			"Spend Gold":               ipc.NewCheckboxConstraint(),
 			"Towers": ipc.NewImageCheckboxConstraint([]string{
-				"Lightbearer", "Wilder", "Mauler", "Graveborn",
+				"Lightbearer", "Wilder", "Graveborn", "Mauler",
 			}),
 		},
 	}
