@@ -23,6 +23,22 @@
     browser_download_url: string;
   }
 
+  function getFilenamesBasedOnPlatform() {
+    let app = "AdbAutoPlayer_Windows.zip";
+    let patch = "Patch_Windows.zip";
+
+    let userAgent = navigator.userAgent.toLowerCase();
+
+    app = "AdbAutoPlayer_Windows.zip";
+    patch = "Patch_Windows.zip";
+    if (userAgent.includes("mac")) {
+      app = "AdbAutoPlayer_Linux.zip";
+      patch = "Patch_Linux.zip";
+    }
+
+    return { app, patch };
+  }
+
   async function checkForNewRelease(currentVersion: string): Promise<void> {
     currentVersion = currentVersion.startsWith("v")
       ? currentVersion.slice(1)
@@ -33,9 +49,8 @@
       );
       const releaseData: Release = await response.json();
 
-      modalAsset = releaseData.assets.find(
-        (a: Asset) => a.name === "AdbAutoPlayer_Windows.zip",
-      );
+      const { app, patch } = getFilenamesBasedOnPlatform();
+      modalAsset = releaseData.assets.find((a: Asset) => a.name === app);
 
       if (!modalAsset) {
         console.log("Release still building");
@@ -64,9 +79,7 @@
           latestParts[1] === currentParts[1] &&
           latestParts[2] > currentParts[2]
         ) {
-          const patch = releaseData.assets.find(
-            (a: Asset) => a.name === "Patch_Windows.zip",
-          );
+          const patch = releaseData.assets.find((a: Asset) => a.name === patch);
           if (!patch) {
             console.log("No asset found");
             return;
