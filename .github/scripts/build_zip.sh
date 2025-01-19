@@ -20,8 +20,8 @@ ls -R "${RELEASE_ZIP_DIR}"
 
 # Create main ZIP file
 cd "${RELEASE_ZIP_DIR}"
-zip -r "${WORKSPACE}/AdbAutoPlayer_MacOS_arm64.zip" ./*
-echo "ZIP file created at ${WORKSPACE}/AdbAutoPlayer_MacOS_arm64.zip"
+zip -r "${WORKSPACE}/AdbAutoPlayer_MacOS.zip" ./*
+echo "ZIP file created at ${WORKSPACE}/AdbAutoPlayer_MacOS.zip"
 
 # Create patch ZIP
 PATCH_DIR="${WORKSPACE}/Patch_MacOS"
@@ -29,5 +29,5 @@ mkdir -p "${PATCH_DIR}"
 cp -r "${RELEASE_ZIP_DIR}/games" "${PATCH_DIR}/"
 
 cd "${PATCH_DIR}"
-zip -r "${WORKSPACE}/Patch_MacOS_arm64.zip" ./*
-echo "Patch ZIP file created at ${WORKSPACE}/Patch_MacOS_arm64.zip"
+zip -r "${WORKSPACE}/Patch_MacOS.zip" ./*
+echo "Patch ZIP file created at ${WORKSPACE}/Patch_MacOS.zip"
