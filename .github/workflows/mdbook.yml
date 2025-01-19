@@ -18,26 +18,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: install latest mdbook
-        run: |
-          tag=$(curl 'https://api.github.com/repos/rust-lang/mdbook/releases/latest' | jq -r '.tag_name')
-          url="https://github.com/rust-lang/mdbook/releases/download/${tag}/mdbook-${tag}-x86_64-unknown-linux-gnu.tar.gz"
-          mkdir mdbook
-          curl -sSL $url | tar -xz --directory=./mdbook
-          echo `pwd`/mdbook >> $GITHUB_PATH
+      - uses: dtolnay/rust-toolchain@stable
 
-      - name: install mdbook-alerts preprocessor
-        run: |
-          tag=$(curl 'https://api.github.com/repos/lambdalisue/rs-mdbook-alerts/releases/latest' | jq -r '.tag_name')
-          url="https://github.com/lambdalisue/rs-mdbook-alerts/releases/download/${tag}/mdbook-alerts-x86_64-unknown-linux-gnu"
-          curl -sSL $url -o ./mdbook_alerts
-          chmod +x ./mdbook_alerts
-          echo `pwd`/mdbook_alerts >> $GITHUB_PATH
+      - run: cargo install mdbook
 
-      - name: Run mdbook-alerts preprocessor
-        run: |
-          cd docs
-          mdbook build
+      - run: cargo install mdbook-alerts
+
+      - run: mdbook build
+        working-directory: docs
 
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
