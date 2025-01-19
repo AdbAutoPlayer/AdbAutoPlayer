@@ -3,15 +3,20 @@
   import { UpdatePatch } from "$lib/wailsjs/go/main/App";
   import { logoAwake } from "$lib/stores/logo";
   import { LogError, LogInfo } from "$lib/wailsjs/runtime";
+  import { marked } from "marked";
+  import Modal from "./Modal.svelte";
   let downloadIconImageSrc: string | null = $state(null);
   let releaseHtmlDownloadUrl: string = $state(
     "https://github.com/yulesxoxo/AdbAutoPlayer/releases",
   );
-
+  let showModal = $state(false);
+  let modalRelease: Release | undefined = $state();
+  let modalAsset: Asset | undefined = $state();
   interface Release {
     html_url: string;
     tag_name: string;
     assets: Asset[];
+    body: string;
   }
   interface Asset {
     name: string;
@@ -26,21 +31,21 @@
       const response = await fetch(
         "https://api.github.com/repos/yulesxoxo/AdbAutoPlayer/releases/latest",
       );
-      const release: Release = await response.json();
+      const releaseData: Release = await response.json();
 
-      const asset = release.assets.find(
+      modalAsset = releaseData.assets.find(
         (a: Asset) => a.name === "AdbAutoPlayer_Windows.zip",
       );
 
-      if (!asset) {
+      if (!modalAsset) {
         console.log("Release still building");
         return;
       }
 
-      if (response.ok && release.tag_name) {
-        const latestVersion = release.tag_name.startsWith("v")
-          ? release.tag_name.slice(1)
-          : release.tag_name;
+      if (response.ok && releaseData.tag_name) {
+        const latestVersion = releaseData.tag_name.startsWith("v")
+          ? releaseData.tag_name.slice(1)
+          : releaseData.tag_name;
 
         const currentParts = currentVersion.split(".").map(Number);
         const latestParts = latestVersion.split(".").map(Number);
@@ -49,7 +54,8 @@
           (latestParts[0] == currentParts[0] &&
             latestParts[1] > currentParts[1])
         ) {
-          notifyUpdate(asset);
+          modalRelease = releaseData;
+          notifyUpdate(modalAsset);
           return;
         }
 
@@ -58,7 +64,7 @@
           latestParts[1] === currentParts[1] &&
           latestParts[2] > currentParts[2]
         ) {
-          const patch = release.assets.find(
+          const patch = releaseData.assets.find(
             (a: Asset) => a.name === "Patch_Windows.zip",
           );
           if (!patch) {
@@ -69,8 +75,8 @@
           $logoAwake = false;
           UpdatePatch(patch.browser_download_url)
             .then(() => {
-              localStorage.setItem("downloadedVersion", release.tag_name);
-              LogInfo("Version: " + release.tag_name);
+              localStorage.setItem("downloadedVersion", releaseData.tag_name);
+              LogInfo("Version: " + releaseData.tag_name);
               $logoAwake = true;
             })
             .catch((err) => {
@@ -91,7 +97,7 @@
   function notifyUpdate(asset: Asset) {
     downloadIconImageSrc = "/icons/download-cloud.svg";
     releaseHtmlDownloadUrl = asset.browser_download_url;
-    alert("New update available click the download button on the top right.");
+    showModal = true;
   }
 
   function isVersionGreater(v1: string, v2: string) {
@@ -117,6 +123,16 @@
     checkForNewRelease(currentVersion);
   }
 
+  function downloadAsset() {
+    if (modalAsset) {
+      const a = document.createElement("a");
+      a.href = modalAsset.browser_download_url;
+      a.download = "";
+      a.click();
+      downloadIconImageSrc = null;
+    }
+  }
+
   runVersionUpdate();
 </script>
 
@@ -131,6 +147,22 @@
     />
   </a>
 {/if}
+
+<Modal bind:showModal>
+  {#snippet header()}
+    <h2>
+      Update Available: {modalRelease?.tag_name}
+    </h2>
+  {/snippet}
+  {@html marked(modalRelease?.body || "")}
+  {#snippet footer()}
+    {#if modalAsset}
+      <button style="display: inline-block" onclick={downloadAsset}
+        >Download</button
+      >
+    {/if}
+  {/snippet}
+</Modal>
 
 <style>
   .download-icon-sticky {
