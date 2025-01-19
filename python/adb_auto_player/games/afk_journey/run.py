@@ -627,8 +627,10 @@ class AFKJourney(Game):
             "mauler": "legend_trials/swords_mauler.png",
         }
 
+        print(towers)
+        print(faction_paths)
         for faction, path in faction_paths.items():
-            if faction not in towers:
+            if faction.capitalize() in towers:
                 result = self.find_template_match(path, use_previous_screenshot=True)
                 if result is None:
                     logging.warning(
