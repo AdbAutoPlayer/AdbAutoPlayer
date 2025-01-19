@@ -11,3 +11,6 @@ edition = "2021"
 [output.html]
 git-repository-url = "https://github.com/yulesxoxo/AdbAutoPlayer"
 edit-url-template = "https://github.com/yulesxoxo/AdbAutoPlayer/edit/main/docs/{path}"
+
+[preprocessor.alerts]
+command = "mdbook_alerts"
