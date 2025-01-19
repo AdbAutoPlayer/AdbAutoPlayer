@@ -25,6 +25,7 @@ export namespace afkjourney {
 	    Formations: number;
 	    "Use suggested Formations": boolean;
 	    "Spend Gold": boolean;
+	    Towers: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new LegendTrialsConfig(source);
@@ -36,6 +37,7 @@ export namespace afkjourney {
 	        this.Formations = source["Formations"];
 	        this["Use suggested Formations"] = source["Use suggested Formations"];
 	        this["Spend Gold"] = source["Spend Gold"];
+	        this.Towers = source["Towers"];
 	    }
 	}
 	export class DurasTrialsConfig {

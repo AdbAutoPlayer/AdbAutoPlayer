@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import MultiCheckbox from "./MultiCheckbox.svelte";
+  import ImageCheckbox from "./ImageCheckbox.svelte";
 
   let {
     configObject,
@@ -145,6 +146,12 @@
                 />
               {:else if getInputType(sectionKey, key) === "multicheckbox"}
                 <MultiCheckbox
+                  choices={constraints[sectionKey]?.[key]?.choices || []}
+                  value={getStringArrayOrEmptyArray(value)}
+                  name="{sectionKey}-{key}"
+                />
+              {:else if getInputType(sectionKey, key) === "imagecheckbox"}
+                <ImageCheckbox
                   choices={constraints[sectionKey]?.[key]?.choices || []}
                   value={getStringArrayOrEmptyArray(value)}
                   name="{sectionKey}-{key}"

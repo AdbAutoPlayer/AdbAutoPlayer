@@ -18,6 +18,11 @@ type MultiCheckboxConstraint struct {
 	Choices []string `json:"choices"`
 }
 
+type ImageCheckboxConstraint struct {
+	Type    string   `json:"type"`
+	Choices []string `json:"choices"`
+}
+
 type SelectConstraint struct {
 	Type    string   `json:"type"`
 	Choices []string `json:"choices"`
@@ -53,6 +58,13 @@ func NewCheckboxConstraint() *CheckboxConstraint {
 func NewMultiCheckboxConstraint(choices []string) MultiCheckboxConstraint {
 	return MultiCheckboxConstraint{
 		Type:    "multicheckbox",
+		Choices: choices,
+	}
+}
+
+func NewImageCheckboxConstraint(choices []string) ImageCheckboxConstraint {
+	return ImageCheckboxConstraint{
+		Type:    "imagecheckbox",
 		Choices: choices,
 	}
 }

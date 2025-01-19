@@ -42,8 +42,6 @@ func main() {
 	}
 	frontendLogger := ipc.NewFrontendLogger(uint8(logLevel))
 
-	fmt.Println("Log Level:", logLevel)
-
 	err = wails.Run(&options.App{
 		Title:  "AdbAutoPlayer",
 		Width:  1024,

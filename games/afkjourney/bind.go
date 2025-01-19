@@ -33,10 +33,11 @@ type DurasTrialsConfig struct {
 }
 
 type LegendTrialsConfig struct {
-	Attempts               int  `toml:"attempts"                 json:"Attempts"`
-	Formations             int  `toml:"formations"               json:"Formations"`
-	UseSuggestedFormations bool `toml:"use_suggested_formations" json:"Use suggested Formations"`
-	SpendGold              bool `toml:"spend_gold"               json:"Spend Gold"`
+	Attempts               int      `toml:"attempts"                 json:"Attempts"`
+	Formations             int      `toml:"formations"               json:"Formations"`
+	UseSuggestedFormations bool     `toml:"use_suggested_formations" json:"Use suggested Formations"`
+	SpendGold              bool     `toml:"spend_gold"               json:"Spend Gold"`
+	Towers                 []string `toml:"towers"                   json:"Towers"`
 }
 
 func NewAFKJourney(useProdPath bool) games.Game {
@@ -129,6 +130,15 @@ func getAFKJourneyConfigConstraints() map[string]interface{} {
 			"Formations":               ipc.NewNumberConstraint(nil, &maxFormations, nil),
 			"Use suggested Formations": ipc.NewCheckboxConstraint(),
 			"Spend Gold":               ipc.NewCheckboxConstraint(),
+		},
+		"Legend Trials": map[string]interface{}{
+			"Attempts":                 ipc.NewNumberConstraint(nil, nil, nil),
+			"Formations":               ipc.NewNumberConstraint(nil, &maxFormations, nil),
+			"Use suggested Formations": ipc.NewCheckboxConstraint(),
+			"Spend Gold":               ipc.NewCheckboxConstraint(),
+			"Towers": ipc.NewImageCheckboxConstraint([]string{
+				"Lightbearer", "Wilder", "Mauler", "Graveborn",
+			}),
 		},
 	}
 }

@@ -20,3 +20,4 @@ attempts = 5
 formations = 7
 use_suggested_formations = true
 spend_gold = false
+towers = ['Lightbearer', 'Wilder', 'Mauler', 'Graveborn']

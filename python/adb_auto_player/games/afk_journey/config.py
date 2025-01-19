@@ -28,6 +28,7 @@ class LegendTrialsConfig(BaseModel):
     formations: int = 7
     use_suggested_formations: bool = True
     spend_gold: bool = False
+    towers: list[str] = Field(default_factory=[])  # type: ignore
 
 
 class Config(BaseModel):

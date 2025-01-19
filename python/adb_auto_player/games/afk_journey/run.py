@@ -10,7 +10,7 @@ from adb_auto_player.exceptions import (
     NotFoundException,
     NotInitializedError,
 )
-from adb_auto_player.games.afk_journey.config import Config, GeneralConfig
+from adb_auto_player.games.afk_journey.config import Config
 from adb_auto_player.games.game import Game
 from adb_auto_player.config_loader import get_games_dir
 
@@ -54,7 +54,7 @@ class AFKJourney(Game):
             logging.debug(f"AFK Journey config path: {self.config_file_path}")
         self.config = Config.from_toml(self.config_file_path)
 
-    def get_config(self) -> GeneralConfig:
+    def get_config(self) -> Config:
         if self.config is None:
             raise NotInitializedError()
         return self.config
@@ -611,18 +611,36 @@ class AFKJourney(Game):
     def push_legend_trials(self) -> None:
         self.start_up()
         self.store[self.STORE_MODE] = self.MODE_LEGEND_TRIALS
-
         try:
             self.__navigate_to_legend_trials_select_tower()
         except TimeoutException as e:
             logging.error(f"{e}")
             return None
-        results = self.find_all_template_matches(
-            "legend_trials/go_lightborn.png", grayscale=True
-        )
-        # todo check 4 results on sunday
-        # print(results)
-        for result in results:
+
+        towers = self.get_config().legend_trials.towers
+
+        results = {}
+        faction_paths = {
+            "lightbearer": "legend_trials/swords_lightbearer.png",
+            "wilder": "legend_trials/swords_wilder.png",
+            "graveborn": "legend_trials/swords_graveborn.png",
+            "mauler": "legend_trials/swords_mauler.png",
+        }
+
+        for faction, path in faction_paths.items():
+            if faction not in towers:
+                result = self.find_template_match(path, use_previous_screenshot=True)
+                if result is None:
+                    logging.warning(
+                        f"{faction.capitalize()}s Tower not available or not found"
+                    )
+                else:
+                    results[faction] = result
+            else:
+                logging.info(f"{faction.capitalize()}s excluded in config")
+
+        for faction, result in results.items():
+            logging.info(f"Starting {faction.capitalize()} Tower")
             self.__navigate_to_legend_trials_select_tower()
             self.get_device().click(*result)
             try:
@@ -663,7 +681,7 @@ class AFKJourney(Game):
         logging.debug("__select_legend_trials_floor")
         _, x, y = self.wait_for_any_template(
             [
-                "legend_trials/tower_icon_lightborn.png",
+                "legend_trials/tower_icon_lightbearer.png",
                 "legend_trials/tower_icon_wilder.png",
                 "legend_trials/tower_icon_graveborn.png",
                 "legend_trials/tower_icon_mauler.png",
