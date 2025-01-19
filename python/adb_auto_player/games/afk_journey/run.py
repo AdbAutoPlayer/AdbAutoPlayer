@@ -644,7 +644,7 @@ class AFKJourney(Game):
             self.__navigate_to_legend_trials_select_tower()
             self.get_device().click(*result)
             try:
-                self.__select_legend_trials_floor()
+                self.__select_legend_trials_floor(faction)
             except (TimeoutException, NotFoundException) as e:
                 logging.error(f"{e}")
                 self.press_back_button()
@@ -677,18 +677,9 @@ class AFKJourney(Game):
             return None
         return None
 
-    def __select_legend_trials_floor(self) -> None:
+    def __select_legend_trials_floor(self, faction: str) -> None:
         logging.debug("__select_legend_trials_floor")
-        _, x, y = self.wait_for_any_template(
-            [
-                "legend_trials/tower_icon_lightbearer.png",
-                "legend_trials/tower_icon_wilder.png",
-                "legend_trials/tower_icon_graveborn.png",
-                "legend_trials/tower_icon_mauler.png",
-            ]
-        )
-        sleep(1)
-
+        _ = self.wait_for_template(f"legend_trials/tower_icon_{faction}.png")
         challenge_btn = self.wait_for_any_template(
             [
                 "legend_trials/challenge_ch.png",
