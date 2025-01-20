@@ -75,20 +75,20 @@ func NewAFKJourney(useProdPath bool) games.Game {
 				Args:  []string{"DurasTrials"},
 			},
 			{
-				Label: "Battle (suggested Formations)",
-				Args:  []string{"BattleSuggested"},
-			},
-			{
-				Label: "Battle (current Formation)",
-				Args:  []string{"Battle"},
+				Label: "Push Legend Trials",
+				Args:  []string{"LegendTrials"},
 			},
 			{
 				Label: "Assist Synergy & CC",
 				Args:  []string{"AssistSynergyAndCC"},
 			},
 			{
-				Label: "Push Legend Trials",
-				Args:  []string{"LegendTrials"},
+				Label: "Battle (suggested Formations)",
+				Args:  []string{"BattleSuggested"},
+			},
+			{
+				Label: "Battle (current Formation)",
+				Args:  []string{"Battle"},
 			},
 		},
 		ConfigConstraints: getAFKJourneyConfigConstraints(),
