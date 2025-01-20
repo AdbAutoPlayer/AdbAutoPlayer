@@ -95,6 +95,9 @@
               localStorage.setItem("downloadedVersion", releaseData.tag_name);
               LogInfo("Version: " + releaseData.tag_name);
               $logoAwake = true;
+              modalRelease = releaseData;
+              modalAsset = undefined;
+              showModal = true;
             })
             .catch((err) => {
               alert(err);
@@ -167,9 +170,15 @@
 
 <Modal bind:showModal>
   {#snippet header()}
-    <h2>
-      Update Available: {modalRelease?.tag_name}
-    </h2>
+    {#if modalAsset}
+      <h2>
+        Update Available: {modalRelease?.tag_name}
+      </h2>
+    {:else}
+      <h2>
+        Update Downloaded: {modalRelease?.tag_name}
+      </h2>
+    {/if}
   {/snippet}
   {@html marked(modalRelease?.body || "")}
   {#snippet footer()}
