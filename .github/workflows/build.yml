@@ -12,6 +12,7 @@ on:
       - '!docs/**'
       - '!.github/workflows/**'
       - 'workflows/build.yml'
+      - '!**/.idea/**'
 
 jobs:
   build-and-release:
