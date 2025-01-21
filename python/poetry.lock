@@ -289,12 +289,12 @@ all = ["flake8 (>=7.1.1)", "mypy (>=1.11.2)", "pytest (>=8.3.2)", "ruff (>=0.6.2
 
 [[package]]
 name = "nuitka"
-version = "2.5.9"
+version = "2.6"
 description = "Python compiler with full language support and CPython compatibility"
 optional = false
 python-versions = "*"
 files = [
-    {file = "Nuitka-2.5.9.tar.gz", hash = "sha256:6cfb37449c9dd60bf6e9f79e420198019f44bb5154e3d6a40d3124d5cc26edf1"},
+    {file = "Nuitka-2.6.tar.gz", hash = "sha256:7d67293d2fe6a481b5d244008af6fa7511a6f27d0664d1adec9305b6fabe9cc8"},
 ]
 
 [package.dependencies]

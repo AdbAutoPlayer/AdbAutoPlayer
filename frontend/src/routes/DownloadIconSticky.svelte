@@ -183,9 +183,9 @@
   {@html marked(modalRelease?.body || "")}
   {#snippet footer()}
     {#if modalAsset}
-      <button style="display: inline-block" onclick={downloadAsset}
-        >Download</button
-      >
+      <button style="display: inline-block" onclick={downloadAsset}>
+        Download
+      </button>
     {/if}
   {/snippet}
 </Modal>

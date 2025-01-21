@@ -16,7 +16,7 @@
     if (e.target === dialog) dialog.close();
   }}
 >
-  <div>
+  <div class="clearfix">
     {@render header?.()}
     <hr />
     {@render children?.()}
@@ -24,21 +24,27 @@
     {#if footer}
       {@render footer()}
       <!-- svelte-ignore a11y_autofocus -->
-      <button style="float: right" autofocus onclick={() => dialog?.close()}
-        >Close</button
-      >
+      <button class="closeWithFooter" autofocus onclick={() => dialog?.close()}>
+        Close
+      </button>
     {:else}
       <!-- svelte-ignore a11y_autofocus -->
-      <button
-        style="display: inline-block; margin-left: auto; margin-right: 0;"
-        autofocus
-        onclick={() => dialog?.close()}>Close</button
-      >
+      <button class="closeNoFooter" autofocus onclick={() => dialog?.close()}>
+        Close
+      </button>
     {/if}
   </div>
 </dialog>
 
 <style>
+  .closeWithFooter {
+    float: right;
+  }
+  .closeNoFooter {
+    display: inline-block;
+    margin-left: auto;
+    margin-right: 0;
+  }
   dialog {
     max-width: 32em;
     border-radius: 0.2em;
@@ -73,5 +79,10 @@
     to {
       opacity: 1;
     }
+  }
+  .clearfix::after {
+    content: "";
+    display: table;
+    clear: both;
   }
 </style>
