@@ -568,7 +568,7 @@ class AFKJourney(Game):
         except TimeoutException:
             return False
         if "assist/chat_button.png" == template:
-            if self.find_template_match("world_chat.png") is None:
+            if self.find_template_match("assist/world_chat.png") is None:
                 self.press_back_button()
                 sleep(1)
             return False
