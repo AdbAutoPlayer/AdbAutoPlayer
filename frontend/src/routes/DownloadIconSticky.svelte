@@ -199,9 +199,9 @@
   function runVersionUpdate() {
     let currentVersion = localStorage.getItem("downloadedVersion");
     if (!currentVersion || isVersionGreater(version, currentVersion)) {
-      currentVersion = "1.2.1";
+      currentVersion = version;
     }
-    if (version === "0.0.1") {
+    if (version === "0.0.0") {
       LogInfo("Version: dev");
       LogInfo("Skipping update for dev");
       return;
