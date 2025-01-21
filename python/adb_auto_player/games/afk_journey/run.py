@@ -281,6 +281,7 @@ class AFKJourney(Game):
                     "confirm.png",
                     "result.png",
                 ],
+                delay=3,
                 timeout=self.BATTLE_TIMEOUT,
             )
 

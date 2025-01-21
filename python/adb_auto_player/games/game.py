@@ -277,7 +277,7 @@ class Game:
         templates: list[str],
         threshold: float = 0.9,
         grayscale: bool = False,
-        delay: float = 3,
+        delay: float = 1,
         timeout: float = 30,
         timeout_message: str | None = None,
     ) -> tuple[str, int, int]:
