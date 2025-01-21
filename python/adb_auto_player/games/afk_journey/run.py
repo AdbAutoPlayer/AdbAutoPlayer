@@ -371,9 +371,16 @@ class AFKJourney(Game):
                 case "notice.png":
                     self.click(530, 1630, scale=True)
                     sleep(3)
+                case "exit.png":
+                    pass
                 case "confirm.png":
-                    self.click(x, y)
-                    sleep(1)
+                    if self.find_template_match("exit.png") is None:
+                        self.click(x, y)
+                        sleep(1)
+                    else:
+                        x_btn = self.find_template_match("x.png")
+                        if x_btn:
+                            self.click(*x_btn)
                 case "time_of_day.png":
                     return None
                 case "dotdotdot.png":
