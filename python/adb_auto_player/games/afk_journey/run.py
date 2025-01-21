@@ -563,13 +563,15 @@ class AFKJourney(Game):
             template, x, y = self.wait_for_any_template(
                 ["assist/join_now.png", "assist/synergy.png", "assist/chat_button.png"],
                 delay=0.1,
-                timeout=1,
+                timeout=2,
             )
         except TimeoutException:
             return False
         if "assist/chat_button.png" == template:
             if self.find_template_match("assist/world_chat.png") is None:
-                self.press_back_button()
+                # Back button no longer reliable closes profile/chat windows
+                # self.press_back_button()
+                self.click(550, 100, scale=True)
                 sleep(1)
             return False
         self.click(x, y)
