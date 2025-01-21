@@ -374,13 +374,17 @@ class AFKJourney(Game):
                 case "exit.png":
                     pass
                 case "confirm.png":
-                    if self.find_template_match("exit.png") is None:
-                        self.click(x, y)
-                        sleep(1)
-                    else:
-                        x_btn = self.find_template_match("x.png")
+                    if self.find_template_match(
+                        "exit_the_game.png", use_previous_screenshot=True
+                    ):
+                        x_btn = self.find_template_match(
+                            "x.png", use_previous_screenshot=True
+                        )
                         if x_btn:
                             self.click(*x_btn)
+                    else:
+                        self.click(x, y)
+                        sleep(1)
                 case "time_of_day.png":
                     return None
                 case "dotdotdot.png":
