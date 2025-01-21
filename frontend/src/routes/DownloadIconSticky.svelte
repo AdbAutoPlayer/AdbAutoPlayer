@@ -5,12 +5,21 @@
   import { LogError, LogInfo } from "$lib/wailsjs/runtime";
   import { marked } from "marked";
   import Modal from "./Modal.svelte";
+
+  const renderer = new marked.Renderer();
+
+  renderer.link = function ({ href, title, text }) {
+    const target = "_blank"; // Add target="_blank"
+    const titleAttr = title ? ` title="${title}"` : "";
+    return `<a href="${href}" target="${target}" rel="noopener noreferrer"${titleAttr}>${text}</a>`;
+  };
   let downloadIconImageSrc: string | null = $state(null);
   let releaseHtmlDownloadUrl: string = $state(
     "https://github.com/yulesxoxo/AdbAutoPlayer/releases",
   );
   let showModal = $state(false);
   let modalRelease: Release | undefined = $state();
+  let modalChangeLog: string | undefined = $state();
   let modalAsset: Asset | undefined = $state();
   interface Release {
     html_url: string;
@@ -39,10 +48,63 @@
     return { appFileName: appFileName, patchFileName: patchFileName };
   }
 
+  function isVersionInRange(
+    version: string,
+    startVersion: string,
+    endVersion: string,
+  ): boolean {
+    const compareVersions = (v1: string, v2: string) => {
+      const parts1 = v1.split(".").map(Number);
+      const parts2 = v2.split(".").map(Number);
+      for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+        const part1 = parts1[i] || 0;
+        const part2 = parts2[i] || 0;
+        if (part1 < part2) return -1;
+        if (part1 > part2) return 1;
+      }
+      return 0;
+    };
+
+    return (
+      compareVersions(version, startVersion) > 0 &&
+      compareVersions(version, endVersion) <= 0
+    );
+  }
+
+  async function getModalChangeLog(
+    currentVersion: string,
+    latestVersion: string,
+  ): Promise<string> {
+    const releasesResponse = await fetch(
+      "https://api.github.com/repos/yulesxoxo/AdbAutoPlayer/releases",
+    );
+    const allReleases: Release[] = await releasesResponse.json();
+
+    const filteredReleases = allReleases.filter((release) => {
+      const version = release.tag_name;
+      return isVersionInRange(version, currentVersion, latestVersion);
+    });
+
+    let changeLog: string = "";
+    let changeLogs: Array<string> = [];
+    filteredReleases.forEach((release: Release) => {
+      let body = release.body.replace(/\*\*Full Changelog\*\*:.*/, "");
+      body.trim();
+      if (body !== "") {
+        changeLogs.push(`# ${release.tag_name}\n${body}\n\n`);
+      }
+      if (changeLogs.length > 0) {
+        changeLog = changeLogs.join("\n___\n");
+        changeLog +=
+          "\n___\n**Full Changelog**: https://github.com/yulesxoxo/AdbAutoPlayer/compare/" +
+          `${currentVersion}...${latestVersion}`;
+      }
+    });
+
+    return changeLog;
+  }
+
   async function checkForNewRelease(currentVersion: string): Promise<void> {
-    currentVersion = currentVersion.startsWith("v")
-      ? currentVersion.slice(1)
-      : currentVersion;
     try {
       const response = await fetch(
         "https://api.github.com/repos/yulesxoxo/AdbAutoPlayer/releases/latest",
@@ -60,9 +122,14 @@
       }
 
       if (response.ok && releaseData.tag_name) {
-        const latestVersion = releaseData.tag_name.startsWith("v")
-          ? releaseData.tag_name.slice(1)
-          : releaseData.tag_name;
+        const latestVersion = releaseData.tag_name;
+
+        if (latestVersion === currentVersion) {
+          console.log("no new updates");
+          return;
+        }
+
+        modalChangeLog = await getModalChangeLog(currentVersion, latestVersion);
 
         const currentParts = currentVersion.split(".").map(Number);
         const latestParts = latestVersion.split(".").map(Number);
@@ -132,9 +199,9 @@
   function runVersionUpdate() {
     let currentVersion = localStorage.getItem("downloadedVersion");
     if (!currentVersion || isVersionGreater(version, currentVersion)) {
-      currentVersion = version;
+      currentVersion = "1.2.1";
     }
-    if (version === "0.0.0") {
+    if (version === "0.0.1") {
       LogInfo("Version: dev");
       LogInfo("Skipping update for dev");
       return;
@@ -180,7 +247,7 @@
       </h2>
     {/if}
   {/snippet}
-  {@html marked(modalRelease?.body || "")}
+  {@html marked(modalChangeLog || "", { renderer: renderer })}
   {#snippet footer()}
     {#if modalAsset}
       <button style="display: inline-block" onclick={downloadAsset}>
