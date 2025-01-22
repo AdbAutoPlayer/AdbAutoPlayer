@@ -671,7 +671,6 @@ class AFKJourney(Game):
             else:
                 logging.info(f"{faction.capitalize()}s excluded in config")
 
-        print(results)
         for faction, result in results.items():
             logging.info(f"Starting {faction.capitalize()} Tower")
             self.__navigate_to_legend_trials_select_tower()
