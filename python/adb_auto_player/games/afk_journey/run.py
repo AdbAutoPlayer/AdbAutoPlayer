@@ -659,7 +659,9 @@ class AFKJourney(Game):
         self.get_screenshot()
         for faction, path in faction_paths.items():
             if faction.capitalize() in towers:
-                result = self.find_template_match(path, use_previous_screenshot=True)
+                result = self.find_template_match(
+                    path, threshold=0.975, use_previous_screenshot=True
+                )
                 if result is None:
                     logging.warning(
                         f"{faction.capitalize()}s Tower not available or not found"
@@ -669,6 +671,7 @@ class AFKJourney(Game):
             else:
                 logging.info(f"{faction.capitalize()}s excluded in config")
 
+        print(results)
         for faction, result in results.items():
             logging.info(f"Starting {faction.capitalize()} Tower")
             self.__navigate_to_legend_trials_select_tower()
