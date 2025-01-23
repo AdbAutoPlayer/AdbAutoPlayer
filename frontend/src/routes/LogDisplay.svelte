@@ -27,7 +27,7 @@
   });
 </script>
 
-<div class="log-container" bind:this={logContainer}>
+<div class="log-container selectable" bind:this={logContainer}>
   {#each logs as message}
     <div style="color: {getLogColor(message)}">
       {message}

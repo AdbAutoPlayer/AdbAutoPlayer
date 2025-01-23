@@ -10,7 +10,7 @@
   } = $props();
 </script>
 
-<div class="command-panel">
+<div class="command-panel no-select">
   <h2>{title}</h2>
   {@render children?.()}
 </div>

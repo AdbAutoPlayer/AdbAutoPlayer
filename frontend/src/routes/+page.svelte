@@ -173,8 +173,10 @@
   });
 </script>
 
-<main class="container">
-  <h1>{activeGame?.GameTitle ?? "Please start a supported game"}</h1>
+<main class="container no-select">
+  <h1>
+    {activeGame?.GameTitle ?? "Please start a supported game"}
+  </h1>
   {#if showConfigForm}
     <CommandPanel title={"Config"}>
       <ConfigForm
