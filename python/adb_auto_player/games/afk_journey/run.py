@@ -178,7 +178,11 @@ class AFKJourney(Game):
     def __copy_suggested_formation_from_records(self, formations: int = 1) -> bool:
         records = self.wait_for_template("records.png")
         self.click(*records)
-        copy = self.wait_for_template("copy.png", timeout=5)
+        copy = self.wait_for_template(
+            "copy.png",
+            timeout=5,
+            timeout_message="No formations available for this battle",
+        )
 
         start_count = 0
         while True:
