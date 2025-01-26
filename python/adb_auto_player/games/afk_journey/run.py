@@ -713,7 +713,7 @@ class AFKJourney(Game):
                         "Not implemented assuming this shows up after the last floor?"
                     )
                     return None
-            logging.info(f"{faction.capitalize()}Trials failed")
+            logging.info(f"{faction.capitalize()} Trials failed")
             return None
         return None
 
