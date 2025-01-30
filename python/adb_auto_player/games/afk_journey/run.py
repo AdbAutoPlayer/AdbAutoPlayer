@@ -2,7 +2,7 @@ import re
 from pathlib import Path
 from time import sleep
 import logging
-from typing import Callable
+from typing import Callable, NoReturn
 
 from adb_auto_player.command import Command
 from adb_auto_player.exceptions import (
@@ -13,6 +13,7 @@ from adb_auto_player.exceptions import (
 from adb_auto_player.games.afk_journey.config import Config
 from adb_auto_player.games.game import Game
 from adb_auto_player.config_loader import get_games_dir
+from adb_auto_player.screen_utils import MatchMode
 
 
 class AFKJourney(Game):
@@ -99,6 +100,16 @@ class AFKJourney(Game):
                 action=self.push_legend_trials,
                 kwargs={},
             ),
+            Command(
+                name="Event",
+                action=self.happy_satchel,
+                kwargs={},
+            ),
+            Command(
+                name="Event2",
+                action=self.monopoly_assist,
+                kwargs={},
+            ),
         ]
 
     def __get_config_attribute_from_mode(self, attribute: str):
@@ -134,7 +145,7 @@ class AFKJourney(Game):
             ):
                 continue
             else:
-                self.wait_for_template("records.png")
+                self.wait_for_any_template(["records.png", "formations_icon.png"])
 
             if self.__handle_single_stage():
                 return True
@@ -242,9 +253,16 @@ class AFKJourney(Game):
     def __start_battle(self) -> bool:
         spend_gold = self.__get_config_attribute_from_mode("spend_gold")
 
-        self.wait_for_template("records.png")
+        result = self.wait_for_any_template(["records.png", "formations_icon.png"])
+        if result is None:
+            return False
         self.click(850, 1780, scale=True)
-        self.wait_until_template_disappears("records.png")
+        template, x, y = result
+        match template:
+            case "records.png":
+                self.wait_until_template_disappears("records.png")
+            case "formations_icon.png":
+                self.wait_until_template_disappears("formations_icon.png")
         sleep(1)
 
         if self.find_any_template(["spend.png", "gold.png"]) and not spend_gold:
@@ -283,6 +301,7 @@ class AFKJourney(Game):
                     "duras_trials/first_clear.png",
                     "retry.png",
                     "confirm.png",
+                    "power_up.png",
                     "result.png",
                 ],
                 delay=3,
@@ -290,6 +309,9 @@ class AFKJourney(Game):
             )
 
             match template:
+                case "power_up.png":
+                    self.click(550, 1800, scale=True)
+                    return False
                 case "confirm.png":
                     logging.warning("Battle data differs between client and server")
                     self.click(*template)
@@ -761,3 +783,54 @@ class AFKJourney(Game):
             )
         sleep(1)
         return None
+
+    def happy_satchel(self) -> NoReturn:
+        self.start_up()
+        while True:
+            claim_button = self.find_template_match("event/claim_button.png")
+            if claim_button:
+                self.click(*claim_button)
+                # click again to close popup
+                sleep(2)
+                self.click(*claim_button)
+            # switch to world chat and back because sometimes chat stops scrolling
+            world_chat_icon = self.find_template_match("event/world_chat_icon.png")
+            if world_chat_icon:
+                self.click(*world_chat_icon)
+                sleep(1)
+            guild_chat_icon = self.find_template_match("event/guild_chat_icon.png")
+            if guild_chat_icon:
+                self.click(*guild_chat_icon)
+            sleep(1)
+
+    def monopoly_assist(self) -> NoReturn:
+        self.start_up()
+        scroll_down_count = 0
+        while True:
+            try:
+                self.wait_for_template("event/log.png", timeout=3)
+            except TimeoutException:
+                self.press_back_button()
+                continue
+            count = 0
+            while count < scroll_down_count:
+                self.scroll_down()
+                count += 1
+
+            assist = self.find_template_match(
+                "event/assist.png",
+                match_mode=MatchMode.BOTTOM_RIGHT,
+            )
+            if assist is None:
+                self.scroll_down()
+                continue
+            self.click(*assist)
+            sleep(3)
+            try:
+                if self.handle_battle_screen(use_suggested_formations=False):
+                    logging.info("Won")
+                else:
+                    logging.warning("Lost")
+                    scroll_down_count += 1
+            except Exception as e:
+                logging.error(f"{e}")

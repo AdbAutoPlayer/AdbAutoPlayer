@@ -325,6 +325,11 @@ class Game:
     def press_back_button(self) -> None:
         self.get_device().keyevent(4)
 
+    def scroll_down(self) -> None:
+        logging.debug("scrolling down")
+        self.get_device().swipe(500, 1000, 500, 500)
+        sleep(2)
+
     T = TypeVar("T")
 
     def __execute_or_timeout(
