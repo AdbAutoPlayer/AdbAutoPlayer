@@ -160,7 +160,7 @@
           UpdatePatch(patch.browser_download_url)
             .then(() => {
               localStorage.setItem("downloadedVersion", releaseData.tag_name);
-              LogInfo("Version: " + releaseData.tag_name);
+              LogInfo(`Downloaded Patch Version: ${releaseData.tag_name}`);
               $logoAwake = true;
               modalRelease = releaseData;
               modalAsset = undefined;
@@ -202,11 +202,11 @@
       currentVersion = version;
     }
     if (version === "0.0.0") {
-      LogInfo("Version: dev");
+      LogInfo(`Patch Version: ${currentVersion} App Version: dev`);
       LogInfo("Skipping update for dev");
       return;
     }
-    LogInfo("Version: " + currentVersion);
+    LogInfo(`Patch Version: ${currentVersion} App Version: ${version}`);
     checkForNewRelease(currentVersion);
   }
 
