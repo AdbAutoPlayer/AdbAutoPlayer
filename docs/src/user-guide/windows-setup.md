@@ -1,6 +1,6 @@
 # Windows Setup Guide
 
-This guide will walk you through setting up **AdbAutoPlayer** on a Windows system using **LDPlayer** as the emulator.
+This guide will walk you through setting up **AdbAutoPlayer** on a Windows system using **MuMuPlayer** as the emulator.
 
 ---
 
@@ -11,29 +11,23 @@ This guide will walk you through setting up **AdbAutoPlayer** on a Windows syste
      [AdbAutoPlayer_Windows.zip](https://github.com/yulesxoxo/AdbAutoPlayer/releases/latest).
    - Extract the contents of the `.zip` file to a folder on your computer.
 
-2. **Install LDPlayer**
-   - Download and install **LDPlayer**: [LDPlayer Download](https://www.ldplayer.net/).
+2. **Install MuMuPlayer**
+   - Download and install **MuMuPlayer**: [MuMuPlayer Download](https://www.mumuplayer.com/).
 
 ---
 
-## Configuring LDPlayer
+## Configuring MuMuPlayer
 
-1. **Start LDPlayer**
-   Launch the LDPlayer emulator after installation.
+1. **Start MuMuPlayer**
+   Launch the MuMuPlayer emulator after installation.
 
 2. **Open Settings**
-   Navigate to the settings menu:
-   ![LDPlayer Settings](../images/ld_player_settings.png)
+   ![MuMuPlayer Settings](../images/windows/mumu_player_settings.png)
 
-3. **Set the Resolution**
-   - Go to **Display**:
-     - **Resolution**: Select **Phone (1080 x 1920)**.
+3. **Set the Resolution to 1080 x 1920**
+  ![mumu_player_settings_display.png](../images/windows/mumu_player_settings_display.png)
 
-4. **Enable ADB Debugging**
-   - Go to **Others**:
-     - **ADB Debugging**: Enable **Local Connection**.
-
-5. **Save Settings**
+4**Save Settings**
    - Click **Save** and restart the Emulator to apply the changes.
 
 ---

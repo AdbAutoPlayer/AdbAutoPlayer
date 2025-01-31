@@ -10,7 +10,7 @@ This is a Warning that does not necessarily need to be fixed. You can try follow
 
 ### macOS
 - Start **MuMuPlayer**, then go to **Tools** → **Open ADB**:
-  ![Open ADB](../images/mumu_player_open_adb.png)
+  ![Open ADB](../images/mumu_player_pro_open_adb.png)
 - Minimize and ignore the terminal window that opens.
 
 ---

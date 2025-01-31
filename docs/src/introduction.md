@@ -8,7 +8,7 @@ AdbAutoPlayer is a tool designed to automate repetitive tasks and dailies in And
 ## Compatibility
 
 - **Tested Environment:**
-  Windows with [LDPlayer](https://www.ldplayer.net/) emulator.
+  Windows with [MuMuPlayer](https://www.mumuplayer.com/) emulator.
 
 - **Limited Testing:**
   Apple M1 Max using [MuMuPlayer Pro](https://www.mumuplayer.com/mac/).
