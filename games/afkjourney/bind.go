@@ -83,12 +83,12 @@ func NewAFKJourney(useProdPath bool) games.Game {
 				Args:  []string{"AssistSynergyAndCC"},
 			},
 			{
-				Label: "Battle (suggested Formations)",
-				Args:  []string{"BattleSuggested"},
+				Label: "[Event] Guild Chat Claim",
+				Args:  []string{"EventGuildChatClaim"},
 			},
 			{
-				Label: "Battle (current Formation)",
-				Args:  []string{"Battle"},
+				Label: "[Event] Monopoly Assist",
+				Args:  []string{"EventMonopolyAssist"},
 			},
 		},
 		ConfigConstraints: getAFKJourneyConfigConstraints(),

@@ -81,16 +81,6 @@ class AFKJourney(Game):
                 kwargs={},
             ),
             Command(
-                name="BattleSuggested",
-                action=self.handle_battle_screen,
-                kwargs={"use_suggested_formations": True},
-            ),
-            Command(
-                name="Battle",
-                action=self.handle_battle_screen,
-                kwargs={"use_suggested_formations": False},
-            ),
-            Command(
                 name="AssistSynergyAndCC",
                 action=self.assist_synergy_corrupt_creature,
                 kwargs={},
@@ -101,13 +91,13 @@ class AFKJourney(Game):
                 kwargs={},
             ),
             Command(
-                name="Event",
-                action=self.happy_satchel,
+                name="EventGuildChatClaim",
+                action=self.event_guild_chat_claim,
                 kwargs={},
             ),
             Command(
-                name="Event2",
-                action=self.monopoly_assist,
+                name="EventMonopolyAssist",
+                action=self.event_monopoly_assist,
                 kwargs={},
             ),
         ]
@@ -145,7 +135,9 @@ class AFKJourney(Game):
             ):
                 continue
             else:
-                self.wait_for_any_template(["records.png", "formations_icon.png"])
+                self.wait_for_any_template(
+                    ["battle/records.png", "battle/formations_icon.png"]
+                )
 
             if self.__handle_single_stage():
                 return True
@@ -169,7 +161,7 @@ class AFKJourney(Game):
         counter = formation_num - start_count
         while counter > 1:
             formation_next = self.wait_for_template(
-                "formation_next.png",
+                "battle/formation_next.png",
                 timeout=5,
                 timeout_message=f"Formation #{formation_num} not found",
             )
@@ -187,7 +179,7 @@ class AFKJourney(Game):
         return True
 
     def __copy_suggested_formation_from_records(self, formations: int = 1) -> bool:
-        records = self.wait_for_template("records.png")
+        records = self.wait_for_template("battle/records.png")
         self.click(*records)
         copy = self.wait_for_template(
             "copy.png",
@@ -252,16 +244,18 @@ class AFKJourney(Game):
     def __start_battle(self) -> bool:
         spend_gold = self.__get_config_attribute_from_mode("spend_gold")
 
-        result = self.wait_for_any_template(["records.png", "formations_icon.png"])
+        result = self.wait_for_any_template(
+            ["battle/records.png", "battle/formations_icon.png"]
+        )
         if result is None:
             return False
         self.click(850, 1780, scale=True)
         template, x, y = result
         match template:
-            case "records.png":
-                self.wait_until_template_disappears("records.png")
-            case "formations_icon.png":
-                self.wait_until_template_disappears("formations_icon.png")
+            case "battle/records.png":
+                self.wait_until_template_disappears("battle/records.png")
+            case "battle/formations_icon.png":
+                self.wait_until_template_disappears("battle/formations_icon.png")
         sleep(1)
 
         if self.find_any_template(["spend.png", "gold.png"]) and not spend_gold:
@@ -296,19 +290,23 @@ class AFKJourney(Game):
 
             template, x, y = self.wait_for_any_template(
                 [
+                    "battle/victory_rewards.png",
                     "next.png",
                     "duras_trials/first_clear.png",
                     "retry.png",
                     "confirm.png",
-                    "power_up.png",
-                    "result.png",
+                    "battle/power_up.png",
+                    "battle/result.png",
                 ],
                 delay=3,
                 timeout=self.BATTLE_TIMEOUT,
             )
 
             match template:
-                case "power_up.png":
+                case "battle/victory_rewards.png":
+                    self.click(550, 1800, scale=True)
+                    return True
+                case "battle/power_up.png":
                     self.click(550, 1800, scale=True)
                     return False
                 case "confirm.png":
@@ -322,7 +320,7 @@ class AFKJourney(Game):
                 case "retry.png":
                     logging.info(f"Lost Battle #{count}")
                     self.click(x, y)
-                case "result.png":
+                case "battle/result.png":
                     self.click(950, 1800, scale=True)
                     return True
         return False
@@ -498,10 +496,14 @@ class AFKJourney(Game):
         count: int = 0
         while True:
             template, _, _ = self.wait_for_any_template(
-                ["records.png", "duras_trials/battle.png", "duras_trials/sweep.png"]
+                [
+                    "battle/records.png",
+                    "duras_trials/battle.png",
+                    "duras_trials/sweep.png",
+                ]
             )
 
-            if nightmare_mode and template != "records.png":
+            if nightmare_mode and template != "battle/records.png":
                 nightmare = self.find_template_match("duras_trials/nightmare.png")
                 if nightmare is None:
                     logging.warning("Nightmare Button not found")
@@ -521,7 +523,11 @@ class AFKJourney(Game):
                         return None
             else:
                 template, x, y = self.wait_for_any_template(
-                    ["records.png", "duras_trials/battle.png", "duras_trials/sweep.png"]
+                    [
+                        "battle/records.png",
+                        "duras_trials/battle.png",
+                        "duras_trials/sweep.png",
+                    ]
                 )
                 match template:
                     case "duras_trials/sweep.png":
@@ -529,7 +535,7 @@ class AFKJourney(Game):
                         return None
                     case "duras_trials/battle.png":
                         self.click(x, y)
-                    case "records.png":
+                    case "battle/records.png":
                         pass
 
             result = self.handle_battle_screen(
@@ -786,41 +792,54 @@ class AFKJourney(Game):
         sleep(1)
         return None
 
-    def happy_satchel(self) -> NoReturn:
+    def event_guild_chat_claim(self) -> NoReturn:
         self.start_up()
+        logging.info("This claims rewards in Guild Chat (e.g. Happy Satchel)")
+        logging.info("Opening chat")
+        self.__navigate_to_default_state()
+        self.click(1010, 1080, scale=True)
+        sleep(3)
         while True:
-            claim_button = self.find_template_match("event/claim_button.png")
+            claim_button = self.find_template_match(
+                "event/guild_chat_claim/claim_button.png"
+            )
             if claim_button:
                 self.click(*claim_button)
                 # click again to close popup
                 sleep(2)
                 self.click(*claim_button)
             # switch to world chat and back because sometimes chat stops scrolling
-            world_chat_icon = self.find_template_match("event/world_chat_icon.png")
+            world_chat_icon = self.find_template_match(
+                "event/guild_chat_claim/world_chat_icon.png"
+            )
             if world_chat_icon:
                 self.click(*world_chat_icon)
                 sleep(1)
-            guild_chat_icon = self.find_template_match("event/guild_chat_icon.png")
+            guild_chat_icon = self.find_template_match(
+                "event/guild_chat_claim/guild_chat_icon.png"
+            )
             if guild_chat_icon:
                 self.click(*guild_chat_icon)
             sleep(1)
 
-    def monopoly_assist(self) -> NoReturn:
+    def event_monopoly_assist(self) -> NoReturn:
         self.start_up()
+        logging.info("This assists friends on Monopoly board events to farm Pal-Coins")
+        logging.warning("You have to open the Monopoly assists screen yourself")
         scroll_down_count = 0
         while True:
-            try:
-                self.wait_for_template("event/log.png", timeout=3)
-            except TimeoutException:
-                self.press_back_button()
-                continue
+            self.wait_for_template(
+                "event/monopoly_assist/log.png",
+                timeout=3,
+                timeout_message="Monopoly assists screen not found",
+            )
             count = 0
             while count < scroll_down_count:
                 self.scroll_down()
                 count += 1
 
             assist = self.find_template_match(
-                "event/assist.png",
+                "event/monopoly_assist/assists.png",
                 match_mode=MatchMode.BOTTOM_RIGHT,
             )
             if assist is None:
