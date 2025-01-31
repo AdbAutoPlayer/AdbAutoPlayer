@@ -10,7 +10,7 @@ push_both_modes = true
 spend_gold = false
 
 [duras_trials]
-attempts = 5
+attempts = 2
 formations = 7
 use_suggested_formations = true
 spend_gold = false

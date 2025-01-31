@@ -17,7 +17,7 @@ class AFKStagesConfig(BaseModel):
 
 
 class DurasTrialsConfig(BaseModel):
-    attempts: int = 5
+    attempts: int = 2
     formations: int = 7
     use_suggested_formations: bool = True
     spend_gold: bool = False
