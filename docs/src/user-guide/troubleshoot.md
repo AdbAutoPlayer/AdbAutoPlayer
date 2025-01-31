@@ -6,11 +6,11 @@
 This is a Warning that does not necessarily need to be fixed. You can try following things:
 
 ### Windows
-- Start **LDPlayer** and check the [Windows Setup Guide](windows-setup.md) if LDPlayer is configured correctly and running this should not happen
+- Start **MuMuPlayer** and check the [Windows Setup Guide](windows-setup.md) if MuMuPlayer is configured correctly and running this should not happen
 
 ### macOS
 - Start **MuMuPlayer**, then go to **Tools** → **Open ADB**:
-  ![Open ADB](../images/mumu_player_pro_open_adb.png)
+  ![Open ADB](../images/macos/mumu_player_pro_open_adb.png)
 - Minimize and ignore the terminal window that opens.
 
 ---
