@@ -4,6 +4,7 @@ import (
 	"adb-auto-player/internal/config"
 	"fmt"
 	"github.com/electricbubble/gadb"
+	"strconv"
 	"strings"
 )
 
@@ -14,13 +15,13 @@ func GetClient() (*gadb.Client, error) {
 	if inMemoryClient != nil {
 		return inMemoryClient, nil
 	}
-	loadConfig, err := config.LoadConfig[config.MainConfig]("config.toml")
+	mainConfig, err := config.LoadConfig[config.MainConfig]("config.toml")
 	if err != nil {
 		return nil, err
 	}
 	adbClient, err := gadb.NewClientWith(
-		loadConfig.ADB.Host,
-		loadConfig.ADB.Port,
+		mainConfig.ADB.Host,
+		mainConfig.ADB.Port,
 	)
 	if err != nil {
 		return nil, err
@@ -43,7 +44,21 @@ func GetDevice() (*gadb.Device, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	serial := mainConfig.Device.ID
+	if strings.Contains(serial, ":") {
+		parts := strings.Split(serial, ":")
+		if len(parts) == 2 {
+			address := parts[0]
+			portStr := parts[1]
+
+			port, err := strconv.Atoi(portStr)
+			if err == nil {
+				_ = adbClient.Connect(address, port)
+			}
+		}
+	}
+
 	deviceList, err := adbClient.DeviceList()
 	if err != nil {
 		return nil, err
@@ -79,4 +94,9 @@ func GetRunningAppPackageName() (*string, error) {
 		value = value[:idx]
 	}
 	return &value, nil
+}
+
+func ResetClientAndDevice() {
+	inMemoryClient = nil
+	inMemoryDevice = nil
 }

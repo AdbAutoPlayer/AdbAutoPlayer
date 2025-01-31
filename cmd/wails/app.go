@@ -56,6 +56,7 @@ func (a *App) SaveMainConfig(mainConfig config.MainConfig) error {
 	}
 	runtime.LogInfo(a.ctx, "Saved Main config")
 	GetProcessManager().logger.SetLogLevelFromString(mainConfig.Logging.Level)
+	adb.ResetClientAndDevice()
 	return nil
 }
 
