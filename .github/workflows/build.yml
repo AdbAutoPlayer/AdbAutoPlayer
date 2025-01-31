@@ -4,15 +4,7 @@ on:
   release:
     types:
       - published
-  push:
-    branches:
-      - main
-    paths:
-      - '**/*'
-      - '!docs/**'
-      - '!.github/workflows/**'
-      - 'workflows/build.yml'
-      - '!**/.idea/**'
+  workflow_dispatch:
 
 jobs:
   build-and-release:
