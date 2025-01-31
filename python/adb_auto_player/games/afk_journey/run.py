@@ -453,11 +453,14 @@ class AFKJourney(Game):
             )
             return None
 
+        first_banner = True
         for banner in rate_up_banners:
-            self.__navigate_to_duras_trials_screen()
+            if not first_banner:
+                self.__navigate_to_duras_trials_screen()
             self.__handle_dura_screen(*banner)
             self.__navigate_to_duras_trials_screen()
             self.__handle_dura_screen(*banner, nightmare_mode=True)
+            first_banner = False
 
         return None
 
