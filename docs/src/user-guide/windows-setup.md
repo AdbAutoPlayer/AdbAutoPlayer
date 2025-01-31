@@ -27,7 +27,7 @@ This guide will walk you through setting up **AdbAutoPlayer** on a Windows syste
 3. **Set the Resolution to 1080 x 1920**
   ![mumu_player_settings_display.png](../images/windows/mumu_player_settings_display.png)
 
-4**Save Settings**
+4. **Save Settings**
    - Click **Save** and restart the Emulator to apply the changes.
 
 ---
