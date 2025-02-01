@@ -49,6 +49,12 @@
 
       menuButtons.push(
         {
+          label: "Edit Main Config",
+          callback: () => openMainConfigForm(),
+          active: false,
+          alwaysEnabled: false,
+        },
+        {
           label: "Edit Game Config",
           callback: () => openGameConfigForm(activeGame),
           active: false,
