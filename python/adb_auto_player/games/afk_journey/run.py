@@ -290,9 +290,10 @@ class AFKJourney(Game):
 
             template, x, y = self.wait_for_any_template(
                 [
-                    "battle/victory_rewards.png",
-                    "next.png",
+                    "duras_trials/no_next.png",
                     "duras_trials/first_clear.png",
+                    "next.png",
+                    "battle/victory_rewards.png",
                     "retry.png",
                     "confirm.png",
                     "battle/power_up.png",
@@ -303,6 +304,9 @@ class AFKJourney(Game):
             )
 
             match template:
+                case "duras_trials/no_next.png":
+                    self.press_back_button()
+                    return True
                 case "battle/victory_rewards.png":
                     self.click(550, 1800, scale=True)
                     return True
