@@ -5,7 +5,6 @@ go 1.23
 toolchain go1.23.4
 
 require (
-	github.com/electricbubble/gadb v0.1.0
 	github.com/pelletier/go-toml/v2 v2.2.3
 	github.com/stretchr/testify v1.10.0
 	github.com/wailsapp/wails/v2 v2.9.2

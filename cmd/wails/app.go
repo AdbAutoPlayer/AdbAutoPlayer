@@ -3,7 +3,6 @@ package main
 import (
 	"adb-auto-player/games"
 	"adb-auto-player/games/afkjourney"
-	"adb-auto-player/internal/adb"
 	"adb-auto-player/internal/config"
 	"adb-auto-player/internal/ipc"
 	"archive/zip"
@@ -56,7 +55,6 @@ func (a *App) SaveMainConfig(mainConfig config.MainConfig) error {
 	}
 	runtime.LogInfo(a.ctx, "Saved Main config")
 	GetProcessManager().logger.SetLogLevelFromString(mainConfig.Logging.Level)
-	adb.ResetClientAndDevice()
 	return nil
 }
 
@@ -96,20 +94,16 @@ func getAllGames(useProdPath bool) []games.Game {
 }
 
 func (a *App) GetRunningSupportedGame() (*games.Game, error) {
-	packageName, err := adb.GetRunningAppPackageName()
-	if err != nil {
-		runtime.LogErrorf(a.ctx, "%v", err)
-		return nil, err
-	}
+	packageName := "com.farlightgames.igame.gp"
 
 	for _, game := range getAllGames(a.useProdPath) {
 		for _, pName := range game.PackageNames {
-			if pName == *packageName {
+			if pName == packageName {
 				return &game, nil
 			}
 		}
 	}
-	return nil, fmt.Errorf("%s is not supported", *packageName)
+	return nil, fmt.Errorf("%s is not supported", packageName)
 }
 
 func (a *App) StartGameProcess(game games.Game, args []string) error {
