@@ -482,8 +482,7 @@ class AFKJourney(Game):
         self.click(460, 1830, scale=True)
         duras_trials_label = self.wait_for_template("duras_trials/label.png")
         self.click(*duras_trials_label)
-        featured_heroes = self.wait_for_template("duras_trials/featured_heroes.png")
-        self.click(*featured_heroes)
+        self.wait_for_template("duras_trials/featured_heroes.png")
         return None
 
     def __handle_dura_screen(
