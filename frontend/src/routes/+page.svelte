@@ -9,6 +9,7 @@
     TerminateGameProcess,
     IsGameProcessRunning,
   } from "$lib/wailsjs/go/main/App";
+  import { LogError } from "$lib/wailsjs/runtime";
   import { onDestroy, onMount } from "svelte";
   import CommandPanel from "./CommandPanel.svelte";
   import ConfigForm from "./ConfigForm.svelte";
@@ -27,12 +28,18 @@
   let configFormProps: Record<string, any> = $state({});
   let activeGame: games.Game | null = $state(null);
 
+  let openFormIsMainConfig: boolean = $state(false);
+
   let configSaveCallback: (config: object) => void = $derived.by(() => {
+    if (openFormIsMainConfig) {
+      return onMainConfigSave;
+    }
     if (activeGame?.GameTitle == "AFK Journey") {
       return onAFKJourneyConfigSave;
     }
-
-    return onMainConfigSave;
+    return function () {
+      LogError("Not Implemented");
+    };
   });
 
   let activeGameMenuButtons: MenuButton[] = $derived.by(() => {
@@ -122,6 +129,7 @@
     if (game === null) {
       return;
     }
+    openFormIsMainConfig = false;
     $logoAwake = false;
     GetEditableGameConfig(game)
       .then((result) => {
@@ -135,6 +143,7 @@
   }
 
   function openMainConfigForm() {
+    openFormIsMainConfig = true;
     $logoAwake = false;
     GetEditableMainConfig()
       .then((result) => {
