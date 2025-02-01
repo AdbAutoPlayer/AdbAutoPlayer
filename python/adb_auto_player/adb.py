@@ -12,12 +12,16 @@ def get_device() -> AdbDevice:
     :raises AdbException: Device not found
     """
     main_config = adb_auto_player.config_loader.get_main_config()
-    device_id = main_config.get("device", {}).get("ID", "127.0.0.1:5554")
+    device_id = main_config.get("device", {}).get("ID", "127.0.0.1:5555")
     adb_config = main_config.get("adb", {})
     client = AdbClient(
         host=adb_config.get("host", "127.0.0.1"),
         port=adb_config.get("port", 5037),
     )
+    try:
+        client.connect(device_id)
+    except Exception:
+        pass
     try:
         devices = client.list()
     except Exception:
