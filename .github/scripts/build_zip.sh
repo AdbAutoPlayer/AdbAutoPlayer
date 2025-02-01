@@ -15,6 +15,9 @@ cp "python/adb_auto_player_py_app" "${RELEASE_ZIP_DIR}/games/"
 cp -r "python/adb_auto_player/games/afk_journey/templates/"* "${RELEASE_ZIP_DIR}/games/afk_journey/templates/"
 cp "python/adb_auto_player/games/afk_journey/AFKJourney.toml" "${RELEASE_ZIP_DIR}/games/afk_journey/"
 
+# Copy binaries
+cp -r "python/adb_auto_player/binaries/macos/"* "${RELEASE_ZIP_DIR}/games/"
+
 echo "Files collected in ${RELEASE_ZIP_DIR}:"
 ls -R "${RELEASE_ZIP_DIR}"
 

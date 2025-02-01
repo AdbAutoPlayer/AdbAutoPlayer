@@ -1,4 +1,8 @@
-from adbutils import AdbClient
+import os
+import sys
+
+import adbutils._utils
+from adbutils import AdbClient, AdbError
 from adbutils._device import AdbDevice
 
 import logging
@@ -7,10 +11,26 @@ import adb_auto_player.config_loader
 from adb_auto_player.exceptions import AdbException
 
 
+def __set_adb_path():
+    is_frozen = hasattr(sys, "frozen") or "__compiled__" in globals()
+    logging.debug(f"is_frozen: {is_frozen}")
+    if is_frozen:
+        adb_env_path = os.getenv("ADBUTILS_ADB_PATH")
+        if not adb_env_path or not os.path.isfile(adb_env_path):
+            adb_path = os.path.join(
+                adb_auto_player.config_loader.get_games_dir(),
+                "adb.exe" if os.name == "nt" else "adb",
+            )
+            os.environ["ADBUTILS_ADB_PATH"] = adb_path
+        logging.debug(f"ADBUTILS_ADB_PATH: {os.getenv("ADBUTILS_ADB_PATH")}")
+    logging.debug(f"adb_path: {adbutils._utils.adb_path()}")
+
+
 def get_device() -> AdbDevice:
     """
     :raises AdbException: Device not found
     """
+    __set_adb_path()
     main_config = adb_auto_player.config_loader.get_main_config()
     device_id = main_config.get("device", {}).get("ID", "127.0.0.1:7555")
     adb_config = main_config.get("adb", {})
@@ -20,12 +40,18 @@ def get_device() -> AdbDevice:
     )
     try:
         client.connect(device_id)
-    except Exception:
-        pass
+    except AdbError as e:
+        if "Install adb" in str(e):
+            raise e
+        else:
+            logging.debug(f"client.connect exception: {e}")
+    except Exception as e:
+        logging.debug(f"client.connect exception: {e}")
+
     try:
         devices = client.list()
     except Exception:
-        raise AdbException("Failed to connect to AdbClient check the main_config.toml")
+        raise AdbException("Failed to connect to AdbClient check the config.toml")
     if len(devices) == 0:
         logging.warning("No devices found")
     else:

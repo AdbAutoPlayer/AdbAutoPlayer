@@ -12,6 +12,8 @@ Copy-Item -Path "python/adb_auto_player.exe" -Destination "$ReleaseZipDir/games"
 Copy-Item -Path "python/adb_auto_player/games/afk_journey/templates/*" -Destination $TemplatesDir -Recurse -Force
 Copy-Item -Path "python/adb_auto_player/games/afk_journey/AFKJourney.toml" -Destination (Join-Path $ReleaseZipDir "games/afk_journey") -Force
 
+Copy-Item -Path "python/adb_auto_player/binaries/*" -Destination "$ReleaseZipDir/games" -Recurse -Force
+
 Write-Output "Files collected in ${ReleaseZipDir}:"
 Get-ChildItem -Path $ReleaseZipDir -Recurse
 

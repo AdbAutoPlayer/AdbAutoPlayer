@@ -1,4 +1,4 @@
 *.build/
 *.dist/
 *.onefile-build/
-*.exe
+adb_auto_player.exe
