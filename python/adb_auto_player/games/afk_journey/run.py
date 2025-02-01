@@ -13,7 +13,6 @@ from adb_auto_player.exceptions import (
 from adb_auto_player.games.afk_journey.config import Config
 from adb_auto_player.games.game import Game
 from adb_auto_player.config_loader import get_games_dir
-from adb_auto_player.screen_utils import MatchMode
 
 
 class AFKJourney(Game):
@@ -843,7 +842,6 @@ class AFKJourney(Game):
 
             assist = self.find_template_match(
                 "event/monopoly_assist/assists.png",
-                match_mode=MatchMode.BOTTOM_RIGHT,
             )
             if assist is None:
                 self.scroll_down()
