@@ -2,22 +2,20 @@
 
 ## Supported Resolutions:
 > [!IMPORTANT]
-> Use 1080x1920 if you can I am not testing any other resolution.
+> Use 1080x1920 if possible. Other resolutions are not tested.
 
 - **9:16** e.g. **1080x1920**, **900x1600**, **720x1280**, ...
 
 ## Features
 - **Automated Stage Progression**:
-  - Supports *Season Talent Stages*, *AFK Stages*, *Dura's Trials* and *Legend Trial*.
+  - Supports *Season Talent Stages*, *AFK Stages*, *Dura's Trials*, and *Legend Trial*.
   - Loads suggested formations, starts battles, and progresses to the next stage automatically.
 
-- **Auto Battle**: Retries the current battle repeatedly until it is cleared.
+- **Assist Synergy & CC**: Farms Synergy requests and Corrupt Creature battles for **Guild Quest** and **Pal-Coins**.
 
-- **Assist Synergy & CC**: For Guild Quest and Pal-Coins
----
+- **[Event] Guild Chat Claim**: Claims rewards in Guild Chat, e.g. Happy Satchels.
 
-## Upcoming/Pending Features
-- Proper self updater - waiting for Wails v3 release https://v3alpha.wails.io/status/
+- **[Event] Monopoly Assist**: Farms assists in Monopoly Log for Pal-Coins.
 
 ---
 
@@ -30,15 +28,14 @@ Configuration is loaded when you click any Action.
 
 ### General
 
-- **Excluded Heroes**: Formations using any Hero selected will be skipped.
+- **Excluded Heroes**: Formations including selected Heroes will be skipped.
 
-- **Assist Limit**: After how many Synergy or CC assists to stop.
+- **Assist Limit**: Defines the number of Synergy or CC assists before stopping.
 ---
 
-### AFK Stages
+### Common Battle Settings
 
-> [!NOTE]
-> Auto Battle also uses AFK Stages config.
+These settings apply to **AFK Stages**, **Dura's Trials**, and **Legend Trials**:
 
 - **Attempts**: Specifies how many times to attempt each formation.
 
@@ -48,42 +45,14 @@ Configuration is loaded when you click any Action.
   - `true`: Uses suggested formations from the `Records` button.
   - `false`: Uses your current formation.
 
-- **push_both_modes**: If set to `true`, the app will try the other mode after failing all attempts on all formations.
-
-- **Spend Gold**:
-  - `true`: Gold will be spent to continue retrying after failure.
-  - `false`: Gold will not be spent to keep retrying the trials.
----
-
-### Duras Trials
-
-- **Attempts**: Specifies how many times to attempt each formation.
-
-- **Formations**: Defines the number of suggested formations to copy.
-
-- **Use Suggested Formations**:
-  - `true`: Uses suggested formations from the `Records` button.
-  - `false`: Uses your currently setup formation.
-
 - **Spend Gold**:
   - `true`: Gold will be spent to continue retrying after failure.
   - `false`: Gold will not be spent to keep retrying the trials.
 
----
+### AFK Stages
+
+- **Push Both Modes**: If set to `true`, the app will try the other mode after failing all attempts on all formations.
 
 ### Legend Trials
 
-- **Attempts**: Specifies how many times to attempt each formation.
-
-- **Formations**: Defines the number of suggested formations to copy.
-
-- **Use Suggested Formations**:
-  - `true`: Uses suggested formations from the `Records` button.
-  - `false`: Uses your currently setup formation.
-
-- **Spend Gold**:
-  - `true`: Gold will be spent to continue retrying after failure.
-  - `false`: Gold will not be spent to keep retrying the trials.
-
-- **Towers**: Any Tower not selected will be skipped, mainly for sundays.
----
+- **Towers**: Any unselected tower will be skipped.
