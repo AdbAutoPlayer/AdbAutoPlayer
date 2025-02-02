@@ -1,4 +1,6 @@
 # AFK Journey
+> [!IMPORTANT]
+> Set the game language to English.
 
 ## Supported Resolutions:
 > [!IMPORTANT]
