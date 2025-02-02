@@ -16,21 +16,27 @@ import (
 )
 
 type App struct {
-	ctx         context.Context
-	useProdPath bool
+	ctx               context.Context
+	useProdPath       bool
+	killAdbOnShutdown bool
 }
 
 func NewApp(useProdPath bool) *App {
-	return &App{useProdPath: useProdPath}
+	return &App{useProdPath: useProdPath, killAdbOnShutdown: false}
 }
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	a.killAdbOnShutdown = !IsAdbRunning()
 }
 
 func (a *App) shutdown(ctx context.Context) {
+	a.ctx = ctx
 	pm := GetProcessManager()
 	_, err := pm.TerminateProcess()
+	if a.killAdbOnShutdown {
+		KillAdbProcess()
+	}
 	if err != nil {
 		panic(err)
 	}
