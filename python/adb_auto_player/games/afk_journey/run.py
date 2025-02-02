@@ -828,7 +828,8 @@ class AFKJourney(Game):
         self.start_up()
         logging.info("This assists friends on Monopoly board events to farm Pal-Coins")
         logging.warning("You have to open the Monopoly assists screen yourself")
-        scroll_down_count = 0
+        win_count = 0
+        loss_count = 0
         while True:
             self.wait_for_template(
                 "event/monopoly_assist/log.png",
@@ -836,7 +837,7 @@ class AFKJourney(Game):
                 timeout_message="Monopoly assists screen not found",
             )
             count = 0
-            while count < scroll_down_count:
+            while count < loss_count:
                 self.scroll_down()
                 count += 1
 
@@ -850,9 +851,10 @@ class AFKJourney(Game):
             sleep(3)
             try:
                 if self.handle_battle_screen(use_suggested_formations=False):
-                    logging.info("Won")
+                    win_count += 1
+                    logging.info(f"Win #{win_count} Pal-Coins: #{win_count*15}")
                 else:
-                    logging.warning("Lost")
-                    scroll_down_count += 1
+                    loss_count += 1
+                    logging.warning(f"Loss #{loss_count}")
             except Exception as e:
                 logging.error(f"{e}")
