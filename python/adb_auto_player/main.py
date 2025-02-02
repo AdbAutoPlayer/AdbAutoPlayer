@@ -1,15 +1,32 @@
 import logging
 import sys
+import argparse
 from typing import NoReturn
 
 from adb_auto_player import logging_setup
 from adb_auto_player.command import Command
 from adb_auto_player.games.afk_journey.run import AFKJourney
 
-HELP_COMMANDS = {"help", "-h", "--h", "-help", "--help"}
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="AFK Journey")
+    parser.add_argument("command", help="Command to run")
+    parser.add_argument(
+        "--output", choices=["json", "raw"], default="json", help="Output format"
+    )
+
+    args = parser.parse_args()
+    if args.output == "json":
+        logging_setup.setup_json_log_handler(logging.DEBUG)
+
+    for cmd in __get_commands():
+        if str.lower(cmd.name) == str.lower(args.command):
+            __run_command(cmd)
+
+    sys.exit(0)
 
 
-def get_commands() -> list[Command] | NoReturn:
+def __get_commands() -> list[Command] | NoReturn:
     commands = []
 
     afk_journey = AFKJourney()
@@ -17,13 +34,7 @@ def get_commands() -> list[Command] | NoReturn:
     return commands
 
 
-def show_help():
-    logging.info("Available commands:")
-    for cmd in get_commands():
-        logging.info("\t\t" + cmd.name)
-
-
-def run_command(cmd: Command) -> NoReturn:
+def __run_command(cmd: Command) -> NoReturn:
     try:
         cmd.run()
     except Exception as e:
@@ -32,26 +43,6 @@ def run_command(cmd: Command) -> NoReturn:
     sys.exit(0)
 
 
-def main() -> None:
-    if len(sys.argv) != 2:
-        logging.error("Usage: cli.exe <command>")
-        show_help()
-        sys.exit(1)
-
-    command = sys.argv[1]
-    if command in HELP_COMMANDS:
-        show_help()
-        sys.exit(0)
-
-    for cmd in get_commands():
-        if str.lower(cmd.name) == str.lower(command):
-            run_command(cmd)
-    logging.error(f"Unknown command: {command}")
-    show_help()
-    sys.exit(1)
-
-
 if __name__ == "__main__":
-    logging_setup.setup_json_log_handler(logging.DEBUG)
     logging.getLogger("PIL").setLevel(logging.INFO)
     main()
