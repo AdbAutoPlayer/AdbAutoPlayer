@@ -63,6 +63,10 @@ func (l *FrontendLogger) Trace(message string) {
 	l.buildLogMessage(LogLevelTrace, message)
 }
 
+func (l *FrontendLogger) Tracef(message string, args ...interface{}) {
+	l.buildLogMessage(LogLevelTrace, fmt.Sprintf(message, args...))
+}
+
 func (l *FrontendLogger) Debug(message string) {
 	l.buildLogMessage(LogLevelDebug, message)
 }
@@ -75,16 +79,32 @@ func (l *FrontendLogger) Info(message string) {
 	l.buildLogMessage(LogLevelInfo, message)
 }
 
+func (l *FrontendLogger) Infof(format string, a ...any) {
+	l.buildLogMessage(LogLevelInfo, fmt.Sprintf(format, a...))
+}
+
 func (l *FrontendLogger) Warning(message string) {
 	l.buildLogMessage(LogLevelWarning, message)
+}
+
+func (l *FrontendLogger) Warningf(format string, a ...any) {
+	l.buildLogMessage(LogLevelWarning, fmt.Sprintf(format, a...))
 }
 
 func (l *FrontendLogger) Error(message string) {
 	l.buildLogMessage(LogLevelError, message)
 }
 
+func (l *FrontendLogger) Errorf(format string, a ...any) {
+	l.buildLogMessage(LogLevelError, fmt.Sprintf(format, a...))
+}
+
 func (l *FrontendLogger) Fatal(message string) {
 	l.buildLogMessage(LogLevelFatal, message)
+}
+
+func (l *FrontendLogger) Fatalf(format string, a ...any) {
+	l.buildLogMessage(LogLevelFatal, fmt.Sprintf(format, a...))
 }
 
 func (l *FrontendLogger) buildLogMessage(level LogLevel, message string) {

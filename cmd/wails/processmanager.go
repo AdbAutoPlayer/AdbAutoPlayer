@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/shirou/gopsutil/process"
 	"os"
 	"os/exec"
 	"strings"
@@ -14,7 +15,7 @@ import (
 
 type Manager struct {
 	mutex   sync.Mutex
-	running *os.Process
+	running *process.Process
 	logger  *ipc.FrontendLogger
 	blocked bool
 }
@@ -59,6 +60,12 @@ func (pm *Manager) StartProcess(binaryPath string, args []string) error {
 	}
 	pm.logger.Debugf("Started process with PID: %d", cmd.Process.Pid)
 
+	proc, err := process.NewProcess(int32(cmd.Process.Pid))
+	if err != nil {
+		return fmt.Errorf("failed to create process handle: %w", err)
+	}
+	pm.running = proc
+
 	go func() {
 		scanner := bufio.NewScanner(stdoutPipe)
 		scanner.Buffer(make([]byte, 4096), 1024*1024)
@@ -67,7 +74,7 @@ func (pm *Manager) StartProcess(binaryPath string, args []string) error {
 			line := scanner.Text()
 			var logMessage ipc.LogMessage
 			if err := json.Unmarshal([]byte(line), &logMessage); err != nil {
-				pm.logger.Error("Failed to parse JSON log message: " + err.Error())
+				pm.logger.Errorf("Failed to parse JSON log message: %v", err)
 				continue
 			}
 
@@ -75,20 +82,16 @@ func (pm *Manager) StartProcess(binaryPath string, args []string) error {
 		}
 
 		if err := scanner.Err(); err != nil {
-			if strings.Contains(err.Error(), "file already closed") {
-				// Suppress logging for this error
-				return
+			if !strings.Contains(err.Error(), "file already closed") {
+				pm.logger.Errorf("Error while reading stdout: %v", err)
 			}
-			pm.logger.Error("Error while reading stdout: " + err.Error())
 		}
 	}()
 
-	pm.running = cmd.Process
-
 	go func() {
-		err := cmd.Wait()
+		_, err := cmd.Process.Wait()
 		if err != nil {
-			pm.logger.Error("Process ended with error: " + err.Error())
+			pm.logger.Errorf("Process ended with error: %v", err)
 		}
 
 		pm.mutex.Lock()
@@ -106,14 +109,21 @@ func (pm *Manager) KillProcess() (bool, error) {
 	if pm.running == nil || !pm.isProcessRunning() {
 		return false, nil
 	}
-	if err := pm.running.Kill(); err != nil {
-		return false, err
+
+	children, err := pm.running.Children()
+	if err != nil && !errors.Is(err, process.ErrorNoChildren) {
+		pm.logger.Errorf("Error getting child processes: %v", err)
 	}
 
-	_, err := pm.running.Wait()
-	if err != nil {
-		pm.running = nil
-		return false, err
+	if err := pm.running.Kill(); err != nil {
+		pm.logger.Errorf("Failed to kill process: %v", err)
+	}
+
+	for _, child := range children {
+		print(child.Name())
+		if err := child.Kill(); err != nil {
+			pm.logger.Errorf("Error killing child process %d: %v", child.Pid, err)
+		}
 	}
 
 	pm.running = nil
@@ -135,10 +145,10 @@ func (pm *Manager) isProcessRunning() bool {
 		return false
 	}
 
-	process, err := os.FindProcess(pm.running.Pid)
-	if err != nil || process == nil {
+	running, err := pm.running.IsRunning()
+	if err != nil {
 		return false
 	}
 
-	return true
+	return running
 }

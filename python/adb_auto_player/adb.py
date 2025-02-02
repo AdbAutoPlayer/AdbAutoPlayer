@@ -22,6 +22,16 @@ def __set_adb_path():
                 "adb.exe" if os.name == "nt" else "adb",
             )
             os.environ["ADBUTILS_ADB_PATH"] = adb_path
+            adb_env_path = adb_path
+        # Dev fallback
+        if not adb_env_path or not os.path.isfile(adb_env_path):
+            adb_path = os.path.join(
+                adb_auto_player.config_loader.get_games_dir().parent,
+                "binaries",
+                "windows" if os.name == "nt" else "macos",
+                "adb.exe" if os.name == "nt" else "adb",
+            )
+            os.environ["ADBUTILS_ADB_PATH"] = adb_path
         logging.debug(f"ADBUTILS_ADB_PATH: {os.getenv("ADBUTILS_ADB_PATH")}")
     logging.debug(f"adb_path: {adbutils._utils.adb_path()}")
 
