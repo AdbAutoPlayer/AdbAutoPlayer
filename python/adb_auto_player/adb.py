@@ -67,7 +67,7 @@ def get_device() -> AdbDevice:
     else:
         devices_str = "Devices:"
         for device_info in devices:
-            devices_str += f"\n{device_info.serial}"
+            devices_str += f"\n- {device_info.serial}"
         logging.info(devices_str)
 
     device = __connect_to_device(client, device_id)
