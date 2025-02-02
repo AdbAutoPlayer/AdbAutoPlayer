@@ -33,7 +33,7 @@ func (a *App) startup(ctx context.Context) {
 func (a *App) shutdown(ctx context.Context) {
 	a.ctx = ctx
 	pm := GetProcessManager()
-	_, err := pm.TerminateProcess()
+	_, err := pm.KillProcess()
 	if a.killAdbOnShutdown {
 		KillAdbProcess()
 	}
@@ -123,7 +123,7 @@ func (a *App) StartGameProcess(game games.Game, args []string) error {
 
 func (a *App) TerminateGameProcess() error {
 	pm := GetProcessManager()
-	terminated, err := pm.TerminateProcess()
+	terminated, err := pm.KillProcess()
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "Terminating process: %v", err)
 		return err

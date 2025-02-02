@@ -99,7 +99,7 @@ func (pm *Manager) StartProcess(binaryPath string, args []string) error {
 	return nil
 }
 
-func (pm *Manager) TerminateProcess() (bool, error) {
+func (pm *Manager) KillProcess() (bool, error) {
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
 
