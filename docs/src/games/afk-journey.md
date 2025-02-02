@@ -17,7 +17,7 @@
 ---
 
 ## Upcoming/Pending Features
-- Nothing as of now
+- Proper self updater - waiting for Wails v3 release https://v3alpha.wails.io/status/
 
 ---
 
