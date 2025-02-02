@@ -1,4 +1,6 @@
 <script lang="ts">
+  import "../app.css";
+
   import LogoSticky from "./LogoSticky.svelte";
   import DocumentationIconSticky from "./DocumentationIconSticky.svelte";
   import DownloadIconSticky from "./DownloadIconSticky.svelte";
