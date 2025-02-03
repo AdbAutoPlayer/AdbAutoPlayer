@@ -8,7 +8,7 @@ on:
 
 jobs:
   go-tests:
-    name: "Go Tests (${{ matrix.os }})"
+    name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
