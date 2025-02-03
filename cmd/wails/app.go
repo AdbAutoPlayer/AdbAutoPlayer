@@ -93,16 +93,14 @@ func (a *App) SaveAFKJourneyConfig(afkJourney games.Game, gameConfig afkjourney.
 	return nil
 }
 
-func getAllGames(useProdPath bool) []games.Game {
-	return []games.Game{
-		afkjourney.NewAFKJourney(useProdPath),
-	}
-}
-
 func (a *App) GetRunningSupportedGame() (*games.Game, error) {
 	packageName := "com.farlightgames.igame.gp"
 
-	for _, game := range getAllGames(a.useProdPath) {
+	allGames := []games.Game{
+		afkjourney.NewAFKJourney(a.useProdPath),
+	}
+
+	for _, game := range allGames {
 		for _, pName := range game.PackageNames {
 			if pName == packageName {
 				return &game, nil
