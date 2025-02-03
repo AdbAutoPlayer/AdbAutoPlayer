@@ -24,8 +24,8 @@ class JsonLogHandler(logging.Handler):
         sys.stdout.flush()
 
 
-def setup_json_log_handler(log_level: int):
+def setup_json_log_handler(level: int | str):
     logger = logging.getLogger()
-    logger.setLevel(log_level)
+    logger.setLevel(level)
     json_handler = JsonLogHandler()
     logger.addHandler(json_handler)

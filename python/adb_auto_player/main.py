@@ -14,10 +14,18 @@ def main() -> None:
     parser.add_argument(
         "--output", choices=["json", "raw"], default="json", help="Output format"
     )
+    parser.add_argument(
+        "--log-level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="DEBUG",
+        help="Log level",
+    )
 
     args = parser.parse_args()
     if args.output == "json":
-        logging_setup.setup_json_log_handler(logging.DEBUG)
+        logging_setup.setup_json_log_handler(args.log_level)
+    else:
+        logging.getLogger().setLevel(args.log_level)
 
     for cmd in __get_commands():
         if str.lower(cmd.name) == str.lower(args.command):
