@@ -20,9 +20,9 @@ class TestSanitizePath(unittest.TestCase):
     @patch("os.path.expanduser", return_value=r"C:\Users\mockuser")
     def test_multiple_occurrences(self, mock_expanduser):
         log = r"adb_path: C:\Users\mockuser\AppData\file.txt"
-        r" and C:\Users\mockuser\Desktop\file2.txt"
+        r" and D:\Users\mockuser\Desktop\file2.txt"
         expected = r"adb_path: C:\Users\<redacted>\AppData\file.txt"
-        r" and C:\Users\<redacted>\Desktop\file2.txt"
+        r" and D:\Users\<redacted>\Desktop\file2.txt"
         self.assertEqual(expected, adb_auto_player.logging_setup.sanitize_path(log))
 
 

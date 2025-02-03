@@ -22,8 +22,8 @@ def sanitize_path(log_message):
 
     if "\\" in home_dir:  # Windows path
         username = home_dir.split("\\")[-1]
-        pattern = re.escape(f"C:\\Users\\{username}")
-        replacement = r"C:\\Users\\<redacted>"
+        pattern = re.escape(f":\\Users\\{username}")
+        replacement = r":\\Users\\<redacted>"
     else:  # Unix path
         username = home_dir.split("/")[-1]
         pattern = f"/home/{username}"
