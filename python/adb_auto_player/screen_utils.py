@@ -50,11 +50,6 @@ def load_image(image_path: Path, image_scale_factor: float = 1.0) -> Image.Image
     return image
 
 
-def clear_template_cache() -> None:
-    global template_cache
-    template_cache.clear()
-
-
 def find_template_match(
     base_image: Image.Image,
     template_image: Image.Image,

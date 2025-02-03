@@ -350,8 +350,8 @@ class Game:
 
     T = TypeVar("T")
 
+    @staticmethod
     def __execute_or_timeout(
-        self,
         operation: Callable[[], T | None],
         timeout_message: str,
         delay: float = 1,
