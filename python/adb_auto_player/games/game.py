@@ -330,14 +330,14 @@ class Game:
             )
 
         logging.debug(f"swiping down: {sy} to {ey}")
-        self.swipe(sx=500, sy=sy, ex=500, ey=ey, duration=duration)
+        self.swipe(sx=540, sy=sy, ex=540, ey=ey, duration=duration)
 
     def swipe_up(self, sy: int = 500, ey: int = 1350, duration: float = 1.0) -> None:
         if ey >= sy:
             raise ValueError("s (start y) must be smaller than ey (end y) to swipe up.")
 
         logging.debug(f"swiping up: {sy} to {ey}")
-        self.swipe(sx=500, sy=sy, ex=500, ey=ey, duration=duration)
+        self.swipe(sx=540, sy=sy, ex=540, ey=ey, duration=duration)
 
     def swipe(self, sx: int, sy: int, ex: int, ey: int, duration: float = 1.0):
         if self.get_scale_factor() != 1.0:
