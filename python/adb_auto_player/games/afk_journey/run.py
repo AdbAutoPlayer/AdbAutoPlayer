@@ -833,7 +833,7 @@ class AFKJourney(Game):
         while True:
             self.wait_for_template(
                 "event/monopoly_assist/log.png",
-                timeout=3,
+                timeout=5,
                 timeout_message="Monopoly assists screen not found",
             )
 
