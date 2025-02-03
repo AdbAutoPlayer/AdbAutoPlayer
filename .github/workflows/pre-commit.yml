@@ -1,3 +1,4 @@
+name: Run
 on:
   push:
     branches:
@@ -6,7 +7,7 @@ on:
 
 jobs:
   pre-commit:
-    name: Run pre-commit hooks
+    name: pre-commit hooks
     runs-on: ubuntu-latest
 
     steps:
