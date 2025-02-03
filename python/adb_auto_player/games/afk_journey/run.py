@@ -836,18 +836,22 @@ class AFKJourney(Game):
                 timeout=3,
                 timeout_message="Monopoly assists screen not found",
             )
-            count = 0
-            while count < loss_count:
-                self.scroll_down()
-                count += 1
 
-            assist = self.find_template_match(
-                "event/monopoly_assist/assists.png",
-            )
-            if assist is None:
-                self.scroll_down()
-                continue
-            self.click(*assist)
+            next_assist: tuple[int, int] | None = None
+            count = 0
+            while next_assist is None:
+                assists = self.find_all_template_matches(
+                    "event/monopoly_assist/assists.png"
+                )
+                for assist in assists:
+                    if count >= loss_count:
+                        next_assist = assist
+                        break
+                    count += 1
+                if next_assist is None:
+                    self.swipe_down()
+
+            self.click(*next_assist)
             sleep(3)
             try:
                 if self.handle_battle_screen(use_suggested_formations=False):

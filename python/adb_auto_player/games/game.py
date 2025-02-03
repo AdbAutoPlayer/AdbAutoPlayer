@@ -125,12 +125,10 @@ class Game:
         if not scale:
             self.get_device().click(x, y)
             return None
-        if self.get_scale_factor() == 1.0:
-            self.get_device().click(x, y)
-        else:
-            scaled_x = int(round(x * self.get_scale_factor()))
-            scaled_y = int(round(y * self.get_scale_factor()))
-            self.get_device().click(scaled_x, scaled_y)
+        if self.get_scale_factor() != 1.0:
+            x = int(round(x * self.get_scale_factor()))
+            y = int(round(y * self.get_scale_factor()))
+        self.get_device().click(x, y)
         return None
 
     def get_screenshot(self) -> Image.Image:
@@ -325,9 +323,29 @@ class Game:
     def press_back_button(self) -> None:
         self.get_device().keyevent(4)
 
-    def scroll_down(self) -> None:
-        logging.debug("scrolling down")
-        self.get_device().swipe(500, 1000, 500, 500)
+    def swipe_down(self, sy: int = 1350, ey: int = 500, duration: float = 1.0) -> None:
+        if sy <= ey:
+            raise ValueError(
+                "sy (start y) must be greater than ey (end y) to swipe down."
+            )
+
+        logging.debug(f"swiping down: {sy} to {ey}")
+        self.swipe(sx=500, sy=sy, ex=500, ey=ey, duration=duration)
+
+    def swipe_up(self, sy: int = 500, ey: int = 1350, duration: float = 1.0) -> None:
+        if ey >= sy:
+            raise ValueError("s (start y) must be smaller than ey (end y) to swipe up.")
+
+        logging.debug(f"swiping up: {sy} to {ey}")
+        self.swipe(sx=500, sy=sy, ex=500, ey=ey, duration=duration)
+
+    def swipe(self, sx: int, sy: int, ex: int, ey: int, duration: float = 1.0):
+        if self.get_scale_factor() != 1.0:
+            sx = int(round(sx * self.get_scale_factor()))
+            sy = int(round(sy * self.get_scale_factor()))
+            ex = int(round(ex * self.get_scale_factor()))
+            ey = int(round(ey * self.get_scale_factor()))
+        self.get_device().swipe(sx=sx, sy=sy, ex=ex, ey=ey, duration=duration)
         sleep(2)
 
     T = TypeVar("T")
