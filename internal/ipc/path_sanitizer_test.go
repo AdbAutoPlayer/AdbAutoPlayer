@@ -28,8 +28,8 @@ func TestSanitizePath(t *testing.T) {
 		},
 		{
 			name:      "Multiple Windows paths",
-			input:     `adb_path: C:\Users\testuser\AppData\file.txt and C:\Users\testuser\Desktop\file2.txt`,
-			expected:  `adb_path: C:\Users\<redacted>\AppData\file.txt and C:\Users\<redacted>\Desktop\file2.txt`,
+			input:     `adb_path: C:\Users\testuser\AppData\file.txt and D:\Users\testuser\Desktop\file2.txt`,
+			expected:  `adb_path: C:\Users\<redacted>\AppData\file.txt and D:\Users\<redacted>\Desktop\file2.txt`,
 			isWindows: true,
 			username:  "testuser",
 		},

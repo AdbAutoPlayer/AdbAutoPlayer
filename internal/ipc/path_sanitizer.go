@@ -48,8 +48,8 @@ func (ps *PathSanitizer) SanitizePath(message string) string {
 
 	var pattern, replacement string
 	if ps.isWindows {
-		pattern = `C:\\Users\\` + regexp.QuoteMeta(ps.username)
-		replacement = `C:\Users\<redacted>`
+		pattern = `:\\Users\\` + regexp.QuoteMeta(ps.username)
+		replacement = `:\Users\<redacted>`
 	} else {
 		pattern = `/home/` + regexp.QuoteMeta(ps.username)
 		replacement = `/home/<redacted>`
