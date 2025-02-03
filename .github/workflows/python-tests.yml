@@ -1,0 +1,33 @@
+name: Python Tests
+
+on:
+  push:
+    branches:
+      - "*"
+  workflow_dispatch:
+
+jobs:
+  python-tests:
+    name: ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: install poetry
+        run: python -m pip install poetry
+
+      - name: poetry install
+        working-directory: python
+        run: poetry install
+
+      - name: Run Python tests with Poetry
+        working-directory: python
+        run: poetry run pytest --maxfail=1 --disable-warnings -q

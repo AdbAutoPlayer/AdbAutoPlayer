@@ -8,6 +8,7 @@ on:
 
 jobs:
   build-and-release:
+    name: ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
