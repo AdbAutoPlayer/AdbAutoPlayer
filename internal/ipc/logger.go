@@ -7,8 +7,9 @@ import (
 )
 
 type FrontendLogger struct {
-	ctx      context.Context
-	logLevel uint8
+	ctx       context.Context
+	logLevel  uint8
+	sanitizer *PathSanitizer
 }
 
 var logLevelPriority = map[LogLevel]uint8{
@@ -26,7 +27,8 @@ func (l *FrontendLogger) Startup(ctx context.Context) {
 
 func NewFrontendLogger(logLevel uint8) *FrontendLogger {
 	return &FrontendLogger{
-		logLevel: logLevel,
+		logLevel:  logLevel,
+		sanitizer: NewPathSanitizer(),
 	}
 }
 
@@ -120,5 +122,6 @@ func (l *FrontendLogger) LogMessage(message LogMessage) {
 	if l.logLevel > logLevelPriority[message.Level] {
 		return
 	}
+	message.Message = l.sanitizer.SanitizePath(message.Message)
 	runtime.EventsEmit(l.ctx, "log-message", message)
 }

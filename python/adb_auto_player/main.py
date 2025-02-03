@@ -12,7 +12,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="AFK Journey")
     parser.add_argument("command", help="Command to run")
     parser.add_argument(
-        "--output", choices=["json", "raw"], default="json", help="Output format"
+        "--output",
+        choices=["json", "text", "raw"],
+        default="json",
+        help="Output format",
     )
     parser.add_argument(
         "--log-level",
@@ -22,10 +25,13 @@ def main() -> None:
     )
 
     args = parser.parse_args()
-    if args.output == "json":
-        logging_setup.setup_json_log_handler(args.log_level)
-    else:
-        logging.getLogger().setLevel(args.log_level)
+    match args.output:
+        case "json":
+            logging_setup.setup_json_log_handler(args.log_level)
+        case "text":
+            logging_setup.setup_text_log_handler(args.log_level)
+        case _:
+            logging.getLogger().setLevel(args.log_level)
 
     for cmd in __get_commands():
         if str.lower(cmd.name) == str.lower(args.command):
