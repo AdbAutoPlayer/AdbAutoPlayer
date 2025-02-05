@@ -122,7 +122,6 @@ class AFKJourney(Game):
 
         self.store[self.STORE_FORMATION_NUM] = 0
         if not use_suggested_formations:
-            logging.info("Not using suggested Formations")
             formations = 1
 
         while self.store.get(self.STORE_FORMATION_NUM, 0) < formations:
