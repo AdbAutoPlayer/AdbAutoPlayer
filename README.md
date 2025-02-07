@@ -22,4 +22,4 @@ pip install -r .\requirements-dev.txt
 ## [Frontend Build](frontend/README.md)
 
 ## Contact
-[Discord](https://discord.com/users/518169167048998913)
+[![Discord Presence](https://lanyard.cnrad.dev/api/518169167048998913)](https://discord.com/users/518169167048998913)
