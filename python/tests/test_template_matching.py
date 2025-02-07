@@ -6,11 +6,11 @@ import adb_auto_player.template_matching as template_matching
 
 class TestTemplateMatching(unittest.TestCase):
     def test_compare_roi_similarity(self):
-        f1 = Path("data/records_formation_1.png")
-        f2 = Path("data/records_formation_2.png")
-        f5 = Path("data/records_formation_5.png")
-        f6 = Path("data/records_formation_6.png")
-        f7 = Path("data/records_formation_7.png")
+        f1 = Path("data") / "records_formation_1.png"
+        f2 = Path("data") / "records_formation_2.png"
+        f5 = Path("data") / "records_formation_5.png"
+        f6 = Path("data") / "records_formation_6.png"
+        f7 = Path("data") / "records_formation_7.png"
 
         roi = (450, 280, 780, 400)
         result = template_matching.compare_roi_similarity(
