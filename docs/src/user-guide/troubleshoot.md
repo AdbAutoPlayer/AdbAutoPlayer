@@ -35,9 +35,6 @@ Once connected, you'll see:
 
 ---
 
-## Notes and Support
-- Need help? Reach out on Discord: [@yules](https://discord.com/users/518169167048998913).
-
 ### MacOS
 - Ensure **ADB Debugging** is enabled in **MuMuPlayer Pro** as described above.
 - If **AdbAutoPlayer** doesn't work, verify:

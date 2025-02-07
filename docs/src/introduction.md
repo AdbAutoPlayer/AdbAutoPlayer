@@ -18,11 +18,4 @@ AdbAutoPlayer is a tool designed to automate repetitive tasks and dailies in And
 
 ## Contact
 
-Feel free to reach out to me on Discord: [@yules](https://discord.com/users/518169167048998913).
-
----
-
-## Bonus 🎵
-
-Enjoy this track while botting:
-<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/2jt6PzDKvyi9gcwILysaep?utm_source=generator&theme=0" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+[![Discord Presence](https://lanyard.cnrad.dev/api/518169167048998913)](https://discord.com/users/518169167048998913)
