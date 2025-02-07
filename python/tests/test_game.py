@@ -21,7 +21,7 @@ class MockGame(Game):
     def get_template_dir_path(self) -> Path:
         return Path()
 
-    def load_config(self):
+    def load_config(self) -> None:
         return None
 
     def get_menu_commands(self) -> list[Command]:

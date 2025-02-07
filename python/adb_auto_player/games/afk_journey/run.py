@@ -19,22 +19,23 @@ class AFKJourney(Game):
     template_dir_path: Path | None = None
     config_file_path: Path | None = None
 
-    # Timeouts
+    # Timeout constants (in seconds)
     BATTLE_TIMEOUT: int = 180
     MIN_TIMEOUT: int = 10
 
-    # Constants
+    # Store keys
     STORE_SEASON: str = "SEASON"
     STORE_MODE: str = "MODE"
     STORE_MAX_ATTEMPTS_REACHED: str = "MAX_ATTEMPTS_REACHED"
     STORE_FORMATION_NUM: str = "FORMATION_NUM"
+
+    # Game modes
     MODE_DURAS_TRIALS: str = "DURAS_TRIALS"
     MODE_AFK_STAGES: str = "AFK_STAGES"
     MODE_LEGEND_TRIALS: str = "LEGEND_TRIALS"
 
-    # Boundaries
-    # Coordinates for the formation selection area (x1, y1, x2, y2)
-    RECORDS_FORMATION_SELECT = (450, 280, 780, 400)
+    # UI coordinates (x1, y1, x2, y2)
+    RECORDS_FORMATION_SELECT_AREA: tuple[int, int, int, int] = (450, 280, 780, 400)
 
     def start_up(self) -> None:
         if self.device is None:
@@ -170,7 +171,7 @@ class AFKJourney(Game):
             )
             self.click(*formation_next)
             self.wait_for_roi_change(
-                *self.RECORDS_FORMATION_SELECT, delay=0.5, timeout=self.MIN_TIMEOUT
+                *self.RECORDS_FORMATION_SELECT_AREA, delay=0.5, timeout=self.MIN_TIMEOUT
             )
             counter -= 1
         excluded_hero = self.__formation_contains_excluded_hero()

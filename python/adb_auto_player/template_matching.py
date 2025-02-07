@@ -71,6 +71,7 @@ def compare_roi_similarity(
     Returns:
         bool: True if the ROI in the base_image matches based on the given threshold.
     """
+    __validate_threshold(threshold)
     sx, sy, ex, ey = roi
 
     if (
@@ -118,6 +119,7 @@ def find_template_match(
     Returns:
         tuple of (center_x, center_y) coordinates or None if no match found
     """
+    __validate_threshold(threshold)
     base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
     template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
 
@@ -168,6 +170,7 @@ def find_all_template_matches(
     grayscale: bool = False,
     min_distance: int = 10,
 ) -> list[tuple[int, int]]:
+    __validate_threshold(threshold)
     base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
     template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
 
@@ -213,3 +216,12 @@ def __suppress_close_matches(
         ):
             suppressed.append(match_tuple)  # type: ignore
     return suppressed
+
+
+def __validate_threshold(threshold: float) -> None:
+    """
+    Raises:
+        ValueError: If the threshold is less than 0 or greater than 1.
+    """
+    if threshold < 0.0 or threshold > 1.0:
+        raise ValueError("Threshold must be between 0 and 1")
