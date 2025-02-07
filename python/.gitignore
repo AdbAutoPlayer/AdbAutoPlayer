@@ -2,3 +2,4 @@
 *.dist/
 *.onefile-build/
 adb_auto_player.exe
+__pycache__
