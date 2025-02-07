@@ -224,4 +224,4 @@ def __validate_threshold(threshold: float) -> None:
         ValueError: If the threshold is less than 0 or greater than 1.
     """
     if threshold < 0.0 or threshold > 1.0:
-        raise ValueError("Threshold must be between 0 and 1")
+        raise ValueError(f"Threshold must be between 0 and 1, got {threshold}")
