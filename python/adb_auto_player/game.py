@@ -2,7 +2,7 @@ import io
 from abc import abstractmethod
 from pathlib import Path
 from time import sleep, time
-from typing import Any, TypeVar, Callable
+from typing import Any, TypeVar, Callable, Literal
 
 from PIL import Image
 from adbutils._device import AdbDevice
@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 import adb_auto_player.adb as adb
 import logging
-import adb_auto_player.screen_utils as screen_utils
+import adb_auto_player.template_matching as template_matching
 from adb_auto_player.command import Command
 from adb_auto_player.exceptions import (
     UnsupportedResolutionException,
@@ -18,7 +18,7 @@ from adb_auto_player.exceptions import (
     AdbException,
     NotInitializedError,
 )
-from adb_auto_player.screen_utils import MatchMode
+from adb_auto_player.template_matching import MatchMode
 
 
 class Game:
@@ -125,9 +125,7 @@ class Game:
         if not scale:
             self.get_device().click(x, y)
             return None
-        if self.get_scale_factor() != 1.0:
-            x = int(round(x * self.get_scale_factor()))
-            y = int(round(y * self.get_scale_factor()))
+        x, y = self.__scale_coordinates(x, y)
         self.get_device().click(x, y)
         return None
 
@@ -155,21 +153,88 @@ class Game:
         else:
             return self.get_screenshot()
 
+    def roi_has_changed(
+        self,
+        sx: int,
+        sy: int,
+        ex: int,
+        ey: int,
+        threshold: float = 0.9,
+        grayscale: bool = False,
+    ):
+        prev = self.previous_screenshot
+        if prev is None:
+            raise ValueError(
+                "Region of interest cannot have changed if "
+                "there is no previous screenshot."
+            )
+
+        sx, sy, ex, ey = self.__scale_coordinates(sx, sy, ex, ey)
+
+        return not template_matching.compare_roi_similarity(
+            prev,
+            self.get_screenshot(),
+            roi=(sx, sy, ex, ey),
+            threshold=threshold,
+            grayscale=grayscale,
+        )
+
+    def wait_for_roi_change(
+        self,
+        sx: int,
+        sy: int,
+        ex: int,
+        ey: int,
+        threshold: float = 0.9,
+        grayscale: bool = False,
+        delay: float = 1,
+        timeout: float = 30,
+        timeout_message: str | None = None,
+    ) -> bool:
+        """
+        :raises TimeoutException:
+        """
+
+        sx, sy, ex, ey = self.__scale_coordinates(sx, sy, ex, ey)
+
+        def roi_changed() -> Literal[True] | None:
+            result = self.roi_has_changed(
+                sx=sx,
+                sy=sy,
+                ex=ex,
+                ey=ey,
+                threshold=threshold,
+                grayscale=grayscale,
+            )
+
+            if result is True:
+                return True
+            return None
+
+        if timeout_message is None:
+            timeout_message = (
+                f"Region of Interest has not changed after {timeout} seconds"
+            )
+
+        return self.__execute_or_timeout(
+            roi_changed, delay=delay, timeout=timeout, timeout_message=timeout_message
+        )
+
     def find_template_match(
         self,
         template: str,
-        match_mode: screen_utils.MatchMode = screen_utils.MatchMode.BEST,
+        match_mode: template_matching.MatchMode = template_matching.MatchMode.BEST,
         threshold: float = 0.9,
         grayscale: bool = False,
         use_previous_screenshot: bool = False,
     ) -> tuple[int, int] | None:
         template_path = self.get_template_dir_path() / template
 
-        return screen_utils.find_template_match(
+        return template_matching.find_template_match(
             base_image=self.__get_screenshot(
                 previous_screenshot=use_previous_screenshot
             ),
-            template_image=screen_utils.load_image(
+            template_image=template_matching.load_image(
                 image_path=template_path,
                 image_scale_factor=self.get_scale_factor(),
             ),
@@ -188,11 +253,11 @@ class Game:
     ) -> list[tuple[int, int]]:
         template_path = self.get_template_dir_path() / template
 
-        return screen_utils.find_all_template_matches(
+        return template_matching.find_all_template_matches(
             base_image=self.__get_screenshot(
                 previous_screenshot=use_previous_screenshot
             ),
-            template_image=screen_utils.load_image(
+            template_image=template_matching.load_image(
                 image_path=template_path,
                 image_scale_factor=self.get_scale_factor(),
             ),
@@ -340,11 +405,7 @@ class Game:
         self.swipe(sx=540, sy=sy, ex=540, ey=ey, duration=duration)
 
     def swipe(self, sx: int, sy: int, ex: int, ey: int, duration: float = 1.0):
-        if self.get_scale_factor() != 1.0:
-            sx = int(round(sx * self.get_scale_factor()))
-            sy = int(round(sy * self.get_scale_factor()))
-            ex = int(round(ex * self.get_scale_factor()))
-            ey = int(round(ey * self.get_scale_factor()))
+        sx, sy, ex, ey = self.__scale_coordinates(sx, sy, ex, ey)
         self.get_device().swipe(sx=sx, sy=sy, ex=ex, ey=ey, duration=duration)
         sleep(2)
 
@@ -380,3 +441,11 @@ class Game:
 
             if end_time <= time():
                 end_time_exceeded = True
+
+    def __scale_coordinates(self, *coordinates: int) -> tuple[int, ...]:
+        """Scale a variable number of coordinates by the given scale factor."""
+        scale_factor = self.get_scale_factor()
+        if scale_factor != 1.0:
+            coordinates = tuple(int(round(c * scale_factor)) for c in coordinates)
+
+        return coordinates

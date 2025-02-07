@@ -50,6 +50,55 @@ def load_image(image_path: Path, image_scale_factor: float = 1.0) -> Image.Image
     return image
 
 
+def compare_roi_similarity(
+    base_image: Image.Image,
+    template_image: Image.Image,
+    roi: tuple[int, int, int, int],
+    threshold: float = 0.9,
+    grayscale: bool = False,
+) -> bool:
+    """
+    Compares the similarity of a region of interest (ROI) between two images.
+
+    Args:
+        base_image: The reference image.
+        template_image: The image to compare against.
+        roi: A tuple (sx, sy, ex, ey) representing the coordinates of the ROI.
+        threshold: Minimum similarity threshold (0-1). If the similarity is below this,
+          returns False.
+        grayscale: Whether to convert both images to grayscale before comparison.
+
+    Returns:
+        bool: True if the ROI in the base_image matches based on the given threshold.
+    """
+    __validate_threshold(threshold)
+    sx, sy, ex, ey = roi
+
+    if (
+        base_image.width != template_image.width
+        or base_image.height != template_image.height
+    ):
+        raise ValueError(
+            "The dimensions of the base image and template image do not match."
+        )
+
+    if not (0 <= sx < ex <= base_image.width and 0 <= sy < ey <= base_image.height):
+        raise ValueError("Invalid ROI coordinates")
+
+    base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
+    template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
+
+    if grayscale:
+        base_cv = cv2.cvtColor(base_cv, cv2.COLOR_BGR2GRAY)
+        template_cv = cv2.cvtColor(template_cv, cv2.COLOR_BGR2GRAY)
+
+    roi_base = base_cv[sy:ey, sx:ex]
+    roi_template = template_cv[sy:ey, sx:ex]
+
+    result = cv2.matchTemplate(roi_base, roi_template, method=cv2.TM_CCOEFF_NORMED)
+    return np.max(result) >= threshold
+
+
 def find_template_match(
     base_image: Image.Image,
     template_image: Image.Image,
@@ -70,6 +119,7 @@ def find_template_match(
     Returns:
         tuple of (center_x, center_y) coordinates or None if no match found
     """
+    __validate_threshold(threshold)
     base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
     template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
 
@@ -120,6 +170,7 @@ def find_all_template_matches(
     grayscale: bool = False,
     min_distance: int = 10,
 ) -> list[tuple[int, int]]:
+    __validate_threshold(threshold)
     base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
     template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
 
@@ -165,3 +216,12 @@ def __suppress_close_matches(
         ):
             suppressed.append(match_tuple)  # type: ignore
     return suppressed
+
+
+def __validate_threshold(threshold: float) -> None:
+    """
+    Raises:
+        ValueError: If the threshold is less than 0 or greater than 1.
+    """
+    if threshold < 0.0 or threshold > 1.0:
+        raise ValueError(f"Threshold must be between 0 and 1, got {threshold}")
