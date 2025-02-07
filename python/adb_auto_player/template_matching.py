@@ -71,7 +71,18 @@ def compare_roi_similarity(
     Returns:
         bool: True if the ROI in the base_image matches based on the given threshold.
     """
-    sx, sy, ex, ey = roi  # Unpacking the tuple
+    sx, sy, ex, ey = roi
+
+    if (
+        base_image.width != template_image.width
+        or base_image.height != template_image.height
+    ):
+        raise ValueError(
+            "The dimensions of the base image and template image do not match."
+        )
+
+    if not (0 <= sx < ex <= base_image.width and 0 <= sy < ey <= base_image.height):
+        raise ValueError("Invalid ROI coordinates")
 
     base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
     template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
@@ -84,10 +95,7 @@ def compare_roi_similarity(
     roi_template = template_cv[sy:ey, sx:ex]
 
     result = cv2.matchTemplate(roi_base, roi_template, method=cv2.TM_CCOEFF_NORMED)
-    if np.max(result) >= threshold:
-        return True
-
-    return False
+    return np.max(result) >= threshold
 
 
 def find_template_match(

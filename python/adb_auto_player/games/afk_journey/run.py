@@ -33,6 +33,7 @@ class AFKJourney(Game):
     MODE_LEGEND_TRIALS: str = "LEGEND_TRIALS"
 
     # Boundaries
+    # Coordinates for the formation selection area (x1, y1, x2, y2)
     RECORDS_FORMATION_SELECT = (450, 280, 780, 400)
 
     def start_up(self) -> None:

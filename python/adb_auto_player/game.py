@@ -445,7 +445,7 @@ class Game:
     def __scale_coordinates(self, *coordinates: int) -> tuple[int, ...]:
         """Scale a variable number of coordinates by the given scale factor."""
         scale_factor = self.get_scale_factor()
-        if 1.0 != scale_factor:
+        if scale_factor != 1.0:
             coordinates = tuple(int(round(c * scale_factor)) for c in coordinates)
 
         return coordinates
