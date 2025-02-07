@@ -34,8 +34,8 @@ class TestGame(unittest.TestCase):
             game.roi_has_changed(0, 0, 0, 0)
 
         roi = (450, 280, 780, 400)
-        f1 = Path("data") / "records_formation_1.png"
-        f2 = Path("data") / "records_formation_2.png"
+        f1 = Path(__file__).parent / "data" / "records_formation_1.png"
+        f2 = Path(__file__).parent / "data" / "records_formation_2.png"
 
         game.previous_screenshot = template_matching.load_image(f1)
         mock_get_screenshot.return_value = template_matching.load_image(f1)
