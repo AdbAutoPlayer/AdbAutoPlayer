@@ -11,25 +11,29 @@ from adb_auto_player.exceptions import (
     NotInitializedError,
 )
 from adb_auto_player.games.afk_journey.config import Config
-from adb_auto_player.games.game import Game
+from adb_auto_player.game import Game
 from adb_auto_player.config_loader import get_games_dir
 
 
 class AFKJourney(Game):
+    template_dir_path: Path | None = None
+    config_file_path: Path | None = None
+
+    # Timeouts
     BATTLE_TIMEOUT: int = 180
+    MIN_TIMEOUT: int = 10
+
+    # Constants
     STORE_SEASON: str = "SEASON"
     STORE_MODE: str = "MODE"
+    STORE_MAX_ATTEMPTS_REACHED: str = "MAX_ATTEMPTS_REACHED"
+    STORE_FORMATION_NUM: str = "FORMATION_NUM"
     MODE_DURAS_TRIALS: str = "DURAS_TRIALS"
     MODE_AFK_STAGES: str = "AFK_STAGES"
     MODE_LEGEND_TRIALS: str = "LEGEND_TRIALS"
-    STORE_MAX_ATTEMPTS_REACHED: str = "MAX_ATTEMPTS_REACHED"
-    STORE_FORMATION_NUM: str = "FORMATION_NUM"
-    CONFIG_GENERAL: str = "general"
-    CONFIG_AFK_STAGES: str = "afk_stages"
-    CONFIG_DURAS_TRIALS: str = "duras_trials"
 
-    template_dir_path: Path | None = None
-    config_file_path: Path | None = None
+    # Boundaries
+    RECORDS_FORMATION_SELECT = (450, 280, 780, 400)
 
     def start_up(self) -> None:
         if self.device is None:
@@ -160,13 +164,14 @@ class AFKJourney(Game):
         while counter > 1:
             formation_next = self.wait_for_template(
                 "battle/formation_next.png",
-                timeout=5,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message=f"Formation #{formation_num} not found",
             )
             self.click(*formation_next)
-            sleep(1)
+            self.wait_for_roi_change(
+                *self.RECORDS_FORMATION_SELECT, delay=0.5, timeout=self.MIN_TIMEOUT
+            )
             counter -= 1
-        sleep(1)
         excluded_hero = self.__formation_contains_excluded_hero()
         if excluded_hero is not None:
             logging.warning(
@@ -181,7 +186,7 @@ class AFKJourney(Game):
         self.click(*records)
         copy = self.wait_for_template(
             "copy.png",
-            timeout=5,
+            timeout=self.MIN_TIMEOUT,
             timeout_message="No formations available for this battle",
         )
 
@@ -609,7 +614,7 @@ class AFKJourney(Game):
             template, x, y = self.wait_for_any_template(
                 ["assist/join_now.png", "assist/synergy.png", "assist/chat_button.png"],
                 delay=0.1,
-                timeout=2,
+                timeout=self.MIN_TIMEOUT,
             )
         except TimeoutException:
             return False
@@ -637,7 +642,7 @@ class AFKJourney(Game):
         return False
 
     def __handle_corrupt_creature(self) -> bool:
-        ready = self.wait_for_template("assist/ready.png", timeout=10)
+        ready = self.wait_for_template("assist/ready.png", timeout=self.MIN_TIMEOUT)
 
         self.click(*ready)
         # Sometimes people wait forever for a third to join...
@@ -759,7 +764,7 @@ class AFKJourney(Game):
             threshold=0.8,
             grayscale=True,
             delay=0.5,
-            timeout=6,
+            timeout=self.MIN_TIMEOUT,
         )
         _, x, y = challenge_btn
         self.click(x, y)
@@ -832,7 +837,7 @@ class AFKJourney(Game):
         while True:
             self.wait_for_template(
                 "event/monopoly_assist/log.png",
-                timeout=5,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="Monopoly assists screen not found",
             )
 

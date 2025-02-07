@@ -4,7 +4,6 @@ import adb_auto_player.logging_setup
 
 
 class TestSanitizePath(unittest.TestCase):
-
     @patch("os.path.expanduser", return_value=r"C:\Users\mockuser")  # Mock home dir
     def test_windows_path(self, mock_expanduser):
         log = r"adb_path: C:\Users\mockuser\AppData\Local\file.txt"
@@ -24,7 +23,3 @@ class TestSanitizePath(unittest.TestCase):
         expected = r"adb_path: C:\Users\<redacted>\AppData\file.txt"
         r" and D:\Users\<redacted>\Desktop\file2.txt"
         self.assertEqual(expected, adb_auto_player.logging_setup.sanitize_path(log))
-
-
-if __name__ == "__main__":
-    unittest.main()
