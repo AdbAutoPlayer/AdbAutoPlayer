@@ -125,7 +125,7 @@
         const latestVersion = releaseData.tag_name;
 
         if (latestVersion === currentVersion) {
-          console.log("no new updates");
+          LogInfo("No updates found");
           return;
         }
 
@@ -197,17 +197,22 @@
   }
 
   function runVersionUpdate() {
-    let currentVersion = localStorage.getItem("downloadedVersion");
-    if (!currentVersion || isVersionGreater(version, currentVersion)) {
-      currentVersion = version;
+    let patchVersion = localStorage.getItem("downloadedVersion");
+
+    if (!patchVersion || isVersionGreater(version, patchVersion)) {
+      console.log(
+        `Version ${version} is greater than Patch Version ${patchVersion}`,
+      );
+      patchVersion = version;
+      localStorage.setItem("downloadedVersion", patchVersion);
     }
     if (version === "0.0.0") {
-      LogInfo(`Patch Version: ${currentVersion} App Version: dev`);
+      LogInfo(`Patch Version: ${patchVersion} App Version: dev`);
       LogInfo("Skipping update for dev");
       return;
     }
-    LogInfo(`Patch Version: ${currentVersion} App Version: ${version}`);
-    checkForNewRelease(currentVersion);
+    LogInfo(`Patch Version: ${patchVersion} App Version: ${version}`);
+    checkForNewRelease(patchVersion);
   }
 
   function downloadAsset() {
