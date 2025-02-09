@@ -12,9 +12,16 @@ cd .\cmd\wails\
 wails build -devtools
 ```
 
-## pre-commit
+## Windows pre-commit
 ```shell
 pip install -r .\requirements-dev.txt
+pre-commit install
+```
+
+## MacOS pre-commit
+```shell
+brew install pre-commit
+pre-commit install
 ```
 
 ## [Python Build](python/README.md)
