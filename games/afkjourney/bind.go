@@ -24,6 +24,7 @@ type AFKStagesConfig struct {
 	UseSuggestedFormations bool `toml:"use_suggested_formations" json:"Use suggested Formations"`
 	PushBothModes          bool `toml:"push_both_modes"          json:"Push both modes"`
 	SpendGold              bool `toml:"spend_gold"               json:"Spend Gold"`
+	Repeat                 bool `toml:"repeat"                   json:"Repeat"`
 }
 
 type DurasTrialsConfig struct {

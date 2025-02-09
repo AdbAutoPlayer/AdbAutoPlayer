@@ -45,16 +45,17 @@ These settings apply to **AFK Stages**, **Dura's Trials**, and **Legend Trials**
 - **Formations**: Defines the number of suggested formations to copy.
 
 - **Use Suggested Formations**:
-  - `true`: Uses suggested formations from the `Records` button.
-  - `false`: Uses your current formation.
+  - Enabled: Uses suggested formations from the `Records` button.
+  - Disabled: Uses your current formation.
 
 - **Spend Gold**:
-  - `true`: Gold will be spent to continue retrying after failure.
-  - `false`: Gold will not be spent to keep retrying the trials.
+  - Enabled: Gold will be spent to continue retrying after failure.
+  - Disabled: Gold will not be spent to keep retrying the trials.
 
 ### AFK Stages
 
-- **Push Both Modes**: If set to `true`, the app will try the other mode after failing all attempts on all formations.
+- **Push Both Modes**: If enabled, the bot will try the other mode after failing all attempts on all formations.
+- **Repeat**: If enabled, the bot will retry from the start after failing all attempts
 
 ### Legend Trials
 
