@@ -1,4 +1,4 @@
-name: Run
+name: Check pre-commit
 on:
   push:
     branches:
