@@ -1,3 +1,4 @@
 cmd/wails/build/bin
 *.zip
 release_zip
+PATCH_*
