@@ -21,5 +21,5 @@
 
 ## Build
 ```shell
-poetry run nuitka --standalone --onefile --output-filename=adb_auto_player.exe --assume-yes-for-downloads --windows-console-mode=disable adb_auto_player/main.py
+poetry run nuitka --standalone --output-filename=adb_auto_player.exe --assume-yes-for-downloads --windows-console-mode=disable adb_auto_player/main.py
 ```

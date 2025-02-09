@@ -44,14 +44,14 @@ type LegendTrialsConfig struct {
 
 func NewAFKJourney(useProdPath bool) games.Game {
 	configPath := "../../python/adb_auto_player/games/afk_journey/AFKJourney.toml"
-	binaryPath := "../../python/adb_auto_player.exe"
+	binaryPath := "../../python/main.dist/adb_auto_player.exe"
 	if useProdPath {
 		if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
 			configPath = "games/afk_journey/AFKJourney.toml"
-			binaryPath = "games/adb_auto_player_py_app"
+			binaryPath = "binaries/adb_auto_player_py_app"
 		} else {
 			configPath = "games/afk_journey/AFKJourney.toml"
-			binaryPath = "games/adb_auto_player.exe"
+			binaryPath = "binaries/adb_auto_player.exe"
 		}
 	}
 	return games.Game{
@@ -131,6 +131,7 @@ func getAFKJourneyConfigConstraints() map[string]interface{} {
 			"Use suggested Formations": ipc.NewCheckboxConstraint(),
 			"Push both modes":          ipc.NewCheckboxConstraint(),
 			"Spend Gold":               ipc.NewCheckboxConstraint(),
+			"Repeat":                   ipc.NewCheckboxConstraint(),
 		},
 		"Duras Trials": map[string]interface{}{
 			"Attempts":                 ipc.NewNumberConstraint(nil, nil, nil),

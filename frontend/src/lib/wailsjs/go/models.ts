@@ -6,6 +6,7 @@ export namespace afkjourney {
 	    "Use suggested Formations": boolean;
 	    "Push both modes": boolean;
 	    "Spend Gold": boolean;
+	    Repeat: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new AFKStagesConfig(source);
@@ -18,6 +19,7 @@ export namespace afkjourney {
 	        this["Use suggested Formations"] = source["Use suggested Formations"];
 	        this["Push both modes"] = source["Push both modes"];
 	        this["Spend Gold"] = source["Spend Gold"];
+	        this.Repeat = source["Repeat"];
 	    }
 	}
 	export class LegendTrialsConfig {

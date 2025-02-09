@@ -2,14 +2,18 @@
 
 WORKSPACE="${GITHUB_WORKSPACE}"
 RELEASE_ZIP_DIR="${WORKSPACE}/release_zip"
+BINARIES_DIR="${WORKSPACE}/binaries"
 
 # Create directory structure
 mkdir -p "${RELEASE_ZIP_DIR}/games/afk_journey/templates"
+mkdir -p "${BINARIES_DIR}"
 
 # Copy files
 cp "cmd/wails/build/bin/AdbAutoPlayer.app/Contents/MacOS/AdbAutoPlayer" "${RELEASE_ZIP_DIR}/"
 cp "cmd/wails/config.toml" "${RELEASE_ZIP_DIR}/"
-cp "python/adb_auto_player_py_app" "${RELEASE_ZIP_DIR}/games/"
+
+# Copy contents of "python/main.dist" dir into BINARIES_DIR
+cp -r "python/main.dist/." "${BINARIES_DIR}/"
 
 # Copy templates and config
 cp -r "python/adb_auto_player/games/afk_journey/templates/"* "${RELEASE_ZIP_DIR}/games/afk_journey/templates/"
