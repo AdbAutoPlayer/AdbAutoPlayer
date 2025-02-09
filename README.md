@@ -28,5 +28,11 @@ pre-commit install
 
 ## [Frontend Build](frontend/README.md)
 
+## Testing .github scripts
+build_zip.sh
+```shell
+GITHUB_WORKSPACE=/Users/$USER/GolandProjects/AdbAutoPlayer bash ./.github/scripts/build_zip.sh
+```
+
 ## Contact
 [![Discord Presence](https://lanyard.cnrad.dev/api/518169167048998913)](https://discord.com/users/518169167048998913)

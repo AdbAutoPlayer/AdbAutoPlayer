@@ -13,6 +13,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	"os"
 	"path/filepath"
+	stdruntime "runtime"
 	"strings"
 )
 
@@ -97,9 +98,12 @@ func changeWorkingDirForProd() bool {
 	}
 
 	if !strings.HasSuffix(execPath, "-dev.exe") {
-		binaryDir := filepath.Dir(execPath)
-		if err := os.Chdir(binaryDir); err != nil {
-			panic(fmt.Sprintf("Failed to change working directory to %s: %v", binaryDir, err))
+		execDir := filepath.Dir(execPath)
+		if stdruntime.GOOS == "darwin" {
+			execDir = filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(execPath)))) // Go outside the .app bundle
+		}
+		if err := os.Chdir(execDir); err != nil {
+			panic(fmt.Sprintf("Failed to change working directory to %s: %v", execDir, err))
 		}
 		return true
 	}

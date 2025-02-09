@@ -8,15 +8,15 @@ import (
 )
 
 type PathSanitizer struct {
-	isWindows bool
-	username  string
-	sanitize  bool
+	runtime  string
+	username string
+	sanitize bool
 }
 
 func NewPathSanitizer() *PathSanitizer {
 	sanitizer := &PathSanitizer{
-		isWindows: runtime.GOOS == "windows",
-		sanitize:  false,
+		runtime:  runtime.GOOS,
+		sanitize: false,
 	}
 
 	currentUser, err := user.Current()
@@ -33,11 +33,11 @@ func NewPathSanitizer() *PathSanitizer {
 	return sanitizer
 }
 
-func NewPathSanitizerWithConfig(isWindows bool, username string) *PathSanitizer {
+func NewPathSanitizerWithConfig(runtime string, username string) *PathSanitizer {
 	return &PathSanitizer{
-		isWindows: isWindows,
-		username:  username,
-		sanitize:  true,
+		runtime:  runtime,
+		username: username,
+		sanitize: true,
 	}
 }
 
@@ -47,9 +47,12 @@ func (ps *PathSanitizer) SanitizePath(message string) string {
 	}
 
 	var pattern, replacement string
-	if ps.isWindows {
+	if ps.runtime == "windows" {
 		pattern = `:\\Users\\` + regexp.QuoteMeta(ps.username)
 		replacement = `:\Users\<redacted>`
+	} else if ps.runtime == "darwin" {
+		pattern = `/Users/` + regexp.QuoteMeta(ps.username)
+		replacement = `/Users/<redacted>`
 	} else {
 		pattern = `/home/` + regexp.QuoteMeta(ps.username)
 		replacement = `/home/<redacted>`

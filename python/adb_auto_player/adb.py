@@ -6,7 +6,7 @@ from adbutils import AdbClient, AdbError
 from adbutils._device import AdbDevice
 
 import logging
-import subprocess
+import shutil
 
 import adb_auto_player.config_loader
 from adb_auto_player.exceptions import AdbException
@@ -35,18 +35,29 @@ def __set_adb_path():
 
     if os.name != "nt":
         logging.debug(f"OS: {os.name}")
-        try:
-            result = subprocess.run(
-                ["which", "adb"], capture_output=True, text=True, check=True
-            )
-            adb_path = result.stdout.strip()
-            if not adb_path:
-                raise FileNotFoundError("adb not found in system PATH")
-            os.environ["ADBUTILS_ADB_PATH"] = adb_path
-        except subprocess.CalledProcessError:
-            raise FileNotFoundError(
-                "Failed to locate adb. Make sure it is installed and in the PATH."
-            )
+        path = os.getenv("PATH")
+        paths = [
+            "/opt/homebrew/bin",
+            "/opt/homebrew/sbin",
+            "/usr/local/bin",
+            "/usr/bin",
+            "/bin",
+            "/usr/sbin",
+            "/sbin",
+        ]
+
+        path_dirs = path.split(os.pathsep)
+        for p in paths:
+            if p not in path_dirs:
+                path_dirs.append(p)
+
+        path = os.pathsep.join(path_dirs)
+        os.environ["PATH"] = path
+        logging.debug(f"PATH: {path}")
+        adb_path = shutil.which("adb")
+        if not adb_path:
+            raise FileNotFoundError("adb not found in system PATH")
+        os.environ["ADBUTILS_ADB_PATH"] = adb_path
         logging.debug(f"ADBUTILS_ADB_PATH: {os.getenv("ADBUTILS_ADB_PATH")}")
 
     logging.debug(f"adb_path: {adbutils._utils.adb_path()}")

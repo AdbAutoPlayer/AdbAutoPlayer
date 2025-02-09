@@ -47,8 +47,9 @@ func (pm *Manager) StartProcess(binaryPath string, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get current working directory: %w", err)
 	}
-	pm.logger.Debugf("Binary path: %s/%s", workingDir, binaryPath)
-	cmd := exec.Command(binaryPath, args...)
+	absoluteBinaryPath := workingDir + "/" + binaryPath
+	pm.logger.Debugf("Absolute ainary path: %s", absoluteBinaryPath)
+	cmd := exec.Command(absoluteBinaryPath, args...)
 	cmd.Dir = workingDir
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
