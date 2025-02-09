@@ -98,11 +98,16 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'published'
 
     steps:
-      - name: Publish Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.event.release.tag_name }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          draft: false
+      - uses: actions/checkout@v4
+
+      - name: Mark release as latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api \
+            --method PATCH \
+            "/repos/${{ github.repository }}/releases/${{ github.event.release.id }}" \
+            -f make_latest=true
