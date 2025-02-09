@@ -19,15 +19,14 @@ def __set_adb_path():
         adb_env_path = os.getenv("ADBUTILS_ADB_PATH")
         if not adb_env_path or not os.path.isfile(adb_env_path):
             adb_path = os.path.join(
-                adb_auto_player.config_loader.get_games_dir(), "adb.exe"
+                adb_auto_player.config_loader.get_binaries_dir(), "adb.exe"
             )
             os.environ["ADBUTILS_ADB_PATH"] = adb_path
             adb_env_path = adb_path
         # Dev fallback
         if not adb_env_path or not os.path.isfile(adb_env_path):
             adb_path = os.path.join(
-                adb_auto_player.config_loader.get_games_dir().parent,
-                "binaries",
+                adb_auto_player.config_loader.get_binaries_dir(),
                 "windows",
                 "adb.exe",
             )

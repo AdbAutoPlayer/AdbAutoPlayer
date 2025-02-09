@@ -42,6 +42,10 @@ def get_games_dir() -> Path:
     return games_dir_path
 
 
+def get_binaries_dir() -> Path:
+    return get_games_dir().parent / "binaries"
+
+
 def get_main_config() -> dict[str, Any]:
     working_dir = __get_working_dir()
     config_toml_path = None
