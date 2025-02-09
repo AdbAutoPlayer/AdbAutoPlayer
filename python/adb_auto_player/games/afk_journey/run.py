@@ -353,6 +353,8 @@ class AFKJourney(Game):
                 self.__start_afk_stage()
             if not self.get_config().afk_stages.repeat:
                 break
+            if self.get_config().afk_stages.push_both_modes:
+                self.store[self.STORE_SEASON] = not season
         return None
 
     def __start_afk_stage(self) -> None:
