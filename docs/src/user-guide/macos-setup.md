@@ -28,6 +28,9 @@ This guide walks you through setting up **AdbAutoPlayer** on macOS (Apple Silico
 ## Starting AdbAutoPlayer
 
 macOS may block the app because it lacks a code signing certificate. Here's how to open it:
+> [!IMPORTANT]
+> This will happen after every update.
+
 
 1. Double-click the app. You'll see this prompt:
    ![Blocked Prompt](../images/macos/not_opened.png)
@@ -35,7 +38,7 @@ macOS may block the app because it lacks a code signing certificate. Here's how 
 
 2. Go to **System Settings** → **Privacy & Security**, scroll to the bottom, and find:
    ![Blocked by macOS](../images/macos/was_blocked_to_protect_your_mac.png)
-   Click **Open Anyway**.
+   Click **Open Anyway** and keep this open you will need it again later.
 
 3. Double-click the app again. If prompted, click **Open Anyway** again:
    ![Open AdbAutoPlayer](../images/macos/open_adb_auto_player.png).
@@ -44,6 +47,11 @@ macOS may block the app because it lacks a code signing certificate. Here's how 
    ![Security Prompt](../images/macos/privacy_and_security.png)
    Use your Touch ID or password.
 
-5. The app will open a Terminal window. Wait for it to load.
+5. The app will open a Terminal window. Leave it open and use the GUI
+6. When you click any action button on the App you will get another blocked prompt:
+   ![Open AdbAutoPlayer](../images/macos/python_app_blocked.png).
+    Repeat Step 2 and try clicking the button again.
+
+
 
 # Continue to the [Troubleshooting Guide](troubleshoot.md)
