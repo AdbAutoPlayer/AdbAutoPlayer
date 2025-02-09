@@ -9,7 +9,7 @@
   const renderer = new marked.Renderer();
 
   renderer.link = function ({ href, title, text }) {
-    const target = "_blank"; // Add target="_blank"
+    const target = "_blank";
     const titleAttr = title ? ` title="${title}"` : "";
     return `<a href="${href}" target="${target}" rel="noopener noreferrer"${titleAttr}>${text}</a>`;
   };
@@ -41,8 +41,8 @@
     appFileName = "AdbAutoPlayer_Windows.zip";
     patchFileName = "Patch_Windows.zip";
     if (userAgent.includes("mac")) {
-      appFileName = "AdbAutoPlayer_Linux.zip";
-      patchFileName = "Patch_Linux.zip";
+      appFileName = "AdbAutoPlayer_MacOS.zip";
+      patchFileName = "Patch_MacOS.zip";
     }
 
     return { appFileName: appFileName, patchFileName: patchFileName };
@@ -81,8 +81,8 @@
     const allReleases: Release[] = await releasesResponse.json();
 
     const filteredReleases = allReleases.filter((release) => {
-      const version = release.tag_name;
-      return isVersionInRange(version, currentVersion, latestVersion);
+      const releaseVersion = release.tag_name;
+      return isVersionInRange(releaseVersion, currentVersion, latestVersion);
     });
 
     let changeLog: string = "";
@@ -117,7 +117,7 @@
       );
 
       if (!modalAsset) {
-        console.log("Release still building");
+        console.log(`Release still building: ${appFileName}`);
         return;
       }
 
