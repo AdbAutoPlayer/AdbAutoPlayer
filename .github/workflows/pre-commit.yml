@@ -1,4 +1,4 @@
-name: Check pre-commit
+name: Validate - pre-commit
 on:
   push:
     branches:
