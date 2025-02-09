@@ -343,13 +343,16 @@ class AFKJourney(Game):
         self.store[self.STORE_SEASON] = season
         self.store[self.STORE_MODE] = self.MODE_AFK_STAGES
 
-        try:
-            self.__start_afk_stage()
-        except TimeoutException as e:
-            logging.warning(f"{e}")
-        if self.get_config().afk_stages.push_both_modes:
-            self.store[self.STORE_SEASON] = not season
-            self.__start_afk_stage()
+        while True:
+            try:
+                self.__start_afk_stage()
+            except TimeoutException as e:
+                logging.warning(f"{e}")
+            if self.get_config().afk_stages.push_both_modes:
+                self.store[self.STORE_SEASON] = not season
+                self.__start_afk_stage()
+            if not self.get_config().afk_stages.repeat:
+                break
         return None
 
     def __start_afk_stage(self) -> None:

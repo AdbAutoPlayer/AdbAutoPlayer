@@ -14,6 +14,7 @@ class AFKStagesConfig(BaseModel):
     use_suggested_formations: bool = True
     push_both_modes: bool = True
     spend_gold: bool = False
+    repeat: bool = True
 
 
 class DurasTrialsConfig(BaseModel):
