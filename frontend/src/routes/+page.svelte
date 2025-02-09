@@ -162,11 +162,12 @@
       updateStateTimeout = setTimeout(updateState, 2500);
       return;
     }
-    if (!$logoAwake) {
-      IsGameProcessRunning().then((response: boolean) => {
-        $logoAwake = !response;
-      });
-    } else {
+
+    IsGameProcessRunning().then((response: boolean) => {
+      $logoAwake = !response;
+    });
+
+    if ($logoAwake) {
       GetRunningSupportedGame()
         .then((game) => {
           activeGame = game;
