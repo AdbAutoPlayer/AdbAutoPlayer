@@ -2,7 +2,7 @@
 
 WORKSPACE="${GITHUB_WORKSPACE}"
 RELEASE_ZIP_DIR="${WORKSPACE}/release_zip"
-BINARIES_DIR="${WORKSPACE}/binaries"
+BINARIES_DIR="${RELEASE_ZIP_DIR}/binaries"
 
 # Create directory structure
 mkdir -p "${RELEASE_ZIP_DIR}/games/afk_journey/templates"
