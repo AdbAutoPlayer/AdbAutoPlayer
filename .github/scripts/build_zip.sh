@@ -10,6 +10,7 @@ mkdir -p "${BINARIES_DIR}"
 
 # Copy files
 cp -r "cmd/wails/build/bin/AdbAutoPlayer.app" "${RELEASE_ZIP_DIR}/"
+cp "cmd/wails/build/bin/AdbAutoPlayer.app/Contents/MacOS/AdbAutoPlayer" "${RELEASE_ZIP_DIR}/"
 cp "cmd/wails/config.toml" "${RELEASE_ZIP_DIR}/"
 
 # Copy contents of "python/main.dist" dir into BINARIES_DIR
