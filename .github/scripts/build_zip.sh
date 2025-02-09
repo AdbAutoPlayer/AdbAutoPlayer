@@ -8,8 +8,9 @@ BINARIES_DIR="${RELEASE_ZIP_DIR}/binaries"
 mkdir -p "${RELEASE_ZIP_DIR}/games/afk_journey/templates"
 mkdir -p "${BINARIES_DIR}"
 
-# Copy files
-cp -r "cmd/wails/build/bin/AdbAutoPlayer.app" "${RELEASE_ZIP_DIR}/"
+# would be the "correct" way to do it but macOS flags unsigned apps as "damaged" and refuses to execute them
+# cp -r "cmd/wails/build/bin/AdbAutoPlayer.app" "${RELEASE_ZIP_DIR}/"
+cp "cmd/wails/build/bin/AdbAutoPlayer.app/Contents/MacOS/AdbAutoPlayer" "${RELEASE_ZIP_DIR}/"
 cp "cmd/wails/config.toml" "${RELEASE_ZIP_DIR}/"
 
 # Copy contents of "python/main.dist" dir into BINARIES_DIR
