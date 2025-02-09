@@ -23,7 +23,7 @@ echo "Files collected in ${RELEASE_ZIP_DIR}:"
 ls -R "${RELEASE_ZIP_DIR}"
 
 # Create main ZIP file
-cd "${RELEASE_ZIP_DIR}"
+cd "${RELEASE_ZIP_DIR}" || exit 1
 zip -r "${WORKSPACE}/AdbAutoPlayer_MacOS.zip" ./*
 echo "ZIP file created at ${WORKSPACE}/AdbAutoPlayer_MacOS.zip"
 
@@ -33,6 +33,6 @@ mkdir -p "${PATCH_DIR}"
 cp -r "${RELEASE_ZIP_DIR}/games" "${PATCH_DIR}/"
 cp -r "${BINARIES_DIR}" "${PATCH_DIR}/"
 
-cd "${PATCH_DIR}"
+cd "${PATCH_DIR}" || exit 1
 zip -r "${WORKSPACE}/Patch_MacOS.zip" ./*
 echo "Patch ZIP file created at ${WORKSPACE}/Patch_MacOS.zip"
