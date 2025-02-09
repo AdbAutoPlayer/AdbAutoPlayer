@@ -31,6 +31,7 @@ echo "ZIP file created at ${WORKSPACE}/AdbAutoPlayer_MacOS.zip"
 PATCH_DIR="${WORKSPACE}/Patch_MacOS"
 mkdir -p "${PATCH_DIR}"
 cp -r "${RELEASE_ZIP_DIR}/games" "${PATCH_DIR}/"
+cp -r "${BINARIES_DIR}" "${PATCH_DIR}/"
 
 cd "${PATCH_DIR}"
 zip -r "${WORKSPACE}/Patch_MacOS.zip" ./*
