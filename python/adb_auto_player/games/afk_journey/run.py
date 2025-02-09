@@ -695,18 +695,16 @@ class AFKJourney(Game):
 
         results = {}
         faction_paths = {
-            "lightbearer": "legend_trials/swords_lightbearer.png",
-            "wilder": "legend_trials/swords_wilder.png",
-            "graveborn": "legend_trials/swords_graveborn.png",
-            "mauler": "legend_trials/swords_mauler.png",
+            "lightbearer": "legend_trials/banner_lightbearer.png",
+            "wilder": "legend_trials/banner_wilder.png",
+            "graveborn": "legend_trials/banner_graveborn.png",
+            "mauler": "legend_trials/banner_mauler.png",
         }
-
+        sleep(1)
         self.get_screenshot()
         for faction, path in faction_paths.items():
             if faction.capitalize() in towers:
-                result = self.find_template_match(
-                    path, threshold=0.975, use_previous_screenshot=True
-                )
+                result = self.find_template_match(path, use_previous_screenshot=True)
                 if result is None:
                     logging.warning(
                         f"{faction.capitalize()}s Tower not available or not found"

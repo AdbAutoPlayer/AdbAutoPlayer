@@ -99,7 +99,7 @@ func changeWorkingDirForProd() bool {
 
 	if !strings.HasSuffix(execPath, "-dev.exe") {
 		execDir := filepath.Dir(execPath)
-		if stdruntime.GOOS == "darwin" {
+		if stdruntime.GOOS == "darwin" && strings.Contains(execDir, "AdbAutoPlayer.app") {
 			execDir = filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(execPath)))) // Go outside the .app bundle
 		}
 		if err := os.Chdir(execDir); err != nil {
