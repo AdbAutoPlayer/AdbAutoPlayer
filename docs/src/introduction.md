@@ -8,8 +8,8 @@ AdbAutoPlayer is a tool designed to automate repetitive tasks and dailies in And
 ## Compatibility
 
 - **Tested Environments:**
-  Windows with [BlueStacks 5](https://www.bluestacks.com/) emulator.
-  Apple M1 Max using [BlueStacks Air](https://www.bluestacks.com/mac).
+  - Windows with [BlueStacks 5](https://www.bluestacks.com/)
+  - Apple M1 Max using [BlueStacks Air](https://www.bluestacks.com/mac).
 
 ---
 
