@@ -332,6 +332,7 @@ class Game:
             delay=delay,
             timeout=timeout,
             timeout_message=timeout_message,
+            result_should_be_none=True,
         )
         return None
 
