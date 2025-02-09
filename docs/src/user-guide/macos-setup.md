@@ -14,6 +14,15 @@ This guide walks you through setting up **AdbAutoPlayer** on macOS (Apple Silico
   [AdbAutoPlayer_MacOS.zip](https://github.com/yulesxoxo/AdbAutoPlayer/releases/latest).
 - Extract the `.zip` file to a folder on your computer.
 
+### 2. **Install Homebrew**
+- Follow the instructions at [brew.sh](https://brew.sh/) to install **Homebrew**, a package manager for macOS.
+
+### 3. **Install ADB via Homebrew**
+- Use Homebrew to install the Android Debug Bridge (ADB):
+  ```bash
+  brew install --cask android-platform-tools
+  ```
+
 ---
 
 ## Starting AdbAutoPlayer

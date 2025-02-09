@@ -9,8 +9,17 @@ from adb_auto_player.games.afk_journey.run import AFKJourney
 
 
 def main() -> None:
+    commands = __get_commands()
+    command_names = []
+    for cmd in commands:
+        command_names.append(cmd.name)
+
     parser = argparse.ArgumentParser(description="AFK Journey")
-    parser.add_argument("command", help="Command to run")
+    parser.add_argument(
+        "command",
+        help="Command to run",
+        choices=command_names,
+    )
     parser.add_argument(
         "--output",
         choices=["json", "text", "raw"],
@@ -33,14 +42,14 @@ def main() -> None:
         case _:
             logging.getLogger().setLevel(args.log_level)
 
-    for cmd in __get_commands():
+    for cmd in commands:
         if str.lower(cmd.name) == str.lower(args.command):
             __run_command(cmd)
 
     sys.exit(0)
 
 
-def __get_commands() -> list[Command] | NoReturn:
+def __get_commands() -> list[Command]:
     commands = []
 
     afk_journey = AFKJourney()

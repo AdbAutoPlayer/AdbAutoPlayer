@@ -6,6 +6,7 @@ from adbutils import AdbClient, AdbError
 from adbutils._device import AdbDevice
 
 import logging
+import subprocess
 
 import adb_auto_player.config_loader
 from adb_auto_player.exceptions import AdbException
@@ -14,12 +15,11 @@ from adb_auto_player.exceptions import AdbException
 def __set_adb_path():
     is_frozen = hasattr(sys, "frozen") or "__compiled__" in globals()
     logging.debug(f"is_frozen: {is_frozen}")
-    if is_frozen:
+    if is_frozen and os.name == "nt":
         adb_env_path = os.getenv("ADBUTILS_ADB_PATH")
         if not adb_env_path or not os.path.isfile(adb_env_path):
             adb_path = os.path.join(
-                adb_auto_player.config_loader.get_games_dir(),
-                "adb.exe" if os.name == "nt" else "adb",
+                adb_auto_player.config_loader.get_games_dir(), "adb.exe"
             )
             os.environ["ADBUTILS_ADB_PATH"] = adb_path
             adb_env_path = adb_path
@@ -28,11 +28,28 @@ def __set_adb_path():
             adb_path = os.path.join(
                 adb_auto_player.config_loader.get_games_dir().parent,
                 "binaries",
-                "windows" if os.name == "nt" else "macos",
-                "adb.exe" if os.name == "nt" else "adb",
+                "windows",
+                "adb.exe",
             )
             os.environ["ADBUTILS_ADB_PATH"] = adb_path
         logging.debug(f"ADBUTILS_ADB_PATH: {os.getenv("ADBUTILS_ADB_PATH")}")
+
+    if os.name != "nt":
+        logging.debug(f"OS: {os.name}")
+        try:
+            result = subprocess.run(
+                ["which", "adb"], capture_output=True, text=True, check=True
+            )
+            adb_path = result.stdout.strip()
+            if not adb_path:
+                raise FileNotFoundError("adb not found in system PATH")
+            os.environ["ADBUTILS_ADB_PATH"] = adb_path
+        except subprocess.CalledProcessError:
+            raise FileNotFoundError(
+                "Failed to locate adb. Make sure it is installed and in the PATH."
+            )
+        logging.debug(f"ADBUTILS_ADB_PATH: {os.getenv("ADBUTILS_ADB_PATH")}")
+
     logging.debug(f"adb_path: {adbutils._utils.adb_path()}")
 
 
