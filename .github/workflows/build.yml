@@ -6,8 +6,12 @@ on:
       - published
   workflow_dispatch:
 
+permissions:
+  contents: write
+  id-token: write
+
 jobs:
-  build-and-release:
+  build:
     name: ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -20,10 +24,6 @@ jobs:
           - os: macos-latest
             zip_files: "AdbAutoPlayer_MacOS.zip,Patch_MacOS.zip"
             build_script: ".github/scripts/build_zip.sh"
-
-    permissions:
-      contents: write
-      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -94,3 +94,15 @@ jobs:
         if: github.event_name == 'release' && github.event.action == 'published'
         with:
           files: ${{ matrix.zip_files }}
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.release.tag_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
