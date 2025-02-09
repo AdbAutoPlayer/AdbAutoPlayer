@@ -7,12 +7,9 @@ AdbAutoPlayer is a tool designed to automate repetitive tasks and dailies in And
 
 ## Compatibility
 
-- **Tested Environment:**
-  Windows with [MuMuPlayer](https://www.mumuplayer.com/) emulator.
-
-- **Limited Testing:**
-  Apple M1 Max using [MuMuPlayer Pro](https://www.mumuplayer.com/mac/).
-  While AdbAutoPlayer should work on Apple Silicon, I do not plan to officially support it or address related issues.
+- **Tested Environments:**
+  Windows with [BlueStacks 5](https://www.bluestacks.com/) emulator.
+  Apple M1 Max using [BlueStacks Air](https://www.bluestacks.com/mac).
 
 ---
 

@@ -1,6 +1,9 @@
 # Windows Setup Guide
 
-This guide will walk you through setting up **AdbAutoPlayer** on a Windows system using **MuMuPlayer** as the emulator.
+This guide will walk you through setting up **AdbAutoPlayer** on Windows.
+
+> [!IMPORTANT]
+> Check [Emulator Settings](emulator-settings.md) if you haven't already!
 
 ---
 
@@ -10,25 +13,6 @@ This guide will walk you through setting up **AdbAutoPlayer** on a Windows syste
    - Get the latest release of **AdbAutoPlayer**:
      [AdbAutoPlayer_Windows.zip](https://github.com/yulesxoxo/AdbAutoPlayer/releases/latest).
    - Extract the contents of the `.zip` file to a folder on your computer.
-
-2. **Install MuMuPlayer**
-   - Download and install **MuMuPlayer**: [MuMuPlayer Download](https://www.mumuplayer.com/).
-
----
-
-## Configuring MuMuPlayer
-
-1. **Start MuMuPlayer**
-   Launch the MuMuPlayer emulator after installation.
-
-2. **Open Settings**
-   ![MuMuPlayer Settings](../images/windows/mumu_player_settings.png)
-
-3. **Set the Resolution to 1080 x 1920**
-  ![mumu_player_settings_display.png](../images/windows/mumu_player_settings_display.png)
-
-4. **Save Settings**
-   - Click **Save** and restart the Emulator to apply the changes.
 
 ---
 

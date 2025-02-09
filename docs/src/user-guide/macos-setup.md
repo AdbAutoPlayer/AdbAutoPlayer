@@ -1,6 +1,9 @@
 # macOS Setup Guide
 
-This guide walks you through setting up **AdbAutoPlayer** on macOS (Apple Silicon) using **MuMuPlayer Pro** as the emulator.
+This guide walks you through setting up **AdbAutoPlayer** on macOS (Apple Silicon).
+
+> [!IMPORTANT]
+> Check [Emulator Settings](emulator-settings.md) if you haven't already!
 
 ---
 
@@ -11,34 +14,9 @@ This guide walks you through setting up **AdbAutoPlayer** on macOS (Apple Silico
   [AdbAutoPlayer_MacOS.zip](https://github.com/yulesxoxo/AdbAutoPlayer/releases/latest).
 - Extract the `.zip` file to a folder on your computer.
 
-### 2. **Install MuMuPlayer Pro**
-- Download and install **MuMuPlayer Pro**:
-  [MuMuPlayer for macOS](https://www.mumuplayer.com/mac/).
-
-### 3. **Install Homebrew**
-- Follow the instructions at [brew.sh](https://brew.sh/) to install **Homebrew**, a package manager for macOS.
-
-### 4. **Install ADB via Homebrew**
-- Use Homebrew to install the Android Debug Bridge (ADB):
-  ```bash
-  brew install --cask android-platform-tools
-  ```
-
 ---
 
-## Configuring MuMuPlayer Pro
-
-### 1. **Set Display Size**
-- Open **Settings** → **Display** → **Display Size Phone**:
-  - Set **Device Display** to **1080 x 1920**.
-
-### 2. **Enable ADB Debugging**
-- Navigate to **Settings** → **Other**:
-  - Enable **ADB**: Select **Try to use the default port (5555)**.
-
----
-
-## Opening the App on macOS
+## Starting AdbAutoPlayer
 
 macOS may block the app because it lacks a code signing certificate. Here's how to open it:
 
