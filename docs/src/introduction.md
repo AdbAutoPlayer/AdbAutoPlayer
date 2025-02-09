@@ -5,6 +5,7 @@ AdbAutoPlayer is a tool designed to automate repetitive tasks and dailies in And
 
 ---
 
+
 ## Compatibility
 
 - **Tested Environments:**
@@ -12,6 +13,10 @@ AdbAutoPlayer is a tool designed to automate repetitive tasks and dailies in And
   - Apple M1 Max using [BlueStacks Air](https://www.bluestacks.com/mac).
 
 ---
+
+## [Download](https://github.com/yulesxoxo/AdbAutoPlayer/releases/latest)
+> [!IMPORTANT]
+> Make sure you read the User Guides on the left!
 
 ## Contact
 

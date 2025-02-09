@@ -41,7 +41,7 @@ macOS may block the app because it lacks a code signing certificate. Here's how 
    Click **Open Anyway** and keep this open you will need it again later.
 
 3. Double-click the app again. If prompted, click **Open Anyway** again:
-   ![Open AdbAutoPlayer](../images/macos/open_adb_auto_player.png).
+   ![Open AdbAutoPlayer](../images/macos/open_adb_auto_player.png)
 
 4. If you see this security prompt:
    ![Security Prompt](../images/macos/privacy_and_security.png)
@@ -49,7 +49,7 @@ macOS may block the app because it lacks a code signing certificate. Here's how 
 
 5. The app will open a Terminal window. Leave it open and use the GUI
 6. When you click any action button on the App you will get another blocked prompt:
-   ![Open AdbAutoPlayer](../images/macos/python_app_blocked.png).
+   ![Open AdbAutoPlayer](../images/macos/python_app_blocked.png)
     Repeat Step 2 and try clicking the button again.
 
 
