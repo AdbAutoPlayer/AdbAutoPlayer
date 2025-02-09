@@ -57,6 +57,9 @@ func main() {
 			BackdropType:         windows.Mica,
 			WebviewGpuIsDisabled: false,
 		},
+		// Mac: &mac.Options{
+		//
+		// },
 		OnStartup: func(ctx context.Context) {
 			app.startup(ctx)
 		},
