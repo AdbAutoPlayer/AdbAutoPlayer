@@ -52,6 +52,13 @@ macOS may block the app because it lacks a code signing certificate. Here's how 
    ![Open AdbAutoPlayer](../images/macos/python_app_blocked.png)
     Repeat Step 2 and try clicking the button again.
 
+## Disable Security (Optional not recommended)
 
+The security prompt from the previous step can be really annoying and will happen on every update. If you want a workaround you can try typing this into terminal:
+```shell
+sudo spctl --master-disable
+```
+This will add the option to allow apps from anywhere:  
+![allow_applications_from_anywhere.png](../images/macos/allow_applications_from_anywhere.png)
 
 # Continue to the [Troubleshooting Guide](troubleshoot.md)
