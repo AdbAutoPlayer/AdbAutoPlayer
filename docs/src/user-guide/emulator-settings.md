@@ -1,6 +1,6 @@
 # Emulator Settings
 
-## BlueStacks & BlueStacks Air (MacOS)
+## BlueStacks (Windows) & BlueStacks Air (MacOS)
 
 ### Emulator Settings
 - **Display**:
@@ -13,7 +13,7 @@ Device ID: `127.0.0.1:5555`
 
 ---
 
-## MuMuPlayer
+## MuMuPlayer (Windows)
 
 > [!NOTE]
 > MuMuPlayer does not require enabling ADB in settings.
@@ -27,7 +27,7 @@ Device ID: `127.0.0.1:7555`
 
 ---
 
-## LDPlayer
+## LDPlayer (Windows)
 
 ### Emulator Settings
 - **Display**:
