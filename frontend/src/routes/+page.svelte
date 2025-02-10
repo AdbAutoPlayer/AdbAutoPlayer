@@ -42,17 +42,17 @@
     };
   });
 
+  let activeButtonLabel: string | null = $state(null);
+
   let activeGameMenuButtons: MenuButton[] = $derived.by(() => {
     if (activeGame?.MenuOptions && activeGame.MenuOptions.length > 0) {
-      const menuButtons: MenuButton[] = activeGame.MenuOptions.map(
-        (menuOption) => ({
-          label: menuOption.Label,
-          callback: (event) =>
-            startGameProcess(event, activeGame, menuOption.Args),
-          active: false,
-          alwaysEnabled: false,
-        }),
-      );
+      let game = activeGame;
+      const menuButtons: MenuButton[] = game.MenuOptions.map((menuOption) => ({
+        label: menuOption.Label,
+        callback: () => startGameProcess(game, menuOption),
+        active: menuOption.Label === activeButtonLabel,
+        alwaysEnabled: false,
+      }));
 
       menuButtons.push(
         {
@@ -80,21 +80,15 @@
     return [];
   });
 
-  function startGameProcess(
-    event: PointerEvent,
-    game: games.Game | null,
-    args: string[],
-  ) {
+  function startGameProcess(game: games.Game, menuOption: games.MenuOption) {
     if (game === null) {
       return;
     }
-    const target = event.target as HTMLElement;
 
-    activeGameMenuButtons.forEach((button) => {
-      button.active = button.label === target.textContent;
-    });
+    activeButtonLabel = menuOption.Label;
+
     $logoAwake = false;
-    StartGameProcess(game, args).catch((err) => {
+    StartGameProcess(game, menuOption.Args).catch((err) => {
       console.log(err);
       alert(err);
     });
