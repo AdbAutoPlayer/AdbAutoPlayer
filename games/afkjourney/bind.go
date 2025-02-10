@@ -64,23 +64,23 @@ func NewAFKJourney(useProdPath bool) games.Game {
 		},
 		MenuOptions: []games.MenuOption{
 			{
-				Label: "Push Season Talent Stages",
+				Label: "Season Talent Stages",
 				Args:  []string{"SeasonTalentStages"},
 			},
 			{
-				Label: "Push AFK Stages",
+				Label: "AFK Stages",
 				Args:  []string{"AFKStages"},
 			},
 			{
-				Label: "Push Duras Trials",
+				Label: "Duras Trials",
 				Args:  []string{"DurasTrials"},
 			},
 			{
-				Label: "Push Legend Trials",
+				Label: "Legend Trials",
 				Args:  []string{"LegendTrials"},
 			},
 			{
-				Label: "Assist Synergy & CC",
+				Label: "Synergy & CC",
 				Args:  []string{"AssistSynergyAndCC"},
 			},
 			{
