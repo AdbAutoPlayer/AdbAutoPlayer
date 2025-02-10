@@ -696,25 +696,35 @@ class AFKJourney(Game):
         towers = self.get_config().legend_trials.towers
 
         results = {}
-        faction_paths = {
-            "lightbearer": "legend_trials/banner_lightbearer.png",
-            "wilder": "legend_trials/banner_wilder.png",
-            "graveborn": "legend_trials/banner_graveborn.png",
-            "mauler": "legend_trials/banner_mauler.png",
-        }
+        factions = [
+            "lightbearer",
+            "wilder",
+            "graveborn",
+            "mauler",
+        ]
         sleep(1)
         self.get_screenshot()
-        for faction, path in faction_paths.items():
-            if faction.capitalize() in towers:
-                result = self.find_template_match(path, use_previous_screenshot=True)
-                if result is None:
-                    logging.warning(
-                        f"{faction.capitalize()}s Tower not available or not found"
-                    )
-                else:
-                    results[faction] = result
-            else:
+        for faction in factions:
+            banner = f"legend_trials/banner_{faction}.png"
+            icon = f"legend_trials/faction_icon_{faction}.png"
+
+            if not faction.capitalize() in towers:
                 logging.info(f"{faction.capitalize()}s excluded in config")
+                continue
+
+            if faction == "lightbearer":
+                logging.debug("DEV TODO: faction_icon_lightbearer.png")
+            else:
+                # when faction icon is visible the tower is not available
+                result = self.find_template_match(icon, use_previous_screenshot=True)
+                if result:
+                    logging.info(f"{faction.capitalize()}s Tower not available today")
+                    continue
+            result = self.find_template_match(banner, use_previous_screenshot=True)
+            if result is None:
+                logging.error(f"{faction.capitalize()}s Tower not found")
+            else:
+                results[faction] = result
 
         for faction, result in results.items():
             logging.info(f"Starting {faction.capitalize()} Tower")
