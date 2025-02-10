@@ -5,6 +5,7 @@
   import { LogError, LogInfo } from "$lib/wailsjs/runtime";
   import { marked } from "marked";
   import Modal from "./Modal.svelte";
+  import { getItem, setItem } from "$lib/indexedDB";
 
   const renderer = new marked.Renderer();
 
@@ -158,8 +159,8 @@
 
           $logoAwake = false;
           UpdatePatch(patch.browser_download_url)
-            .then(() => {
-              localStorage.setItem("downloadedVersion", releaseData.tag_name);
+            .then(async () => {
+              await setItem("patch", releaseData.tag_name);
               LogInfo(`Downloaded Patch Version: ${releaseData.tag_name}`);
               $logoAwake = true;
               modalRelease = releaseData;
@@ -170,6 +171,7 @@
               alert(err);
               $logoAwake = true;
             });
+          return;
         }
 
         console.log("No new version available");
@@ -196,23 +198,26 @@
     return patch1 > patch2;
   }
 
-  function runVersionUpdate() {
-    let patchVersion = localStorage.getItem("downloadedVersion");
+  async function runVersionUpdate() {
+    if (version === "0.0.0") {
+      LogInfo(`App Version: dev`);
+      LogInfo("Skipping update for dev");
+      return;
+    }
+
+    let patchVersion = await getItem<string>("patch");
+    console.log("patchVersion", patchVersion);
 
     if (!patchVersion || isVersionGreater(version, patchVersion)) {
       console.log(
         `Version ${version} is greater than Patch Version ${patchVersion}`,
       );
       patchVersion = version;
-      localStorage.setItem("downloadedVersion", patchVersion);
+      await setItem("patch", version);
     }
-    if (version === "0.0.0") {
-      LogInfo(`Patch Version: ${patchVersion} App Version: dev`);
-      LogInfo("Skipping update for dev");
-      return;
-    }
+
     LogInfo(`Patch Version: ${patchVersion} App Version: ${version}`);
-    checkForNewRelease(patchVersion);
+    await checkForNewRelease(patchVersion);
   }
 
   function downloadAsset() {
