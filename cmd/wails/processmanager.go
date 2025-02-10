@@ -9,6 +9,7 @@ import (
 	"github.com/shirou/gopsutil/process"
 	"os"
 	"os/exec"
+	stdruntime "runtime"
 	"strings"
 	"sync"
 )
@@ -113,7 +114,11 @@ func (pm *Manager) KillProcess() (bool, error) {
 
 	children, err := pm.running.Children()
 	if err != nil && !errors.Is(err, process.ErrorNoChildren) {
-		pm.logger.Errorf("Error getting child processes: %v", err)
+		if stdruntime.GOOS == "darwin" && err.Error() == "exit status 1" {
+			pm.logger.Debug("Ignoring exit status 1 for GOOS == darwin")
+		} else {
+			pm.logger.Errorf("Error getting child processes: %v", err)
+		}
 	}
 
 	if err := pm.running.Kill(); err != nil {
