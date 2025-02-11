@@ -633,12 +633,12 @@ class AFKJourney(Game):
         self.click(x, y)
         match template:
             case "assist/join_now.png":
-                logging.info("Battling Corrupt Creature")
+                logging.info("Clicking Corrupt Creature join now button")
                 try:
                     return self.__handle_corrupt_creature()
                 except TimeoutException:
                     logging.warning(
-                        "Something went wrong when trying to battle Corrupt Creature"
+                        "Joined too late or something went wrong"
                     )
                     return False
             case "assist/synergy.png":
