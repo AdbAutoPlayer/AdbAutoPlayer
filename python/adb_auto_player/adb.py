@@ -109,7 +109,7 @@ def get_device() -> AdbDevice:
     if device is None:
         raise AdbException(f"Device: {device_id} not found")
 
-    logging.info(f"Successfully connected to device {device.serial}")
+    logging.info(f"Connected to Device {device.serial}")
     return device
 
 
