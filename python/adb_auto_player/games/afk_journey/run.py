@@ -22,6 +22,7 @@ class AFKJourney(Game):
     # Timeout constants (in seconds)
     BATTLE_TIMEOUT: int = 180
     MIN_TIMEOUT: int = 10
+    FAST_TIMEOUT: int = 3
 
     # Store keys
     STORE_SEASON: str = "SEASON"
@@ -584,6 +585,7 @@ class AFKJourney(Game):
         logging.info("Running: Synergy & CC")
         count: int = 0
         while count < assist_limit:
+            logging.info("Searching Synergy & Corrupt Creature requests in World Chat")
             if self.__find_synergy_or_corrupt_creature():
                 count += 1
                 logging.info(f"Assist #{count}")
@@ -594,13 +596,13 @@ class AFKJourney(Game):
     def __find_synergy_or_corrupt_creature(self) -> bool:
         result = self.find_any_template(
             [
-                "assist/world_chat.png",
+                "assist/label_world_chat.png",
                 "assist/tap_to_enter.png",
-                "assist/team-up_chat.png",
+                "assist/label_team-up_chat.png",
             ]
         )
         if result is None:
-            logging.info("Searching Synergy & Corrupt Creature requests in World Chat")
+            logging.info("Navigating to World Chat")
             self.__navigate_to_default_state()
             self.click(1010, 1080, scale=True)
             sleep(1)
@@ -609,23 +611,25 @@ class AFKJourney(Game):
 
         template, x, y = result
         match template:
-            case "assist/world_chat.png":
-                self.click(260, 1400, scale=True)
-            case "assist/tap_to_enter.png", "assist/team-up_chat.png":
-                logging.info("Switching to world chat")
+            # Chat Window is open but not on World Chat
+            case "assist/tap_to_enter.png", "assist/label_team-up_chat.png":
+                logging.info("Switching to World Chat")
                 self.click(110, 350, scale=True)
                 return False
-
+            case "assist/label_world_chat.png":
+                pass
+        # Click Profile icon in chat
+        self.click(260, 1400, scale=True)
         try:
             template, x, y = self.wait_for_any_template(
                 ["assist/join_now.png", "assist/synergy.png", "assist/chat_button.png"],
                 delay=0.1,
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.FAST_TIMEOUT,
             )
         except TimeoutException:
             return False
         if "assist/chat_button.png" == template:
-            if self.find_template_match("assist/world_chat.png") is None:
+            if self.find_template_match("assist/label_world_chat.png") is None:
                 # Back button does not always close profile/chat windows
                 self.click(550, 100, scale=True)
                 sleep(1)
