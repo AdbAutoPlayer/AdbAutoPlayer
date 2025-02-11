@@ -46,7 +46,7 @@ def main() -> None:
         if str.lower(cmd.name) == str.lower(args.command):
             __run_command(cmd)
 
-    sys.exit(0)
+    sys.exit(1)
 
 
 def __get_commands() -> list[Command]:
@@ -61,7 +61,7 @@ def __run_command(cmd: Command) -> NoReturn:
     try:
         cmd.run()
     except Exception as e:
-        logging.error(e)
+        logging.error(f"{e}")
         sys.exit(1)
     sys.exit(0)
 

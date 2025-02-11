@@ -24,14 +24,18 @@ def sanitize_path(log_message):
         username = home_dir.split("\\")[-1]
         pattern = re.escape(f":\\Users\\{username}")
         replacement = r":\\Users\\<redacted>"
+        log_message = re.sub(pattern, replacement, log_message)
+        pattern = re.escape(f":\\\\Users\\\\{username}")
+        replacement = r":\\\\Users\\\\<redacted>"
+        log_message = re.sub(pattern, replacement, log_message)
+
     else:  # Unix path
         username = home_dir.split("/")[-1]
         pattern = f"/home/{username}"
         replacement = "/home/<redacted>"
+        log_message = re.sub(pattern, replacement, log_message)
 
-    sanitized_message = re.sub(pattern, replacement, log_message)
-
-    return sanitized_message
+    return log_message
 
 
 class JsonLogHandler(logging.Handler):
