@@ -703,22 +703,21 @@ class AFKJourney(Game):
         sleep(1)
         self.get_screenshot()
         for faction in factions:
-            banner = f"legend_trials/banner_{faction}.png"
-            icon = f"legend_trials/faction_icon_{faction}.png"
-
             if not faction.capitalize() in towers:
                 logging.info(f"{faction.capitalize()}s excluded in config")
                 continue
 
-            if faction == "lightbearer":
-                logging.debug("DEV TODO: faction_icon_lightbearer.png")
-            else:
-                # when faction icon is visible the tower is not available
-                result = self.find_template_match(icon, use_previous_screenshot=True)
-                if result:
-                    logging.info(f"{faction.capitalize()}s Tower not available today")
-                    continue
-            result = self.find_template_match(banner, use_previous_screenshot=True)
+            if self.find_template_match(
+                f"legend_trials/faction_icon_{faction}.png",
+                use_previous_screenshot=True,
+            ):
+                logging.info(f"{faction.capitalize()}s Tower not available today")
+                continue
+
+            result = self.find_template_match(
+                f"legend_trials/banner_{faction}.png",
+                use_previous_screenshot=True,
+            )
             if result is None:
                 logging.error(f"{faction.capitalize()}s Tower not found")
             else:
