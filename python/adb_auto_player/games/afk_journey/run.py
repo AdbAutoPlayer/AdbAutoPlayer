@@ -717,7 +717,7 @@ class AFKJourney(Game):
                 f"legend_trials/faction_icon_{faction}.png",
                 use_previous_screenshot=True,
             ):
-                logging.debug(f"{faction.capitalize()} Tower not available today")
+                logging.warning(f"{faction.capitalize()} Tower not available today")
                 continue
 
             result = self.find_template_match(
