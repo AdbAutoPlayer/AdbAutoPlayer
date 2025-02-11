@@ -2,8 +2,14 @@
   import { EventsOn } from "$lib/wailsjs/runtime";
 
   let logs: string[] = $state([]);
+
+  const maxLogEntries = 1000;
+
   EventsOn("log-message", (logMessage: LogMessage) => {
     const message: string = `[${logMessage.level}] ${logMessage.message}`;
+    if (logs.length >= maxLogEntries) {
+      logs.shift();
+    }
     logs.push(message);
   });
 
