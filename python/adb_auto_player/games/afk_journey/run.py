@@ -581,13 +581,14 @@ class AFKJourney(Game):
     def assist_synergy_corrupt_creature(self) -> None:
         self.start_up()
         assist_limit = self.get_config().general.assist_limit
-        logging.info("Assisting Synergy and Corrupt Creature in world chat")
+        logging.info("Running: Synergy & CC")
         count: int = 0
         while count < assist_limit:
             if self.__find_synergy_or_corrupt_creature():
                 count += 1
+                logging.info(f"Assist #{count}")
 
-        logging.info("Done assisting")
+        logging.info("Finished: Synergy & CC")
         return None
 
     def __find_synergy_or_corrupt_creature(self) -> bool:
@@ -599,7 +600,7 @@ class AFKJourney(Game):
             ]
         )
         if result is None:
-            logging.info("Opening chat")
+            logging.info("Searching Synergy & Corrupt Creature requests in World Chat")
             self.__navigate_to_default_state()
             self.click(1010, 1080, scale=True)
             sleep(1)
@@ -625,8 +626,7 @@ class AFKJourney(Game):
             return False
         if "assist/chat_button.png" == template:
             if self.find_template_match("assist/world_chat.png") is None:
-                # Back button no longer reliable closes profile/chat windows
-                # self.press_back_button()
+                # Back button does not always close profile/chat windows
                 self.click(550, 100, scale=True)
                 sleep(1)
             return False
@@ -638,11 +638,11 @@ class AFKJourney(Game):
                     return self.__handle_corrupt_creature()
                 except TimeoutException:
                     logging.warning(
-                        "Joined too late or something went wrong"
+                        "Clicked join now button too late or something went wrong"
                     )
                     return False
             case "assist/synergy.png":
-                logging.info("Synergy")
+                logging.info("Clicking Synergy button")
                 return self.__handle_synergy()
         return False
 
@@ -674,12 +674,14 @@ class AFKJourney(Game):
     def __handle_synergy(self) -> bool:
         go = self.find_template_match("assist/go.png")
         if go is None:
+            logging.info("Clicked Synergy button too late")
             return False
         self.click(*go)
         sleep(3)
         self.click(130, 900, scale=True)
         sleep(1)
         self.click(630, 1800, scale=True)
+        logging.info("Synergy complete")
         return True
 
     def push_legend_trials(self) -> None:
