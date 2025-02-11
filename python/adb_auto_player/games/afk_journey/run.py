@@ -717,7 +717,7 @@ class AFKJourney(Game):
                 f"legend_trials/faction_icon_{faction}.png",
                 use_previous_screenshot=True,
             ):
-                logging.info(f"{faction.capitalize()}s Tower not available today")
+                logging.debug(f"{faction.capitalize()} Tower not available today")
                 continue
 
             result = self.find_template_match(
@@ -731,6 +731,9 @@ class AFKJourney(Game):
 
         for faction, result in results.items():
             logging.info(f"Starting {faction.capitalize()} Tower")
+            if self.find_template_match(f"legend_trials/faction_icon_{faction}.png"):
+                logging.warning(f"{faction.capitalize()} Tower no longer available")
+                continue
             self.__navigate_to_legend_trials_select_tower()
             self.click(*result)
             try:
