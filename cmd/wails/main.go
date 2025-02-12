@@ -115,23 +115,3 @@ func changeWorkingDirForProd() {
 		panic(err)
 	}
 }
-
-func getPythonBinaryPath(workingDir string) *string {
-	executable := "adb_auto_player_py_app"
-	if stdruntime.GOOS == "windows" {
-		executable = "adb_auto_player.exe"
-	}
-
-	paths := []string{
-		filepath.Join(workingDir, "binaries", executable),
-	}
-
-	println(filepath.Join(workingDir, "binaries", executable))
-	if stdruntime.GOOS == "darwin" {
-		paths = append(paths, filepath.Join(workingDir, "../../../../python/main.dist/", executable))
-	} else {
-		paths = append(paths, filepath.Join(workingDir, "../../python/main.dist/", executable))
-	}
-
-	return GetFirstPathThatExists(paths)
-}
