@@ -75,11 +75,6 @@
     onConfigSave?.(processFormData(formData));
   }
 
-  function formatSectionKey(sectionKey: string): string {
-    const withSpaces = sectionKey.replace(/_/g, " ");
-    return withSpaces.replace(/\b\w/g, (match) => match.toUpperCase());
-  }
-
   function setupRealTimeValidation() {
     const formElement = document.getElementById(
       "config-form",
@@ -118,13 +113,13 @@
 <form class="config-form" id="config-form">
   {#each configSections as { sectionKey, sectionConfig }}
     <fieldset>
-      <legend>{formatSectionKey(sectionKey)}</legend>
+      <legend>{sectionKey}</legend>
 
       {#each Object.entries(sectionConfig) as [key, value]}
         <div class="form-group">
           <div class="form-group-inner">
             <label for="{sectionKey}-{key}">
-              {formatSectionKey(key)}
+              {key}
             </label>
 
             <div class="input-container">

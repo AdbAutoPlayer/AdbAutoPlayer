@@ -4,18 +4,17 @@
     SaveMainConfig,
     GetRunningSupportedGame,
     GetEditableGameConfig,
-    SaveAFKJourneyConfig,
+    SaveGameConfig,
     StartGameProcess,
     TerminateGameProcess,
     IsGameProcessRunning,
   } from "$lib/wailsjs/go/main/App";
-  import { LogError } from "$lib/wailsjs/runtime";
   import { onDestroy, onMount } from "svelte";
   import CommandPanel from "./CommandPanel.svelte";
   import ConfigForm from "./ConfigForm.svelte";
   import Menu from "./Menu.svelte";
   import { logoAwake } from "$lib/stores/logo";
-  import { afkjourney, config, games } from "$lib/wailsjs/go/models";
+  import { config, ipc } from "$lib/wailsjs/go/models";
   const defaultButtons: MenuButton[] = [
     {
       label: "Edit Main Config",
@@ -26,7 +25,7 @@
 
   let showConfigForm: boolean = $state(false);
   let configFormProps: Record<string, any> = $state({});
-  let activeGame: games.Game | null = $state(null);
+  let activeGame: ipc.GameGUI | null = $state(null);
 
   let openFormIsMainConfig: boolean = $state(false);
 
@@ -34,25 +33,22 @@
     if (openFormIsMainConfig) {
       return onMainConfigSave;
     }
-    if (activeGame?.GameTitle == "AFK Journey") {
-      return onAFKJourneyConfigSave;
-    }
-    return function () {
-      LogError("Not Implemented");
-    };
+
+    return onGameConfigSave;
   });
 
   let activeButtonLabel: string | null = $state(null);
 
   let activeGameMenuButtons: MenuButton[] = $derived.by(() => {
-    if (activeGame?.MenuOptions && activeGame.MenuOptions.length > 0) {
-      let game = activeGame;
-      const menuButtons: MenuButton[] = game.MenuOptions.map((menuOption) => ({
-        label: menuOption.Label,
-        callback: () => startGameProcess(game, menuOption),
-        active: menuOption.Label === activeButtonLabel,
-        alwaysEnabled: false,
-      }));
+    if (activeGame?.menu_options && activeGame.menu_options.length > 0) {
+      const menuButtons: MenuButton[] = activeGame.menu_options.map(
+        (menuOption) => ({
+          label: menuOption.label,
+          callback: () => startGameProcess(menuOption),
+          active: menuOption.label === activeButtonLabel,
+          alwaysEnabled: false,
+        }),
+      );
 
       menuButtons.push(
         {
@@ -80,15 +76,11 @@
     return [];
   });
 
-  function startGameProcess(game: games.Game, menuOption: games.MenuOption) {
-    if (game === null) {
-      return;
-    }
-
-    activeButtonLabel = menuOption.Label;
+  function startGameProcess(menuOption: ipc.MenuOption) {
+    activeButtonLabel = menuOption.label;
 
     $logoAwake = false;
-    StartGameProcess(game, menuOption.Args).catch((err) => {
+    StartGameProcess(menuOption.args).catch((err) => {
       console.log(err);
       alert(err);
     });
@@ -105,11 +97,11 @@
       });
   }
 
-  function onAFKJourneyConfigSave(configObject: object) {
-    if (activeGame?.GameTitle !== "AFK Journey") {
+  function onGameConfigSave(configObject: object) {
+    if (!activeGame) {
       return;
     }
-    SaveAFKJourneyConfig(activeGame, afkjourney.Config.createFrom(configObject))
+    SaveGameConfig(configObject)
       .catch((err) => {
         alert(err);
       })
@@ -119,7 +111,7 @@
       });
   }
 
-  function openGameConfigForm(game: games.Game | null) {
+  function openGameConfigForm(game: ipc.GameGUI | null) {
     if (game === null) {
       return;
     }
@@ -185,7 +177,7 @@
 
 <main class="container no-select">
   <h1>
-    {activeGame?.GameTitle ?? "Please start a supported game"}
+    {activeGame?.game_title ?? "Please start a supported game"}
   </h1>
   {#if showConfigForm}
     <CommandPanel title={"Config"}>

@@ -21,9 +21,8 @@ import (
 var assets embed.FS
 
 func main() {
-	useProdPath := changeWorkingDirForProd()
-
-	app := NewApp(useProdPath)
+	workingDir := changeWorkingDirForProd()
+	pythonBinaryPath := getPythonBinaryPath(workingDir)
 
 	logLevel := logger.DEBUG
 	mainConfig, err := config.LoadConfig[config.MainConfig]("config.toml")
@@ -42,6 +41,11 @@ func main() {
 		}
 	}
 	frontendLogger := ipc.NewFrontendLogger(uint8(logLevel))
+
+	app, err := NewApp(pythonBinaryPath)
+	if err != nil {
+		frontendLogger.Error("Can not start bot")
+	}
 
 	err = wails.Run(&options.App{
 		Title:  "AdbAutoPlayer",
@@ -84,10 +88,14 @@ func main() {
 	}
 }
 
-func changeWorkingDirForProd() bool {
+func changeWorkingDirForProd() string {
 	for _, arg := range os.Args {
 		if strings.Contains(arg, "wailsbindings") {
-			return false
+			workingDir, err := os.Getwd()
+			if err != nil {
+				panic(err)
+			}
+			return workingDir
 		}
 
 	}
@@ -105,8 +113,30 @@ func changeWorkingDirForProd() bool {
 		if err := os.Chdir(execDir); err != nil {
 			panic(fmt.Sprintf("Failed to change working directory to %s: %v", execDir, err))
 		}
-		return true
 	}
 
-	return false
+	workingDir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	return workingDir
+}
+
+func getPythonBinaryPath(workingDir string) *string {
+	executable := "adb_auto_player_py_ap"
+	if stdruntime.GOOS == "windows" {
+		executable = "adb_auto_player.exe"
+	}
+
+	paths := []string{
+		filepath.Join(workingDir, "binaries", executable),
+	}
+
+	if stdruntime.GOOS == "darwin" {
+		paths = append(paths, filepath.Join(workingDir, "../../../../../python/main.dist/", executable))
+	} else {
+		paths = append(paths, filepath.Join(workingDir, "../../python/main.dist/", executable))
+	}
+
+	return GetFirstPathThatExists(paths)
 }

@@ -1,24 +1,24 @@
-[general]
-excluded_heroes = []
-assist_limit = 20
+["General"]
+"Exclude Heroes" = []
+"Assist Limit" = 20
 
-[afk_stages]
-attempts = 5
-formations = 7
-use_suggested_formations = true
-push_both_modes = true
-spend_gold = false
-repeat = true
+["AFK Stages"]
+Attempts = 5
+Formations = 7
+"Suggested Formations" = true
+"Both Modes" = true
+"Spend Gold" = false
+Repeat = true
 
-[duras_trials]
-attempts = 2
-formations = 7
-use_suggested_formations = true
-spend_gold = false
+["Dura's Trials"]
+Attempts = 2
+Formations = 7
+"Suggested Formations" = true
+"Spend Gold" = false
 
-[legend_trials]
-attempts = 5
-formations = 7
-use_suggested_formations = true
-spend_gold = false
-towers = ['Lightbearer', 'Wilder', 'Graveborn', 'Mauler']
+["Legend Trial"]
+Attempts = 5
+Formations = 7
+"Suggested Formations" = true
+"Spend Gold" = false
+Towers = ['Lightbearer', 'Wilder', 'Graveborn', 'Mauler']

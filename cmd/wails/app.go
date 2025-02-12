@@ -1,28 +1,70 @@
 package main
 
 import (
-	"adb-auto-player/games"
-	"adb-auto-player/games/afkjourney"
 	"adb-auto-player/internal/config"
 	"adb-auto-player/internal/ipc"
 	"archive/zip"
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type App struct {
-	ctx               context.Context
-	useProdPath       bool
-	killAdbOnShutdown bool
+	ctx                    context.Context
+	pythonBinaryPath       *string
+	killAdbOnShutdown      bool
+	games                  []ipc.GameGUI
+	lastOpenGameConfigPath *string
 }
 
-func NewApp(useProdPath bool) *App {
-	return &App{useProdPath: useProdPath, killAdbOnShutdown: false}
+func NewApp(pythonBinaryPath *string) (*App, error) {
+	newApp := &App{
+		pythonBinaryPath:  pythonBinaryPath,
+		killAdbOnShutdown: false,
+		games:             []ipc.GameGUI{},
+	}
+
+	err := newApp.setGamesFromPython()
+	if err != nil {
+		print("Error setting games from Python: " + err.Error())
+		return newApp, err
+	}
+	return newApp, nil
+}
+
+func (a *App) setGamesFromPython() error {
+	pm := GetProcessManager()
+
+	if a.pythonBinaryPath == nil || *a.pythonBinaryPath == "" {
+		println("Could not find Python Binary")
+		if a.ctx != nil {
+			runtime.LogError(a.ctx, "Could not find Python Binary")
+
+		}
+		return nil
+	}
+	gamesString, err := pm.Exec(*a.pythonBinaryPath, "GUIGamesMenu")
+	if err != nil {
+		return err
+	}
+
+	var gameGUIs []ipc.GameGUI
+
+	err = json.Unmarshal([]byte(gamesString), &gameGUIs)
+	if err != nil {
+		return err
+	}
+
+	a.games = gameGUIs
+
+	return nil
 }
 
 func (a *App) startup(ctx context.Context) {
@@ -64,55 +106,71 @@ func (a *App) SaveMainConfig(mainConfig config.MainConfig) error {
 	return nil
 }
 
-func (a *App) GetEditableGameConfig(game games.Game) (map[string]interface{}, error) {
+func (a *App) GetEditableGameConfig(game ipc.GameGUI) (map[string]interface{}, error) {
 	var gameConfig interface{}
 	var err error
-	switch game.GameTitle {
-	case "AFK Journey":
-		gameConfig, err = config.LoadConfig[afkjourney.Config](game.ConfigPath)
-	default:
-		gameConfig, err = config.LoadConfig[map[string]interface{}](game.ConfigPath)
+
+	workingDir, err := os.Getwd()
+	if err != nil {
+		return nil, err
 	}
 
+	paths := []string{
+		filepath.Join(workingDir, "games", game.ConfigPath),
+		filepath.Join(workingDir, "../../python/adb_auto_player/games", game.ConfigPath),
+	}
+	configPath := GetFirstPathThatExists(paths)
+
+	if configPath == nil {
+		errorText := fmt.Sprintf(
+			"no %s config found at %s",
+			game.GameTitle,
+			strings.Join(paths, ", "),
+		)
+		runtime.LogErrorf(a.ctx, "%s", errorText)
+		return nil, errors.New(errorText)
+	}
+
+	a.lastOpenGameConfigPath = configPath
+
+	gameConfig, err = config.LoadConfig[map[string]interface{}](*configPath)
 	if err != nil {
 		return nil, err
 	}
 
 	response := map[string]interface{}{
 		"config":      gameConfig,
-		"constraints": game.ConfigConstraints,
+		"constraints": game.Constraints,
 	}
 	return response, nil
 }
 
-func (a *App) SaveAFKJourneyConfig(afkJourney games.Game, gameConfig afkjourney.Config) error {
-	if err := config.SaveConfig[afkjourney.Config](afkJourney.ConfigPath, &gameConfig); err != nil {
+func (a *App) SaveGameConfig(gameConfig interface{}) error {
+	if nil == a.lastOpenGameConfigPath {
+		return errors.New("cannot save game config: no game config found")
+	}
+
+	if err := config.SaveConfig[interface{}](*a.lastOpenGameConfigPath, &gameConfig); err != nil {
 		return err
 	}
-	runtime.LogInfo(a.ctx, "Saved AFK Journey config")
+	runtime.LogInfo(a.ctx, "Saved config")
 	return nil
 }
 
-func (a *App) GetRunningSupportedGame() (*games.Game, error) {
-	packageName := "com.farlightgames.igame.gp"
-
-	allGames := []games.Game{
-		afkjourney.NewAFKJourney(a.useProdPath),
+func (a *App) GetRunningSupportedGame() (*ipc.GameGUI, error) {
+	for _, game := range a.games {
+		// TODO we only have a single game right now anyway
+		// Original idea was to detect what game is running
+		// We can add a command on python for this
+		// Or remove this and have a select in the GUI
+		return &game, nil
 	}
-
-	for _, game := range allGames {
-		for _, pName := range game.PackageNames {
-			if pName == packageName {
-				return &game, nil
-			}
-		}
-	}
-	return nil, fmt.Errorf("%s is not supported", packageName)
+	return nil, fmt.Errorf("should never happen")
 }
 
-func (a *App) StartGameProcess(game games.Game, args []string) error {
+func (a *App) StartGameProcess(args []string) error {
 	pm := GetProcessManager()
-	if err := pm.StartProcess(game.BinaryPath, args); err != nil {
+	if err := pm.StartProcess(*a.pythonBinaryPath, args); err != nil {
 		runtime.LogErrorf(a.ctx, "Starting process: %v", err)
 		return err
 	}

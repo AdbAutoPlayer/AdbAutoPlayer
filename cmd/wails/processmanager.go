@@ -46,11 +46,10 @@ func (pm *Manager) StartProcess(binaryPath string, args []string) error {
 
 	workingDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to get current working directory: %w", err)
+		return err
 	}
-	absoluteBinaryPath := workingDir + "/" + binaryPath
-	pm.logger.Debugf("Absolute ainary path: %s", absoluteBinaryPath)
-	cmd := exec.Command(absoluteBinaryPath, args...)
+
+	cmd := exec.Command(binaryPath, args...)
 	cmd.Dir = workingDir
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
@@ -126,7 +125,6 @@ func (pm *Manager) KillProcess() (bool, error) {
 	}
 
 	for _, child := range children {
-		print(child.Name())
 		if err := child.Kill(); err != nil {
 			pm.logger.Errorf("Error killing child process %d: %v", child.Pid, err)
 		}
@@ -157,4 +155,15 @@ func (pm *Manager) isProcessRunning() bool {
 	}
 
 	return running
+}
+
+func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
+	cmd := exec.Command(binaryPath, args...)
+
+	output, err := cmd.Output()
+	if err != nil {
+		fmt.Printf("Failed to execute command: %v", err)
+		return "", fmt.Errorf("failed to execute command: %w", err)
+	}
+	return string(output), nil
 }

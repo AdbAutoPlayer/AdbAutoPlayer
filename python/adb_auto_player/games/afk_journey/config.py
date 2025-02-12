@@ -1,14 +1,18 @@
 from enum import StrEnum, auto
 from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 import tomllib
 from pathlib import Path
 
+from adb_auto_player.ipc import constraint
+
+# Type constraints
 PositiveInt = Annotated[int, Field(ge=1, le=999)]
 FormationsInt = Annotated[int, Field(ge=1, le=7)]
 
 
+# Enums
 class HeroesEnum(StrEnum):
     def _generate_next_value_(name, start, count, last_values):
         return name
@@ -87,27 +91,6 @@ class HeroesEnum(StrEnum):
     Walker = auto()
 
 
-class GeneralConfig(BaseModel):
-    excluded_heroes: list[HeroesEnum] = Field(default_factory=list)
-    assist_limit: PositiveInt = 20
-
-
-class AFKStagesConfig(BaseModel):
-    attempts: PositiveInt = 5
-    formations: FormationsInt = 7
-    use_suggested_formations: bool = True
-    push_both_modes: bool = True
-    spend_gold: bool = False
-    repeat: bool = True
-
-
-class DurasTrialsConfig(BaseModel):
-    attempts: PositiveInt = 2
-    formations: FormationsInt = 7
-    use_suggested_formations: bool = True
-    spend_gold: bool = False
-
-
 class TowerEnum(StrEnum):
     def _generate_next_value_(name, start, count, last_values):
         return name
@@ -118,19 +101,50 @@ class TowerEnum(StrEnum):
     Mauler = auto()
 
 
+# Models
+class GeneralConfig(BaseModel):
+    excluded_heroes: list[HeroesEnum] = Field(
+        default_factory=list, alias="Exclude Heroes"
+    )
+    assist_limit: PositiveInt = Field(default=20, alias="Assist Limit")
+
+
+class AFKStagesConfig(BaseModel):
+    attempts: PositiveInt = Field(default=5, alias="Attempts")
+    formations: FormationsInt = Field(default=7, alias="Formations")
+    use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
+    push_both_modes: bool = Field(default=True, alias="Both Modes")
+    spend_gold: bool = Field(default=False, alias="Spend Gold")
+    repeat: bool = Field(default=True, alias="Repeat")
+
+
+class DurasTrialsConfig(BaseModel):
+    attempts: PositiveInt = Field(default=2, alias="Attempts")
+    formations: FormationsInt = Field(default=7, alias="Formations")
+    use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
+    spend_gold: bool = Field(default=False, alias="Spend Gold")
+
+
 class LegendTrialsConfig(BaseModel):
-    attempts: PositiveInt = 5
-    formations: FormationsInt = 7
-    use_suggested_formations: bool = True
-    spend_gold: bool = False
-    towers: list[TowerEnum] = Field(default_factory=list)
+    attempts: PositiveInt = Field(default=5, alias="Attempts")
+    formations: FormationsInt = Field(default=7, alias="Formations")
+    use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
+    spend_gold: bool = Field(default=False, alias="Spend Gold")
+    towers: list[TowerEnum] = Field(default_factory=list, alias="Towers")
+
+    @field_validator("towers", mode="before")
+    @classmethod
+    def parse_towers(cls, v):
+        if isinstance(v, list):
+            return [TowerEnum(tower) for tower in v]
+        return v
 
 
 class Config(BaseModel):
-    general: GeneralConfig
-    afk_stages: AFKStagesConfig
-    duras_trials: DurasTrialsConfig
-    legend_trials: LegendTrialsConfig
+    general: GeneralConfig = Field(alias="General")
+    afk_stages: AFKStagesConfig = Field(alias="AFK Stages")
+    duras_trials: DurasTrialsConfig = Field(alias="Dura's Trials")
+    legend_trials: LegendTrialsConfig = Field(alias="Legend Trial")
 
     @classmethod
     def from_toml(cls, file_path: Path):
@@ -138,3 +152,39 @@ class Config(BaseModel):
             toml_data = tomllib.load(f)
 
         return cls(**toml_data)
+
+    @staticmethod
+    def get_constraints() -> dict[str, dict[str, constraint.ConstraintType]]:
+        formations_constraint = constraint.create_number_constraint(maximum=7)
+
+        return {
+            "General": {
+                "Exclude Heroes": constraint.create_multicheckbox_constraint(
+                    [e.value for e in HeroesEnum]  # type: ignore
+                ),
+                "Assist Limit": constraint.create_number_constraint(),
+            },
+            "AFK Stages": {
+                "Attempts": constraint.create_number_constraint(),
+                "Formations": formations_constraint,
+                "Suggested Formations": constraint.create_checkbox_constraint(),
+                "Both Modes": constraint.create_checkbox_constraint(),
+                "Spend Gold": constraint.create_checkbox_constraint(),
+                "Repeat": constraint.create_checkbox_constraint(),
+            },
+            "Dura's Trials": {
+                "Attempts": constraint.create_number_constraint(),
+                "Formations": formations_constraint,
+                "Suggested Formations": constraint.create_checkbox_constraint(),
+                "Spend Gold": constraint.create_checkbox_constraint(),
+            },
+            "Legend Trial": {
+                "Attempts": constraint.create_number_constraint(),
+                "Formations": formations_constraint,
+                "Suggested Formations": constraint.create_checkbox_constraint(),
+                "Spend Gold": constraint.create_checkbox_constraint(),
+                "Towers": constraint.create_image_checkbox_constraint(
+                    [e.value for e in TowerEnum]  # type: ignore
+                ),
+            },
+        }

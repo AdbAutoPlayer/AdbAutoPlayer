@@ -121,7 +121,7 @@ class AFKJourney(Game):
             game_title="AFK Journey",
             config_path="afk_journey/AFKJourney.toml",
             menu_options=self._get_menu_options_from_cli_menu(),
-            config_schema=Config.model_json_schema(),
+            constraints=Config.get_constraints(),
         )
 
     def __get_config_attribute_from_mode(self, attribute: str):
