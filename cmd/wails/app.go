@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
 	"net/http"
@@ -38,7 +39,7 @@ func (a *App) setGamesFromPython() error {
 	pm := GetProcessManager()
 
 	if a.pythonBinaryPath == nil || *a.pythonBinaryPath == "" {
-		panic("Could not find Python Binary")
+		return errors.New("no python executable found")
 	}
 	gamesString, err := pm.Exec(*a.pythonBinaryPath, "GUIGamesMenu")
 	if err != nil {
@@ -75,7 +76,15 @@ func (a *App) shutdown(ctx context.Context) {
 }
 
 func (a *App) GetEditableMainConfig() (map[string]interface{}, error) {
-	mainConfig, err := config.LoadConfig[config.MainConfig]("config.toml")
+	paths := []string{
+		"config.toml",
+	}
+	if stdruntime.GOOS == "darwin" {
+		paths = append(paths, "../../config.toml")
+	}
+	configPath := GetFirstPathThatExists(paths)
+
+	mainConfig, err := config.LoadConfig[config.MainConfig](*configPath)
 	if err != nil {
 		return nil, err
 	}
@@ -93,6 +102,7 @@ func (a *App) SaveMainConfig(mainConfig config.MainConfig) error {
 	}
 	runtime.LogInfo(a.ctx, "Saved Main config")
 	GetProcessManager().logger.SetLogLevelFromString(mainConfig.Logging.Level)
+	runtime.LogSetLogLevel(a.ctx, logger.LogLevel(ipc.GetLogLevelFromString(mainConfig.Logging.Level)))
 	return nil
 }
 
@@ -102,12 +112,16 @@ func (a *App) GetEditableGameConfig(game ipc.GameGUI) (map[string]interface{}, e
 
 	workingDir, err := os.Getwd()
 	if err != nil {
+		runtime.LogErrorf(a.ctx, "Failed to get current working directory: %v", err)
 		return nil, err
 	}
 
 	paths := []string{
 		filepath.Join(workingDir, "games", game.ConfigPath),
 		filepath.Join(workingDir, "../../python/adb_auto_player/games", game.ConfigPath),
+	}
+	if stdruntime.GOOS == "darwin" {
+		paths = append(paths, filepath.Join(workingDir, "../../../../python/adb_auto_player/games", game.ConfigPath))
 	}
 	configPath := GetFirstPathThatExists(paths)
 
@@ -125,6 +139,7 @@ func (a *App) GetEditableGameConfig(game ipc.GameGUI) (map[string]interface{}, e
 
 	gameConfig, err = config.LoadConfig[map[string]interface{}](*configPath)
 	if err != nil {
+
 		return nil, err
 	}
 
@@ -168,6 +183,11 @@ func (a *App) GetRunningSupportedGame() (*ipc.GameGUI, error) {
 		// We can add a command on python for this
 		// Or remove this and have a select in the GUI
 		return &game, nil
+	}
+	if a.pythonBinaryPath == nil {
+		runtime.LogDebugf(a.ctx, "Python Binary Path: nil")
+	} else {
+		runtime.LogDebugf(a.ctx, "Python Binary Path: %s", *a.pythonBinaryPath)
 	}
 	return nil, fmt.Errorf("should never happen")
 }

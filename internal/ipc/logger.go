@@ -40,21 +40,25 @@ func (l *FrontendLogger) SetLogLevelFromIPCLogLevel(logLevel LogLevel) {
 	l.logLevel = logLevelPriority[logLevel]
 }
 
-func (l *FrontendLogger) SetLogLevelFromString(logLevel string) {
+func GetLogLevelFromString(logLevel string) uint8 {
 	switch logLevel {
 	case string(LogLevelTrace):
-		l.logLevel = logLevelPriority[LogLevelTrace]
+		return logLevelPriority[LogLevelTrace]
 	case string(LogLevelDebug):
-		l.logLevel = logLevelPriority[LogLevelDebug]
+		return logLevelPriority[LogLevelDebug]
 	case string(LogLevelWarning):
-		l.logLevel = logLevelPriority[LogLevelWarning]
+		return logLevelPriority[LogLevelWarning]
 	case string(LogLevelError):
-		l.logLevel = logLevelPriority[LogLevelError]
+		return logLevelPriority[LogLevelError]
 	case string(LogLevelFatal):
-		l.logLevel = logLevelPriority[LogLevelFatal]
+		return logLevelPriority[LogLevelFatal]
 	default:
-		l.logLevel = logLevelPriority[LogLevelInfo]
+		return logLevelPriority[LogLevelInfo]
 	}
+}
+
+func (l *FrontendLogger) SetLogLevelFromString(logLevel string) {
+	l.logLevel = GetLogLevelFromString(logLevel)
 }
 
 func (l *FrontendLogger) Print(message string) {
