@@ -38,9 +38,10 @@ func NewApp() *App {
 func (a *App) setGamesFromPython() error {
 	pm := GetProcessManager()
 
-	if a.pythonBinaryPath == nil || *a.pythonBinaryPath == "" {
+	if a.pythonBinaryPath == nil {
 		return errors.New("no python executable found")
 	}
+
 	gamesString, err := pm.Exec(*a.pythonBinaryPath, "GUIGamesMenu")
 	if err != nil {
 		return err
@@ -164,12 +165,11 @@ func (a *App) SaveGameConfig(gameConfig map[string]interface{}) error {
 
 func (a *App) GetRunningSupportedGame() (*ipc.GameGUI, error) {
 	if a.pythonBinaryPath == nil {
-		binaryPath, err := getPythonBinaryPath()
+		err := a.setPythonBinaryPath()
 		if err != nil {
 			runtime.LogErrorf(a.ctx, "%v", err)
 			return nil, err
 		}
-		a.pythonBinaryPath = binaryPath
 	}
 	if len(a.games) == 0 {
 		err := a.setGamesFromPython()
@@ -194,13 +194,14 @@ func (a *App) GetRunningSupportedGame() (*ipc.GameGUI, error) {
 	return nil, fmt.Errorf("should never happen")
 }
 
-func getPythonBinaryPath() (*string, error) {
+func (a *App) setPythonBinaryPath() error {
 	workingDir, err := os.Getwd()
 	if err != nil {
-		return nil, err
+		runtime.LogErrorf(a.ctx, "%v", err)
+		return err
 	}
 
-	executable := "adb_auto_player_py_ap"
+	executable := "adb_auto_player_py_app"
 	if stdruntime.GOOS == "windows" {
 		executable = "adb_auto_player.exe"
 	}
@@ -214,8 +215,9 @@ func getPythonBinaryPath() (*string, error) {
 	} else {
 		paths = append(paths, filepath.Join(workingDir, "../../python/main.dist/", executable))
 	}
-
-	return GetFirstPathThatExists(paths), nil
+	runtime.LogDebugf(a.ctx, "Paths: %s", strings.Join(paths, ", "))
+	a.pythonBinaryPath = GetFirstPathThatExists(paths)
+	return nil
 }
 
 func (a *App) StartGameProcess(args []string) error {
