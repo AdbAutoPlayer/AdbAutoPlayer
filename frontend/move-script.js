@@ -8,7 +8,7 @@ async function moveBuildDir() {
   try {
     await fs.ensureDir(targetDir);
 
-    await fs.copy(buildDir, targetDir, { overwrite: false });
+    await fs.copy(buildDir, targetDir, { overwrite: true });
     console.log("Build directory moved successfully!");
   } catch (error) {
     console.error("Error moving build directory:", error);

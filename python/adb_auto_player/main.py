@@ -62,8 +62,9 @@ def get_gui_games_menu() -> str:
     for game in __get_games():
         options = game.get_gui_options()
         menu.append(options.to_dict())
+
     menu_json_string = json.dumps(menu)
-    print(json.dumps(menu))
+    print(menu_json_string)
     return menu_json_string
 
 

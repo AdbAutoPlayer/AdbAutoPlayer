@@ -152,9 +152,14 @@
       return;
     }
 
-    IsGameProcessRunning().then((response: boolean) => {
-      $logoAwake = !response;
-    });
+    IsGameProcessRunning()
+      .then((response: boolean) => {
+        $logoAwake = !response;
+      })
+      .catch((err) => {
+        console.log(err);
+        updateStateTimeout = setTimeout(updateState, 2500);
+      });
 
     if ($logoAwake) {
       GetRunningSupportedGame()
@@ -164,6 +169,7 @@
         .catch((err) => {
           console.log(err);
           activeGame = null;
+          updateStateTimeout = setTimeout(updateState, 2500);
         });
     }
     updateStateTimeout = setTimeout(updateState, 2500);
@@ -180,7 +186,7 @@
 
 <main class="container no-select">
   <h1>
-    {activeGame?.game_title ?? "Please start a supported game"}
+    {activeGame?.game_title ?? "Loading"}
   </h1>
   {#if showConfigForm}
     <CommandPanel title={"Config"}>
