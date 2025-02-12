@@ -21,8 +21,7 @@ import (
 var assets embed.FS
 
 func main() {
-	workingDir := changeWorkingDirForProd()
-	pythonBinaryPath := getPythonBinaryPath(workingDir)
+	changeWorkingDirForProd()
 
 	logLevel := logger.DEBUG
 	mainConfig, err := config.LoadConfig[config.MainConfig]("config.toml")
@@ -42,10 +41,7 @@ func main() {
 	}
 	frontendLogger := ipc.NewFrontendLogger(uint8(logLevel))
 
-	app, err := NewApp(pythonBinaryPath)
-	if err != nil {
-		panic(err)
-	}
+	app := NewApp()
 
 	err = wails.Run(&options.App{
 		Title:  "AdbAutoPlayer",
@@ -88,16 +84,15 @@ func main() {
 	}
 }
 
-func changeWorkingDirForProd() string {
+func changeWorkingDirForProd() {
 	for _, arg := range os.Args {
 		if strings.Contains(arg, "wailsbindings") {
-			workingDir, err := os.Getwd()
+			_, err := os.Getwd()
 			if err != nil {
 				panic(err)
 			}
-			return workingDir
+			return
 		}
-
 	}
 
 	execPath, err := os.Executable()
@@ -115,28 +110,8 @@ func changeWorkingDirForProd() string {
 		}
 	}
 
-	workingDir, err := os.Getwd()
+	_, err = os.Getwd()
 	if err != nil {
 		panic(err)
 	}
-	return workingDir
-}
-
-func getPythonBinaryPath(workingDir string) *string {
-	executable := "adb_auto_player_py_ap"
-	if stdruntime.GOOS == "windows" {
-		executable = "adb_auto_player.exe"
-	}
-
-	paths := []string{
-		filepath.Join(workingDir, "binaries", executable),
-	}
-
-	if stdruntime.GOOS == "darwin" {
-		paths = append(paths, filepath.Join(workingDir, "../../../../../python/main.dist/", executable))
-	} else {
-		paths = append(paths, filepath.Join(workingDir, "../../python/main.dist/", executable))
-	}
-
-	return GetFirstPathThatExists(paths)
 }

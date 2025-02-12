@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	stdruntime "runtime"
 	"strings"
 )
 
@@ -24,18 +25,13 @@ type App struct {
 	lastOpenGameConfigPath *string
 }
 
-func NewApp(pythonBinaryPath *string) (*App, error) {
+func NewApp() *App {
 	newApp := &App{
-		pythonBinaryPath:  pythonBinaryPath,
+		pythonBinaryPath:  nil,
 		killAdbOnShutdown: false,
 		games:             []ipc.GameGUI{},
 	}
-
-	err := newApp.setGamesFromPython()
-	if err != nil {
-		panic(err)
-	}
-	return newApp, nil
+	return newApp
 }
 
 func (a *App) setGamesFromPython() error {
@@ -152,6 +148,20 @@ func (a *App) SaveGameConfig(gameConfig map[string]interface{}) error {
 }
 
 func (a *App) GetRunningSupportedGame() (*ipc.GameGUI, error) {
+	if a.pythonBinaryPath == nil {
+		binaryPath, err := getPythonBinaryPath()
+		if err == nil {
+			return nil, err
+		}
+		a.pythonBinaryPath = binaryPath
+	}
+	if len(a.games) == 0 {
+		err := a.setGamesFromPython()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	for _, game := range a.games {
 		// TODO we only have a single game right now anyway
 		// Original idea was to detect what game is running
@@ -160,6 +170,30 @@ func (a *App) GetRunningSupportedGame() (*ipc.GameGUI, error) {
 		return &game, nil
 	}
 	return nil, fmt.Errorf("should never happen")
+}
+
+func getPythonBinaryPath() (*string, error) {
+	workingDir, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+
+	executable := "adb_auto_player_py_ap"
+	if stdruntime.GOOS == "windows" {
+		executable = "adb_auto_player.exe"
+	}
+
+	paths := []string{
+		filepath.Join(workingDir, "binaries", executable),
+	}
+
+	if stdruntime.GOOS == "darwin" {
+		paths = append(paths, filepath.Join(workingDir, "../../../../../python/main.dist/", executable))
+	} else {
+		paths = append(paths, filepath.Join(workingDir, "../../python/main.dist/", executable))
+	}
+
+	return GetFirstPathThatExists(paths), nil
 }
 
 func (a *App) StartGameProcess(args []string) error {
