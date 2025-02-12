@@ -161,16 +161,17 @@
         $logoAwake = !response;
       })
       .catch((err) => {
-        console.log(err);
+        console.log(`err: ${err}`);
       });
 
     if ($logoAwake) {
       GetRunningSupportedGame()
         .then((game) => {
+          console.log(`game: ${game}`);
           activeGame = game;
         })
         .catch((err) => {
-          console.log(err);
+          console.log(`err: ${err}`);
           activeGame = null;
         });
     }

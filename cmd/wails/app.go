@@ -165,7 +165,8 @@ func (a *App) SaveGameConfig(gameConfig map[string]interface{}) error {
 func (a *App) GetRunningSupportedGame() (*ipc.GameGUI, error) {
 	if a.pythonBinaryPath == nil {
 		binaryPath, err := getPythonBinaryPath()
-		if err == nil {
+		if err != nil {
+			runtime.LogErrorf(a.ctx, "%v", err)
 			return nil, err
 		}
 		a.pythonBinaryPath = binaryPath
@@ -173,6 +174,7 @@ func (a *App) GetRunningSupportedGame() (*ipc.GameGUI, error) {
 	if len(a.games) == 0 {
 		err := a.setGamesFromPython()
 		if err != nil {
+			runtime.LogErrorf(a.ctx, "%v", err)
 			return nil, err
 		}
 	}
