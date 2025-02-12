@@ -42,7 +42,7 @@ func main() {
 	}
 	frontendLogger := ipc.NewFrontendLogger(uint8(logLevel))
 
-	app, pythonBinaryErr := NewApp(pythonBinaryPath)
+	app, _ := NewApp(pythonBinaryPath)
 
 	err = wails.Run(&options.App{
 		Title:  "AdbAutoPlayer",
@@ -83,10 +83,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	if pythonBinaryErr != nil {
-		frontendLogger.Errorf("%s", pythonBinaryErr.Error())
-	}
 }
 
 func changeWorkingDirForProd() string {
@@ -124,7 +120,7 @@ func changeWorkingDirForProd() string {
 }
 
 func getPythonBinaryPath(workingDir string) *string {
-	executable := "adb_auto_player_py_ap"
+	executable := "adb_auto_player_py_app"
 	if stdruntime.GOOS == "windows" {
 		executable = "adb_auto_player.exe"
 	}
@@ -133,8 +129,9 @@ func getPythonBinaryPath(workingDir string) *string {
 		filepath.Join(workingDir, "binaries", executable),
 	}
 
+	println(filepath.Join(workingDir, "binaries", executable))
 	if stdruntime.GOOS == "darwin" {
-		paths = append(paths, filepath.Join(workingDir, "../../../../../python/main.dist/", executable))
+		paths = append(paths, filepath.Join(workingDir, "../../../../python/main.dist/", executable))
 	} else {
 		paths = append(paths, filepath.Join(workingDir, "../../python/main.dist/", executable))
 	}
