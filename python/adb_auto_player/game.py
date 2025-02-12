@@ -59,7 +59,7 @@ class Game:
         menu_options = []
         for i, command in enumerate(self.get_cli_menu_commands()):
             menu_options.append(
-                MenuOption(label=command.gui_label, args=[command.name], order=i)
+                MenuOption(label=command.gui_label, args=[command.name])
             )
         return menu_options
 

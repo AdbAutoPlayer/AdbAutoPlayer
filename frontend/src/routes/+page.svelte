@@ -15,6 +15,7 @@
   import Menu from "./Menu.svelte";
   import { logoAwake } from "$lib/stores/logo";
   import { config, ipc } from "$lib/wailsjs/go/models";
+  import { sortObjectByOrder } from "$lib/orderHelper";
   const defaultButtons: MenuButton[] = [
     {
       label: "Edit Main Config",
@@ -119,6 +120,7 @@
     $logoAwake = false;
     GetEditableGameConfig(game)
       .then((result) => {
+        result.constraints = sortObjectByOrder(result.constraints);
         configFormProps = result;
         showConfigForm = true;
       })
@@ -133,6 +135,7 @@
     $logoAwake = false;
     GetEditableMainConfig()
       .then((result) => {
+        result.constraints = sortObjectByOrder(result.constraints);
         configFormProps = result;
         showConfigForm = true;
       })

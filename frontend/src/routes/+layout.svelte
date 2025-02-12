@@ -12,7 +12,6 @@
   let { children } = $props();
 
   document.body.addEventListener("click", function (e: MouseEvent) {
-    e.preventDefault();
     const target = e.target as HTMLElement;
 
     const anchor = target.closest("a");

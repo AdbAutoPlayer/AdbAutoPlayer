@@ -59,9 +59,8 @@ def main() -> None:
 
 def get_gui_games_menu() -> str:
     menu = []
-    for i, game in enumerate(__get_games()):
+    for game in __get_games():
         options = game.get_gui_options()
-        options.order = i
         menu.append(options.to_dict())
     menu_json_string = json.dumps(menu)
     print(json.dumps(menu))

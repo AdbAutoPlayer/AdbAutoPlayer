@@ -4,6 +4,7 @@ import (
 	"adb-auto-player/internal/ipc"
 	"github.com/pelletier/go-toml/v2"
 	"os"
+	"regexp"
 )
 
 type MainConfig struct {
@@ -58,6 +59,12 @@ func SaveConfig[T any](filePath string, config *T) error {
 	if err != nil {
 		return err
 	}
+
+	// toml.Marshal converts ints to float e.g. 2 => 2.0 this reverts this...
+	// it would also convert an intended 2.0 to 2 but that is never an issue
+	configStr := string(newConfigData)
+	modifiedConfigStr := regexp.MustCompile(`=(\s\d+)\.0(\s|$)`).ReplaceAllString(configStr, `=$1$2`)
+	newConfigData = []byte(modifiedConfigStr)
 
 	if err := os.WriteFile(filePath, newConfigData, 0644); err != nil {
 		return err

@@ -145,12 +145,12 @@ func (a *App) GetEditableGameConfig(game ipc.GameGUI) (map[string]interface{}, e
 	return response, nil
 }
 
-func (a *App) SaveGameConfig(gameConfig interface{}) error {
+func (a *App) SaveGameConfig(gameConfig map[string]interface{}) error {
 	if nil == a.lastOpenGameConfigPath {
 		return errors.New("cannot save game config: no game config found")
 	}
 
-	if err := config.SaveConfig[interface{}](*a.lastOpenGameConfigPath, &gameConfig); err != nil {
+	if err := config.SaveConfig[map[string]interface{}](*a.lastOpenGameConfigPath, &gameConfig); err != nil {
 		return err
 	}
 	runtime.LogInfo(a.ctx, "Saved config")

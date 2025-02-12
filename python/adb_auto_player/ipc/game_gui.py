@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import TypeVar, Any
 
 from adb_auto_player.ipc import constraint
 
@@ -7,7 +8,6 @@ from adb_auto_player.ipc import constraint
 class MenuOption:
     label: str
     args: list[str]
-    order: int
 
 
 @dataclass
@@ -16,13 +16,30 @@ class GameGUIOptions:
     config_path: str
     menu_options: list[MenuOption]
     constraints: dict[str, dict[str, constraint.ConstraintType]]
-    order: int | None = None
 
     def to_dict(self):
         return {
             "game_title": self.game_title,
             "config_path": self.config_path,
             "menu_options": [menu_option.__dict__ for menu_option in self.menu_options],
-            "constraints": self.constraints,
-            "order": self.order,
+            "constraints": add_order_key(self.constraints),
         }
+
+
+T = TypeVar("T", bound=dict[str, Any])
+
+
+def add_order_key(data: T) -> T:
+    if isinstance(data, dict):
+        ordered_keys = list(data.keys())
+
+        order = [key for key in ordered_keys if key and key[0].isupper()]
+
+        if order:
+            data["Order"] = order
+
+        for key in ordered_keys:
+            if isinstance(data[key], dict):
+                add_order_key(data[key])
+
+    return data
