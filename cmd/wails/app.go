@@ -42,7 +42,7 @@ func (a *App) setGamesFromPython() error {
 	pm := GetProcessManager()
 
 	if a.pythonBinaryPath == nil || *a.pythonBinaryPath == "" {
-		panic("Could not find Python Binary")
+		return errors.New("no python executable found")
 	}
 	gamesString, err := pm.Exec(*a.pythonBinaryPath, "GUIGamesMenu")
 	if err != nil {
