@@ -21,8 +21,7 @@ import (
 var assets embed.FS
 
 func main() {
-	workingDir := changeWorkingDirForProd()
-	pythonBinaryPath := getPythonBinaryPath(workingDir)
+	changeWorkingDirForProd()
 
 	logLevel := logger.DEBUG
 	mainConfig, err := config.LoadConfig[config.MainConfig]("config.toml")
@@ -42,7 +41,7 @@ func main() {
 	}
 	frontendLogger := ipc.NewFrontendLogger(uint8(logLevel))
 
-	app, _ := NewApp(pythonBinaryPath)
+	app := NewApp()
 
 	err = wails.Run(&options.App{
 		Title:  "AdbAutoPlayer",
@@ -85,16 +84,15 @@ func main() {
 	}
 }
 
-func changeWorkingDirForProd() string {
+func changeWorkingDirForProd() {
 	for _, arg := range os.Args {
 		if strings.Contains(arg, "wailsbindings") {
-			workingDir, err := os.Getwd()
+			_, err := os.Getwd()
 			if err != nil {
 				panic(err)
 			}
-			return workingDir
+			return
 		}
-
 	}
 
 	execPath, err := os.Executable()
@@ -112,11 +110,10 @@ func changeWorkingDirForProd() string {
 		}
 	}
 
-	workingDir, err := os.Getwd()
+	_, err = os.Getwd()
 	if err != nil {
 		panic(err)
 	}
-	return workingDir
 }
 
 func getPythonBinaryPath(workingDir string) *string {

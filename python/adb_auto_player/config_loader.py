@@ -53,7 +53,10 @@ def get_main_config() -> dict[str, Any]:
         config_toml_path = working_dir.parent.parent / "cmd" / "wails" / "config.toml"
 
     if not config_toml_path or not config_toml_path.exists():
-        config_toml_path = __get_working_dir() / "config.toml"
+        config_toml_path = working_dir / "config.toml"
+
+    if not config_toml_path or not config_toml_path.exists():
+        config_toml_path = working_dir.parent / "config.toml"
 
     logging.debug(f"Python config.toml path: {config_toml_path}")
     with open(config_toml_path, "rb") as f:
