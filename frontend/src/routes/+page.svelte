@@ -113,18 +113,22 @@
   }
 
   function openGameConfigForm(game: ipc.GameGUI | null) {
+    console.log("openGameConfigForm");
     if (game === null) {
+      console.log("game === null");
       return;
     }
     openFormIsMainConfig = false;
     $logoAwake = false;
     GetEditableGameConfig(game)
       .then((result) => {
+        console.log(result);
         result.constraints = sortObjectByOrder(result.constraints);
         configFormProps = result;
         showConfigForm = true;
       })
       .catch((err) => {
+        console.log(err);
         $logoAwake = true;
         alert(err);
       });
@@ -158,7 +162,6 @@
       })
       .catch((err) => {
         console.log(err);
-        updateStateTimeout = setTimeout(updateState, 2500);
       });
 
     if ($logoAwake) {
@@ -169,7 +172,6 @@
         .catch((err) => {
           console.log(err);
           activeGame = null;
-          updateStateTimeout = setTimeout(updateState, 2500);
         });
     }
     updateStateTimeout = setTimeout(updateState, 2500);
