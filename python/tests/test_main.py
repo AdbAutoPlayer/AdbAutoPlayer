@@ -21,4 +21,4 @@ class TestMain(unittest.TestCase):
         self.assertIn("Cecia", menu_json_string)
         self.assertIn('"maximum": 7,', menu_json_string)
         # check print is called for ipc
-        mock_print.assert_called()
+        mock_print.assert_not_called()

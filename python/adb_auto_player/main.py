@@ -64,7 +64,6 @@ def get_gui_games_menu() -> str:
         menu.append(options.to_dict())
 
     menu_json_string = json.dumps(menu)
-    print(menu_json_string)
     return menu_json_string
 
 
@@ -72,7 +71,7 @@ def __get_commands() -> list[Command]:
     commands = [
         Command(
             name="GUIGamesMenu",
-            action=get_gui_games_menu,
+            action=__print_gui_games_menu,
         ),
     ]
 
@@ -80,6 +79,10 @@ def __get_commands() -> list[Command]:
         commands += game.get_cli_menu_commands()
 
     return commands
+
+
+def __print_gui_games_menu() -> None:
+    print(get_gui_games_menu())
 
 
 def __run_command(cmd: Command) -> NoReturn:

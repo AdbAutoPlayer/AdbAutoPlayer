@@ -30,6 +30,9 @@ T = TypeVar("T", bound=dict[str, Any])
 
 
 def add_order_key(data: T) -> T:
+    """
+    Needed for Wails, Go does not maintain order for maps
+    """
     if isinstance(data, dict):
         ordered_keys = list(data.keys())
 

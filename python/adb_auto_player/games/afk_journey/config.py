@@ -15,7 +15,7 @@ FormationsInt = Annotated[int, Field(ge=1, le=7)]
 # Enums
 class HeroesEnum(StrEnum):
     def _generate_next_value_(name, start, count, last_values):
-        return name
+        return name.replace("_and_", " & ").replace("_", " ")
 
     Alsa = auto()
     Antandra = auto()
@@ -35,12 +35,12 @@ class HeroesEnum(StrEnum):
     Dionel = auto()
     Dunlingr = auto()
     Eironn = auto()
-    ElijahAndLailah = "Elijah & Lailah"
+    Elijah_and_Lailah = auto()
     Fae = auto()
     Faramor = auto()
     Florabelle = auto()
     Gerda = auto()
-    GrannyDahnie = "Granny Dahnie"
+    Granny_Dahnie = auto()
     Harak = auto()
     Hewynn = auto()
     Hodgkin = auto()

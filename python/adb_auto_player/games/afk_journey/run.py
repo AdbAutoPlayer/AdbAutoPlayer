@@ -71,6 +71,7 @@ class AFKJourney(Game):
         return ["1080x1920", "9:16"]
 
     def get_cli_menu_commands(self) -> list[Command]:
+        """Add new commands/gui buttons here"""
         return [
             Command(
                 name="SeasonTalentStages",
@@ -239,7 +240,8 @@ class AFKJourney(Game):
             return None
 
         excluded_heroes_missing_icon = {
-            "Callan" "Cryonaia",
+            "Callan",
+            "Cryonaia",
             "Faramor",
             "Cyran",
             "Gerda",
