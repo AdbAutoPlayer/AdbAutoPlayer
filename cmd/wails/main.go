@@ -42,10 +42,7 @@ func main() {
 	}
 	frontendLogger := ipc.NewFrontendLogger(uint8(logLevel))
 
-	app, err := NewApp(pythonBinaryPath)
-	if err != nil {
-		panic(err)
-	}
+	app, pythonBinaryErr := NewApp(pythonBinaryPath)
 
 	err = wails.Run(&options.App{
 		Title:  "AdbAutoPlayer",
@@ -85,6 +82,10 @@ func main() {
 
 	if err != nil {
 		panic(err)
+	}
+
+	if pythonBinaryErr != nil {
+		frontendLogger.Errorf("%s", pythonBinaryErr.Error())
 	}
 }
 

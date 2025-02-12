@@ -33,7 +33,7 @@ func NewApp(pythonBinaryPath *string) (*App, error) {
 
 	err := newApp.setGamesFromPython()
 	if err != nil {
-		panic(err)
+		return newApp, err
 	}
 	return newApp, nil
 }
