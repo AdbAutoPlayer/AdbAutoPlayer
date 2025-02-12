@@ -33,8 +33,7 @@ func NewApp(pythonBinaryPath *string) (*App, error) {
 
 	err := newApp.setGamesFromPython()
 	if err != nil {
-		print("Error setting games from Python: " + err.Error())
-		return newApp, err
+		panic(err)
 	}
 	return newApp, nil
 }
@@ -43,12 +42,7 @@ func (a *App) setGamesFromPython() error {
 	pm := GetProcessManager()
 
 	if a.pythonBinaryPath == nil || *a.pythonBinaryPath == "" {
-		println("Could not find Python Binary")
-		if a.ctx != nil {
-			runtime.LogError(a.ctx, "Could not find Python Binary")
-
-		}
-		return nil
+		panic("Could not find Python Binary")
 	}
 	gamesString, err := pm.Exec(*a.pythonBinaryPath, "GUIGamesMenu")
 	if err != nil {

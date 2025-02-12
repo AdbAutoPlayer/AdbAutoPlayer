@@ -44,7 +44,7 @@ func main() {
 
 	app, err := NewApp(pythonBinaryPath)
 	if err != nil {
-		frontendLogger.Error("Can not start bot")
+		panic(err)
 	}
 
 	err = wails.Run(&options.App{
@@ -84,7 +84,7 @@ func main() {
 	})
 
 	if err != nil {
-		println("Error:", err.Error())
+		panic(err)
 	}
 }
 
