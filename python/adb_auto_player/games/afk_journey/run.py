@@ -13,6 +13,7 @@ from adb_auto_player.exceptions import (
 from adb_auto_player.games.afk_journey.config import Config
 from adb_auto_player.game import Game
 from adb_auto_player.config_loader import get_games_dir
+from adb_auto_player.ipc.game_gui import GameGUIOptions
 
 
 class AFKJourney(Game):
@@ -69,44 +70,59 @@ class AFKJourney(Game):
     def get_supported_resolutions(self) -> list[str]:
         return ["1080x1920", "9:16"]
 
-    def get_menu_commands(self) -> list[Command]:
+    def get_cli_menu_commands(self) -> list[Command]:
         return [
             Command(
                 name="SeasonTalentStages",
+                gui_label="Season Talent Stages",
                 action=self.push_afk_stages,
                 kwargs={"season": True},
             ),
             Command(
                 name="AFKStages",
+                gui_label="AFK Stages",
                 action=self.push_afk_stages,
                 kwargs={"season": False},
             ),
             Command(
                 name="DurasTrials",
+                gui_label="Dura's Trials",
                 action=self.push_duras_trials,
                 kwargs={},
             ),
             Command(
                 name="AssistSynergyAndCC",
+                gui_label="Synergy & CC",
                 action=self.assist_synergy_corrupt_creature,
                 kwargs={},
             ),
             Command(
                 name="LegendTrials",
+                gui_label="Legend Trial",
                 action=self.push_legend_trials,
                 kwargs={},
             ),
             Command(
                 name="EventGuildChatClaim",
+                gui_label="[Event] Guild Chat Claim",
                 action=self.event_guild_chat_claim,
                 kwargs={},
             ),
             Command(
                 name="EventMonopolyAssist",
+                gui_label="[Event] Monopoly Assist",
                 action=self.event_monopoly_assist,
                 kwargs={},
             ),
         ]
+
+    def get_gui_options(self) -> GameGUIOptions:
+        return GameGUIOptions(
+            game_title="AFK Journey",
+            config_path="afk_journey/AFKJourney.toml",
+            menu_options=self._get_menu_options_from_cli_menu(),
+            constraints=Config.get_constraints(),
+        )
 
     def __get_config_attribute_from_mode(self, attribute: str):
         match self.store.get(self.STORE_MODE, None):
@@ -215,7 +231,7 @@ class AFKJourney(Game):
 
     def __formation_contains_excluded_hero(self) -> str | None:
         excluded_heroes_dict = {
-            f"heroes/{re.sub(r"[\s&]", "", name.lower())}.png": name
+            f"heroes/{re.sub(r"[\s&]", "", name.value.lower())}.png": name.value
             for name in self.get_config().general.excluded_heroes
         }
 

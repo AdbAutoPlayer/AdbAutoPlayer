@@ -18,6 +18,7 @@ from adb_auto_player.exceptions import (
     AdbException,
     NotInitializedError,
 )
+from adb_auto_player.ipc.game_gui import GameGUIOptions, MenuOption
 from adb_auto_player.template_matching import MatchMode
 
 
@@ -39,7 +40,11 @@ class Game:
         pass
 
     @abstractmethod
-    def get_menu_commands(self) -> list[Command]:
+    def get_cli_menu_commands(self) -> list[Command]:
+        pass
+
+    @abstractmethod
+    def get_gui_options(self) -> GameGUIOptions:
         pass
 
     @abstractmethod
@@ -49,6 +54,14 @@ class Game:
     @abstractmethod
     def get_config(self) -> BaseModel:
         pass
+
+    def _get_menu_options_from_cli_menu(self) -> list[MenuOption]:
+        menu_options = []
+        for i, command in enumerate(self.get_cli_menu_commands()):
+            menu_options.append(
+                MenuOption(label=command.gui_label, args=[command.name])
+            )
+        return menu_options
 
     def check_requirements(self) -> None:
         """

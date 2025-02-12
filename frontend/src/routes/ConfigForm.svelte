@@ -14,12 +14,10 @@
   } = $props();
 
   const configSections: Array<Record<string, any>> = $derived(
-    Object.entries(configObject)
-      .filter(([key]) => key !== "plugin")
-      .map(([sectionKey, sectionConfig]) => ({
-        sectionKey,
-        sectionConfig,
-      })),
+    Object.entries(constraints).map(([sectionKey, sectionConfig]) => ({
+      sectionKey,
+      sectionConfig,
+    })),
   );
 
   function getInputType(sectionKey: string, key: string): string {
@@ -75,11 +73,6 @@
     onConfigSave?.(processFormData(formData));
   }
 
-  function formatSectionKey(sectionKey: string): string {
-    const withSpaces = sectionKey.replace(/_/g, " ");
-    return withSpaces.replace(/\b\w/g, (match) => match.toUpperCase());
-  }
-
   function setupRealTimeValidation() {
     const formElement = document.getElementById(
       "config-form",
@@ -118,13 +111,13 @@
 <form class="config-form" id="config-form">
   {#each configSections as { sectionKey, sectionConfig }}
     <fieldset>
-      <legend>{formatSectionKey(sectionKey)}</legend>
+      <legend>{sectionKey}</legend>
 
       {#each Object.entries(sectionConfig) as [key, value]}
         <div class="form-group">
           <div class="form-group-inner">
             <label for="{sectionKey}-{key}">
-              {formatSectionKey(key)}
+              {key}
             </label>
 
             <div class="input-container">
@@ -133,33 +126,39 @@
                   type="checkbox"
                   id="{sectionKey}-{key}"
                   name="{sectionKey}-{key}"
-                  checked={Boolean(value)}
+                  checked={Boolean(configObject[sectionKey][key])}
                 />
               {:else if getInputType(sectionKey, key) === "number"}
                 <input
                   type="number"
                   id="{sectionKey}-{key}"
                   name="{sectionKey}-{key}"
-                  {value}
-                  min={constraints[sectionKey]?.[key]?.minimum ?? 1}
-                  max={constraints[sectionKey]?.[key]?.maximum ?? 999}
+                  value={configObject[sectionKey][key]}
+                  min={value.minimum}
+                  max={value.maximum}
                 />
               {:else if getInputType(sectionKey, key) === "multicheckbox"}
                 <MultiCheckbox
-                  choices={constraints[sectionKey]?.[key]?.choices || []}
-                  value={getStringArrayOrEmptyArray(value)}
+                  choices={value.choices || []}
+                  value={getStringArrayOrEmptyArray(
+                    configObject[sectionKey][key],
+                  )}
                   name="{sectionKey}-{key}"
                 />
               {:else if getInputType(sectionKey, key) === "imagecheckbox"}
                 <ImageCheckbox
-                  choices={constraints[sectionKey]?.[key]?.choices || []}
-                  value={getStringArrayOrEmptyArray(value)}
+                  choices={value.choices || []}
+                  value={getStringArrayOrEmptyArray(
+                    configObject[sectionKey][key],
+                  )}
                   name="{sectionKey}-{key}"
                 />
               {:else if getInputType(sectionKey, key) === "select"}
                 <select id="{sectionKey}-{key}" name="{sectionKey}-{key}">
-                  {#each constraints[sectionKey]?.[key]?.choices as option}
-                    <option value={option} selected={value === option}
+                  {#each value.choices as option}
+                    <option
+                      value={option}
+                      selected={configObject[sectionKey][key] === option}
                       >{option}</option
                     >
                   {/each}
@@ -169,7 +168,7 @@
                   type="text"
                   id="{sectionKey}-{key}"
                   name="{sectionKey}-{key}"
-                  {value}
+                  value={configObject[sectionKey][key]}
                 />
               {/if}
             </div>

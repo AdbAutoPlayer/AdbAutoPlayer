@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="EventMonopolyAssist" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="SynergyAndCC" type="PythonConfigurationType" factoryName="Python">
     <module name="python" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
@@ -13,7 +13,7 @@
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/adb_auto_player/main.py" />
-    <option name="PARAMETERS" value="EventMonopolyAssist --output=text --log-level=INFO" />
+    <option name="PARAMETERS" value="AssistSynergyAndCC --output=text" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
