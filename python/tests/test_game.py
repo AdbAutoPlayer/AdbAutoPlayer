@@ -24,7 +24,7 @@ class MockGame(Game):
     def load_config(self) -> None:
         return None
 
-    def get_menu_commands(self) -> list[Command]:
+    def get_cli_menu_commands(self) -> list[Command]:
         return list()
 
     def get_supported_resolutions(self) -> list[str]:

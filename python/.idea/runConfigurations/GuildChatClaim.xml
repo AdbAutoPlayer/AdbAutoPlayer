@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="EventGuildChatClaim" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="GuildChatClaim" type="PythonConfigurationType" factoryName="Python" folderName="Event">
     <module name="python" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />

@@ -1,3 +1,4 @@
+import json
 import logging
 import sys
 import argparse
@@ -5,7 +6,14 @@ from typing import NoReturn
 
 from adb_auto_player import logging_setup
 from adb_auto_player.command import Command
+from adb_auto_player.game import Game
 from adb_auto_player.games.afk_journey.run import AFKJourney
+
+
+def __get_games() -> list[Game]:
+    return [
+        AFKJourney(),
+    ]
 
 
 def main() -> None:
@@ -49,11 +57,26 @@ def main() -> None:
     sys.exit(1)
 
 
-def __get_commands() -> list[Command]:
-    commands = []
+def __get_gui_games_menu() -> None:
+    menu = []
+    for i, game in enumerate(__get_games()):
+        options = game.get_gui_options()
+        options.order = i
+        menu.append(options.to_dict())
+    print(json.dumps(menu))
 
-    afk_journey = AFKJourney()
-    commands += afk_journey.get_menu_commands()
+
+def __get_commands() -> list[Command]:
+    commands = [
+        Command(
+            name="GUIGamesMenu",
+            action=__get_gui_games_menu,
+        ),
+    ]
+
+    for game in __get_games():
+        commands += game.get_cli_menu_commands()
+
     return commands
 
 
