@@ -168,7 +168,8 @@ class AFKJourney(Game):
                 self.store[self.STORE_MAX_ATTEMPTS_REACHED] = False
                 return False
 
-        logging.info("Stopping Battle, tried all attempts for all Formations")
+        if formations > 1:
+            logging.info("Stopping Battle, tried all attempts for all Formations")
         return False
 
     def __copy_suggested_formation(
