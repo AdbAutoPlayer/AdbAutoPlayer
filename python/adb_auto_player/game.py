@@ -30,6 +30,8 @@ class Game:
         self.previous_screenshot: Image.Image | None = None
         self.resolution: tuple[int, int] | None = None
         self.scale_factor: float | None = None
+        self.supports_portrait: bool = False
+        self.supports_landscape: bool = False
 
     @abstractmethod
     def get_template_dir_path(self) -> Path:
@@ -103,6 +105,29 @@ class Game:
             )
 
         self.resolution = width, height
+
+        if (
+            self.supports_portrait
+            and not self.supports_landscape
+            and not adb.is_portrait(self.device)
+        ):
+            raise UnsupportedResolutionException(
+                "This bot only works in Portrait mode: "
+                "https://yulesxoxo.github.io/AdbAutoPlayer/user-guide/"
+                "troubleshoot.html#this-bot-only-works-in-portrait-mode"
+            )
+
+        if (
+            self.supports_landscape
+            and not self.supports_portrait
+            and adb.is_portrait(self.device)
+        ):
+            raise UnsupportedResolutionException(
+                "This bot only works in Landscape mode: "
+                "https://yulesxoxo.github.io/AdbAutoPlayer/user-guide/"
+                "troubleshoot.html#this-bot-only-works-in-portrait-mode"
+            )
+
         return None
 
     def get_scale_factor(self) -> float:

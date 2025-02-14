@@ -6,7 +6,13 @@
   const maxLogEntries = 1000;
 
   EventsOn("log-message", (logMessage: LogMessage) => {
-    const message: string = `[${logMessage.level}] ${logMessage.message}`;
+    const urlRegex = /(https?:\/\/\S+)/g;
+
+    const message: string = `[${logMessage.level}] ${logMessage.message.replace(
+      urlRegex,
+      '<a href="$1" target="_blank">$1</a>',
+    )}`;
+
     if (logs.length >= maxLogEntries) {
       logs.shift();
     }
@@ -36,7 +42,7 @@
 <div class="log-container selectable" bind:this={logContainer}>
   {#each logs as message}
     <div style="color: {getLogColor(message)}">
-      {message}
+      {@html message}
     </div>
   {/each}
 </div>

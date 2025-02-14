@@ -17,6 +17,10 @@ from adb_auto_player.ipc.game_gui import GameGUIOptions
 
 
 class AFKJourney(Game):
+    def __init__(self) -> None:
+        super().__init__()
+        self.supports_portrait = True
+
     template_dir_path: Path | None = None
     config_file_path: Path | None = None
 
