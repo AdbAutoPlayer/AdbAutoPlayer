@@ -144,9 +144,6 @@ def get_screen_resolution(device: AdbDevice) -> str:
 
 
 def is_portrait(device: AdbDevice) -> bool:
-    logging.debug("")
-    if "Orientation: 0" in device.shell(
+    return "Orientation: 0" in device.shell(
         "dumpsys input | grep 'SurfaceOrientation'"
-    ) and "ROTATION_0" in device.shell("dumpsys window | grep mCurrentRotation"):
-        return True
-    return False
+    ) and "ROTATION_0" in device.shell("dumpsys window | grep mCurrentRotation")
