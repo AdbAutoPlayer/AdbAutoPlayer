@@ -111,7 +111,11 @@ class Game:
             and not self.supports_landscape
             and not adb.is_portrait(self.device)
         ):
-            raise UnsupportedResolutionException("This bot only works in Portrait mode")
+            raise UnsupportedResolutionException(
+                "This bot only works in Portrait mode: "
+                "https://yulesxoxo.github.io/AdbAutoPlayer/user-guide/"
+                "troubleshoot.html#this-bot-only-works-in-portrait-mode"
+            )
 
         if (
             self.supports_landscape
@@ -119,7 +123,9 @@ class Game:
             and adb.is_portrait(self.device)
         ):
             raise UnsupportedResolutionException(
-                "This bot only works in Landscape mode"
+                "This bot only works in Landscape mode: "
+                "https://yulesxoxo.github.io/AdbAutoPlayer/user-guide/"
+                "troubleshoot.html#this-bot-only-works-in-portrait-mode"
             )
 
         return None
