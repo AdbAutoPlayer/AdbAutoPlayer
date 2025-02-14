@@ -141,3 +141,12 @@ def get_screen_resolution(device: AdbDevice) -> str:
         return str(resolution_str)
     logging.debug(result)
     raise AdbException("Unable to determine screen resolution")
+
+
+def is_portrait(device: AdbDevice) -> bool:
+    logging.debug("")
+    if "Orientation: 0" in device.shell(
+        "dumpsys input | grep 'SurfaceOrientation'"
+    ) and "ROTATION_0" in device.shell("dumpsys window | grep mCurrentRotation"):
+        return True
+    return False
