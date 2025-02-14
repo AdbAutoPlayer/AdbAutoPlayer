@@ -147,8 +147,11 @@ def is_portrait(device: AdbDevice) -> bool:
     orientation_check = device.shell(
         "dumpsys input | grep 'SurfaceOrientation'"
     ).strip()
+    logging.debug(f"orientation_check: {orientation_check}")
     rotation_check = device.shell("dumpsys window | grep mCurrentRotation").strip()
+    logging.debug(f"rotation_check: {orientation_check}")
     display_check = device.shell("dumpsys display | grep -E 'orientation'").strip()
+    logging.debug(f"display_check: {orientation_check}")
     checks = [
         "Orientation: 0" in orientation_check if orientation_check else True,
         "ROTATION_0" in rotation_check if rotation_check else True,
