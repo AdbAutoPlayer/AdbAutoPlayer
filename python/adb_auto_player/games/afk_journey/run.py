@@ -177,7 +177,7 @@ class AFKJourney(Game):
         return False
 
     def __copy_suggested_formation(
-        self, formations: int = 1, start_count: int = 0
+        self, formations: int = 1, start_count: int = 1
     ) -> bool:
         formation_num = self.store.get(self.STORE_FORMATION_NUM, 0)
 
@@ -186,7 +186,7 @@ class AFKJourney(Game):
 
         logging.info(f"Copying Formation #{formation_num}")
         counter = formation_num - start_count
-        while counter > 1:
+        while counter > 0:
             formation_next = self.wait_for_template(
                 "battle/formation_next.png",
                 timeout=self.MIN_TIMEOUT,
@@ -202,8 +202,9 @@ class AFKJourney(Game):
             logging.warning(
                 f"Formation contains excluded Hero: '{excluded_hero}' skipping"
             )
+            start_count = self.store[self.STORE_FORMATION_NUM]
             self.store[self.STORE_FORMATION_NUM] += 1
-            return self.__copy_suggested_formation(formations, start_count + 1)
+            return self.__copy_suggested_formation(formations, start_count)
         return True
 
     def __copy_suggested_formation_from_records(self, formations: int = 1) -> bool:
@@ -215,7 +216,7 @@ class AFKJourney(Game):
             timeout_message="No formations available for this battle",
         )
 
-        start_count = 0
+        start_count = 1
         while True:
             if not self.__copy_suggested_formation(formations, start_count):
                 return False
@@ -228,7 +229,7 @@ class AFKJourney(Game):
                     "Formation contains locked Artifacts or Heroes skipping"
                 )
                 self.click(*cancel)
-                start_count = self.store.get(self.STORE_FORMATION_NUM, 1) - 1
+                start_count = self.store.get(self.STORE_FORMATION_NUM, 1)
                 self.store[self.STORE_FORMATION_NUM] += 1
             else:
                 self.__click_confirm_on_popup()
