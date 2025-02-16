@@ -14,6 +14,7 @@ from adb_auto_player.games.afk_journey.config import Config
 from adb_auto_player.game import Game
 from adb_auto_player.config_loader import get_games_dir
 from adb_auto_player.ipc.game_gui import GameGUIOptions
+from adb_auto_player.template_matching import MatchMode
 
 
 class AFKJourney(Game):
@@ -287,13 +288,30 @@ class AFKJourney(Game):
                 self.wait_until_template_disappears("battle/formations_icon.png")
         sleep(1)
 
-        if self.find_any_template(["spend.png", "gold.png"]) and not spend_gold:
-            logging.warning("Not spending gold returning")
-            self.store[self.STORE_MAX_ATTEMPTS_REACHED] = True
-            self.press_back_button()
-            return False
+        if self.find_any_template(["battle/spend.png", "battle/gold.png"]):
+            if spend_gold:
+                logging.warning("Not spending gold returning")
+                self.store[self.STORE_MAX_ATTEMPTS_REACHED] = True
+                self.press_back_button()
+                return False
+            else:
+                self.__click_confirm_on_popup()
 
-        self.__click_confirm_on_popup()
+        if self.find_template_match(
+            "battle/no_hero_is_placed_on_the_talent_buff_tile.png",
+            use_previous_screenshot=True,
+        ):
+            checkbox = self.find_template_match(
+                "battle/checkbox_unchecked.png",
+                match_mode=MatchMode.TOP_LEFT,
+                use_previous_screenshot=True,
+            )
+            if checkbox is None:
+                logging.error('Could not find "Don\'t remind for 3 days" checkbox')
+            else:
+                self.click(*checkbox)
+            self.__click_confirm_on_popup()
+
         self.__click_confirm_on_popup()
         return True
 
