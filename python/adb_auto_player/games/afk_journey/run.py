@@ -288,6 +288,7 @@ class AFKJourney(Game):
                 self.wait_until_template_disappears("battle/formations_icon.png")
         sleep(1)
 
+        # Need to double-check the order of prompts here
         if self.find_any_template(["battle/spend.png", "battle/gold.png"]):
             if spend_gold:
                 logging.warning("Not spending gold returning")
