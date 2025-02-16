@@ -7,7 +7,7 @@ from typing import NoReturn
 from adb_auto_player import logging_setup
 from adb_auto_player.command import Command
 from adb_auto_player.game import Game
-from adb_auto_player.games.afk_journey.run import AFKJourney
+from adb_auto_player.games.afk_journey.main import AFKJourney
 
 
 def __get_games() -> list[Game]:
