@@ -174,7 +174,7 @@ class AFKJourneyBase(Game, ABC):
                 start_count = self.store.get(self.STORE_FORMATION_NUM, 1)
                 self.store[self.STORE_FORMATION_NUM] += 1
             else:
-                self.__click_confirm_on_popup()
+                self._click_confirm_on_popup()
                 logging.debug("Formation copied")
                 return True
 
@@ -237,7 +237,7 @@ class AFKJourneyBase(Game, ABC):
                 self.press_back_button()
                 return False
             else:
-                self.__click_confirm_on_popup()
+                self._click_confirm_on_popup()
 
         if self.find_template_match(
             "battle/no_hero_is_placed_on_the_talent_buff_tile.png",
@@ -252,12 +252,12 @@ class AFKJourneyBase(Game, ABC):
                 logging.error('Could not find "Don\'t remind for 3 days" checkbox')
             else:
                 self.click(*checkbox)
-            self.__click_confirm_on_popup()
+            self._click_confirm_on_popup()
 
-        self.__click_confirm_on_popup()
+        self._click_confirm_on_popup()
         return True
 
-    def __click_confirm_on_popup(self) -> bool:
+    def _click_confirm_on_popup(self) -> bool:
         result = self.find_any_template(["confirm.png", "confirm_text.png"])
         if result:
             _, x, y = result

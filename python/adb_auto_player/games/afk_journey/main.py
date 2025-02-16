@@ -1,6 +1,9 @@
 from adb_auto_player.command import Command
 
 from adb_auto_player.games.afk_journey.mixins.afk_stages import AFKStagesMixin
+from adb_auto_player.games.afk_journey.mixins.arcane_labyrinth import (
+    ArcaneLabyrinthMixin,
+)
 from adb_auto_player.games.afk_journey.mixins.assist import AssistMixin
 from adb_auto_player.games.afk_journey.config import Config
 from adb_auto_player.games.afk_journey.mixins.duras_trials import DurasTrialsMixin
@@ -11,6 +14,7 @@ from adb_auto_player.ipc.game_gui import GameGUIOptions
 
 class AFKJourney(
     AFKStagesMixin,
+    ArcaneLabyrinthMixin,
     AssistMixin,
     DurasTrialsMixin,
     EventMixin,
@@ -47,6 +51,12 @@ class AFKJourney(
                 name="LegendTrials",
                 gui_label="Legend Trial",
                 action=self.push_legend_trials,
+                kwargs={},
+            ),
+            Command(
+                name="ArcaneLabyrinth",
+                gui_label="Arcane Labyrinth",
+                action=self.handle_arcane_labyrinth,
                 kwargs={},
             ),
             Command(
