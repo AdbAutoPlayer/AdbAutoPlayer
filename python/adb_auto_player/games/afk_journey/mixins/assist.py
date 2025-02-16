@@ -56,7 +56,7 @@ class AssistMixin(AFKJourneyBase, ABC):
             )
         except TimeoutException:
             return False
-        if "assist/chat_button.png" == template:
+        if template == "assist/chat_button.png":
             if self.find_template_match("assist/label_world_chat.png") is None:
                 # Back button does not always close profile/chat windows
                 self.click(550, 100, scale=True)

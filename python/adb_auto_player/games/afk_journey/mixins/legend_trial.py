@@ -28,7 +28,7 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
         sleep(1)
         self.get_screenshot()
         for faction in factions:
-            if not faction.capitalize() in towers:
+            if faction.capitalize() not in towers:
                 logging.info(f"{faction.capitalize()}s excluded in config")
                 continue
 

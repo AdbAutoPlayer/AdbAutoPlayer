@@ -17,7 +17,7 @@ class AFKJourney(
     LegendTrialMixin,
 ):
     def get_cli_menu_commands(self) -> list[Command]:
-        """Add new commands/gui buttons here"""
+        # Add new commands/gui buttons here
         return [
             Command(
                 name="SeasonTalentStages",
