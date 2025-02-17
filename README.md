@@ -29,7 +29,12 @@ pre-commit install
 ## [Frontend Build](frontend/README.md)
 
 ## Testing .github scripts
-build_zip.sh
+### Windows build_zip.ps1
+```powershell
+$env:GITHUB_WORKSPACE = "C:\Users\$env:USERNAME\GolandProjects\AdbAutoPlayer"; .github\scripts\build_zip.ps1
+```
+
+### MacOS build_zip.sh
 ```shell
 GITHUB_WORKSPACE=/Users/$USER/GolandProjects/AdbAutoPlayer bash ./.github/scripts/build_zip.sh
 ```

@@ -1,8 +1,24 @@
 #!/bin/bash
+set -e
+
+if [[ -z "${GITHUB_WORKSPACE}" ]]; then
+  echo "Error: GITHUB_WORKSPACE is not set."
+  exit 1
+fi
 
 WORKSPACE="${GITHUB_WORKSPACE}"
 RELEASE_ZIP_DIR="${WORKSPACE}/release_zip"
 BINARIES_DIR="${RELEASE_ZIP_DIR}/binaries"
+
+echo "Running Wails build..."
+pushd "${WORKSPACE}/cmd/wails" > /dev/null
+wails build -devtools
+popd > /dev/null
+
+echo "Running Nuitka build..."
+pushd "${WORKSPACE}/python" > /dev/null
+poetry run nuitka --standalone --output-filename=adb_auto_player_py_app --assume-yes-for-downloads adb_auto_player/main.py
+popd > /dev/null
 
 # Create directory structure
 mkdir -p "${RELEASE_ZIP_DIR}/games/afk_journey/templates"
@@ -10,10 +26,11 @@ mkdir -p "${BINARIES_DIR}"
 
 # would be the "correct" way to do it but macOS flags unsigned apps as "damaged" and refuses to execute them
 # cp -r "cmd/wails/build/bin/AdbAutoPlayer.app" "${RELEASE_ZIP_DIR}/"
+# Copy main binary (handling macOS unsigned app issue)
 cp "cmd/wails/build/bin/AdbAutoPlayer.app/Contents/MacOS/AdbAutoPlayer" "${RELEASE_ZIP_DIR}/"
 cp "cmd/wails/config.toml" "${RELEASE_ZIP_DIR}/"
 
-# Copy contents of "python/main.dist" dir into BINARIES_DIR
+# Copy compiled Nuitka binary
 cp -r "python/main.dist/." "${BINARIES_DIR}/"
 
 # Copy templates and config
