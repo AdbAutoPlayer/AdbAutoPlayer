@@ -1,3 +1,5 @@
+$ErrorActionPreference = "Stop"
+
 $Workspace = $env:GITHUB_WORKSPACE
 $ReleaseZipDir = Join-Path $Workspace "release_zip"
 
