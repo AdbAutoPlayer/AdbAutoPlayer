@@ -91,6 +91,7 @@ jobs:
           name: ${{ matrix.os }}-build
           path: |
             ${{ join(matrix.zip_files, '\n') }}
+          if-no-files-found: 'error'
 
   publish:
     needs: build
