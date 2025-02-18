@@ -89,7 +89,8 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         with:
           name: ${{ matrix.os }}-build
-          path: ${{ join(matrix.zip_files, '\n') }}
+          path: |
+            ${{ join(matrix.zip_files, '\n') }}
 
   publish:
     needs: build
