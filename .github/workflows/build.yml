@@ -81,6 +81,12 @@ jobs:
         with:
           files: ${{ matrix.zip_files }}
 
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch'
+        with:
+          name: ${{ matrix.os }}-build
+          path: ${{ matrix.zip_files }}
+
   publish:
     needs: build
     runs-on: ubuntu-latest
