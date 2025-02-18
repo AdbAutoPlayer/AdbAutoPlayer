@@ -19,10 +19,14 @@ jobs:
         os: [windows-latest, macos-latest]
         include:
           - os: windows-latest
-            zip_files: "AdbAutoPlayer_Windows.zip,Patch_Windows.zip"
+            zip_files:
+              - "AdbAutoPlayer_Windows.zip"
+              - "Patch_Windows.zip"
             build_script: ".github/scripts/build_zip.ps1"
           - os: macos-latest
-            zip_files: "AdbAutoPlayer_MacOS.zip,Patch_MacOS.zip"
+            zip_files:
+              - "AdbAutoPlayer_MacOS.zip"
+              - "Patch_MacOS.zip"
             build_script: ".github/scripts/build_zip.sh"
 
     steps:
@@ -79,13 +83,13 @@ jobs:
       - uses: softprops/action-gh-release@v2
         if: github.event_name == 'release' && github.event.action == 'published'
         with:
-          files: ${{ matrix.zip_files }}
+          files: ${{ join(matrix.zip_files, ',') }}
 
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'workflow_dispatch'
         with:
           name: ${{ matrix.os }}-build
-          path: ${{ matrix.zip_files }}
+          path: ${{ join(matrix.zip_files, '\n') }}
 
   publish:
     needs: build
