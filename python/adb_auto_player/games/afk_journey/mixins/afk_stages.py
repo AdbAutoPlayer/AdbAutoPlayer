@@ -22,7 +22,10 @@ class AFKStagesMixin(AFKJourneyBase, ABC):
                 logging.warning(f"{e}")
             if self.get_config().afk_stages.push_both_modes:
                 self.store[self.STORE_SEASON] = not season
-                self.__start_afk_stage()
+                try:
+                    self.__start_afk_stage()
+                except TimeoutException as e:
+                    logging.warning(f"{e}")
             if not self.get_config().afk_stages.repeat:
                 break
         return None
