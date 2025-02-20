@@ -69,7 +69,7 @@ def get_device() -> AdbDevice:
     """
     __set_adb_path()
     main_config = adb_auto_player.config_loader.get_main_config()
-    device_id = main_config.get("device", {}).get("ID", "127.0.0.1:7555")
+    device_id = main_config.get("device", {}).get("ID", "127.0.0.1:5555")
     adb_config = main_config.get("adb", {})
     client = AdbClient(
         host=adb_config.get("host", "127.0.0.1"),
@@ -80,6 +80,11 @@ def get_device() -> AdbDevice:
     except AdbError as e:
         if "Install adb" in str(e):
             raise e
+        elif "Unknown data: b" in str(e):
+            raise AdbException(
+                "Please make sure the adb port is correct "
+                "in most cases it should be 5037"
+            )
         else:
             logging.debug(f"client.connect exception: {e}")
     except Exception as e:
