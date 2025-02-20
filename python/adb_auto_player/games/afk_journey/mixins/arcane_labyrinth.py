@@ -81,7 +81,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             clear_count += 1
             logging.info(f"Arcane Labyrinth clear #{clear_count}")
             self.arcane_lucky_flip_keys += 25
-            logging.info(f"Lucky Pick Keys farmed: {self.arcane_lucky_flip_keys}")
+            logging.info(f"Lucky Flip Keys farmed: {self.arcane_lucky_flip_keys}")
             self.wait_for_template("arcane_labyrinth/enter.png")
 
     def __select_a_crest(self) -> None:
@@ -96,7 +96,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
         if template == "arcane_labyrinth/rarity/epic.png":
             self.arcane_lucky_flip_keys += 9
-            logging.info(f"Lucky Pick Keys farmed: {self.arcane_lucky_flip_keys}")
+            logging.info(f"Lucky Flip Keys farmed: {self.arcane_lucky_flip_keys}")
 
         self.click(x, y)
         sleep(1)
