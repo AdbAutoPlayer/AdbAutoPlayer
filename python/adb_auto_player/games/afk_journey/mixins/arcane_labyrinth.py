@@ -18,6 +18,7 @@ from adb_auto_player.games.afk_journey.afk_journey_base import AFKJourneyBase
 class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
     skip_coordinates: tuple[int, int] | None = None
     lucky_flip_keys: int = 0
+    tap_to_close_coordinates: tuple[int, int] | None = None
 
     def handle_arcane_labyrinth(self) -> NoReturn:
         logging.warning("This is made for farming Lucky Flip Keys")
@@ -85,7 +86,9 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 | "arcane_labyrinth/blessing/soul_blessing.png"
                 | "arcane_labyrinth/blessing/epic_crest.png"
             ):
-                self.click(x, y + 200)
+                if self.tap_to_close_coordinates is not None:
+                    self.click(*self.tap_to_close_coordinates)
+                self.click(x, y + 500)
             case (
                 "arcane_labyrinth/shop_button.png"
                 | "arcane_labyrinth/crest_crystal_ball.png"
@@ -174,6 +177,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             template, x, y = result
             match template:
                 case "arcane_labyrinth/tap_to_close.png":
+                    self.tap_to_close_coordinates = (x, y)
                     self.click(x, y)
                     return False
                 case "arcane_labyrinth/skip.png":
