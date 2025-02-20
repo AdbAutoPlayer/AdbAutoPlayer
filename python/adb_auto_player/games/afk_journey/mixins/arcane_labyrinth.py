@@ -7,6 +7,14 @@ from adb_auto_player.exceptions import TimeoutException
 from adb_auto_player.games.afk_journey.afk_journey_base import AFKJourneyBase
 
 
+# Improvements:
+# 1. Choose runes instead of blessing/item when possible
+#    This would increase chance of getting epic crests which give 9 keys
+# 2. Option to prioritize battles that give runes over shop/crystal ball
+# 3. Choosing runes you have more of rather than at random to get better crests
+# 4. Shop if you have >= 100 or >= 175 crystals
+# 5. Skip items in shop only buy runes
+# 6. Ignore runes we already have 8 (or 10?) copies of because you can't get crests
 class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
     skip_coordinates: tuple[int, int] | None = None
     lucky_flip_keys: int = 0
@@ -78,8 +86,11 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 | "arcane_labyrinth/blessing/epic_crest.png"
             ):
                 self.click(x, y + 200)
-            case "arcane_labyrinth/shop_button.png":
-                # We are skipping the shop completely it is a waste of time to buy
+            case (
+                "arcane_labyrinth/shop_button.png"
+                | "arcane_labyrinth/crest_crystal_ball.png"
+            ):
+                # We are skipping this completely it is a waste of time to buy
                 # Edit: I think for weaker accounts it would be more beneficial to buy
                 # So should be a config option
                 self.click(x, y)
