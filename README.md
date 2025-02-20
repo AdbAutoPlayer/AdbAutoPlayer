@@ -40,4 +40,8 @@ GITHUB_WORKSPACE=/Users/$USER/GolandProjects/AdbAutoPlayer bash ./.github/script
 ```
 
 ## Contact
+### AFK Journey
+[Discord: Yaphalla](https://discord.gg/yaphalla)  
+[Channel: yules](https://discord.com/channels/1332082220013322240/1338732933057347655)
+### General
 [![Discord Presence](https://lanyard.cnrad.dev/api/518169167048998913)](https://discord.com/users/518169167048998913)
