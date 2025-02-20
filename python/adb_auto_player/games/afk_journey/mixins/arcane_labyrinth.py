@@ -159,10 +159,21 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         if result:
             self.click(*result)
             sleep(1)
-            checkbox = self.find_template_match("battle/checkbox_unchecked.png")
-            if checkbox is not None:
-                self.click(*checkbox)
-                self._click_confirm_on_popup()
+
+            template, _, _ = self.wait_for_any_template(
+                [
+                    "arcane_labyrinth/heroes_icon.png",
+                    "confirm.png",
+                    "confirm_text.png",
+                ]
+            )
+
+            if template != "arcane_labyrinth/heroes_icon.png":
+                checkbox = self.find_template_match("battle/checkbox_unchecked.png")
+                if checkbox is not None:
+                    self.click(*checkbox)
+            self._click_confirm_on_popup()
+            self._click_confirm_on_popup()
             self.wait_for_template("arcane_labyrinth/heroes_icon.png")
             logging.info("Arcane Labyrinth entered")
             return
