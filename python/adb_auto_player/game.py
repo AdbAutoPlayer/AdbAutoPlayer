@@ -324,7 +324,7 @@ class Game:
                 grayscale=grayscale,
             )
             if result is not None:
-                logging.debug(f"{template} found")
+                logging.debug(f"wait_for_template: {template} found")
             return result
 
         if timeout_message is None:
@@ -356,7 +356,9 @@ class Game:
                 grayscale=grayscale,
             )
             if result is None:
-                logging.debug(f"{template} no longer visible")
+                logging.debug(
+                    f"wait_until_template_disappears: {template} no longer visible"
+                )
 
             return result
 
@@ -435,14 +437,14 @@ class Game:
                 "sy (start y) must be greater than ey (end y) to swipe down."
             )
 
-        logging.debug(f"swiping down: {sy} to {ey}")
+        logging.debug(f"swipe_down: {sy} to {ey}")
         self.swipe(sx=540, sy=sy, ex=540, ey=ey, duration=duration)
 
     def swipe_up(self, sy: int = 500, ey: int = 1350, duration: float = 1.0) -> None:
         if ey >= sy:
             raise ValueError("s (start y) must be smaller than ey (end y) to swipe up.")
 
-        logging.debug(f"swiping up: {sy} to {ey}")
+        logging.debug(f"swipe_up: {sy} to {ey}")
         self.swipe(sx=540, sy=sy, ex=540, ey=ey, duration=duration)
 
     def swipe(self, sx: int, sy: int, ex: int, ey: int, duration: float = 1.0):
