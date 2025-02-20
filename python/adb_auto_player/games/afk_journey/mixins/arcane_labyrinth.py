@@ -127,7 +127,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 x, y = self.wait_for_template("arcane_labyrinth/onwards.png")
                 self.click(x, y)
             case "arcane_labyrinth/swords_button.png":
-                self.click(x, y)
+                self.__click_best_gate(x, y)
                 battle = self.wait_for_template("arcane_labyrinth/battle.png")
                 self.click(*battle)
 
@@ -264,3 +264,30 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             case _:
                 pass
         return False
+
+    def __click_best_gate(self, swords_x: int, swords_y: int) -> None:
+        result = self.find_any_template(
+            templates=[
+                "arcane_labyrinth/gate/relic.png",
+                "arcane_labyrinth/gate/blessing.png",
+                "arcane_labyrinth/gate/pure_crystal.png",
+            ]
+        )
+
+        if result is None:
+            logging.warning("Could not resolve best gate")
+            self.click(swords_x, swords_y)
+            return
+
+        template, x, y = result
+        logging.debug(f"__click_best_gate: {template}")
+        results = self.find_all_template_matches("arcane_labyrinth/swords_button.png")
+        if len(results) == 0:
+            logging.warning("Could not resolve best gate")
+            self.click(swords_x, swords_y)
+            return
+
+        closest_match = min(results, key=lambda coord: abs(coord[0] - x))
+        best_x, best_y = closest_match
+        self.click(best_x, best_y)
+        return
