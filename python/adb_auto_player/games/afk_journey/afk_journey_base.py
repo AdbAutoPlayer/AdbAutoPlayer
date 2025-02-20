@@ -188,7 +188,6 @@ class AFKJourneyBase(Game, ABC):
             return None
 
         excluded_heroes_missing_icon = {
-            "Cryonaia",
             "Faramor",
             "Cyran",
             "Gerda",

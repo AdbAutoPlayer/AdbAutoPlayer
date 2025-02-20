@@ -447,6 +447,10 @@ class Game:
         logging.debug(f"swipe_up: {sy} to {ey}")
         self.swipe(sx=540, sy=sy, ex=540, ey=ey, duration=duration)
 
+    def hold(self, x: int, y: int, duration: float = 3.0) -> None:
+        logging.debug(f"hold: ({x}, {y}) for {duration} seconds")
+        self.swipe(sx=x, sy=y, ex=x, ey=y, duration=duration)
+
     def swipe(self, sx: int, sy: int, ex: int, ey: int, duration: float = 1.0):
         sx, sy, ex, ey = self.__scale_coordinates(sx, sy, ex, ey)
         self.get_device().swipe(sx=sx, sy=sy, ex=ex, ey=ey, duration=duration)
