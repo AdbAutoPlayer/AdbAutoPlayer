@@ -3,7 +3,6 @@ from abc import ABC
 from time import sleep
 from typing import NoReturn
 
-from adb_auto_player.exceptions import TimeoutException
 from adb_auto_player.games.afk_journey.afk_journey_base import AFKJourneyBase
 
 
@@ -101,16 +100,19 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 self.click(x, y)
             case "arcane_labyrinth/swords_button.png":
                 self.click(x, y)
-                battle = self.wait_for_template("arcane_labyrinth/battle.png")
-                self.click(*battle)
-                try:
-                    battle = self.wait_for_template(
-                        "arcane_labyrinth/battle.png",
-                        timeout=self.MIN_TIMEOUT,
-                    )
+                while True:
+                    battle = self.wait_for_template("arcane_labyrinth/battle.png")
+                    if battle:
+                        self.click(*battle)
+                        break
+                    else:
+                        self.click(x, y)
+                    sleep(0.1)
+
+                while self.find_template_match("arcane_labyrinth/battle.png"):
                     self.click(*battle)
-                except TimeoutException:
-                    pass
+                    sleep(0.1)
+
                 while self.__try_to_skip_battle():
                     pass
 
@@ -171,24 +173,24 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             )
 
             if not result:
-                sleep(0.25)
+                sleep(0.1)
                 return True
 
             template, x, y = result
             match template:
                 case "arcane_labyrinth/tap_to_close.png":
                     self.tap_to_close_coordinates = (x, y)
-                    self.click(x, y)
+                    self.click(*self.tap_to_close_coordinates)
                     return False
                 case "arcane_labyrinth/skip.png":
                     self.skip_coordinates = (x, y)
-                    self.click(x, y)
+                    self.click(*self.skip_coordinates)
             return True
 
         tap = self.find_template_match("arcane_labyrinth/tap_to_close.png")
         if not tap:
             self.click(*self.skip_coordinates)
-            sleep(0.25)
+            sleep(0.1)
             return True
         self.click(*tap)
         return False
