@@ -203,7 +203,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "arcane_labyrinth/dead/mauler.png",
                 "arcane_labyrinth/dead/wilder.png",
             ],
-            threshold=0.98,
+            threshold=0.95,
         )
 
         if dead_hero:
