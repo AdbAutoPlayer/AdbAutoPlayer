@@ -164,6 +164,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 [
                     "arcane_labyrinth/tap_to_close.png",
                     "arcane_labyrinth/skip.png",
+                    "arcane_labyrinth/battle.png",
                 ]
             )
 
@@ -180,6 +181,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 case "arcane_labyrinth/skip.png":
                     self.arcane_skip_coordinates = (x, y)
                     self.click(*self.arcane_skip_coordinates)
+                case "arcane_labyrinth/battle.png":
+                    self.click(x, y)
             return True
 
         result = self.find_any_template(
@@ -187,6 +190,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "arcane_labyrinth/tap_to_close.png",
                 "arcane_labyrinth/heroes_icon.png",
                 "arcane_labyrinth/confirm.png",
+                "arcane_labyrinth/battle.png",
             ]
         )
 
@@ -196,6 +200,9 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             return True
         template, x, y = result
         match template:
+            case "arcane_labyrinth/battle.png":
+                self.click(x, y)
+                return True
             case "arcane_labyrinth/tap_to_close.png":
                 self.click(x, y)
             case "arcane_labyrinth/confirm.png":
