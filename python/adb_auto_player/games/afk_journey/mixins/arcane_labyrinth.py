@@ -11,14 +11,6 @@ class DeadHeroException(Exception):
     pass
 
 
-# Improvements:
-# 1. Choose runes instead of blessing/item when possible
-#    This would increase chance of getting epic crests which give 9 keys
-# 2. Option to prioritize battles that give runes over shop/crystal ball
-# 3. Choosing runes you have more of rather than at random to get better crests
-# 4. Shop if you have >= 100 or >= 175 crystals
-# 5. Skip items in shop only buy runes
-# 6. Ignore runes we already have 8 (or 10?) copies of because you can't get crests
 class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
     arcane_skip_coordinates: tuple[int, int] | None = None
     arcane_lucky_flip_keys: int = 0
