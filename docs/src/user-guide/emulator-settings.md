@@ -11,6 +11,7 @@
 ### AdbAutoPlayer Main Config
 > [!NOTE]
 > If you have never changed the config you don't have to do anything this is the default value!
+
 Device ID: `127.0.0.1:5555`
 
 ---
