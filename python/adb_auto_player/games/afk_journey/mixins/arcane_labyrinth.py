@@ -154,28 +154,31 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 return False
         return True
 
+    def __handle_enter_button(self, x: int, y: int) -> None:
+        self.click(x, y)
+        sleep(1)
+
+        template, _, _ = self.wait_for_any_template(
+            [
+                "arcane_labyrinth/heroes_icon.png",
+                "confirm.png",
+                "confirm_text.png",
+            ]
+        )
+
+        if template != "arcane_labyrinth/heroes_icon.png":
+            checkbox = self.find_template_match("battle/checkbox_unchecked.png")
+            if checkbox is not None:
+                self.click(*checkbox)
+        self._click_confirm_on_popup()
+        self._click_confirm_on_popup()
+        self.wait_for_template("arcane_labyrinth/heroes_icon.png")
+        logging.info("Arcane Labyrinth entered")
+
     def __start_arcane_labyrinth(self) -> None:
         result = self.find_template_match("arcane_labyrinth/enter.png")
         if result:
-            self.click(*result)
-            sleep(1)
-
-            template, _, _ = self.wait_for_any_template(
-                [
-                    "arcane_labyrinth/heroes_icon.png",
-                    "confirm.png",
-                    "confirm_text.png",
-                ]
-            )
-
-            if template != "arcane_labyrinth/heroes_icon.png":
-                checkbox = self.find_template_match("battle/checkbox_unchecked.png")
-                if checkbox is not None:
-                    self.click(*checkbox)
-            self._click_confirm_on_popup()
-            self._click_confirm_on_popup()
-            self.wait_for_template("arcane_labyrinth/heroes_icon.png")
-            logging.info("Arcane Labyrinth entered")
+            self.__handle_enter_button(*result)
             return
 
         if self.find_template_match("arcane_labyrinth/heroes_icon.png"):
@@ -203,10 +206,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         )
         match template:
             case "arcane_labyrinth/enter.png":
-                self.click(x, y)
-                sleep(1)
-                self._click_confirm_on_popup()
-                self._click_confirm_on_popup()
+                self.__handle_enter_button(x, y)
             case "arcane_labyrinth/heroes_icon.png":
                 logging.info("Arcane Labyrinth already started")
         return
