@@ -64,20 +64,6 @@ jobs:
       - name: install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
-      - name: wails build
-        working-directory: cmd/wails
-        run: wails build -devtools
-
-      - name: nuitka build windows
-        if: matrix.os == 'windows-latest'
-        working-directory: python
-        run: poetry run nuitka --standalone --output-filename=adb_auto_player.exe --assume-yes-for-downloads --windows-console-mode=attach adb_auto_player/main.py
-
-      - name: nuitka build macos
-        if: matrix.os == 'macos-latest'
-        working-directory: python
-        run: poetry run nuitka --standalone --output-filename=adb_auto_player_py_app --assume-yes-for-downloads adb_auto_player/main.py
-
       - name: build zip windows
         if: matrix.os == 'windows-latest'
         shell: pwsh
@@ -94,6 +80,20 @@ jobs:
         if: github.event_name == 'release' && github.event.action == 'published'
         with:
           files: ${{ matrix.zip_files }}
+
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && matrix.os == 'windows-latest'
+        with:
+          if-no-files-found: 'error'
+          name: ${{ matrix.os }}-build
+          path: "*_Windows.zip"
+
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && matrix.os == 'macos-latest'
+        with:
+          if-no-files-found: 'error'
+          name: ${{ matrix.os }}-build
+          path: "*_MacOS.zip"
 
   publish:
     needs: build

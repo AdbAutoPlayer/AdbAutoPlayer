@@ -85,11 +85,21 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
                 self.click(*nightmare)
                 template, x, y = self.wait_for_any_template(
                     [
+                        "duras_trials/nightmare_skip.png",
                         "duras_trials/nightmare_swords.png",
                         "duras_trials/cleared.png",
                     ]
                 )
                 match template:
+                    case "duras_trials/nightmare_skip.png":
+                        self.click(x, y)
+                        self.wait_until_template_disappears(
+                            "duras_trials/nightmare_skip.png"
+                        )
+                        # clicks the reward popup
+                        self.click(x, y)
+                        self.wait_for_template("duras_trials/nightmare_swords.png")
+                        self.click(x, y)
                     case "duras_trials/nightmare_swords.png":
                         self.click(x, y)
                     case "duras_trials/cleared.png":
