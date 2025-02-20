@@ -169,12 +169,11 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     self.skip_coordinates = (x, y)
                     self.click(x, y)
             return True
-        else:
-            tap = self.find_template_match("arcane_labyrinth/tap_to_close.png")
-            if not tap:
-                self.click(*self.skip_coordinates)
-                sleep(0.25)
-                return True
-            else:
-                self.click(*tap)
+
+        tap = self.find_template_match("arcane_labyrinth/tap_to_close.png")
+        if not tap:
+            self.click(*self.skip_coordinates)
+            sleep(0.25)
+            return True
+        self.click(*tap)
         return False
