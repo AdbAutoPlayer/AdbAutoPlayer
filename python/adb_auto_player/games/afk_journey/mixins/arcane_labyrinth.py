@@ -15,9 +15,9 @@ from adb_auto_player.games.afk_journey.afk_journey_base import AFKJourneyBase
 # 5. Skip items in shop only buy runes
 # 6. Ignore runes we already have 8 (or 10?) copies of because you can't get crests
 class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
-    skip_coordinates: tuple[int, int] | None = None
-    lucky_flip_keys: int = 0
-    tap_to_close_coordinates: tuple[int, int] | None = None
+    arcane_skip_coordinates: tuple[int, int] | None = None
+    arcane_lucky_flip_keys: int = 0
+    arcane_tap_to_close_coordinates: tuple[int, int] | None = None
 
     def handle_arcane_labyrinth(self) -> NoReturn:
         logging.warning("This is made for farming Lucky Flip Keys")
@@ -36,8 +36,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 pass
             clear_count += 1
             logging.info(f"Arcane Labyrinth clear #{clear_count}")
-            self.lucky_flip_keys += 25
-            logging.info(f"Lucky Pick Keys farmed: {self.lucky_flip_keys}")
+            self.arcane_lucky_flip_keys += 25
+            logging.info(f"Lucky Pick Keys farmed: {self.arcane_lucky_flip_keys}")
             self.wait_for_template("arcane_labyrinth/enter.png")
 
     def __select_a_crest(self) -> None:
@@ -51,8 +51,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         )
 
         if template == "arcane_labyrinth/rarity/epic.png":
-            self.lucky_flip_keys += 9
-            logging.info(f"Lucky Pick Keys farmed: {self.lucky_flip_keys}")
+            self.arcane_lucky_flip_keys += 9
+            logging.info(f"Lucky Pick Keys farmed: {self.arcane_lucky_flip_keys}")
 
         self.click(x, y)
         sleep(1)
@@ -85,8 +85,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 | "arcane_labyrinth/blessing/soul_blessing.png"
                 | "arcane_labyrinth/blessing/epic_crest.png"
             ):
-                if self.tap_to_close_coordinates is not None:
-                    self.click(*self.tap_to_close_coordinates)
+                if self.arcane_tap_to_close_coordinates is not None:
+                    self.click(*self.arcane_tap_to_close_coordinates)
                 self.click(x, y + 500)
             case (
                 "arcane_labyrinth/shop_button.png"
@@ -100,20 +100,14 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 self.click(x, y)
             case "arcane_labyrinth/swords_button.png":
                 self.click(x, y)
-                while True:
-                    battle = self.wait_for_template("arcane_labyrinth/battle.png")
-                    if battle:
-                        self.click(*battle)
-                        break
-                    else:
-                        self.click(x, y)
-                    sleep(0.1)
+                battle = self.wait_for_template("arcane_labyrinth/battle.png")
+                self.click(*battle)
 
                 while self.find_template_match("arcane_labyrinth/battle.png"):
                     self.click(*battle)
                     sleep(0.1)
 
-                while self.__try_to_skip_battle():
+                while self.__battle_is_not_completed():
                     pass
 
             case "arcane_labyrinth/select_a_crest.png":
@@ -141,7 +135,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         self._navigate_to_default_state()
         self.click(460, 1830, scale=True)
         self.wait_for_template(
-            "duras_trials/label.png", timeout_message="Battle Modes screen not found"
+            "duras_trials/label.png",
+            timeout_message="Battle Modes screen not found",
         )
         self.swipe_down()
         label = self.wait_for_template("arcane_labyrinth/label.png")
@@ -163,8 +158,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 logging.info("Arcane Labyrinth already started")
         return
 
-    def __try_to_skip_battle(self) -> bool:
-        if self.skip_coordinates is None:
+    def __battle_is_not_completed(self) -> bool:
+        if self.arcane_skip_coordinates is None:
             result = self.find_any_template(
                 [
                     "arcane_labyrinth/tap_to_close.png",
@@ -179,18 +174,32 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             template, x, y = result
             match template:
                 case "arcane_labyrinth/tap_to_close.png":
-                    self.tap_to_close_coordinates = (x, y)
-                    self.click(*self.tap_to_close_coordinates)
+                    self.arcane_tap_to_close_coordinates = (x, y)
+                    self.click(*self.arcane_tap_to_close_coordinates)
                     return False
                 case "arcane_labyrinth/skip.png":
-                    self.skip_coordinates = (x, y)
-                    self.click(*self.skip_coordinates)
+                    self.arcane_skip_coordinates = (x, y)
+                    self.click(*self.arcane_skip_coordinates)
             return True
 
-        tap = self.find_template_match("arcane_labyrinth/tap_to_close.png")
-        if not tap:
-            self.click(*self.skip_coordinates)
+        result = self.find_any_template(
+            [
+                "arcane_labyrinth/tap_to_close.png",
+                "arcane_labyrinth/heroes_icon.png",
+                "arcane_labyrinth/confirm.png",
+            ]
+        )
+
+        if result is None:
+            self.click(*self.arcane_skip_coordinates)
             sleep(0.1)
             return True
-        self.click(*tap)
+        template, x, y = result
+        match template:
+            case "arcane_labyrinth/tap_to_close.png":
+                self.click(x, y)
+            case "arcane_labyrinth/confirm.png":
+                self.__select_a_crest()
+            case _:
+                pass
         return False
