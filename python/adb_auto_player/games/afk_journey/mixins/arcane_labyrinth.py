@@ -19,6 +19,20 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
     arcane_lucky_flip_keys: int = 0
     arcane_tap_to_close_coordinates: tuple[int, int] | None = None
 
+    def __quit(self) -> None:
+        while True:
+            door = self.find_template_match("arcane_labyrinth/quit_door.png")
+            if door is None:
+                self.press_back_button()
+                sleep(3)
+                continue
+            self.click(*door)
+            break
+        hold_to_exit = self.wait_for_template("arcane_labyrinth/hold_to_exit.png")
+        self.hold(*hold_to_exit, duration=5.0)
+        sleep(3)
+        self.click(*door)
+
     def handle_arcane_labyrinth(self) -> NoReturn:
         logging.warning("This is made for farming Lucky Flip Keys")
         logging.warning(
