@@ -409,8 +409,10 @@ class Game:
         match_mode: MatchMode = MatchMode.BEST,
         threshold: float = 0.9,
         grayscale: bool = False,
+        use_previous_screenshot: bool = False,
     ) -> tuple[str, int, int] | None:
-        self.get_screenshot()
+        if not use_previous_screenshot:
+            self.get_screenshot()
         for template in templates:
             result = self.find_template_match(
                 template,

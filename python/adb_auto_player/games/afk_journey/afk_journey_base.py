@@ -239,9 +239,11 @@ class AFKJourneyBase(Game, ABC):
             else:
                 self.__click_confirm_on_popup()
 
-        if self.find_template_match(
-            "battle/no_hero_is_placed_on_the_talent_buff_tile.png",
-            use_previous_screenshot=True,
+        while self.find_any_template(
+            [
+                "battle/no_hero_is_placed_on_the_talent_buff_tile.png",
+                "duras_trials/blessed_heroes_specific_tiles.png",
+            ],
         ):
             checkbox = self.find_template_match(
                 "battle/checkbox_unchecked.png",
@@ -249,7 +251,7 @@ class AFKJourneyBase(Game, ABC):
                 use_previous_screenshot=True,
             )
             if checkbox is None:
-                logging.error('Could not find "Don\'t remind for 3 days" checkbox')
+                logging.error('Could not find "Don\'t remind for x days" checkbox')
             else:
                 self.click(*checkbox)
             self.__click_confirm_on_popup()
