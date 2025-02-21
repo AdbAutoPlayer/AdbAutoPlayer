@@ -9,7 +9,7 @@ This guide will walk you through setting up **AdbAutoPlayer** on Windows.
 
 ## Installation
 
-1. **Download the Tool**
+1. **Download the App**
    - Get the latest release of **AdbAutoPlayer**:
      [AdbAutoPlayer_Windows.zip](https://github.com/yulesxoxo/AdbAutoPlayer/releases/latest)
    - Extract the contents of the `.zip` file to a folder on your computer.
