@@ -173,6 +173,11 @@ class Game:
         """
         screenshot_data = self.get_device().shell("screencap -p", encoding=None)
         if isinstance(screenshot_data, bytes):
+            png_start_index = screenshot_data.find(b"\x89PNG\r\n\x1a\n")
+            # Slice the screenshot data to remove the warning
+            # and keep only the PNG image data
+            if png_start_index != -1:
+                screenshot_data = screenshot_data[png_start_index:]
             self.previous_screenshot = Image.open(io.BytesIO(screenshot_data))
             return self.previous_screenshot
         raise AdbException(
