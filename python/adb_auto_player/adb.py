@@ -140,10 +140,26 @@ def get_screen_resolution(device: AdbDevice) -> str:
     :raises AdbException: Unable to determine screen resolution
     """
     result = str(device.shell("wm size"))
+
     if result:
-        resolution_str = result.split("Physical size: ")[-1].strip()
-        logging.debug(f"Device screen resolution: {resolution_str}")
-        return str(resolution_str)
+        lines = result.splitlines()
+        override_size = None
+        physical_size = None
+
+        for line in lines:
+            if "Override size:" in line:
+                override_size = line.split("Override size:")[-1].strip()
+                logging.debug(f"Override size: {override_size}")
+            elif "Physical size:" in line:
+                physical_size = line.split("Physical size:")[-1].strip()
+                logging.debug(f"Physical size: {physical_size}")
+
+        resolution_str = override_size if override_size else physical_size
+
+        if resolution_str:
+            logging.debug(f"Device screen resolution: {resolution_str}")
+            return resolution_str
+
     logging.debug(result)
     raise AdbException("Unable to determine screen resolution")
 
