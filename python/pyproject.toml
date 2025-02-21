@@ -26,4 +26,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-main = "adb_auto_player.main:main"
+adb-auto-player = "adb_auto_player.main:main"
