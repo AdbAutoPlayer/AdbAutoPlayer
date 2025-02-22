@@ -24,7 +24,6 @@
 ## Configuration Details
 > [!NOTE]
 > Use the Edit Game Config button in the GUI to change the config!
-![config.png](../images/games/afk_journey/config.png)
 
 Configuration can be found under `games/afk_journey/AFKJourney.toml`.
 Configuration is loaded when you click any Action.
