@@ -146,7 +146,10 @@ class Game:
         return self.resolution
 
     def set_device(self) -> None:
-        self.device = adb.get_device()
+        resolutions = self.get_supported_resolutions()
+        suggested_resolution = next((res for res in resolutions if "x" in res), None)
+        logging.debug(f"Suggested Resolution: {suggested_resolution}")
+        self.device = adb.get_device(suggested_resolution)
         self.check_requirements()
 
     def get_device(self) -> AdbDevice:

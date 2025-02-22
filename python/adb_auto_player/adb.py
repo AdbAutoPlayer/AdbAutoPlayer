@@ -63,13 +63,14 @@ def __set_adb_path():
     logging.debug(f"adb_path: {adbutils._utils.adb_path()}")
 
 
-def get_device() -> AdbDevice:
+def get_device(override_size: str | None = None) -> AdbDevice:
     """
     :raises AdbException: Device not found
     """
     __set_adb_path()
     main_config = adb_auto_player.config_loader.get_main_config()
     device_id = main_config.get("device", {}).get("ID", "127.0.0.1:5555")
+    wm_size = main_config.get("device", {}).get("wm_size", False)
     adb_config = main_config.get("adb", {})
     client = AdbClient(
         host=adb_config.get("host", "127.0.0.1"),
@@ -115,7 +116,19 @@ def get_device() -> AdbDevice:
         raise AdbException(f"Device: {device_id} not found")
 
     logging.info(f"Connected to Device {device.serial}")
+
+    if override_size and wm_size:
+        logging.info(f"Overriding size: {override_size}")
+        device.shell(f"wm size {override_size}")
+
     return device
+
+
+def wm_size_reset(device: AdbDevice | None = None) -> None:
+    if device is None:
+        device = get_device(override_size=None)
+    device.shell("wm size reset")
+    logging.info(f"Reset Display Size for Device: {device.serial}")
 
 
 def __connect_to_device(client: AdbClient, device_id: str) -> AdbDevice | None:

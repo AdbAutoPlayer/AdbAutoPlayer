@@ -4,6 +4,7 @@ import sys
 import argparse
 from typing import NoReturn
 
+import adb_auto_player.adb
 from adb_auto_player import logging_setup
 from adb_auto_player.command import Command
 from adb_auto_player.game import Game
@@ -72,6 +73,10 @@ def __get_commands() -> list[Command]:
         Command(
             name="GUIGamesMenu",
             action=__print_gui_games_menu,
+        ),
+        Command(
+            name="WMSizeReset",
+            action=adb_auto_player.adb.wm_size_reset,
         ),
     ]
 

@@ -22,6 +22,15 @@
       callback: () => openMainConfigForm(),
       active: false,
     },
+    {
+      label: "Reset Display Size",
+      callback: () =>
+        startGameProcess({
+          label: "WMSizeReset",
+          args: ["WMSizeReset"],
+        }),
+      active: false,
+    },
   ];
 
   let showConfigForm: boolean = $state(false);
@@ -59,6 +68,15 @@
           alwaysEnabled: false,
         },
         {
+          label: "Reset Display Size",
+          callback: () =>
+            startGameProcess({
+              label: "WMSizeReset",
+              args: ["WMSizeReset"],
+            }),
+          active: false,
+        },
+        {
           label: "Edit Game Config",
           callback: () => openGameConfigForm(activeGame),
           active: false,
@@ -78,6 +96,7 @@
   });
 
   function startGameProcess(menuOption: ipc.MenuOption) {
+    console.log(menuOption);
     activeButtonLabel = menuOption.label;
 
     $logoAwake = false;
