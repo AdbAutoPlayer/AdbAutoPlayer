@@ -380,3 +380,19 @@ class AFKJourneyBase(Game, ABC):
         if confirm:
             self.click(*confirm)
         return None
+
+    def _handle_guide_popup(
+        self,
+        use_previous_screenshot=False,
+    ) -> None:
+        while True:
+            result = self.find_any_template(
+                templates=["guide/close.png", "guide/next.png"],
+                use_previous_screenshot=use_previous_screenshot,
+            )
+            if result is None:
+                break
+            _, x, y = result
+            self.click(x, y)
+            sleep(1)
+        return

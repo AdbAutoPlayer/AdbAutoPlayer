@@ -60,6 +60,25 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
         self.wait_for_template("duras_trials/featured_heroes.png")
         return None
 
+    def __dura_resolve_state(self) -> tuple[str, int, int]:
+        while True:
+            template, x, y = self.wait_for_any_template(
+                templates=[
+                    "battle/records.png",
+                    "duras_trials/battle.png",
+                    "duras_trials/sweep.png",
+                    "guide/close.png",
+                    "guide/next.png",
+                ],
+            )
+
+            match template:
+                case "guide/close.png" | "guide/next.png":
+                    self._handle_guide_popup(use_previous_screenshot=True)
+                case _:
+                    break
+        return template, x, y
+
     def __handle_dura_screen(
         self, x: int, y: int, nightmare_mode: bool = False
     ) -> None:
@@ -69,13 +88,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
 
         count: int = 0
         while True:
-            template, _, _ = self.wait_for_any_template(
-                [
-                    "battle/records.png",
-                    "duras_trials/battle.png",
-                    "duras_trials/sweep.png",
-                ]
-            )
+            template, _, _ = self.__dura_resolve_state()
 
             if nightmare_mode and template != "battle/records.png":
                 nightmare = self.find_template_match("duras_trials/nightmare.png")
@@ -106,13 +119,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
                         logging.info("Nightmare Trial already cleared")
                         return None
             else:
-                template, x, y = self.wait_for_any_template(
-                    [
-                        "battle/records.png",
-                        "duras_trials/battle.png",
-                        "duras_trials/sweep.png",
-                    ]
-                )
+                template, x, y = self.__dura_resolve_state()
                 match template:
                     case "duras_trials/sweep.png":
                         logging.info("Dura's Trial already cleared")
