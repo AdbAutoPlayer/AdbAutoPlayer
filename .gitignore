@@ -2,3 +2,4 @@ cmd/wails/build/bin
 *.zip
 AdbAutoPlayer
 PATCH_*
+*.syso
