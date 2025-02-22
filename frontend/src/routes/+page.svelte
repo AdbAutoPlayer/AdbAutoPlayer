@@ -88,7 +88,10 @@
   }
 
   function onMainConfigSave(configObject: object) {
-    SaveMainConfig(config.MainConfig.createFrom(configObject))
+    console.log("onMainConfigSave");
+    const configForm = config.MainConfig.createFrom(configObject);
+    console.log(configForm);
+    SaveMainConfig(configForm)
       .catch((err) => {
         alert(err);
       })
