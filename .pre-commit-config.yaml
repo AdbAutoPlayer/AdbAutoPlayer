@@ -15,6 +15,7 @@ repos:
         files: python/
         args: [ --fix ]
       - id: ruff-format
+        files: python/
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: 'v1.14.1'
     hooks:
