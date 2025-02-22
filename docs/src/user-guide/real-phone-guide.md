@@ -8,8 +8,9 @@
 
 ---
 
-### General
-![device-config.png](../images/real-phone/device-config.png)
+## General
+![device-config.png](../images/real-phone/device-config.png)  
+
 Enable `Resize Display` it will change your Display Size to the suggested Resolution when the bot starts.
 
 When you are done you can use the `Reset Display Size` button to revert your Display Size to the original Resolution.
