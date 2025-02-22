@@ -3,7 +3,7 @@
 
 # User Guide
 - [Emulator Settings](user-guide/emulator-settings.md)
-- [Real Phone](user-guide/real-phone-guide)
+- [Real Phone](user-guide/real-phone-guide.md)
 - [Windows Setup Guide](user-guide/windows-setup.md)
 - [macOS Setup Guide](user-guide/macos-setup.md)
 - [Troubleshooting](user-guide/troubleshoot.md)
