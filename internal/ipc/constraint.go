@@ -83,7 +83,8 @@ func GetMainConfigConstraints() map[string]interface{} {
 	// Combine them into a map for use in the config
 	return map[string]interface{}{
 		"Device": map[string]interface{}{
-			"ID": []string{},
+			"ID":             []string{},
+			"Resize Display": NewCheckboxConstraint(),
 		},
 		"ADB": map[string]interface{}{
 			"Host": []string{},

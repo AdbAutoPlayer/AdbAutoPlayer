@@ -14,7 +14,8 @@ type MainConfig struct {
 }
 
 type DeviceConfig struct {
-	ID string `toml:"ID"`
+	ID          string `toml:"ID"`
+	UseWMResize bool   `toml:"use_wm_resize" json:"Resize Display"`
 }
 
 type ADBConfig struct {
