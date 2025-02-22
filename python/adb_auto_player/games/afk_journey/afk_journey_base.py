@@ -81,10 +81,10 @@ class AFKJourneyBase(Game, ABC):
                 return getattr(self.get_config().afk_stages, attribute)
 
     def _handle_battle_screen(self, use_suggested_formations: bool = True) -> bool:
-        """
-        Handles logic for battle screen
-        :param use_suggested_formations: if False use suggested formations from records
-        :return: bool
+        """Handles logic for battle screen.
+
+        Args:
+            use_suggested_formations: if True copy formations from Records
         """
         self.start_up()
 

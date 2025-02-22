@@ -7,9 +7,10 @@ from adb_auto_player.games.afk_journey.afk_journey_base import AFKJourneyBase
 
 class AFKStagesMixin(AFKJourneyBase, ABC):
     def push_afk_stages(self, season: bool) -> None:
-        """
-        Entry for pushing AFK Stages
-        :param season: Push Season Stage if True otherwise push regular AFK Stages
+        """Entry for pushing AFK Stages.
+
+        Args:
+            season: Push Season Stage if True otherwise push regular AFK Stages
         """
         self.start_up()
         self.store[self.STORE_MODE] = self.MODE_AFK_STAGES

@@ -64,8 +64,13 @@ def __set_adb_path():
 
 
 def get_device(override_size: str | None = None) -> AdbDevice:
-    """
-    :raises AdbException: Device not found
+    """Connects to an Android device using ADB and returns the device object.
+
+    This function connects to a device by fetching configuration settings,
+    handles errors during connection, and returns the device object if found.
+
+    Raises:
+        AdbException: Device not found
     """
     __set_adb_path()
     main_config = adb_auto_player.config_loader.get_main_config()
@@ -149,8 +154,10 @@ def is_device_connection_active(device: AdbDevice) -> bool:
 
 
 def get_screen_resolution(device: AdbDevice) -> str:
-    """
-    :raises AdbException: Unable to determine screen resolution
+    """Uses wm size to resolve device display resolution.
+
+    Raises:
+        AdbException: Unable to determine screen resolution
     """
     result = str(device.shell("wm size"))
 

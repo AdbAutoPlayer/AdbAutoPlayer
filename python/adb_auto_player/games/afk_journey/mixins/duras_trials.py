@@ -7,10 +7,6 @@ from adb_auto_player.games.afk_journey.afk_journey_base import AFKJourneyBase
 
 class DurasTrialsMixin(AFKJourneyBase, ABC):
     def push_duras_trials(self) -> None:
-        """
-        Entry for pushing Dura's Trials
-        :return:
-        """
         self.start_up()
         self.store[self.STORE_MODE] = self.MODE_DURAS_TRIALS
         self.__navigate_to_duras_trials_screen()

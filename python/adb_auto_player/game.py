@@ -66,8 +66,10 @@ class Game:
         return menu_options
 
     def check_requirements(self) -> None:
-        """
-        :raises UnsupportedResolutionException:
+        """Validates Device properties such as resolution and orientation.
+
+        Raises:
+             UnsupportedResolutionException: Device resolution is not supported.
         """
         resolution = adb.get_screen_resolution(self.get_device())
         supported_resolutions = self.get_supported_resolutions()
@@ -171,8 +173,10 @@ class Game:
         return None
 
     def get_screenshot(self) -> Image.Image:
-        """
-        :raises AdbException: Screenshot cannot be recorded
+        """Gets screenshot from device using screencap.
+
+        Raises:
+            AdbException: Screenshot cannot be recorded
         """
         screenshot_data = self.get_device().shell("screencap -p", encoding=None)
         if isinstance(screenshot_data, bytes):
@@ -237,10 +241,11 @@ class Game:
         timeout: float = 30,
         timeout_message: str | None = None,
     ) -> bool:
-        """
-        :raises TimeoutException:
-        """
+        """Waits for a region of interest to change.
 
+        Raises:
+             TimeoutException: No change detected.
+        """
         sx, sy, ex, ey = self.__scale_coordinates(sx, sy, ex, ey)
 
         def roi_changed() -> Literal[True] | None:
@@ -321,8 +326,10 @@ class Game:
         timeout: float = 30,
         timeout_message: str | None = None,
     ) -> tuple[int, int]:
-        """
-        :raises TimeoutException:
+        """Waits for the template to appear in the screen.
+
+        Raises:
+            TimeoutException: Template not found.
         """
 
         def find_template() -> tuple[int, int] | None:
@@ -353,8 +360,10 @@ class Game:
         timeout: float = 30,
         timeout_message: str | None = None,
     ) -> None:
-        """
-        :raises TimeoutException:
+        """Waits for the template to disappear from the screen.
+
+        Raises:
+            TimeoutException: Template still visible.
         """
 
         def find_best_template() -> tuple[int, int] | None:
@@ -393,8 +402,10 @@ class Game:
         timeout: float = 30,
         timeout_message: str | None = None,
     ) -> tuple[str, int, int]:
-        """
-        :raises TimeoutException:
+        """Waits for any template to appear on the screen.
+
+        Raises:
+            TimeoutException: No template visible.
         """
 
         def find_template() -> tuple[str, int, int] | None:
@@ -474,8 +485,10 @@ class Game:
         timeout: float = 30,
         result_should_be_none: bool = False,
     ) -> T:
-        """
-        :raises TimeoutException:
+        """Repeatedly executes an operation until a desired result is reached.
+
+        Raises:
+            TimeoutException: Operation did not return the desired result.
         """
         time_spent_waiting: float = 0
         end_time = time() + timeout

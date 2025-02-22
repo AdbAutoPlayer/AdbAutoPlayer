@@ -22,18 +22,17 @@ template_cache: dict[str, Image.Image] = {}
 
 
 def load_image(image_path: Path, image_scale_factor: float = 1.0) -> Image.Image:
-    """
-    Loads an image from disk or returns the cached version if available.
+    """Loads an image from disk or returns the cached version if available.
+
     Resizes the image if needed and stores it in the global template_cache.
 
-    :param image_path: Path to the template image.
-    :param image_scale_factor: Scale factor for resizing the image.
-    :return: PIL Image object.
+    Args:
+        image_path: Path to the template image.
+        image_scale_factor: Scale factor for resizing the image.
 
-    :raises FileNotFoundError:
-    :raises IOError:
+    Returns:
+        PIL Image.Image
     """
-
     cache_key = f"{str(image_path)}_{image_scale_factor}"
     if cache_key in template_cache:
         return template_cache[cache_key]
@@ -57,8 +56,7 @@ def compare_roi_similarity(
     threshold: float = 0.9,
     grayscale: bool = False,
 ) -> bool:
-    """
-    Compares the similarity of a region of interest (ROI) between two images.
+    """Compares the similarity of a region of interest (ROI) between two images.
 
     Args:
         base_image: The reference image.
@@ -69,7 +67,7 @@ def compare_roi_similarity(
         grayscale: Whether to convert both images to grayscale before comparison.
 
     Returns:
-        bool: True if the ROI in the base_image matches based on the given threshold.
+        True if the ROI in the base_image matches based on the given threshold.
     """
     __validate_threshold(threshold)
     sx, sy, ex, ey = roi
@@ -106,8 +104,7 @@ def find_template_match(
     threshold: float = 0.9,
     grayscale: bool = False,
 ) -> tuple[int, int] | None:
-    """
-    Find a template image within a base image with different matching modes.
+    """Find a template image within a base image with different matching modes.
 
     Args:
         base_image: The image to search in
@@ -198,8 +195,8 @@ def find_all_template_matches(
 def __suppress_close_matches(
     matches: list[tuple[int, int]], min_distance: int
 ) -> list[tuple[int, int]]:
-    """
-    Suppresses closely spaced matches to return distinct results.
+    """Suppresses closely spaced matches to return distinct results.
+
     Uses a simple clustering method based on minimum distance.
     """
     if not matches:
@@ -219,7 +216,8 @@ def __suppress_close_matches(
 
 
 def __validate_threshold(threshold: float) -> None:
-    """
+    """Validate the threshold value.
+
     Raises:
         ValueError: If the threshold is less than 0 or greater than 1.
     """

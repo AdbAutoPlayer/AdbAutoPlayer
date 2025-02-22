@@ -8,8 +8,8 @@ from adb_auto_player.ipc.log_message import LogMessage, LogLevel
 
 
 def sanitize_path(log_message):
-    """
-    Sanitizes file paths in log messages by replacing the username with '<redacted>'.
+    """Sanitizes file paths in log messages by replacing the username with '<redacted>'.
+
     Works with both Windows and Unix-style paths.
 
     Args:

@@ -9,9 +9,13 @@ class Command:
         kwargs: dict | None = None,
         gui_label: str | None = None,
     ):
-        """
-        :param action: The function (callback) that will be executed for the command.
-        :param kwargs: The keyword arguments to pass to the action function.
+        """Defines a CLI command / GUI Button.
+
+        Args:
+            name: Command name
+            action: The function (callback) that will be executed for the command.
+            kwargs: The keyword arguments to pass to the action function.
+            gui_label: The label for the GUI button. If None name will be used.
         """
         self.name = name
         self.action = action
