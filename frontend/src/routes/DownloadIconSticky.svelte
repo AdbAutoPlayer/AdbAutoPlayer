@@ -134,20 +134,16 @@
 
         const currentParts = currentVersion.split(".").map(Number);
         const latestParts = latestVersion.split(".").map(Number);
-        if (
-          latestParts[0] > currentParts[0] ||
-          (latestParts[0] == currentParts[0] &&
-            latestParts[1] > currentParts[1])
-        ) {
+        if (latestParts[0] > currentParts[0]) {
           modalRelease = releaseData;
           notifyUpdate(modalAsset);
           return;
         }
 
         if (
-          latestParts[0] === currentParts[0] &&
-          latestParts[1] === currentParts[1] &&
-          latestParts[2] > currentParts[2]
+          latestParts[1] > currentParts[1] ||
+          (latestParts[1] == currentParts[1] &&
+            latestParts[2] > currentParts[2])
         ) {
           const patch = releaseData.assets.find(
             (a: Asset) => a.name === patchFileName,
