@@ -1,5 +1,3 @@
-## What's Changed
-
 ### Patch (updated automatically)
 - Description of changes that are updated by self updater (python only)
 
