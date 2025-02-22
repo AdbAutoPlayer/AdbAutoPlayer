@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - "*"
+    paths-ignore:
+      - 'frontend/**'
+      - 'docs/**'
+      - 'python/**'
   workflow_dispatch:
 
 jobs:
