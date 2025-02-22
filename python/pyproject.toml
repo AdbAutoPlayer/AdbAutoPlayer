@@ -17,9 +17,16 @@ pydantic = "^2.10.5"
 nuitka = "^2.5.9"
 pytest = "^8.3.4"
 
-[tool.black]
+[tool.ruff]
 line-length = 88
-target-version = ['py312']
+indent-width = 4
+target-version = "py312"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
 
 [build-system]
 requires = ["poetry-core"]

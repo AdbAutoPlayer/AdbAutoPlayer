@@ -69,7 +69,7 @@ class EventMixin(AFKJourneyBase, ABC):
             try:
                 if self._handle_battle_screen(use_suggested_formations=False):
                     win_count += 1
-                    logging.info(f"Win #{win_count} Pal-Coins: {win_count*15}")
+                    logging.info(f"Win #{win_count} Pal-Coins: {win_count * 15}")
                 else:
                     loss_count += 1
                     logging.warning(f"Loss #{loss_count}")

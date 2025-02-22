@@ -180,7 +180,7 @@ class AFKJourneyBase(Game, ABC):
 
     def __formation_contains_excluded_hero(self) -> str | None:
         excluded_heroes_dict = {
-            f"heroes/{re.sub(r"[\s&]", "", name.value.lower())}.png": name.value
+            f"heroes/{re.sub(r'[\s&]', '', name.value.lower())}.png": name.value
             for name in self.get_config().general.excluded_heroes
         }
 
