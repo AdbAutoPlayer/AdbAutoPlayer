@@ -16,7 +16,10 @@ class EventMixin(AFKJourneyBase, ABC):
         sleep(3)
         while True:
             claim_button = self.find_template_match(
-                "event/guild_chat_claim/claim_button.png"
+                template="event/guild_chat_claim/claim_button.png",
+                crop_left=0.6,
+                crop_top=0.2,
+                crop_bottom=0.2,
             )
             if claim_button:
                 self.click(*claim_button)
@@ -25,13 +28,19 @@ class EventMixin(AFKJourneyBase, ABC):
                 self.click(*claim_button)
             # switch to world chat and back because sometimes chat stops scrolling
             world_chat_icon = self.find_template_match(
-                "event/guild_chat_claim/world_chat_icon.png"
+                template="event/guild_chat_claim/world_chat_icon.png",
+                crop_right=0.8,
+                crop_top=0.1,
+                crop_bottom=0.3,
             )
             if world_chat_icon:
                 self.click(*world_chat_icon)
                 sleep(1)
             guild_chat_icon = self.find_template_match(
-                "event/guild_chat_claim/guild_chat_icon.png"
+                template="event/guild_chat_claim/guild_chat_icon.png",
+                crop_right=0.8,
+                crop_top=0.1,
+                crop_bottom=0.3,
             )
             if guild_chat_icon:
                 self.click(*guild_chat_icon)
@@ -45,7 +54,9 @@ class EventMixin(AFKJourneyBase, ABC):
         loss_count = 0
         while True:
             self.wait_for_template(
-                "event/monopoly_assist/log.png",
+                template="event/monopoly_assist/log.png",
+                # TODO cropping next time event shows up
+                crop_bottom=0.5,
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Monopoly assists screen not found",
             )
@@ -54,7 +65,8 @@ class EventMixin(AFKJourneyBase, ABC):
             count = 0
             while next_assist is None:
                 assists = self.find_all_template_matches(
-                    "event/monopoly_assist/assists.png"
+                    "event/monopoly_assist/assists.png",
+                    # TODO cropping next time event shows up
                 )
                 for assist in assists:
                     if count >= loss_count:
