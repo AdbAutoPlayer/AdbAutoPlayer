@@ -49,6 +49,47 @@ def load_image(image_path: Path, image_scale_factor: float = 1.0) -> Image.Image
     return image
 
 
+def crop_image(
+    image: Image.Image, left: float, right: float, top: float, bottom: float
+) -> tuple[Image.Image, int, int]:
+    """Crop an image based on percentage values for each side.
+
+    Args:
+        image (Image.Image): The input image to be cropped.
+        left (float): Percentage to crop from the left side.
+        right (float): Percentage to crop from the right side.
+        top (float): Percentage to crop from the top side.
+        bottom (float): Percentage to crop from the bottom side.
+
+    Returns:
+        - Cropped image.
+        - Number of pixels cropped from the left.
+        - Number of pixels cropped from the top.
+
+    Raises:
+        ValueError: If any crop percentage is negative,
+            the sum of left and right crop percentages is 1.0 or greater
+            or the sum of top and bottom crop percentages is 1.0 or greater.
+    """
+    if all(v == 0 for v in (left, right, top, bottom)):
+        return image, 0, 0
+
+    if any(v < 0 for v in (left, right, top, bottom)):
+        raise ValueError("Crop percentages cannot be negative.")
+    if left + right >= 1.0:
+        raise ValueError("left + right must be less than 1.0.")
+    if top + bottom >= 1.0:
+        raise ValueError("top + bottom must be less than 1.0.")
+
+    width, height = image.size
+    left_px = int(width * left)
+    right_px = int(width * (1 - right))
+    top_px = int(height * top)
+    bottom_px = int(height * (1 - bottom))
+    cropped_image = image.crop((left_px, top_px, right_px, bottom_px))
+    return cropped_image, left_px, top_px
+
+
 def compare_roi_similarity(
     base_image: Image.Image,
     template_image: Image.Image,

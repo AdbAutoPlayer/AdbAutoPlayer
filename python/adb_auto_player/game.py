@@ -28,6 +28,7 @@ class Game:
         self.config: BaseModel | None = None
         self.store: dict[str, Any] = {}
         self.previous_screenshot: Image.Image | None = None
+        self.previous_cropped_screenshot: Image.Image | None = None
         self.resolution: tuple[int, int] | None = None
         self.scale_factor: float | None = None
         self.supports_portrait: bool = False
@@ -273,18 +274,28 @@ class Game:
 
     def find_template_match(
         self,
-        template: str,
+        template: str | Path,
         match_mode: template_matching.MatchMode = template_matching.MatchMode.BEST,
         threshold: float = 0.9,
         grayscale: bool = False,
+        crop_left: float = 0.0,
+        crop_right: float = 0.0,
+        crop_top: float = 0.0,
+        crop_bottom: float = 0.0,
         use_previous_screenshot: bool = False,
     ) -> tuple[int, int] | None:
         template_path = self.get_template_dir_path() / template
 
-        return template_matching.find_template_match(
-            base_image=self.__get_screenshot(
-                previous_screenshot=use_previous_screenshot
-            ),
+        base_image, left_offset, top_offset = template_matching.crop_image(
+            image=self.__get_screenshot(previous_screenshot=use_previous_screenshot),
+            left=crop_left,
+            right=crop_right,
+            top=crop_top,
+            bottom=crop_bottom,
+        )
+
+        result = template_matching.find_template_match(
+            base_image=base_image,
             template_image=template_matching.load_image(
                 image_path=template_path,
                 image_scale_factor=self.get_scale_factor(),
@@ -294,9 +305,15 @@ class Game:
             grayscale=grayscale,
         )
 
+        if result is None:
+            return None
+
+        x, y = result
+        return x + left_offset, y + top_offset
+
     def find_all_template_matches(
         self,
-        template: str,
+        template: str | Path,
         threshold: float = 0.9,
         grayscale: bool = False,
         min_distance: int = 10,
@@ -319,9 +336,13 @@ class Game:
 
     def wait_for_template(
         self,
-        template: str,
+        template: str | Path,
         threshold: float = 0.9,
         grayscale: bool = False,
+        crop_left: float = 0.0,
+        crop_right: float = 0.0,
+        crop_top: float = 0.0,
+        crop_bottom: float = 0.0,
         delay: float = 1,
         timeout: float = 30,
         timeout_message: str | None = None,
@@ -337,6 +358,10 @@ class Game:
                 template,
                 threshold=threshold,
                 grayscale=grayscale,
+                crop_left=crop_left,
+                crop_right=crop_right,
+                crop_top=crop_top,
+                crop_bottom=crop_bottom,
             )
             if result is not None:
                 logging.debug(f"wait_for_template: {template} found")
@@ -353,9 +378,13 @@ class Game:
 
     def wait_until_template_disappears(
         self,
-        template: str,
+        template: str | Path,
         threshold: float = 0.9,
         grayscale: bool = False,
+        crop_left: float = 0.0,
+        crop_right: float = 0.0,
+        crop_top: float = 0.0,
+        crop_bottom: float = 0.0,
         delay: float = 1,
         timeout: float = 30,
         timeout_message: str | None = None,
@@ -371,6 +400,10 @@ class Game:
                 template,
                 threshold=threshold,
                 grayscale=grayscale,
+                crop_left=crop_left,
+                crop_right=crop_right,
+                crop_top=crop_top,
+                crop_bottom=crop_bottom,
             )
             if result is None:
                 logging.debug(
@@ -430,6 +463,10 @@ class Game:
         match_mode: MatchMode = MatchMode.BEST,
         threshold: float = 0.9,
         grayscale: bool = False,
+        crop_left: float = 0.0,
+        crop_right: float = 0.0,
+        crop_top: float = 0.0,
+        crop_bottom: float = 0.0,
         use_previous_screenshot: bool = False,
     ) -> tuple[str, int, int] | None:
         if not use_previous_screenshot:
@@ -440,6 +477,10 @@ class Game:
                 match_mode=match_mode,
                 threshold=threshold,
                 grayscale=grayscale,
+                crop_left=crop_left,
+                crop_right=crop_right,
+                crop_top=crop_top,
+                crop_bottom=crop_bottom,
                 use_previous_screenshot=True,
             )
             if result is not None:
