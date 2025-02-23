@@ -37,9 +37,6 @@ class AFKJourneyBase(Game, ABC):
     MODE_AFK_STAGES: str = "AFK_STAGES"
     MODE_LEGEND_TRIALS: str = "LEGEND_TRIALS"
 
-    # UI coordinates (x1, y1, x2, y2)
-    RECORDS_FORMATION_SELECT_AREA: tuple[int, int, int, int] = (450, 280, 780, 400)
-
     def start_up(self) -> None:
         if self.device is None:
             logging.debug("start_up")
@@ -104,7 +101,11 @@ class AFKJourneyBase(Game, ABC):
                 continue
             else:
                 self.wait_for_any_template(
-                    ["battle/records.png", "battle/formations_icon.png"]
+                    templates=[
+                        "battle/records.png",
+                        "battle/formations_icon.png",
+                    ],
+                    crop_top=0.5,
                 )
 
             if self.__handle_single_stage():
@@ -131,12 +132,19 @@ class AFKJourneyBase(Game, ABC):
         while counter > 0:
             formation_next = self.wait_for_template(
                 "battle/formation_next.png",
+                crop_left=0.8,
+                crop_top=0.5,
+                crop_bottom=0.4,
                 timeout=self.MIN_TIMEOUT,
                 timeout_message=f"Formation #{formation_num} not found",
             )
             self.click(*formation_next)
             self.wait_for_roi_change(
-                *self.RECORDS_FORMATION_SELECT_AREA, delay=0.5, timeout=self.MIN_TIMEOUT
+                crop_left=0.2,
+                crop_right=0.2,
+                crop_top=0.15,
+                crop_bottom=0.8,
+                timeout=self.MIN_TIMEOUT,
             )
             counter -= 1
         excluded_hero = self.__formation_contains_excluded_hero()
@@ -150,10 +158,18 @@ class AFKJourneyBase(Game, ABC):
         return True
 
     def __copy_suggested_formation_from_records(self, formations: int = 1) -> bool:
-        records = self.wait_for_template("battle/records.png")
+        records = self.wait_for_template(
+            template="battle/records.png",
+            crop_right=0.5,
+            crop_top=0.8,
+        )
         self.click(*records)
         copy = self.wait_for_template(
-            "copy.png",
+            "battle/copy.png",
+            crop_left=0.3,
+            crop_right=0.1,
+            crop_top=0.7,
+            crop_bottom=0.1,
             timeout=self.MIN_TIMEOUT,
             timeout_message="No formations available for this battle",
         )
@@ -165,7 +181,13 @@ class AFKJourneyBase(Game, ABC):
             self.click(*copy)
             sleep(1)
 
-            cancel = self.find_template_match("cancel.png")
+            cancel = self.find_template_match(
+                template="cancel.png",
+                crop_left=0.1,
+                crop_right=0.5,
+                crop_top=0.6,
+                crop_bottom=0.3,
+            )
             if cancel:
                 logging.warning(
                     "Formation contains locked Artifacts or Heroes skipping"
@@ -204,7 +226,13 @@ class AFKJourneyBase(Game, ABC):
         return self.__find_any_excluded_hero(filtered_dict)
 
     def __find_any_excluded_hero(self, excluded_heroes: dict[str, str]) -> str | None:
-        result = self.find_any_template(list(excluded_heroes.keys()))
+        result = self.find_any_template(
+            templates=list(excluded_heroes.keys()),
+            crop_left=0.1,
+            crop_right=0.2,
+            crop_top=0.3,
+            crop_bottom=0.4,
+        )
         if result is None:
             return None
 
@@ -215,17 +243,21 @@ class AFKJourneyBase(Game, ABC):
         spend_gold = self.__get_config_attribute_from_mode("spend_gold")
 
         result = self.wait_for_any_template(
-            ["battle/records.png", "battle/formations_icon.png"]
+            templates=[
+                "battle/records.png",
+                "battle/formations_icon.png",
+            ],
+            crop_top=0.5,
         )
+
         if result is None:
             return False
         self.click(850, 1780, scale=True)
         template, x, y = result
-        match template:
-            case "battle/records.png":
-                self.wait_until_template_disappears("battle/records.png")
-            case "battle/formations_icon.png":
-                self.wait_until_template_disappears("battle/formations_icon.png")
+        self.wait_until_template_disappears(
+            template,
+            crop_top=0.5,
+        )
         sleep(1)
 
         # Need to double-check the order of prompts here
@@ -247,6 +279,9 @@ class AFKJourneyBase(Game, ABC):
             checkbox = self.find_template_match(
                 "battle/checkbox_unchecked.png",
                 match_mode=MatchMode.TOP_LEFT,
+                crop_right=0.8,
+                crop_top=0.2,
+                crop_bottom=0.6,
                 use_previous_screenshot=True,
             )
             if checkbox is None:
@@ -259,7 +294,10 @@ class AFKJourneyBase(Game, ABC):
         return True
 
     def _click_confirm_on_popup(self) -> bool:
-        result = self.find_any_template(["confirm.png", "confirm_text.png"])
+        result = self.find_any_template(
+            templates=["confirm.png", "confirm_text.png"],
+            crop_top=0.4,
+        )
         if result:
             _, x, y = result
             self.click(x, y)
@@ -289,7 +327,6 @@ class AFKJourneyBase(Game, ABC):
                     "battle/power_up.png",
                     "battle/result.png",
                 ],
-                delay=3,
                 timeout=self.BATTLE_TIMEOUT,
             )
 
@@ -348,10 +385,18 @@ class AFKJourneyBase(Game, ABC):
                     pass
                 case "confirm.png":
                     if self.find_template_match(
-                        "exit_the_game.png", use_previous_screenshot=True
+                        "exit_the_game.png",
+                        crop_top=0.4,
+                        crop_bottom=0.4,
+                        use_previous_screenshot=True,
                     ):
                         x_btn = self.find_template_match(
-                            "x.png", use_previous_screenshot=True
+                            "x.png",
+                            crop_left=0.6,
+                            crop_right=0.3,
+                            crop_top=0.6,
+                            crop_bottom=0.2,
+                            use_previous_screenshot=True,
                         )
                         if x_btn:
                             self.click(*x_btn)
@@ -366,7 +411,12 @@ class AFKJourneyBase(Game, ABC):
         return None
 
     def _select_afk_stage(self) -> None:
-        self.wait_for_template("resonating_hall.png")
+        self.wait_for_template(
+            template="resonating_hall.png",
+            crop_left=0.3,
+            crop_right=0.3,
+            crop_top=0.9,
+        )
         self.click(550, 1080, scale=True)  # click rewards popup
         sleep(1)
         if self.store.get(self.STORE_SEASON, False):
@@ -376,7 +426,11 @@ class AFKJourneyBase(Game, ABC):
             logging.debug("Clicking Battle button")
             self.click(800, 1610, scale=True)
         sleep(2)
-        confirm = self.find_template_match("confirm.png")
+        confirm = self.find_template_match(
+            template="confirm.png",
+            crop_left=0.5,
+            crop_top=0.5,
+        )
         if confirm:
             self.click(*confirm)
         return None
@@ -388,6 +442,7 @@ class AFKJourneyBase(Game, ABC):
         while True:
             result = self.find_any_template(
                 templates=["guide/close.png", "guide/next.png"],
+                crop_top=0.4,
                 use_previous_screenshot=use_previous_screenshot,
             )
             if result is None:

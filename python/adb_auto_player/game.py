@@ -17,6 +17,7 @@ from adb_auto_player.exceptions import (
     TimeoutException,
     AdbException,
     NotInitializedError,
+    NoPreviousScreenshotException,
 )
 from adb_auto_player.ipc.game_gui import GameGUIOptions, MenuOption
 from adb_auto_player.template_matching import MatchMode
@@ -203,57 +204,61 @@ class Game:
         else:
             return self.get_screenshot()
 
-    def roi_has_changed(
+    def wait_for_roi_change(
         self,
-        sx: int,
-        sy: int,
-        ex: int,
-        ey: int,
         threshold: float = 0.9,
         grayscale: bool = False,
-    ):
+        crop_left: float = 0.0,
+        crop_right: float = 0.0,
+        crop_top: float = 0.0,
+        crop_bottom: float = 0.0,
+        delay: float = 0.5,
+        timeout: float = 30,
+        timeout_message: str | None = None,
+    ) -> bool:
+        """Waits for a region of interest (ROI) on the screen to change.
+
+        This function monitors a specific region of the screen (defined by the crop values).
+        If the crop values are all set to 0, it will monitor the entire screen for changes.
+        A change is detected based on a similarity threshold between current and previous screen regions.
+
+        Raises:
+            NoPreviousScreenshotException: No previous screenshot
+            TimeoutException: If no change is detected within the timeout period.
+            ValueError: Invalid crop values.
+        """
+        # Not using get_previous_screenshot is intentional here.
+        # If you execute an action (e.g. click a button) then call wait_for_roi_change
+        # There is a chance that by the time get_previous_screenshot takes
+        # a screenshot because none exists that the animations are completed
+        # this means the roi will never change
         prev = self.previous_screenshot
         if prev is None:
-            raise ValueError(
+            raise NoPreviousScreenshotException(
                 "Region of interest cannot have changed if "
                 "there is no previous screenshot."
             )
 
-        sx, sy, ex, ey = self.__scale_coordinates(sx, sy, ex, ey)
-
-        return not template_matching.compare_roi_similarity(
-            prev,
-            self.get_screenshot(),
-            roi=(sx, sy, ex, ey),
-            threshold=threshold,
-            grayscale=grayscale,
+        cropped, _, _ = template_matching.crop_image(
+            image=prev,
+            left=crop_left,
+            right=crop_right,
+            top=crop_top,
+            bottom=crop_bottom,
         )
 
-    def wait_for_roi_change(
-        self,
-        sx: int,
-        sy: int,
-        ex: int,
-        ey: int,
-        threshold: float = 0.9,
-        grayscale: bool = False,
-        delay: float = 1,
-        timeout: float = 30,
-        timeout_message: str | None = None,
-    ) -> bool:
-        """Waits for a region of interest to change.
-
-        Raises:
-             TimeoutException: No change detected.
-        """
-        sx, sy, ex, ey = self.__scale_coordinates(sx, sy, ex, ey)
-
         def roi_changed() -> Literal[True] | None:
-            result = self.roi_has_changed(
-                sx=sx,
-                sy=sy,
-                ex=ex,
-                ey=ey,
+            screenshot, _, _ = template_matching.crop_image(
+                image=self.get_screenshot(),
+                left=crop_left,
+                right=crop_right,
+                top=crop_top,
+                bottom=crop_bottom,
+            )
+
+            result = not template_matching.similar_image(
+                base_image=cropped,
+                template_image=screenshot,
                 threshold=threshold,
                 grayscale=grayscale,
             )
@@ -273,18 +278,28 @@ class Game:
 
     def find_template_match(
         self,
-        template: str,
+        template: str | Path,
         match_mode: template_matching.MatchMode = template_matching.MatchMode.BEST,
         threshold: float = 0.9,
         grayscale: bool = False,
+        crop_left: float = 0.0,
+        crop_right: float = 0.0,
+        crop_top: float = 0.0,
+        crop_bottom: float = 0.0,
         use_previous_screenshot: bool = False,
     ) -> tuple[int, int] | None:
         template_path = self.get_template_dir_path() / template
 
-        return template_matching.find_template_match(
-            base_image=self.__get_screenshot(
-                previous_screenshot=use_previous_screenshot
-            ),
+        base_image, left_offset, top_offset = template_matching.crop_image(
+            image=self.__get_screenshot(previous_screenshot=use_previous_screenshot),
+            left=crop_left,
+            right=crop_right,
+            top=crop_top,
+            bottom=crop_bottom,
+        )
+
+        result = template_matching.find_template_match(
+            base_image=base_image,
             template_image=template_matching.load_image(
                 image_path=template_path,
                 image_scale_factor=self.get_scale_factor(),
@@ -294,20 +309,36 @@ class Game:
             grayscale=grayscale,
         )
 
+        if result is None:
+            return None
+
+        x, y = result
+        return x + left_offset, y + top_offset
+
     def find_all_template_matches(
         self,
-        template: str,
+        template: str | Path,
         threshold: float = 0.9,
         grayscale: bool = False,
+        crop_left: float = 0.0,
+        crop_right: float = 0.0,
+        crop_top: float = 0.0,
+        crop_bottom: float = 0.0,
         min_distance: int = 10,
         use_previous_screenshot: bool = False,
     ) -> list[tuple[int, int]]:
         template_path = self.get_template_dir_path() / template
 
-        return template_matching.find_all_template_matches(
-            base_image=self.__get_screenshot(
-                previous_screenshot=use_previous_screenshot
-            ),
+        base_image, left_offset, top_offset = template_matching.crop_image(
+            image=self.__get_screenshot(previous_screenshot=use_previous_screenshot),
+            left=crop_left,
+            right=crop_right,
+            top=crop_top,
+            bottom=crop_bottom,
+        )
+
+        result = template_matching.find_all_template_matches(
+            base_image=base_image,
             template_image=template_matching.load_image(
                 image_path=template_path,
                 image_scale_factor=self.get_scale_factor(),
@@ -317,12 +348,19 @@ class Game:
             min_distance=min_distance,
         )
 
+        adjusted_result = [(x + left_offset, y + top_offset) for x, y in result]
+        return adjusted_result
+
     def wait_for_template(
         self,
-        template: str,
+        template: str | Path,
         threshold: float = 0.9,
         grayscale: bool = False,
-        delay: float = 1,
+        crop_left: float = 0.0,
+        crop_right: float = 0.0,
+        crop_top: float = 0.0,
+        crop_bottom: float = 0.0,
+        delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
     ) -> tuple[int, int]:
@@ -337,6 +375,10 @@ class Game:
                 template,
                 threshold=threshold,
                 grayscale=grayscale,
+                crop_left=crop_left,
+                crop_right=crop_right,
+                crop_top=crop_top,
+                crop_bottom=crop_bottom,
             )
             if result is not None:
                 logging.debug(f"wait_for_template: {template} found")
@@ -353,10 +395,14 @@ class Game:
 
     def wait_until_template_disappears(
         self,
-        template: str,
+        template: str | Path,
         threshold: float = 0.9,
         grayscale: bool = False,
-        delay: float = 1,
+        crop_left: float = 0.0,
+        crop_right: float = 0.0,
+        crop_top: float = 0.0,
+        crop_bottom: float = 0.0,
+        delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
     ) -> None:
@@ -371,6 +417,10 @@ class Game:
                 template,
                 threshold=threshold,
                 grayscale=grayscale,
+                crop_left=crop_left,
+                crop_right=crop_right,
+                crop_top=crop_top,
+                crop_bottom=crop_bottom,
             )
             if result is None:
                 logging.debug(
@@ -398,7 +448,11 @@ class Game:
         templates: list[str],
         threshold: float = 0.9,
         grayscale: bool = False,
-        delay: float = 1,
+        crop_left: float = 0.0,
+        crop_right: float = 0.0,
+        crop_top: float = 0.0,
+        crop_bottom: float = 0.0,
+        delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
     ) -> tuple[str, int, int]:
@@ -413,6 +467,10 @@ class Game:
                 templates,
                 threshold=threshold,
                 grayscale=grayscale,
+                crop_left=crop_left,
+                crop_right=crop_right,
+                crop_top=crop_top,
+                crop_bottom=crop_bottom,
             )
 
         if timeout_message is None:
@@ -430,6 +488,10 @@ class Game:
         match_mode: MatchMode = MatchMode.BEST,
         threshold: float = 0.9,
         grayscale: bool = False,
+        crop_left: float = 0.0,
+        crop_right: float = 0.0,
+        crop_top: float = 0.0,
+        crop_bottom: float = 0.0,
         use_previous_screenshot: bool = False,
     ) -> tuple[str, int, int] | None:
         if not use_previous_screenshot:
@@ -440,6 +502,10 @@ class Game:
                 match_mode=match_mode,
                 threshold=threshold,
                 grayscale=grayscale,
+                crop_left=crop_left,
+                crop_right=crop_right,
+                crop_top=crop_top,
+                crop_bottom=crop_bottom,
                 use_previous_screenshot=True,
             )
             if result is not None:
@@ -481,7 +547,7 @@ class Game:
     def __execute_or_timeout(
         operation: Callable[[], T | None],
         timeout_message: str,
-        delay: float = 1,
+        delay: float = 0.5,
         timeout: float = 30,
         result_should_be_none: bool = False,
     ) -> T:
