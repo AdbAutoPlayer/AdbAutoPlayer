@@ -23,11 +23,15 @@ class AssistMixin(AFKJourneyBase, ABC):
 
     def __find_synergy_or_corrupt_creature(self) -> bool:
         result = self.find_any_template(
-            [
+            templates=[
                 "assist/label_world_chat.png",
                 "assist/tap_to_enter.png",
                 "assist/label_team-up_chat.png",
-            ]
+            ],
+            crop_left=0.1,
+            crop_right=0.5,
+            crop_top=0.1,
+            crop_bottom=0.1,
         )
         if result is None:
             logging.info("Navigating to World Chat")
@@ -50,14 +54,29 @@ class AssistMixin(AFKJourneyBase, ABC):
         self.click(260, 1400, scale=True)
         try:
             template, x, y = self.wait_for_any_template(
-                ["assist/join_now.png", "assist/synergy.png", "assist/chat_button.png"],
+                templates=[
+                    "assist/join_now.png",
+                    "assist/synergy.png",
+                    "assist/chat_button.png",
+                ],
+                crop_left=0.1,
+                crop_top=0.4,
+                crop_bottom=0.1,
                 delay=0.1,
                 timeout=self.FAST_TIMEOUT,
             )
         except TimeoutException:
             return False
         if template == "assist/chat_button.png":
-            if self.find_template_match("assist/label_world_chat.png") is None:
+            if (
+                self.find_template_match(
+                    template="assist/label_world_chat.png",
+                    crop_right=0.5,
+                    crop_top=0.1,
+                    crop_bottom=0.8,
+                )
+                is None
+            ):
                 # Back button does not always close profile/chat windows
                 self.click(550, 100, scale=True)
                 sleep(1)
@@ -79,32 +98,71 @@ class AssistMixin(AFKJourneyBase, ABC):
         return False
 
     def __handle_corrupt_creature(self) -> bool:
-        ready = self.wait_for_template("assist/ready.png", timeout=self.MIN_TIMEOUT)
+        ready = self.wait_for_template(
+            template="assist/ready.png",
+            crop_left=0.2,
+            crop_right=0.1,
+            crop_top=0.8,
+            timeout=self.MIN_TIMEOUT,
+        )
 
         self.click(*ready)
         # Sometimes people wait forever for a third to join...
         self.wait_until_template_disappears(
-            "assist/rewards_heart.png", timeout=self.BATTLE_TIMEOUT
+            template="assist/rewards_heart.png",
+            crop_left=0.6,
+            crop_top=0.7,
+            crop_bottom=0.1,
+            timeout=self.BATTLE_TIMEOUT,
         )
-        self.wait_for_template("assist/bell.png")
+        while True:
+            template = self.wait_for_any_template(
+                templates=[
+                    "assist/bell.png",
+                    "guide/close.png",
+                    "guide/next.png",
+                ],
+            )
+            match template:
+                case "assist/bell.png":
+                    break
+                case _:
+                    self._handle_guide_popup(use_previous_screenshot=True)
         # click first 5 heroes in row 1 and 2
         for x in [110, 290, 470, 630, 800]:
             self.click(x, 1300, scale=True)
             sleep(0.5)
         while True:
-            cc_ready = self.find_template_match("assist/cc_ready.png")
+            cc_ready = self.find_template_match(
+                template="assist/cc_ready.png",
+                crop_top=0.9,
+                crop_left=0.1,
+                crop_right=0.2,
+            )
             if cc_ready:
                 self.click(*cc_ready)
                 sleep(1)
             else:
                 break
-        self.wait_for_template("assist/reward.png")
+        self.wait_for_template(
+            template="assist/reward.png",
+            crop_left=0.3,
+            crop_right=0.3,
+            crop_top=0.6,
+            crop_bottom=0.3,
+        )
         logging.info("Corrupt Creature done")
         self.press_back_button()
         return True
 
     def __handle_synergy(self) -> bool:
-        go = self.find_template_match("assist/go.png")
+        go = self.find_template_match(
+            template="assist/go.png",
+            crop_left=0.1,
+            crop_right=0.6,
+            crop_top=0.7,
+            crop_bottom=0.2,
+        )
         if go is None:
             logging.info("Clicked Synergy button too late")
             return False
