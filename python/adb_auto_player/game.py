@@ -315,15 +315,25 @@ class Game:
         template: str | Path,
         threshold: float = 0.9,
         grayscale: bool = False,
+        crop_left: float = 0.0,
+        crop_right: float = 0.0,
+        crop_top: float = 0.0,
+        crop_bottom: float = 0.0,
         min_distance: int = 10,
         use_previous_screenshot: bool = False,
     ) -> list[tuple[int, int]]:
         template_path = self.get_template_dir_path() / template
 
-        return template_matching.find_all_template_matches(
-            base_image=self.__get_screenshot(
-                previous_screenshot=use_previous_screenshot
-            ),
+        base_image, left_offset, top_offset = template_matching.crop_image(
+            image=self.__get_screenshot(previous_screenshot=use_previous_screenshot),
+            left=crop_left,
+            right=crop_right,
+            top=crop_top,
+            bottom=crop_bottom,
+        )
+
+        result = template_matching.find_all_template_matches(
+            base_image=base_image,
             template_image=template_matching.load_image(
                 image_path=template_path,
                 image_scale_factor=self.get_scale_factor(),
@@ -332,6 +342,9 @@ class Game:
             grayscale=grayscale,
             min_distance=min_distance,
         )
+
+        adjusted_result = [(x + left_offset, y + top_offset) for x, y in result]
+        return adjusted_result
 
     def wait_for_template(
         self,
@@ -430,6 +443,10 @@ class Game:
         templates: list[str],
         threshold: float = 0.9,
         grayscale: bool = False,
+        crop_left: float = 0.0,
+        crop_right: float = 0.0,
+        crop_top: float = 0.0,
+        crop_bottom: float = 0.0,
         delay: float = 1,
         timeout: float = 30,
         timeout_message: str | None = None,
@@ -445,6 +462,10 @@ class Game:
                 templates,
                 threshold=threshold,
                 grayscale=grayscale,
+                crop_left=crop_left,
+                crop_right=crop_right,
+                crop_top=crop_top,
+                crop_bottom=crop_bottom,
             )
 
         if timeout_message is None:
