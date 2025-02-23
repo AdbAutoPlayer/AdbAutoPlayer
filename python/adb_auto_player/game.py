@@ -212,7 +212,7 @@ class Game:
         crop_right: float = 0.0,
         crop_top: float = 0.0,
         crop_bottom: float = 0.0,
-        delay: float = 1,
+        delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
     ) -> bool:
@@ -360,7 +360,7 @@ class Game:
         crop_right: float = 0.0,
         crop_top: float = 0.0,
         crop_bottom: float = 0.0,
-        delay: float = 1,
+        delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
     ) -> tuple[int, int]:
@@ -402,7 +402,7 @@ class Game:
         crop_right: float = 0.0,
         crop_top: float = 0.0,
         crop_bottom: float = 0.0,
-        delay: float = 1,
+        delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
     ) -> None:
@@ -452,7 +452,7 @@ class Game:
         crop_right: float = 0.0,
         crop_top: float = 0.0,
         crop_bottom: float = 0.0,
-        delay: float = 1,
+        delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
     ) -> tuple[str, int, int]:
@@ -547,7 +547,7 @@ class Game:
     def __execute_or_timeout(
         operation: Callable[[], T | None],
         timeout_message: str,
-        delay: float = 1,
+        delay: float = 0.5,
         timeout: float = 30,
         result_should_be_none: bool = False,
     ) -> T:

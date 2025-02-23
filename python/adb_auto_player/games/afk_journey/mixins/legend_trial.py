@@ -25,6 +25,8 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
             "graveborn",
             "mauler",
         ]
+        # Season Legend Trial header is visible but there are still animations
+        # so we sleep
         sleep(1)
         self.get_screenshot()
         for faction in factions:
@@ -127,7 +129,6 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
             crop_right=0.3,
             crop_top=0.2,
             crop_bottom=0.2,
-            delay=0.5,
             timeout=self.MIN_TIMEOUT,
         )
         _, x, y = challenge_btn
@@ -166,5 +167,4 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
                 crop_bottom=0.8,
                 timeout_message="Could not find Season Legend Trial Header",
             )
-        sleep(1)
         return None

@@ -144,7 +144,6 @@ class AFKJourneyBase(Game, ABC):
                 crop_right=0.2,
                 crop_top=0.15,
                 crop_bottom=0.8,
-                delay=0.5,
                 timeout=self.MIN_TIMEOUT,
             )
             counter -= 1
