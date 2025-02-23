@@ -181,7 +181,13 @@ class AFKJourneyBase(Game, ABC):
             self.click(*copy)
             sleep(1)
 
-            cancel = self.find_template_match("cancel.png")
+            cancel = self.find_template_match(
+                template="cancel.png",
+                crop_left=0.1,
+                crop_right=0.5,
+                crop_top=0.6,
+                crop_bottom=0.3,
+            )
             if cancel:
                 logging.warning(
                     "Formation contains locked Artifacts or Heroes skipping"
