@@ -22,3 +22,9 @@ class NotFoundException(Exception):
 
 class NotInitializedError(Exception):
     pass
+
+
+class NoPreviousScreenshotException(Exception):
+    """Previous Screenshot required but does not exist."""
+
+    pass

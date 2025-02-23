@@ -17,6 +17,7 @@ from adb_auto_player.exceptions import (
     TimeoutException,
     AdbException,
     NotInitializedError,
+    NoPreviousScreenshotException,
 )
 from adb_auto_player.ipc.game_gui import GameGUIOptions, MenuOption
 from adb_auto_player.template_matching import MatchMode
@@ -203,57 +204,61 @@ class Game:
         else:
             return self.get_screenshot()
 
-    def roi_has_changed(
-        self,
-        sx: int,
-        sy: int,
-        ex: int,
-        ey: int,
-        threshold: float = 0.9,
-        grayscale: bool = False,
-    ):
-        prev = self.previous_screenshot
-        if prev is None:
-            raise ValueError(
-                "Region of interest cannot have changed if "
-                "there is no previous screenshot."
-            )
-
-        sx, sy, ex, ey = self.__scale_coordinates(sx, sy, ex, ey)
-
-        return not template_matching.compare_roi_similarity(
-            prev,
-            self.get_screenshot(),
-            roi=(sx, sy, ex, ey),
-            threshold=threshold,
-            grayscale=grayscale,
-        )
-
     def wait_for_roi_change(
         self,
-        sx: int,
-        sy: int,
-        ex: int,
-        ey: int,
         threshold: float = 0.9,
         grayscale: bool = False,
+        crop_left: float = 0.0,
+        crop_right: float = 0.0,
+        crop_top: float = 0.0,
+        crop_bottom: float = 0.0,
         delay: float = 1,
         timeout: float = 30,
         timeout_message: str | None = None,
     ) -> bool:
-        """Waits for a region of interest to change.
+        """Waits for a region of interest (ROI) on the screen to change.
+
+        This function monitors a specific region of the screen (defined by the crop values).
+        If the crop values are all set to 0, it will monitor the entire screen for changes.
+        A change is detected based on a similarity threshold between current and previous screen regions.
 
         Raises:
-             TimeoutException: No change detected.
+            NoPreviousScreenshotException: No previous screenshot
+            TimeoutException: If no change is detected within the timeout period.
+            ValueError: Invalid crop values.
         """
-        sx, sy, ex, ey = self.__scale_coordinates(sx, sy, ex, ey)
+        # Not using get_previous_screenshot is intentional here.
+        # If you execute an action (e.g. click a button) then call wait_for_roi_change
+        # There is a chance that by the time get_previous_screenshot takes
+        # a screenshot because none exists that the animations are completed
+        # this means the roi will never change
+        prev = self.previous_screenshot
+        if prev is None:
+            raise NoPreviousScreenshotException(
+                "Region of interest cannot have changed if "
+                "there is no previous screenshot."
+            )
+
+        cropped, _, _ = template_matching.crop_image(
+            image=prev,
+            left=crop_left,
+            right=crop_right,
+            top=crop_top,
+            bottom=crop_bottom,
+        )
 
         def roi_changed() -> Literal[True] | None:
-            result = self.roi_has_changed(
-                sx=sx,
-                sy=sy,
-                ex=ex,
-                ey=ey,
+            screenshot, _, _ = template_matching.crop_image(
+                image=self.get_screenshot(),
+                left=crop_left,
+                right=crop_right,
+                top=crop_top,
+                bottom=crop_bottom,
+            )
+
+            result = not template_matching.similar_image(
+                base_image=cropped,
+                template_image=screenshot,
                 threshold=threshold,
                 grayscale=grayscale,
             )

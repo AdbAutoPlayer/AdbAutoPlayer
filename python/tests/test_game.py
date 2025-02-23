@@ -3,7 +3,11 @@ import unittest
 from unittest.mock import patch, DEFAULT
 
 from pathlib import Path
-from adb_auto_player.exceptions import NotInitializedError
+from adb_auto_player.exceptions import (
+    NotInitializedError,
+    NoPreviousScreenshotException,
+    TimeoutException,
+)
 from adb_auto_player.game import Game
 import adb_auto_player.template_matching as template_matching
 
@@ -11,30 +15,71 @@ TEST_DATA_DIR = Path(__file__).parent / "data"
 
 
 class TestGame(unittest.TestCase):
-    @patch.object(Game, "get_screenshot")
-    def test_roi_has_changed(self, mock_get_screenshot):
+    def test_wait_for_roi_change_validation(self):
         game = Game()
-        with self.assertRaises(ValueError):
-            game.roi_has_changed(0, 0, 0, 0)
 
-        roi = (450, 280, 780, 400)
+        with self.assertRaises(NoPreviousScreenshotException):
+            game.wait_for_roi_change()
+
+        game.previous_screenshot = template_matching.load_image(
+            TEST_DATA_DIR / "records_formation_1.png"
+        )
+
+        with self.assertRaises(ValueError):
+            game.wait_for_roi_change(crop_left=-0.5)
+
+        with self.assertRaises(ValueError):
+            game.wait_for_roi_change(crop_left=1.5)
+
+        with self.assertRaises(ValueError):
+            game.wait_for_roi_change(crop_left=0.8, crop_right=0.5)
+        return
+
+    @patch.object(Game, "get_screenshot")
+    def test_wait_for_roi_change_no_crop(self, get_screenshot):
+        game = Game()
+
         f1 = TEST_DATA_DIR / "records_formation_1.png"
         f2 = TEST_DATA_DIR / "records_formation_2.png"
 
         game.previous_screenshot = template_matching.load_image(f1)
-        mock_get_screenshot.return_value = template_matching.load_image(f1)
+        get_screenshot.return_value = template_matching.load_image(f1)
 
-        # Missing scale factor
-        with self.assertRaises(NotInitializedError):
-            game.roi_has_changed(*roi)
+        with self.assertRaises(TimeoutException):
+            game.wait_for_roi_change(timeout=1.0)
 
-        game.scale_factor = 1.0
+        get_screenshot.return_value = template_matching.load_image(f2)
+        self.assertTrue(game.wait_for_roi_change(timeout=0))
 
-        self.assertFalse(game.roi_has_changed(*roi))
+    @patch.object(Game, "get_screenshot")
+    def test_wait_for_roi_change_with_crop(self, get_screenshot):
+        game = Game()
 
-        mock_get_screenshot.return_value = template_matching.load_image(f2)
+        f1 = TEST_DATA_DIR / "records_formation_1.png"
+        f2 = TEST_DATA_DIR / "records_formation_2.png"
 
-        self.assertTrue(game.roi_has_changed(*roi))
+        game.previous_screenshot = template_matching.load_image(f1)
+        get_screenshot.return_value = template_matching.load_image(f1)
+
+        with self.assertRaises(TimeoutException):
+            game.wait_for_roi_change(
+                crop_left=0.2,
+                crop_right=0.2,
+                crop_top=0.15,
+                crop_bottom=0.8,
+                timeout=1.0,
+            )
+
+        get_screenshot.return_value = template_matching.load_image(f2)
+        self.assertTrue(
+            game.wait_for_roi_change(
+                crop_left=0.2,
+                crop_right=0.2,
+                crop_top=0.15,
+                crop_bottom=0.8,
+                timeout=0,
+            )
+        )
 
     @patch.multiple(
         Game,

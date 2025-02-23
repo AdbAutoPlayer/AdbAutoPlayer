@@ -37,9 +37,6 @@ class AFKJourneyBase(Game, ABC):
     MODE_AFK_STAGES: str = "AFK_STAGES"
     MODE_LEGEND_TRIALS: str = "LEGEND_TRIALS"
 
-    # UI coordinates (x1, y1, x2, y2)
-    RECORDS_FORMATION_SELECT_AREA: tuple[int, int, int, int] = (450, 280, 780, 400)
-
     def start_up(self) -> None:
         if self.device is None:
             logging.debug("start_up")
@@ -136,7 +133,12 @@ class AFKJourneyBase(Game, ABC):
             )
             self.click(*formation_next)
             self.wait_for_roi_change(
-                *self.RECORDS_FORMATION_SELECT_AREA, delay=0.5, timeout=self.MIN_TIMEOUT
+                crop_left=0.2,
+                crop_right=0.2,
+                crop_top=0.15,
+                crop_bottom=0.8,
+                delay=0.5,
+                timeout=self.MIN_TIMEOUT,
             )
             counter -= 1
         excluded_hero = self.__formation_contains_excluded_hero()
