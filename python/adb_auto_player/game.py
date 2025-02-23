@@ -28,7 +28,6 @@ class Game:
         self.config: BaseModel | None = None
         self.store: dict[str, Any] = {}
         self.previous_screenshot: Image.Image | None = None
-        self.previous_cropped_screenshot: Image.Image | None = None
         self.resolution: tuple[int, int] | None = None
         self.scale_factor: float | None = None
         self.supports_portrait: bool = False
