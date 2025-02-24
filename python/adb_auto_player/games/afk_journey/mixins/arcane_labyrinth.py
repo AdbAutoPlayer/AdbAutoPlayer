@@ -63,6 +63,13 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 break
         return
 
+    def _add_keys_farmed(self, keys: int):
+        self.arcane_lucky_flip_keys += keys
+        logging.info(
+            f"Lucky Flip Keys farmed: {self.arcane_lucky_flip_keys} "
+            f"(Guild Keys: {self.arcane_lucky_flip_keys // 5})"
+        )
+
     def handle_arcane_labyrinth(self) -> NoReturn:
         logging.warning("This is made for farming Lucky Flip Keys")
         logging.warning(
@@ -87,8 +94,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 continue
             clear_count += 1
             logging.info(f"Arcane Labyrinth clear #{clear_count}")
-            self.arcane_lucky_flip_keys += 23
-            logging.info(f"Lucky Flip Keys farmed: {self.arcane_lucky_flip_keys}")
+            self._add_keys_farmed(23)
             self.wait_for_template(
                 "arcane_labyrinth/enter.png",
                 crop_top=0.8,
@@ -110,8 +116,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         )
 
         if template == "arcane_labyrinth/rarity/epic.png":
-            self.arcane_lucky_flip_keys += 9
-            logging.info(f"Lucky Flip Keys farmed: {self.arcane_lucky_flip_keys}")
+            self._add_keys_farmed(9)
 
         self.click(x, y)
         sleep(1)
