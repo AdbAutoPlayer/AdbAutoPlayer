@@ -1,5 +1,6 @@
 import logging
 import re
+import sys
 from abc import ABC
 from time import sleep
 from typing import NoReturn
@@ -161,19 +162,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
             case "arcane_labyrinth/swords_button.png":
                 self.__click_best_gate(x, y)
-                self.wait_for_template(
-                    template="arcane_labyrinth/battle.png",
-                    crop_top=0.8,
-                    crop_left=0.3,
-                )
-                self.__check_for_dead_hero()
-                battle = self.wait_for_template(
-                    template="arcane_labyrinth/battle.png",
-                    crop_top=0.8,
-                    crop_left=0.3,
-                )
-                self.click(*battle)
-
+                self.__arcane_lab_start_battle()
                 while self.__battle_is_not_completed():
                     pass
 
@@ -183,6 +172,50 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 self.click(x, y)
                 return False
         return True
+
+    def __arcane_lab_start_battle(self):
+        template, x, y = self.wait_for_any_template(
+            templates=[
+                "arcane_labyrinth/battle.png",
+                "arcane_labyrinth/additional_challenge.png",
+            ],
+            threshold=0.8,
+        )
+
+        match template:
+            case "arcane_labyrinth/additional_challenge.png":
+                logging.debug("__arcane_lab_start_battle: additional challenge popup")
+                self.click(x, y)
+            case _:
+                pass
+        sleep(0.5)
+
+        while True:
+            template, x, y = self.wait_for_any_template(
+                templates=[
+                    "arcane_labyrinth/battle.png",
+                    "arcane_labyrinth/additional_challenge.png",
+                ],
+                threshold=0.8,
+                crop_top=0.2,
+                crop_left=0.3,
+            )
+            match template:
+                case "arcane_labyrinth/additional_challenge.png":
+                    logging.debug(
+                        "__arcane_lab_start_battle: additional challenge popup"
+                    )
+                    self.click(x, y)
+                case _:
+                    break
+
+        self.__check_for_dead_hero()
+        battle = self.wait_for_template(
+            template="arcane_labyrinth/battle.png",
+            crop_top=0.8,
+            crop_left=0.3,
+        )
+        self.click(*battle)
 
     def __handle_enter_button(self, x: int, y: int) -> None:
         self.click(x, y)
@@ -287,6 +320,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
         result = self.find_any_template(
             templates=templates,
+            threshold=0.8,
         )
 
         if result is None:
@@ -305,7 +339,12 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 self.click(*self.arcane_skip_coordinates)
                 return True
             case "arcane_labyrinth/battle.png":
-                self.click(x, y)
+                while self.find_template_match(
+                    template="arcane_labyrinth/battle.png",
+                    crop_top=0.8,
+                    crop_left=0.3,
+                ):
+                    self.click(x, y)
                 return True
             case "arcane_labyrinth/confirm.png":
                 self.__select_a_crest()
@@ -315,7 +354,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
     def __click_best_gate(self, swords_x: int, swords_y: int) -> None:
         logging.debug("__click_best_gate")
-
+        sleep(0.5)
         results = self.find_all_template_matches(
             "arcane_labyrinth/swords_button.png",
             crop_top=0.6,
