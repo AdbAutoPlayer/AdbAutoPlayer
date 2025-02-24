@@ -374,8 +374,9 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         if result is None:
             if self.arcane_skip_coordinates is not None:
                 self.click(*self.arcane_skip_coordinates)
-
+                logging.debug("Clicking skip")
             if not self.find_template_match("arcane_labyrinth/difficulty.png"):
+                logging.debug("arcane_labyrinth/difficulty.png no longer visible")
                 return False
             sleep(0.3)
 
@@ -482,8 +483,9 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     if not purchase:
                         break
                     purchase_count += 1
-                    logging.info(f"Purchase: #{purchase_count}")
+                    logging.info(f"Purchase #{purchase_count}")
                     self.click(*purchase)
+                    sleep(1)
                     continue
                 case "arcane_labyrinth/select_a_crest.png":
                     self.__select_a_crest()
