@@ -82,8 +82,13 @@ class DeviceStream:
         return self.latest_frame
 
     def _handle_stream_arm_mac(self) -> None:
-        # TODO for some reason the windows function causes a Segmentation fault
-        # on arm macos
+        # h264 returns segmentation fault
+        # raw-frames lags bluestacks to death
+        # example command:
+        # adb -s 127.0.0.1:5555 shell screenrecord --output-format=raw-frames
+        # --time-limit=1 - | ffmpeg -f rawvideo -pix_fmt rgb24 -s 1080x1920 -i -
+        # -f image2 -vcodec png frame%04d.png
+        # maybe we can just brew install scrcpy and try with that?
         logging.error("Device Stream is not implemented for macOS")
         self.stop()
         return
