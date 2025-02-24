@@ -449,13 +449,14 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
             )
 
+            sleep(0.5)
             result = self.find_any_template(
                 [
                     "arcane_labyrinth/50_crystals.png",
                     "arcane_labyrinth/select_a_crest.png",
                 ],
                 crop_left=0.1,
-                crop_top=0.2,
+                crop_top=0.1,
                 use_previous_screenshot=True,
             )
             if result is None:
@@ -475,7 +476,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                         break
                     purchase_count += 1
                     self.click(*purchase)
-                    sleep(1)
+                    continue
                 case "arcane_labyrinth/select_a_crest.png":
                     self.__select_a_crest()
 
