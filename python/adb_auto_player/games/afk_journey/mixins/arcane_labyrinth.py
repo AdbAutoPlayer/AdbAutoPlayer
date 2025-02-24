@@ -11,6 +11,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
     arcane_skip_coordinates: tuple[int, int] | None = None
     arcane_lucky_flip_keys: int = 0
     arcane_tap_to_close_coordinates: tuple[int, int] | None = None
+    arcane_difficulty_was_visible: bool = False
 
     def __quit(self) -> None:
         logging.info("Restarting Arcane Labyrinth")
@@ -130,6 +131,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             "arcane_labyrinth/shop_button.png",
             "arcane_labyrinth/crest_crystal_ball.png",
             "arcane_labyrinth/select_a_crest.png",
+            "arcane_labyrinth/confirm.png",
             "arcane_labyrinth/tap_to_close.png",
             "arcane_labyrinth/quit.png",
             "arcane_labyrinth/blessing/set_prices.png",
@@ -178,7 +180,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 while self.__battle_is_not_completed():
                     pass
 
-            case "arcane_labyrinth/select_a_crest.png":
+            case "arcane_labyrinth/select_a_crest.png" | "arcane_labyrinth/confirm.png":
                 self.__select_a_crest()
             case "arcane_labyrinth/quit.png":
                 self.click(x, y)
@@ -230,14 +232,21 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             crop_left=0.3,
         )
         self.click(*battle)
+        self.arcane_difficulty_was_visible = False
+        sleep(2)
 
     def __handle_enter_button(self, x: int, y: int) -> None:
         if not self.find_template_match("arcane_labyrinth/arrow_right.png"):
-            left_arrow = self.find_template_match("arcane_labyrinth/arrow_left.png")
-            if left_arrow:
+            left_arrow = self.wait_for_template("arcane_labyrinth/arrow_left.png")
+            if not self.find_template_match("arcane_labyrinth/arrow_right.png"):
+                logging.debug("Lowering difficulty")
                 self.click(*left_arrow)
-                sleep(0.5)
+                sleep(1)
                 self.click(*left_arrow)
+            else:
+                logging.debug("Already on lower difficulty")
+        else:
+            logging.debug("Already on lower difficulty")
 
         self.click(x, y)
         while self.find_template_match(
@@ -305,8 +314,11 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         # Back button does not work on Arcane Labyrinth screen
 
         def check_for_select_a_crest() -> bool:
-            match = self.find_template_match(
-                template="arcane_labyrinth/select_a_crest.png",
+            match = self.find_any_template(
+                templates=[
+                    "arcane_labyrinth/select_a_crest.png",
+                    "arcane_labyrinth/confirm.png",
+                ],
                 crop_top=0.8,
             )
 
@@ -317,8 +329,11 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
         self._navigate_to_default_state(check_callable=check_for_select_a_crest)
 
-        if self.find_template_match(
-            template="arcane_labyrinth/select_a_crest.png",
+        if self.find_any_template(
+            templates=[
+                "arcane_labyrinth/select_a_crest.png",
+                "arcane_labyrinth/confirm.png",
+            ],
             crop_top=0.8,
         ):
             return
@@ -364,6 +379,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         ]
 
         if self.arcane_skip_coordinates is None:
+            logging.debug("searching skip button")
             templates.insert(0, "arcane_labyrinth/skip.png")
 
         result = self.find_any_template(
@@ -375,10 +391,20 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             if self.arcane_skip_coordinates is not None:
                 self.click(*self.arcane_skip_coordinates)
                 logging.debug("Clicking skip")
-            if not self.find_template_match("arcane_labyrinth/difficulty.png"):
+            difficulty = self.find_template_match(
+                template="arcane_labyrinth/difficulty.png",
+                threshold=0.7,
+                crop_bottom=0.8,
+            )
+
+            if difficulty is None and self.arcane_difficulty_was_visible:
                 logging.debug("arcane_labyrinth/difficulty.png no longer visible")
+                self.arcane_difficulty_was_visible = False
                 return False
-            sleep(0.3)
+
+            if difficulty is not None:
+                self.arcane_difficulty_was_visible = True
+            sleep(0.1)
 
             return True
 
@@ -483,9 +509,9 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     if not purchase:
                         break
                     purchase_count += 1
-                    logging.info(f"Purchase #{purchase_count}")
+                    logging.info(f"Purchase Attempt #{purchase_count}")
                     self.click(*purchase)
-                    sleep(1)
+                    sleep(0.5)
                     continue
                 case "arcane_labyrinth/select_a_crest.png":
                     self.__select_a_crest()
