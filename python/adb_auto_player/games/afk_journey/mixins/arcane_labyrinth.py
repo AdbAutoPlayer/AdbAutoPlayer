@@ -356,7 +356,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "arcane_labyrinth/dead/mauler.png",
                 "arcane_labyrinth/dead/wilder.png",
             ],
-            threshold=0.95,
+            threshold=0.98,
             crop_top=0.6,
             crop_bottom=0.1,
         )
