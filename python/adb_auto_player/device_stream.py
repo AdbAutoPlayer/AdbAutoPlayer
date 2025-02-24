@@ -5,9 +5,8 @@ import platform
 from PIL import Image
 import queue
 from adbutils import AdbDevice, AdbConnection
-
+from io import BytesIO
 from av.codec.context import CodecContext
-
 import adb_auto_player.adb
 
 
@@ -39,10 +38,8 @@ class DeviceStream:
     def _get_screenrecord_command(self) -> str:
         """Get platform-specific screenrecord command."""
         if self.is_arm_mac:
-            # Use more compatible options for ARM Macs
-            return "screenrecord --bit-rate=8000000 --output-format=raw-frames -"
+            return "screenrecord --output-format=png --bugreport -"
         else:
-            # Original command for other platforms
             return "screenrecord --output-format=h264 --time-limit=1 -"
 
     def start(self):
@@ -73,13 +70,8 @@ class DeviceStream:
                 break
 
     def get_latest_frame(self) -> Image.Image | None:
-        """Get the most recent frame from the stream.
-
-        Returns:
-            PIL.Image if available, None otherwise
-        """
+        """Get the most recent frame from the stream."""
         try:
-            # Try to get the newest frame without blocking
             while not self.frame_queue.empty():
                 self.latest_frame = self.frame_queue.get_nowait()
         except queue.Empty:
@@ -87,27 +79,24 @@ class DeviceStream:
 
         return self.latest_frame
 
-    def _process_raw_frames(self, chunk: bytes) -> None:
-        """Process raw frames format (for ARM Mac)."""
+    def _process_png_frame(self, data: bytes) -> None:
+        """Process PNG frame data directly in memory."""
         try:
-            bytes_per_pixel = 3  # RGB
-            frame_size = self.width * self.height * bytes_per_pixel
+            if not data:
+                return
 
-            while len(chunk) >= frame_size:
-                frame_data = chunk[:frame_size]
-                chunk = chunk[frame_size:]
+            # Process image directly from bytes
+            image = Image.open(BytesIO(data))
 
-                image = Image.frombytes("RGB", (self.width, self.height), frame_data)
-
-                if self.frame_queue.full():
-                    try:
-                        self.frame_queue.get_nowait()
-                    except queue.Empty:
-                        pass
-                self.frame_queue.put(image)
+            if self.frame_queue.full():
+                try:
+                    self.frame_queue.get_nowait()
+                except queue.Empty:
+                    pass
+            self.frame_queue.put(image)
 
         except Exception as e:
-            logging.error(f"Error processing raw frames: {e}")
+            logging.error(f"Error processing PNG frame: {e}")
 
     def _process_h264(self, buffer: bytes) -> bytes:
         """Process H264 encoded frames."""
@@ -116,26 +105,25 @@ class DeviceStream:
             for packet in packets:
                 frames = self.codec.decode(packet)
                 for frame in frames:
-                    # Convert frame to PIL Image
                     image = Image.fromarray(frame.to_ndarray(format="rgb24"))
-
-                    # Update queue
                     if self.frame_queue.full():
                         try:
                             self.frame_queue.get_nowait()
                         except queue.Empty:
                             pass
                     self.frame_queue.put(image)
-            return b""  # Clear buffer after successful processing
+            return b""
         except Exception as e:
             logging.error(f"Error processing H264: {e}")
             if len(buffer) > 1024 * 1024:
-                return buffer[-1024 * 1024 :]  # Keep last MB if buffer too large
+                return buffer[-1024 * 1024 :]
             return buffer
 
     def _stream_screen(self):
         """Background thread that continuously captures frames."""
         buffer = b""
+        png_header = b"\x89PNG\r\n\x1a\n"
+        png_end = b"IEND\xaeB`\x82"
 
         while self._running:
             try:
@@ -149,15 +137,33 @@ class DeviceStream:
 
                     if self.is_arm_mac:
                         buffer += chunk
-                        self._process_raw_frames(buffer)
+
+                        # Find and process complete PNG frames
+                        while True:
+                            start = buffer.find(png_header)
+                            if start == -1:
+                                break
+
+                            end = buffer.find(png_end, start)
+                            if end == -1:
+                                break
+
+                            # Process complete PNG frame (include the PNG end marker)
+                            frame_data = buffer[start : end + len(png_end)]
+                            self._process_png_frame(frame_data)
+                            buffer = buffer[end + len(png_end) :]
+
+                        # Prevent buffer from growing too large
+                        if len(buffer) > 1024 * 1024:
+                            buffer = buffer[-1024 * 1024 :]
                     else:
                         buffer += chunk
                         buffer = self._process_h264(buffer)
 
             except Exception as e:
                 logging.error(f"Stream error: {e}")
-                time.sleep(1)  # Wait before retrying
-                buffer = b""  # Clear buffer on error
+                time.sleep(1)
+                buffer = b""
 
             finally:
                 if self._process:
