@@ -87,7 +87,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 continue
             clear_count += 1
             logging.info(f"Arcane Labyrinth clear #{clear_count}")
-            self.arcane_lucky_flip_keys += 25
+            self.arcane_lucky_flip_keys += 23
             logging.info(f"Lucky Flip Keys farmed: {self.arcane_lucky_flip_keys}")
             self.wait_for_template(
                 "arcane_labyrinth/enter.png",
