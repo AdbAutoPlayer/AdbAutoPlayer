@@ -491,21 +491,31 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             sleep(1)
             result = self.find_any_template(
                 [
-                    "arcane_labyrinth/50_crystals.png",
+                    "arcane_labyrinth/onwards.png",
                     "arcane_labyrinth/select_a_crest.png",
                 ],
-                crop_left=0.2,
-                crop_top=0.1,
+                crop_top=0.8,
             )
             if result is None:
                 break
 
             template, x, y = result
             match template:
-                case "arcane_labyrinth/50_crystals.png":
+                case "arcane_labyrinth/onwards.png":
                     if purchase_count >= 2:
                         break
-                    self.click(x, y)
+
+                    # cropped in a way only the top item can be clicked
+                    item_price = self.find_template_match(
+                        template="arcane_labyrinth/shop_crystal.png",
+                        crop_left=0.7,
+                        crop_top=0.2,
+                        crop_bottom=0.6,
+                    )
+                    if item_price is None:
+                        break
+
+                    self.click(*item_price)
                     sleep(0.5)
                     purchase = self.find_template_match(
                         template="arcane_labyrinth/purchase.png",
@@ -514,7 +524,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     if not purchase:
                         break
                     purchase_count += 1
-                    logging.info(f"Purchase Attempt #{purchase_count}")
+                    logging.info(f"Purchase #{purchase_count}")
                     self.click(*purchase)
                     sleep(0.5)
                     continue
