@@ -150,13 +150,14 @@ class Game:
             raise NotInitializedError()
         return self.resolution
 
-    def set_device(self) -> None:
+    def set_device(self, device_streaming: bool = False) -> None:
         resolutions = self.get_supported_resolutions()
         suggested_resolution = next((res for res in resolutions if "x" in res), None)
         logging.debug(f"Suggested Resolution: {suggested_resolution}")
         self.device = adb.get_device(suggested_resolution)
         self.check_requirements()
-        self.start_stream()
+        if device_streaming:
+            self.start_stream()
 
     def start_stream(self) -> None:
         try:
