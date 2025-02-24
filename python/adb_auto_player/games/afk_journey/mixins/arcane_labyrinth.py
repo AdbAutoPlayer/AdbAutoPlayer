@@ -188,6 +188,11 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             case "arcane_labyrinth/tap_to_close.png":
                 self.arcane_tap_to_close_coordinates = (x, y)
                 self.click(x, y)
+                while self.find_template_match(
+                    template="arcane_labyrinth/tap_to_close.png",
+                    crop_top=0.8,
+                ):
+                    self.click(x, y)
         return True
 
     def __arcane_lab_start_battle(self):
