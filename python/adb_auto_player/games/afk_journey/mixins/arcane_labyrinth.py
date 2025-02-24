@@ -449,13 +449,12 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
             )
 
-            sleep(2)
+            sleep(1)
             result = self.find_any_template(
                 [
                     "arcane_labyrinth/50_crystals.png",
                     "arcane_labyrinth/select_a_crest.png",
                 ],
-                use_previous_screenshot=True,
             )
             if result is None:
                 break
