@@ -376,18 +376,6 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 self.click(*self.arcane_skip_coordinates)
 
             if not self.find_template_match("arcane_labyrinth/difficulty.png"):
-                try:
-                    tap = self.wait_for_template(
-                        template="arcane_labyrinth/tap_to_close.png",
-                        crop_top=0.8,
-                        delay=0.25,
-                        timeout=self.FAST_TIMEOUT,
-                    )
-                    self.click(*tap)
-                    sleep(1)
-                except TimeoutException as e:
-                    logging.debug(f"{e}")
-
                 return False
             sleep(0.3)
 
