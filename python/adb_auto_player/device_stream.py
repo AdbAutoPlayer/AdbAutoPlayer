@@ -75,12 +75,15 @@ class DeviceStream:
 
         while self._running:
             try:
-                # Start screenrecord process
-                cmd = f"screenrecord --output-format=h264 --time-limit=1 -"
-                self._process = self.device.shell(cmd, stream=True)
+                self._process = self.device.shell(
+                    "screenrecord --output-format=h264 --time-limit=1 -",
+                    stream=True,
+                )
 
                 while self._running:
                     chunk = self._process.read(4096)
+                    # TODO when printing chunk on macos it prints:
+                    # b'Segmentation fault \n'
                     if not chunk:
                         break
 
@@ -92,45 +95,31 @@ class DeviceStream:
                         for packet in packets:
                             frames = self.codec.decode(packet)
                             for frame in frames:
-                                # Convert frame to PIL Image
                                 image = Image.fromarray(
                                     frame.to_ndarray(format="rgb24")
                                 )
 
-                                # Update queue
                                 if self.frame_queue.full():
-                                    # Remove oldest frame if queue is full
                                     try:
                                         self.frame_queue.get_nowait()
                                     except queue.Empty:
                                         pass
                                 self.frame_queue.put(image)
 
-                        # Keep any remaining partial data in the buffer
                         buffer = b""
 
                     except Exception:
-                        # If decoding fails, keep the buffer and continue
                         if len(buffer) > 1024 * 1024:
-                            # Prevent buffer from growing too large
                             buffer = buffer[-1024 * 1024 :]
                         continue
 
             except Exception as e:
-                logging.error(f"Stream error: {e}")
-                time.sleep(1)  # Wait before retrying
-                buffer = b""  # Clear buffer on error
+                if not "was aborted by the software in your host machine" in str(e):
+                    logging.error(f"Stream error: {e}")
+                time.sleep(1)
+                buffer = b""
 
             finally:
                 if self._process:
                     self._process.close()
                     self._process = None
-
-    def __enter__(self):
-        """Context manager entry."""
-        self.start()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit."""
-        self.stop()
