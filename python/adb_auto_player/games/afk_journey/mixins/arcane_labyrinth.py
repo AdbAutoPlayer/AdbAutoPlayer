@@ -92,7 +92,6 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     continue
             except TimeoutException as e:
                 logging.warning(f"{e}")
-                self.__quit()
                 continue
             clear_count += 1
             logging.info(f"Arcane Labyrinth clear #{clear_count}")
@@ -480,11 +479,20 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 case "arcane_labyrinth/select_a_crest.png":
                     self.__select_a_crest()
 
-        x, y = self.wait_for_template(
-            "arcane_labyrinth/onwards.png",
-            crop_top=0.8,
-            crop_right=0.6,
-            timeout=self.MIN_TIMEOUT,
-        )
-        self.click(x, y)
+        while True:
+            template, x, y = self.wait_for_any_template(
+                templates=[
+                    "arcane_labyrinth/onwards.png",
+                    "arcane_labyrinth/select_a_crest.png",
+                ],
+                crop_top=0.8,
+                timeout=self.MIN_TIMEOUT,
+            )
+
+            match template:
+                case "arcane_labyrinth/select_a_crest.png":
+                    self.__select_a_crest()
+                case _:
+                    self.click(x, y)
+                    break
         return

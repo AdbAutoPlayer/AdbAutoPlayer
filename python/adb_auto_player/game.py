@@ -246,6 +246,8 @@ class Game:
         return self.get_screenshot()
 
     def __get_screenshot(self, previous_screenshot: bool):
+        if self.stream:
+            return self.get_screenshot()
         if previous_screenshot:
             return self.get_previous_screenshot()
         else:
