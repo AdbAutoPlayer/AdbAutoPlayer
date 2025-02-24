@@ -89,7 +89,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
 
             match template:
                 case "guide/close.png" | "guide/next.png":
-                    self._handle_guide_popup(use_previous_screenshot=True)
+                    self._handle_guide_popup()
                 case _:
                     break
         return template, x, y

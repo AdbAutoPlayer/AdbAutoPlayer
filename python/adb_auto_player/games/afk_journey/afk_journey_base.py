@@ -437,13 +437,11 @@ class AFKJourneyBase(Game, ABC):
 
     def _handle_guide_popup(
         self,
-        use_previous_screenshot=False,
     ) -> None:
         while True:
             result = self.find_any_template(
                 templates=["guide/close.png", "guide/next.png"],
                 crop_top=0.4,
-                use_previous_screenshot=use_previous_screenshot,
             )
             if result is None:
                 break

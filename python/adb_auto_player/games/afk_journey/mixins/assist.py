@@ -127,7 +127,7 @@ class AssistMixin(AFKJourneyBase, ABC):
                 case "assist/bell.png":
                     break
                 case _:
-                    self._handle_guide_popup(use_previous_screenshot=True)
+                    self._handle_guide_popup()
         # click first 5 heroes in row 1 and 2
         for x in [110, 290, 470, 630, 800]:
             self.click(x, 1300, scale=True)
