@@ -11,6 +11,7 @@ from pydantic import BaseModel
 import adb_auto_player.adb as adb
 import logging
 import adb_auto_player.template_matching as template_matching
+import adb_auto_player.config_loader as config_loader
 from adb_auto_player.command import Command
 from adb_auto_player.device_stream import DeviceStream, StreamingNotSupportedException
 from adb_auto_player.exceptions import (
@@ -156,6 +157,13 @@ class Game:
         logging.debug(f"Suggested Resolution: {suggested_resolution}")
         self.device = adb.get_device(suggested_resolution)
         self.check_requirements()
+
+        main_config = config_loader.get_main_config()
+        config_streaming = main_config.get("device", {}).get("streaming", True)
+
+        if not config_streaming:
+            logging.warning("Device Streaming is disabled in Main Config")
+            return
         if device_streaming:
             self.start_stream()
 
