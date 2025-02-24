@@ -9,6 +9,10 @@ from adbutils import AdbDevice, AdbConnection
 from av.codec.context import CodecContext
 
 
+class StreamingNotSupportedException(Exception):
+    pass
+
+
 class DeviceStream:
     def __init__(self, device: AdbDevice, fps: int = 30, buffer_size: int = 2):
         """Initialize the screen stream.
@@ -17,6 +21,9 @@ class DeviceStream:
             device: AdbDevice instance
             fps: Target frames per second (default: 30)
             buffer_size: Number of frames to keep in buffer (default: 2)
+
+        Raises:
+            StreamingNotSupportedException
         """
         self.device = device
         self.fps = fps
@@ -32,7 +39,12 @@ class DeviceStream:
             and platform.machine().startswith(("arm", "aarch"))
         )
 
-    def start(self):
+        if self.is_arm_mac:
+            raise StreamingNotSupportedException(
+                "Device Stream is not implemented for macOS"
+            )
+
+    def start(self) -> None:
         """Start the screen streaming thread."""
         if self._running:
             return
@@ -42,7 +54,7 @@ class DeviceStream:
         self._stream_thread.daemon = True
         self._stream_thread.start()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the screen streaming thread."""
         self._running = False
         if self._process:
@@ -69,57 +81,64 @@ class DeviceStream:
 
         return self.latest_frame
 
-    def _stream_screen(self):
-        """Background thread that continuously captures frames."""
+    def _handle_stream_arm_mac(self) -> None:
+        # TODO for some reason the windows function causes a Segmentation fault
+        # on arm macos
+        logging.error("Device Stream is not implemented for macOS")
+        self.stop()
+        return
+
+    def _handle_stream_windows(self) -> None:
+        self._process = self.device.shell(
+            cmdargs="screenrecord --output-format=h264 --time-limit=1 -",
+            stream=True,
+        )
+
         buffer = b""
-
         while self._running:
+            chunk = self._process.read(4096)
+            if not chunk:
+                break
+
+            buffer += chunk
+
+            # Try to decode frames from the buffer
             try:
-                self._process = self.device.shell(
-                    "screenrecord --output-format=h264 --time-limit=1 -",
-                    stream=True,
-                )
+                packets = self.codec.parse(buffer)
+                for packet in packets:
+                    frames = self.codec.decode(packet)
+                    for frame in frames:
+                        image = Image.fromarray(frame.to_ndarray(format="rgb24"))
 
-                while self._running:
-                    chunk = self._process.read(4096)
-                    # TODO when printing chunk on macos it prints:
-                    # b'Segmentation fault \n'
-                    if not chunk:
-                        break
+                        if self.frame_queue.full():
+                            try:
+                                self.frame_queue.get_nowait()
+                            except queue.Empty:
+                                pass
+                        self.frame_queue.put(image)
 
-                    buffer += chunk
-
-                    # Try to decode as many frames as possible from the buffer
-                    try:
-                        packets = self.codec.parse(buffer)
-                        for packet in packets:
-                            frames = self.codec.decode(packet)
-                            for frame in frames:
-                                image = Image.fromarray(
-                                    frame.to_ndarray(format="rgb24")
-                                )
-
-                                if self.frame_queue.full():
-                                    try:
-                                        self.frame_queue.get_nowait()
-                                    except queue.Empty:
-                                        pass
-                                self.frame_queue.put(image)
-
-                        buffer = b""
-
-                    except Exception:
-                        if len(buffer) > 1024 * 1024:
-                            buffer = buffer[-1024 * 1024 :]
-                        continue
-
-            except Exception as e:
-                if not "was aborted by the software in your host machine" in str(e):
-                    logging.error(f"Stream error: {e}")
-                time.sleep(1)
                 buffer = b""
 
+            except Exception:
+                if len(buffer) > 1024 * 1024:
+                    buffer = buffer[-1024 * 1024 :]
+                continue
+        return
+
+    def _stream_screen(self) -> None:
+        """Background thread that continuously captures frames."""
+        while self._running:
+            try:
+                if self.is_arm_mac:
+                    self._handle_stream_arm_mac()
+                else:
+                    self._handle_stream_windows()
+            except Exception as e:
+                if "was aborted by the software in your host machine" not in str(e):
+                    logging.error(f"Stream error: {e}")
+                time.sleep(1)
             finally:
                 if self._process:
                     self._process.close()
                     self._process = None
+        return

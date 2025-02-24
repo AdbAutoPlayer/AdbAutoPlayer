@@ -12,7 +12,7 @@ import adb_auto_player.adb as adb
 import logging
 import adb_auto_player.template_matching as template_matching
 from adb_auto_player.command import Command
-from adb_auto_player.device_stream import DeviceStream
+from adb_auto_player.device_stream import DeviceStream, StreamingNotSupportedException
 from adb_auto_player.exceptions import (
     UnsupportedResolutionException,
     TimeoutException,
@@ -159,9 +159,15 @@ class Game:
         self.start_stream()
 
     def start_stream(self) -> None:
-        self.stream = DeviceStream(
-            self.device,
-        )
+        try:
+            self.stream = DeviceStream(
+                self.device,
+            )
+        except StreamingNotSupportedException as e:
+            logging.warning(f"{e}")
+
+        if self.stream is None:
+            return
 
         self.stream.start()
         logging.info("Starting Device Stream...")
