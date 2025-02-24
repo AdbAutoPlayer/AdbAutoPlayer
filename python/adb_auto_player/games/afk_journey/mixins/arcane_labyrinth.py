@@ -239,6 +239,13 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
     def __handle_enter_button(self, x: int, y: int) -> None:
         self.click(x, y)
+        while self.find_template_match(
+            template="arcane_labyrinth/enter.png",
+            crop_top=0.8,
+            crop_left=0.3,
+        ):
+            self.click(x, y)
+            sleep(0.5)
 
         template, _, _ = self.wait_for_any_template(
             templates=[
