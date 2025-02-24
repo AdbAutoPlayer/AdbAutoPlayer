@@ -55,6 +55,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     "arcane_labyrinth/enter.png",
                     "arcane_labyrinth/heroes_icon.png",
                 ],
+                threshold=0.8,
                 crop_top=0.8,
                 crop_left=0.3,
             )
@@ -193,6 +194,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "confirm.png",
                 "confirm_text.png",
             ],
+            threshold=0.8,
             crop_left=0.3,
             crop_top=0.4,
             crop_bottom=0.2,
@@ -206,6 +208,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         self._click_confirm_on_popup()
         self.wait_for_template(
             template="arcane_labyrinth/heroes_icon.png",
+            threshold=0.8,
             crop_left=0.6,
             crop_right=0.1,
             crop_top=0.8,
@@ -224,6 +227,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
         if self.find_template_match(
             template="arcane_labyrinth/heroes_icon.png",
+            threshold=0.8,
             crop_left=0.6,
             crop_right=0.1,
             crop_top=0.8,
@@ -248,6 +252,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "arcane_labyrinth/enter.png",
                 "arcane_labyrinth/heroes_icon.png",
             ],
+            threshold=0.8,
             crop_top=0.8,
             crop_left=0.3,
             timeout=self.MIN_TIMEOUT,
