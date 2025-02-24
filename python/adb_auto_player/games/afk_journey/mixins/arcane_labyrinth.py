@@ -1,15 +1,10 @@
 import logging
-import re
 from abc import ABC
 from time import sleep
 from typing import NoReturn
 
 from adb_auto_player.exceptions import TimeoutException
 from adb_auto_player.games.afk_journey.afk_journey_base import AFKJourneyBase
-
-
-class DeadHeroException(Exception):
-    pass
 
 
 class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
@@ -83,13 +78,9 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         while True:
             try:
                 self.__start_arcane_labyrinth()
-                try:
-                    while self.__handle_arcane_labyrinth():
-                        pass
-                except DeadHeroException as e:
-                    logging.warning(f"{e}")
-                    self.__quit()
-                    continue
+                while self.__handle_arcane_labyrinth():
+                    sleep(1)
+
             except TimeoutException as e:
                 logging.warning(f"{e}")
                 continue
@@ -139,6 +130,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             "arcane_labyrinth/shop_button.png",
             "arcane_labyrinth/crest_crystal_ball.png",
             "arcane_labyrinth/select_a_crest.png",
+            "arcane_labyrinth/tap_to_close.png",
             "arcane_labyrinth/quit.png",
             "arcane_labyrinth/blessing/set_prices.png",
             "arcane_labyrinth/blessing/soul_blessing.png",
@@ -191,6 +183,9 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             case "arcane_labyrinth/quit.png":
                 self.click(x, y)
                 return False
+            case "arcane_labyrinth/tap_to_close.png":
+                self.arcane_tap_to_close_coordinates = (x, y)
+                self.click(x, y)
         return True
 
     def __arcane_lab_start_battle(self):
@@ -229,7 +224,6 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 case _:
                     break
 
-        self.__check_for_dead_hero()
         battle = self.wait_for_template(
             template="arcane_labyrinth/battle.png",
             crop_top=0.8,
@@ -238,6 +232,13 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         self.click(*battle)
 
     def __handle_enter_button(self, x: int, y: int) -> None:
+        if not self.find_template_match("arcane_labyrinth/arrow_right.png"):
+            left_arrow = self.find_template_match("arcane_labyrinth/arrow_left.png")
+            if left_arrow:
+                self.click(*left_arrow)
+                sleep(0.5)
+                self.click(*left_arrow)
+
         self.click(x, y)
         while self.find_template_match(
             template="arcane_labyrinth/enter.png",
@@ -252,16 +253,16 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "arcane_labyrinth/heroes_icon.png",
                 "arcane_labyrinth/pure_crystal_icon.png",
                 "arcane_labyrinth/quit_door.png",
+                "arcane_labyrinth/select_a_crest.png",
                 "confirm.png",
                 "confirm_text.png",
             ],
             threshold=0.7,
         )
 
-        if template not in (
-            "arcane_labyrinth/heroes_icon.png",
-            "arcane_labyrinth/pure_crystal_icon.png",
-            "arcane_labyrinth/quit_door.png",
+        if template in (
+            "confirm.png",
+            "confirm_text.png",
         ):
             checkbox = self.find_template_match("battle/checkbox_unchecked.png")
             if checkbox is not None:
@@ -302,7 +303,26 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         logging.info("Navigating to Arcane Labyrinth screen")
         # Possibility of getting stuck
         # Back button does not work on Arcane Labyrinth screen
-        self._navigate_to_default_state()
+
+        def check_for_select_a_crest() -> bool:
+            match = self.find_template_match(
+                template="arcane_labyrinth/select_a_crest.png",
+                crop_top=0.8,
+            )
+
+            if match is not None:
+                logging.info("Select a Crest screen open")
+                return True
+            return False
+
+        self._navigate_to_default_state(check_callable=check_for_select_a_crest)
+
+        if self.find_template_match(
+            template="arcane_labyrinth/select_a_crest.png",
+            crop_top=0.8,
+        ):
+            return
+
         self.click(460, 1830, scale=True)
         self.wait_for_template(
             "duras_trials/label.png",
@@ -354,7 +374,23 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         if result is None:
             if self.arcane_skip_coordinates is not None:
                 self.click(*self.arcane_skip_coordinates)
-            sleep(0.1)
+
+            if not self.find_template_match("arcane_labyrinth/difficulty.png"):
+                try:
+                    tap = self.wait_for_template(
+                        template="arcane_labyrinth/tap_to_close.png",
+                        crop_top=0.8,
+                        delay=0.25,
+                        timeout=self.FAST_TIMEOUT,
+                    )
+                    self.click(*tap)
+                    sleep(1)
+                except TimeoutException as e:
+                    logging.debug(f"{e}")
+
+                return False
+            sleep(0.3)
+
             return True
 
         template, x, y = result
@@ -420,29 +456,6 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         self.click(best_x, best_y)
         return
 
-    def __check_for_dead_hero(self) -> None:
-        logging.debug("__check_for_dead_hero")
-        dead_hero = self.find_any_template(
-            templates=[
-                "arcane_labyrinth/dead/celestial.png",
-                "arcane_labyrinth/dead/graveborn.png",
-                "arcane_labyrinth/dead/hypogean.png",
-                "arcane_labyrinth/dead/lightbearer.png",
-                "arcane_labyrinth/dead/mauler.png",
-                "arcane_labyrinth/dead/wilder.png",
-            ],
-            threshold=0.98,
-            crop_top=0.6,
-            crop_bottom=0.1,
-        )
-
-        if dead_hero:
-            filename, _, _ = dead_hero
-            filename = re.sub(r".*/(.*?)\.png", r"\1", filename)
-            faction = filename.capitalize()
-            raise DeadHeroException(f"{faction} died :(")
-        return
-
     def __handle_shop(self) -> None:
         purchase_count = 0
         while True:
@@ -481,6 +494,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     if not purchase:
                         break
                     purchase_count += 1
+                    logging.info(f"Purchase: #{purchase_count}")
                     self.click(*purchase)
                     continue
                 case "arcane_labyrinth/select_a_crest.png":
