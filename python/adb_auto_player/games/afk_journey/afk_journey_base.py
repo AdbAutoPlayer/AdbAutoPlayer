@@ -37,10 +37,10 @@ class AFKJourneyBase(Game, ABC):
     MODE_AFK_STAGES: str = "AFK_STAGES"
     MODE_LEGEND_TRIALS: str = "LEGEND_TRIALS"
 
-    def start_up(self) -> None:
+    def start_up(self, device_streaming: bool = False) -> None:
         if self.device is None:
             logging.debug("start_up")
-            self.set_device()
+            self.set_device(device_streaming=device_streaming)
         if self.config is None:
             self.load_config()
         return None

@@ -12,6 +12,7 @@ pillow = "^11.0.0"
 adbutils = "^2.8.0"
 opencv-python = "^4.10.0.84"
 pydantic = "^2.10.5"
+av = "^14.1.0"
 
 [tool.poetry.group.dev.dependencies]
 nuitka = "^2.5.9"

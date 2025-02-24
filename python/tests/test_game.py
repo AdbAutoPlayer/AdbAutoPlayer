@@ -4,7 +4,6 @@ from unittest.mock import patch, DEFAULT
 
 from pathlib import Path
 from adb_auto_player.exceptions import (
-    NotInitializedError,
     NoPreviousScreenshotException,
     TimeoutException,
 )

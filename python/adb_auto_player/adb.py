@@ -2,8 +2,7 @@ import os
 import sys
 
 import adbutils._utils
-from adbutils import AdbClient, AdbError
-from adbutils._device import AdbDevice
+from adbutils import AdbClient, AdbError, AdbDevice
 
 import logging
 import shutil
