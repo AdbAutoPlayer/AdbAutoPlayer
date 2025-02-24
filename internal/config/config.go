@@ -16,6 +16,7 @@ type MainConfig struct {
 type DeviceConfig struct {
 	ID          string `toml:"ID"`
 	UseWMResize bool   `toml:"wm_size" json:"Resize Display"`
+	Streaming   bool   `toml:"streaming" json:"Device Streaming"`
 }
 
 type ADBConfig struct {
@@ -30,7 +31,9 @@ type LoggingConfig struct {
 func NewMainConfig() MainConfig {
 	return MainConfig{
 		Device: DeviceConfig{
-			ID: "emulator-5554",
+			ID:          "emulator-5554",
+			UseWMResize: false,
+			Streaming:   true,
 		},
 		ADB: ADBConfig{
 			Host: "127.0.0.1",
