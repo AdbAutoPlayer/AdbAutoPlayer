@@ -5,13 +5,14 @@ from time import sleep, time
 from typing import Any, TypeVar, Callable, Literal
 
 from PIL import Image
-from adbutils._device import AdbDevice
+from adbutils import AdbDevice
 from pydantic import BaseModel
 
 import adb_auto_player.adb as adb
 import logging
 import adb_auto_player.template_matching as template_matching
 from adb_auto_player.command import Command
+from adb_auto_player.device_stream import DeviceStream
 from adb_auto_player.exceptions import (
     UnsupportedResolutionException,
     TimeoutException,
@@ -33,6 +34,7 @@ class Game:
         self.scale_factor: float | None = None
         self.supports_portrait: bool = False
         self.supports_landscape: bool = False
+        self.stream: DeviceStream | None = None
 
     @abstractmethod
     def get_template_dir_path(self) -> Path:
@@ -154,6 +156,27 @@ class Game:
         logging.debug(f"Suggested Resolution: {suggested_resolution}")
         self.device = adb.get_device(suggested_resolution)
         self.check_requirements()
+        self.start_stream()
+
+    def start_stream(self) -> None:
+        self.stream = DeviceStream(
+            self.device,
+        )
+
+        self.stream.start()
+        logging.info("Starting Device Stream...")
+        time_waiting_for_stream_to_start = 0
+        while True:
+            if time_waiting_for_stream_to_start >= 10:
+                logging.error("Could not start Device Stream using screenshots instead")
+                if self.stream:
+                    self.stream.stop()
+                    self.stream = None
+            if self.stream and self.stream.get_latest_frame():
+                logging.info("Device Stream started")
+                break
+            sleep(1)
+            time_waiting_for_stream_to_start += 1
 
     def get_device(self) -> AdbDevice:
         if self.device is None:
@@ -174,11 +197,19 @@ class Game:
         return None
 
     def get_screenshot(self) -> Image.Image:
-        """Gets screenshot from device using screencap.
+        """Gets screenshot from device using stream or screencap.
 
         Raises:
             AdbException: Screenshot cannot be recorded
         """
+        if self.stream:
+            image = self.stream.get_latest_frame()
+            if image:
+                self.previous_screenshot = image
+                return image
+            logging.error(
+                "Could not retrieve latest Frame from Device Stream using screencap..."
+            )
         screenshot_data = self.get_device().shell("screencap -p", encoding=None)
         if isinstance(screenshot_data, bytes):
             png_start_index = screenshot_data.find(b"\x89PNG\r\n\x1a\n")
