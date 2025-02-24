@@ -172,6 +172,7 @@ class Game:
                 if self.stream:
                     self.stream.stop()
                     self.stream = None
+                break
             if self.stream and self.stream.get_latest_frame():
                 logging.info("Device Stream started")
                 break
