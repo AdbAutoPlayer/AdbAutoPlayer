@@ -455,6 +455,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     "arcane_labyrinth/50_crystals.png",
                     "arcane_labyrinth/select_a_crest.png",
                 ],
+                crop_left=0.2,
+                crop_top=0.1,
             )
             if result is None:
                 break
