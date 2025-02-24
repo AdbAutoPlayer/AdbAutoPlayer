@@ -393,7 +393,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "arcane_labyrinth/gate/relic_powerful.png",
                 "arcane_labyrinth/gate/relic.png",
                 "arcane_labyrinth/gate/blessing.png",
-                "arcane_labyrinth/gate/pure_crystal_icon.png",
+                "arcane_labyrinth/gate/pure_crystal.png",
             ],
             threshold=0.8,
             crop_top=0.2,
