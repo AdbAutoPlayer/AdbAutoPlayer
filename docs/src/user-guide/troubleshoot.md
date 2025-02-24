@@ -1,5 +1,10 @@
 # Troubleshooting
 
+## General try disabling Device Stream
+If Device Streaming is active try unchecking it and see if your problem goes away.  
+If your problem does NOT go away activate it again.  
+![device-stream.png](../images/app/device-stream.png)
+
 ## Emulator
 If you are not using BlueStacks try using BlueStacks.
 
