@@ -468,6 +468,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     if purchase_count >= 2:
                         break
                     self.click(x, y)
+                    sleep(0.5)
                     purchase = self.find_template_match(
                         template="arcane_labyrinth/purchase.png",
                         crop_top=0.8,
