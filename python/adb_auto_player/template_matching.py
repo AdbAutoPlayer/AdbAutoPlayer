@@ -116,7 +116,6 @@ def similar_image(
 
     base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
     template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
-    __validate_template_size(base_cv.shape, template_cv.shape)
     if grayscale:
         base_cv = cv2.cvtColor(base_cv, cv2.COLOR_BGR2GRAY)
         template_cv = cv2.cvtColor(template_cv, cv2.COLOR_BGR2GRAY)
