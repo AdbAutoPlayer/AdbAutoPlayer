@@ -18,3 +18,37 @@ The self-updater automatically downloads the `Patch_*.zip` and overwrites existi
 
 - It only applies to **Minor** and **Patch** version updates.
 - For a **Major** version update, the user will be asked to download the latest version and replace the app completely.
+
+## Installing Pre-commit
+We will assume you have python installed otherwise go to [Python README](python-README.md)
+
+> [!IMPORTANT]
+> Execute these commands in the project root directory
+
+### Windows
+```shell
+pip install -r .\requirements-dev.txt
+pre-commit install
+```
+
+### 
+```shell
+brew install pre-commit
+pre-commit install
+```
+
+## Build scripts
+### Windows build_zip.ps1
+```powershell
+$env:GITHUB_WORKSPACE = "C:\Users\$env:USERNAME\GolandProjects\AdbAutoPlayer"; .github\scripts\build_zip.ps1
+```
+
+Python CLI only:
+```powershell
+$env:GITHUB_WORKSPACE = "C:\Users\$env:USERNAME\GolandProjects\AdbAutoPlayer"; .github\scripts\build_zip.ps1 -cli
+```
+
+### MacOS build_zip.sh
+```shell
+GITHUB_WORKSPACE=/Users/$USER/GolandProjects/AdbAutoPlayer bash ./.github/scripts/build_zip.sh
+```

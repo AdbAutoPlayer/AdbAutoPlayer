@@ -6,47 +6,17 @@
 ## Supported Games
 - AFK Journey
 
-## Go Build
-```shell
-cd .\cmd\wails\
-wails build -devtools
-```
+_____
 
-## Windows pre-commit
-```shell
-pip install -r .\requirements-dev.txt
-pre-commit install
-```
+# Development
 
-## MacOS pre-commit
-```shell
-brew install pre-commit
-pre-commit install
-```
+## [Click Here for Documentation](https://yulesxoxo.github.io/AdbAutoPlayer/development/general.html)
 
-## [Python Build](python/README.md)
+___
 
-## [Frontend Build](frontend/README.md)
-
-## Testing .github scripts
-### Windows build_zip.ps1
-```powershell
-$env:GITHUB_WORKSPACE = "C:\Users\$env:USERNAME\GolandProjects\AdbAutoPlayer"; .github\scripts\build_zip.ps1
-```
-
-Python CLI only:
-```powershell
-$env:GITHUB_WORKSPACE = "C:\Users\$env:USERNAME\GolandProjects\AdbAutoPlayer"; .github\scripts\build_zip.ps1 -cli
-```
-
-### MacOS build_zip.sh
-```shell
-GITHUB_WORKSPACE=/Users/$USER/GolandProjects/AdbAutoPlayer bash ./.github/scripts/build_zip.sh
-```
-
-## Contact
-### AFK Journey
+# Contact
+## AFK Journey
 [Discord: Yaphalla](https://discord.gg/yaphalla)  
 [Channel: yules](https://discord.com/channels/1332082220013322240/1338732933057347655)
-### General
+## General
 [![Discord Presence](https://lanyard.cnrad.dev/api/518169167048998913)](https://discord.com/users/518169167048998913)

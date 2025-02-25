@@ -13,6 +13,7 @@
 
 # App Development
 - [General](development/general.md)
+- [Go README](development/go-README.md)
 - [Frontend README](development/frontend-README.md)
 - [Python README](development/python-README.md)
 - [Writing Bots](development/writing-bots.md)

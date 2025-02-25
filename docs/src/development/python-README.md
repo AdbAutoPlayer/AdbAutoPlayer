@@ -2,12 +2,13 @@
 
 ## General
 Set the python directory as the root of your project if you are using PyCharm.  
-The `python/.idea` contains run configurations and other things that make setting up PyCharm easier for you.
+The `python/.idea` contains run configurations and other things that make setting up PyCharm easier for you.  
+If you only want to develop bots or run it in CLI you do not have to set up Go and the Frontend.
 
-## Windows
-### Setup
+## Setup
 > [!IMPORTANT]
-> Execute commands in the python directory
+> Execute these commands in the python directory
+### Windows
 1. Install [Python](https://www.python.org/downloads/)
 2. Install [Poetry](https://python-poetry.org/docs/#installing-with-the-official-installer)
 3. Create virtualenv and install
@@ -20,10 +21,7 @@ The `python/.idea` contains run configurations and other things that make settin
     poetry run adb-auto-player
     ```
 
-## MacOS
-### Setup
-> [!IMPORTANT]
-> Execute commands in the python directory
+### MacOS
 1. Install [Python](https://formulae.brew.sh/formula/python@3.12)
 2. Install [Poetry](https://python-poetry.org/docs/#installing-with-pipx)
 3. Install [Adb](https://formulae.brew.sh/cask/android-platform-tools)
@@ -36,16 +34,3 @@ The `python/.idea` contains run configurations and other things that make settin
    ```shell
    poetry run adb-auto-player
    ```
-
-## Building the Executable
-> [!IMPORTANT]
-> You never really have to do this it's for documentation purposes only. If you want to develop use the poetry command and if you to build the App use the corresponding build script!
-### Windows
-```shell
-poetry run nuitka --standalone --output-filename=adb_auto_player.exe --assume-yes-for-downloads --windows-console-mode=hide adb_auto_player/main.py
-```
-
-### MacOS
-```shell
-poetry run nuitka --standalone --output-filename=adb_auto_player_py_app --assume-yes-for-downloads adb_auto_player/main.py
-```
