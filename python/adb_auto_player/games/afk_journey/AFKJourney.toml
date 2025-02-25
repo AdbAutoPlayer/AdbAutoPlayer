@@ -1,5 +1,5 @@
 ['AFK Stages']
-Attempts = 3
+Attempts = 5
 'Both Modes' = true
 Formations = 7
 Repeat = true
@@ -17,7 +17,7 @@ Formations = 7
 'Exclude Heroes' = []
 
 ['Legend Trial']
-Attempts = 3
+Attempts = 5
 Formations = 7
 'Spend Gold' = false
 'Suggested Formations' = true
