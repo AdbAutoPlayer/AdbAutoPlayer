@@ -12,4 +12,5 @@
     - [Skeleton Labs PR #3189](https://github.com/skeletonlabs/skeleton/pull/3189)
 
 ## 🐍 Python
-- Nothing :)
+- Support for other games (If somebody reaches out, and they want to make a bot for another game)
+- Support for running multiple bots/configs (Yules: Can't find the motivation to do this because I personally have no use for it at the moment.)
