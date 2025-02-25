@@ -8,8 +8,8 @@
 
 ## 🎨 Frontend
 - **Implement Skeleton UI Toolkit**
-  _Waiting for Tailwind V4 support_
-    - [Skeleton Labs PR #3189](https://github.com/skeletonlabs/skeleton/pull/3189)
+  _Waiting for Skeleton v3 Release_
+    - [Skeleton v3](https://github.com/skeletonlabs/skeleton/discussions/3175)
 
 ## 🐍 Python
 - Support for other games (If somebody reaches out, and they want to make a bot for another game)
