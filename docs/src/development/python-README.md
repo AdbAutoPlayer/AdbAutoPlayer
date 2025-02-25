@@ -39,13 +39,11 @@ The `python/.idea` contains run configurations and other things that make settin
 
 ## Building the Executable
 > [!IMPORTANT]
-> You never really have to do this it's for documentation purposes only. If you want to develop use the poetry command and if you to build the App you can find the build scripts in the main README.md of the repo!
-
+> You never really have to do this it's for documentation purposes only. If you want to develop use the poetry command and if you to build the App use the corresponding build script!
 ### Windows
 ```shell
 poetry run nuitka --standalone --output-filename=adb_auto_player.exe --assume-yes-for-downloads --windows-console-mode=hide adb_auto_player/main.py
 ```
-
 
 ### MacOS
 ```shell

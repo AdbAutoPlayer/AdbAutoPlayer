@@ -1,4 +1,4 @@
-# Frontend README
+# Frontend
 
 ## Windows Setup
 ```bash

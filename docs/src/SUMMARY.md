@@ -12,4 +12,8 @@
 - [TODO](games/afk-journey/TODO.md)
 
 # App Development
+- [General](development/general.md)
+- [Frontend README](development/frontend-README)
+- [Python README](development/python-README)
+- [Writing Bots](development/writing-bots.md)
 - [TODO](development/TODO.md)
