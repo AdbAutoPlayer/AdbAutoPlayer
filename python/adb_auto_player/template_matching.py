@@ -109,18 +109,14 @@ def similar_image(
         True if the base_image matches the template_image based on the given threshold.
     """
     __validate_threshold(threshold)
-
-    if (
-        base_image.width != template_image.width
-        or base_image.height != template_image.height
-    ):
-        raise ValueError(
-            "The dimensions of the base image and template image do not match."
-        )
+    __validate_template_size(
+        base_image=base_image,
+        template_image=template_image,
+    )
 
     base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
     template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
-
+    __validate_template_size(base_cv.shape, template_cv.shape)
     if grayscale:
         base_cv = cv2.cvtColor(base_cv, cv2.COLOR_BGR2GRAY)
         template_cv = cv2.cvtColor(template_cv, cv2.COLOR_BGR2GRAY)
@@ -149,6 +145,11 @@ def find_template_match(
         tuple of (center_x, center_y) coordinates or None if no match found
     """
     __validate_threshold(threshold)
+    __validate_template_size(
+        base_image=base_image,
+        template_image=template_image,
+    )
+
     base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
     template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
 
@@ -200,6 +201,11 @@ def find_all_template_matches(
     min_distance: int = 10,
 ) -> list[tuple[int, int]]:
     __validate_threshold(threshold)
+    __validate_template_size(
+        base_image=base_image,
+        template_image=template_image,
+    )
+
     base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
     template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
 
@@ -222,6 +228,54 @@ def find_all_template_matches(
         centers = __suppress_close_matches(centers, min_distance)
 
     return centers
+
+
+def find_worst_template_match(
+    base_image: Image.Image,
+    template_image: Image.Image,
+    grayscale: bool = False,
+) -> tuple[int, int] | None:
+    """Find the area in the base image that is most different from the template.
+
+    This function creates a difference map between the template and all possible
+    positions in the base image, then returns the position with the maximum difference.
+
+    Args:
+        base_image: The image to search in
+        template_image: The template to compare against
+        grayscale: Whether to convert images to grayscale before comparison
+
+    Returns:
+        tuple of (center_x, center_y) coordinates for the most different region
+    """
+    __validate_template_size(
+        base_image=base_image,
+        template_image=template_image,
+    )
+
+    base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
+    template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
+
+    if grayscale:
+        base_cv = cv2.cvtColor(base_cv, cv2.COLOR_BGR2GRAY)
+        template_cv = cv2.cvtColor(template_cv, cv2.COLOR_BGR2GRAY)
+
+    # Create a difference map using OpenCV's matchTemplate with TM_SQDIFF
+    # TM_SQDIFF gives higher values for worse matches (sum of squared differences)
+    diff_map = cv2.matchTemplate(base_cv, template_cv, cv2.TM_SQDIFF)
+
+    # Find the location with the maximum difference (worst match)
+    _, max_val, _, max_diff_loc = cv2.minMaxLoc(diff_map)
+    if max_val < 10000:
+        return None
+    max_diff_x, max_diff_y = max_diff_loc
+
+    # Calculate center coordinates
+    template_height, template_width = template_cv.shape[:2]
+    center_x = max_diff_x + template_width // 2
+    center_y = max_diff_y + template_height // 2
+
+    return center_x, center_y
 
 
 def __suppress_close_matches(
@@ -255,3 +309,26 @@ def __validate_threshold(threshold: float) -> None:
     """
     if threshold < 0.0 or threshold > 1.0:
         raise ValueError(f"Threshold must be between 0 and 1, got {threshold}")
+
+
+def __validate_template_size(
+    base_image: Image.Image, template_image: Image.Image
+) -> None:
+    """Validate that the template image is smaller than the base image.
+
+    Args:
+        base_image: The base PIL Image
+        template_image: The template PIL Image
+
+    Raises:
+        ValueError: If the template is larger than the base image in any dimension
+    """
+    base_width, base_height = base_image.size
+    template_width, template_height = template_image.size
+
+    if template_height > base_height or template_width > base_width:
+        raise ValueError(
+            f"Template must be smaller than the base image. "
+            f"Base size: ({base_width}, {base_height}), "
+            f"Template size: ({template_width}, {template_height})"
+        )

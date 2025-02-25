@@ -8,12 +8,18 @@ from adb_auto_player.games.afk_journey.afk_journey_base import AFKJourneyBase
 
 class AssistMixin(AFKJourneyBase, ABC):
     def assist_synergy_corrupt_creature(self) -> None:
-        self.start_up()
+        self.start_up(device_streaming=True)
+
+        if self.stream is None:
+            logging.warning(
+                "This feature is quite slow without Device Streaming "
+                "you will miss a lot of Synergy and CC requests"
+            )
+
         assist_limit = self.get_config().general.assist_limit
-        logging.info("Running: Synergy & CC")
+        logging.info("Searching Synergy & Corrupt Creature requests in World Chat")
         count: int = 0
         while count < assist_limit:
-            logging.info("Searching Synergy & Corrupt Creature requests in World Chat")
             if self.__find_synergy_or_corrupt_creature():
                 count += 1
                 logging.info(f"Assist #{count}")
@@ -50,9 +56,34 @@ class AssistMixin(AFKJourneyBase, ABC):
                 return False
             case "assist/label_world_chat.png":
                 pass
-        # Click Profile icon in chat
-        self.click(260, 1400, scale=True)
+
+        profile_icon = self.find_worst_match(
+            "assist/empty_chat.png",
+            crop_left=0.2,
+            crop_right=0.7,
+            crop_top=0.7,
+            crop_bottom=0.22,
+        )
+
+        if profile_icon is None:
+            sleep(1)
+            return False
+
+        self.click(*profile_icon)
         try:
+            self.wait_for_any_template(
+                templates=[
+                    "assist/join_now.png",
+                    "assist/synergy.png",
+                    "assist/chat_button.png",
+                ],
+                crop_left=0.1,
+                crop_top=0.4,
+                crop_bottom=0.1,
+                delay=0.1,
+                timeout=self.FAST_TIMEOUT,
+            )
+            sleep(0.5)
             template, x, y = self.wait_for_any_template(
                 templates=[
                     "assist/join_now.png",
@@ -106,28 +137,40 @@ class AssistMixin(AFKJourneyBase, ABC):
             timeout=self.MIN_TIMEOUT,
         )
 
-        self.click(*ready)
-        # Sometimes people wait forever for a third to join...
-        self.wait_until_template_disappears(
-            template="assist/rewards_heart.png",
-            crop_left=0.6,
-            crop_top=0.7,
-            crop_bottom=0.1,
-            timeout=self.BATTLE_TIMEOUT,
-        )
+        while self.find_template_match(
+            template="assist/ready.png",
+            crop_left=0.2,
+            crop_right=0.1,
+            crop_top=0.8,
+        ):
+            self.click(*ready)
+            sleep(0.5)
+
         while True:
-            template = self.wait_for_any_template(
+            template, _, _ = self.wait_for_any_template(
                 templates=[
                     "assist/bell.png",
                     "guide/close.png",
                     "guide/next.png",
+                    "assist/label_world_chat.png",
+                    "time_of_day.png",
                 ],
+                timeout=self.BATTLE_TIMEOUT,
             )
+            logging.debug(f"template {template}")
             match template:
                 case "assist/bell.png":
+                    sleep(2)
                     break
-                case _:
+                case "guide/close.png" | "guide/next.png":
                     self._handle_guide_popup()
+                case _:
+                    logging.debug("false")
+                    logging.debug(f"template {template}")
+
+                    return False
+
+        logging.debug("Placing heroes")
         # click first 5 heroes in row 1 and 2
         for x in [110, 290, 470, 630, 800]:
             self.click(x, 1300, scale=True)

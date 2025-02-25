@@ -364,6 +364,38 @@ class Game:
         x, y = result
         return x + left_offset, y + top_offset
 
+    def find_worst_match(
+        self,
+        template: str | Path,
+        grayscale: bool = False,
+        crop_left: float = 0.0,
+        crop_right: float = 0.0,
+        crop_top: float = 0.0,
+        crop_bottom: float = 0.0,
+    ):
+        template_path = self.get_template_dir_path() / template
+        base_image, left_offset, top_offset = template_matching.crop_image(
+            image=self.__get_screenshot(previous_screenshot=False),
+            left=crop_left,
+            right=crop_right,
+            top=crop_top,
+            bottom=crop_bottom,
+        )
+
+        result = template_matching.find_worst_template_match(
+            base_image=base_image,
+            template_image=template_matching.load_image(
+                image_path=template_path,
+                image_scale_factor=self.get_scale_factor(),
+            ),
+            grayscale=grayscale,
+        )
+
+        if result is None:
+            return None
+        x, y = result
+        return x + left_offset, y + top_offset
+
     def find_all_template_matches(
         self,
         template: str | Path,

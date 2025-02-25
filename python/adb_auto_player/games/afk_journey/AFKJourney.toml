@@ -13,7 +13,7 @@ Formations = 7
 'Suggested Formations' = true
 
 [General]
-'Assist Limit' = 20
+'Assist Limit' = 10
 'Exclude Heroes' = []
 
 ['Legend Trial']
