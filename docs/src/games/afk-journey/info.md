@@ -13,7 +13,9 @@
   - Supports *Season Talent Stages*, *AFK Stages*, *Dura's Trials*, and *Legend Trial*.
   - Loads suggested formations, starts battles, and progresses to the next stage automatically.
 
-- **Assist Synergy & CC**: Farms Synergy requests and Corrupt Creature battles for **Guild Quest** and **Pal-Coins**.
+- **Synergy & CC**: Farms Synergy requests and Corrupt Creature battles for **Guild Quest** and **Pal-Coins**.
+
+- **Arcane Labyrinth**: Farms Difficulty 13 in Arcane Labyrinth for Lucky Pick Keys.
 
 - **[Event] Guild Chat Claim**: Claims rewards in Guild Chat, e.g. Happy Satchels.
 
