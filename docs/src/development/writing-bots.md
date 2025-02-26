@@ -16,7 +16,7 @@ If you want to add any feature to the AFK Journey Bot:
             logging.info("Hello World!")
             self.start_up() # initializes most things you will need like device and config
             # if your bot needs to be fast e.g. Fishing or any other interactive mode you need to enable device streaming
-            #self.start_up(device_streaming=True)
+            # self.start_up(device_streaming=True)
     ```
 
 2. Add a new Command in [class AFKJourney](https://github.com/yulesxoxo/AdbAutoPlayer/tree/main/python/adb_auto_player/games/afk_journey/main.py).
