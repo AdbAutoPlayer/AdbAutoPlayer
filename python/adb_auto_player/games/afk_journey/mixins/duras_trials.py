@@ -48,7 +48,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
         def check_for_duras_trials_label() -> bool:
             match = self.find_template_match(
                 template="duras_trials/featured_heroes.png",
-                crop_left=0.8,
+                crop_left=0.7,
                 crop_bottom=0.8,
             )
             return match is not None
@@ -57,7 +57,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
 
         featured_heroes = self.find_template_match(
             template="duras_trials/featured_heroes.png",
-            crop_left=0.8,
+            crop_left=0.7,
             crop_bottom=0.8,
             use_previous_screenshot=True,
         )
@@ -70,7 +70,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
         self.click(*duras_trials_label)
         self.wait_for_template(
             template="duras_trials/featured_heroes.png",
-            crop_left=0.8,
+            crop_left=0.7,
             crop_bottom=0.8,
         )
         return None
