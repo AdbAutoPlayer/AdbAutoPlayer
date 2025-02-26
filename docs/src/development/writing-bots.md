@@ -1,6 +1,6 @@
 # Writing Bots
 
-Check out [Python README](python-README) if you need help with setting up the project in general.
+Check out [Python README](https://github.com/yulesxoxo/AdbAutoPlayer/blob/main/docs/src/development/python-README.md) if you need help with setting up the project in general.
 
 ## AFK Journey
 If you want to add any feature to the AFK Journey Bot:
