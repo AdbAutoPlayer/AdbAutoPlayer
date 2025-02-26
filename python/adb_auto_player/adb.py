@@ -153,7 +153,10 @@ def __get_adb_device(
 
     if override_size and wm_size:
         logging.info(f"Overriding size: {override_size}")
-        device.shell(f"wm size {override_size}")
+        try:
+            device.shell(f"wm size {override_size}")
+        except Exception as e:
+            raise AdbException(f"wm size {override_size}: {e}")
 
     return device
 
@@ -161,7 +164,11 @@ def __get_adb_device(
 def wm_size_reset(device: AdbDevice | None = None) -> None:
     if device is None:
         device = get_device(override_size=None)
-    device.shell("wm size reset")
+
+    try:
+        device.shell("wm size reset")
+    except Exception as e:
+        raise AdbException(f"wm size reset: {e}")
     logging.info(f"Reset Display Size for Device: {device.serial}")
 
 
@@ -178,7 +185,7 @@ def is_device_connection_active(device: AdbDevice) -> bool:
         device.get_state()
         return True
     except Exception as e:
-        logging.debug(f"Exception: {e}")
+        logging.debug(f"device.get_state(): {e}")
         return False
 
 
@@ -188,8 +195,10 @@ def get_screen_resolution(device: AdbDevice) -> str:
     Raises:
         AdbException: Unable to determine screen resolution
     """
-    result = str(device.shell("wm size"))
-
+    try:
+        result = str(device.shell("wm size"))
+    except Exception as e:
+        raise AdbException(f"wm size: {e}")
     if result:
         lines = result.splitlines()
         override_size = None
@@ -214,13 +223,22 @@ def get_screen_resolution(device: AdbDevice) -> str:
 
 
 def is_portrait(device: AdbDevice) -> bool:
-    orientation_check = device.shell(
-        "dumpsys input | grep 'SurfaceOrientation'"
-    ).strip()
+    try:
+        orientation_check = device.shell(
+            "dumpsys input | grep 'SurfaceOrientation'"
+        ).strip()
+    except Exception as e:
+        raise AdbException(f"dumpsys input: {e}")
     logging.debug(f"orientation_check: {orientation_check}")
-    rotation_check = device.shell("dumpsys window | grep mCurrentRotation").strip()
+    try:
+        rotation_check = device.shell("dumpsys window | grep mCurrentRotation").strip()
+    except Exception as e:
+        raise AdbException(f"dumpsys window: {e}")
     logging.debug(f"rotation_check: {rotation_check}")
-    display_check = device.shell("dumpsys display | grep -E 'orientation'").strip()
+    try:
+        display_check = device.shell("dumpsys display | grep -E 'orientation'").strip()
+    except Exception as e:
+        raise AdbException(f"dumpsys display: {e}")
     logging.debug(f"display_check: {display_check}")
     checks = [
         "Orientation: 0" in orientation_check if orientation_check else True,
