@@ -74,12 +74,42 @@ def get_device(override_size: str | None = None) -> AdbDevice:
     __set_adb_path()
     main_config = adb_auto_player.config_loader.get_main_config()
     device_id = main_config.get("device", {}).get("ID", "127.0.0.1:5555")
-    wm_size = main_config.get("device", {}).get("wm_size", False)
     adb_config = main_config.get("adb", {})
     client = AdbClient(
         host=adb_config.get("host", "127.0.0.1"),
         port=adb_config.get("port", 5037),
     )
+
+    # if it starts with anything else I will just assume the user knows what they are
+    # doing and don't need this
+    if device_id.startswith("127.0.0.1:") or device_id.startswith("localhost:"):
+        i = 0
+        host, port = device_id.split(":")
+        port = int(port)
+        while True:
+            try:
+                return __get_adb_device(
+                    client,
+                    f"{host}:{port}",
+                    override_size,
+                )
+            except AdbException as e:
+                i += 1
+                if i >= 10:
+                    raise e
+                logging.warning(f"{e}")
+                port += 1
+                logging.info(f"Trying Device ID: {host}:{port}")
+    else:
+        return __get_adb_device(client, device_id, override_size)
+
+
+def __get_adb_device(
+    client: AdbClient, device_id: str, override_size: str | None = None
+) -> AdbDevice:
+    main_config = adb_auto_player.config_loader.get_main_config()
+    wm_size = main_config.get("device", {}).get("wm_size", False)
+
     try:
         client.connect(device_id)
     except AdbError as e:
