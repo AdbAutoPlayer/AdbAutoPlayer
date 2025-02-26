@@ -1,4 +1,4 @@
-name: Lychee Link Checking
+name: mdBook validate links
 
 on:
   push:
