@@ -215,7 +215,7 @@
     if (lastAppVersion !== version) {
       console.log("Update downloaded manually");
       lastAppVersion = version;
-      patchVersion = lastAppVersion;
+      patchVersion = version;
       await setItem("lastAppVersion", version);
       await setItem("patch", version);
     }
