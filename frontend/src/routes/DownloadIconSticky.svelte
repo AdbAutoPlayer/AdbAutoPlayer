@@ -2,7 +2,7 @@
   import { version } from "$app/environment";
   import { UpdatePatch } from "$lib/wailsjs/go/main/App";
   import { logoAwake } from "$lib/stores/logo";
-  import { LogError, LogInfo } from "$lib/wailsjs/runtime";
+  import { LogError, LogInfo, LogWarning } from "$lib/wailsjs/runtime";
   import { marked } from "marked";
   import Modal from "./Modal.svelte";
   import { getItem, setItem } from "$lib/indexedDB";
@@ -136,6 +136,9 @@
         const latestParts = latestVersion.split(".").map(Number);
         if (latestParts[0] > currentParts[0]) {
           modalRelease = releaseData;
+          LogWarning(
+            "You need to manually download the latest Version: https://github.com/yulesxoxo/AdbAutoPlayer/releases",
+          );
           notifyUpdate(modalAsset);
           return;
         }
