@@ -205,6 +205,22 @@
     }
 
     let patchVersion = await getItem<string>("patch");
+    let lastAppVersion = await getItem<string>("lastAppVersion");
+
+    if (!lastAppVersion) {
+      lastAppVersion = version;
+      await setItem("lastAppVersion", version);
+    }
+
+    if (lastAppVersion !== version) {
+      console.log("Update downloaded manually");
+      lastAppVersion = version;
+      patchVersion = lastAppVersion;
+      await setItem("lastAppVersion", version);
+      await setItem("patch", version);
+    }
+
+    console.log("lastAppVersion", lastAppVersion);
     console.log("patchVersion", patchVersion);
 
     if (!patchVersion || isVersionGreater(version, patchVersion)) {
