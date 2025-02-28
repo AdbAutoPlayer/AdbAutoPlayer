@@ -50,6 +50,6 @@ And of course check out other Mixins to get a rough idea how to get started!
 
 
 ## New Game
-Right now there are placeholders in the code and the idea is to allow adding new bots, because we are only writing bots for 1 game right now it is hardcoded in some places.  
-If you want to write a bot for another game and use this as a baseline reach out. [<Click Here for Contact>](../introduction.md#contact)  
-We will make adjustments to support bots for new games as soon as there is somebody really interested in making one.
+For the simplest setup check the [Infinity Nikki Bot](https://github.com/yulesxoxo/AdbAutoPlayer/tree/main/python/adb_auto_player/games/infinity_nikki).  
+It only has a single feature and a single config option.  
+Besides making your Game Class you just have to add the game to the `__get_games()` function in [main.py](https://github.com/yulesxoxo/AdbAutoPlayer/blob/main/python/adb_auto_player/main.py)
