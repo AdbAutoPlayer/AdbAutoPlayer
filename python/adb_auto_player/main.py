@@ -61,16 +61,11 @@ def main() -> None:
 
 
 def get_gui_games_menu() -> str:
-    logging.disable(logging.CRITICAL)
-    device = adb_auto_player.adb.get_device()
-    package_name = adb_auto_player.adb.get_running_app(device)
+    menu = []
 
     for game in __get_games():
         options = game.get_gui_options()
-        if package_name in game.package_names:
-            single_menu = [options.to_dict()]
-            single_menu_string = json.dumps(single_menu)
-            return single_menu_string
+        menu.append(options.to_dict())
 
     return json.dumps([])
 
@@ -85,6 +80,10 @@ def __get_commands() -> list[Command]:
             name="WMSizeReset",
             action=adb_auto_player.adb.wm_size_reset,
         ),
+        Command(
+            name="GetRunningGame",
+            action=__print_running_game,
+        ),
     ]
 
     for game in __get_games():
@@ -95,6 +94,25 @@ def __get_commands() -> list[Command]:
 
 def __print_gui_games_menu() -> None:
     print(get_gui_games_menu())
+    return None
+
+
+def __print_running_game() -> None:
+    print(__get_running_game())
+    return None
+
+
+def __get_running_game() -> str:
+    logging.disable(logging.CRITICAL)
+    try:
+        device = adb_auto_player.adb.get_device()
+        package_name = adb_auto_player.adb.get_running_app(device)
+        for game in __get_games():
+            if package_name in game.package_names:
+                return game.get_gui_options().game_title
+    except Exception:
+        pass
+    return ""
 
 
 def __run_command(cmd: Command) -> NoReturn:
