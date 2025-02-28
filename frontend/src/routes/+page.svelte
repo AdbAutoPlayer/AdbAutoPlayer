@@ -211,7 +211,7 @@
 
 <main class="container no-select">
   <h1>
-    {activeGame?.game_title ?? "Loading"}
+    {activeGame?.game_title ?? "Start any supported Game!"}
   </h1>
   {#if showConfigForm}
     <CommandPanel title={"Config"}>
