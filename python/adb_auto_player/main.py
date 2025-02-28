@@ -61,6 +61,7 @@ def main() -> None:
 
 
 def get_gui_games_menu() -> str:
+    logging.disable(logging.CRITICAL)
     device = adb_auto_player.adb.get_device()
     package_name = adb_auto_player.adb.get_running_app(device)
 
