@@ -1,4 +1,5 @@
 from adb_auto_player.command import Command
+from adb_auto_player.games.infinity_nikki.config import Config
 from adb_auto_player.games.infinity_nikki.mixins.sheep_minigame import (
     SheepMinigameMixin,
 )
@@ -23,5 +24,5 @@ class InfinityNikki(
             game_title="Infinity Nikki",
             config_path="infinity_nikki/InfinityNikki.toml",
             menu_options=self._get_menu_options_from_cli_menu(),
-            constraints={},
+            constraints=Config.get_constraints(),
         )
