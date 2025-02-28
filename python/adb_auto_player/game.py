@@ -36,6 +36,7 @@ class Game:
         self.supports_portrait: bool = False
         self.supports_landscape: bool = False
         self.stream: DeviceStream | None = None
+        self.package_names: list[str] = []
 
     @abstractmethod
     def get_template_dir_path(self) -> Path:

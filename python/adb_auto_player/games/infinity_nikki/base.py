@@ -10,6 +10,9 @@ class InfinityNikkiBase(Game, ABC):
     def __init__(self) -> None:
         super().__init__()
         self.supports_portrait = False
+        self.package_names = [
+            "com.infoldgames.infinitynikkias",
+        ]
 
     template_dir_path: Path | None = None
     config_file_path: Path | None = None

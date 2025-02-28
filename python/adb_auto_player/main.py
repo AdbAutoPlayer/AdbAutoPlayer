@@ -61,9 +61,16 @@ def main() -> None:
 
 
 def get_gui_games_menu() -> str:
+    device = adb_auto_player.adb.get_device()
+    package_name = adb_auto_player.adb.get_running_app(device)
+
     menu = []
     for game in __get_games():
         options = game.get_gui_options()
+        if package_name in game.package_names:
+            single_menu = [options.to_dict()]
+            single_menu_string = json.dumps(single_menu)
+            return single_menu_string
         menu.append(options.to_dict())
 
     menu_json_string = json.dumps(menu)
