@@ -1,14 +1,14 @@
 from abc import ABC
 from time import sleep
 import logging
-import adb_auto_player.adb
 
 from adb_auto_player.games.infinity_nikki.base import InfinityNikkiBase
 
 
 class SheepMinigameMixin(InfinityNikkiBase, ABC):
-    def afk_sheep_minigame(self):
+    def afk_sheep_minigame(self) -> None:
         self.start_up(device_streaming=True)
+        config = self.get_config().sheep_minigame_config
 
         _ = self.wait_for_template(
             "conversation/history.png",
@@ -21,7 +21,7 @@ class SheepMinigameMixin(InfinityNikkiBase, ABC):
         # 160000 / 1350 =~ 119
         bling_visible = False
         count = 0
-        while count < 119:
+        while count < config.runs:
             if self.find_template_match("conversation/history.png"):
                 bling_visible = False
                 self.click(1250, 575, scale=True)
@@ -33,3 +33,5 @@ class SheepMinigameMixin(InfinityNikkiBase, ABC):
                 logging.debug("Bling visible")
                 self.click(950, 950, scale=True)
             sleep(0.5)
+
+        logging.info("Done")

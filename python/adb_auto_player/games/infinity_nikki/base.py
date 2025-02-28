@@ -2,8 +2,11 @@ import logging
 from abc import ABC
 
 from adb_auto_player.config_loader import get_games_dir
+from adb_auto_player.exceptions import NotInitializedError
 from adb_auto_player.game import Game
 from pathlib import Path
+
+from adb_auto_player.games.infinity_nikki.config import Config
 
 
 class InfinityNikkiBase(Game, ABC):
@@ -37,11 +40,17 @@ class InfinityNikkiBase(Game, ABC):
         return self.template_dir_path
 
     def load_config(self) -> None:
-        return None
+        if self.config_file_path is None:
+            self.config_file_path = (
+                get_games_dir() / "infinity_nikki" / "InfinityNikki.toml"
+            )
+            logging.debug(f"Infinity Nikki config path: {self.config_file_path}")
+        self.config = Config.from_toml(self.config_file_path)
 
-    def get_config(self) -> None:
-        # No need for config atm
-        return None
+    def get_config(self) -> Config:
+        if self.config is None:
+            raise NotInitializedError()
+        return self.config
 
     def get_supported_resolutions(self) -> list[str]:
         return ["1080x1920"]
