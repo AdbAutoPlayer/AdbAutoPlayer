@@ -7,9 +7,15 @@
 - [Windows Setup Guide](user-guide/windows-setup.md)
 - [macOS Setup Guide](user-guide/macos-setup.md)
 - [Troubleshooting](user-guide/troubleshoot.md)
-# AFK Journey
+
+# Games
+## AFK Journey
 - [Info](games/afk-journey/info.md)
 - [TODO](games/afk-journey/TODO.md)
+
+## Infinity Nikki
+- [Info](games/infinity-nikki/info.md)
+- [TODO](games/infinity-nikki/TODO.md)
 
 # App Development
 - [General](development/general.md)
