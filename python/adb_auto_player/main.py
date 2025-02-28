@@ -9,11 +9,13 @@ from adb_auto_player import logging_setup
 from adb_auto_player.command import Command
 from adb_auto_player.game import Game
 from adb_auto_player.games.afk_journey.main import AFKJourney
+from adb_auto_player.games.infinity_nikki.main import InfinityNikki
 
 
 def __get_games() -> list[Game]:
     return [
         AFKJourney(),
+        InfinityNikki(),
     ]
 
 
