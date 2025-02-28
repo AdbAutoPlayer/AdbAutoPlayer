@@ -70,7 +70,7 @@ class AFKJourneyBase(Game, ABC):
         return self.config
 
     def get_supported_resolutions(self) -> list[str]:
-        return ["1080x1920", "9:16"]
+        return ["1080x1920"]
 
     def __get_config_attribute_from_mode(self, attribute: str):
         match self.store.get(self.STORE_MODE, None):
