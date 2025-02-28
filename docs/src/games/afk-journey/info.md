@@ -2,11 +2,8 @@
 > [!IMPORTANT]
 > Set the game language to English.
 
-## Supported Resolutions:
-> [!IMPORTANT]
-> Use 1080x1920 if possible. Other resolutions are not tested.
-
-- **9:16** e.g. **1080x1920**, **900x1600**, **720x1280**, ...
+## Supported Resolution:
+#### 1080x1920
 
 ## Features
 - **Automated Stage Progression**:
