@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="SeasonTalentStages" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="SeasonTalentStages" type="PythonConfigurationType" factoryName="Python" folderName="AFK Journey">
     <module name="python" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
@@ -12,6 +12,7 @@
     <option name="IS_MODULE_SDK" value="true" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
+    <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/adb_auto_player/main.py" />
     <option name="PARAMETERS" value="SeasonTalentStages --output=text" />
     <option name="SHOW_COMMAND_LINE" value="false" />
