@@ -12,7 +12,6 @@ from adb_auto_player.games.infinity_nikki.config import Config
 class InfinityNikkiBase(Game, ABC):
     def __init__(self) -> None:
         super().__init__()
-        self.supports_portrait = False
         self.package_names = [
             "com.infoldgames.infinitynikkias",
         ]
