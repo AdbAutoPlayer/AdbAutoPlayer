@@ -67,7 +67,7 @@ def get_gui_games_menu() -> str:
         options = game.get_gui_options()
         menu.append(options.to_dict())
 
-    return json.dumps([])
+    return json.dumps(menu)
 
 
 def __get_commands() -> list[Command]:
