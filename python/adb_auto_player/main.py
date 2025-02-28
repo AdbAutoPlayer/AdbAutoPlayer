@@ -98,7 +98,7 @@ def __print_gui_games_menu() -> None:
 
 
 def __print_running_game() -> None:
-    print(__get_running_game())
+    print(__get_running_game(), end="")
     return None
 
 
