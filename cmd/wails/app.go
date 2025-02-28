@@ -183,9 +183,12 @@ func (a *App) GetRunningSupportedGame() (*ipc.GameGUI, error) {
 	runningGame, err := pm.Exec(*a.pythonBinaryPath, "GetRunningGame")
 	if runningGame == "" {
 		runtime.LogDebug(a.ctx, "No running game found")
-	} else {
-		runtime.LogDebugf(a.ctx, "Running game: %s", runningGame)
+		return nil, nil
 	}
+
+	runningGame = strings.TrimSpace(runningGame)
+	runtime.LogDebugf(a.ctx, "Running game: %s", runningGame)
+
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "%v", err)
 		return nil, err
