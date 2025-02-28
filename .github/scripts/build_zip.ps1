@@ -6,6 +6,14 @@ $ErrorActionPreference = "Stop"
 
 $Workspace = $env:GITHUB_WORKSPACE
 $ReleaseZipDir = Join-Path $Workspace "AdbAutoPlayer"
+$PatchDir = Join-Path $Workspace "Patch_Windows"
+
+if (Test-Path $ReleaseZipDir) {
+    Remove-Item -Recurse -Force $ReleaseZipDir
+}
+if (Test-Path $PatchDir) {
+    Remove-Item -Recurse -Force $PatchDir
+}
 
 if (-not $Workspace) {
     Write-Error "GITHUB_WORKSPACE environment variable is not set."
@@ -29,11 +37,11 @@ if (-not $cli) {
 Pop-Location
 
 New-Item -ItemType Directory -Force -Path $ReleaseZipDir
-$TemplatesDir = Join-Path $ReleaseZipDir "games/afk_journey/templates"
 $BinariesDir = Join-Path $ReleaseZipDir "binaries"
+$GamesDir = Join-Path $ReleaseZipDir "games"
 
-New-Item -ItemType Directory -Force -Path $TemplatesDir
 New-Item -ItemType Directory -Force -Path $BinariesDir
+New-Item -ItemType Directory -Force -Path $GamesDir
 
 if (-not $cli) {
     Copy-Item -Path "$Workspace/cmd/wails/build/bin/AdbAutoPlayer.exe" -Destination $ReleaseZipDir -Force
@@ -42,8 +50,35 @@ if (-not $cli) {
 Copy-Item -Path "$Workspace/cmd/wails/config.toml" -Destination $ReleaseZipDir -Force
 Copy-Item -Path "$Workspace/python/main.dist/*" -Destination $BinariesDir -Recurse -Force
 Copy-Item -Path "$Workspace/python/adb_auto_player/binaries/windows/*" -Destination $BinariesDir -Recurse -Force
-Copy-Item -Path "$Workspace/python/adb_auto_player/games/afk_journey/templates/*" -Destination $TemplatesDir -Recurse -Force
-Copy-Item -Path "$Workspace/python/adb_auto_player/games/afk_journey/AFKJourney.toml" -Destination (Join-Path $ReleaseZipDir "games/afk_journey") -Force
+
+# Copy everything from "games" except:
+# - .py files
+# - Directories that start with "_"
+# - Any directory named "mixins"
+$GamesSource = Join-Path $Workspace "python/adb_auto_player/games"
+$Items = Get-ChildItem -Path $GamesSource -Recurse | Where-Object {
+    -not ($_.FullName -match '\\_') -and      # Exclude directories starting with "_"
+    -not ($_.FullName -match '\\mixins($|\\)') -and  # Exclude directories named "mixins"
+    -not ($_.Extension -eq '.py')             # Exclude .py files
+}
+
+foreach ($Item in $Items) {
+    $DestPath = $Item.FullName.Replace($GamesSource, $GamesDir)
+    if ($Item.PSIsContainer) {
+        New-Item -ItemType Directory -Force -Path $DestPath
+    } else {
+        Copy-Item -Path $Item.FullName -Destination $DestPath -Force
+    }
+}
+
+foreach ($Item in $Items) {
+    $DestPath = $Item.FullName.Replace($GamesSource, $GamesDir)
+    if ($Item.PSIsContainer) {
+        New-Item -ItemType Directory -Force -Path $DestPath
+    } else {
+        Copy-Item -Path $Item.FullName -Destination $DestPath -Force
+    }
+}
 
 Write-Output "Files collected in ${ReleaseZipDir}:"
 Get-ChildItem -Path $ReleaseZipDir -Recurse
@@ -52,7 +87,6 @@ if (-not $cli) {
     $ZipFile = Join-Path $Workspace "AdbAutoPlayer_Windows.zip"
     Compress-Archive -Path "$ReleaseZipDir\*" -DestinationPath $ZipFile -Force
     Write-Output "ZIP file created at ${ZipFile}"
-    $PatchDir = Join-Path $Workspace "Patch_Windows"
     New-Item -ItemType Directory -Force -Path $PatchDir
     Copy-Item -Path (Join-Path $ReleaseZipDir "games") -Destination $PatchDir -Recurse -Force
     Copy-Item -Path $BinariesDir -Destination $PatchDir -Recurse -Force

@@ -17,6 +17,10 @@ class AFKJourneyBase(Game, ABC):
     def __init__(self) -> None:
         super().__init__()
         self.supports_portrait = True
+        self.package_names = [
+            "com.farlightgames.igame.gp",
+            "com.farlightgames.igame.gp.vn",
+        ]
 
     template_dir_path: Path | None = None
     config_file_path: Path | None = None
@@ -66,7 +70,7 @@ class AFKJourneyBase(Game, ABC):
         return self.config
 
     def get_supported_resolutions(self) -> list[str]:
-        return ["1080x1920", "9:16"]
+        return ["1080x1920"]
 
     def __get_config_attribute_from_mode(self, attribute: str):
         match self.store.get(self.STORE_MODE, None):

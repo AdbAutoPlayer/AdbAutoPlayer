@@ -179,19 +179,29 @@ func (a *App) GetRunningSupportedGame() (*ipc.GameGUI, error) {
 		}
 	}
 
+	pm := GetProcessManager()
+	runningGame, err := pm.Exec(*a.pythonBinaryPath, "GetRunningGame")
+	if runningGame == "" {
+		runtime.LogDebug(a.ctx, "No running game found")
+	} else {
+		runtime.LogDebugf(a.ctx, "Running game: %s", runningGame)
+	}
+	if err != nil {
+		runtime.LogErrorf(a.ctx, "%v", err)
+		return nil, err
+	}
 	for _, game := range a.games {
-		// TODO we only have a single game right now anyway
-		// Original idea was to detect what game is running
-		// We can add a command on python for this
-		// Or remove this and have a select in the GUI
-		return &game, nil
+		if runningGame == game.GameTitle {
+			return &game, nil
+		}
 	}
 	if a.pythonBinaryPath == nil {
 		runtime.LogDebugf(a.ctx, "Python Binary Path: nil")
 	} else {
 		runtime.LogDebugf(a.ctx, "Python Binary Path: %s", *a.pythonBinaryPath)
 	}
-	return nil, fmt.Errorf("should never happen")
+	runtime.LogDebugf(a.ctx, "Package: %s not supported", runningGame)
+	return nil, nil
 }
 
 func (a *App) setPythonBinaryPath() error {

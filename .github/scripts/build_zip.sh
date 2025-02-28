@@ -21,7 +21,7 @@ poetry run nuitka --standalone --output-filename=adb_auto_player_py_app --assume
 popd > /dev/null
 
 # Create directory structure
-mkdir -p "${RELEASE_ZIP_DIR}/games/afk_journey/templates"
+mkdir -p "${RELEASE_ZIP_DIR}/games"
 mkdir -p "${BINARIES_DIR}"
 
 # would be the "correct" way to do it but macOS flags unsigned apps as "damaged" and refuses to execute them
@@ -33,9 +33,17 @@ cp "cmd/wails/config.toml" "${RELEASE_ZIP_DIR}/"
 # Copy compiled Nuitka binary
 cp -r "python/main.dist/." "${BINARIES_DIR}/"
 
-# Copy templates and config
-cp -r "python/adb_auto_player/games/afk_journey/templates/"* "${RELEASE_ZIP_DIR}/games/afk_journey/templates/"
-cp "python/adb_auto_player/games/afk_journey/AFKJourney.toml" "${RELEASE_ZIP_DIR}/games/afk_journey/"
+# Use find to copy all files from python/adb_auto_player/games except:
+# - .py files
+# - Directories starting with "_"
+# - Any directory named "mixins"
+find "${WORKSPACE}/python/adb_auto_player/games" \
+  -type f ! -name "*.py" \
+  -exec cp --parents {} "${RELEASE_ZIP_DIR}/" \;
+
+find "${WORKSPACE}/python/adb_auto_player/games" \
+  -type d ! -name "_*" ! -name "mixins" \
+  -exec cp -r --parents {} "${RELEASE_ZIP_DIR}/" \;
 
 echo "Files collected in ${RELEASE_ZIP_DIR}:"
 ls -R "${RELEASE_ZIP_DIR}"
