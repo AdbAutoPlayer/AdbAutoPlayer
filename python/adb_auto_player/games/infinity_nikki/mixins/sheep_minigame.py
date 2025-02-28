@@ -37,7 +37,6 @@ class SheepMinigameMixin(InfinityNikkiBase, ABC):
                 self.click(950, 950, scale=True)
             if history_visible_before_bling_count > 20:
                 logging.warning("Exiting because Bling cap has been reached.")
-            print(history_visible_before_bling_count)
             sleep(0.5)
 
         logging.info("Done")
