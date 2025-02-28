@@ -16,7 +16,12 @@ class Command:
             action: The function (callback) that will be executed for the command.
             kwargs: The keyword arguments to pass to the action function.
             gui_label: The label for the GUI button. If None name will be used.
+
+        Raises:
+            ValueError: If name contains whitespace.
         """
+        if " " in name:
+            raise ValueError(f"Command name '{name}' should not contain spaces.")
         self.name = name
         self.action = action
         self.kwargs = kwargs if kwargs is not None else {}
