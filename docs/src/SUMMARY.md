@@ -9,13 +9,11 @@
 - [Troubleshooting](user-guide/troubleshoot.md)
 
 # Games
-## AFK Journey
-- [Info](games/afk-journey/info.md)
-- [TODO](games/afk-journey/TODO.md)
+- [AFK Journey](games/afk-journey/info.md)
+  - [TODO](games/afk-journey/TODO.md)
 
-## Infinity Nikki
-- [Info](games/infinity-nikki/info.md)
-- [TODO](games/infinity-nikki/TODO.md)
+- [Infinity Nikki](games/infinity-nikki/info.md)
+  - [TODO](games/infinity-nikki/TODO.md)
 
 # App Development
 - [General](development/general.md)
