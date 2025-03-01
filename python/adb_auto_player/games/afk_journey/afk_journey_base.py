@@ -286,7 +286,7 @@ class AFKJourneyBase(Game, ABC):
                 crop_right=0.8,
                 crop_top=0.2,
                 crop_bottom=0.6,
-                use_previous_screenshot=True,
+                threshold=0.8,
             )
             if checkbox is None:
                 logging.error('Could not find "Don\'t remind for x days" checkbox')
