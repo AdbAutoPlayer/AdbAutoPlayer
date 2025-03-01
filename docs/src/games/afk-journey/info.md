@@ -18,6 +18,14 @@
 
 - **[Event] Monopoly Assist**: Farms assists in Monopoly Log for Pal-Coins.
 
+## In-Game Recommended Settings  
+
+To improve performance and reduce lag, adjust the following in-game settings:  
+
+- Set Graphics to **Minimum** while keeping high-performance **Power Mode**.  
+- **Disable Battle Texts**: Go to `Battle > Combat Text > Off`. This prevents excessive on-screen text, reducing emulator lag.  
+- **Disable Battle Logs**: Under Combat Text, turning off battle logs minimizes post-battle processing and improves overall game performance.  
+
 ---
 
 ## Configuration Details
@@ -25,6 +33,7 @@
 > Use the Edit Game Config button in the GUI to change the config!
 
 Configuration is loaded when you click any Action.
+
 
 ### General
 
