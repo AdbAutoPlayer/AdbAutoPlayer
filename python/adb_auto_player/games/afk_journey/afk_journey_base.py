@@ -346,7 +346,7 @@ class AFKJourneyBase(Game, ABC):
                     return False
                 case "confirm.png":
                     logging.warning("Battle data differs between client and server")
-                    self.click(*template)
+                    self.click(x, y)
                     sleep(3)
                     self._select_afk_stage()
                     return False
