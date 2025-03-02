@@ -345,10 +345,11 @@ class AFKJourneyBase(Game, ABC):
                     self.click(550, 1800, scale=True)
                     return False
                 case "confirm.png":
-                    logging.warning("Battle data differs between client and server")
+                    logging.error(
+                        "Network Error or Battle data differs between client and server"
+                    )
                     self.click(x, y)
                     sleep(3)
-                    self._select_afk_stage()
                     return False
                 case "next.png" | "duras_trials/first_clear.png":
                     return True
