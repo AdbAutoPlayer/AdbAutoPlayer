@@ -51,7 +51,11 @@ class JsonLogHandler(logging.Handler):
         sanitized_message = sanitize_path(record.getMessage())
 
         log_message = LogMessage.create_log_message(
-            level_mapping.get(record.levelno, LogLevel.DEBUG), sanitized_message
+            level=level_mapping.get(record.levelno, LogLevel.DEBUG),
+            message=sanitized_message,
+            source_file=record.module,
+            function_name=record.funcName,
+            line_number=record.lineno,
         )
         log_dict = log_message.to_dict()
         log_json = json.dumps(log_dict)

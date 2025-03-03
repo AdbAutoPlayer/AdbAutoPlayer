@@ -213,7 +213,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
         match template:
             case "arcane_labyrinth/additional_challenge.png":
-                logging.debug("__arcane_lab_start_battle: additional challenge popup")
+                logging.debug("additional challenge popup")
                 self.click(x, y)
             case _:
                 pass
@@ -391,8 +391,6 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         return
 
     def __battle_is_not_completed(self) -> bool:
-        logging.debug("__battle_is_not_completed")
-
         templates = [
             "arcane_labyrinth/tap_to_close.png",
             "arcane_labyrinth/heroes_icon.png",
@@ -413,7 +411,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         if result is None:
             if self.arcane_skip_coordinates is not None:
                 self.click(*self.arcane_skip_coordinates)
-                logging.debug("Clicking skip")
+                logging.debug("clicking skip")
             difficulty = self.find_template_match(
                 template="arcane_labyrinth/difficulty.png",
                 threshold=0.7,
@@ -455,6 +453,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 self.__select_a_crest()
             case _:
                 pass
+        logging.debug(f"template: {template} found battle done")
         return False
 
     def __click_best_gate(self, swords_x: int, swords_y: int) -> None:
