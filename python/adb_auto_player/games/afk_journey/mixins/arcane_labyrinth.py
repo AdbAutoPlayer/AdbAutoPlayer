@@ -91,7 +91,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 while self.__handle_arcane_labyrinth():
                     sleep(1)
 
-            except TimeoutException as e:
+            except (TimeoutException, TimeoutError) as e:
                 logging.warning(f"{e}")
                 continue
             clear_count += 1
@@ -442,13 +442,19 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 self.click(*self.arcane_skip_coordinates)
                 return True
             case "arcane_labyrinth/battle.png":
+                count = 0
                 while self.find_template_match(
                     template="arcane_labyrinth/battle.png",
                     crop_top=0.8,
                     crop_left=0.3,
                 ):
+                    if count > 10:
+                        raise TimeoutError(
+                            "arcane_labyrinth/battle.png still visible after 10 clicks"
+                        )
                     self.click(x, y)
                     sleep(0.5)
+                    count += 1
                 return True
             case "arcane_labyrinth/confirm.png":
                 self.__select_a_crest()
