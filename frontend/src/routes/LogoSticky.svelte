@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { pollRunningProcess } from "$lib/stores/polling";
+  import { pollRunningGame } from "$lib/stores/polling";
 </script>
 
 <div class="logo-sticky">
   <img
-    src={$pollRunningProcess ? "/images/3583082.png" : "/images/3583083.png"}
+    src={$pollRunningGame ? "/images/3583082.png" : "/images/3583083.png"}
     alt="uwu"
     draggable="false"
   />
