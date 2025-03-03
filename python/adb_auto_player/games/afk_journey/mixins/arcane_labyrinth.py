@@ -448,6 +448,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     crop_left=0.3,
                 ):
                     self.click(x, y)
+                    sleep(0.5)
                 return True
             case "arcane_labyrinth/confirm.png":
                 self.__select_a_crest()
