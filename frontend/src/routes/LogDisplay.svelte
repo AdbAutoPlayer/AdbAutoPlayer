@@ -8,10 +8,24 @@
   EventsOn("log-message", (logMessage: LogMessage) => {
     const urlRegex = /(https?:\/\/\S+)/g;
 
-    const message: string = `[${logMessage.level}] ${logMessage.message.replace(
-      urlRegex,
-      '<a href="$1" target="_blank">$1</a>',
-    )}`;
+    let message: string = "";
+    if (logMessage.level == "DEBUG") {
+      const parts = [];
+      if (logMessage.source_file) parts.push(`${logMessage.source_file}`);
+      if (logMessage.function_name) parts.push(`${logMessage.function_name}`);
+      if (logMessage.line_number) parts.push(`${logMessage.line_number}`);
+      const debugInfo = parts.length > 0 ? ` (${parts.join("::")})` : "";
+
+      message = `[${logMessage.level}]${debugInfo} ${logMessage.message.replace(
+        urlRegex,
+        '<a href="$1" target="_blank">$1</a>',
+      )}`;
+    } else {
+      message = `[${logMessage.level}] ${logMessage.message.replace(
+        urlRegex,
+        '<a href="$1" target="_blank">$1</a>',
+      )}`;
+    }
 
     if (logs.length >= maxLogEntries) {
       logs.shift();

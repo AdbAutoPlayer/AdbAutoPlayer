@@ -53,7 +53,7 @@ class JsonLogHandler(logging.Handler):
         log_message = LogMessage.create_log_message(
             level=level_mapping.get(record.levelno, LogLevel.DEBUG),
             message=sanitized_message,
-            source_file=record.module,
+            source_file=record.module + ".py",
             function_name=record.funcName,
             line_number=record.lineno,
         )

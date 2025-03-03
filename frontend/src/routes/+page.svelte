@@ -96,7 +96,6 @@
   });
 
   function startGameProcess(menuOption: ipc.MenuOption) {
-    console.log(menuOption);
     activeButtonLabel = menuOption.label;
 
     $logoAwake = false;
@@ -189,7 +188,6 @@
     if ($logoAwake) {
       GetRunningSupportedGame()
         .then((game) => {
-          console.log(`game: ${game}`);
           activeGame = game;
         })
         .catch((err) => {

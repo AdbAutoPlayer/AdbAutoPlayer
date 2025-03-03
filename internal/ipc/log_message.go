@@ -16,11 +16,12 @@ const (
 )
 
 type LogMessage struct {
-	Level      LogLevel  `json:"level"`
-	Message    string    `json:"message"`
-	Timestamp  time.Time `json:"timestamp"`
-	SourceFile *string   `json:"source_file"`
-	LineNumber *int32    `json:"line_number"`
+	Level        LogLevel  `json:"level"`
+	Message      string    `json:"message"`
+	Timestamp    time.Time `json:"timestamp"`
+	SourceFile   *string   `json:"source_file"`
+	FunctionName *string   `json:"function_name"`
+	LineNumber   *int32    `json:"line_number"`
 }
 
 func NewLogMessage(
@@ -30,10 +31,11 @@ func NewLogMessage(
 	now := time.Now()
 	timestamp := &now
 	return LogMessage{
-		Level:      level,
-		Message:    message,
-		Timestamp:  *timestamp,
-		SourceFile: nil,
-		LineNumber: nil,
+		Level:        level,
+		Message:      message,
+		Timestamp:    *timestamp,
+		SourceFile:   nil,
+		FunctionName: nil,
+		LineNumber:   nil,
 	}
 }

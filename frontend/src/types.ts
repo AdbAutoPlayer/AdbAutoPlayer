@@ -11,6 +11,7 @@ interface LogMessage {
   level: LogLevel;
   message: string;
   timestamp: string;
-  sourceFile?: string;
-  lineNumber?: number;
+  source_file?: string;
+  function_name?: string;
+  line_number?: number;
 }
