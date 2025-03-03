@@ -5,6 +5,7 @@ from typing import NoReturn
 
 from adb_auto_player.exceptions import TimeoutException
 from adb_auto_player.games.afk_journey.afk_journey_base import AFKJourneyBase
+from adb_auto_player.template_matching import MatchMode
 
 
 class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
@@ -12,6 +13,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
     arcane_lucky_flip_keys: int = 0
     arcane_tap_to_close_coordinates: tuple[int, int] | None = None
     arcane_difficulty_was_visible: bool = False
+    arcane_difficulty_not_visible_count: int = 0
 
     def __quit(self) -> None:
         logging.info("Restarting Arcane Labyrinth")
@@ -246,26 +248,30 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         sleep(2)
 
     def __handle_enter_button(self, x: int, y: int) -> None:
-        if not self.find_template_match("arcane_labyrinth/arrow_right.png"):
+        difficulty = self.get_config().arcane_labyrinth.difficulty
+
+        if difficulty < 15 and not self.find_template_match(
+            "arcane_labyrinth/arrow_right.png"
+        ):
             left_arrow = self.wait_for_template("arcane_labyrinth/arrow_left.png")
             if not self.find_template_match("arcane_labyrinth/arrow_right.png"):
                 logging.debug("Lowering difficulty")
-                self.click(*left_arrow)
-                sleep(1)
-                self.click(*left_arrow)
+                while (15 - difficulty) > 0:
+                    self.click(*left_arrow)
+                    sleep(1)
+                    difficulty += 1
             else:
                 logging.debug("Already on lower difficulty")
         else:
             logging.debug("Already on lower difficulty")
 
-        self.click(x, y)
         while self.find_template_match(
             template="arcane_labyrinth/enter.png",
             crop_top=0.8,
             crop_left=0.3,
         ):
             self.click(x, y)
-            sleep(0.5)
+            sleep(2)
 
         template, _, _ = self.wait_for_any_template(
             templates=[
@@ -276,14 +282,21 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "confirm.png",
                 "confirm_text.png",
             ],
-            threshold=0.7,
+            threshold=0.8,
         )
 
         if template in (
             "confirm.png",
             "confirm_text.png",
         ):
-            checkbox = self.find_template_match("battle/checkbox_unchecked.png")
+            checkbox = self.find_template_match(
+                "battle/checkbox_unchecked.png",
+                match_mode=MatchMode.TOP_LEFT,
+                crop_right=0.8,
+                crop_top=0.2,
+                crop_bottom=0.6,
+                threshold=0.8,
+            )
             if checkbox is not None:
                 self.click(*checkbox)
         self._click_confirm_on_popup()
@@ -408,12 +421,15 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             )
 
             if difficulty is None and self.arcane_difficulty_was_visible:
-                logging.debug("arcane_labyrinth/difficulty.png no longer visible")
-                self.arcane_difficulty_was_visible = False
-                return False
+                if self.arcane_difficulty_not_visible_count > 10:
+                    logging.debug("arcane_labyrinth/difficulty.png no longer visible")
+                    self.arcane_difficulty_was_visible = False
+                    return False
+                self.arcane_difficulty_not_visible_count += 1
 
             if difficulty is not None:
                 self.arcane_difficulty_was_visible = True
+                self.arcane_difficulty_not_visible_count = 0
             sleep(0.1)
 
             return True

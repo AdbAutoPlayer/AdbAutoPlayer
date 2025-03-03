@@ -63,6 +63,9 @@ These settings apply to **AFK Stages**, **Dura's Trials**, and **Legend Trials**
 - **Push Both Modes**: If enabled, the bot will try the other mode after failing all attempts on all formations.
 - **Repeat**: If enabled, the bot will retry from the start after failing all attempts
 
+### Arcane Labyrinth
+- **Difficulty**: Difficulty to run, difficulty will only be changed if it's 15 if you manually set it to a lower difficulty e.g. 7 it will ignore this setting.
+
 ### Legend Trials
 
 - **Towers**: Any unselected tower will be skipped.

@@ -140,11 +140,16 @@ class LegendTrialsConfig(BaseModel):
         return v
 
 
+class ArcaneLabyrinthConfig(BaseModel):
+    difficulty: int = Field(ge=1, le=15, default=13, alias="Difficulty")
+
+
 class Config(BaseModel):
     general: GeneralConfig = Field(alias="General")
     afk_stages: AFKStagesConfig = Field(alias="AFK Stages")
     duras_trials: DurasTrialsConfig = Field(alias="Dura's Trials")
     legend_trials: LegendTrialsConfig = Field(alias="Legend Trial")
+    arcane_labyrinth: ArcaneLabyrinthConfig = Field(alias="Arcane Labyrinth")
 
     @classmethod
     def from_toml(cls, file_path: Path):
@@ -171,6 +176,12 @@ class Config(BaseModel):
                 "Both Modes": constraint.create_checkbox_constraint(),
                 "Spend Gold": constraint.create_checkbox_constraint(),
                 "Repeat": constraint.create_checkbox_constraint(),
+            },
+            "Arcane Labyrinth": {
+                "Difficulty": constraint.create_number_constraint(
+                    minimum=1,
+                    maximum=15,
+                ),
             },
             "Dura's Trials": {
                 "Attempts": constraint.create_number_constraint(),

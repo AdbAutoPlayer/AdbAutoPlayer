@@ -12,6 +12,9 @@ PositiveInt = Annotated[int, Field(ge=1, le=999)]
 
 # Models
 class SheepMinigameConfig(BaseModel):
+    # perfect clear gives 1350 bling
+    # bling cap is 160k
+    # 160000 / 1350 =~ 119
     runs: PositiveInt = Field(default=119, alias="Runs")
 
 

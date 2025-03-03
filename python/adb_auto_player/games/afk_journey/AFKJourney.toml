@@ -6,6 +6,9 @@ Repeat = true
 'Spend Gold' = false
 'Suggested Formations' = true
 
+['Arcane Labyrinth']
+Difficulty = 13
+
 ["Dura's Trials"]
 Attempts = 2
 Formations = 7
