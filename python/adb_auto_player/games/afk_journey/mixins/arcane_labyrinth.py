@@ -283,7 +283,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         self._click_confirm_on_popup()
         return None
 
-    def __handle_enter_button(self, x: int, y: int) -> None:
+    def __handle_enter_button(self) -> None:
         difficulty = self.get_config().arcane_labyrinth.difficulty
 
         if difficulty < 15 and not self.find_template_match(
@@ -301,12 +301,12 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         else:
             logging.debug("Already on lower difficulty")
 
-        while self.find_template_match(
+        while enter := self.find_template_match(
             template="arcane_labyrinth/enter.png",
             crop_top=0.8,
             crop_left=0.3,
         ):
-            self.click(x, y)
+            self.click(*enter)
             sleep(2)
 
         template, _, _ = self.wait_for_any_template(
@@ -355,7 +355,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             crop_left=0.3,
         )
         if result:
-            self.__handle_enter_button(*result)
+            self.__handle_enter_button()
             return
 
         if self.find_template_match(
@@ -423,7 +423,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         )
         match template:
             case "arcane_labyrinth/enter.png":
-                self.__handle_enter_button(x, y)
+                self.__handle_enter_button()
             case "arcane_labyrinth/heroes_icon.png":
                 logging.info("Arcane Labyrinth already started")
         return
