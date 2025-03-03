@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	stdruntime "runtime"
 	"strings"
+	"time"
 )
 
 type App struct {
@@ -282,6 +283,8 @@ func (a *App) IsGameProcessRunning() bool {
 func (a *App) UpdatePatch(assetUrl string) error {
 	pm := GetProcessManager()
 	pm.blocked = true
+	_, _ = pm.KillProcess()
+	time.Sleep(time.Duration(3) * time.Second)
 	defer func() { pm.blocked = false }()
 	runtime.LogInfo(a.ctx, "Downloading update")
 	response, err := http.Get(assetUrl)
