@@ -8,6 +8,10 @@ from adb_auto_player.games.afk_journey.afk_journey_base import AFKJourneyBase
 from adb_auto_player.template_matching import MatchMode
 
 
+class BattleCannotBeStartedError(Exception):
+    pass
+
+
 class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
     arcane_skip_coordinates: tuple[int, int] | None = None
     arcane_lucky_flip_keys: int = 0
@@ -40,6 +44,14 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     self.click(x, y)
                     continue
             break
+
+        _ = self.wait_for_template(
+            "arcane_labyrinth/hold_to_exit.png",
+            crop_right=0.5,
+            crop_top=0.5,
+            crop_bottom=0.3,
+        )
+        sleep(1)
         hold_to_exit = self.wait_for_template(
             "arcane_labyrinth/hold_to_exit.png",
             crop_right=0.5,
@@ -91,8 +103,13 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 while self.__handle_arcane_labyrinth():
                     sleep(1)
 
-            except (TimeoutException, TimeoutError) as e:
+            except TimeoutException as e:
                 logging.warning(f"{e}")
+                continue
+            except BattleCannotBeStartedError as e:
+                logging.error(f"{e}")
+                logging.error("Restarting Arcane Labyrinth")
+                self.__quit()
                 continue
             clear_count += 1
             logging.info(f"Arcane Labyrinth clear #{clear_count}")
@@ -202,7 +219,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     self.click(x, y)
         return True
 
-    def __arcane_lab_start_battle(self):
+    def __arcane_lab_start_battle(self) -> None:
         template, x, y = self.wait_for_any_template(
             templates=[
                 "arcane_labyrinth/battle.png",
@@ -243,9 +260,28 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             crop_top=0.8,
             crop_left=0.3,
         )
+        count = 1
+        logging.debug(f"clicking arcane_labyrinth/battle.png #{count}")
         self.click(*battle)
+        sleep(0.5)
+        while self.find_template_match(
+            template="arcane_labyrinth/battle.png",
+            crop_top=0.8,
+            crop_left=0.3,
+        ):
+            if count >= 5:
+                raise BattleCannotBeStartedError(
+                    "arcane_labyrinth/battle.png still visible after 5 clicks"
+                )
+            count += 1
+            logging.debug(f"clicking arcane_labyrinth/battle.png #{count}")
+            self.click(*battle)
+            sleep(0.5)
         self.arcane_difficulty_was_visible = False
-        sleep(2)
+        sleep(1)
+        self._click_confirm_on_popup()
+        self._click_confirm_on_popup()
+        return None
 
     def __handle_enter_button(self, x: int, y: int) -> None:
         difficulty = self.get_config().arcane_labyrinth.difficulty
@@ -442,19 +478,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 self.click(*self.arcane_skip_coordinates)
                 return True
             case "arcane_labyrinth/battle.png":
-                count = 0
-                while self.find_template_match(
-                    template="arcane_labyrinth/battle.png",
-                    crop_top=0.8,
-                    crop_left=0.3,
-                ):
-                    if count > 10:
-                        raise TimeoutError(
-                            "arcane_labyrinth/battle.png still visible after 10 clicks"
-                        )
-                    self.click(x, y)
-                    sleep(0.5)
-                    count += 1
+                self.__arcane_lab_start_battle()
                 return True
             case "arcane_labyrinth/confirm.png":
                 self.__select_a_crest()
@@ -470,7 +494,6 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             "arcane_labyrinth/swords_button.png",
             crop_top=0.6,
             crop_bottom=0.2,
-            use_previous_screenshot=True,
         )
         if len(results) <= 1:
             self.click(swords_x, swords_y)
@@ -487,7 +510,6 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             threshold=0.8,
             crop_top=0.2,
             crop_bottom=0.5,
-            use_previous_screenshot=True,
         )
 
         if result is None:
