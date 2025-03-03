@@ -1,7 +1,7 @@
 <script lang="ts">
   import { version } from "$app/environment";
   import { UpdatePatch } from "$lib/wailsjs/go/main/App";
-  import { logoAwake } from "$lib/stores/logo";
+  import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
   import { LogError, LogInfo, LogWarning } from "$lib/wailsjs/runtime";
   import { marked } from "marked";
   import Modal from "./Modal.svelte";
@@ -155,23 +155,17 @@
             console.log("No asset found");
             return;
           }
-
-          $logoAwake = false;
-          UpdatePatch(patch.browser_download_url)
-            .then(async () => {
-              await setItem("patch", releaseData.tag_name);
-              LogInfo(`Downloaded Patch Version: ${releaseData.tag_name}`);
-              modalRelease = releaseData;
-              modalAsset = undefined;
-              showModal = true;
-              alert("Update completed");
-            })
-            .catch((err) => {
-              alert(err);
-            })
-            .finally(() => {
-              $logoAwake = true;
-            });
+          try {
+            await UpdatePatch(patch.browser_download_url);
+            await setItem("patch", releaseData.tag_name);
+            LogInfo(`Downloaded Patch Version: ${releaseData.tag_name}`);
+            modalRelease = releaseData;
+            modalAsset = undefined;
+            showModal = true;
+            alert("Update completed");
+          } catch (error) {
+            alert(error);
+          }
           return;
         }
 
@@ -234,7 +228,15 @@
     }
 
     LogInfo(`Patch Version: ${patchVersion} App Version: ${version}`);
-    await checkForNewRelease(patchVersion);
+
+    $pollRunningGame = false;
+    $pollRunningProcess = false;
+    try {
+      await checkForNewRelease(patchVersion);
+    } catch (error) {
+      $pollRunningGame = true;
+      $pollRunningProcess = true;
+    }
   }
 
   function downloadAsset() {

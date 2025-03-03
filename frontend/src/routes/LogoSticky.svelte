@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { logoAwake } from "$lib/stores/logo";
+  import { pollRunningProcess } from "$lib/stores/polling";
 </script>
 
 <div class="logo-sticky">
   <img
-    src={$logoAwake ? "/images/3583082.png" : "/images/3583083.png"}
+    src={$pollRunningProcess ? "/images/3583082.png" : "/images/3583083.png"}
     alt="uwu"
     draggable="false"
   />

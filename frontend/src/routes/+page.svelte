@@ -13,7 +13,7 @@
   import CommandPanel from "./CommandPanel.svelte";
   import ConfigForm from "./ConfigForm.svelte";
   import Menu from "./Menu.svelte";
-  import { logoAwake } from "$lib/stores/logo";
+  import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
   import { config, ipc } from "$lib/wailsjs/go/models";
   import { sortObjectByOrder } from "$lib/orderHelper";
   const defaultButtons: MenuButton[] = [
@@ -97,12 +97,18 @@
 
   function startGameProcess(menuOption: ipc.MenuOption) {
     activeButtonLabel = menuOption.label;
+    $pollRunningGame = false;
+    clearTimeout(updateStateTimeout);
 
-    $logoAwake = false;
-    StartGameProcess(menuOption.args).catch((err) => {
-      console.log(err);
-      alert(err);
-    });
+    StartGameProcess(menuOption.args)
+      .catch((err) => {
+        console.log(err);
+        alert(err);
+      })
+      .finally(() => {
+        $pollRunningGame = true;
+        setTimeout(updateStateHandler, 1000);
+      });
   }
 
   function onMainConfigSave(configObject: object) {
@@ -115,7 +121,8 @@
       })
       .finally(() => {
         showConfigForm = false;
-        $logoAwake = true;
+        $pollRunningGame = true;
+        $pollRunningProcess = true;
       });
   }
 
@@ -129,77 +136,79 @@
       })
       .finally(() => {
         showConfigForm = false;
-        $logoAwake = true;
+        $pollRunningGame = true;
+        $pollRunningProcess = true;
       });
   }
 
-  function openGameConfigForm(game: ipc.GameGUI | null) {
+  async function openGameConfigForm(game: ipc.GameGUI | null) {
     console.log("openGameConfigForm");
     if (game === null) {
       console.log("game === null");
       return;
     }
+    $pollRunningGame = false;
+    $pollRunningProcess = false;
+
     openFormIsMainConfig = false;
-    $logoAwake = false;
-    GetEditableGameConfig(game)
-      .then((result) => {
-        console.log(result);
-        result.constraints = sortObjectByOrder(result.constraints);
-        configFormProps = result;
-        showConfigForm = true;
-      })
-      .catch((err) => {
-        console.log(err);
-        $logoAwake = true;
-        alert(err);
-      });
+    try {
+      const result = await GetEditableGameConfig(game);
+      console.log(result);
+      result.constraints = sortObjectByOrder(result.constraints);
+      configFormProps = result;
+      showConfigForm = true;
+    } catch (error) {
+      console.log(error);
+      alert(error);
+      $pollRunningGame = true;
+      $pollRunningProcess = true;
+    }
   }
 
-  function openMainConfigForm() {
+  async function openMainConfigForm() {
     openFormIsMainConfig = true;
-    $logoAwake = false;
-    GetEditableMainConfig()
-      .then((result) => {
-        result.constraints = sortObjectByOrder(result.constraints);
-        configFormProps = result;
-        showConfigForm = true;
-      })
-      .catch((err) => {
-        $logoAwake = true;
-        alert(err);
-      });
+    $pollRunningGame = false;
+    $pollRunningProcess = false;
+    try {
+      const result = await GetEditableMainConfig();
+      result.constraints = sortObjectByOrder(result.constraints);
+      configFormProps = result;
+      showConfigForm = true;
+    } catch (error) {
+      alert(error);
+      $pollRunningGame = true;
+      $pollRunningProcess = true;
+    }
   }
 
   let updateStateTimeout: number | undefined;
-  function updateState() {
-    if (showConfigForm) {
-      updateStateTimeout = setTimeout(updateState, 2500);
-      return;
+  async function updateStateHandler() {
+    await updateState();
+    updateStateTimeout = setTimeout(updateStateHandler, 3000);
+  }
+
+  async function updateState() {
+    try {
+      if ($pollRunningProcess) {
+        const response = await IsGameProcessRunning();
+        $pollRunningGame = !response;
+      }
+    } catch (err) {
+      console.log(`err: ${err}`);
     }
 
-    IsGameProcessRunning()
-      .then((response: boolean) => {
-        $logoAwake = !response;
-      })
-      .catch((err) => {
-        console.log(`err: ${err}`);
-      });
-
-    if ($logoAwake) {
-      GetRunningSupportedGame()
-        .then((game) => {
-          activeGame = game;
-        })
-        .catch((err) => {
-          console.log(`err: ${err}`);
-          activeGame = null;
-        });
+    try {
+      if ($pollRunningGame) {
+        activeGame = await GetRunningSupportedGame();
+      }
+    } catch (err) {
+      console.log(`err: ${err}`);
+      activeGame = null;
     }
-    updateStateTimeout = setTimeout(updateState, 2500);
   }
 
   onMount(() => {
-    updateState();
+    updateStateHandler();
   });
 
   onDestroy(() => {
@@ -224,7 +233,7 @@
       <Menu
         buttons={activeGameMenuButtons ?? []}
         {defaultButtons}
-        disableActions={!$logoAwake}
+        disableActions={!$pollRunningGame}
       ></Menu>
     </CommandPanel>
   {/if}
