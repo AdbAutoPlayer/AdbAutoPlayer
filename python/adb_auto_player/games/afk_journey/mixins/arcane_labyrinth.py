@@ -113,7 +113,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 continue
             clear_count += 1
             logging.info(f"Arcane Labyrinth clear #{clear_count}")
-            self._add_keys_farmed(23)
+            self._add_keys_farmed(self.get_config().arcane_labyrinth.difficulty + 10)
             self.wait_for_template(
                 "arcane_labyrinth/enter.png",
                 crop_top=0.8,
