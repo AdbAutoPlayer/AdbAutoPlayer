@@ -161,13 +161,15 @@
             .then(async () => {
               await setItem("patch", releaseData.tag_name);
               LogInfo(`Downloaded Patch Version: ${releaseData.tag_name}`);
-              $logoAwake = true;
               modalRelease = releaseData;
               modalAsset = undefined;
               showModal = true;
+              alert("Update completed");
             })
             .catch((err) => {
               alert(err);
+            })
+            .finally(() => {
               $logoAwake = true;
             });
           return;
