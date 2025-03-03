@@ -95,50 +95,53 @@
     return [];
   });
 
-  function startGameProcess(menuOption: ipc.MenuOption) {
+  async function startGameProcess(menuOption: ipc.MenuOption) {
     activeButtonLabel = menuOption.label;
     $pollRunningGame = false;
     clearTimeout(updateStateTimeout);
 
-    StartGameProcess(menuOption.args)
-      .catch((err) => {
-        console.log(err);
-        alert(err);
-      })
-      .finally(() => {
-        $pollRunningGame = true;
-        setTimeout(updateStateHandler, 1000);
-      });
+    try {
+      await StartGameProcess(menuOption.args);
+    } catch (error) {
+      console.log(error);
+      alert(error);
+    }
+    $pollRunningGame = true;
+    setTimeout(updateStateHandler, 1000);
   }
 
-  function onMainConfigSave(configObject: object) {
+  async function onMainConfigSave(configObject: object) {
     console.log("onMainConfigSave");
     const configForm = config.MainConfig.createFrom(configObject);
     console.log(configForm);
-    SaveMainConfig(configForm)
-      .catch((err) => {
-        alert(err);
-      })
-      .finally(() => {
-        showConfigForm = false;
-        $pollRunningGame = true;
-        $pollRunningProcess = true;
-      });
+
+    try {
+      await SaveMainConfig(configForm);
+    } catch (error) {
+      console.log(error);
+      alert(error);
+    }
+
+    showConfigForm = false;
+    $pollRunningGame = true;
+    $pollRunningProcess = true;
   }
 
-  function onGameConfigSave(configObject: object) {
+  async function onGameConfigSave(configObject: object) {
     if (!activeGame) {
       return;
     }
-    SaveGameConfig(configObject)
-      .catch((err) => {
-        alert(err);
-      })
-      .finally(() => {
-        showConfigForm = false;
-        $pollRunningGame = true;
-        $pollRunningProcess = true;
-      });
+
+    try {
+      await SaveGameConfig(configObject);
+    } catch (error) {
+      console.log(error);
+      alert(error);
+    }
+
+    showConfigForm = false;
+    $pollRunningGame = true;
+    $pollRunningProcess = true;
   }
 
   async function openGameConfigForm(game: ipc.GameGUI | null) {
