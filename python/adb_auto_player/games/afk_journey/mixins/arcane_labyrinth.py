@@ -372,11 +372,12 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         # Possibility of getting stuck
         # Back button does not work on Arcane Labyrinth screen
 
-        def check_for_select_a_crest() -> bool:
+        def stop_condition() -> bool:
             match = self.find_any_template(
                 templates=[
                     "arcane_labyrinth/select_a_crest.png",
                     "arcane_labyrinth/confirm.png",
+                    "arcane_labyrinth/quit.png",
                 ],
                 crop_top=0.8,
             )
@@ -386,12 +387,13 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 return True
             return False
 
-        self._navigate_to_default_state(check_callable=check_for_select_a_crest)
+        self._navigate_to_default_state(check_callable=stop_condition)
 
         if self.find_any_template(
             templates=[
                 "arcane_labyrinth/select_a_crest.png",
                 "arcane_labyrinth/confirm.png",
+                "arcane_labyrinth/quit.png",
             ],
             crop_top=0.8,
         ):
