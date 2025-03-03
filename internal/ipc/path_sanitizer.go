@@ -42,20 +42,20 @@ func NewPathSanitizerWithConfig(runtime string, username string) *PathSanitizer 
 }
 
 func (ps *PathSanitizer) SanitizePath(message string) string {
-	if !ps.sanitize || strings.Contains(message, "<redacted>") {
+	if !ps.sanitize || strings.Contains(message, "{redacted}") {
 		return message
 	}
 
 	var pattern, replacement string
 	if ps.runtime == "windows" {
 		pattern = `:\\Users\\` + regexp.QuoteMeta(ps.username)
-		replacement = `:\Users\<redacted>`
+		replacement = `:\Users\{redacted}`
 	} else if ps.runtime == "darwin" {
 		pattern = `/Users/` + regexp.QuoteMeta(ps.username)
-		replacement = `/Users/<redacted>`
+		replacement = `/Users/{redacted}`
 	} else {
 		pattern = `/home/` + regexp.QuoteMeta(ps.username)
-		replacement = `/home/<redacted>`
+		replacement = `/home/{redacted}`
 	}
 
 	re, err := regexp.Compile(pattern)
