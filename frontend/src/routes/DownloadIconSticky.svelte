@@ -234,9 +234,11 @@
     try {
       await checkForNewRelease(patchVersion);
     } catch (error) {
-      $pollRunningGame = true;
-      $pollRunningProcess = true;
+      console.log(error);
+      alert(error);
     }
+    $pollRunningGame = true;
+    $pollRunningProcess = true;
   }
 
   function downloadAsset() {
