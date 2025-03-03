@@ -84,8 +84,11 @@ class TextLogHandler(logging.StreamHandler):
         log_level = record.levelname
         sanitized_message = sanitize_path(record.getMessage())
         color = self.COLORS.get(log_level, self.COLORS["RESET"])
+
+        debug_info = f"({record.module}.py::{record.funcName}::{record.lineno})"
         formatted_message = (
-            f"{color}[{log_level}] {sanitized_message}{self.COLORS['RESET']}"
+            f"{color}"
+            f"[{log_level}] {debug_info} {sanitized_message}{self.COLORS['RESET']}"
         )
         print(formatted_message)
         sys.stdout.flush()
