@@ -98,21 +98,26 @@ def __print_gui_games_menu() -> None:
 
 
 def __print_running_game() -> None:
-    print(__get_running_game(), end="")
+    running_game = __get_running_game()
+    if running_game:
+        logging.info(f"Running game: {__get_running_game()}")
+    else:
+        logging.debug("No running game")
     return None
 
 
-def __get_running_game() -> str:
-    logging.disable(logging.CRITICAL)
+def __get_running_game() -> str | None:
     try:
         device = adb_auto_player.adb.get_device()
         package_name = adb_auto_player.adb.get_running_app(device)
+        if not package_name:
+            return None
         for game in __get_games():
-            if package_name in game.package_names:
+            if any(pn in package_name for pn in game.package_names):
                 return game.get_gui_options().game_title
-    except Exception:
-        pass
-    return ""
+    except Exception as e:
+        logging.error(e)
+    return None
 
 
 def __run_command(cmd: Command) -> NoReturn:

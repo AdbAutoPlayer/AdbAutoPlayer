@@ -19,7 +19,6 @@ class AFKJourneyBase(Game, ABC):
         self.supports_portrait = True
         self.package_names = [
             "com.farlightgames.igame.gp",
-            "com.farlightgames.igame.gp.vn",
         ]
 
     template_dir_path: Path | None = None

@@ -13,7 +13,7 @@ class InfinityNikkiBase(Game, ABC):
     def __init__(self) -> None:
         super().__init__()
         self.package_names = [
-            "com.infoldgames.infinitynikkias",
+            "com.infoldgames.infinitynikki",
         ]
 
     template_dir_path: Path | None = None

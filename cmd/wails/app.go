@@ -180,19 +180,38 @@ func (a *App) GetRunningSupportedGame() (*ipc.GameGUI, error) {
 	}
 
 	pm := GetProcessManager()
-	runningGame, err := pm.Exec(*a.pythonBinaryPath, "GetRunningGame")
-	if runningGame == "" {
-		runtime.LogDebug(a.ctx, "No running game found")
-		return nil, nil
-	}
 
-	runningGame = strings.TrimSpace(runningGame)
-	runtime.LogDebugf(a.ctx, "Running game: %s", runningGame)
+	runningGame := ""
+	output, err := pm.Exec(*a.pythonBinaryPath, "GetRunningGame")
 
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "%v", err)
 		return nil, err
 	}
+
+	lines := strings.Split(output, "\n")
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+
+		var logMessage ipc.LogMessage
+		if err := json.Unmarshal([]byte(line), &logMessage); err != nil {
+			pm.logger.Errorf("Failed to parse JSON log message: %v", err)
+			continue
+		}
+
+		if strings.HasPrefix(logMessage.Message, "Running game: ") {
+			runningGame = strings.TrimSpace(strings.TrimPrefix(logMessage.Message, "Running game: "))
+		}
+
+		pm.logger.LogMessage(logMessage)
+	}
+
+	if runningGame == "" {
+		return nil, nil
+	}
+
 	for _, game := range a.games {
 		if runningGame == game.GameTitle {
 			return &game, nil
