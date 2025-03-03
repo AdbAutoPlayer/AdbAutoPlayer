@@ -19,6 +19,30 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
     arcane_difficulty_was_visible: bool = False
     arcane_difficulty_not_visible_count: int = 0
 
+    def __add_clear_key_amount(self) -> None:
+        mapping = {
+            1: 5,
+            2: 7,
+            3: 8,
+            4: 8,
+            5: 10,
+            6: 12,
+            7: 14,
+            8: 16,
+            9: 18,
+            10: 20,
+            11: 21,
+            12: 22,
+            13: 23,
+            14: 24,
+            15: 25,
+        }
+
+        keys = mapping.get(self.get_config().arcane_labyrinth.difficulty, None)
+        if keys:
+            self.__add_keys_farmed(keys)
+        return
+
     def __quit(self) -> None:
         logging.info("Restarting Arcane Labyrinth")
         x, y = 0, 0  # PyCharm complains for no reason...
@@ -77,12 +101,13 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 break
         return
 
-    def _add_keys_farmed(self, keys: int):
+    def __add_keys_farmed(self, keys: int) -> None:
         self.arcane_lucky_flip_keys += keys
         logging.info(
             f"Lucky Flip Keys farmed: {self.arcane_lucky_flip_keys} "
             f"(Guild Keys: {self.arcane_lucky_flip_keys // 5})"
         )
+        return
 
     def handle_arcane_labyrinth(self) -> NoReturn:
         logging.warning("This is made for farming Lucky Flip Keys")
@@ -113,7 +138,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 continue
             clear_count += 1
             logging.info(f"Arcane Labyrinth clear #{clear_count}")
-            self._add_keys_farmed(self.get_config().arcane_labyrinth.difficulty + 10)
+            self.__add_clear_key_amount()
             self.wait_for_template(
                 "arcane_labyrinth/enter.png",
                 crop_top=0.8,
@@ -135,7 +160,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         )
 
         if template == "arcane_labyrinth/rarity/epic.png":
-            self._add_keys_farmed(9)
+            self.__add_keys_farmed(9)
 
         self.click(x, y)
         sleep(1)
