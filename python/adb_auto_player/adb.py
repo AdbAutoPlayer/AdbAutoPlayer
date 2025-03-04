@@ -115,13 +115,13 @@ def __get_adb_device(
         int_port: int = int(port)
         while i <= 10:
             new_device_id = f"{host}:{int_port + i}"
+            logging.debug(f"Trying Device ID: {new_device_id}")
             try:
                 device = __connect_to_device(client, new_device_id)
                 if device is not None:
                     break
             except AdbException as e:
                 logging.debug(f"{e}")
-                logging.debug(f"Trying Device ID: {new_device_id}")
             i += 1
 
     try:
@@ -129,18 +129,18 @@ def __get_adb_device(
     except Exception:
         raise AdbException("Failed to connect to AdbClient check the config.toml")
     if len(devices) == 0:
-        logging.warning("No devices found")
+        logging.debug("No devices found")
     else:
         devices_str = "Devices:"
         for device_info in devices:
             devices_str += f"\n- {device_info.serial}"
-        logging.info(devices_str)
+        logging.debug(devices_str)
 
     if device:
-        logging.info(f"Connected to Device: {device.serial}")
+        logging.debug(f"Connected to Device: {device.serial}")
     elif device is None and len(devices) == 1:
         only_available_device = devices[0].serial
-        logging.warning(
+        logging.debug(
             f"{device_id} not found connecting to"
             f" only available Device: {only_available_device}"
         )
@@ -150,7 +150,7 @@ def __get_adb_device(
         raise AdbException(f"Device: {device_id} not found")
 
     if override_size and wm_size:
-        logging.info(f"Overriding size: {override_size}")
+        logging.debug(f"Overriding size: {override_size}")
         try:
             device.shell(f"wm size {override_size}")
         except Exception as e:
