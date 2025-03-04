@@ -120,9 +120,9 @@ def __get_adb_device(
                 if device is not None:
                     break
             except AdbException as e:
-                i += 1
                 logging.debug(f"{e}")
                 logging.debug(f"Trying Device ID: {new_device_id}")
+            i += 1
 
     try:
         devices = client.list()
