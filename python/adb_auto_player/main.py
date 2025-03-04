@@ -100,7 +100,7 @@ def __print_gui_games_menu() -> None:
 def __print_running_game() -> None:
     running_game = __get_running_game()
     if running_game:
-        logging.critical(f"Running game: {running_game}")
+        logging.debug(f"Running game: {running_game}")
     else:
         logging.debug("No running game")
     return None
