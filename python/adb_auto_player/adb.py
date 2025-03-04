@@ -136,18 +136,18 @@ def __get_adb_device(
             devices_str += f"\n- {device_info.serial}"
         logging.info(devices_str)
 
-    if device is None and len(devices) == 1:
+    if device:
+        logging.info(f"Connected to Device: {device.serial}")
+    elif device is None and len(devices) == 1:
         only_available_device = devices[0].serial
         logging.warning(
             f"{device_id} not found connecting to"
-            f" only available device: {only_available_device}"
+            f" only available Device: {only_available_device}"
         )
         device = __connect_to_device(client, only_available_device)
 
     if device is None:
         raise AdbException(f"Device: {device_id} not found")
-
-    logging.info(f"Connected to Device {device.serial}")
 
     if override_size and wm_size:
         logging.info(f"Overriding size: {override_size}")
