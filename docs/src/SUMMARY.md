@@ -9,8 +9,8 @@
 - [Troubleshooting](user-guide/troubleshoot.md)
 
 # Games
-- [AFK Journey](games/afk-journey/afk-journey)
-- [Infinity Nikki](games/infinity-nikki/infinity-nikki)
+- [AFK Journey](games/afk-journey.md)
+- [Infinity Nikki](games/infinity-nikki.md)
 
 # App Development
 - [General](development/general.md)
