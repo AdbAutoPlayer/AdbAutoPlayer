@@ -187,7 +187,11 @@
   let updateStateTimeout: number | undefined;
   async function updateStateHandler() {
     await updateState();
-    updateStateTimeout = setTimeout(updateStateHandler, 3000);
+    if (activeGame) {
+      updateStateTimeout = setTimeout(updateStateHandler, 10000);
+    } else {
+      updateStateTimeout = setTimeout(updateStateHandler, 3000);
+    }
   }
 
   async function updateState() {
