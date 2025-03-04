@@ -245,24 +245,23 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         return True
 
     def __arcane_lab_start_battle(self) -> None:
-        template, x, y = self.wait_for_any_template(
+        _ = self.wait_for_any_template(
             templates=[
                 "arcane_labyrinth/battle.png",
                 "arcane_labyrinth/additional_challenge.png",
             ],
             threshold=0.8,
+            crop_top=0.2,
+            crop_left=0.3,
         )
 
-        match template:
-            case "arcane_labyrinth/additional_challenge.png":
-                logging.debug("additional challenge popup")
-                self.click(x, y)
-            case _:
-                pass
-        sleep(0.5)
-
+        sleep(1)
+        battle_click_count = 0
+        no_result_count = 0
         while True:
-            template, x, y = self.wait_for_any_template(
+            if no_result_count >= 3:
+                break
+            result = self.find_any_template(
                 templates=[
                     "arcane_labyrinth/battle.png",
                     "arcane_labyrinth/additional_challenge.png",
@@ -271,36 +270,27 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 crop_top=0.2,
                 crop_left=0.3,
             )
+            if result is None:
+                no_result_count += 1
+                sleep(0.5)
+                continue
+            template, x, y = result
             match template:
                 case "arcane_labyrinth/additional_challenge.png":
                     logging.debug(
                         "__arcane_lab_start_battle: additional challenge popup"
                     )
                     self.click(x, y)
-                case _:
-                    break
-
-        battle = self.wait_for_template(
-            template="arcane_labyrinth/battle.png",
-            crop_top=0.8,
-            crop_left=0.3,
-        )
-        count = 1
-        logging.debug(f"clicking arcane_labyrinth/battle.png #{count}")
-        self.click(*battle)
-        sleep(0.5)
-        while self.find_template_match(
-            template="arcane_labyrinth/battle.png",
-            crop_top=0.8,
-            crop_left=0.3,
-        ):
-            if count >= 5:
-                raise BattleCannotBeStartedError(
-                    "arcane_labyrinth/battle.png still visible after 5 clicks"
-                )
-            count += 1
-            logging.debug(f"clicking arcane_labyrinth/battle.png #{count}")
-            self.click(*battle)
+                case "arcane_labyrinth/battle.png":
+                    battle_click_count += 1
+                    if battle_click_count > 8:
+                        raise BattleCannotBeStartedError(
+                            "arcane_labyrinth/battle.png still visible after 8 clicks"
+                        )
+                    logging.debug(
+                        f"clicking arcane_labyrinth/battle.png #{battle_click_count}"
+                    )
+                    self.click(x, y)
             sleep(0.5)
         self.arcane_difficulty_was_visible = False
         sleep(1)
