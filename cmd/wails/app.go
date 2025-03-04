@@ -204,6 +204,7 @@ func (a *App) GetRunningSupportedGame() (*ipc.GameGUI, error) {
 
 		if strings.HasPrefix(logMessage.Message, "Running game: ") {
 			runningGame = strings.TrimSpace(strings.TrimPrefix(logMessage.Message, "Running game: "))
+			break
 		}
 
 		pm.logger.LogMessage(logMessage)
