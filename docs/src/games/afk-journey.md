@@ -1,9 +1,9 @@
 # AFK Journey
-> [!IMPORTANT]
-> Set the game language to English.
+## Support Game Languages:
+- **English**
 
-## Supported Resolution:
-#### 1080x1920
+## Supported Resolutions:
+- **1080x1920**
 
 ## Features
 - **Automated Stage Progression**:
@@ -29,12 +29,6 @@ To improve performance and reduce lag, adjust the following in-game settings:
 ---
 
 ## Configuration Details
-> [!NOTE]
-> Use the Edit Game Config button in the GUI to change the config!
-
-Configuration is loaded when you click any Action.
-
-
 ### General
 
 - **Excluded Heroes**: Formations including selected Heroes will be skipped.
