@@ -80,32 +80,13 @@ def get_device(override_size: str | None = None) -> AdbDevice:
         port=adb_config.get("port", 5037),
     )
 
-    # if it starts with anything else I will just assume the user knows what they are
-    # doing and don't need this
-    if device_id.startswith("127.0.0.1:") or device_id.startswith("localhost:"):
-        i = 0
-        host, port = device_id.split(":")
-        port = int(port)
-        while True:
-            try:
-                return __get_adb_device(
-                    client,
-                    f"{host}:{port}",
-                    override_size,
-                )
-            except AdbException as e:
-                i += 1
-                if i >= 10:
-                    raise e
-                logging.warning(f"{e}")
-                port += 1
-                logging.info(f"Trying Device ID: {host}:{port}")
-    else:
-        return __get_adb_device(client, device_id, override_size)
+    return __get_adb_device(client, device_id, override_size)
 
 
 def __get_adb_device(
-    client: AdbClient, device_id: str, override_size: str | None = None
+    client: AdbClient,
+    device_id: str,
+    override_size: str | None = None,
 ) -> AdbDevice:
     main_config = adb_auto_player.config_loader.get_main_config()
     wm_size = main_config.get("device", {}).get("wm_size", False)
@@ -125,6 +106,24 @@ def __get_adb_device(
     except Exception as e:
         logging.debug(f"client.connect exception: {e}")
 
+    device = __connect_to_device(client, device_id)
+    if device is None and (
+        device_id.startswith("127.0.0.1:") or device_id.startswith("localhost:")
+    ):
+        i = 1
+        host, port = device_id.split(":")
+        int_port: int = int(port)
+        while i <= 10:
+            new_device_id = f"{host}:{int_port + i}"
+            try:
+                device = __connect_to_device(client, new_device_id)
+                if device is not None:
+                    break
+            except AdbException as e:
+                i += 1
+                logging.debug(f"{e}")
+                logging.debug(f"Trying Device ID: {new_device_id}")
+
     try:
         devices = client.list()
     except Exception:
@@ -137,7 +136,6 @@ def __get_adb_device(
             devices_str += f"\n- {device_info.serial}"
         logging.info(devices_str)
 
-    device = __connect_to_device(client, device_id)
     if device is None and len(devices) == 1:
         only_available_device = devices[0].serial
         logging.warning(

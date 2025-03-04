@@ -101,6 +101,8 @@ class DeviceStream:
 
         buffer = b""
         while self._running:
+            if self._process is None:
+                break
             chunk = self._process.read(4096)
             if not chunk:
                 break
