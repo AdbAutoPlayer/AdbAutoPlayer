@@ -1,6 +1,8 @@
 # Emulator Settings
+> [!IMPORTANT]
+> Cloud Emulators like BlueStacks X cannot be used
 
-## BlueStacks (Windows) & BlueStacks Air (MacOS)
+## BlueStacks 5 (Windows) & BlueStacks Air (MacOS)
 
 ### Emulator Settings
 - **Display**:
