@@ -84,7 +84,7 @@
         },
         {
           label: "Stop Action",
-          callback: () => TerminateGameProcess(),
+          callback: () => stopGameProcess(),
           active: false,
           alwaysEnabled: true,
         },
@@ -95,9 +95,18 @@
     return [];
   });
 
+  async function stopGameProcess() {
+    clearTimeout(updateStateTimeout);
+    try {
+      await TerminateGameProcess();
+    } catch (error) {
+      console.log(error);
+    }
+    setTimeout(updateStateHandler, 1000);
+  }
+
   async function startGameProcess(menuOption: ipc.MenuOption) {
     activeButtonLabel = menuOption.label;
-    $pollRunningGame = false;
     clearTimeout(updateStateTimeout);
 
     try {
@@ -106,7 +115,6 @@
       console.log(error);
       alert(error);
     }
-    $pollRunningGame = true;
     setTimeout(updateStateHandler, 1000);
   }
 
