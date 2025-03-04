@@ -120,6 +120,8 @@ func (pm *Manager) KillProcess() (bool, error) {
 		}
 	}
 
+	processName, nameErr := pm.running.Name()
+
 	if err := pm.running.Kill(); err != nil {
 		pm.logger.Errorf("Failed to kill process: %v", err)
 	}
@@ -130,8 +132,35 @@ func (pm *Manager) KillProcess() (bool, error) {
 		}
 	}
 
+	if nameErr == nil {
+		pm.killAllProcessesByName(processName)
+	}
+
 	pm.running = nil
 	return true, nil
+}
+
+func (pm *Manager) killAllProcessesByName(processName string) {
+	processes, err := process.Processes()
+	if err != nil {
+		pm.logger.Errorf("Failed to list processes: %v", err)
+		return
+	}
+
+	for _, proc := range processes {
+		name, err := proc.Name()
+		if err != nil {
+			continue
+		}
+
+		if name == processName {
+			if err := proc.Kill(); err != nil {
+				pm.logger.Errorf("Failed to kill process %d (%s): %v", proc.Pid, processName, err)
+			} else {
+				pm.logger.Debug(fmt.Sprintf("Killed process %d (%s)", proc.Pid, processName))
+			}
+		}
+	}
 }
 
 func (pm *Manager) IsProcessRunning() bool {
