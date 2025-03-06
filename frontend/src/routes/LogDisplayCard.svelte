@@ -54,9 +54,7 @@
 </script>
 
 <div class="flex-grow min-h-[200px] p-4">
-  <div
-    class="card p-4 bg-surface-100-900/50 h-full flex-grow flex-col min-h-[200px]"
-  >
+  <div class="card p-4 bg-surface-100-900/50 o h-full flex-col">
     <div
       class="select-text font-mono h-full overflow-y-scroll break-words whitespace-normal"
       bind:this={logContainer}

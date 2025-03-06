@@ -37,7 +37,7 @@
     <LogoSticky></LogoSticky>
   </div>
 
-  <main class="flex-grow-0 overflow-y-visible p-4">
+  <main class="flex-grow w-full p-4">
     {@render children()}
   </main>
   <LogDisplayCard />
