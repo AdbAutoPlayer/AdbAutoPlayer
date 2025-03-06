@@ -1,5 +1,9 @@
 <div class="fixed top-0 left-0 z-50 m-2 cursor-pointer select-none">
-  <a href="https://yulesxoxo.github.io/AdbAutoPlayer/" target="_blank">
+  <a
+    href="https://yulesxoxo.github.io/AdbAutoPlayer/"
+    target="_blank"
+    draggable="false"
+  >
     <span class="items-center justify-center badge-icon p-0">
       <img
         src="/icons/help-circle.svg"

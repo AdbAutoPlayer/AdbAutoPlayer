@@ -258,6 +258,7 @@
   <a
     href={releaseHtmlDownloadUrl}
     class="fixed top-0 right-0 z-50 m-2 cursor-pointer select-none"
+    draggable="false"
   >
     <span class="items-center justify-center badge-icon">
       <img
