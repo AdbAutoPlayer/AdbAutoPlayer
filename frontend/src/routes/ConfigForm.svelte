@@ -116,7 +116,7 @@
       <fieldset
         class="border border-surface-900/60 p-4 rounded-container-token mb-4"
       >
-        <legend class="px-2">{sectionKey}</legend>
+        <legend class="px-2 text-xl">{sectionKey}</legend>
 
         {#each Object.entries(sectionConfig) as [key, value]}
           <div class="mb-4">

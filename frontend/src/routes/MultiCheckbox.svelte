@@ -9,37 +9,38 @@
     name: string;
   } = $props();
 
-  function groupOptionsByFirstLetter(
-    options: string[],
-  ): Record<string, string[]> {
-    return options.reduce((acc: Record<string, string[]>, option: string) => {
+  function groupOptionsByFirstLetter(options: string[]): Map<string, string[]> {
+    return options.reduce((acc, option) => {
       const firstLetter = option.charAt(0).toUpperCase();
-      if (!acc[firstLetter]) {
-        acc[firstLetter] = [];
+      if (!acc.has(firstLetter)) {
+        acc.set(firstLetter, []);
       }
-      acc[firstLetter].push(option);
+      acc.get(firstLetter)!.push(option);
       return acc;
-    }, {});
+    }, new Map<string, string[]>());
   }
 
   const groupedOptions = groupOptionsByFirstLetter(choices || []);
 </script>
 
-<div class="multicheckbox-grouped">
-  {#if Object.keys(groupedOptions).length > 0}
-    {#each Object.entries(groupedOptions) as [letter, options]}
-      <div class="letter-group">
-        <div class="letter-header">{letter}</div>
-        <div class="letter-options">
+<div class="flex flex-wrap gap-2.5">
+  {#if groupedOptions.size > 0}
+    {#each [...groupedOptions.entries()] as [letter, options]}
+      <div class="border border-white/20 rounded p-1.25">
+        <div class="font-bold mb-1.25 bg-white/10 p-0.5">
+          {letter}
+        </div>
+        <div class="flex flex-col">
           {#each options as option}
-            <label class="checkbox-container">
+            <label class="flex items-center m-0.5">
               <input
                 type="checkbox"
+                class="checkbox ml-0.25 mr-0.5"
                 {name}
                 value={option}
                 checked={Array.isArray(value) ? value.includes(option) : false}
               />
-              {option}
+              <span class="mr-0.25">{option}</span>
             </label>
           {/each}
         </div>
@@ -49,36 +50,3 @@
     <p>No options available</p>
   {/if}
 </div>
-
-<style>
-  .multicheckbox-grouped {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .letter-group {
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-    padding: 5px;
-  }
-
-  .letter-header {
-    font-weight: bold;
-    margin-bottom: 5px;
-    text-align: center;
-    background-color: rgba(255, 255, 255, 0.1);
-    padding: 2px;
-  }
-
-  .letter-options {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .checkbox-container {
-    display: flex;
-    align-items: center;
-    margin: 2px 0;
-  }
-</style>
