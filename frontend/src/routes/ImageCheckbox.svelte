@@ -68,8 +68,4 @@
   input[type="checkbox"] {
     margin: 0;
   }
-
-  span {
-    font-size: 14px;
-  }
 </style>

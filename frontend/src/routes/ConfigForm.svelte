@@ -190,7 +190,7 @@
       </fieldset>
     {/each}
 
-    <div class="mt-4 mb-4 text-center">
+    <div class="m-4">
       <button
         type="button"
         class="btn preset-filled-primary-500 hover:preset-filled-primary-700-300"
