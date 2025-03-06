@@ -1,26 +1,32 @@
+"""Arcane Labyrinth Mixin."""
+
 import logging
 from abc import ABC
 from time import sleep
 from typing import NoReturn
 
-from adb_auto_player.exceptions import TimeoutException
-from adb_auto_player.games.afk_journey.afk_journey_base import AFKJourneyBase
-from adb_auto_player.template_matching import MatchMode
+from adb_auto_player import Coordinates, CropRegions, MatchMode, TimeoutError
+from adb_auto_player.games.afk_journey import AFKJourneyBase
 
 
 class BattleCannotBeStartedError(Exception):
+    """Battle failed to start."""
+
     pass
 
 
 class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
+    """Arcane Labyrinth Mixin."""
+
     arcane_skip_coordinates: tuple[int, int] | None = None
     arcane_lucky_flip_keys: int = 0
     arcane_tap_to_close_coordinates: tuple[int, int] | None = None
     arcane_difficulty_was_visible: bool = False
     arcane_difficulty_not_visible_count: int = 0
 
-    def __add_clear_key_amount(self) -> None:
-        mapping = {
+    def _add_clear_key_amount(self) -> None:
+        """Clear key amount."""
+        mapping: dict[int, int] = {
             1: 5,
             2: 7,
             3: 8,
@@ -40,20 +46,18 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
         keys = mapping.get(self.get_config().arcane_labyrinth.difficulty, None)
         if keys:
-            self.__add_keys_farmed(keys)
-        return
+            self._add_keys_farmed(keys)
 
-    def __quit(self) -> None:
+    def _quit(self) -> None:
         logging.info("Restarting Arcane Labyrinth")
         x, y = 0, 0  # PyCharm complains for no reason...
         while True:
-            result = self.find_any_template(
+            result: tuple[str, int, int] | None = self.find_any_template(
                 templates=[
                     "arcane_labyrinth/quit_door.png",
                     "arcane_labyrinth/exit.png",
                 ],
-                crop_left=0.7,
-                crop_top=0.8,
+                crop=CropRegions(left=0.7, top=0.8),
             )
             if result is None:
                 self.press_back_button()
@@ -62,25 +66,21 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             template, x, y = result
             match template:
                 case "arcane_labyrinth/quit_door.png":
-                    self.click(x, y)
+                    self.click(Coordinates(x, y))
                     sleep(0.2)
                 case _:
-                    self.click(x, y)
+                    self.click(Coordinates(x, y))
                     continue
             break
 
-        _ = self.wait_for_template(
+        _: tuple[int, int] = self.wait_for_template(
             "arcane_labyrinth/hold_to_exit.png",
-            crop_right=0.5,
-            crop_top=0.5,
-            crop_bottom=0.3,
+            crop=CropRegions(right=0.5, top=0.5, bottom=0.3),
         )
         sleep(1)
-        hold_to_exit = self.wait_for_template(
+        hold_to_exit: tuple[int, int] = self.wait_for_template(
             "arcane_labyrinth/hold_to_exit.png",
-            crop_right=0.5,
-            crop_top=0.5,
-            crop_bottom=0.3,
+            crop=CropRegions(right=0.5, top=0.5, bottom=0.3),
         )
         self.hold(*hold_to_exit, duration=5.0)
 
@@ -91,25 +91,28 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     "arcane_labyrinth/heroes_icon.png",
                 ],
                 threshold=0.7,
-                crop_top=0.8,
-                crop_left=0.3,
+                crop=CropRegions(left=0.3, top=0.8),
             )
             if result is None:
-                self.click(x, y)
+                self.click(Coordinates(x, y))
                 sleep(0.2)
             else:
                 break
-        return
 
-    def __add_keys_farmed(self, keys: int) -> None:
+    def _add_keys_farmed(self, keys: int) -> None:
+        """Logs the number of keys farmed.
+
+        Args:
+            keys (int): Number of keys.
+        """
         self.arcane_lucky_flip_keys += keys
         logging.info(
             f"Lucky Flip Keys farmed: {self.arcane_lucky_flip_keys} "
             f"(Guild Keys: {self.arcane_lucky_flip_keys // 5})"
         )
-        return
 
     def handle_arcane_labyrinth(self) -> NoReturn:
+        """Handle Arcane Labyrinth."""
         logging.warning("This is made for farming Lucky Flip Keys")
         logging.warning(
             "Your current team and artifact will be used "
@@ -124,29 +127,29 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         clear_count = 0
         while True:
             try:
-                self.__start_arcane_labyrinth()
-                while self.__handle_arcane_labyrinth():
+                self._start_arcane_labyrinth()
+                while self._handle_arcane_labyrinth():
                     sleep(1)
 
-            except TimeoutException as e:
+            except TimeoutError as e:
                 logging.warning(f"{e}")
                 continue
             except BattleCannotBeStartedError as e:
                 logging.error(f"{e}")
                 logging.error("Restarting Arcane Labyrinth")
-                self.__quit()
+                self._quit()
                 continue
             clear_count += 1
             logging.info(f"Arcane Labyrinth clear #{clear_count}")
-            self.__add_clear_key_amount()
+            self._add_clear_key_amount()
             self.wait_for_template(
                 "arcane_labyrinth/enter.png",
-                crop_top=0.8,
-                crop_left=0.3,
+                crop=CropRegions(top=0.8, left=0.3),
                 timeout=self.MIN_TIMEOUT,
             )
 
-    def __select_a_crest(self) -> None:
+    def _select_a_crest(self) -> None:
+        """Crest selection."""
         template, x, y = self.wait_for_any_template(
             templates=[
                 "arcane_labyrinth/rarity/epic.png",
@@ -154,28 +157,24 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "arcane_labyrinth/rarity/rare.png",
             ],
             delay=0.2,
-            crop_right=0.8,
-            crop_top=0.3,
-            crop_bottom=0.1,
+            crop=CropRegions(right=0.8, top=0.3, bottom=0.1),
         )
 
         if template == "arcane_labyrinth/rarity/epic.png":
-            self.__add_keys_farmed(9)
+            self._add_keys_farmed(9)
 
-        self.click(x, y)
+        self.click(Coordinates(x, y))
         sleep(1)
-        confirm = self.find_template_match(
+        confirm: tuple[int, int] | None = self.game_find_template_match(
             "arcane_labyrinth/confirm.png",
-            crop_left=0.2,
-            crop_right=0.2,
-            crop_top=0.8,
+            crop=CropRegions(left=0.2, right=0.2, top=0.8),
         )
         if confirm:
-            self.click(*confirm)
-        return
+            self.click(Coordinates(*confirm))
 
-    def __handle_arcane_labyrinth(self) -> bool:
-        templates = [
+    def _handle_arcane_labyrinth(self) -> bool:
+        """Handle Arcane Labyrinth."""
+        templates: list[str] = [
             "arcane_labyrinth/swords_button.png",
             "arcane_labyrinth/shop_button.png",
             "arcane_labyrinth/crest_crystal_ball.png",
@@ -214,52 +213,53 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 | "arcane_labyrinth/blessing/epic_crest.png"
             ):
                 if self.arcane_tap_to_close_coordinates is not None:
-                    self.click(*self.arcane_tap_to_close_coordinates)
-                self.click(x, y + 500)
+                    self.click(Coordinates(*self.arcane_tap_to_close_coordinates))
+                self.click(Coordinates(x, y + 500))
             case (
                 "arcane_labyrinth/shop_button.png"
                 | "arcane_labyrinth/crest_crystal_ball.png"
             ):
-                self.click(x, y)
-                self.__handle_shop()
+                self.click(Coordinates(x, y))
+                self._handle_shop()
 
             case "arcane_labyrinth/swords_button.png":
-                self.__click_best_gate(x, y)
-                self.__arcane_lab_start_battle()
-                while self.__battle_is_not_completed():
+                self._click_best_gate(x, y)
+                self._arcane_lab_start_battle()
+                while self._battle_is_not_completed():
                     pass
 
             case "arcane_labyrinth/select_a_crest.png" | "arcane_labyrinth/confirm.png":
-                self.__select_a_crest()
+                self._select_a_crest()
             case "arcane_labyrinth/quit.png":
-                self.click(x, y)
+                self.click(Coordinates(x, y))
                 return False
             case "arcane_labyrinth/tap_to_close.png":
                 self.arcane_tap_to_close_coordinates = (x, y)
-                self.click(x, y)
-                while self.find_template_match(
+                self.click(Coordinates(x, y))
+                while self.game_find_template_match(
                     template="arcane_labyrinth/tap_to_close.png",
-                    crop_top=0.8,
+                    crop=CropRegions(top=0.8),
                 ):
-                    self.click(x, y)
+                    self.click(Coordinates(x, y))
         return True
 
-    def __arcane_lab_start_battle(self) -> None:
+    def _arcane_lab_start_battle(self) -> None:
+        """Start labyrinth battle."""
         _ = self.wait_for_any_template(
             templates=[
                 "arcane_labyrinth/battle.png",
                 "arcane_labyrinth/additional_challenge.png",
             ],
             threshold=0.8,
-            crop_top=0.2,
-            crop_left=0.3,
+            crop=CropRegions(top=0.2, left=0.3),
         )
 
         sleep(1)
         battle_click_count = 0
         no_result_count = 0
+        no_result_threshold = 3
         while True:
-            if no_result_count >= 3:
+            if no_result_count >= no_result_threshold:
                 break
             result = self.find_any_template(
                 templates=[
@@ -267,8 +267,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     "arcane_labyrinth/additional_challenge.png",
                 ],
                 threshold=0.8,
-                crop_top=0.2,
-                crop_left=0.3,
+                crop=CropRegions(top=0.2, right=0.3),
             )
             if result is None:
                 no_result_count += 1
@@ -278,37 +277,41 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             match template:
                 case "arcane_labyrinth/additional_challenge.png":
                     logging.debug(
-                        "__arcane_lab_start_battle: additional challenge popup"
+                        "_arcane_lab_start_battle: additional challenge popup"
                     )
-                    self.click(x, y)
+                    self.click(Coordinates(x, y))
                 case "arcane_labyrinth/battle.png":
                     battle_click_count += 1
-                    if battle_click_count > 8:
+                    battle_click_limit = 8
+                    if battle_click_count > battle_click_limit:
                         raise BattleCannotBeStartedError(
                             "arcane_labyrinth/battle.png still visible after 8 clicks"
                         )
                     logging.debug(
                         f"clicking arcane_labyrinth/battle.png #{battle_click_count}"
                     )
-                    self.click(x, y)
+                    self.click(Coordinates(x, y))
             sleep(0.5)
         self.arcane_difficulty_was_visible = False
         sleep(1)
         self._click_confirm_on_popup()
         self._click_confirm_on_popup()
-        return None
 
-    def __handle_enter_button(self) -> None:
-        difficulty = self.get_config().arcane_labyrinth.difficulty
+    def _handle_enter_button(self) -> None:
+        """Handle entering the labyrinth."""
+        difficulty: int = self.get_config().arcane_labyrinth.difficulty
+        max_difficulty = 15
 
-        if difficulty < 15 and not self.find_template_match(
+        if difficulty < max_difficulty and not self.game_find_template_match(
             "arcane_labyrinth/arrow_right.png"
         ):
-            left_arrow = self.wait_for_template("arcane_labyrinth/arrow_left.png")
-            if not self.find_template_match("arcane_labyrinth/arrow_right.png"):
+            left_arrow: tuple[int, int] = self.wait_for_template(
+                "arcane_labyrinth/arrow_left.png"
+            )
+            if not self.game_find_template_match("arcane_labyrinth/arrow_right.png"):
                 logging.debug("Lowering difficulty")
-                while (15 - difficulty) > 0:
-                    self.click(*left_arrow)
+                while (max_difficulty - difficulty) > 0:
+                    self.click(Coordinates(*left_arrow))
                     sleep(1)
                     difficulty += 1
             else:
@@ -316,12 +319,11 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         else:
             logging.debug("Already on lower difficulty")
 
-        while enter := self.find_template_match(
+        while enter := self.game_find_template_match(
             template="arcane_labyrinth/enter.png",
-            crop_top=0.8,
-            crop_left=0.3,
+            crop=CropRegions(top=0.8, left=0.3),
         ):
-            self.click(*enter)
+            self.click(Coordinates(*enter))
             sleep(2)
 
         template, _, _ = self.wait_for_any_template(
@@ -340,16 +342,14 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             "confirm.png",
             "confirm_text.png",
         ):
-            checkbox = self.find_template_match(
+            checkbox = self.game_find_template_match(
                 "battle/checkbox_unchecked.png",
                 match_mode=MatchMode.TOP_LEFT,
-                crop_right=0.8,
-                crop_top=0.2,
-                crop_bottom=0.6,
+                crop=CropRegions(right=0.8, top=0.2, bottom=0.6),
                 threshold=0.8,
             )
             if checkbox is not None:
-                self.click(*checkbox)
+                self.click(Coordinates(*checkbox))
         self._click_confirm_on_popup()
         self._click_confirm_on_popup()
         self.wait_for_any_template(
@@ -363,22 +363,20 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         )
         logging.info("Arcane Labyrinth entered")
 
-    def __start_arcane_labyrinth(self) -> None:
-        result = self.find_template_match(
+    def _start_arcane_labyrinth(self) -> None:
+        """Start Arcane Labyrinth."""
+        result: tuple[int, int] | None = self.game_find_template_match(
             template="arcane_labyrinth/enter.png",
-            crop_top=0.8,
-            crop_left=0.3,
+            crop=CropRegions(top=0.8, left=0.3),
         )
         if result:
-            self.__handle_enter_button()
+            self._handle_enter_button()
             return
 
-        if self.find_template_match(
+        if self.game_find_template_match(
             template="arcane_labyrinth/heroes_icon.png",
             threshold=0.7,
-            crop_left=0.6,
-            crop_right=0.1,
-            crop_top=0.8,
+            crop=CropRegions(left=0.6, right=0.1, top=0.8),
         ):
             logging.info("Arcane Labyrinth already started")
             return
@@ -388,13 +386,14 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         # Back button does not work on Arcane Labyrinth screen
 
         def stop_condition() -> bool:
-            match = self.find_any_template(
+            """Stop condition."""
+            match: tuple[str, int, int] | None = self.find_any_template(
                 templates=[
                     "arcane_labyrinth/select_a_crest.png",
                     "arcane_labyrinth/confirm.png",
                     "arcane_labyrinth/quit.png",
                 ],
-                crop_top=0.8,
+                crop=CropRegions(top=0.8),
             )
 
             if match is not None:
@@ -410,41 +409,41 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "arcane_labyrinth/confirm.png",
                 "arcane_labyrinth/quit.png",
             ],
-            crop_top=0.8,
+            crop=CropRegions(top=0.8),
         ):
             return
 
-        self.click(460, 1830, scale=True)
+        self.click(Coordinates(460, 1830), scale=True)
         self.wait_for_template(
             "duras_trials/label.png",
             timeout_message="Battle Modes screen not found",
             timeout=self.MIN_TIMEOUT,
         )
         self.swipe_down()
-        label = self.wait_for_template(
+        label: tuple[int, int] = self.wait_for_template(
             "arcane_labyrinth/label.png",
             timeout=self.MIN_TIMEOUT,
         )
-        self.click(*label)
+        self.click(Coordinates(*label))
         template, x, y = self.wait_for_any_template(
             templates=[
                 "arcane_labyrinth/enter.png",
                 "arcane_labyrinth/heroes_icon.png",
             ],
             threshold=0.7,
-            crop_top=0.8,
-            crop_left=0.3,
+            crop=CropRegions(left=0.3, top=0.8),
             timeout=self.MIN_TIMEOUT,
         )
         match template:
             case "arcane_labyrinth/enter.png":
-                self.__handle_enter_button()
+                self._handle_enter_button()
             case "arcane_labyrinth/heroes_icon.png":
                 logging.info("Arcane Labyrinth already started")
         return
 
-    def __battle_is_not_completed(self) -> bool:
-        templates = [
+    def _battle_is_not_completed(self) -> bool:
+        """Battle is not completed."""
+        templates: list[str] = [
             "arcane_labyrinth/tap_to_close.png",
             "arcane_labyrinth/heroes_icon.png",
             "arcane_labyrinth/confirm.png",
@@ -456,23 +455,24 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             logging.debug("searching skip button")
             templates.insert(0, "arcane_labyrinth/skip.png")
 
-        result = self.find_any_template(
+        result: tuple[str, int, int] | None = self.find_any_template(
             templates=templates,
             threshold=0.8,
         )
 
         if result is None:
             if self.arcane_skip_coordinates is not None:
-                self.click(*self.arcane_skip_coordinates)
+                self.click(Coordinates(*self.arcane_skip_coordinates))
                 logging.debug("clicking skip")
-            difficulty = self.find_template_match(
+            difficulty: tuple[int, int] | None = self.game_find_template_match(
                 template="arcane_labyrinth/difficulty.png",
                 threshold=0.7,
-                crop_bottom=0.8,
+                crop=CropRegions(bottom=0.8),
             )
 
             if difficulty is None and self.arcane_difficulty_was_visible:
-                if self.arcane_difficulty_not_visible_count > 10:
+                difficulty_check_attempts = 10
+                if self.arcane_difficulty_not_visible_count > difficulty_check_attempts:
                     logging.debug("arcane_labyrinth/difficulty.png no longer visible")
                     self.arcane_difficulty_was_visible = False
                     return False
@@ -489,35 +489,35 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         match template:
             case "arcane_labyrinth/tap_to_close.png":
                 self.arcane_tap_to_close_coordinates = (x, y)
-                self.click(*self.arcane_tap_to_close_coordinates)
+                self.click(Coordinates(*self.arcane_tap_to_close_coordinates))
             case "arcane_labyrinth/skip.png":
                 self.arcane_skip_coordinates = (x, y)
-                self.click(*self.arcane_skip_coordinates)
+                self.click(Coordinates(*self.arcane_skip_coordinates))
                 return True
             case "arcane_labyrinth/battle.png":
-                self.__arcane_lab_start_battle()
+                self._arcane_lab_start_battle()
                 return True
             case "arcane_labyrinth/confirm.png":
-                self.__select_a_crest()
+                self._select_a_crest()
             case _:
                 pass
         logging.debug(f"template: {template} found battle done")
         return False
 
-    def __click_best_gate(self, swords_x: int, swords_y: int) -> None:
-        logging.debug("__click_best_gate")
+    def _click_best_gate(self, swords_x: int, swords_y: int) -> None:
+        """Click best gate."""
+        logging.debug("_click_best_gate")
         sleep(0.5)
-        results = self.find_all_template_matches(
+        results: list[tuple[int, int]] = self.find_all_template_matches(
             "arcane_labyrinth/swords_button.png",
-            crop_top=0.6,
-            crop_bottom=0.2,
+            crop=CropRegions(top=0.6, bottom=0.2),
         )
         if len(results) <= 1:
-            self.click(swords_x, swords_y)
+            self.click(Coordinates(swords_x, swords_y))
             return
 
         sleep(1)
-        result = self.find_any_template(
+        result: tuple[str, int, int] | None = self.find_any_template(
             templates=[
                 "arcane_labyrinth/gate/relic_powerful.png",
                 "arcane_labyrinth/gate/relic.png",
@@ -525,24 +525,24 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "arcane_labyrinth/gate/blessing.png",
             ],
             threshold=0.8,
-            crop_top=0.2,
-            crop_bottom=0.5,
+            crop=CropRegions(top=0.2, bottom=0.5),
         )
 
         if result is None:
             logging.warning("Could not resolve best gate")
-            self.click(swords_x, swords_y)
+            self.click(Coordinates(swords_x, swords_y))
             return
 
         template, x, y = result
-        logging.debug(f"__click_best_gate: {template}")
+        logging.debug(f"_click_best_gate: {template}")
 
         closest_match = min(results, key=lambda coord: abs(coord[0] - x))
         best_x, best_y = closest_match
-        self.click(best_x, best_y)
+        self.click(Coordinates(best_x, best_y))
         return
 
-    def __handle_shop(self) -> None:
+    def _handle_shop(self) -> None:
+        """Handle Fitz's Shop."""
         purchase_count = 0
         while True:
             self.wait_for_any_template(
@@ -550,52 +550,51 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     "arcane_labyrinth/onwards.png",
                     "arcane_labyrinth/select_a_crest.png",
                 ],
-                crop_top=0.8,
+                crop=CropRegions(top=0.8),
                 timeout=self.MIN_TIMEOUT,
             )
 
             sleep(1)
-            result = self.find_any_template(
+            result: tuple[str, int, int] | None = self.find_any_template(
                 [
                     "arcane_labyrinth/onwards.png",
                     "arcane_labyrinth/select_a_crest.png",
                 ],
-                crop_top=0.8,
+                crop=CropRegions(top=0.8),
             )
             if result is None:
                 break
 
             template, x, y = result
+            purchase_limit = 2
             match template:
                 case "arcane_labyrinth/onwards.png":
-                    if purchase_count >= 2:
+                    if purchase_count >= purchase_limit:
                         break
 
                     # cropped in a way only the top item can be clicked
-                    item_price = self.find_template_match(
+                    item_price: tuple[int, int] | None = self.game_find_template_match(
                         template="arcane_labyrinth/shop_crystal.png",
-                        crop_left=0.7,
-                        crop_top=0.2,
-                        crop_bottom=0.6,
+                        crop=CropRegions(left=0.7, top=0.2, bottom=0.6),
                     )
                     if item_price is None:
                         break
 
-                    self.click(*item_price)
+                    self.click(Coordinates(*item_price))
                     sleep(0.5)
-                    purchase = self.find_template_match(
+                    purchase: tuple[int, int] | None = self.game_find_template_match(
                         template="arcane_labyrinth/purchase.png",
-                        crop_top=0.8,
+                        crop=CropRegions(top=0.8),
                     )
                     if not purchase:
                         break
                     purchase_count += 1
                     logging.info(f"Purchase #{purchase_count}")
-                    self.click(*purchase)
+                    self.click(Coordinates(*purchase))
                     sleep(0.5)
                     continue
                 case "arcane_labyrinth/select_a_crest.png":
-                    self.__select_a_crest()
+                    self._select_a_crest()
 
         while True:
             template, x, y = self.wait_for_any_template(
@@ -603,14 +602,13 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     "arcane_labyrinth/onwards.png",
                     "arcane_labyrinth/select_a_crest.png",
                 ],
-                crop_top=0.8,
+                crop=CropRegions(top=0.8),
                 timeout=self.MIN_TIMEOUT,
             )
 
             match template:
                 case "arcane_labyrinth/select_a_crest.png":
-                    self.__select_a_crest()
+                    self._select_a_crest()
                 case _:
-                    self.click(x, y)
+                    self.click(Coordinates(x, y))
                     break
-        return

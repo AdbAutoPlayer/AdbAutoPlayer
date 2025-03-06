@@ -1,30 +1,37 @@
-class TimeoutException(Exception):
-    """Raised when an operation exceeds the given timeout."""
-
-    pass
+"""ADB Auto Player Custom Exceptions Module."""
 
 
-class UnsupportedResolutionException(Exception):
-    """Raised when the resolution is not supported."""
-
-    pass
-
-
-class AdbException(Exception):
+class GenericAdbError(Exception):
     """Raised for any Adb related issues."""
 
     pass
 
 
-class NotFoundException(Exception):
+class NotFoundError(Exception):
+    """Image not found."""
+
+    pass
+
+
+class NoPreviousScreenshotError(Exception):
+    """Previous Screenshot required but does not exist."""
+
     pass
 
 
 class NotInitializedError(Exception):
+    """Required variable not initialized."""
+
     pass
 
 
-class NoPreviousScreenshotException(Exception):
-    """Previous Screenshot required but does not exist."""
+class TimeoutError(Exception):
+    """Raised when an operation exceeds the given timeout."""
+
+    pass
+
+
+class UnsupportedResolutionError(Exception):
+    """Raised when the resolution is not supported."""
 
     pass

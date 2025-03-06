@@ -1,5 +1,8 @@
+"""ADB Auto Player Template Matching Module."""
+
 from enum import StrEnum, auto
 from pathlib import Path
+from typing import NamedTuple
 
 import cv2
 import numpy as np
@@ -7,6 +10,8 @@ from PIL import Image
 
 
 class MatchMode(StrEnum):
+    """Match mode as a sting-based enum."""
+
     BEST = auto()
     TOP_LEFT = auto()
     TOP_RIGHT = auto()
@@ -16,6 +21,15 @@ class MatchMode(StrEnum):
     LEFT_BOTTOM = auto()
     RIGHT_TOP = auto()
     RIGHT_BOTTOM = auto()
+
+
+class CropRegions(NamedTuple):
+    """Crop named tuple."""
+
+    left: float = 0  # Percentage to crop from the left side
+    right: float = 0  # Percentage to crop from the right side
+    top: float = 0  # Percentage to crop from the top side
+    bottom: float = 0  # Percentage to crop from the bottom side
 
 
 template_cache: dict[str, Image.Image] = {}
@@ -33,7 +47,7 @@ def load_image(image_path: Path, image_scale_factor: float = 1.0) -> Image.Image
     Returns:
         PIL Image.Image
     """
-    cache_key = f"{str(image_path)}_{image_scale_factor}"
+    cache_key = f"{image_path}_{image_scale_factor}"
     if cache_key in template_cache:
         return template_cache[cache_key]
 
@@ -49,43 +63,38 @@ def load_image(image_path: Path, image_scale_factor: float = 1.0) -> Image.Image
     return image
 
 
-def crop_image(
-    image: Image.Image, left: float, right: float, top: float, bottom: float
-) -> tuple[Image.Image, int, int]:
+def crop_image(image: Image.Image, crop: CropRegions) -> tuple[Image.Image, int, int]:
     """Crop an image based on percentage values for each side.
 
     Args:
         image (Image.Image): The input image to be cropped.
-        left (float): Percentage to crop from the left side.
-        right (float): Percentage to crop from the right side.
-        top (float): Percentage to crop from the top side.
-        bottom (float): Percentage to crop from the bottom side.
+        crop (Crop): The crop percentage values for each edge.
 
     Returns:
-        - Cropped image.
-        - Number of pixels cropped from the left.
-        - Number of pixels cropped from the top.
+        Cropped image.
+        Number of pixels cropped from the left.
+        Number of pixels cropped from the top.
 
     Raises:
         ValueError: If any crop percentage is negative,
             the sum of left and right crop percentages is 1.0 or greater
             or the sum of top and bottom crop percentages is 1.0 or greater.
     """
-    if all(v == 0 for v in (left, right, top, bottom)):
+    if all(v == 0 for v in (crop.left, crop.right, crop.top, crop.bottom)):
         return image, 0, 0
 
-    if any(v < 0 for v in (left, right, top, bottom)):
+    if any(v < 0 for v in (crop.left, crop.right, crop.top, crop.bottom)):
         raise ValueError("Crop percentages cannot be negative.")
-    if left + right >= 1.0:
+    if crop.left + crop.right >= 1.0:
         raise ValueError("left + right must be less than 1.0.")
-    if top + bottom >= 1.0:
+    if crop.top + crop.bottom >= 1.0:
         raise ValueError("top + bottom must be less than 1.0.")
 
     width, height = image.size
-    left_px = int(width * left)
-    right_px = int(width * (1 - right))
-    top_px = int(height * top)
-    bottom_px = int(height * (1 - bottom))
+    left_px = int(width * crop.left)
+    right_px = int(width * (1 - crop.right))
+    top_px = int(height * crop.top)
+    bottom_px = int(height * (1 - crop.bottom))
     cropped_image = image.crop((left_px, top_px, right_px, bottom_px))
     return cropped_image, left_px, top_px
 
@@ -108,8 +117,8 @@ def similar_image(
     Returns:
         True if the base_image matches the template_image based on the given threshold.
     """
-    __validate_threshold(threshold)
-    __validate_template_size(
+    _validate_threshold(threshold)
+    _validate_template_size(
         base_image=base_image,
         template_image=template_image,
     )
@@ -143,8 +152,8 @@ def find_template_match(
     Returns:
         tuple of (center_x, center_y) coordinates or None if no match found
     """
-    __validate_threshold(threshold)
-    __validate_template_size(
+    _validate_threshold(threshold)
+    _validate_template_size(
         base_image=base_image,
         template_image=template_image,
     )
@@ -199,8 +208,20 @@ def find_all_template_matches(
     grayscale: bool = False,
     min_distance: int = 10,
 ) -> list[tuple[int, int]]:
-    __validate_threshold(threshold)
-    __validate_template_size(
+    """Find all matches.
+
+    Args:
+        base_image (Image.Image): Base image.
+        template_image (Image.Image): Template image.
+        threshold (float, optional): Image similarity threshold. Defaults to 0.9.
+        grayscale (bool, optional): Convert to grayscale boolean. Defaults to False.
+        min_distance (int, optional): Minimum distance between matches. Defaults to 10.
+
+    Returns:
+        list[tuple[int, int]]: List of found coordinates.
+    """
+    _validate_threshold(threshold)
+    _validate_template_size(
         base_image=base_image,
         template_image=template_image,
     )
@@ -224,7 +245,7 @@ def find_all_template_matches(
         centers.append((center_x, center_y))
 
     if centers:
-        centers = __suppress_close_matches(centers, min_distance)
+        centers = _suppress_close_matches(centers, min_distance)
 
     return centers
 
@@ -247,7 +268,7 @@ def find_worst_template_match(
     Returns:
         tuple of (center_x, center_y) coordinates for the most different region
     """
-    __validate_template_size(
+    _validate_template_size(
         base_image=base_image,
         template_image=template_image,
     )
@@ -265,7 +286,8 @@ def find_worst_template_match(
 
     # Find the location with the maximum difference (worst match)
     _, max_val, _, max_diff_loc = cv2.minMaxLoc(diff_map)
-    if max_val < 10000:
+    min_difference_threshold = 10000
+    if max_val < min_difference_threshold:
         return None
     max_diff_x, max_diff_y = max_diff_loc
 
@@ -277,7 +299,7 @@ def find_worst_template_match(
     return center_x, center_y
 
 
-def __suppress_close_matches(
+def _suppress_close_matches(
     matches: list[tuple[int, int]], min_distance: int
 ) -> list[tuple[int, int]]:
     """Suppresses closely spaced matches to return distinct results.
@@ -289,10 +311,11 @@ def __suppress_close_matches(
 
     matches_array = np.array(matches)
     suppressed: list[tuple[int, int]] = []  # type: ignore
+    dimension = 2
 
     for match in matches_array:
         match_tuple = tuple(match)
-        if len(match_tuple) == 2 and all(
+        if len(match_tuple) == dimension and all(
             np.linalg.norm(match_tuple - np.array(s)) >= min_distance
             for s in suppressed
         ):
@@ -300,7 +323,7 @@ def __suppress_close_matches(
     return suppressed
 
 
-def __validate_threshold(threshold: float) -> None:
+def _validate_threshold(threshold: float) -> None:
     """Validate the threshold value.
 
     Raises:
@@ -310,7 +333,7 @@ def __validate_threshold(threshold: float) -> None:
         raise ValueError(f"Threshold must be between 0 and 1, got {threshold}")
 
 
-def __validate_template_size(
+def _validate_template_size(
     base_image: Image.Image, template_image: Image.Image
 ) -> None:
     """Validate that the template image is smaller than the base image.
