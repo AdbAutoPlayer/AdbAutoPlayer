@@ -236,29 +236,27 @@
   });
 </script>
 
-<div class="w-full">
-  <h1 class="text-3xl text-center pb-4">
-    {activeGame?.game_title ?? "Start any supported Game!"}
-  </h1>
-  <div
-    class="card p-4 bg-surface-100-900/50 border-[1px] border-surface-200-800 text-center"
-  >
-    {#if showConfigForm}
-      <h2 class="text-xl text-center pb-2">Config</h2>
-      <ConfigForm
-        configObject={configFormProps.config ?? []}
-        constraints={configFormProps.constraints ?? []}
-        onConfigSave={configSaveCallback}
-      />
-    {:else}
-      <h2 class="text-xl text-center pb-2">Menu</h2>
-      <Menu
-        buttons={activeGameMenuButtons ?? []}
-        {defaultButtons}
-        disableActions={!$pollRunningGame}
-      ></Menu>
-    {/if}
-  </div>
+<h1 class="text-3xl text-center pb-4">
+  {activeGame?.game_title ?? "Start any supported Game!"}
+</h1>
+<div
+  class="card p-4 bg-surface-100-900/50 border-[1px] border-surface-200-800 text-center"
+>
+  {#if showConfigForm}
+    <h2 class="text-xl text-center pb-2">Config</h2>
+    <ConfigForm
+      configObject={configFormProps.config ?? []}
+      constraints={configFormProps.constraints ?? []}
+      onConfigSave={configSaveCallback}
+    />
+  {:else}
+    <h2 class="text-xl text-center pb-2">Menu</h2>
+    <Menu
+      buttons={activeGameMenuButtons ?? []}
+      {defaultButtons}
+      disableActions={!$pollRunningGame}
+    ></Menu>
+  {/if}
 </div>
 
 <style>

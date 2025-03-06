@@ -36,8 +36,7 @@
     <DownloadIconSticky></DownloadIconSticky>
     <LogoSticky></LogoSticky>
   </div>
-
-  <main class="flex-grow w-full p-4">
+  <main class="w-full p-4">
     {@render children()}
   </main>
   <LogDisplayCard />
