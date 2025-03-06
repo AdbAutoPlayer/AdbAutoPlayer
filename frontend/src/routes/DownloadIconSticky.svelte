@@ -14,7 +14,7 @@
     const titleAttr = title ? ` title="${title}"` : "";
     return `<a href="${href}" target="${target}" rel="noopener noreferrer"${titleAttr}>${text}</a>`;
   };
-  let downloadIconImageSrc: string | null = $state(null);
+  let showDownloadIcon: boolean = $state(true);
   let releaseHtmlDownloadUrl: string = $state(
     "https://github.com/yulesxoxo/AdbAutoPlayer/releases",
   );
@@ -179,7 +179,7 @@
   }
 
   function notifyUpdate(asset: Asset) {
-    downloadIconImageSrc = "/icons/download-cloud.svg";
+    showDownloadIcon = true;
     releaseHtmlDownloadUrl = asset.browser_download_url;
     showModal = true;
   }
@@ -247,22 +247,27 @@
       a.href = modalAsset.browser_download_url;
       a.download = "";
       a.click();
-      downloadIconImageSrc = null;
+      showDownloadIcon = false;
     }
   }
 
   runVersionUpdate();
 </script>
 
-{#if downloadIconImageSrc}
-  <a href={releaseHtmlDownloadUrl} class="download-icon-sticky">
-    <img
-      src={downloadIconImageSrc}
-      alt="Download"
-      width="24"
-      height="24"
-      draggable="false"
-    />
+{#if showDownloadIcon}
+  <a
+    href={releaseHtmlDownloadUrl}
+    class="fixed top-0 right-0 z-50 m-2 cursor-pointer select-none"
+  >
+    <span class="items-center justify-center badge-icon">
+      <img
+        src="/icons/download-cloud.svg"
+        alt="Download"
+        width="24"
+        height="24"
+        draggable="false"
+      />
+    </span>
   </a>
 {/if}
 
@@ -287,23 +292,3 @@
     {/if}
   {/snippet}
 </Modal>
-
-<style>
-  .download-icon-sticky {
-    user-select: none;
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-    cursor: pointer;
-    background: transparent;
-    border: none;
-    padding: 0;
-    outline: none;
-    box-shadow: none;
-  }
-
-  .download-icon-sticky img {
-    display: block;
-  }
-</style>
