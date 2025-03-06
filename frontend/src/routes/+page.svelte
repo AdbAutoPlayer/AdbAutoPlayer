@@ -16,22 +16,6 @@
   import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
   import { config, ipc } from "$lib/wailsjs/go/models";
   import { sortObjectByOrder } from "$lib/orderHelper";
-  const defaultButtons: MenuButton[] = [
-    {
-      label: "Edit Main Config",
-      callback: () => openMainConfigForm(),
-      active: false,
-    },
-    {
-      label: "Reset Display Size",
-      callback: () =>
-        startGameProcess({
-          label: "WMSizeReset",
-          args: ["WMSizeReset"],
-        }),
-      active: false,
-    },
-  ];
 
   let showConfigForm: boolean = $state(false);
   let configFormProps: Record<string, any> = $state({});
@@ -49,6 +33,25 @@
 
   let activeButtonLabel: string | null = $state(null);
 
+  let defaultButtons: MenuButton[] = $derived.by(() => {
+    return [
+      {
+        label: "Edit Main Config",
+        callback: () => openMainConfigForm(),
+        active: false,
+      },
+      {
+        label: "Reset Display Size",
+        callback: () =>
+          startGameProcess({
+            label: "Reset Display Size",
+            args: ["WMSizeReset"],
+          }),
+        active: "Reset Display Size" === activeButtonLabel,
+      },
+    ];
+  });
+
   let activeGameMenuButtons: MenuButton[] = $derived.by(() => {
     if (activeGame?.menu_options && activeGame.menu_options.length > 0) {
       const menuButtons: MenuButton[] = activeGame.menu_options.map(
@@ -59,7 +62,6 @@
           alwaysEnabled: false,
         }),
       );
-
       menuButtons.push(
         {
           label: "Edit Main Config",
@@ -71,10 +73,10 @@
           label: "Reset Display Size",
           callback: () =>
             startGameProcess({
-              label: "WMSizeReset",
+              label: "Reset Display Size",
               args: ["WMSizeReset"],
             }),
-          active: false,
+          active: "Reset Display Size" === activeButtonLabel,
         },
         {
           label: "Edit Game Config",
@@ -103,6 +105,7 @@
       console.log(error);
     }
     setTimeout(updateStateHandler, 1000);
+    activeButtonLabel = null;
   }
 
   async function startGameProcess(menuOption: ipc.MenuOption) {
@@ -207,6 +210,9 @@
       if ($pollRunningProcess) {
         const response = await IsGameProcessRunning();
         $pollRunningGame = !response;
+        if ($pollRunningGame) {
+          activeButtonLabel = null;
+        }
       }
     } catch (err) {
       console.log(`err: ${err}`);
@@ -232,7 +238,7 @@
 </script>
 
 <main class="container no-select">
-  <h1>
+  <h1 class="text-3xl text-center">
     {activeGame?.game_title ?? "Start any supported Game!"}
   </h1>
   {#if showConfigForm}
