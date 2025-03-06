@@ -9,17 +9,6 @@
 
 :root {
   color-scheme: dark;
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 400;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
-  color: #f6f6f6;
 }
 
 a {
@@ -36,7 +25,6 @@ h1 {
   text-align: center;
 }
 
-button,
 input,
 textarea,
 select {
@@ -51,17 +39,6 @@ select {
   transition: border-color 0.25s;
   box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
   outline: none;
-}
-
-button {
-  cursor: pointer;
-}
-button:hover {
-  border-color: #396cd8;
-}
-button:active {
-  border-color: #396cd8;
-  background-color: #0f0f0f69;
 }
 
 textarea {

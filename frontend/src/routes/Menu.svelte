@@ -8,47 +8,36 @@
     defaultButtons: MenuButton[];
     disableActions: boolean;
   } = $props();
+  // https://next.skeleton.dev/docs/components/accordion/svelte#multiple
 </script>
 
-{#if buttons.length > 0}
-  {#each buttons as { label, callback, active, alwaysEnabled }}
-    <button
-      disabled={!alwaysEnabled && disableActions}
-      class:active
-      onclick={callback}
-    >
-      {label}
-    </button>
-  {/each}
-{:else}
-  {#each defaultButtons as { label, callback, active, alwaysEnabled }}
-    <button
-      disabled={!alwaysEnabled && disableActions}
-      class:active
-      onclick={callback}
-    >
-      {label}
-    </button>
-  {/each}
-{/if}
-
-<style>
-  button {
-    margin: 5px;
-    padding: 10px 20px;
-    font-size: 1em;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.2s ease-in-out;
-  }
-
-  button:disabled.active {
-    opacity: 1;
-    outline: 2px solid #396cd8;
-  }
-
-  button:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-</style>
+<div class="space-y-4">
+  <div class="flex items-center gap-4">
+    <!-- //TODO:: buttons is dynamic I cannot know how many buttons there will be I want it to automatically place buttons in a new row instead of scroll right  -->
+    {#if buttons.length > 0}
+      {#each buttons as { label, callback, active, alwaysEnabled }}
+        <button
+          type="button"
+          disabled={!alwaysEnabled && disableActions}
+          class:active
+          class="btn preset-filled-primary-500"
+          onclick={callback}
+        >
+          {label}
+        </button>
+      {/each}
+    {:else}
+      {#each defaultButtons as { label, callback, active, alwaysEnabled }}
+        <button
+          type="button"
+          disabled={!alwaysEnabled && disableActions}
+          class:active
+          class="btn preset-filled-primary-500"
+          onclick={callback}
+        >
+          {label}
+        </button>
+      {/each}
+    {/if}
+  </div>
+</div>
