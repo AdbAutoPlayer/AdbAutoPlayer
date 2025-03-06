@@ -53,24 +53,19 @@
   });
 </script>
 
-<div class="log-container selectable" bind:this={logContainer}>
-  {#each logs as message}
-    <div style="color: {getLogColor(message)}">
-      {@html message}
+<div class="flex-grow min-h-[200px] p-4">
+  <div
+    class="card p-4 bg-surface-100-900/50 h-full flex-grow flex-col min-h-[200px]"
+  >
+    <div
+      class="select-text font-mono h-full overflow-y-scroll break-words whitespace-normal"
+      bind:this={logContainer}
+    >
+      {#each logs as message}
+        <div style="color: {getLogColor(message)}">
+          {@html message}
+        </div>
+      {/each}
     </div>
-  {/each}
+  </div>
 </div>
-
-<style>
-  .log-container {
-    height: 200px;
-    overflow-y: auto;
-    background-color: #0f0f0f98;
-    border-radius: 8px;
-    padding: 10px;
-    resize: vertical;
-    white-space: pre-wrap;
-    text-align: left;
-    font-family: Consolas, monospace;
-  }
-</style>

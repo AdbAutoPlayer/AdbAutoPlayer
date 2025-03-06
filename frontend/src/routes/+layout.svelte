@@ -6,8 +6,7 @@
   import LogoSticky from "./LogoSticky.svelte";
   import DocumentationIconSticky from "./DocumentationIconSticky.svelte";
   import DownloadIconSticky from "./DownloadIconSticky.svelte";
-  import CommandPanel from "./CommandPanel.svelte";
-  import LogDisplay from "./LogDisplay.svelte";
+  import LogDisplayCard from "./LogDisplayCard.svelte";
 
   let { children } = $props();
 
@@ -31,12 +30,15 @@
   });
 </script>
 
-<DocumentationIconSticky></DocumentationIconSticky>
-<DownloadIconSticky></DownloadIconSticky>
-<LogoSticky></LogoSticky>
+<div class="flex flex-col h-screen overflow-hidden">
+  <div class="flex-none">
+    <DocumentationIconSticky></DocumentationIconSticky>
+    <DownloadIconSticky></DownloadIconSticky>
+    <LogoSticky></LogoSticky>
+  </div>
 
-{@render children()}
-
-<CommandPanel title={"Logs"}>
-  <LogDisplay />
-</CommandPanel>
+  <main class="flex-grow-0 overflow-y-visible p-4">
+    {@render children()}
+  </main>
+  <LogDisplayCard />
+</div>

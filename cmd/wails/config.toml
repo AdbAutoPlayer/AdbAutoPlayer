@@ -1,6 +1,6 @@
 [device]
 ID = '127.0.0.1:5555'
-wm_size = false
+wm_size = true
 streaming = true
 
 [adb]
@@ -8,4 +8,4 @@ host = '127.0.0.1'
 port = 5037
 
 [logging]
-level = 'INFO'
+level = 'DEBUG'

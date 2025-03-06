@@ -10,7 +10,6 @@
     IsGameProcessRunning,
   } from "$lib/wailsjs/go/main/App";
   import { onDestroy, onMount } from "svelte";
-  import CommandPanel from "./CommandPanel.svelte";
   import ConfigForm from "./ConfigForm.svelte";
   import Menu from "./Menu.svelte";
   import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
@@ -237,34 +236,30 @@
   });
 </script>
 
-<main class="container no-select">
-  <h1 class="text-3xl text-center">
+<main class="no-select">
+  <h1 class="text-3xl text-center pb-4">
     {activeGame?.game_title ?? "Start any supported Game!"}
   </h1>
-  {#if showConfigForm}
-    <CommandPanel title={"Config"}>
+  <div
+    class="card bg-surface-100-900/50 border-[1px] border-surface-200-800 w-full max-w-md p-4 text-center overflow-y-scroll"
+  >
+    {#if showConfigForm}
+      <h2>Config</h2>
       <ConfigForm
         configObject={configFormProps.config ?? []}
         constraints={configFormProps.constraints ?? []}
         onConfigSave={configSaveCallback}
       />
-    </CommandPanel>
-  {:else}
-    <CommandPanel title={"Menu"}>
+    {:else}
+      <h2>Menu</h2>
       <Menu
         buttons={activeGameMenuButtons ?? []}
         {defaultButtons}
         disableActions={!$pollRunningGame}
       ></Menu>
-    </CommandPanel>
-  {/if}
+    {/if}
+  </div>
 </main>
 
 <style>
-  .container {
-    margin: 0;
-    padding-top: 0;
-    display: flex;
-    flex-direction: column;
-  }
 </style>
