@@ -36,12 +36,12 @@
   let logContainer: HTMLDivElement;
 
   function getLogColor(message: string): string {
-    if (message.includes("[DEBUG]")) return "cyan";
-    if (message.includes("[INFO]")) return "green";
-    if (message.includes("[WARNING]")) return "yellow";
-    if (message.includes("[ERROR]")) return "red";
-    if (message.includes("[FATAL]")) return "darkred";
-    return "white";
+    if (message.includes("[DEBUG]")) return "text-primary-500";
+    if (message.includes("[INFO]")) return "text-success-500";
+    if (message.includes("[WARNING]")) return "text-warning-500";
+    if (message.includes("[ERROR]")) return "text-error-500";
+    if (message.includes("[FATAL]")) return "text-error-950";
+    return "text-primary-50";
   }
 
   $effect(() => {
@@ -60,7 +60,7 @@
       bind:this={logContainer}
     >
       {#each logs as message}
-        <div style="color: {getLogColor(message)}">
+        <div class={getLogColor(message)}>
           {@html message}
         </div>
       {/each}
