@@ -18,11 +18,12 @@
   );
 </script>
 
-<div class="imagecheckbox">
+<div class="flex flex-wrap gap-2.5">
   {#if choicesWithImages.length > 0}
     {#each choices as choice, i}
-      <label class="checkbox-container">
+      <label class="badge bg-surface-950 flex items-center p-4">
         <input
+          class="checkbox"
           type="checkbox"
           {name}
           value={choice}
@@ -31,7 +32,7 @@
         <img
           src={"/imagecheckbox/" + choicesWithImages[i]}
           alt={choice}
-          class="choice-icon"
+          class="w-6 h-6"
         />
         <span>{choice}</span>
       </label>
@@ -40,32 +41,3 @@
     <p>No options available</p>
   {/if}
 </div>
-
-<style>
-  .imagecheckbox {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .checkbox-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-    padding: 5px;
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .choice-icon {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-    border-radius: 4px;
-  }
-
-  input[type="checkbox"] {
-    margin: 0;
-  }
-</style>
