@@ -113,23 +113,26 @@
 
   <form id="config-form" class="config-form">
     {#each configSections as { sectionKey, sectionConfig }}
-      <fieldset>
-        <legend>{sectionKey}</legend>
+      <fieldset
+        class="border border-surface-900/60 p-4 rounded-container-token mb-4"
+      >
+        <legend class="px-2">{sectionKey}</legend>
 
         {#each Object.entries(sectionConfig) as [key, value]}
-          <div class="form-group">
-            <div class="form-group-inner">
-              <label for="{sectionKey}-{key}">
+          <div class="mb-4">
+            <div class="flex items-center justify-between">
+              <label for="{sectionKey}-{key}" class="w-30 mr-3 text-right">
                 {key}
               </label>
 
-              <div class="input-container">
+              <div class="flex-1 flex items-center">
                 {#if getInputType(sectionKey, key) === "checkbox"}
                   <input
                     type="checkbox"
                     id="{sectionKey}-{key}"
                     name="{sectionKey}-{key}"
                     checked={Boolean(configObject[sectionKey][key])}
+                    class="checkbox"
                   />
                 {:else if getInputType(sectionKey, key) === "number"}
                   <input
@@ -139,6 +142,7 @@
                     value={configObject[sectionKey][key]}
                     min={value.minimum}
                     max={value.maximum}
+                    class="input w-full"
                   />
                 {:else if getInputType(sectionKey, key) === "multicheckbox"}
                   <MultiCheckbox
@@ -157,7 +161,11 @@
                     name="{sectionKey}-{key}"
                   />
                 {:else if getInputType(sectionKey, key) === "select"}
-                  <select id="{sectionKey}-{key}" name="{sectionKey}-{key}">
+                  <select
+                    id="{sectionKey}-{key}"
+                    name="{sectionKey}-{key}"
+                    class="select w-full"
+                  >
                     {#each value.choices as option}
                       <option
                         value={option}
@@ -172,6 +180,7 @@
                     id="{sectionKey}-{key}"
                     name="{sectionKey}-{key}"
                     value={configObject[sectionKey][key]}
+                    class="input w-full"
                   />
                 {/if}
               </div>
@@ -179,57 +188,14 @@
           </div>
         {/each}
       </fieldset>
-      <br />
     {/each}
 
-    <div class="button-container">
-      <button type="button" onclick={handleSave}>Save</button>
+    <div class="mt-4 mb-4 text-center">
+      <button
+        type="button"
+        class="btn preset-filled-primary-500 hover:preset-filled-primary-700-300"
+        on:click={handleSave}>Save</button
+      >
     </div>
   </form>
 </div>
-
-<style>
-  fieldset {
-    border-color: #0f0f0f98;
-  }
-
-  .form-group {
-    margin-bottom: 15px;
-  }
-
-  .form-group-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .form-group .form-group-inner label {
-    flex: 0 0 120px;
-    margin-right: 10px;
-    text-align: right;
-  }
-
-  .input-container {
-    flex: 1;
-    display: flex;
-    align-items: center;
-  }
-
-  .input-container input:not([type="checkbox"]) {
-    width: 100%;
-  }
-
-  .input-container select {
-    width: 100%;
-  }
-
-  .input-container input[type="checkbox"] {
-    margin: 2px;
-  }
-
-  .button-container {
-    margin-top: 10px;
-    margin-bottom: 10px;
-    text-align: center;
-  }
-</style>
