@@ -258,6 +258,3 @@
     ></Menu>
   {/if}
 </div>
-
-<style>
-</style>
