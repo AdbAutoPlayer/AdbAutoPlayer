@@ -1,23 +1,30 @@
+"""ADB Auto Player Game GUI Module."""
+
 from dataclasses import dataclass
-from typing import TypeVar, Any
+from typing import Any, TypeVar
 
 from adb_auto_player.ipc import constraint
 
 
 @dataclass
 class MenuOption:
+    """Menu Option."""
+
     label: str
     args: list[str]
 
 
 @dataclass
 class GameGUIOptions:
+    """Game GUI Options."""
+
     game_title: str
     config_path: str
     menu_options: list[MenuOption]
     constraints: dict[str, dict[str, constraint.ConstraintType]]
 
     def to_dict(self):
+        """Converts the GameGUIOptions to a dictionary."""
         return {
             "game_title": self.game_title,
             "config_path": self.config_path,

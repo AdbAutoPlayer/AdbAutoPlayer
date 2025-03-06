@@ -1,25 +1,30 @@
+"""AFK Journey Legend Trial Mixin."""
+
 import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player.exceptions import TimeoutException, NotFoundException
-from adb_auto_player.games.afk_journey.afk_journey_base import AFKJourneyBase
+from adb_auto_player import Coordinates, CropRegions, NotFoundError, TimeoutError
+from adb_auto_player.games.afk_journey import AFKJourneyBase
 
 
 class LegendTrialMixin(AFKJourneyBase, ABC):
+    """Legend Trial Mixin."""
+
     def push_legend_trials(self) -> None:
+        """Push Legend Trials."""
         self.start_up()
         self.store[self.STORE_MODE] = self.MODE_LEGEND_TRIALS
         try:
-            self.__navigate_to_legend_trials_select_tower()
-        except TimeoutException as e:
+            self._navigate_to_legend_trials_select_tower()
+        except TimeoutError as e:
             logging.error(f"{e}")
             return None
 
         towers = self.get_config().legend_trials.towers
 
         results = {}
-        factions = [
+        factions: list[str] = [
             "lightbearer",
             "wilder",
             "graveborn",
@@ -34,22 +39,17 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
                 logging.info(f"{faction.capitalize()}s excluded in config")
                 continue
 
-            if self.find_template_match(
+            if self.game_find_template_match(
                 template=f"legend_trials/faction_icon_{faction}.png",
-                crop_right=0.7,
-                crop_top=0.3,
-                crop_bottom=0.1,
+                crop=CropRegions(right=0.7, top=0.3, bottom=0.1),
                 use_previous_screenshot=True,
             ):
                 logging.warning(f"{faction.capitalize()} Tower not available today")
                 continue
 
-            result = self.find_template_match(
+            result = self.game_find_template_match(
                 template=f"legend_trials/banner_{faction}.png",
-                crop_left=0.2,
-                crop_right=0.3,
-                crop_top=0.2,
-                crop_bottom=0.1,
+                crop=CropRegions(left=0.2, right=0.3, top=0.2, bottom=0.1),
                 use_previous_screenshot=True,
             )
             if result is None:
@@ -59,48 +59,50 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
 
         for faction, result in results.items():
             logging.info(f"Starting {faction.capitalize()} Tower")
-            if self.find_template_match(
+            if self.game_find_template_match(
                 template=f"legend_trials/faction_icon_{faction}.png",
-                crop_right=0.7,
-                crop_top=0.3,
-                crop_bottom=0.1,
+                crop=CropRegions(right=0.7, top=0.3, bottom=0.1),
             ):
                 logging.warning(f"{faction.capitalize()} Tower no longer available")
                 continue
-            self.__navigate_to_legend_trials_select_tower()
-            self.click(*result)
+            self._navigate_to_legend_trials_select_tower()
+            self.click(Coordinates(*result))
             try:
-                self.__select_legend_trials_floor(faction)
-            except (TimeoutException, NotFoundException) as e:
+                self._select_legend_trials_floor(faction)
+            except (TimeoutError, NotFoundError) as e:
                 logging.error(f"{e}")
                 self.press_back_button()
                 sleep(3)
                 continue
-            self.__handle_legend_trials_battle(faction)
+            self._handle_legend_trials_battle(faction)
         logging.info("Legend Trial finished")
         return None
 
-    def __handle_legend_trials_battle(self, faction: str) -> None:
+    def _handle_legend_trials_battle(self, faction: str) -> None:
+        """Handle Legend Trials battle screen.
+
+        Args:
+            faction (str): Faction name.
+        """
         count: int = 0
         while True:
             try:
-                result = self._handle_battle_screen(
+                result: bool = self._handle_battle_screen(
                     self.get_config().legend_trials.use_suggested_formations
                 )
-            except TimeoutException as e:
+            except TimeoutError as e:
                 logging.warning(f"{e}")
                 return None
 
             if result is True:
-                next_btn = self.wait_for_template(
+                next_btn: tuple[int, int] = self.wait_for_template(
                     template="next.png",
-                    crop_left=0.6,
-                    crop_top=0.9,
+                    crop=CropRegions(left=0.6, top=0.9),
                 )
                 if next_btn is not None:
                     count += 1
                     logging.info(f"{faction.capitalize()} Trials pushed: {count}")
-                    self.click(*next_btn)
+                    self.click(Coordinates(*next_btn))
                     continue
                 else:
                     logging.warning(
@@ -111,12 +113,16 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
             return None
         return None
 
-    def __select_legend_trials_floor(self, faction: str) -> None:
+    def _select_legend_trials_floor(self, faction: str) -> None:
+        """Select Legend Trials floor.
+
+        Args:
+            faction (str): Faction name.
+        """
         logging.debug("__select_legend_trials_floor")
         _ = self.wait_for_template(
             template=f"legend_trials/tower_icon_{faction}.png",
-            crop_right=0.8,
-            crop_bottom=0.8,
+            crop=CropRegions(right=0.8, bottom=0.8),
         )
         challenge_btn = self.wait_for_any_template(
             templates=[
@@ -125,46 +131,40 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
             ],
             threshold=0.8,
             grayscale=True,
-            crop_left=0.3,
-            crop_right=0.3,
-            crop_top=0.2,
-            crop_bottom=0.2,
+            crop=CropRegions(left=0.3, right=0.3, top=0.2, bottom=0.2),
             timeout=self.MIN_TIMEOUT,
         )
         _, x, y = challenge_btn
-        self.click(x, y)
-        return None
+        self.click(Coordinates(x, y))
 
-    def __navigate_to_legend_trials_select_tower(self) -> None:
+    def _navigate_to_legend_trials_select_tower(self) -> None:
+        """Navigate to Legend Trials select tower screen."""
+
         def check_for_legend_trials_s_header() -> bool:
-            header = self.find_template_match(
+            header = self.game_find_template_match(
                 template="legend_trials/s_header.png",
-                crop_right=0.8,
-                crop_bottom=0.8,
+                crop=CropRegions(right=0.8, bottom=0.8),
             )
             return header is not None
 
         self._navigate_to_default_state(check_callable=check_for_legend_trials_s_header)
 
         logging.info("Navigating to Legend Trials tower selection")
-        s_header = self.find_template_match(
+        s_header = self.game_find_template_match(
             template="legend_trials/s_header.png",
-            crop_right=0.8,
-            crop_bottom=0.8,
+            crop=CropRegions(right=0.8, bottom=0.8),
             use_previous_screenshot=True,
         )
         if not s_header:
             logging.info("Clicking Battle Modes button")
-            self.click(460, 1830, scale=True)
+            self.click(Coordinates(460, 1830), scale=True)
             label = self.wait_for_template(
                 template="legend_trials/label.png",
                 timeout_message="Could not find Legend Trial Label",
             )
-            self.click(*label)
+            self.click(Coordinates(*label))
             self.wait_for_template(
                 template="legend_trials/s_header.png",
-                crop_right=0.8,
-                crop_bottom=0.8,
+                crop=CropRegions(right=0.8, bottom=0.8),
                 timeout_message="Could not find Season Legend Trial Header",
             )
-        return None

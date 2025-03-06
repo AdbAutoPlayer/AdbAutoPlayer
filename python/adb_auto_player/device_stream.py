@@ -1,19 +1,25 @@
-import threading
+"""ADB Auto Player Device Stream Module."""
+
 import logging
-import time
 import platform
-from PIL import Image
 import queue
-from adbutils import AdbDevice, AdbConnection
+import threading
+import time
 
+from adbutils import AdbConnection, AdbDevice
 from av.codec.context import CodecContext
+from PIL import Image
 
 
-class StreamingNotSupportedException(Exception):
+class StreamingNotSupportedError(Exception):
+    """Streaming is not yet implemented for the specified platform."""
+
     pass
 
 
 class DeviceStream:
+    """Device screen streaming."""
+
     def __init__(self, device: AdbDevice, fps: int = 30, buffer_size: int = 2):
         """Initialize the screen stream.
 
@@ -23,7 +29,7 @@ class DeviceStream:
             buffer_size: Number of frames to keep in buffer (default: 2)
 
         Raises:
-            StreamingNotSupportedException
+            StreamingNotSupportedError
         """
         self.device = device
         self.fps = fps
@@ -40,7 +46,7 @@ class DeviceStream:
         )
 
         if self.is_arm_mac:
-            raise StreamingNotSupportedException(
+            raise StreamingNotSupportedError(
                 "Device Stream is not implemented for macOS"
             )
 
@@ -82,6 +88,8 @@ class DeviceStream:
         return self.latest_frame
 
     def _handle_stream_arm_mac(self) -> None:
+        """Stream handler for Mac."""
+        # TODO
         # h264 returns segmentation fault
         # raw-frames lags bluestacks to death
         # example command:
@@ -91,9 +99,9 @@ class DeviceStream:
         # maybe we can just brew install scrcpy and try with that?
         logging.error("Device Stream is not implemented for macOS")
         self.stop()
-        return
 
     def _handle_stream_windows(self) -> None:
+        """Stream handler for Windows."""
         self._process = self.device.shell(
             cmdargs="screenrecord --output-format=h264 --time-limit=1 -",
             stream=True,
@@ -130,7 +138,6 @@ class DeviceStream:
                 if len(buffer) > 1024 * 1024:
                     buffer = buffer[-1024 * 1024 :]
                 continue
-        return
 
     def _stream_screen(self) -> None:
         """Background thread that continuously captures frames."""
@@ -148,4 +155,3 @@ class DeviceStream:
                 if self._process:
                     self._process.close()
                     self._process = None
-        return

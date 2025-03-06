@@ -1,37 +1,58 @@
+"""ADB Auto Player Game Base Module."""
+
 import io
+import logging
 from abc import abstractmethod
+from collections.abc import Callable
 from pathlib import Path
 from time import sleep, time
-from typing import Any, TypeVar, Callable, Literal
+from typing import Any, Literal, NamedTuple, TypeVar
 
+from adb_auto_player import (
+    Command,
+    ConfigLoader,
+    DeviceStream,
+    GenericAdbError,
+    NoPreviousScreenshotError,
+    NotInitializedError,
+    StreamingNotSupportedError,
+    TimeoutError,
+    UnsupportedResolutionError,
+)
+from adb_auto_player.adb import get_adb_device, get_screen_resolution, is_portrait
+from adb_auto_player.ipc.game_gui import GameGUIOptions, MenuOption
+from adb_auto_player.template_matching import (
+    CropRegions,
+    MatchMode,
+    crop_image,
+    find_all_template_matches,
+    find_template_match,
+    find_worst_template_match,
+    load_image,
+    similar_image,
+)
+from adbutils._device import AdbDevice
 from PIL import Image
-from adbutils import AdbDevice
 from pydantic import BaseModel
 
-import adb_auto_player.adb as adb
-import logging
-import adb_auto_player.template_matching as template_matching
-import adb_auto_player.config_loader as config_loader
-from adb_auto_player.command import Command
-from adb_auto_player.device_stream import DeviceStream, StreamingNotSupportedException
-from adb_auto_player.exceptions import (
-    UnsupportedResolutionException,
-    TimeoutException,
-    AdbException,
-    NotInitializedError,
-    NoPreviousScreenshotException,
-)
-from adb_auto_player.ipc.game_gui import GameGUIOptions, MenuOption
-from adb_auto_player.template_matching import MatchMode
+
+class Coordinates(NamedTuple):
+    """Coordinate named tuple."""
+
+    x: int
+    y: int
 
 
 class Game:
+    """Generic Game class."""
+
     def __init__(self) -> None:
-        self.device: AdbDevice | None = None
+        """Initialize a game."""
+        self._device: AdbDevice | None = None
         self.config: BaseModel | None = None
         self.store: dict[str, Any] = {}
         self.previous_screenshot: Image.Image | None = None
-        self.resolution: tuple[int, int] | None = None
+        self._resolution: tuple[int, int] | None = None
         self.scale_factor: float | None = None
         self.supports_portrait: bool = False
         self.supports_landscape: bool = False
@@ -40,31 +61,38 @@ class Game:
 
     @abstractmethod
     def get_template_dir_path(self) -> Path:
-        pass
+        """Required method to return the template directory path."""
+        ...
 
     @abstractmethod
-    def load_config(self):
-        pass
+    def load_config(self) -> None:
+        """Required method to load the game configuration."""
+        ...
 
     @abstractmethod
     def get_cli_menu_commands(self) -> list[Command]:
-        pass
+        """Required method to return the CLI menu commands."""
+        ...
 
     @abstractmethod
     def get_gui_options(self) -> GameGUIOptions:
-        pass
+        """Required method to return the GUI options."""
+        ...
 
     @abstractmethod
     def get_supported_resolutions(self) -> list[str]:
-        pass
+        """Required method to return the supported resolutions."""
+        ...
 
     @abstractmethod
     def get_config(self) -> BaseModel:
-        pass
+        """Required method to return the game configuration."""
+        ...
 
     def _get_menu_options_from_cli_menu(self) -> list[MenuOption]:
+        """Get the menu options from the CLI menu commands."""
         menu_options = []
-        for i, command in enumerate(self.get_cli_menu_commands()):
+        for _, command in enumerate(self.get_cli_menu_commands()):
             menu_options.append(
                 MenuOption(label=command.gui_label, args=[command.name])
             )
@@ -76,15 +104,13 @@ class Game:
         Raises:
              UnsupportedResolutionException: Device resolution is not supported.
         """
-        resolution = adb.get_screen_resolution(self.get_device())
-        supported_resolutions = self.get_supported_resolutions()
+        resolution: str = get_screen_resolution(self.device)
+        supported_resolutions: list[str] = self.get_supported_resolutions()
 
         try:
             width, height = map(int, resolution.split("x"))
         except ValueError:
-            raise UnsupportedResolutionException(
-                f"Invalid resolution format: {resolution}"
-            )
+            raise UnsupportedResolutionError(f"Invalid resolution format: {resolution}")
 
         is_supported = False
         for supported_resolution in supported_resolutions:
@@ -101,12 +127,12 @@ class Game:
                         is_supported = True
                         break
                 except ValueError:
-                    raise UnsupportedResolutionException(
+                    raise UnsupportedResolutionError(
                         f"Invalid aspect ratio format: {supported_resolution}"
                     )
 
         if not is_supported:
-            raise UnsupportedResolutionException(
+            raise UnsupportedResolutionError(
                 "This bot only supports these resolutions: "
                 f"{', '.join(supported_resolutions)}"
             )
@@ -116,9 +142,9 @@ class Game:
         if (
             self.supports_portrait
             and not self.supports_landscape
-            and not adb.is_portrait(self.device)
+            and not is_portrait(self.device)
         ):
-            raise UnsupportedResolutionException(
+            raise UnsupportedResolutionError(
                 "This bot only works in Portrait mode: "
                 "https://yulesxoxo.github.io/AdbAutoPlayer/user-guide/"
                 "troubleshoot.html#this-bot-only-works-in-portrait-mode"
@@ -127,39 +153,74 @@ class Game:
         if (
             self.supports_landscape
             and not self.supports_portrait
-            and adb.is_portrait(self.device)
+            and is_portrait(self.device)
         ):
-            raise UnsupportedResolutionException(
+            raise UnsupportedResolutionError(
                 "This bot only works in Landscape mode: "
                 "https://yulesxoxo.github.io/AdbAutoPlayer/user-guide/"
                 "troubleshoot.html#this-bot-only-works-in-portrait-mode"
             )
 
-        return None
-
     def get_scale_factor(self) -> float:
+        """Get the scale factor of the current resolution relative to a reference.
+
+        The reference resolution is (1080, 1920) and the scale factor is the width of
+        the current resolution divided by the width of the reference resolution.
+
+        The scale factor is used to scale the coordinates of templates and is used by
+        `get_templates` to get the correct size of templates.
+
+        Returns:
+            float: Scale factor of the current resolution.
+        """
         if self.scale_factor:
             return self.scale_factor
         reference_resolution = (1080, 1920)
-        if self.get_resolution() == reference_resolution:
+        if self.resolution == reference_resolution:
             self.scale_factor = 1.0
         else:
-            self.scale_factor = self.get_resolution()[0] / reference_resolution[0]
+            self.scale_factor = self.resolution[0] / reference_resolution[0]
         return self.scale_factor
 
-    def get_resolution(self) -> tuple[int, int]:
-        if self.resolution is None:
+    @property
+    def resolution(self) -> tuple[int, int]:
+        """Get resolution."""
+        if self._resolution is None:
             raise NotInitializedError()
-        return self.resolution
+        return self._resolution
 
-    def set_device(self, device_streaming: bool = False) -> None:
-        resolutions = self.get_supported_resolutions()
-        suggested_resolution = next((res for res in resolutions if "x" in res), None)
+    @resolution.setter
+    def resolution(self, value: tuple[int, int]) -> None:
+        """Set resolution."""
+        self._resolution = value
+
+    @property
+    def device(self) -> AdbDevice:
+        """Get device."""
+        return self._device
+
+    @device.setter
+    def device(self, value: AdbDevice) -> None:
+        """Set device."""
+        self._device = value
+
+    def open_eyes(self, device_streaming: bool = False) -> None:
+        """Give the bot eyes.
+
+        Set the device for the game and start the device stream.
+
+        Args:
+            device_streaming (bool, optional): Whether to start the device stream.
+        """
+        resolutions: list[str] = self.get_supported_resolutions()
+        suggested_resolution: str | None = next(
+            (res for res in resolutions if "x" in res), None
+        )
         logging.debug(f"Suggested Resolution: {suggested_resolution}")
-        self.device = adb.get_device(suggested_resolution)
+        self.device = get_adb_device(suggested_resolution)
         self.check_requirements()
 
-        main_config = config_loader.get_main_config()
+        main_config: dict[str, Any] = ConfigLoader().main_config
         config_streaming = main_config.get("device", {}).get("streaming", True)
 
         if not config_streaming:
@@ -169,11 +230,12 @@ class Game:
             self.start_stream()
 
     def start_stream(self) -> None:
+        """Start the device stream."""
         try:
             self.stream = DeviceStream(
                 self.device,
             )
-        except StreamingNotSupportedException as e:
+        except StreamingNotSupportedError as e:
             logging.warning(f"{e}")
 
         if self.stream is None:
@@ -182,8 +244,9 @@ class Game:
         self.stream.start()
         logging.info("Starting Device Stream...")
         time_waiting_for_stream_to_start = 0
+        attempts = 10
         while True:
-            if time_waiting_for_stream_to_start >= 10:
+            if time_waiting_for_stream_to_start >= attempts:
                 logging.error("Could not start Device Stream using screenshots instead")
                 if self.stream:
                     self.stream.stop()
@@ -195,22 +258,24 @@ class Game:
             sleep(1)
             time_waiting_for_stream_to_start += 1
 
-    def get_device(self) -> AdbDevice:
-        if self.device is None:
-            raise NotInitializedError()
-        return self.device
-
     def click(
         self,
-        x: int,
-        y: int,
+        coordinates: Coordinates,
         scale: bool = False,
     ) -> None:
+        """Click on the given coordinates.
+
+        Args:
+            coordinates (Coordinates): Coordinates to click on.
+            scale (bool, optional): Whether to scale the coordinates.
+        """
         if not scale:
-            self.get_device().click(x, y)
+            self.device.click(coordinates.x, coordinates.y)
             return None
-        x, y = self.__scale_coordinates(x, y)
-        self.get_device().click(x, y)
+
+        coordinates = Coordinates(*self._scale_coordinates(*coordinates))
+        self.device.click(coordinates.x, coordinates.y)
+
         return None
 
     def get_screenshot(self) -> Image.Image:
@@ -220,14 +285,14 @@ class Game:
             AdbException: Screenshot cannot be recorded
         """
         if self.stream:
-            image = self.stream.get_latest_frame()
+            image: Image.Image | None = self.stream.get_latest_frame()
             if image:
                 self.previous_screenshot = image
                 return image
             logging.error(
                 "Could not retrieve latest Frame from Device Stream using screencap..."
             )
-        screenshot_data = self.get_device().shell("screencap -p", encoding=None)
+        screenshot_data = self.device.shell("screencap -p", encoding=None)
         if isinstance(screenshot_data, bytes):
             png_start_index = screenshot_data.find(b"\x89PNG\r\n\x1a\n")
             # Slice the screenshot data to remove the warning
@@ -236,17 +301,19 @@ class Game:
                 screenshot_data = screenshot_data[png_start_index:]
             self.previous_screenshot = Image.open(io.BytesIO(screenshot_data))
             return self.previous_screenshot
-        raise AdbException(
-            f"Screenshots cannot be recorded from device: {self.get_device().serial}"
+        raise GenericAdbError(
+            f"Screenshots cannot be recorded from device: {self.device.serial}"
         )
 
     def get_previous_screenshot(self) -> Image.Image:
+        """Get the previous screenshot."""
         if self.previous_screenshot is not None:
             return self.previous_screenshot
         logging.warning("No previous screenshot")
         return self.get_screenshot()
 
-    def __get_screenshot(self, previous_screenshot: bool):
+    def _get_screenshot(self, previous_screenshot: bool) -> Image.Image:
+        """Get screenshot depending on stream or not."""
         if self.stream:
             return self.get_screenshot()
         if previous_screenshot:
@@ -254,23 +321,35 @@ class Game:
         else:
             return self.get_screenshot()
 
-    def wait_for_roi_change(
+    def wait_for_roi_change(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
         threshold: float = 0.9,
         grayscale: bool = False,
-        crop_left: float = 0.0,
-        crop_right: float = 0.0,
-        crop_top: float = 0.0,
-        crop_bottom: float = 0.0,
+        crop: CropRegions = CropRegions(),
         delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
     ) -> bool:
         """Waits for a region of interest (ROI) on the screen to change.
 
-        This function monitors a specific region of the screen (defined by the crop values).
-        If the crop values are all set to 0, it will monitor the entire screen for changes.
-        A change is detected based on a similarity threshold between current and previous screen regions.
+        This function monitors a specific region of the screen defined by
+        the crop values.
+        If the crop values are all set to 0, it will monitor the entire
+        screen for changes.
+        A change is detected based on a similarity threshold between current and
+        previous screen regions.
+
+        Args:
+            threshold (float): Similarity threshold. Defaults to 0.9.
+            grayscale (bool): Whether to convert images to grayscale before comparison.
+                Defaults to False.
+            crop (Crop): Crop percentages for trimming the image. Defaults to Crop().
+            delay (float): Delay between checks in seconds. Defaults to 0.5.
+            timeout (float): Timeout in seconds. Defaults to 30.
+            timeout_message (str | None): Custom timeout message. Defaults to None.
+
+        Returns:
+            bool: True if the region of interest has changed, False otherwise.
 
         Raises:
             NoPreviousScreenshotException: No previous screenshot
@@ -282,31 +361,19 @@ class Game:
         # There is a chance that by the time get_previous_screenshot takes
         # a screenshot because none exists that the animations are completed
         # this means the roi will never change
-        prev = self.previous_screenshot
+        prev: Image.Image | None = self.previous_screenshot
         if prev is None:
-            raise NoPreviousScreenshotException(
+            raise NoPreviousScreenshotError(
                 "Region of interest cannot have changed if "
                 "there is no previous screenshot."
             )
 
-        cropped, _, _ = template_matching.crop_image(
-            image=prev,
-            left=crop_left,
-            right=crop_right,
-            top=crop_top,
-            bottom=crop_bottom,
-        )
+        cropped, _, _ = crop_image(image=prev, crop=crop)
 
         def roi_changed() -> Literal[True] | None:
-            screenshot, _, _ = template_matching.crop_image(
-                image=self.get_screenshot(),
-                left=crop_left,
-                right=crop_right,
-                top=crop_top,
-                bottom=crop_bottom,
-            )
+            screenshot, _, _ = crop_image(image=self.get_screenshot(), crop=crop)
 
-            result = not template_matching.similar_image(
+            result = not similar_image(
                 base_image=cropped,
                 template_image=screenshot,
                 threshold=threshold,
@@ -322,35 +389,44 @@ class Game:
                 f"Region of Interest has not changed after {timeout} seconds"
             )
 
-        return self.__execute_or_timeout(
+        return self._execute_or_timeout(
             roi_changed, delay=delay, timeout=timeout, timeout_message=timeout_message
         )
 
-    def find_template_match(
+    # TODO: Change this functio name.
+    # It is the same as template_matching.find_template_match
+    def game_find_template_match(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
         template: str | Path,
-        match_mode: template_matching.MatchMode = template_matching.MatchMode.BEST,
+        match_mode: MatchMode = MatchMode.BEST,
         threshold: float = 0.9,
         grayscale: bool = False,
-        crop_left: float = 0.0,
-        crop_right: float = 0.0,
-        crop_top: float = 0.0,
-        crop_bottom: float = 0.0,
+        crop: CropRegions = CropRegions(),
         use_previous_screenshot: bool = False,
     ) -> tuple[int, int] | None:
+        """Find a template on the screen.
+
+        Args:
+            template (str | Path): Path to the template image.
+            match_mode (MatchMode, optional): Defaults to MatchMode.BEST.
+            threshold (float, optional): Image similarity threshold. Defaults to 0.9.
+            grayscale (bool, optional): Convert to grayscale boolean. Defaults to False.
+            crop (Crop, optional): Crop percentages. Defaults to Crop().
+            use_previous_screenshot (bool, optional): Defaults to False.
+
+        Returns:
+            tuple[int, int] | None: Coordinates of the match, or None if not found.
+        """
         template_path = self.get_template_dir_path() / template
 
-        base_image, left_offset, top_offset = template_matching.crop_image(
-            image=self.__get_screenshot(previous_screenshot=use_previous_screenshot),
-            left=crop_left,
-            right=crop_right,
-            top=crop_top,
-            bottom=crop_bottom,
+        base_image, left_offset, top_offset = crop_image(
+            image=self._get_screenshot(previous_screenshot=use_previous_screenshot),
+            crop=crop,
         )
 
-        result = template_matching.find_template_match(
+        result = find_template_match(
             base_image=base_image,
-            template_image=template_matching.load_image(
+            template_image=load_image(
                 image_path=template_path,
                 image_scale_factor=self.get_scale_factor(),
             ),
@@ -369,23 +445,26 @@ class Game:
         self,
         template: str | Path,
         grayscale: bool = False,
-        crop_left: float = 0.0,
-        crop_right: float = 0.0,
-        crop_top: float = 0.0,
-        crop_bottom: float = 0.0,
-    ):
-        template_path = self.get_template_dir_path() / template
-        base_image, left_offset, top_offset = template_matching.crop_image(
-            image=self.__get_screenshot(previous_screenshot=False),
-            left=crop_left,
-            right=crop_right,
-            top=crop_top,
-            bottom=crop_bottom,
+        crop: CropRegions = CropRegions(),
+    ) -> None | tuple[int, int]:
+        """Find the most different match.
+
+        Args:
+            template (str | Path): Path to template image.
+            grayscale (bool, optional): Convert to grayscale boolean. Defaults to False.
+            crop (CropRegions, optional): Crop percentages. Defaults to CropRegions().
+
+        Returns:
+            None | tuple[int, int]: Coordinates of worst match.
+        """
+        template_path: Path = self.get_template_dir_path() / template
+        base_image, left_offset, top_offset = crop_image(
+            image=self._get_screenshot(previous_screenshot=False), crop=crop
         )
 
-        result = template_matching.find_worst_template_match(
+        result = find_worst_template_match(
             base_image=base_image,
-            template_image=template_matching.load_image(
+            template_image=load_image(
                 image_path=template_path,
                 image_scale_factor=self.get_scale_factor(),
             ),
@@ -397,31 +476,39 @@ class Game:
         x, y = result
         return x + left_offset, y + top_offset
 
-    def find_all_template_matches(
+    def find_all_template_matches(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
         template: str | Path,
         threshold: float = 0.9,
         grayscale: bool = False,
-        crop_left: float = 0.0,
-        crop_right: float = 0.0,
-        crop_top: float = 0.0,
-        crop_bottom: float = 0.0,
+        crop: CropRegions = CropRegions(),
         min_distance: int = 10,
         use_previous_screenshot: bool = False,
     ) -> list[tuple[int, int]]:
-        template_path = self.get_template_dir_path() / template
+        """Find all matches.
 
-        base_image, left_offset, top_offset = template_matching.crop_image(
-            image=self.__get_screenshot(previous_screenshot=use_previous_screenshot),
-            left=crop_left,
-            right=crop_right,
-            top=crop_top,
-            bottom=crop_bottom,
+        Args:
+            template (str | Path): Path to template image.
+            threshold (float, optional): Image similarity threshold. Defaults to 0.9.
+            grayscale (bool, optional): Convert to grayscale boolean. Defaults to False.
+            crop (CropRegions, optional): Crop percentages. Defaults to CropRegions().
+            min_distance (int, optional): Minimum distance between matches.
+                Defaults to 10.
+            use_previous_screenshot (bool, optional): Defaults to False.
+
+        Returns:
+            list[tuple[int, int]]: List of found coordinates.
+        """
+        template_path: Path = self.get_template_dir_path() / template
+
+        base_image, left_offset, top_offset = crop_image(
+            image=self._get_screenshot(previous_screenshot=use_previous_screenshot),
+            crop=crop,
         )
 
-        result = template_matching.find_all_template_matches(
+        result: list[tuple[int, int]] = find_all_template_matches(
             base_image=base_image,
-            template_image=template_matching.load_image(
+            template_image=load_image(
                 image_path=template_path,
                 image_scale_factor=self.get_scale_factor(),
             ),
@@ -430,18 +517,17 @@ class Game:
             min_distance=min_distance,
         )
 
-        adjusted_result = [(x + left_offset, y + top_offset) for x, y in result]
+        adjusted_result: list[tuple[int, int]] = [
+            (x + left_offset, y + top_offset) for x, y in result
+        ]
         return adjusted_result
 
-    def wait_for_template(
+    def wait_for_template(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
         template: str | Path,
         threshold: float = 0.9,
         grayscale: bool = False,
-        crop_left: float = 0.0,
-        crop_right: float = 0.0,
-        crop_top: float = 0.0,
-        crop_bottom: float = 0.0,
+        crop: CropRegions = CropRegions(),
         delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
@@ -453,14 +539,11 @@ class Game:
         """
 
         def find_template() -> tuple[int, int] | None:
-            result = self.find_template_match(
+            result: tuple[int, int] | None = self.game_find_template_match(
                 template,
                 threshold=threshold,
                 grayscale=grayscale,
-                crop_left=crop_left,
-                crop_right=crop_right,
-                crop_top=crop_top,
-                crop_bottom=crop_bottom,
+                crop=crop,
             )
             if result is not None:
                 logging.debug(f"wait_for_template: {template} found")
@@ -471,19 +554,16 @@ class Game:
                 f"Could not find Template: '{template}' after {timeout} seconds"
             )
 
-        return self.__execute_or_timeout(
+        return self._execute_or_timeout(
             find_template, delay=delay, timeout=timeout, timeout_message=timeout_message
         )
 
-    def wait_until_template_disappears(
+    def wait_until_template_disappears(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
         template: str | Path,
         threshold: float = 0.9,
         grayscale: bool = False,
-        crop_left: float = 0.0,
-        crop_right: float = 0.0,
-        crop_top: float = 0.0,
-        crop_bottom: float = 0.0,
+        crop: CropRegions = CropRegions(),
         delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
@@ -495,14 +575,11 @@ class Game:
         """
 
         def find_best_template() -> tuple[int, int] | None:
-            result = self.find_template_match(
+            result: tuple[int, int] | None = self.game_find_template_match(
                 template,
                 threshold=threshold,
                 grayscale=grayscale,
-                crop_left=crop_left,
-                crop_right=crop_right,
-                crop_top=crop_top,
-                crop_bottom=crop_bottom,
+                crop=crop,
             )
             if result is None:
                 logging.debug(
@@ -516,24 +593,20 @@ class Game:
                 f"Template: {template} is still visible after {timeout} seconds"
             )
 
-        self.__execute_or_timeout(
+        self._execute_or_timeout(
             find_best_template,
             delay=delay,
             timeout=timeout,
             timeout_message=timeout_message,
             result_should_be_none=True,
         )
-        return None
 
-    def wait_for_any_template(
+    def wait_for_any_template(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
         templates: list[str],
         threshold: float = 0.9,
         grayscale: bool = False,
-        crop_left: float = 0.0,
-        crop_right: float = 0.0,
-        crop_top: float = 0.0,
-        crop_bottom: float = 0.0,
+        crop: CropRegions = CropRegions(),
         delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
@@ -549,10 +622,7 @@ class Game:
                 templates,
                 threshold=threshold,
                 grayscale=grayscale,
-                crop_left=crop_left,
-                crop_right=crop_right,
-                crop_top=crop_top,
-                crop_bottom=crop_bottom,
+                crop=crop,
             )
 
         if timeout_message is None:
@@ -560,34 +630,41 @@ class Game:
                 f"None of the templates {templates} were found after {timeout} seconds"
             )
 
-        return self.__execute_or_timeout(
+        return self._execute_or_timeout(
             find_template, delay=delay, timeout=timeout, timeout_message=timeout_message
         )
 
-    def find_any_template(
+    def find_any_template(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
         templates: list[str],
         match_mode: MatchMode = MatchMode.BEST,
         threshold: float = 0.9,
         grayscale: bool = False,
-        crop_left: float = 0.0,
-        crop_right: float = 0.0,
-        crop_top: float = 0.0,
-        crop_bottom: float = 0.0,
+        crop: CropRegions = CropRegions(),
         use_previous_screenshot: bool = False,
     ) -> tuple[str, int, int] | None:
+        """Find any first template on the screen.
+
+        Args:
+            templates (list[str]): List of templates to search for.
+            match_mode (MatchMode, optional): String enum. Defaults to MatchMode.BEST.
+            threshold (float, optional): Image similarity threshold. Defaults to 0.9.
+            grayscale (bool, optional): Convert to grayscale boolean. Defaults to False.
+            crop (CropRegions, optional): Crop percentages. Defaults to CropRegions().
+            use_previous_screenshot (bool, optional): Defaults to False.
+
+        Returns:
+            tuple[str, int, int] | None: Coordinates of the match, or None if not found.
+        """
         if not use_previous_screenshot:
             self.get_screenshot()
         for template in templates:
-            result = self.find_template_match(
+            result: tuple[int, int] | None = self.game_find_template_match(
                 template,
                 match_mode=match_mode,
                 threshold=threshold,
                 grayscale=grayscale,
-                crop_left=crop_left,
-                crop_right=crop_right,
-                crop_top=crop_top,
-                crop_bottom=crop_bottom,
+                crop=crop,
                 use_previous_screenshot=True,
             )
             if result is not None:
@@ -596,9 +673,20 @@ class Game:
         return None
 
     def press_back_button(self) -> None:
-        self.get_device().keyevent(4)
+        """Presses the back button."""
+        self.device.keyevent(4)
 
     def swipe_down(self, sy: int = 1350, ey: int = 500, duration: float = 1.0) -> None:
+        """Swipes the screen down.
+
+        Args:
+            sy (int, optional): Start Y coordinate. Defaults to 1350.
+            ey (int, optional): End Y coordinate. Defaults to 500.
+            duration (float, optional): Swipe duration. Defaults to 1.0.
+
+        Raises:
+            ValueError: If sy is greater than or equal to ey.
+        """
         if sy <= ey:
             raise ValueError(
                 "sy (start y) must be greater than ey (end y) to swipe down."
@@ -608,6 +696,16 @@ class Game:
         self.swipe(sx=540, sy=sy, ex=540, ey=ey, duration=duration)
 
     def swipe_up(self, sy: int = 500, ey: int = 1350, duration: float = 1.0) -> None:
+        """Swipes the screen up.
+
+        Args:
+            sy (int, optional): Start Y coordinate. Defaults to 500.
+            ey (int, optional): End Y coordinate. Defaults to 1350.
+            duration (float, optional): Swipe duration. Defaults to 1.0.
+
+        Raises:
+            ValueError: If ey is less than or equal to sy.
+        """
         if ey >= sy:
             raise ValueError("s (start y) must be smaller than ey (end y) to swipe up.")
 
@@ -615,18 +713,34 @@ class Game:
         self.swipe(sx=540, sy=sy, ex=540, ey=ey, duration=duration)
 
     def hold(self, x: int, y: int, duration: float = 3.0) -> None:
+        """Holds a point on the screen.
+
+        Args:
+            x (int): X coordinate.
+            y (int): Y coordinate.
+            duration (float, optional): Hold duration. Defaults to 3.0.
+        """
         logging.debug(f"hold: ({x}, {y}) for {duration} seconds")
         self.swipe(sx=x, sy=y, ex=x, ey=y, duration=duration)
 
-    def swipe(self, sx: int, sy: int, ex: int, ey: int, duration: float = 1.0):
-        sx, sy, ex, ey = self.__scale_coordinates(sx, sy, ex, ey)
-        self.get_device().swipe(sx=sx, sy=sy, ex=ex, ey=ey, duration=duration)
+    def swipe(self, sx: int, sy: int, ex: int, ey: int, duration: float = 1.0) -> None:
+        """Swipes the screen.
+
+        Args:
+            sx (int): Start X coordinate.
+            sy (int): Start Y coordinate.
+            ex (int): End X coordinate.
+            ey (int): End Y coordinate.
+            duration (float, optional): Swipe duration. Defaults to 1.0.
+        """
+        sx, sy, ex, ey = self._scale_coordinates(sx, sy, ex, ey)
+        self.device.swipe(sx=sx, sy=sy, ex=ex, ey=ey, duration=duration)
         sleep(2)
 
     T = TypeVar("T")
 
     @staticmethod
-    def __execute_or_timeout(
+    def _execute_or_timeout(
         operation: Callable[[], T | None],
         timeout_message: str,
         delay: float = 0.5,
@@ -639,7 +753,7 @@ class Game:
             TimeoutException: Operation did not return the desired result.
         """
         time_spent_waiting: float = 0
-        end_time = time() + timeout
+        end_time: float = time() + timeout
         end_time_exceeded = False
 
         while True:
@@ -653,14 +767,14 @@ class Game:
             time_spent_waiting += delay
 
             if time_spent_waiting >= timeout or end_time_exceeded:
-                raise TimeoutException(f"{timeout_message}")
+                raise TimeoutError(f"{timeout_message}")
 
             if end_time <= time():
                 end_time_exceeded = True
 
-    def __scale_coordinates(self, *coordinates: int) -> tuple[int, ...]:
+    def _scale_coordinates(self, *coordinates: int) -> tuple[int, ...]:
         """Scale a variable number of coordinates by the given scale factor."""
-        scale_factor = self.get_scale_factor()
+        scale_factor: float = self.get_scale_factor()
         if scale_factor != 1.0:
             coordinates = tuple(int(round(c * scale_factor)) for c in coordinates)
 

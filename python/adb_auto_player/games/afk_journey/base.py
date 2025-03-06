@@ -1,26 +1,37 @@
+"""AFK Journey Base Module."""
+
 import logging
 import re
 from abc import ABC
-from time import sleep
-from typing import Callable
-
-from adb_auto_player.config_loader import get_games_dir
-from adb_auto_player.exceptions import NotInitializedError
-from adb_auto_player.game import Game
+from collections.abc import Callable
 from pathlib import Path
+from time import sleep
+from typing import Any
 
+from adb_auto_player import (
+    ConfigLoader,
+    Coordinates,
+    CropRegions,
+    Game,
+    MatchMode,
+    NotInitializedError,
+)
 from adb_auto_player.games.afk_journey.config import Config
-from adb_auto_player.template_matching import MatchMode
 
 
 class AFKJourneyBase(Game, ABC):
+    """AFK Journey Base Class."""
+
     def __init__(self) -> None:
+        """Initialize AFKJourneyBase."""
         super().__init__()
         self.supports_portrait = True
         self.package_names = [
             "com.farlightgames.igame.gp",
         ]
 
+    config_loader = ConfigLoader()
+    games_dir: Path = config_loader.games_dir
     template_dir_path: Path | None = None
     config_file_path: Path | None = None
 
@@ -41,37 +52,49 @@ class AFKJourneyBase(Game, ABC):
     MODE_LEGEND_TRIALS: str = "LEGEND_TRIALS"
 
     def start_up(self, device_streaming: bool = False) -> None:
+        """Give the bot eyes."""
         if self.device is None:
             logging.debug("start_up")
-            self.set_device(device_streaming=device_streaming)
+            self.open_eyes(device_streaming=device_streaming)
         if self.config is None:
             self.load_config()
-        return None
 
     def get_template_dir_path(self) -> Path:
+        """Retrieve path to images."""
         if self.template_dir_path is not None:
             return self.template_dir_path
 
-        games_dir = get_games_dir()
-        self.template_dir_path = games_dir / "afk_journey" / "templates"
+        self.template_dir_path = self.games_dir / "afk_journey" / "templates"
         logging.debug(f"AFKJourney template dir: {self.template_dir_path}")
         return self.template_dir_path
 
     def load_config(self) -> None:
+        """Load config TOML."""
         if self.config_file_path is None:
-            self.config_file_path = get_games_dir() / "afk_journey" / "AFKJourney.toml"
+            self.config_file_path = self.games_dir / "afk_journey" / "AFKJourney.toml"
             logging.debug(f"AFK Journey config path: {self.config_file_path}")
         self.config = Config.from_toml(self.config_file_path)
 
     def get_config(self) -> Config:
+        """Get config."""
         if self.config is None:
             raise NotInitializedError()
         return self.config
 
     def get_supported_resolutions(self) -> list[str]:
+        """Get supported resolutions."""
         return ["1080x1920"]
 
-    def __get_config_attribute_from_mode(self, attribute: str):
+    def _get_config_attribute_from_mode(self, attribute: str) -> Any:
+        """Retrieve a configuration attribute based on the current game mode.
+
+        Args:
+            attribute (str): The name of the configuration attribute to retrieve.
+
+        Returns:
+            The value of the specified attribute from the configuration corresponding
+            to the current game mode.
+        """
         match self.store.get(self.STORE_MODE, None):
             case self.MODE_DURAS_TRIALS:
                 return getattr(self.get_config().duras_trials, attribute)
@@ -85,10 +108,13 @@ class AFKJourneyBase(Game, ABC):
 
         Args:
             use_suggested_formations: if True copy formations from Records
+
+        Returns:
+            True if the battle was won, False otherwise.
         """
         self.start_up()
 
-        formations = self.__get_config_attribute_from_mode("formations")
+        formations = self._get_config_attribute_from_mode("formations")
 
         self.store[self.STORE_FORMATION_NUM] = 0
         if not use_suggested_formations:
@@ -99,7 +125,7 @@ class AFKJourneyBase(Game, ABC):
 
             if (
                 use_suggested_formations
-                and not self.__copy_suggested_formation_from_records(formations)
+                and not self._copy_suggested_formation_from_records(formations)
             ):
                 continue
             else:
@@ -108,10 +134,10 @@ class AFKJourneyBase(Game, ABC):
                         "battle/records.png",
                         "battle/formations_icon.png",
                     ],
-                    crop_top=0.5,
+                    crop=CropRegions(top=0.5),
                 )
 
-            if self.__handle_single_stage():
+            if self._handle_single_stage():
                 return True
 
             if self.store.get(self.STORE_MAX_ATTEMPTS_REACHED, False):
@@ -122,9 +148,18 @@ class AFKJourneyBase(Game, ABC):
             logging.info("Stopping Battle, tried all attempts for all Formations")
         return False
 
-    def __copy_suggested_formation(
+    def _copy_suggested_formation(
         self, formations: int = 1, start_count: int = 1
     ) -> bool:
+        """Helper to copy suggested formations from records.
+
+        Args:
+            formations (int): Number of formation to copy
+            start_count (int): First formation to copy
+
+        Returns:
+            True if successful, False otherwise
+        """
         formation_num = self.store.get(self.STORE_FORMATION_NUM, 0)
 
         if formations < formation_num:
@@ -133,69 +168,62 @@ class AFKJourneyBase(Game, ABC):
         logging.info(f"Copying Formation #{formation_num}")
         counter = formation_num - start_count
         while counter > 0:
-            formation_next = self.wait_for_template(
+            formation_next: tuple[int, int] = self.wait_for_template(
                 "battle/formation_next.png",
-                crop_left=0.8,
-                crop_top=0.5,
-                crop_bottom=0.4,
+                crop=CropRegions(left=0.8, top=0.5, bottom=0.4),
                 timeout=self.MIN_TIMEOUT,
                 timeout_message=f"Formation #{formation_num} not found",
             )
-            self.click(*formation_next)
+            self.click(Coordinates(*formation_next))
             self.wait_for_roi_change(
-                crop_left=0.2,
-                crop_right=0.2,
-                crop_top=0.15,
-                crop_bottom=0.8,
+                crop=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
                 timeout=self.MIN_TIMEOUT,
             )
             counter -= 1
-        excluded_hero = self.__formation_contains_excluded_hero()
+        excluded_hero: str | None = self._formation_contains_excluded_hero()
         if excluded_hero is not None:
             logging.warning(
                 f"Formation contains excluded Hero: '{excluded_hero}' skipping"
             )
             start_count = self.store[self.STORE_FORMATION_NUM]
             self.store[self.STORE_FORMATION_NUM] += 1
-            return self.__copy_suggested_formation(formations, start_count)
+            return self._copy_suggested_formation(formations, start_count)
         return True
 
-    def __copy_suggested_formation_from_records(self, formations: int = 1) -> bool:
-        records = self.wait_for_template(
+    def _copy_suggested_formation_from_records(self, formations: int = 1) -> bool:
+        """Copy suggested formations from records.
+
+        Returns:
+            True if successful, False otherwise.
+        """
+        records: tuple[int, int] = self.wait_for_template(
             template="battle/records.png",
-            crop_right=0.5,
-            crop_top=0.8,
+            crop=CropRegions(right=0.5, top=0.8),
         )
-        self.click(*records)
-        copy = self.wait_for_template(
+        self.click(Coordinates(*records))
+        copy: tuple[int, int] = self.wait_for_template(
             "battle/copy.png",
-            crop_left=0.3,
-            crop_right=0.1,
-            crop_top=0.7,
-            crop_bottom=0.1,
+            crop=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
             timeout=self.MIN_TIMEOUT,
             timeout_message="No formations available for this battle",
         )
 
         start_count = 1
         while True:
-            if not self.__copy_suggested_formation(formations, start_count):
+            if not self._copy_suggested_formation(formations, start_count):
                 return False
-            self.click(*copy)
+            self.click(Coordinates(*copy))
             sleep(1)
 
-            cancel = self.find_template_match(
+            cancel = self.game_find_template_match(
                 template="cancel.png",
-                crop_left=0.1,
-                crop_right=0.5,
-                crop_top=0.6,
-                crop_bottom=0.3,
+                crop=CropRegions(left=0.1, right=0.5, top=0.6, bottom=0.3),
             )
             if cancel:
                 logging.warning(
                     "Formation contains locked Artifacts or Heroes skipping"
                 )
-                self.click(*cancel)
+                self.click(Coordinates(*cancel))
                 start_count = self.store.get(self.STORE_FORMATION_NUM, 1)
                 self.store[self.STORE_FORMATION_NUM] += 1
             else:
@@ -203,8 +231,13 @@ class AFKJourneyBase(Game, ABC):
                 logging.debug("Formation copied")
                 return True
 
-    def __formation_contains_excluded_hero(self) -> str | None:
-        excluded_heroes_dict = {
+    def _formation_contains_excluded_hero(self) -> str | None:
+        """Skip formations with excluded heroes.
+
+        Returns:
+            str | None: Name of excluded hero
+        """
+        excluded_heroes_dict: dict[str, str] = {
             f"heroes/{re.sub(r'[\s&]', '', name.value.lower())}.png": name.value
             for name in self.get_config().general.excluded_heroes
         }
@@ -212,7 +245,7 @@ class AFKJourneyBase(Game, ABC):
         if not excluded_heroes_dict:
             return None
 
-        excluded_heroes_missing_icon = {
+        excluded_heroes_missing_icon: set[str] = {
             "Faramor",
             "Cyran",
             "Gerda",
@@ -226,15 +259,20 @@ class AFKJourneyBase(Game, ABC):
             else:
                 filtered_dict[key] = value
 
-        return self.__find_any_excluded_hero(filtered_dict)
+        return self._find_any_excluded_hero(filtered_dict)
 
-    def __find_any_excluded_hero(self, excluded_heroes: dict[str, str]) -> str | None:
-        result = self.find_any_template(
+    def _find_any_excluded_hero(self, excluded_heroes: dict[str, str]) -> str | None:
+        """Find excluded hero templates.
+
+        Args:
+            excluded_heroes (dict[str, str]): Dictionary of excluded heroes.
+
+        Returns:
+            str | None: Name of excluded hero
+        """
+        result: tuple[str, int, int] | None = self.find_any_template(
             templates=list(excluded_heroes.keys()),
-            crop_left=0.1,
-            crop_right=0.2,
-            crop_top=0.3,
-            crop_bottom=0.4,
+            crop=CropRegions(left=0.1, right=0.2, top=0.3, bottom=0.4),
         )
         if result is None:
             return None
@@ -242,25 +280,27 @@ class AFKJourneyBase(Game, ABC):
         template, _, _ = result
         return excluded_heroes.get(template)
 
-    def __start_battle(self) -> bool:
-        spend_gold = self.__get_config_attribute_from_mode("spend_gold")
+    def _start_battle(self) -> bool:
+        """Begin battle.
 
-        result = self.wait_for_any_template(
+        Returns:
+            bool: True if battle started, False otherwise.
+        """
+        spend_gold: str = self._get_config_attribute_from_mode("spend_gold")
+
+        result: tuple[str, int, int] = self.wait_for_any_template(
             templates=[
                 "battle/records.png",
                 "battle/formations_icon.png",
             ],
-            crop_top=0.5,
+            crop=CropRegions(top=0.5),
         )
 
         if result is None:
             return False
-        self.click(850, 1780, scale=True)
+        self.click(Coordinates(x=850, y=1780), scale=True)
         template, x, y = result
-        self.wait_until_template_disappears(
-            template,
-            crop_top=0.5,
-        )
+        self.wait_until_template_disappears(template, crop=CropRegions(top=0.5))
         sleep(1)
 
         # Need to double-check the order of prompts here
@@ -279,45 +319,55 @@ class AFKJourneyBase(Game, ABC):
                 "duras_trials/blessed_heroes_specific_tiles.png",
             ],
         ):
-            checkbox = self.find_template_match(
+            checkbox = self.game_find_template_match(
                 "battle/checkbox_unchecked.png",
                 match_mode=MatchMode.TOP_LEFT,
-                crop_right=0.8,
-                crop_top=0.2,
-                crop_bottom=0.6,
+                crop=CropRegions(right=0.8, top=0.2, bottom=0.6),
                 threshold=0.8,
             )
             if checkbox is None:
                 logging.error('Could not find "Don\'t remind for x days" checkbox')
             else:
-                self.click(*checkbox)
+                self.click(Coordinates(*checkbox))
             self._click_confirm_on_popup()
 
         self._click_confirm_on_popup()
         return True
 
     def _click_confirm_on_popup(self) -> bool:
-        result = self.find_any_template(
-            templates=["confirm.png", "confirm_text.png"],
-            crop_top=0.4,
+        """Confirm popups.
+
+        Returns:
+            bool: True if confirmed, False if not.
+        """
+        result: tuple[str, int, int] | None = self.find_any_template(
+            templates=["confirm.png", "confirm_text.png"], crop=CropRegions(top=0.4)
         )
         if result:
             _, x, y = result
-            self.click(x, y)
+            self.click(Coordinates(x=x, y=y))
             sleep(1)
             return True
         return False
 
-    def __handle_single_stage(self) -> bool:
-        logging.debug("__handle_single_stage")
-        attempts = self.__get_config_attribute_from_mode("attempts")
-        count: int = 0
+    def _handle_single_stage(self) -> bool:
+        """Handles a single stage of a battle.
+
+        Returns:
+            bool: True if the battle was successful, False if not.
+        """
+        logging.debug("_handle_single_stage")
+        attempts = self._get_config_attribute_from_mode("attempts")
+        count = 0
+        result: bool | None = None
+
         while count < attempts:
             count += 1
-
             logging.info(f"Starting Battle #{count}")
-            if not self.__start_battle():
-                return False
+
+            if not self._start_battle():
+                result = False
+                break
 
             template, x, y = self.wait_for_any_template(
                 [
@@ -327,46 +377,64 @@ class AFKJourneyBase(Game, ABC):
                     "battle/victory_rewards.png",
                     "retry.png",
                     "confirm.png",
+                    "battle/victory_rewards.png",  # TODO: Duplicate? Check if needed.
                     "battle/power_up.png",
                     "battle/result.png",
                 ],
                 timeout=self.BATTLE_TIMEOUT,
             )
 
-            match template:
-                case "duras_trials/no_next.png":
-                    self.press_back_button()
-                    return True
-                case "battle/victory_rewards.png":
-                    self.click(550, 1800, scale=True)
-                    return True
-                case "battle/power_up.png":
-                    self.click(550, 1800, scale=True)
-                    return False
-                case "confirm.png":
-                    logging.error(
-                        "Network Error or Battle data differs between client and server"
-                    )
-                    self.click(x, y)
-                    sleep(3)
-                    return False
-                case "next.png" | "duras_trials/first_clear.png":
-                    return True
-                case "retry.png":
-                    logging.info(f"Lost Battle #{count}")
-                    self.click(x, y)
-                case "battle/result.png":
-                    self.click(950, 1800, scale=True)
-                    return True
-        return False
+            if template == "duras_trials/no_next.png":
+                self.press_back_button()
+                result = True
+                break
+            elif template == "battle/victory_rewards.png":
+                self.click(Coordinates(x=550, y=1800), scale=True)
+                result = True
+                break
+            elif template == "battle/power_up.png":
+                self.click(Coordinates(x=550, y=1800), scale=True)
+                result = False
+                break
+            elif template == "confirm.png":
+                logging.error(
+                    "Network Error or Battle data differs between client and server"
+                )
+                self.click(Coordinates(x=x, y=y))
+                sleep(3)
+                result = False
+                break
+            elif template in ("next.png", "duras_trials/first_clear.png"):
+                result = True
+                break
+            elif template == "retry.png":
+                logging.info(f"Lost Battle #{count}")
+                self.click(Coordinates(x=x, y=y))
+                # Do not break so the loop continues
+            elif template == "battle/result.png":
+                self.click(Coordinates(x=950, y=1800), scale=True)
+                result = True
+                break
+
+        # If no branch set result, default to False.
+        if result is None:
+            result = False
+
+        return result
 
     def _navigate_to_default_state(
         self, check_callable: Callable[[], bool] | None = None
     ) -> None:
+        """Navigate to main default screen.
+
+        Args:
+            check_callable (Callable[[], bool] | None, optional): Callable to check.
+                Defaults to None.
+        """
         while True:
             if check_callable and check_callable():
                 return None
-            result = self.find_any_template(
+            result: tuple[str, int, int] | None = self.find_any_template(
                 [
                     "notice.png",
                     "confirm.png",
@@ -383,29 +451,25 @@ class AFKJourneyBase(Game, ABC):
             template, x, y = result
             match template:
                 case "notice.png":
-                    self.click(530, 1630, scale=True)
+                    self.click(Coordinates(x=530, y=1630), scale=True)
                     sleep(3)
                 case "exit.png":
                     pass
                 case "confirm.png":
-                    if self.find_template_match(
+                    if self.game_find_template_match(
                         "exit_the_game.png",
-                        crop_top=0.4,
-                        crop_bottom=0.4,
+                        crop=CropRegions(top=0.4, bottom=0.4),
                         use_previous_screenshot=True,
                     ):
-                        x_btn = self.find_template_match(
+                        x_btn: tuple[int, int] | None = self.game_find_template_match(
                             "x.png",
-                            crop_left=0.6,
-                            crop_right=0.3,
-                            crop_top=0.6,
-                            crop_bottom=0.2,
+                            crop=CropRegions(left=0.6, right=0.3, top=0.6, bottom=0.2),
                             use_previous_screenshot=True,
                         )
                         if x_btn:
-                            self.click(*x_btn)
+                            self.click(Coordinates(*x_btn))
                     else:
-                        self.click(x, y)
+                        self.click(Coordinates(x=x, y=y))
                         sleep(1)
                 case "time_of_day.png":
                     return None
@@ -415,41 +479,37 @@ class AFKJourneyBase(Game, ABC):
         return None
 
     def _select_afk_stage(self) -> None:
+        """Selects an AFK stage template."""
         self.wait_for_template(
             template="resonating_hall.png",
-            crop_left=0.3,
-            crop_right=0.3,
-            crop_top=0.9,
+            crop=CropRegions(left=0.3, right=0.3, top=0.9),
         )
-        self.click(550, 1080, scale=True)  # click rewards popup
+        self.click(Coordinates(x=550, y=1080), scale=True)  # click rewards popup
         sleep(1)
         if self.store.get(self.STORE_SEASON, False):
             logging.debug("Clicking Talent Trials button")
-            self.click(300, 1610, scale=True)
+            self.click(Coordinates(x=300, y=1610), scale=True)
         else:
             logging.debug("Clicking Battle button")
-            self.click(800, 1610, scale=True)
+            self.click(Coordinates(x=800, y=1610), scale=True)
         sleep(2)
-        confirm = self.find_template_match(
-            template="confirm.png",
-            crop_left=0.5,
-            crop_top=0.5,
+        confirm = self.game_find_template_match(
+            template="confirm.png", crop=CropRegions(left=0.5, top=0.5)
         )
         if confirm:
-            self.click(*confirm)
-        return None
+            self.click(Coordinates(*confirm))
 
     def _handle_guide_popup(
         self,
     ) -> None:
+        """Close out of guide popups."""
         while True:
-            result = self.find_any_template(
+            result: tuple[str, int, int] | None = self.find_any_template(
                 templates=["guide/close.png", "guide/next.png"],
-                crop_top=0.4,
+                crop=CropRegions(top=0.4),
             )
             if result is None:
                 break
             _, x, y = result
-            self.click(x, y)
+            self.click(Coordinates(x=x, y=y))
             sleep(1)
-        return

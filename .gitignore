@@ -3,3 +3,4 @@ cmd/wails/build/bin
 AdbAutoPlayer
 PATCH_*
 *.syso
+.vscode

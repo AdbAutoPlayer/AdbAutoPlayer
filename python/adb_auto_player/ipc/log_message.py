@@ -1,7 +1,11 @@
+"""ADB Auto Player Logging Module."""
+
 from datetime import datetime, timezone
 
 
 class LogLevel:
+    """Logging levels."""
+
     TRACE = "TRACE"
     DEBUG = "DEBUG"
     INFO = "INFO"
@@ -11,7 +15,9 @@ class LogLevel:
 
 
 class LogMessage:
-    def __init__(
+    """Log message class."""
+
+    def __init__(  # noqa: PLR0913 - TODO
         self,
         level: str,
         message: str,
@@ -19,7 +25,8 @@ class LogMessage:
         source_file: str | None = None,
         function_name: str | None = None,
         line_number: int | None = None,
-    ):
+    ) -> None:
+        """Initialize LogMessage."""
         self.level = level
         self.message = message
         self.timestamp = timestamp
@@ -47,6 +54,7 @@ class LogMessage:
         function_name: str | None = None,
         line_number: int | None = None,
     ) -> "LogMessage":
+        """Create a new LogMessage."""
         return cls(
             level=level,
             message=message,

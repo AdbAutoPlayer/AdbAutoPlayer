@@ -1,13 +1,25 @@
-import unittest
-from unittest.mock import patch, MagicMock
+"""Pytest Main Module."""
 
-import adb_auto_player.main
+import unittest
+from unittest.mock import MagicMock, patch
+
+from adb_auto_player.main import get_gui_games_menu
 
 
 class TestMain(unittest.TestCase):
+    """Test Main Module."""
+
     @patch("builtins.print")
-    def test_get_gui_games_menu(self, mock_print: MagicMock):
-        menu_json_string = adb_auto_player.main.get_gui_games_menu()
+    def test_get_gui_games_menu(self, mock_print: MagicMock) -> None:
+        """Test get_gui_games_menu function.
+
+        This test verifies that the get_gui_games_menu function returns a JSON string
+        containing the expected game menu details for the GUI. It checks that the
+        JSON string includes the game title, config path, menu options, and specific
+        constraints. It also ensures that the print function is not called, indicating
+        no output to the console during the function's execution.
+        """
+        menu_json_string = get_gui_games_menu()
         self.assertIn('"game_title": "AFK Journey"', menu_json_string)
         self.assertIn(
             '"config_path": "afk_journey/AFKJourney.toml"',
