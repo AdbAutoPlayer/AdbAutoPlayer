@@ -5,9 +5,6 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-working_dir_path: Path | None = None
-games_dir_path: Path | None = None
-
 
 class ConfigLoader:
     """Class for lazily computing and caching configuation paths."""
@@ -19,7 +16,7 @@ class ConfigLoader:
     @property
     def working_dir(self) -> Path:
         """Return the current working directory."""
-        logging.debug(f"Python working dir: {working_dir_path}")
+        logging.debug(f"Python working dir: {self._working_dir}")
         return self._working_dir
 
     @property
@@ -47,21 +44,16 @@ class ConfigLoader:
     @property
     def main_config(self) -> dict[str, Any]:
         """Locate and load the main config.toml file."""
-        config_toml_path: Path = None  # type: ignore
+        candidates: list[Path] = [
+            self.working_dir.parent / "config" / "config.toml",
+            self.working_dir.parent / "config.toml",
+            self.working_dir / "config.toml",
+        ]
 
-        if (
-            "python" in self.working_dir.parts
-            and "adb_auto_player" in self.working_dir.parts
-        ):
-            config_toml_path = (
-                self.working_dir.parent.parent / "cmd" / "wails" / "config.toml"
-            )
-
-        if not config_toml_path or not config_toml_path.exists():
-            config_toml_path = self.working_dir / "config.toml"
-
-        if not config_toml_path or not config_toml_path.exists():
-            config_toml_path = self.working_dir.parent / "config.toml"
+        # Find the first existing candidate or default to the first path
+        config_toml_path: Path = next(
+            (c for c in candidates if c.exists()), candidates[0]
+        )
 
         logging.debug(f"Python config.toml path: {config_toml_path}")
         with open(config_toml_path, "rb") as f:
