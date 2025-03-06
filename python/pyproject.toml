@@ -2,7 +2,10 @@
 name = "adb-auto-player"
 version = "0.0.0"
 description = ""
-authors = ["yulesxoxo <https://github.com/yulesxoxo/yulesxoxo>"]
+authors = [
+    "yulesxoxo <https://github.com/yulesxoxo/yulesxoxo>",
+    "Vale <https://github.com/Valextr/Valextr>"
+]
 readme = "README.md"
 package-mode = true
 

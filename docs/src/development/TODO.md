@@ -13,3 +13,11 @@
 
 ## 🐍 Python
 - Support for running multiple bots/configs (Yules: Can't find the motivation to do this because I personally have no use for it at the moment.)
+- Add daily chore automation
+  - Claim mail, friend points, quests, noble paths, etc.
+  - Farm daily affinity (3x clicks per hero)
+  - Do server arena battles
+  - Do Dream Realm
+  - Buy the usual from emporium (single pull and affinity items)
+  - Do single pull
+- GFL2 Daily automation
