@@ -240,17 +240,17 @@
   {activeGame?.game_title ?? "Start any supported Game!"}
 </h1>
 <div
-  class="card p-4 bg-surface-100-900/50 border-[1px] border-surface-200-800 text-center"
+  class="card p-4 bg-surface-100-900/50 border-[1px] border-surface-200-800 text-center flex flex-col max-h-[60vh] overflow-hidden"
 >
   {#if showConfigForm}
-    <h2 class="text-xl text-center pb-2">Config</h2>
-    <ConfigForm
-      configObject={configFormProps.config ?? []}
-      constraints={configFormProps.constraints ?? []}
-      onConfigSave={configSaveCallback}
-    />
+    <div class="flex-grow overflow-y-scroll">
+      <ConfigForm
+        configObject={configFormProps.config ?? []}
+        constraints={configFormProps.constraints ?? []}
+        onConfigSave={configSaveCallback}
+      />
+    </div>
   {:else}
-    <h2 class="text-xl text-center pb-2">Menu</h2>
     <Menu
       buttons={activeGameMenuButtons ?? []}
       {defaultButtons}

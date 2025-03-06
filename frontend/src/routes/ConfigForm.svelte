@@ -108,79 +108,85 @@
   }
 </script>
 
-<form class="config-form" id="config-form">
-  {#each configSections as { sectionKey, sectionConfig }}
-    <fieldset>
-      <legend>{sectionKey}</legend>
+<div class="h-full max-h-full overflow-y-auto">
+  <h2 class="text-2xl text-center pb-2">Config</h2>
 
-      {#each Object.entries(sectionConfig) as [key, value]}
-        <div class="form-group">
-          <div class="form-group-inner">
-            <label for="{sectionKey}-{key}">
-              {key}
-            </label>
+  <form id="config-form" class="config-form">
+    {#each configSections as { sectionKey, sectionConfig }}
+      <fieldset>
+        <legend>{sectionKey}</legend>
 
-            <div class="input-container">
-              {#if getInputType(sectionKey, key) === "checkbox"}
-                <input
-                  type="checkbox"
-                  id="{sectionKey}-{key}"
-                  name="{sectionKey}-{key}"
-                  checked={Boolean(configObject[sectionKey][key])}
-                />
-              {:else if getInputType(sectionKey, key) === "number"}
-                <input
-                  type="number"
-                  id="{sectionKey}-{key}"
-                  name="{sectionKey}-{key}"
-                  value={configObject[sectionKey][key]}
-                  min={value.minimum}
-                  max={value.maximum}
-                />
-              {:else if getInputType(sectionKey, key) === "multicheckbox"}
-                <MultiCheckbox
-                  choices={value.choices || []}
-                  value={getStringArrayOrEmptyArray(
-                    configObject[sectionKey][key],
-                  )}
-                  name="{sectionKey}-{key}"
-                />
-              {:else if getInputType(sectionKey, key) === "imagecheckbox"}
-                <ImageCheckbox
-                  choices={value.choices || []}
-                  value={getStringArrayOrEmptyArray(
-                    configObject[sectionKey][key],
-                  )}
-                  name="{sectionKey}-{key}"
-                />
-              {:else if getInputType(sectionKey, key) === "select"}
-                <select id="{sectionKey}-{key}" name="{sectionKey}-{key}">
-                  {#each value.choices as option}
-                    <option
-                      value={option}
-                      selected={configObject[sectionKey][key] === option}
-                      >{option}</option
-                    >
-                  {/each}
-                </select>
-              {:else}
-                <input
-                  type="text"
-                  id="{sectionKey}-{key}"
-                  name="{sectionKey}-{key}"
-                  value={configObject[sectionKey][key]}
-                />
-              {/if}
+        {#each Object.entries(sectionConfig) as [key, value]}
+          <div class="form-group">
+            <div class="form-group-inner">
+              <label for="{sectionKey}-{key}">
+                {key}
+              </label>
+
+              <div class="input-container">
+                {#if getInputType(sectionKey, key) === "checkbox"}
+                  <input
+                    type="checkbox"
+                    id="{sectionKey}-{key}"
+                    name="{sectionKey}-{key}"
+                    checked={Boolean(configObject[sectionKey][key])}
+                  />
+                {:else if getInputType(sectionKey, key) === "number"}
+                  <input
+                    type="number"
+                    id="{sectionKey}-{key}"
+                    name="{sectionKey}-{key}"
+                    value={configObject[sectionKey][key]}
+                    min={value.minimum}
+                    max={value.maximum}
+                  />
+                {:else if getInputType(sectionKey, key) === "multicheckbox"}
+                  <MultiCheckbox
+                    choices={value.choices || []}
+                    value={getStringArrayOrEmptyArray(
+                      configObject[sectionKey][key],
+                    )}
+                    name="{sectionKey}-{key}"
+                  />
+                {:else if getInputType(sectionKey, key) === "imagecheckbox"}
+                  <ImageCheckbox
+                    choices={value.choices || []}
+                    value={getStringArrayOrEmptyArray(
+                      configObject[sectionKey][key],
+                    )}
+                    name="{sectionKey}-{key}"
+                  />
+                {:else if getInputType(sectionKey, key) === "select"}
+                  <select id="{sectionKey}-{key}" name="{sectionKey}-{key}">
+                    {#each value.choices as option}
+                      <option
+                        value={option}
+                        selected={configObject[sectionKey][key] === option}
+                        >{option}</option
+                      >
+                    {/each}
+                  </select>
+                {:else}
+                  <input
+                    type="text"
+                    id="{sectionKey}-{key}"
+                    name="{sectionKey}-{key}"
+                    value={configObject[sectionKey][key]}
+                  />
+                {/if}
+              </div>
             </div>
           </div>
-        </div>
-      {/each}
-    </fieldset>
-    <br />
-  {/each}
+        {/each}
+      </fieldset>
+      <br />
+    {/each}
 
-  <button type="button" onclick={handleSave}>Save</button>
-</form>
+    <div class="button-container">
+      <button type="button" onclick={handleSave}>Save</button>
+    </div>
+  </form>
+</div>
 
 <style>
   fieldset {
@@ -219,5 +225,11 @@
 
   .input-container input[type="checkbox"] {
     margin: 2px;
+  }
+
+  .button-container {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    text-align: center;
   }
 </style>

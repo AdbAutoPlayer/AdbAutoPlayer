@@ -12,6 +12,8 @@
 </script>
 
 <div class="space-y-4">
+  <h2 class="text-2xl text-center pb-2">Menu</h2>
+
   <div class="flex flex-wrap justify-center gap-4">
     {#if buttons.length > 0}
       {#each buttons as { label, callback, active, alwaysEnabled }}
