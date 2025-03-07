@@ -1,20 +1,12 @@
 <script lang="ts">
-  //import { version } from "$app/environment";
+  import marked from "$lib/markdownRenderer";
   const version = "3.0.0";
   import { UpdatePatch } from "$lib/wailsjs/go/main/App";
   import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
   import { LogError, LogInfo, LogWarning } from "$lib/wailsjs/runtime";
-  import { marked } from "marked";
   import Modal from "./Modal.svelte";
   import { getItem, setItem } from "$lib/indexedDB";
 
-  const renderer = new marked.Renderer();
-
-  renderer.link = function ({ href, title, text }) {
-    const target = "_blank";
-    const titleAttr = title ? ` title="${title}"` : "";
-    return `<a class="anchor-font-color" href="${href}" target="${target}" rel="noopener noreferrer"${titleAttr}>${text}</a>`;
-  };
   let showDownloadIcon: boolean = $state(true);
   let releaseHtmlDownloadUrl: string = $state(
     "https://github.com/yulesxoxo/AdbAutoPlayer/releases",
@@ -283,7 +275,7 @@
       {/if}
     </h2>
   {/snippet}
-  {@html marked(modalChangeLog || "", { renderer: renderer })}
+  {@html marked(modalChangeLog || "")}
   {#snippet footer()}
     {#if modalAsset}
       <button
