@@ -109,7 +109,7 @@
 </script>
 
 <div class="h-full max-h-full overflow-y-auto">
-  <h2 class="text-2xl text-center pb-2">Config</h2>
+  <h2 class="h2 text-2xl text-center pb-2">Config</h2>
 
   <form id="config-form" class="config-form">
     {#each configSections as { sectionKey, sectionConfig }}
@@ -193,8 +193,8 @@
     <div class="m-4">
       <button
         type="button"
-        class="btn preset-filled-primary-500 hover:preset-filled-primary-700-300"
-        on:click={handleSave}>Save</button
+        class="btn preset-filled-primary-100-900 hover:preset-filled-primary-500"
+        onclick={handleSave}>Save</button
       >
     </div>
   </form>

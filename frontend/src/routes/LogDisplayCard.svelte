@@ -6,7 +6,7 @@
   const maxLogEntries = 1000;
 
   EventsOn("log-message", (logMessage: LogMessage) => {
-    const urlRegex = /(https?:\/\/\S+)/g;
+    const urlRegex = /(https?:\/\/[^\s'"]+)/g;
 
     let message: string = "";
     if (logMessage.level == "DEBUG") {

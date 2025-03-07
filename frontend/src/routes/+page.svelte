@@ -236,7 +236,7 @@
   });
 </script>
 
-<h1 class="text-3xl text-center pb-4">
+<h1 class="h1 text-3xl text-center pb-4">
   {activeGame?.game_title ?? "Start any supported Game!"}
 </h1>
 <div

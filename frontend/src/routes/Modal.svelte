@@ -26,7 +26,7 @@
         {@render footer()}
       {/if}
       <button
-        class="btn preset-filled-primary-500 hover:preset-filled-primary-700-300"
+        class="btn preset-filled-primary-100-900 hover:preset-filled-primary-500"
         onclick={() => dialog?.close()}
       >
         Close

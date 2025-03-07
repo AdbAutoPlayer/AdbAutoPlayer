@@ -267,7 +267,7 @@
 
 <Modal bind:showModal>
   {#snippet header()}
-    <h2 class="text-2xl text-center">
+    <h2 class="h2 text-2xl text-center">
       {#if modalAsset}
         Update Available: {modalRelease?.tag_name}
       {:else}
@@ -279,7 +279,7 @@
   {#snippet footer()}
     {#if modalAsset}
       <button
-        class="btn preset-filled-primary-500 hover:preset-filled-primary-700-300"
+        class="btn preset-filled-primary-100-900 hover:preset-filled-primary-500"
         onclick={downloadAsset}
       >
         Download
