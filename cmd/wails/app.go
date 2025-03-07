@@ -350,9 +350,9 @@ func (a *App) getMainConfigPath() string {
 	}
 
 	paths := []string{
-		"../../config/config.toml", // dev
-		"config.toml",              // distributed
-		"../../config.toml",        // macOS dev
+		"../../config/config.toml",       // dev
+		"config.toml",                    // distributed
+		"../../../../config/config.toml", // macOS dev no not a joke
 	}
 
 	configPath := GetFirstPathThatExists(paths)
