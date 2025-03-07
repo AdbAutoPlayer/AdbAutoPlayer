@@ -1,7 +1,9 @@
 @import "tailwindcss";
-@import "@skeletonlabs/skeleton/themes/catppuccin";
 @import "@skeletonlabs/skeleton";
 @import "@skeletonlabs/skeleton/optional/presets";
+@import "@skeletonlabs/skeleton/themes/catppuccin";
+@import "@skeletonlabs/skeleton/themes/cerberus";
+@import "@skeletonlabs/skeleton/themes/terminus";
 @import "@skeletonlabs/skeleton/themes/wintry";
 @plugin '@tailwindcss/forms';
 

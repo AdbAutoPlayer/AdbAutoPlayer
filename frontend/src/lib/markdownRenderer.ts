@@ -4,7 +4,7 @@ const renderer = new marked.Renderer();
 
 renderer.link = function ({ href, text }) {
   const target = "_blank";
-  return `<a class="text-blue-500 hover:underline" href="${href}" target="${target}" rel="noopener noreferrer">${text}</a>`;
+  return `<a class="anchor" href="${href}" target="${target}" rel="noopener noreferrer">${text}</a>`;
 };
 
 renderer.heading = function ({ text, depth }) {

@@ -18,12 +18,12 @@
 
       message = `[${logMessage.level}]${debugInfo} ${logMessage.message.replace(
         urlRegex,
-        '<a href="$1" target="_blank">$1</a>',
+        '<a class="anchor" href="$1" target="_blank">$1</a>',
       )}`;
     } else {
       message = `[${logMessage.level}] ${logMessage.message.replace(
         urlRegex,
-        '<a href="$1" target="_blank">$1</a>',
+        '<a class="anchor" href="$1" target="_blank">$1</a>',
       )}`;
     }
 
@@ -53,7 +53,7 @@
   });
 </script>
 
-<div class="flex-grow min-h-[200px] p-4 flex flex-col">
+<div class="flex-grow min-h-[20vh] p-4 flex flex-col">
   <div class="card p-4 bg-surface-100-900/50 flex-grow h-full flex-col">
     <div
       class="select-text font-mono h-full overflow-y-scroll break-words whitespace-normal flex-grow"

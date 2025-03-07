@@ -11,7 +11,7 @@
   // https://next.skeleton.dev/docs/components/accordion/svelte#multiple
 </script>
 
-<div class="space-y-4">
+<div class="h-full max-h-full overflow-y-auto">
   <h2 class="text-2xl text-center pb-2">Menu</h2>
 
   <div class="flex flex-wrap justify-center gap-4">

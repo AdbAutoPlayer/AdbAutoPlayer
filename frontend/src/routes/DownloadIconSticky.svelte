@@ -1,13 +1,13 @@
 <script lang="ts">
   import marked from "$lib/markdownRenderer";
-  const version = "3.0.0";
+  import { version } from "$app/environment";
   import { UpdatePatch } from "$lib/wailsjs/go/main/App";
   import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
   import { LogError, LogInfo, LogWarning } from "$lib/wailsjs/runtime";
   import Modal from "./Modal.svelte";
   import { getItem, setItem } from "$lib/indexedDB";
 
-  let showDownloadIcon: boolean = $state(true);
+  let showDownloadIcon: boolean = $state(false);
   let releaseHtmlDownloadUrl: string = $state(
     "https://github.com/yulesxoxo/AdbAutoPlayer/releases",
   );

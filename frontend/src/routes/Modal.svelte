@@ -47,8 +47,6 @@
     left: 50%;
     transform: translateX(-50%);
     max-height: 80vh;
-    display: flex;
-    flex-direction: column;
   }
 
   dialog > div {
