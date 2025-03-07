@@ -34,6 +34,14 @@ jobs:
       - name: install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+          libgtk-3-dev \
+          libgio2.0-dev \
+          libwebkit2gtk-4.0-dev
+
       - name: Wails build
         run: |
           cd cmd
