@@ -45,9 +45,10 @@ class ConfigLoader:
     def main_config(self) -> dict[str, Any]:
         """Locate and load the main config.toml file."""
         candidates: list[Path] = [
-            self.working_dir.parent / "config" / "config.toml",
-            self.working_dir.parent / "config.toml",
-            self.working_dir / "config.toml",
+            self.working_dir / "config.toml",  # distributed GUI context
+            self.working_dir.parent / "config.toml",  # distributed CLI context
+            self.working_dir.parent / "config" / "config.toml",  # Python CLI in /python
+            self.working_dir.parent.parent / "config" / "config.toml",  # PyCharm
         ]
 
         # Find the first existing candidate or default to the first path

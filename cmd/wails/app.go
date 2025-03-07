@@ -25,6 +25,7 @@ type App struct {
 	killAdbOnShutdown      bool
 	games                  []ipc.GameGUI
 	lastOpenGameConfigPath *string
+	mainConfigPath         *string
 }
 
 func NewApp() *App {
@@ -78,16 +79,7 @@ func (a *App) shutdown(ctx context.Context) {
 }
 
 func (a *App) GetEditableMainConfig() (map[string]interface{}, error) {
-	paths := []string{
-		"../../config/config.toml",
-		"config.toml",
-	}
-	if stdruntime.GOOS == "darwin" {
-		paths = append(paths, "../../config.toml")
-	}
-	configPath := GetFirstPathThatExists(paths)
-
-	mainConfig, err := config.LoadConfig[config.MainConfig](*configPath)
+	mainConfig, err := config.LoadConfig[config.MainConfig](a.getMainConfigPath())
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +92,7 @@ func (a *App) GetEditableMainConfig() (map[string]interface{}, error) {
 }
 
 func (a *App) SaveMainConfig(mainConfig config.MainConfig) error {
-	if err := config.SaveConfig[config.MainConfig]("config.toml", &mainConfig); err != nil {
+	if err := config.SaveConfig[config.MainConfig](a.getMainConfigPath(), &mainConfig); err != nil {
 		return err
 	}
 	runtime.LogInfo(a.ctx, "Saved Main config")
@@ -350,4 +342,22 @@ func (a *App) UpdatePatch(assetUrl string) error {
 
 	runtime.LogInfo(a.ctx, "Update successful")
 	return nil
+}
+
+func (a *App) getMainConfigPath() string {
+	if a.mainConfigPath != nil {
+		return *a.mainConfigPath
+	}
+
+	paths := []string{
+		"config.toml",                    // distributed
+		"../../config/config.toml",       // dev
+		"../../../../config/config.toml", // macOS dev no not a joke
+	}
+
+	configPath := GetFirstPathThatExists(paths)
+
+	a.mainConfigPath = configPath
+
+	return *configPath
 }
