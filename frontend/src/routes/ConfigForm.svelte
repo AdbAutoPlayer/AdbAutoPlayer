@@ -8,12 +8,15 @@
     constraints,
     onConfigSave,
   }: {
-    configObject: Record<string, any>;
-    constraints: Record<string, any>;
+    configObject: ConfigObject;
+    constraints: Constraints;
     onConfigSave: (config: object) => void;
   } = $props();
 
-  const configSections: Array<Record<string, any>> = $derived(
+  const configSections: Array<{
+    sectionKey: string;
+    sectionConfig: ConstraintSection;
+  }> = $derived(
     Object.entries(constraints).map(([sectionKey, sectionConfig]) => ({
       sectionKey,
       sectionConfig,
@@ -22,7 +25,14 @@
 
   function getInputType(sectionKey: string, key: string): string {
     const constraint = constraints[sectionKey]?.[key];
-    return constraint?.type ?? "text";
+    if (
+      typeof constraint === "object" &&
+      constraint !== null &&
+      "type" in constraint
+    ) {
+      return constraint.type;
+    }
+    return "text";
   }
 
   function processFormData(formData: FormData): Record<string, any> {
@@ -106,6 +116,38 @@
     console.log(value);
     return [];
   }
+
+  function isNumberConstraint(value: any): value is NumberConstraint {
+    return (
+      typeof value === "object" && value !== null && value.type === "number"
+    );
+  }
+
+  function isMultiCheckboxConstraint(
+    value: any,
+  ): value is MultiCheckboxConstraint {
+    return (
+      typeof value === "object" &&
+      value !== null &&
+      value.type === "multicheckbox"
+    );
+  }
+
+  function isImageCheckboxConstraint(
+    value: any,
+  ): value is ImageCheckboxConstraint {
+    return (
+      typeof value === "object" &&
+      value !== null &&
+      value.type === "imagecheckbox"
+    );
+  }
+
+  function isSelectConstraint(value: any): value is SelectConstraint {
+    return (
+      typeof value === "object" && value !== null && value.type === "select"
+    );
+  }
 </script>
 
 <div class="h-full max-h-full overflow-y-auto">
@@ -134,7 +176,7 @@
                     checked={Boolean(configObject[sectionKey][key])}
                     class="checkbox"
                   />
-                {:else if getInputType(sectionKey, key) === "number"}
+                {:else if isNumberConstraint(value)}
                   <input
                     type="number"
                     id="{sectionKey}-{key}"
@@ -142,25 +184,26 @@
                     value={configObject[sectionKey][key]}
                     min={value.minimum}
                     max={value.maximum}
+                    step={value.step}
                     class="input w-full"
                   />
-                {:else if getInputType(sectionKey, key) === "multicheckbox"}
+                {:else if isMultiCheckboxConstraint(value)}
                   <MultiCheckbox
-                    choices={value.choices || []}
+                    choices={value.choices}
                     value={getStringArrayOrEmptyArray(
                       configObject[sectionKey][key],
                     )}
                     name="{sectionKey}-{key}"
                   />
-                {:else if getInputType(sectionKey, key) === "imagecheckbox"}
+                {:else if isImageCheckboxConstraint(value)}
                   <ImageCheckbox
-                    choices={value.choices || []}
+                    choices={value.choices}
                     value={getStringArrayOrEmptyArray(
                       configObject[sectionKey][key],
                     )}
                     name="{sectionKey}-{key}"
                   />
-                {:else if getInputType(sectionKey, key) === "select"}
+                {:else if isSelectConstraint(value)}
                   <select
                     id="{sectionKey}-{key}"
                     name="{sectionKey}-{key}"
