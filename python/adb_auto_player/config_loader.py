@@ -47,7 +47,7 @@ class ConfigLoader:
         candidates: list[Path] = [
             self.working_dir / "config.toml",  # distributed GUI context
             self.working_dir.parent / "config.toml",  # distributed CLI context
-            self.working_dir.parent / "config" / "config.toml",  # not sure
+            self.working_dir.parent / "config" / "config.toml",  # Python CLI in /python
             self.working_dir.parent.parent / "config" / "config.toml",  # PyCharm
         ]
 
