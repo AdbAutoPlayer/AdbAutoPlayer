@@ -53,10 +53,10 @@
   });
 </script>
 
-<div class="flex-grow min-h-[20vh] p-4 flex flex-col">
-  <div class="card p-4 bg-surface-100-900/50 flex-grow h-full flex-col">
+<div class="flex min-h-[20vh] flex-grow flex-col p-4">
+  <div class="card bg-surface-100-900/50 h-full flex-grow flex-col p-4">
     <div
-      class="select-text font-mono h-full overflow-y-scroll break-words whitespace-normal flex-grow"
+      class="h-full flex-grow overflow-y-scroll font-mono break-words whitespace-normal select-text"
       bind:this={logContainer}
     >
       {#each logs as message}

@@ -4,7 +4,7 @@
     target="_blank"
     draggable="false"
   >
-    <span class="items-center justify-center badge-icon p-0">
+    <span class="badge-icon items-center justify-center p-0">
       <img
         src="/icons/help-circle.svg"
         alt="Documentation"

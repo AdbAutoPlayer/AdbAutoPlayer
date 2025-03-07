@@ -151,23 +151,23 @@
 </script>
 
 <div class="h-full max-h-full overflow-y-auto">
-  <h2 class="h2 text-2xl text-center pb-2">Config</h2>
+  <h2 class="h2 pb-2 text-center text-2xl">Config</h2>
 
   <form id="config-form" class="config-form">
     {#each configSections as { sectionKey, sectionConfig }}
       <fieldset
-        class="border border-surface-900/60 p-4 rounded-container-token mb-4"
+        class="border-surface-900/60 rounded-container-token mb-4 border p-4"
       >
         <legend class="px-2 text-xl">{sectionKey}</legend>
 
         {#each Object.entries(sectionConfig) as [key, value]}
           <div class="mb-4">
             <div class="flex items-center justify-between">
-              <label for="{sectionKey}-{key}" class="w-30 mr-3 text-right">
+              <label for="{sectionKey}-{key}" class="mr-3 w-30 text-right">
                 {key}
               </label>
 
-              <div class="flex-1 flex items-center">
+              <div class="flex flex-1 items-center">
                 {#if getInputType(sectionKey, key) === "checkbox"}
                   <input
                     type="checkbox"

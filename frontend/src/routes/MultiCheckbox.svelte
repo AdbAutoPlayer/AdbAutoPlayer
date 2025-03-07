@@ -26,16 +26,16 @@
 <div class="flex flex-wrap gap-2.5">
   {#if groupedOptions.size > 0}
     {#each [...groupedOptions.entries()] as [letter, options]}
-      <div class="border border-white/20 rounded p-1.25">
-        <div class="font-bold mb-1.25 bg-white/10 p-0.5">
+      <div class="rounded border border-white/20 p-1.25">
+        <div class="mb-1.25 bg-white/10 p-0.5 font-bold">
           {letter}
         </div>
         <div class="flex flex-col">
           {#each options as option}
-            <label class="flex items-center m-0.5">
+            <label class="m-0.5 flex items-center">
               <input
                 type="checkbox"
-                class="checkbox ml-0.25 mr-0.5"
+                class="checkbox mr-0.5 ml-0.25"
                 {name}
                 value={option}
                 checked={Array.isArray(value) ? value.includes(option) : false}

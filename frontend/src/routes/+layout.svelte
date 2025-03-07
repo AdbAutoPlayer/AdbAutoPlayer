@@ -30,7 +30,7 @@
   });
 </script>
 
-<div class="flex flex-col h-screen overflow-hidden">
+<div class="flex h-screen flex-col overflow-hidden">
   <div class="flex-none">
     <DocumentationIconSticky></DocumentationIconSticky>
     <DownloadIconSticky></DownloadIconSticky>

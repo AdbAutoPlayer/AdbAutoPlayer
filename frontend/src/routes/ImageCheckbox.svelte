@@ -32,7 +32,7 @@
         <img
           src={"/imagecheckbox/" + choicesWithImages[i]}
           alt={choice}
-          class="w-6 h-6"
+          class="h-6 w-6"
         />
         <span>{choice}</span>
       </label>

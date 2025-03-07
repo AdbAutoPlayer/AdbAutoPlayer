@@ -21,7 +21,7 @@
     <hr class="p-2" />
     {@render children?.()}
     <hr class="p-2" />
-    <div class="flex justify-between w-full">
+    <div class="flex w-full justify-between">
       {#if footer}
         {@render footer()}
       {/if}

@@ -253,7 +253,7 @@
     class="fixed top-0 right-0 z-50 m-2 cursor-pointer select-none"
     draggable="false"
   >
-    <span class="items-center justify-center badge-icon">
+    <span class="badge-icon items-center justify-center">
       <img
         src="/icons/download-cloud.svg"
         alt="Download"
@@ -267,7 +267,7 @@
 
 <Modal bind:showModal>
   {#snippet header()}
-    <h2 class="h2 text-2xl text-center">
+    <h2 class="h2 text-center text-2xl">
       {#if modalAsset}
         Update Available: {modalRelease?.tag_name}
       {:else}

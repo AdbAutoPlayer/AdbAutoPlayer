@@ -236,11 +236,11 @@
   });
 </script>
 
-<h1 class="h1 text-3xl text-center pb-4">
+<h1 class="h1 pb-4 text-center text-3xl">
   {activeGame?.game_title ?? "Start any supported Game!"}
 </h1>
 <div
-  class="card p-4 bg-surface-100-900/50 text-center flex flex-col max-h-[50vh] overflow-hidden min-h-[20vh]"
+  class="card bg-surface-100-900/50 flex max-h-[50vh] min-h-[20vh] flex-col overflow-hidden p-4 text-center"
 >
   {#if showConfigForm}
     <div class="flex-grow overflow-y-scroll">
