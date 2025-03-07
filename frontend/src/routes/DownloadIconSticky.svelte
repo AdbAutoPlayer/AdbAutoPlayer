@@ -1,20 +1,13 @@
 <script lang="ts">
+  import marked from "$lib/markdownRenderer";
   import { version } from "$app/environment";
   import { UpdatePatch } from "$lib/wailsjs/go/main/App";
   import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
   import { LogError, LogInfo, LogWarning } from "$lib/wailsjs/runtime";
-  import { marked } from "marked";
   import Modal from "./Modal.svelte";
   import { getItem, setItem } from "$lib/indexedDB";
 
-  const renderer = new marked.Renderer();
-
-  renderer.link = function ({ href, title, text }) {
-    const target = "_blank";
-    const titleAttr = title ? ` title="${title}"` : "";
-    return `<a href="${href}" target="${target}" rel="noopener noreferrer"${titleAttr}>${text}</a>`;
-  };
-  let downloadIconImageSrc: string | null = $state(null);
+  let showDownloadIcon: boolean = $state(false);
   let releaseHtmlDownloadUrl: string = $state(
     "https://github.com/yulesxoxo/AdbAutoPlayer/releases",
   );
@@ -179,7 +172,7 @@
   }
 
   function notifyUpdate(asset: Asset) {
-    downloadIconImageSrc = "/icons/download-cloud.svg";
+    showDownloadIcon = true;
     releaseHtmlDownloadUrl = asset.browser_download_url;
     showModal = true;
   }
@@ -247,63 +240,50 @@
       a.href = modalAsset.browser_download_url;
       a.download = "";
       a.click();
-      downloadIconImageSrc = null;
+      showDownloadIcon = false;
     }
   }
 
   runVersionUpdate();
 </script>
 
-{#if downloadIconImageSrc}
-  <a href={releaseHtmlDownloadUrl} class="download-icon-sticky">
-    <img
-      src={downloadIconImageSrc}
-      alt="Download"
-      width="24"
-      height="24"
-      draggable="false"
-    />
+{#if showDownloadIcon}
+  <a
+    href={releaseHtmlDownloadUrl}
+    class="fixed top-0 right-0 z-50 m-2 cursor-pointer select-none"
+    draggable="false"
+  >
+    <span class="badge-icon items-center justify-center">
+      <img
+        src="/icons/download-cloud.svg"
+        alt="Download"
+        width="24"
+        height="24"
+        draggable="false"
+      />
+    </span>
   </a>
 {/if}
 
 <Modal bind:showModal>
   {#snippet header()}
-    {#if modalAsset}
-      <h2>
+    <h2 class="h2 text-center text-2xl">
+      {#if modalAsset}
         Update Available: {modalRelease?.tag_name}
-      </h2>
-    {:else}
-      <h2>
+      {:else}
         Update Downloaded: {modalRelease?.tag_name}
-      </h2>
-    {/if}
+      {/if}
+    </h2>
   {/snippet}
-  {@html marked(modalChangeLog || "", { renderer: renderer })}
+  {@html marked(modalChangeLog || "")}
   {#snippet footer()}
     {#if modalAsset}
-      <button style="display: inline-block" onclick={downloadAsset}>
+      <button
+        class="btn preset-filled-primary-100-900 hover:preset-filled-primary-500"
+        onclick={downloadAsset}
+      >
         Download
       </button>
     {/if}
   {/snippet}
 </Modal>
-
-<style>
-  .download-icon-sticky {
-    user-select: none;
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-    cursor: pointer;
-    background: transparent;
-    border: none;
-    padding: 0;
-    outline: none;
-    box-shadow: none;
-  }
-
-  .download-icon-sticky img {
-    display: block;
-  }
-</style>

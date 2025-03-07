@@ -8,12 +8,15 @@
     constraints,
     onConfigSave,
   }: {
-    configObject: Record<string, any>;
-    constraints: Record<string, any>;
+    configObject: ConfigObject;
+    constraints: Constraints;
     onConfigSave: (config: object) => void;
   } = $props();
 
-  const configSections: Array<Record<string, any>> = $derived(
+  const configSections: Array<{
+    sectionKey: string;
+    sectionConfig: ConstraintSection;
+  }> = $derived(
     Object.entries(constraints).map(([sectionKey, sectionConfig]) => ({
       sectionKey,
       sectionConfig,
@@ -22,7 +25,14 @@
 
   function getInputType(sectionKey: string, key: string): string {
     const constraint = constraints[sectionKey]?.[key];
-    return constraint?.type ?? "text";
+    if (
+      typeof constraint === "object" &&
+      constraint !== null &&
+      "type" in constraint
+    ) {
+      return constraint.type;
+    }
+    return "text";
   }
 
   function processFormData(formData: FormData): Record<string, any> {
@@ -106,118 +116,129 @@
     console.log(value);
     return [];
   }
+
+  function isNumberConstraint(value: any): value is NumberConstraint {
+    return (
+      typeof value === "object" && value !== null && value.type === "number"
+    );
+  }
+
+  function isMultiCheckboxConstraint(
+    value: any,
+  ): value is MultiCheckboxConstraint {
+    return (
+      typeof value === "object" &&
+      value !== null &&
+      value.type === "multicheckbox"
+    );
+  }
+
+  function isImageCheckboxConstraint(
+    value: any,
+  ): value is ImageCheckboxConstraint {
+    return (
+      typeof value === "object" &&
+      value !== null &&
+      value.type === "imagecheckbox"
+    );
+  }
+
+  function isSelectConstraint(value: any): value is SelectConstraint {
+    return (
+      typeof value === "object" && value !== null && value.type === "select"
+    );
+  }
 </script>
 
-<form class="config-form" id="config-form">
-  {#each configSections as { sectionKey, sectionConfig }}
-    <fieldset>
-      <legend>{sectionKey}</legend>
+<div class="h-full max-h-full overflow-y-auto">
+  <h2 class="h2 pb-2 text-center text-2xl">Config</h2>
 
-      {#each Object.entries(sectionConfig) as [key, value]}
-        <div class="form-group">
-          <div class="form-group-inner">
-            <label for="{sectionKey}-{key}">
-              {key}
-            </label>
+  <form id="config-form" class="config-form">
+    {#each configSections as { sectionKey, sectionConfig }}
+      <fieldset
+        class="border-surface-900/60 rounded-container-token mb-4 border p-4"
+      >
+        <legend class="px-2 text-xl">{sectionKey}</legend>
 
-            <div class="input-container">
-              {#if getInputType(sectionKey, key) === "checkbox"}
-                <input
-                  type="checkbox"
-                  id="{sectionKey}-{key}"
-                  name="{sectionKey}-{key}"
-                  checked={Boolean(configObject[sectionKey][key])}
-                />
-              {:else if getInputType(sectionKey, key) === "number"}
-                <input
-                  type="number"
-                  id="{sectionKey}-{key}"
-                  name="{sectionKey}-{key}"
-                  value={configObject[sectionKey][key]}
-                  min={value.minimum}
-                  max={value.maximum}
-                />
-              {:else if getInputType(sectionKey, key) === "multicheckbox"}
-                <MultiCheckbox
-                  choices={value.choices || []}
-                  value={getStringArrayOrEmptyArray(
-                    configObject[sectionKey][key],
-                  )}
-                  name="{sectionKey}-{key}"
-                />
-              {:else if getInputType(sectionKey, key) === "imagecheckbox"}
-                <ImageCheckbox
-                  choices={value.choices || []}
-                  value={getStringArrayOrEmptyArray(
-                    configObject[sectionKey][key],
-                  )}
-                  name="{sectionKey}-{key}"
-                />
-              {:else if getInputType(sectionKey, key) === "select"}
-                <select id="{sectionKey}-{key}" name="{sectionKey}-{key}">
-                  {#each value.choices as option}
-                    <option
-                      value={option}
-                      selected={configObject[sectionKey][key] === option}
-                      >{option}</option
-                    >
-                  {/each}
-                </select>
-              {:else}
-                <input
-                  type="text"
-                  id="{sectionKey}-{key}"
-                  name="{sectionKey}-{key}"
-                  value={configObject[sectionKey][key]}
-                />
-              {/if}
+        {#each Object.entries(sectionConfig) as [key, value]}
+          <div class="mb-4">
+            <div class="flex items-center justify-between">
+              <label for="{sectionKey}-{key}" class="mr-3 w-30 text-right">
+                {key}
+              </label>
+
+              <div class="flex flex-1 items-center">
+                {#if getInputType(sectionKey, key) === "checkbox"}
+                  <input
+                    type="checkbox"
+                    id="{sectionKey}-{key}"
+                    name="{sectionKey}-{key}"
+                    checked={Boolean(configObject[sectionKey][key])}
+                    class="checkbox"
+                  />
+                {:else if isNumberConstraint(value)}
+                  <input
+                    type="number"
+                    id="{sectionKey}-{key}"
+                    name="{sectionKey}-{key}"
+                    value={configObject[sectionKey][key]}
+                    min={value.minimum}
+                    max={value.maximum}
+                    step={value.step}
+                    class="input w-full"
+                  />
+                {:else if isMultiCheckboxConstraint(value)}
+                  <MultiCheckbox
+                    choices={value.choices}
+                    value={getStringArrayOrEmptyArray(
+                      configObject[sectionKey][key],
+                    )}
+                    name="{sectionKey}-{key}"
+                  />
+                {:else if isImageCheckboxConstraint(value)}
+                  <ImageCheckbox
+                    choices={value.choices}
+                    value={getStringArrayOrEmptyArray(
+                      configObject[sectionKey][key],
+                    )}
+                    name="{sectionKey}-{key}"
+                  />
+                {:else if isSelectConstraint(value)}
+                  <select
+                    id="{sectionKey}-{key}"
+                    name="{sectionKey}-{key}"
+                    class="select w-full"
+                  >
+                    {#each value.choices as option}
+                      <option
+                        value={option}
+                        selected={configObject[sectionKey][key] === option}
+                        >{option}</option
+                      >
+                    {/each}
+                  </select>
+                {:else}
+                  <input
+                    type="text"
+                    id="{sectionKey}-{key}"
+                    name="{sectionKey}-{key}"
+                    value={configObject[sectionKey][key]}
+                    class="input w-full"
+                  />
+                {/if}
+              </div>
             </div>
           </div>
-        </div>
-      {/each}
-    </fieldset>
-    <br />
-  {/each}
+        {/each}
+      </fieldset>
+    {/each}
 
-  <button type="button" onclick={handleSave}>Save</button>
-</form>
-
-<style>
-  fieldset {
-    border-color: #0f0f0f98;
-  }
-
-  .form-group {
-    margin-bottom: 15px;
-  }
-
-  .form-group-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .form-group .form-group-inner label {
-    flex: 0 0 120px;
-    margin-right: 10px;
-    text-align: right;
-  }
-
-  .input-container {
-    flex: 1;
-    display: flex;
-    align-items: center;
-  }
-
-  .input-container input:not([type="checkbox"]) {
-    width: 100%;
-  }
-
-  .input-container select {
-    width: 100%;
-  }
-
-  .input-container input[type="checkbox"] {
-    margin: 2px;
-  }
-</style>
+    <div class="m-4">
+      <button
+        type="button"
+        class="btn preset-filled-primary-100-900 hover:preset-filled-primary-500"
+        onclick={handleSave}>Save</button
+      >
+    </div>
+  </form>
+</div>

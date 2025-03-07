@@ -17,8 +17,35 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install dependencies
-        run: pip install -r requirements-dev.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'latest'
+
+      # for Frontend checks
+      - name: npm install
+        run: |
+          cd frontend
+          npm install
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get -yq update
+          sudo apt-get -yq install libgtk-3-0 libwebkit2gtk-4.1-dev gcc-aarch64-linux-gnu
+
+      - name: Wails build
+        run: |
+          cd cmd
+          cd wails
+          wails build -tags webkit2_41
+
+      - run: pip install -r requirements-dev.txt
 
       - name: Run pre-commit
         run: |

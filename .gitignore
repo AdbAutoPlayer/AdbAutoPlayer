@@ -4,3 +4,4 @@ AdbAutoPlayer
 PATCH_*
 *.syso
 .vscode
+node_modules

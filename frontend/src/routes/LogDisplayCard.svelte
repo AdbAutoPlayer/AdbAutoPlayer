@@ -6,7 +6,7 @@
   const maxLogEntries = 1000;
 
   EventsOn("log-message", (logMessage: LogMessage) => {
-    const urlRegex = /(https?:\/\/\S+)/g;
+    const urlRegex = /(https?:\/\/[^\s'"]+)/g;
 
     let message: string = "";
     if (logMessage.level == "DEBUG") {
@@ -18,12 +18,12 @@
 
       message = `[${logMessage.level}]${debugInfo} ${logMessage.message.replace(
         urlRegex,
-        '<a href="$1" target="_blank">$1</a>',
+        '<a class="anchor" href="$1" target="_blank">$1</a>',
       )}`;
     } else {
       message = `[${logMessage.level}] ${logMessage.message.replace(
         urlRegex,
-        '<a href="$1" target="_blank">$1</a>',
+        '<a class="anchor" href="$1" target="_blank">$1</a>',
       )}`;
     }
 
@@ -36,12 +36,12 @@
   let logContainer: HTMLDivElement;
 
   function getLogColor(message: string): string {
-    if (message.includes("[DEBUG]")) return "cyan";
-    if (message.includes("[INFO]")) return "green";
-    if (message.includes("[WARNING]")) return "yellow";
-    if (message.includes("[ERROR]")) return "red";
-    if (message.includes("[FATAL]")) return "darkred";
-    return "white";
+    if (message.includes("[DEBUG]")) return "text-primary-500";
+    if (message.includes("[INFO]")) return "text-success-500";
+    if (message.includes("[WARNING]")) return "text-warning-500";
+    if (message.includes("[ERROR]")) return "text-error-500";
+    if (message.includes("[FATAL]")) return "text-error-950";
+    return "text-primary-50";
   }
 
   $effect(() => {
@@ -53,24 +53,17 @@
   });
 </script>
 
-<div class="log-container selectable" bind:this={logContainer}>
-  {#each logs as message}
-    <div style="color: {getLogColor(message)}">
-      {@html message}
+<div class="flex min-h-[20vh] flex-grow flex-col p-4">
+  <div class="card bg-surface-100-900/50 h-full flex-grow flex-col p-4">
+    <div
+      class="h-full flex-grow overflow-y-scroll font-mono break-words whitespace-normal select-text"
+      bind:this={logContainer}
+    >
+      {#each logs as message}
+        <div class={getLogColor(message)}>
+          {@html message}
+        </div>
+      {/each}
     </div>
-  {/each}
+  </div>
 </div>
-
-<style>
-  .log-container {
-    height: 200px;
-    overflow-y: auto;
-    background-color: #0f0f0f98;
-    border-radius: 8px;
-    padding: 10px;
-    resize: vertical;
-    white-space: pre-wrap;
-    text-align: left;
-    font-family: Consolas, monospace;
-  }
-</style>
