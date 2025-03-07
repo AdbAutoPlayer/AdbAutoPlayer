@@ -17,8 +17,16 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install dependencies
-        run: pip install -r requirements-dev.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'latest'
+
+      - name: npm install
+        run: |
+          cd frontend
+          npm install
+
+      - run: pip install -r requirements-dev.txt
 
       - name: Run pre-commit
         run: |
