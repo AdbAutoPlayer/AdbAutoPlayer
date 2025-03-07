@@ -81,6 +81,8 @@ def setup_json_log_handler(level: int | str) -> None:
     """
     logger: logging.Logger = logging.getLogger()
     logger.setLevel(level)
+    for handler in logger.handlers:
+        logger.removeHandler(handler)
     json_log_handler = JsonLogHandler()
     logger.addHandler(json_log_handler)
 
@@ -124,5 +126,7 @@ def setup_text_log_handler(level: int | str) -> None:
     """
     logger: logging.Logger = logging.getLogger()
     logger.setLevel(level)
+    for handler in logger.handlers:
+        logger.removeHandler(handler)
     text_log_handler = TextLogHandler()
     logger.addHandler(text_log_handler)
