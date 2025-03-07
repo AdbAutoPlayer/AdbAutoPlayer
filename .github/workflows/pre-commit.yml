@@ -36,11 +36,18 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          sudo apt update
-          sudo apt install -y \
-          libgtk-3-dev \
-          libglib2.0-dev \
-          libwebkit2gtk-4.0-dev
+          sudo apt-get -yq update
+          DISTRO=$(lsb_release -rs) # Get the distribution version (e.g., "22.04", "24.04")
+          if [[ "$DISTRO" == "20.04" ]]; then
+          sudo apt-get -yq install libgtk-3-0 libwebkit2gtk-4.0-dev gcc-aarch64-linux-gnu
+          elif [[ "$DISTRO" == "22.04" ]]; then
+          sudo apt-get -yq install libgtk-3-0 libwebkit2gtk-4.0-dev gcc-aarch64-linux-gnu
+          elif [[ "$DISTRO" == "24.04" ]]; then
+          sudo apt-get -yq install libgtk-3-0 libwebkit2gtk-4.1-dev gcc-aarch64-linux-gnu
+          else
+          echo "Unsupported Linux distribution: $DISTRO"
+          exit 1 # Fail the workflow if the distribution is not supported
+          fi
 
       - name: Wails build
         run: |
