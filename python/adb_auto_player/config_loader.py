@@ -22,18 +22,15 @@ class ConfigLoader:
     @property
     def games_dir(self) -> Path:
         """Determine and return the games directory."""
-        candidate: Path = self.working_dir / "adb_auto_player" / "games"
-
-        if candidate.exists():
-            games: Path = candidate
-        else:
-            fallback: Path = (
-                self.working_dir.parent.parent / "python" / "adb_auto_player" / "games"
-            )
-            games = fallback if fallback.exists() else candidate
+        candidates: list[Path] = [
+            self.working_dir / "games",  # distributed GUI Context
+            self.working_dir.parent / "games",  # distributed CLI Context
+            self.working_dir / "adb_auto_player" / "games",
+            self.working_dir.parent.parent / "python" / "adb_auto_player" / "games",
+        ]
+        games: Path = next((c for c in candidates if c.exists()), candidates[0])
 
         logging.debug(f"Python games dir: {games}")
-
         return games
 
     @property
