@@ -163,7 +163,7 @@ def _get_running_game() -> str | None:
             if any(pn in package_name for pn in game.package_names):
                 return game.get_gui_options().game_title
     except Exception as e:
-        logging.error(e)
+        logging.error(f"{e}")
     return None
 
 
