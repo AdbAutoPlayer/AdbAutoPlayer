@@ -11,6 +11,7 @@ from adb_auto_player.adb import get_adb_device, get_running_app, wm_size_reset
 from adb_auto_player.games import AFKJourney, InfinityNikki
 from adb_auto_player.ipc import GameGUIOptions
 from adb_auto_player.logging_setup import setup_json_log_handler, setup_text_log_handler
+from adbutils import AdbError
 from adbutils._device import AdbDevice
 
 
@@ -162,6 +163,14 @@ def _get_running_game() -> str | None:
         for game in _get_games():
             if any(pn in package_name for pn in game.package_names):
                 return game.get_gui_options().game_title
+    except AdbError as e:
+        if str(e) == "closed":
+            # This error usually happens when you try to initialize an ADB Connection
+            # Before the device is ready e.g. emulator is starting
+            # Also contains no actionable information so best to hide from Users
+            logging.debug("ADB Error: closed")
+            return None
+        logging.error(f"ADB Error: {e}")
     except Exception as e:
         logging.error(f"{e}")
     return None
