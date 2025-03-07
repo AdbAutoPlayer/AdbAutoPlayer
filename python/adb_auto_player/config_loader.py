@@ -48,6 +48,7 @@ class ConfigLoader:
             self.working_dir.parent / "config" / "config.toml",
             self.working_dir.parent / "config.toml",
             self.working_dir / "config.toml",
+            self.working_dir.parent.parent / "config" / "config.toml",  # PyCharm
         ]
 
         # Find the first existing candidate or default to the first path
