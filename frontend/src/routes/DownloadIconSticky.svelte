@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { version } from "$app/environment";
+  //import { version } from "$app/environment";
+  const version = "3.0.0";
   import { UpdatePatch } from "$lib/wailsjs/go/main/App";
   import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
   import { LogError, LogInfo, LogWarning } from "$lib/wailsjs/runtime";
@@ -12,7 +13,7 @@
   renderer.link = function ({ href, title, text }) {
     const target = "_blank";
     const titleAttr = title ? ` title="${title}"` : "";
-    return `<a href="${href}" target="${target}" rel="noopener noreferrer"${titleAttr}>${text}</a>`;
+    return `<a class="anchor-font-color" href="${href}" target="${target}" rel="noopener noreferrer"${titleAttr}>${text}</a>`;
   };
   let showDownloadIcon: boolean = $state(true);
   let releaseHtmlDownloadUrl: string = $state(
@@ -274,20 +275,21 @@
 
 <Modal bind:showModal>
   {#snippet header()}
-    {#if modalAsset}
-      <h2>
+    <h2 class="text-2xl text-center">
+      {#if modalAsset}
         Update Available: {modalRelease?.tag_name}
-      </h2>
-    {:else}
-      <h2>
+      {:else}
         Update Downloaded: {modalRelease?.tag_name}
-      </h2>
-    {/if}
+      {/if}
+    </h2>
   {/snippet}
   {@html marked(modalChangeLog || "", { renderer: renderer })}
   {#snippet footer()}
     {#if modalAsset}
-      <button style="display: inline-block" onclick={downloadAsset}>
+      <button
+        class="btn preset-filled-primary-500 hover:preset-filled-primary-700-300"
+        onclick={downloadAsset}
+      >
         Download
       </button>
     {/if}

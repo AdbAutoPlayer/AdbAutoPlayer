@@ -21,30 +21,21 @@
     <hr />
     {@render children?.()}
     <hr />
-    {#if footer}
-      {@render footer()}
-      <!-- svelte-ignore a11y_autofocus -->
-      <button class="closeWithFooter" autofocus onclick={() => dialog?.close()}>
+    <div class="flex justify-between w-full">
+      {#if footer}
+        {@render footer()}
+      {/if}
+      <button
+        class="btn preset-filled-primary-500 hover:preset-filled-primary-700-300"
+        onclick={() => dialog?.close()}
+      >
         Close
       </button>
-    {:else}
-      <!-- svelte-ignore a11y_autofocus -->
-      <button class="closeNoFooter" autofocus onclick={() => dialog?.close()}>
-        Close
-      </button>
-    {/if}
+    </div>
   </div>
 </dialog>
 
 <style>
-  .closeWithFooter {
-    float: right;
-  }
-  .closeNoFooter {
-    display: inline-block;
-    margin-left: auto;
-    margin-right: 0;
-  }
   dialog {
     max-width: 32em;
     border-radius: 0.2em;
