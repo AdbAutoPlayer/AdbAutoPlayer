@@ -1,14 +1,15 @@
-from adb_auto_player.command import Command
+"""AFK Journey Main Module."""
 
-from adb_auto_player.games.afk_journey.mixins.afk_stages import AFKStagesMixin
-from adb_auto_player.games.afk_journey.mixins.arcane_labyrinth import (
-    ArcaneLabyrinthMixin,
-)
-from adb_auto_player.games.afk_journey.mixins.assist import AssistMixin
+from adb_auto_player import Command
 from adb_auto_player.games.afk_journey.config import Config
-from adb_auto_player.games.afk_journey.mixins.duras_trials import DurasTrialsMixin
-from adb_auto_player.games.afk_journey.mixins.event import EventMixin
-from adb_auto_player.games.afk_journey.mixins.legend_trial import LegendTrialMixin
+from adb_auto_player.games.afk_journey.mixins import (
+    AFKStagesMixin,
+    ArcaneLabyrinthMixin,
+    AssistMixin,
+    DurasTrialsMixin,
+    EventMixin,
+    LegendTrialMixin,
+)
 from adb_auto_player.ipc.game_gui import GameGUIOptions
 
 
@@ -20,7 +21,10 @@ class AFKJourney(
     EventMixin,
     LegendTrialMixin,
 ):
+    """AFK Journey Game."""
+
     def get_cli_menu_commands(self) -> list[Command]:
+        """Get the CLI menu commands."""
         # Add new commands/gui buttons here
         return [
             Command(
@@ -74,6 +78,7 @@ class AFKJourney(
         ]
 
     def get_gui_options(self) -> GameGUIOptions:
+        """Get the GUI options from TOML."""
         return GameGUIOptions(
             game_title="AFK Journey",
             config_path="afk_journey/AFKJourney.toml",

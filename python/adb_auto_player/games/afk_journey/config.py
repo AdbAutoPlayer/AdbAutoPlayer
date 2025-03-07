@@ -1,11 +1,19 @@
+"""AFK Journey Config Module."""
+
+import tomllib
 from enum import StrEnum, auto
+from pathlib import Path
 from typing import Annotated
 
+from adb_auto_player.ipc import NumberConstraintDict
+from adb_auto_player.ipc.constraint import (
+    ConstraintType,
+    create_checkbox_constraint,
+    create_image_checkbox_constraint,
+    create_multicheckbox_constraint,
+    create_number_constraint,
+)
 from pydantic import BaseModel, Field, field_validator
-import tomllib
-from pathlib import Path
-
-from adb_auto_player.ipc import constraint
 
 # Type constraints
 PositiveInt = Annotated[int, Field(ge=1, le=999)]
@@ -14,7 +22,9 @@ FormationsInt = Annotated[int, Field(ge=1, le=7)]
 
 # Enums
 class HeroesEnum(StrEnum):
-    def _generate_next_value_(name, start, count, last_values):
+    """All heroes."""
+
+    def _generate_next_value_(name, start, count, last_values):  # noqa: N805
         return name.replace("_and_", " & ").replace("_", " ")
 
     Alsa = auto()
@@ -92,7 +102,9 @@ class HeroesEnum(StrEnum):
 
 
 class TowerEnum(StrEnum):
-    def _generate_next_value_(name, start, count, last_values):
+    """All faction towers."""
+
+    def _generate_next_value_(name, start, count, last_values):  # noqa: N805
         return name
 
     Lightbearer = auto()
@@ -103,6 +115,8 @@ class TowerEnum(StrEnum):
 
 # Models
 class GeneralConfig(BaseModel):
+    """General config model."""
+
     excluded_heroes: list[HeroesEnum] = Field(
         default_factory=list, alias="Exclude Heroes"
     )
@@ -110,6 +124,8 @@ class GeneralConfig(BaseModel):
 
 
 class AFKStagesConfig(BaseModel):
+    """AFK Stages config model."""
+
     attempts: PositiveInt = Field(default=5, alias="Attempts")
     formations: FormationsInt = Field(default=7, alias="Formations")
     use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
@@ -119,6 +135,8 @@ class AFKStagesConfig(BaseModel):
 
 
 class DurasTrialsConfig(BaseModel):
+    """Dura's Trials config model."""
+
     attempts: PositiveInt = Field(default=2, alias="Attempts")
     formations: FormationsInt = Field(default=7, alias="Formations")
     use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
@@ -126,6 +144,8 @@ class DurasTrialsConfig(BaseModel):
 
 
 class LegendTrialsConfig(BaseModel):
+    """Legend Trials config model."""
+
     attempts: PositiveInt = Field(default=5, alias="Attempts")
     formations: FormationsInt = Field(default=7, alias="Formations")
     use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
@@ -135,16 +155,21 @@ class LegendTrialsConfig(BaseModel):
     @field_validator("towers", mode="before")
     @classmethod
     def parse_towers(cls, v):
+        """Parse the tower names."""
         if isinstance(v, list):
             return [TowerEnum(tower) for tower in v]
         return v
 
 
 class ArcaneLabyrinthConfig(BaseModel):
+    """Arcane Labyrinth config model."""
+
     difficulty: int = Field(ge=1, le=15, default=13, alias="Difficulty")
 
 
 class Config(BaseModel):
+    """Config model."""
+
     general: GeneralConfig = Field(alias="General")
     afk_stages: AFKStagesConfig = Field(alias="AFK Stages")
     duras_trials: DurasTrialsConfig = Field(alias="Dura's Trials")
@@ -153,48 +178,60 @@ class Config(BaseModel):
 
     @classmethod
     def from_toml(cls, file_path: Path):
+        """Create a Config instance from a TOML file.
+
+        Args:
+            file_path (Path): Path to the TOML file.
+
+        Returns:
+            Config: An instance of the Config class initialized with data
+            from the TOML file.
+        """
         with open(file_path, "rb") as f:
             toml_data = tomllib.load(f)
 
         return cls(**toml_data)
 
     @staticmethod
-    def get_constraints() -> dict[str, dict[str, constraint.ConstraintType]]:
-        formations_constraint = constraint.create_number_constraint(maximum=7)
+    def get_constraints() -> dict[str, dict[str, ConstraintType]]:
+        """Get contraints from ADB Auto Player IPC."""
+        formations_constraint: NumberConstraintDict = create_number_constraint(
+            maximum=7
+        )
 
         return {
             "General": {
-                "Exclude Heroes": constraint.create_multicheckbox_constraint(
+                "Exclude Heroes": create_multicheckbox_constraint(
                     [e.value for e in HeroesEnum]  # type: ignore
                 ),
-                "Assist Limit": constraint.create_number_constraint(),
+                "Assist Limit": create_number_constraint(),
             },
             "AFK Stages": {
-                "Attempts": constraint.create_number_constraint(),
+                "Attempts": create_number_constraint(),
                 "Formations": formations_constraint,
-                "Suggested Formations": constraint.create_checkbox_constraint(),
-                "Both Modes": constraint.create_checkbox_constraint(),
-                "Spend Gold": constraint.create_checkbox_constraint(),
-                "Repeat": constraint.create_checkbox_constraint(),
+                "Suggested Formations": create_checkbox_constraint(),
+                "Both Modes": create_checkbox_constraint(),
+                "Spend Gold": create_checkbox_constraint(),
+                "Repeat": create_checkbox_constraint(),
             },
             "Arcane Labyrinth": {
-                "Difficulty": constraint.create_number_constraint(
+                "Difficulty": create_number_constraint(
                     minimum=1,
                     maximum=15,
                 ),
             },
             "Dura's Trials": {
-                "Attempts": constraint.create_number_constraint(),
+                "Attempts": create_number_constraint(),
                 "Formations": formations_constraint,
-                "Suggested Formations": constraint.create_checkbox_constraint(),
-                "Spend Gold": constraint.create_checkbox_constraint(),
+                "Suggested Formations": create_checkbox_constraint(),
+                "Spend Gold": create_checkbox_constraint(),
             },
             "Legend Trial": {
-                "Attempts": constraint.create_number_constraint(),
+                "Attempts": create_number_constraint(),
                 "Formations": formations_constraint,
-                "Suggested Formations": constraint.create_checkbox_constraint(),
-                "Spend Gold": constraint.create_checkbox_constraint(),
-                "Towers": constraint.create_image_checkbox_constraint(
+                "Suggested Formations": create_checkbox_constraint(),
+                "Spend Gold": create_checkbox_constraint(),
+                "Towers": create_image_checkbox_constraint(
                     [e.value for e in TowerEnum]  # type: ignore
                 ),
             },

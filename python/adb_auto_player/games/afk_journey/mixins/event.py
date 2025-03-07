@@ -1,52 +1,53 @@
+"""AFK Journey Event Mixin."""
+
 import logging
 from abc import ABC
 from time import sleep
 from typing import NoReturn
 
-from adb_auto_player.games.afk_journey.afk_journey_base import AFKJourneyBase
+from adb_auto_player import Coordinates, CropRegions
+from adb_auto_player.games.afk_journey import AFKJourneyBase
 
 
 class EventMixin(AFKJourneyBase, ABC):
+    """Mixin for events."""
+
     def event_guild_chat_claim(self) -> NoReturn:
+        """Claim rewards from Guild Chat."""
         self.start_up()
         logging.info("This claims rewards in Guild Chat (e.g. Happy Satchel)")
         logging.info("Opening chat")
         self._navigate_to_default_state()
-        self.click(1010, 1080, scale=True)
+        self.click(Coordinates(1010, 1080), scale=True)
         sleep(3)
         while True:
-            claim_button = self.find_template_match(
+            claim_button = self.game_find_template_match(
                 template="event/guild_chat_claim/claim_button.png",
-                crop_left=0.6,
-                crop_top=0.2,
-                crop_bottom=0.2,
+                crop=CropRegions(left=0.6, top=0.2, bottom=0.2),
             )
             if claim_button:
-                self.click(*claim_button)
+                self.click(Coordinates(*claim_button))
                 # click again to close popup
                 sleep(2)
-                self.click(*claim_button)
+                self.click(Coordinates(*claim_button))
             # switch to world chat and back because sometimes chat stops scrolling
-            world_chat_icon = self.find_template_match(
+            world_chat_icon = self.game_find_template_match(
                 template="event/guild_chat_claim/world_chat_icon.png",
-                crop_right=0.8,
-                crop_top=0.1,
-                crop_bottom=0.3,
+                crop=CropRegions(right=0.8, top=0.1, bottom=0.3),
             )
             if world_chat_icon:
-                self.click(*world_chat_icon)
+                self.click(Coordinates(*world_chat_icon))
                 sleep(1)
-            guild_chat_icon = self.find_template_match(
+            guild_chat_icon = self.game_find_template_match(
                 template="event/guild_chat_claim/guild_chat_icon.png",
-                crop_right=0.8,
-                crop_top=0.1,
-                crop_bottom=0.3,
+                crop=CropRegions(right=0.8, top=0.1, bottom=0.3),
             )
             if guild_chat_icon:
-                self.click(*guild_chat_icon)
+                self.click(Coordinates(*guild_chat_icon))
             sleep(1)
 
     def event_monopoly_assist(self) -> NoReturn:
+        """Farm Pal-Coins from Monopoly assists."""
         self.start_up()
         logging.info("This assists friends on Monopoly board events to farm Pal-Coins")
         logging.warning("You have to open the Monopoly assists screen yourself")
@@ -56,7 +57,7 @@ class EventMixin(AFKJourneyBase, ABC):
             self.wait_for_template(
                 template="event/monopoly_assist/log.png",
                 # TODO cropping next time event shows up
-                crop_bottom=0.5,
+                crop=CropRegions(bottom=0.5),
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Monopoly assists screen not found",
             )
@@ -76,7 +77,7 @@ class EventMixin(AFKJourneyBase, ABC):
                 if next_assist is None:
                     self.swipe_down()
 
-            self.click(*next_assist)
+            self.click(Coordinates(*next_assist))
             sleep(3)
             try:
                 if self._handle_battle_screen(use_suggested_formations=False):

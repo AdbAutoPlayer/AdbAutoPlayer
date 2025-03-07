@@ -47,7 +47,7 @@ if (-not $cli) {
     Copy-Item -Path "$Workspace/cmd/wails/build/bin/AdbAutoPlayer.exe" -Destination $ReleaseZipDir -Force
 }
 
-Copy-Item -Path "$Workspace/cmd/wails/config.toml" -Destination $ReleaseZipDir -Force
+Copy-Item -Path "$Workspace/config/config.toml" -Destination $ReleaseZipDir -Force
 Copy-Item -Path "$Workspace/python/main.dist/*" -Destination $BinariesDir -Recurse -Force
 Copy-Item -Path "$Workspace/python/adb_auto_player/binaries/windows/*" -Destination $BinariesDir -Recurse -Force
 

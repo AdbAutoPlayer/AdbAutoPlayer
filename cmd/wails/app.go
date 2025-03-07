@@ -79,6 +79,7 @@ func (a *App) shutdown(ctx context.Context) {
 
 func (a *App) GetEditableMainConfig() (map[string]interface{}, error) {
 	paths := []string{
+		"../../config/config.toml",
 		"config.toml",
 	}
 	if stdruntime.GOOS == "darwin" {

@@ -28,7 +28,7 @@ mkdir -p "${BINARIES_DIR}"
 # cp -r "cmd/wails/build/bin/AdbAutoPlayer.app" "${RELEASE_ZIP_DIR}/"
 # Copy main binary (handling macOS unsigned app issue)
 cp "cmd/wails/build/bin/AdbAutoPlayer.app/Contents/MacOS/AdbAutoPlayer" "${RELEASE_ZIP_DIR}/"
-cp "cmd/wails/config.toml" "${RELEASE_ZIP_DIR}/"
+cp "config/config.toml" "${RELEASE_ZIP_DIR}/"
 
 # Copy compiled Nuitka binary
 cp -r "python/main.dist/." "${BINARIES_DIR}/"

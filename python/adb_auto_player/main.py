@@ -1,18 +1,20 @@
+"""Adb Auto Player Main Module."""
+
+import argparse
 import json
 import logging
 import sys
-import argparse
 from typing import NoReturn
 
-import adb_auto_player.adb
-from adb_auto_player import logging_setup
-from adb_auto_player.command import Command
-from adb_auto_player.game import Game
-from adb_auto_player.games.afk_journey.main import AFKJourney
-from adb_auto_player.games.infinity_nikki.main import InfinityNikki
+from adb_auto_player import Command, Game
+from adb_auto_player.adb import get_adb_device, get_running_app, wm_size_reset
+from adb_auto_player.games import AFKJourney, InfinityNikki
+from adb_auto_player.ipc import GameGUIOptions
+from adb_auto_player.logging_setup import setup_json_log_handler, setup_text_log_handler
+from adbutils._device import AdbDevice
 
 
-def __get_games() -> list[Game]:
+def _get_games() -> list[Game]:
     return [
         AFKJourney(),
         InfinityNikki(),
@@ -20,7 +22,12 @@ def __get_games() -> list[Game]:
 
 
 def main() -> None:
-    commands = __get_commands()
+    """Main entry point of the application.
+
+    This function parses the command line arguments, sets up the logging based on the
+    output format and log level, and then runs the specified command.
+    """
+    commands: list[Command] = _get_commands()
     command_names = []
     for cmd in commands:
         command_names.append(cmd.name)
@@ -47,72 +54,112 @@ def main() -> None:
     args = parser.parse_args()
     match args.output:
         case "json":
-            logging_setup.setup_json_log_handler(args.log_level)
+            setup_json_log_handler(args.log_level)
         case "text":
-            logging_setup.setup_text_log_handler(args.log_level)
+            setup_text_log_handler(args.log_level)
         case _:
             logging.getLogger().setLevel(args.log_level)
 
     for cmd in commands:
         if str.lower(cmd.name) == str.lower(args.command):
-            __run_command(cmd)
+            _run_command(cmd)
 
     sys.exit(1)
 
 
 def get_gui_games_menu() -> str:
-    menu = []
+    """Get the menu for the GUI.
 
-    for game in __get_games():
-        options = game.get_gui_options()
+    Returns a JSON string containing a list of dictionaries.
+    Each dictionary represents a game and contains the following keys:
+        - game_title: str
+        - config_path: str
+        - menu_options: list[MenuOption]
+        - constraints: dict[str, Any]
+
+    Used by the Wails GUI to populate the menu.
+    """
+    menu = []
+    for game in _get_games():
+        options: GameGUIOptions = game.get_gui_options()
         menu.append(options.to_dict())
 
     return json.dumps(menu)
 
 
-def __get_commands() -> list[Command]:
-    commands = [
+def _get_commands() -> list[Command]:
+    """Retrieve a list of CLI commands.
+
+    This function compiles a list of commands for the application, including
+    GUI-related commands and game-specific commands. It starts with a set of
+    predefined commands, such as displaying the GUI games menu, resetting the
+    window size, and getting the running game information. It then extends this
+    list by fetching additional commands from each game instance.
+
+    Returns:
+        list[Command]: A list of Command objects representing available CLI
+        commands for the application.
+    """
+    commands: list[Command] = [
         Command(
             name="GUIGamesMenu",
-            action=__print_gui_games_menu,
+            action=_print_gui_games_menu,
         ),
         Command(
             name="WMSizeReset",
-            action=adb_auto_player.adb.wm_size_reset,
+            action=wm_size_reset,
         ),
         Command(
             name="GetRunningGame",
-            action=__print_running_game,
+            action=_print_running_game,
         ),
     ]
 
-    for game in __get_games():
+    for game in _get_games():
         commands += game.get_cli_menu_commands()
 
     return commands
 
 
-def __print_gui_games_menu() -> None:
+def _print_gui_games_menu() -> None:
+    """Print the menu for the GUI to CLI."""
     print(get_gui_games_menu())
-    return None
 
 
-def __print_running_game() -> None:
-    running_game = __get_running_game()
+def _print_running_game() -> None:
+    """Log the title of the currently running game.
+
+    This function retrieves the title of the game currently running on an
+    ADB-connected device, if any. If a game is found, it logs the title with
+    an info-level log. If no game is running, it logs a debug message
+    indicating the absence of a running game.
+    """
+    running_game: str | None = _get_running_game()
     if running_game:
         logging.debug(f"Running game: {running_game}")
     else:
         logging.debug("No running game")
-    return None
 
 
-def __get_running_game() -> str | None:
+def _get_running_game() -> str | None:
+    """Retrieve the title of the currently running game.
+
+    This function attempts to determine which game is currently running on an
+    ADB-connected device. It first acquires the device, then retrieves the
+    package name of the running application. It checks this package name against
+    the package names of known games. If a match is found, it returns the
+    corresponding game's title.
+
+    Returns:
+        str | None: The title of the running game, or None if no known game is
+        detected.
+    """
     try:
-        device = adb_auto_player.adb.get_device()
-        package_name = adb_auto_player.adb.get_running_app(device)
+        device: AdbDevice = get_adb_device()
+        package_name: str | None = get_running_app(device)
         if not package_name:
             return None
-        for game in __get_games():
+        for game in _get_games():
             if any(pn in package_name for pn in game.package_names):
                 return game.get_gui_options().game_title
     except Exception as e:
@@ -120,7 +167,21 @@ def __get_running_game() -> str | None:
     return None
 
 
-def __run_command(cmd: Command) -> NoReturn:
+def _run_command(cmd: Command) -> NoReturn:
+    """Execute a command and handle exceptions.
+
+    This function runs the specified command and manages any exceptions
+    that occur during execution. If an exception occurs, it logs the error
+    message and exits the program with a status of 1. If the command runs
+    successfully, it exits the program with a status of 0.
+
+    Args:
+        cmd (Command): The command to execute.
+
+    Raises:
+        SystemExit: Exits with status 1 if an exception occurs, or status 0
+        if the command completes successfully.
+    """
     try:
         cmd.run()
     except Exception as e:

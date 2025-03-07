@@ -1,31 +1,40 @@
-import os
-import sys
-
-import adbutils._utils
-from adbutils import AdbClient, AdbError, AdbDevice
+"""ADB Auto Player ADB Module."""
 
 import logging
+import os
 import shutil
+import sys
+from typing import Any
 
-import adb_auto_player.config_loader
-from adb_auto_player.exceptions import AdbException
+import adbutils._utils
+from adb_auto_player import ConfigLoader, GenericAdbError
+from adbutils import AdbClient, AdbDevice, AdbError
+from adbutils._proto import AdbDeviceInfo
 
 
-def __set_adb_path():
-    is_frozen = hasattr(sys, "frozen") or "__compiled__" in globals()
-    logging.debug(f"is_frozen: {is_frozen}")
+def _set_adb_path() -> None:
+    """Helper function to set environment varaible ADBUTILS_ADB_PATH depending on OS.
+
+    Raises:
+        FileNotFoundError: ADB executable not found in PATH.
+    """
+    config_loader = ConfigLoader()
+    is_frozen: bool = hasattr(sys, "frozen") or "__compiled__" in globals()
+    logging.debug(f"{is_frozen=}")
+
     if is_frozen and os.name == "nt":
-        adb_env_path = os.getenv("ADBUTILS_ADB_PATH")
+        adb_env_path: str | None = os.getenv("ADBUTILS_ADB_PATH")
+
         if not adb_env_path or not os.path.isfile(adb_env_path):
-            adb_path = os.path.join(
-                adb_auto_player.config_loader.get_binaries_dir(), "adb.exe"
-            )
-            os.environ["ADBUTILS_ADB_PATH"] = adb_path
+            adb_path: str | None = os.path.join(config_loader.binaries_dir, "adb.exe")
+            if adb_path is not None:
+                os.environ["ADBUTILS_ADB_PATH"] = adb_path
             adb_env_path = adb_path
+
         # Dev fallback
         if not adb_env_path or not os.path.isfile(adb_env_path):
             adb_path = os.path.join(
-                adb_auto_player.config_loader.get_binaries_dir(),
+                config_loader.binaries_dir,
                 "windows",
                 "adb.exe",
             )
@@ -45,7 +54,8 @@ def __set_adb_path():
             "/sbin",
         ]
 
-        path_dirs = path.split(os.pathsep)
+        if path is not None:
+            path_dirs = path.split(os.pathsep)
         for p in paths:
             if p not in path_dirs:
                 path_dirs.append(p)
@@ -62,123 +72,215 @@ def __set_adb_path():
     logging.debug(f"adb_path: {adbutils._utils.adb_path()}")
 
 
-def get_device(override_size: str | None = None) -> AdbDevice:
+def get_adb_device(override_size: str | None = None) -> AdbDevice:
     """Connects to an Android device using ADB and returns the device object.
 
     This function connects to a device by fetching configuration settings,
     handles errors during connection, and returns the device object if found.
 
     Raises:
-        AdbException: Device not found
+        AdbException: Device not found.
     """
-    __set_adb_path()
-    main_config = adb_auto_player.config_loader.get_main_config()
-    device_id = main_config.get("device", {}).get("ID", "127.0.0.1:5555")
-    adb_config = main_config.get("adb", {})
+    _set_adb_path()
+    main_config: dict[str, Any] = ConfigLoader().main_config
+    device_id: Any = main_config.get("device", {}).get("ID", "127.0.0.1:5555")
+    adb_config: Any = main_config.get("adb", {})
     client = AdbClient(
         host=adb_config.get("host", "127.0.0.1"),
         port=adb_config.get("port", 5037),
     )
 
-    return __get_adb_device(client, device_id, override_size)
+    return _get_adb_device(client, device_id, override_size)
 
 
-def __get_adb_device(
-    client: AdbClient,
-    device_id: str,
-    override_size: str | None = None,
-) -> AdbDevice:
-    main_config = adb_auto_player.config_loader.get_main_config()
-    wm_size = main_config.get("device", {}).get("wm_size", False)
+def _connect_client(client: AdbClient, device_id: str) -> None:
+    """Attempts to connect to an ADB device using the given client and device ID.
 
+    Args:
+        client (AdbClient): ADB client instance used for connection.
+        device_id (str): ID of the device to connect to.
+
+    Raises:
+        AdbError: AdbTimeout error regarding installation or port mismatch.
+        AdbException: Other AdbTimeout errors.
+    """
     try:
         client.connect(device_id)
     except AdbError as e:
-        if "Install adb" in str(e):
+        err_msg = str(e)
+        if "Install adb" in err_msg:
             raise e
-        elif "Unknown data: b" in str(e):
-            raise AdbException(
+        elif "Unknown data: b" in err_msg:
+            raise GenericAdbError(
                 "Please make sure the adb port is correct "
-                "in most cases it should be 5037"
+                "(in most cases it should be 5037)"
             )
         else:
             logging.debug(f"client.connect exception: {e}")
     except Exception as e:
         logging.debug(f"client.connect exception: {e}")
 
-    device = __connect_to_device(client, device_id)
-    if device is None and (
-        device_id.startswith("127.0.0.1:") or device_id.startswith("localhost:")
-    ):
-        i = 1
-        host, port = device_id.split(":")
-        int_port: int = int(port)
-        while i <= 10:
-            new_device_id = f"{host}:{int_port + i}"
-            logging.debug(f"Trying Device ID: {new_device_id}")
-            try:
-                device = __connect_to_device(client, new_device_id)
-                if device is not None:
-                    break
-            except AdbException as e:
-                logging.debug(f"{e}")
-            i += 1
 
+def _get_devices(client: AdbClient) -> list[AdbDeviceInfo]:
+    """Attempts to list ADB devices.
+
+    Args:
+        client (AdbClient): ADB client instance used for connection.
+
+    Raises:
+        AdbException: Failed to list devices.
+
+    Returns:
+        list[AdbDeviceInfo]: List of devices.
+    """
     try:
-        devices = client.list()
+        return client.list()
     except Exception:
-        raise AdbException("Failed to connect to AdbClient check the config.toml")
-    if len(devices) == 0:
-        logging.debug("No devices found")
+        raise GenericAdbError("Failed to connect to AdbClient; check the config.toml")
+
+
+def _log_devices(devices: list[AdbDeviceInfo]) -> None:
+    """Logs the list of ADB devices.
+
+    Args:
+        devices (list[AdbDeviceInfo]): ADB devices.
+    """
+    if not devices:
+        logging.warning("No devices found")
     else:
         devices_str = "Devices:"
         for device_info in devices:
             devices_str += f"\n- {device_info.serial}"
         logging.debug(devices_str)
 
-    if device:
-        logging.debug(f"Connected to Device: {device.serial}")
-    elif device is None and len(devices) == 1:
-        only_available_device = devices[0].serial
-        logging.debug(
-            f"{device_id} not found connecting to"
-            f" only available Device: {only_available_device}"
+
+def _resolve_device(
+    client: AdbClient, device_id: str, devices: list[AdbDeviceInfo]
+) -> AdbDevice:
+    """Attepts to connect to a device.
+
+    Args:
+        client (AdbClient): ADB client.
+        device_id (str): ADB device ID.
+        devices (list[AdbDeviceInfo]): List of ADB devices.
+
+    Raises:
+        AdbException: Device not found.
+
+    Returns:
+        AdbDevice: Connected device.
+    """
+    device: AdbDevice | None = _connect_to_device(client, device_id)
+    if device is None and len(devices) == 1:
+        only_device: str = devices[0].serial
+        logging.warning(
+            f"{device_id} not found, connecting to only available device: {only_device}"
         )
-        device = __connect_to_device(client, only_available_device)
-
+        device = _connect_to_device(client, only_device)
     if device is None:
-        raise AdbException(f"Device: {device_id} not found")
+        raise GenericAdbError(f"Device: {device_id} not found")
+    return device
 
+
+def _override_size(device: AdbDevice, override_size: str, wm_size: Any) -> None:
     if override_size and wm_size:
         logging.debug(f"Overriding size: {override_size}")
         try:
             device.shell(f"wm size {override_size}")
         except Exception as e:
-            raise AdbException(f"wm size {override_size}: {e}")
+            raise GenericAdbError(f"wm size {override_size}: {e}")
+
+
+def _get_adb_device(
+    client: AdbClient, device_id: str, override_size: str | None = None
+) -> AdbDevice:
+    # Get configuration for window size override
+    """Connects to a specified ADB device and optionally overrides its screen size.
+
+    This function uses the provided ADB client and device ID to connect to
+    an Android device. It logs the available devices, resolves the correct
+    device to connect to, and logs the connection. Optionally, it can override
+    the device's screen size if specified.
+
+    Args:
+        client (AdbClient): ADB client used for the connection.
+        device_id (str): ID of the device to connect to.
+        override_size (str | None, optional): Screen size to override.
+
+    Raises:
+        AdbException: If unable to connect to the device or if size override fails.
+
+    Returns:
+        AdbDevice: Connected ADB device.
+    """
+    main_config: dict[str, Any] = ConfigLoader().main_config
+    wm_size: Any = main_config.get("device", {}).get("wm_size", False)
+
+    # Connect the client and list devices
+    _connect_client(client, device_id)
+    devices: list[AdbDeviceInfo] = _get_devices(client)
+    _log_devices(devices)
+
+    # Try to resolve the correct device
+    device = _resolve_device(client, device_id, devices)
+    logging.info(f"Connected to Device {device.serial}")
+
+    # Optionally override the size
+    if override_size:
+        _override_size(device, override_size, wm_size)
 
     return device
 
 
 def wm_size_reset(device: AdbDevice | None = None) -> None:
+    """Resets the display size of the device to its original size.
+
+    Uses a shell command to reset the display size.
+    If device is not specified, it will use the device from get_device().
+
+    Args:
+        device (AdbDevice | None): ADB device.
+
+    Raises:
+        AdbException: Unable to reset display size.
+    """
     if device is None:
-        device = get_device(override_size=None)
+        device = get_adb_device(override_size=None)
 
     try:
         device.shell("wm size reset")
     except Exception as e:
-        raise AdbException(f"wm size reset: {e}")
+        raise GenericAdbError(f"wm size reset: {e}")
     logging.info(f"Reset Display Size for Device: {device.serial}")
 
 
-def __connect_to_device(client: AdbClient, device_id: str) -> AdbDevice | None:
-    device = client.device(f"{device_id}")
-    if is_device_connection_active(device):
+def _connect_to_device(client: AdbClient, device_id: str) -> AdbDevice | None:
+    """Helper function to return a connected device.
+
+    Args:
+        client (AdbClient): ADB client.
+        device_id (str): ADB device ID.
+
+    Returns:
+        AdbDevice | None: Connected device.
+    """
+    device: AdbDevice = client.device(f"{device_id}")
+
+    if _is_device_connection_active(device):
         return device
     else:
         return None
 
 
-def is_device_connection_active(device: AdbDevice) -> bool:
+def _is_device_connection_active(device: AdbDevice) -> bool:
+    """Helper function to check if device connection is active.
+
+    Args:
+        device (AdbDevice): ADB Device.
+
+    Returns:
+        bool: True if device connection is active, False otherwise.
+    """
     try:
         device.get_state()
         return True
@@ -188,17 +290,23 @@ def is_device_connection_active(device: AdbDevice) -> bool:
 
 
 def get_screen_resolution(device: AdbDevice) -> str:
-    """Uses wm size to resolve device display resolution.
+    """Get screen resolution as string.
+
+    Args:
+        device (AdbDevice): ADB device.
 
     Raises:
-        AdbException: Unable to determine screen resolution
+        AdbException: Unable to determine screen resolution.
+
+    Returns:
+        str: Resolution as string.
     """
     try:
         result = str(device.shell("wm size"))
     except Exception as e:
-        raise AdbException(f"wm size: {e}")
+        raise GenericAdbError(f"wm size: {e}")
     if result:
-        lines = result.splitlines()
+        lines: list[str] = result.splitlines()
         override_size = None
         physical_size = None
 
@@ -210,35 +318,46 @@ def get_screen_resolution(device: AdbDevice) -> str:
                 physical_size = line.split("Physical size:")[-1].strip()
                 logging.debug(f"Physical size: {physical_size}")
 
-        resolution_str = override_size if override_size else physical_size
+        resolution_str: str | None = override_size if override_size else physical_size
 
         if resolution_str:
             logging.debug(f"Device screen resolution: {resolution_str}")
             return resolution_str
 
     logging.debug(result)
-    raise AdbException("Unable to determine screen resolution")
+    raise GenericAdbError("Unable to determine screen resolution")
 
 
 def is_portrait(device: AdbDevice) -> bool:
+    """Check if device is in portrait mode.
+
+    Args:
+        device (AdbDevice): ADB device.
+
+    Returns:
+        bool: True if all checks pass, False otherwise.
+    """
     try:
         orientation_check = device.shell(
             "dumpsys input | grep 'SurfaceOrientation'"
         ).strip()
     except Exception as e:
-        raise AdbException(f"dumpsys input: {e}")
+        raise GenericAdbError(f"dumpsys input: {e}")
     logging.debug(f"orientation_check: {orientation_check}")
+
     try:
         rotation_check = device.shell("dumpsys window | grep mCurrentRotation").strip()
     except Exception as e:
-        raise AdbException(f"dumpsys window: {e}")
+        raise GenericAdbError(f"dumpsys window: {e}")
     logging.debug(f"rotation_check: {rotation_check}")
+
     try:
         display_check = device.shell("dumpsys display | grep -E 'orientation'").strip()
     except Exception as e:
-        raise AdbException(f"dumpsys display: {e}")
+        raise GenericAdbError(f"dumpsys display: {e}")
     logging.debug(f"display_check: {display_check}")
-    checks = [
+
+    checks: list[bool] = [
         "Orientation: 0" in orientation_check if orientation_check else True,
         "ROTATION_0" in rotation_check if rotation_check else True,
         "orientation=0" in display_check if display_check else True,
@@ -248,7 +367,15 @@ def is_portrait(device: AdbDevice) -> bool:
 
 
 def get_running_app(device: AdbDevice) -> str | None:
-    app = str(
+    """Get the currently running app.
+
+    Args:
+        device (AdbDevice): ADB device.
+
+    Returns:
+        str | None: Currently running app name, or None if unable to determine.
+    """
+    app: str = str(
         device.shell(
             "dumpsys activity activities | grep mResumedActivity | "
             'cut -d "{" -f2 | cut -d \' \' -f3 | cut -d "/" -f1'
