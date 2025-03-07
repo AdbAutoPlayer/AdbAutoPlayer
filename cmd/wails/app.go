@@ -350,8 +350,8 @@ func (a *App) getMainConfigPath() string {
 	}
 
 	paths := []string{
-		"../../config/config.toml",       // dev
 		"config.toml",                    // distributed
+		"../../config/config.toml",       // dev
 		"../../../../config/config.toml", // macOS dev no not a joke
 	}
 
