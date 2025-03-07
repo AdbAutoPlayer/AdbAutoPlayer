@@ -54,6 +54,7 @@ def _set_adb_path() -> None:
             "/sbin",
         ]
 
+        path_dirs = []
         if path is not None:
             path_dirs = path.split(os.pathsep)
         for p in paths:
@@ -173,13 +174,37 @@ def _resolve_device(
     device: AdbDevice | None = _connect_to_device(client, device_id)
     if device is None and len(devices) == 1:
         only_device: str = devices[0].serial
-        logging.warning(
+        logging.debug(
             f"{device_id} not found, connecting to only available device: {only_device}"
         )
         device = _connect_to_device(client, only_device)
+
+    if device is None:
+        device = _try_incrementing_ports(client, device_id)
+
     if device is None:
         raise GenericAdbError(f"Device: {device_id} not found")
     return device
+
+
+def _try_incrementing_ports(client: AdbClient, device_id: str) -> AdbDevice | None:
+    """Attempts to connect to a device by incrementing the port number.
+
+    This is specifically for cases where Bluestacks prompts the user to create a
+    new instance with a different Android version. Even after closing the first
+    instance, it may remain in the device list but not be connectable. This function
+    tries the next 5 ports to find a valid connection.
+    """
+    if ":" in device_id:
+        address, port_str = device_id.rsplit(":", 1)
+        if port_str.isdigit():
+            port = int(port_str)
+            for port_increment in range(6):  # Try up to 5 increments
+                new_device_id = f"{address}:{port + port_increment}"
+                device = _connect_to_device(client, new_device_id)
+                if device is not None:
+                    return device
+    return None
 
 
 def _override_size(device: AdbDevice, override_size: str, wm_size: Any) -> None:
@@ -194,7 +219,6 @@ def _override_size(device: AdbDevice, override_size: str, wm_size: Any) -> None:
 def _get_adb_device(
     client: AdbClient, device_id: str, override_size: str | None = None
 ) -> AdbDevice:
-    # Get configuration for window size override
     """Connects to a specified ADB device and optionally overrides its screen size.
 
     This function uses the provided ADB client and device ID to connect to
@@ -213,6 +237,7 @@ def _get_adb_device(
     Returns:
         AdbDevice: Connected ADB device.
     """
+    # Get configuration for window size override
     main_config: dict[str, Any] = ConfigLoader().main_config
     wm_size: Any = main_config.get("device", {}).get("wm_size", False)
 
@@ -223,7 +248,7 @@ def _get_adb_device(
 
     # Try to resolve the correct device
     device = _resolve_device(client, device_id, devices)
-    logging.info(f"Connected to Device {device.serial}")
+    logging.debug(f"Connected to Device: {device.serial}")
 
     # Optionally override the size
     if override_size:
