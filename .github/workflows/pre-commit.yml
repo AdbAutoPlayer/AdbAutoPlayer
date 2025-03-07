@@ -21,10 +21,12 @@ jobs:
         with:
           node-version: 'latest'
 
-      - name: npm install
+      # for Frontend checks
+      - name: npm install && npm run build
         run: |
           cd frontend
           npm install
+          npm run build # for svelte-check
 
       - run: pip install -r requirements-dev.txt
 
