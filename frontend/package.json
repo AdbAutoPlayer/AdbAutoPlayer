@@ -9,7 +9,8 @@
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"svelte-check": "svelte-check"
+		"svelte-check": "svelte-check",
+		"prettier-write": "prettier --write \"**/*.{ts,js,svelte}\""
 	},
 	"devDependencies": {
 		"@skeletonlabs/skeleton": "^3.0.0-next.12",

@@ -20,7 +20,7 @@ repos:
       - id: black
         files: python/
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.8
+    rev: v0.9.10
     hooks:
       - id: ruff
         files: python/
@@ -28,7 +28,7 @@ repos:
       - id: ruff-format
         files: python/
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.14.1'
+    rev: 'v1.15.0'
     hooks:
       - id: mypy
         files: python/
@@ -36,7 +36,26 @@ repos:
 
   # Golang
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.63.4
+    rev: v1.64.6
     hooks:
       - id: golangci-lint
         files: \.go$
+
+  # Frontend
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier
+        entry:  npm --prefix frontend run prettier-write
+        language: system
+        files: frontend/
+        pass_filenames: false
+
+  - repo: local
+    hooks:
+      - id: svelte-check
+        name: svelte-check
+        entry: npm --prefix frontend run svelte-check
+        language: system
+        files: frontend/
+        pass_filenames: false
