@@ -49,7 +49,6 @@ if (-not $cli) {
 
 Copy-Item -Path "$Workspace/config/config.toml" -Destination $ReleaseZipDir -Force
 Copy-Item -Path "$Workspace/python/main.dist/*" -Destination $BinariesDir -Recurse -Force
-Copy-Item -Path "$Workspace/python/adb_auto_player/binaries/windows/*" -Destination $BinariesDir -Recurse -Force
 
 # Copy everything from "games" except:
 # - .py files
@@ -80,18 +79,28 @@ foreach ($Item in $Items) {
     }
 }
 
-Write-Output "Files collected in ${ReleaseZipDir}:"
-Get-ChildItem -Path $ReleaseZipDir -Recurse
+if (-not $cli) {
+    New-Item -ItemType Directory -Force -Path $PatchDir
+    Copy-Item -Path (Join-Path $ReleaseZipDir "games") -Destination $PatchDir -Recurse -Force
+    Copy-Item -Path $BinariesDir -Destination $PatchDir -Recurse -Force
+    $PatchZipFile = Join-Path $Workspace "Patch_Windows.zip"
+    Compress-Archive -Path "$PatchDir\*" -DestinationPath $PatchZipFile -Force
+    Write-Output "Patch ZIP file created at ${PatchZipFile}"
+}
+
+# We are only shipping static binaries for the full .zip
+# If we ever need to update them we should add a flag to conditionally add them to Patch
+Copy-Item -Path "$Workspace/python/adb_auto_player/binaries/windows/*" -Destination $BinariesDir -Recurse -Force
 
 if (-not $cli) {
     $ZipFile = Join-Path $Workspace "AdbAutoPlayer_Windows.zip"
     Compress-Archive -Path "$ReleaseZipDir\*" -DestinationPath $ZipFile -Force
     Write-Output "ZIP file created at ${ZipFile}"
-    New-Item -ItemType Directory -Force -Path $PatchDir
-    Copy-Item -Path (Join-Path $ReleaseZipDir "games") -Destination $PatchDir -Recurse -Force
-    Copy-Item -Path $BinariesDir -Destination $PatchDir -Recurse -Force
 
-    $PatchZipFile = Join-Path $Workspace "Patch_Windows.zip"
-    Compress-Archive -Path "$PatchDir\*" -DestinationPath $PatchZipFile -Force
-    Write-Output "Patch ZIP file created at ${PatchZipFile}"
 }
+
+
+
+
+Write-Output "Files collected in ${ReleaseZipDir}:"
+Get-ChildItem -Path $ReleaseZipDir -Recurse
