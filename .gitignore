@@ -5,3 +5,4 @@ PATCH_*
 *.syso
 .vscode
 node_modules
+release_zip
