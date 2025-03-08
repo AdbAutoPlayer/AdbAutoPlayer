@@ -15,4 +15,4 @@ async function moveBuildDir() {
   }
 }
 
-moveBuildDir();
+await moveBuildDir();

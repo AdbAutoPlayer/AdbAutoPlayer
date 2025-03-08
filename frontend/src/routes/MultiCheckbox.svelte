@@ -35,7 +35,7 @@
             <label class="m-0.5 flex items-center">
               <input
                 type="checkbox"
-                class="checkbox mr-0.5 ml-0.25"
+                class="mr-0.5 ml-0.25 checkbox"
                 {name}
                 value={option}
                 checked={Array.isArray(value) ? value.includes(option) : false}

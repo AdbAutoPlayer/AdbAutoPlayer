@@ -267,7 +267,7 @@
 
 <Modal bind:showModal>
   {#snippet header()}
-    <h2 class="h2 text-center text-2xl">
+    <h2 class="text-center h2 text-2xl">
       {#if modalAsset}
         Update Available: {modalRelease?.tag_name}
       {:else}

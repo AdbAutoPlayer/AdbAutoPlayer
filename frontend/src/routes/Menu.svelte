@@ -12,7 +12,7 @@
 </script>
 
 <div class="h-full max-h-full overflow-y-auto">
-  <h2 class="h2 pb-2 text-center text-2xl">Menu</h2>
+  <h2 class="pb-2 text-center h2 text-2xl">Menu</h2>
 
   <div class="flex flex-wrap justify-center gap-4">
     {#if buttons.length > 0}

@@ -151,12 +151,12 @@
 </script>
 
 <div class="h-full max-h-full overflow-y-auto">
-  <h2 class="h2 pb-2 text-center text-2xl">Config</h2>
+  <h2 class="pb-2 text-center h2 text-2xl">Config</h2>
 
   <form id="config-form" class="config-form">
     {#each configSections as { sectionKey, sectionConfig }}
       <fieldset
-        class="border-surface-900/60 rounded-container-token mb-4 border p-4"
+        class="rounded-container-token mb-4 border border-surface-900/60 p-4"
       >
         <legend class="px-2 text-xl">{sectionKey}</legend>
 
