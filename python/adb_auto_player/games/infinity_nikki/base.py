@@ -30,6 +30,11 @@ class InfinityNikkiBase(Game, ABC):
             self.open_eyes(device_streaming=device_streaming)
         if self.config is None:
             self.load_config()
+        logging.warning(
+            "This game does not automatically scale on resolution change: "
+            "https://yulesxoxo.github.io/AdbAutoPlayer/user-guide/troubleshoot.html"
+            "#tap-to-restart-this-app-for-a-better-view"
+        )
 
     def get_template_dir_path(self) -> Path:
         """Retrieve path to images."""
