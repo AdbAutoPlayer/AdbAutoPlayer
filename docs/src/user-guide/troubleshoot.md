@@ -31,13 +31,17 @@ This issue usually occurs due to one of the following reasons:
 Make sure to extract all files and check your antivirus settings to prevent accidental deletions. 
 
 ## File contains a virus or potentially unwanted software
-1. Search **Windows Security**
+1. Search **Windows Security**  
     ![search-windows-security.png](../images/troubleshoot/search-windows-security.png)
 2. Select **Virus & threat protection**  
     ![select-virus-and-threat-protection.png](../images/troubleshoot/select-virus-and-threat-protection.png)
-3. Click **allowed threats**
+3. Click **allowed threats**  
     ![click-allowed-threats.png](../images/troubleshoot/click-allowed-threats.png)
 4. Search for a Threat that has **AdbAutoPlayer** or **adb_auto_player** in the file name or path then click **Actions** and **Restore**  
     ![click-actions-restore.png](../images/troubleshoot/click-actions-restore.png)
-5. If you have no Threats click **Protection history** and check there then do the same as step 4.
+5. If you have no Threats click **Protection history** and check there then do the same as step 4.  
     ![no-allowed-threats.png](../images/troubleshoot/no-allowed-threats.png)
+
+## Tap to restart this app for a better view
+![tap-to-restart.png](../images/troubleshoot/tap-to-restart.png)  
+Some games will not automatically scale when the resolution changes. You simply have to press the button and the bot will work.
