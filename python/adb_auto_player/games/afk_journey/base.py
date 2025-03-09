@@ -440,6 +440,8 @@ class AFKJourneyBase(Game, ABC):
                     "confirm.png",
                     "time_of_day.png",
                     "dotdotdot.png",
+                    "guide/close.png",
+                    "guide/next.png",
                 ]
             )
 
@@ -476,6 +478,9 @@ class AFKJourneyBase(Game, ABC):
                 case "dotdotdot.png":
                     self.press_back_button()
                     sleep(1)
+                case ("guide/close.png", "guide/next.png"):
+                    self.click(Coordinates(x=x, y=y))
+                    sleep(0.5)
         return None
 
     def _select_afk_stage(self) -> None:
