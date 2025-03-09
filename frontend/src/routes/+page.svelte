@@ -100,19 +100,23 @@
     clearTimeout(updateStateTimeout);
     try {
       await TerminateGameProcess();
+      activeButtonLabel = null;
     } catch (error) {
       console.log(error);
     }
     setTimeout(updateStateHandler, 1000);
-    activeButtonLabel = null;
   }
 
   async function startGameProcess(menuOption: ipc.MenuOption) {
-    activeButtonLabel = menuOption.label;
+    if (activeButtonLabel !== null) {
+      return;
+    }
     clearTimeout(updateStateTimeout);
 
     try {
+      activeButtonLabel = menuOption.label;
       await StartGameProcess(menuOption.args);
+      activeButtonLabel = menuOption.label;
     } catch (error) {
       console.log(error);
       alert(error);
@@ -207,9 +211,9 @@
   async function updateState() {
     try {
       if ($pollRunningProcess) {
-        const response = await IsGameProcessRunning();
-        $pollRunningGame = !response;
-        if ($pollRunningGame) {
+        const isProcessRunning = await IsGameProcessRunning();
+        $pollRunningGame = !isProcessRunning;
+        if (!isProcessRunning) {
           activeButtonLabel = null;
         }
       }
