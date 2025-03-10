@@ -227,7 +227,7 @@
     try {
       await checkForNewRelease(patchVersion);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       alert(error);
     }
     $pollRunningGame = true;

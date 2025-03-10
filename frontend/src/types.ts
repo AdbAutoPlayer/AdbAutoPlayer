@@ -1,10 +1,3 @@
-interface MenuButton {
-  label: string;
-  callback: (...args: any[]) => void;
-  active: boolean;
-  alwaysEnabled?: boolean;
-}
-
 type LogLevel = "TRACE" | "DEBUG" | "INFO" | "WARNING" | "ERROR" | "FATAL";
 
 interface LogMessage {

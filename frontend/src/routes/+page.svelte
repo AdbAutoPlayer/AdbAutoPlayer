@@ -10,11 +10,12 @@
     IsGameProcessRunning,
   } from "$lib/wailsjs/go/main/App";
   import { onDestroy, onMount } from "svelte";
-  import ConfigForm from "./ConfigForm.svelte";
-  import Menu from "./Menu.svelte";
+  import ConfigForm from "./ConfigForm/ConfigForm.svelte";
+  import Menu from "./Menu/Menu.svelte";
   import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
   import { config, ipc } from "$lib/wailsjs/go/models";
   import { sortObjectByOrder } from "$lib/orderHelper";
+  import type { MenuButton } from "$lib/model";
 
   let showConfigForm: boolean = $state(false);
   let configFormProps: Record<string, any> = $state({});
@@ -35,18 +36,37 @@
   let defaultButtons: MenuButton[] = $derived.by(() => {
     return [
       {
-        label: "Edit Main Config",
         callback: () => openMainConfigForm(),
-        active: false,
+        isProcessRunning: false,
+        option: ipc.MenuOption.createFrom({
+          label: "Edit Main Config",
+          category: "Config",
+          tooltip: "Configs that will be applied to any game",
+        }),
       },
       {
-        label: "Reset Display Size",
+        callback: () =>
+          startGameProcess({
+            label: "Set Display Size 1080x1920",
+            args: ["WMSize1080x1920"],
+          }),
+        isProcessRunning: "Set Display Size 1080x1920" === activeButtonLabel,
+        option: ipc.MenuOption.createFrom({
+          label: "Set Display Size 1080x1920",
+          category: "Phone",
+        }),
+      },
+      {
         callback: () =>
           startGameProcess({
             label: "Reset Display Size",
             args: ["WMSizeReset"],
           }),
-        active: "Reset Display Size" === activeButtonLabel,
+        isProcessRunning: "Reset Display Size" === activeButtonLabel,
+        option: ipc.MenuOption.createFrom({
+          label: "Reset Display Size",
+          category: "Phone",
+        }),
       },
     ];
   });
@@ -55,45 +75,56 @@
     if (activeGame?.menu_options && activeGame.menu_options.length > 0) {
       const menuButtons: MenuButton[] = activeGame.menu_options.map(
         (menuOption) => ({
-          label: menuOption.label,
           callback: () => startGameProcess(menuOption),
-          active: menuOption.label === activeButtonLabel,
-          alwaysEnabled: false,
+          isProcessRunning: menuOption.label === activeButtonLabel,
+          option: menuOption,
         }),
       );
+      menuButtons.push(...defaultButtons);
       menuButtons.push(
         {
-          label: "Edit Main Config",
-          callback: () => openMainConfigForm(),
-          active: false,
-          alwaysEnabled: false,
-        },
-        {
-          label: "Reset Display Size",
-          callback: () =>
-            startGameProcess({
-              label: "Reset Display Size",
-              args: ["WMSizeReset"],
-            }),
-          active: "Reset Display Size" === activeButtonLabel,
-        },
-        {
-          label: "Edit Game Config",
           callback: () => openGameConfigForm(activeGame),
-          active: false,
-          alwaysEnabled: false,
+          isProcessRunning: false,
+          option: ipc.MenuOption.createFrom({
+            label: `Edit ${activeGame.game_title} Config`,
+            category: "Config",
+          }),
         },
         {
-          label: "Stop Action",
           callback: () => stopGameProcess(),
-          active: false,
+          isProcessRunning: false,
           alwaysEnabled: true,
+          option: ipc.MenuOption.createFrom({
+            label: "Stop Action",
+            tooltip: `Stops the currently running process`,
+          }),
         },
       );
 
       return menuButtons;
     }
-    return [];
+    return defaultButtons;
+  });
+
+  let categories: string[] = $derived.by(() => {
+    let tempCategories = ["Config", "Phone"];
+    if (!activeGame) {
+      return tempCategories;
+    }
+
+    if (activeGame.categories) {
+      tempCategories.push(...activeGame.categories);
+    }
+
+    if (activeGame.menu_options && activeGame.menu_options.length > 0) {
+      activeGame.menu_options.forEach((menuOption) => {
+        if (menuOption.category) {
+          tempCategories.push(menuOption.category);
+        }
+      });
+    }
+
+    return Array.from(new Set(tempCategories));
   });
 
   async function stopGameProcess() {
@@ -101,8 +132,8 @@
     try {
       await TerminateGameProcess();
       activeButtonLabel = null;
-    } catch (e) {
-      console.log(e);
+    } catch (error) {
+      console.error(error);
     }
     setTimeout(updateStateHandler, 1000);
   }
@@ -117,9 +148,10 @@
       activeButtonLabel = menuOption.label;
       await StartGameProcess(menuOption.args);
       activeButtonLabel = menuOption.label;
-    } catch (e) {
-      console.log(e);
-      alert(e);
+    } catch (error) {
+      console.error(error);
+
+      alert(error);
     }
     setTimeout(updateStateHandler, 1000);
   }
@@ -131,9 +163,9 @@
 
     try {
       await SaveMainConfig(configForm);
-    } catch (e) {
-      console.log(e);
-      alert(e);
+    } catch (error) {
+      console.error(error);
+      alert(error);
     }
 
     showConfigForm = false;
@@ -148,9 +180,9 @@
 
     try {
       await SaveGameConfig(configObject);
-    } catch (e) {
-      console.log(e);
-      alert(e);
+    } catch (error) {
+      console.error(error);
+      alert(error);
     }
 
     showConfigForm = false;
@@ -174,9 +206,9 @@
       result.constraints = sortObjectByOrder(result.constraints);
       configFormProps = result;
       showConfigForm = true;
-    } catch (e) {
-      console.log(e);
-      alert(e);
+    } catch (error) {
+      console.error(error);
+      alert(error);
       $pollRunningGame = true;
       $pollRunningProcess = true;
     }
@@ -191,8 +223,9 @@
       result.constraints = sortObjectByOrder(result.constraints);
       configFormProps = result;
       showConfigForm = true;
-    } catch (e) {
-      alert(e);
+    } catch (error) {
+      console.error(error);
+      alert(error);
       $pollRunningGame = true;
       $pollRunningProcess = true;
     }
@@ -217,16 +250,16 @@
           activeButtonLabel = null;
         }
       }
-    } catch (err) {
-      console.log(`err: ${err}`);
+    } catch (error) {
+      console.error(error);
     }
 
     try {
       if ($pollRunningGame) {
         activeGame = await GetRunningSupportedGame();
       }
-    } catch (err) {
-      console.log(`err: ${err}`);
+    } catch (error) {
+      console.error(error);
       activeGame = null;
     }
   }
@@ -256,9 +289,9 @@
     </div>
   {:else}
     <Menu
-      buttons={activeGameMenuButtons ?? []}
-      {defaultButtons}
+      buttons={activeGameMenuButtons}
       disableActions={!$pollRunningGame}
+      {categories}
     ></Menu>
   {/if}
 </div>
