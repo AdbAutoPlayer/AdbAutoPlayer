@@ -15,7 +15,9 @@ from adb_auto_player.games.afk_journey.mixins import (
 from adb_auto_player.ipc.game_gui import GameGUIOptions, MenuOption
 
 
-class _Category(StrEnum):
+class ModeCategory(StrEnum):
+    """Enumeration for mode categories used in the GUIs accordion menu."""
+
     GAME_MODES = "Game Modes"
     EVENTS_AND_OTHER = "Events & Other"
 
@@ -40,7 +42,7 @@ class AFKJourney(
                 kwargs={"season": True},
                 menu_option=MenuOption(
                     label="Season Talent Stages",
-                    category=_Category.GAME_MODES,
+                    category=ModeCategory.GAME_MODES,
                 ),
             ),
             Command(
@@ -49,7 +51,7 @@ class AFKJourney(
                 kwargs={"season": False},
                 menu_option=MenuOption(
                     label="AFK Stages",
-                    category=_Category.GAME_MODES,
+                    category=ModeCategory.GAME_MODES,
                 ),
             ),
             Command(
@@ -58,7 +60,7 @@ class AFKJourney(
                 kwargs={},
                 menu_option=MenuOption(
                     label="Dura's Trials",
-                    category=_Category.GAME_MODES,
+                    category=ModeCategory.GAME_MODES,
                 ),
             ),
             Command(
@@ -67,7 +69,7 @@ class AFKJourney(
                 kwargs={},
                 menu_option=MenuOption(
                     label="Synergy & CC",
-                    category=_Category.EVENTS_AND_OTHER,
+                    category=ModeCategory.EVENTS_AND_OTHER,
                 ),
             ),
             Command(
@@ -76,7 +78,7 @@ class AFKJourney(
                 kwargs={},
                 menu_option=MenuOption(
                     label="Legend Trial",
-                    category=_Category.GAME_MODES,
+                    category=ModeCategory.GAME_MODES,
                 ),
             ),
             Command(
@@ -85,7 +87,7 @@ class AFKJourney(
                 kwargs={},
                 menu_option=MenuOption(
                     label="Arcane Labyrinth",
-                    category=_Category.GAME_MODES,
+                    category=ModeCategory.GAME_MODES,
                 ),
             ),
             Command(
@@ -94,7 +96,7 @@ class AFKJourney(
                 kwargs={},
                 menu_option=MenuOption(
                     label="Guild Chat Claim",
-                    category=_Category.EVENTS_AND_OTHER,
+                    category=ModeCategory.EVENTS_AND_OTHER,
                 ),
             ),
             Command(
@@ -103,7 +105,7 @@ class AFKJourney(
                 kwargs={},
                 menu_option=MenuOption(
                     label="Monopoly Assist",
-                    category=_Category.EVENTS_AND_OTHER,
+                    category=ModeCategory.EVENTS_AND_OTHER,
                 ),
             ),
         ]
@@ -114,6 +116,6 @@ class AFKJourney(
             game_title="AFK Journey",
             config_path="afk_journey/AFKJourney.toml",
             menu_options=self._get_menu_options_from_cli_menu(),
-            categories=list(_Category),
+            categories=list(ModeCategory),
             constraints=Config.get_constraints(),
         )
