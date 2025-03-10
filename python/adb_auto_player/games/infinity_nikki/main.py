@@ -1,11 +1,17 @@
 """Infinity Nikki Main Module."""
 
+from enum import StrEnum
+
 from adb_auto_player.command import Command
 from adb_auto_player.games.infinity_nikki.config import Config
 from adb_auto_player.games.infinity_nikki.mixins.sheep_minigame import (
     SheepMinigameMixin,
 )
 from adb_auto_player.ipc.game_gui import GameGUIOptions, MenuOption
+
+
+class _Category(StrEnum):
+    MINIGAMES = "Minigames"
 
 
 class InfinityNikki(
@@ -22,7 +28,7 @@ class InfinityNikki(
                 kwargs={},
                 menu_option=MenuOption(
                     label="Sheep Minigame",
-                    category="Minigames",
+                    category=_Category.MINIGAMES,
                     tooltip='This runs the Sheep Minigame till "Runs" count or '
                     "Bling cap is reached.",
                 ),
@@ -35,6 +41,6 @@ class InfinityNikki(
             game_title="Infinity Nikki",
             config_path="infinity_nikki/InfinityNikki.toml",
             menu_options=self._get_menu_options_from_cli_menu(),
-            categories=["Minigames"],
+            categories=[_Category.MINIGAMES],
             constraints=Config.get_constraints(),
         )
