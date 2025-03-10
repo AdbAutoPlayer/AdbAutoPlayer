@@ -101,8 +101,8 @@
     try {
       await TerminateGameProcess();
       activeButtonLabel = null;
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
+      console.log(e);
     }
     setTimeout(updateStateHandler, 1000);
   }
@@ -117,9 +117,9 @@
       activeButtonLabel = menuOption.label;
       await StartGameProcess(menuOption.args);
       activeButtonLabel = menuOption.label;
-    } catch (error) {
-      console.log(error);
-      alert(error);
+    } catch (e) {
+      console.log(e);
+      alert(e);
     }
     setTimeout(updateStateHandler, 1000);
   }
@@ -131,9 +131,9 @@
 
     try {
       await SaveMainConfig(configForm);
-    } catch (error) {
-      console.log(error);
-      alert(error);
+    } catch (e) {
+      console.log(e);
+      alert(e);
     }
 
     showConfigForm = false;
@@ -148,9 +148,9 @@
 
     try {
       await SaveGameConfig(configObject);
-    } catch (error) {
-      console.log(error);
-      alert(error);
+    } catch (e) {
+      console.log(e);
+      alert(e);
     }
 
     showConfigForm = false;
@@ -174,9 +174,9 @@
       result.constraints = sortObjectByOrder(result.constraints);
       configFormProps = result;
       showConfigForm = true;
-    } catch (error) {
-      console.log(error);
-      alert(error);
+    } catch (e) {
+      console.log(e);
+      alert(e);
       $pollRunningGame = true;
       $pollRunningProcess = true;
     }
@@ -191,8 +191,8 @@
       result.constraints = sortObjectByOrder(result.constraints);
       configFormProps = result;
       showConfigForm = true;
-    } catch (error) {
-      alert(error);
+    } catch (e) {
+      alert(e);
       $pollRunningGame = true;
       $pollRunningProcess = true;
     }
