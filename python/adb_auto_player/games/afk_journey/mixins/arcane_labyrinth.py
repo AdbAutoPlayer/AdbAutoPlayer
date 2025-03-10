@@ -150,6 +150,17 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
     def _select_a_crest(self) -> None:
         """Crest selection."""
+        _ = self.wait_for_any_template(
+            templates=[
+                "arcane_labyrinth/rarity/epic.png",
+                "arcane_labyrinth/rarity/elite.png",
+                "arcane_labyrinth/rarity/rare.png",
+            ],
+            delay=0.2,
+            crop=CropRegions(right=0.8, top=0.3, bottom=0.1),
+        )
+        # prevents epic being skipped if elite or rate was matched first
+        sleep(0.5)
         template, x, y = self.wait_for_any_template(
             templates=[
                 "arcane_labyrinth/rarity/epic.png",
