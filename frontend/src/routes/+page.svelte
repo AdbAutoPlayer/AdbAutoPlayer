@@ -41,7 +41,8 @@
         option: ipc.MenuOption.createFrom({
           label: "Edit Main Config",
           category: "Config",
-          tooltip: "Configs that will be applied to any game",
+          tooltip:
+            "Global settings that apply to the app as a whole, not specific to any game.",
         }),
       },
       {
