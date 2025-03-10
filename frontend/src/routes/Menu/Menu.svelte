@@ -50,9 +50,7 @@
               </div>
             {/snippet}
           </Accordion.Item>
-          {#if category !== categories[categories.length - 1]}
-            <hr class="hr" />
-          {/if}
+          <hr class="hr" />
         {/if}
       {/each}
     </Accordion>
