@@ -93,9 +93,11 @@ class Game:
         """Get the menu options from the CLI menu commands."""
         menu_options = []
         for _, command in enumerate(self.get_cli_menu_commands()):
-            menu_options.append(
-                MenuOption(label=command.gui_label, args=[command.name])
-            )
+            menu_option = command.menu_option
+            if menu_option is None:
+                continue
+
+            menu_options.append(menu_option)
         return menu_options
 
     def check_requirements(self) -> None:

@@ -7,7 +7,12 @@ import sys
 from typing import NoReturn
 
 from adb_auto_player import Command, Game
-from adb_auto_player.adb import get_adb_device, get_running_app, wm_size_reset
+from adb_auto_player.adb import (
+    exec_wm_size,
+    get_adb_device,
+    get_running_app,
+    wm_size_reset,
+)
 from adb_auto_player.games import AFKJourney, InfinityNikki
 from adb_auto_player.ipc import GameGUIOptions
 from adb_auto_player.logging_setup import setup_json_log_handler, setup_text_log_handler
@@ -109,6 +114,11 @@ def _get_commands() -> list[Command]:
         Command(
             name="WMSizeReset",
             action=wm_size_reset,
+        ),
+        Command(
+            name="WMSize1080x1920",
+            action=exec_wm_size,
+            kwargs={"resolution": "1080x1920"},
         ),
         Command(
             name="GetRunningGame",

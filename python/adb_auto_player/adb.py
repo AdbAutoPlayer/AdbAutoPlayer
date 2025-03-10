@@ -207,13 +207,12 @@ def _try_incrementing_ports(client: AdbClient, device_id: str) -> AdbDevice | No
     return None
 
 
-def _override_size(device: AdbDevice, override_size: str, wm_size: Any) -> None:
-    if override_size and wm_size:
-        logging.debug(f"Overriding size: {override_size}")
-        try:
-            device.shell(f"wm size {override_size}")
-        except Exception as e:
-            raise GenericAdbError(f"wm size {override_size}: {e}")
+def _override_size(device: AdbDevice, override_size: str) -> None:
+    logging.debug(f"Overriding size: {override_size}")
+    try:
+        device.shell(f"wm size {override_size}")
+    except Exception as e:
+        raise GenericAdbError(f"wm size {override_size}: {e}")
 
 
 def _get_adb_device(
@@ -251,10 +250,27 @@ def _get_adb_device(
     logging.debug(f"Connected to Device: {device.serial}")
 
     # Optionally override the size
-    if override_size:
-        _override_size(device, override_size, wm_size)
+    if override_size and wm_size:
+        _override_size(device, override_size)
 
     return device
+
+
+def exec_wm_size(resolution: str, device: AdbDevice | None = None) -> None:
+    """Sets display size to resolution.
+
+    Some games will not automatically scale when the resolution changes.
+    This can be used to set the resolution before starting the game for phones.
+
+    Args:
+        resolution (str): Display size to use.
+        device (AdbDevice | None): ADB device.
+    """
+    if device is None:
+        device = get_adb_device(override_size=None)
+
+    _override_size(device, resolution)
+    logging.info(f"Set Display Size to {resolution} for Device: {device.serial}")
 
 
 def wm_size_reset(device: AdbDevice | None = None) -> None:
