@@ -4,7 +4,7 @@
   import { UpdatePatch } from "$lib/wailsjs/go/main/App";
   import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
   import { LogError, LogInfo, LogWarning } from "$lib/wailsjs/runtime";
-  import Modal from "./Modal.svelte";
+  import DownloadModal from "./DownloadModal.svelte";
   import { getItem, setItem } from "$lib/indexedDB";
 
   let showDownloadIcon: boolean = $state(false);
@@ -155,7 +155,6 @@
             modalRelease = releaseData;
             modalAsset = undefined;
             showModal = true;
-            alert("Update completed");
           } catch (error) {
             alert(error);
           }
@@ -227,7 +226,7 @@
     try {
       await checkForNewRelease(patchVersion);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       alert(error);
     }
     $pollRunningGame = true;
@@ -265,8 +264,8 @@
   </a>
 {/if}
 
-<Modal bind:showModal>
-  {#snippet header()}
+<DownloadModal bind:showModal>
+  {#snippet modalContent()}
     <h2 class="text-center h2 text-2xl">
       {#if modalAsset}
         Update Available: {modalRelease?.tag_name}
@@ -274,9 +273,7 @@
         Update Downloaded: {modalRelease?.tag_name}
       {/if}
     </h2>
-  {/snippet}
-  {@html marked(modalChangeLog || "")}
-  {#snippet footer()}
+    {@html marked(modalChangeLog || "")}
     {#if modalAsset}
       <button
         class="btn preset-filled-primary-100-900 hover:preset-filled-primary-500"
@@ -286,4 +283,4 @@
       </button>
     {/if}
   {/snippet}
-</Modal>
+</DownloadModal>

@@ -46,6 +46,7 @@ class MockGame(Game):
             game_title="Dummy Game",
             config_path="dummy_config_path",
             menu_options=[],
+            categories=[],
             constraints={},
         )
 

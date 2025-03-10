@@ -11,7 +11,9 @@ class MenuOption:
     """Menu Option."""
 
     label: str
-    args: list[str]
+    args: list[str] | None = None
+    category: str | None = None
+    tooltip: str | None = None
 
 
 @dataclass
@@ -21,6 +23,7 @@ class GameGUIOptions:
     game_title: str
     config_path: str
     menu_options: list[MenuOption]
+    categories: list[str]
     constraints: dict[str, dict[str, constraint.ConstraintType]]
 
     def to_dict(self):
@@ -29,6 +32,7 @@ class GameGUIOptions:
             "game_title": self.game_title,
             "config_path": self.config_path,
             "menu_options": [menu_option.__dict__ for menu_option in self.menu_options],
+            "categories": self.categories,
             "constraints": add_order_key(self.constraints),
         }
 

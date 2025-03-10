@@ -5,7 +5,7 @@
 
   import LogoSticky from "./LogoSticky.svelte";
   import DocumentationIconSticky from "./DocumentationIconSticky.svelte";
-  import DownloadIconSticky from "./DownloadIconSticky.svelte";
+  import DownloadIconSticky from "./SelfUpdater/DownloadIconSticky.svelte";
   import LogDisplayCard from "./LogDisplayCard.svelte";
 
   let { children } = $props();
