@@ -155,7 +155,6 @@
             modalRelease = releaseData;
             modalAsset = undefined;
             showModal = true;
-            alert("Update completed");
           } catch (error) {
             alert(error);
           }
