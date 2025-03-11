@@ -20,6 +20,7 @@
   - Buy the usual from emporium (single pull and affinity items)
   - Do single pull
 - GFL2 Daily automation
+- Migrate Poetry to https://github.com/astral-sh/uv
 
 ## General
 - Yules - Refactor Config logic
