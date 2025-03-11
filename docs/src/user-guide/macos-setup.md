@@ -49,7 +49,28 @@ In this case just follow what it says in Next steps: on the screenshot. Copy and
   Installed as /opt/homebrew/bin/adb
   Running on Darwin 24.2.0 (arm64)
   ```
+  
+### 4. **Install scrcpy via Homebrew**
+- Use Homebrew to install scrcpy:
+  ```bash
+  brew install scrcpy
+  ```
+- Make sure scrcpy is installed
+  In your Terminal input:
+  ```bash
+  scrcpy -v
+  ```
+  if correctly installed you will get output like this:
+  ```text
+  scrcpy 3.1 <https://github.com/Genymobile/scrcpy>
 
+  Dependencies (compiled / linked):
+  - SDL: 2.30.10 / 2.32.0
+  - libavcodec: 61.19.100 / 61.19.100
+  - libavformat: 61.7.100 / 61.7.100
+  - libavutil: 59.39.100 / 59.39.100
+  - libusb: - / 1.0.27
+  ```
 ---
 
 ## Starting AdbAutoPlayer
@@ -66,19 +87,19 @@ macOS may block the app because it lacks a code signing certificate. Here's how 
    ![Blocked Prompt](../images/macos/not_opened.png)  
    Click **Done**.
 
-2. Go to **System Settings** → **Privacy & Security**, scroll to the bottom, and find:
+2. Go to **System Settings** → **Privacy & Security**, scroll to the bottom, and find:  
    ![Blocked by macOS](../images/macos/was_blocked_to_protect_your_mac.png)  
    Click **Open Anyway** and keep this open you will need it again later.
 
-3. Double-click the app again. If prompted, click **Open Anyway** again:
+3. Double-click the app again. If prompted, click **Open Anyway** again:  
    ![Open AdbAutoPlayer](../images/macos/open_adb_auto_player.png)
 
-4. If you see this security prompt:
+4. If you see this security prompt:  
    ![Security Prompt](../images/macos/privacy_and_security.png)  
    Use your Touch ID or password.
 
 5. The app will open a Terminal window. Leave it open and use the GUI
-6. When you click any action button on the App you will get another blocked prompt:
+6. When you click any action button on the App you will get another blocked prompt:  
    ![Open AdbAutoPlayer](../images/macos/python_app_blocked.png)  
     Repeat Step 2 and try clicking the button again.
 
@@ -88,7 +109,7 @@ The security prompt from the previous step can be really annoying and will happe
 ```shell
 sudo spctl --master-disable
 ```
-This will add the option to allow apps from anywhere:
+This will add the option to allow apps from anywhere:  
 ![allow_applications_from_anywhere.png](../images/macos/allow_applications_from_anywhere.png)
 
 # Continue to the [Troubleshooting Guide](troubleshoot.md)
