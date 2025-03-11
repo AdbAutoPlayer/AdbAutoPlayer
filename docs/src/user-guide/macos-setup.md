@@ -49,28 +49,6 @@ In this case just follow what it says in Next steps: on the screenshot. Copy and
   Installed as /opt/homebrew/bin/adb
   Running on Darwin 24.2.0 (arm64)
   ```
-  
-### 4. **Install scrcpy via Homebrew**
-- Use Homebrew to install scrcpy:
-  ```bash
-  brew install scrcpy
-  ```
-- Make sure scrcpy is installed
-  In your Terminal input:
-  ```bash
-  scrcpy -v
-  ```
-  if correctly installed you will get output like this:
-  ```text
-  scrcpy 3.1 <https://github.com/Genymobile/scrcpy>
-
-  Dependencies (compiled / linked):
-  - SDL: 2.30.10 / 2.32.0
-  - libavcodec: 61.19.100 / 61.19.100
-  - libavformat: 61.7.100 / 61.7.100
-  - libavutil: 59.39.100 / 59.39.100
-  - libusb: - / 1.0.27
-  ```
 ---
 
 ## Starting AdbAutoPlayer
