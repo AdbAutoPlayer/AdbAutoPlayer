@@ -11,7 +11,6 @@
 
 ## 🐍 Python
 - Support for running multiple bots/configs (Yules: Can't find the motivation to do this because I personally have no use for it at the moment.)
-- Yules - Implement Device Streaming for macOS
 - Add daily chore automation
   - Claim mail, friend points, quests, noble paths, etc.
   - Farm daily affinity (3x clicks per hero)
