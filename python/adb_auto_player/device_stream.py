@@ -145,5 +145,7 @@ def _device_is_emulator(device: AdbDevice) -> bool:
     """Checks if the device is an emulator."""
     result = str(device.shell('getprop | grep "Build"'))
     if "Build" in result:
+        logging.debug('getprop contains "Build" assuming Emulator')
         return True
+    logging.debug('getprop does not contain "Build" assuming Phone')
     return False
