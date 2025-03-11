@@ -88,7 +88,7 @@ class DeviceStream:
         return self.latest_frame
 
     def _handle_stream(self) -> None:
-        """Stream handler for Windows."""
+        """Generic stream handler."""
         self._process = self.device.shell(
             cmdargs="screenrecord --output-format=h264 --time-limit=1 -",
             stream=True,
