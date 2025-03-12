@@ -8,6 +8,7 @@ from adb_auto_player.games.afk_journey.mixins import (
     AFKStagesMixin,
     ArcaneLabyrinthMixin,
     AssistMixin,
+    DreamRealmMixin,
     DurasTrialsMixin,
     EventMixin,
     LegendTrialMixin,
@@ -29,6 +30,7 @@ class AFKJourney(
     DurasTrialsMixin,
     EventMixin,
     LegendTrialMixin,
+    DreamRealmMixin,
 ):
     """AFK Journey Game."""
 
@@ -106,6 +108,15 @@ class AFKJourney(
                 menu_option=MenuOption(
                     label="Monopoly Assist",
                     category=ModeCategory.EVENTS_AND_OTHER,
+                ),
+            ),
+            Command(
+                name="DreamRealm",
+                action=self.run_dream_realm,
+                kwargs={},
+                menu_option=MenuOption(
+                    label="Dream Realm",
+                    category=ModeCategory.GAME_MODES,
                 ),
             ),
         ]
