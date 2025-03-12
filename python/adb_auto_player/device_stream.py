@@ -40,14 +40,14 @@ class DeviceStream:
         self._stream_thread: threading.Thread | None = None
         self._process: AdbConnection | None = None
         self.codec: CodecContext = CodecContext.create("h264", "r")
-        self.is_arm_mac = (
-            platform.system() == "Darwin"
-            and platform.machine().startswith(("arm", "aarch"))
+        is_arm_mac = platform.system() == "Darwin" and platform.machine().startswith(
+            ("arm", "aarch")
         )
 
-        if self.is_arm_mac:
+        if is_arm_mac and _device_is_emulator(device):
             raise StreamingNotSupportedError(
-                "Device Stream is not implemented for macOS"
+                "Emulators running on macOS do not support Device Streaming "
+                "you can try using your Phone."
             )
 
     def start(self) -> None:
@@ -87,21 +87,8 @@ class DeviceStream:
 
         return self.latest_frame
 
-    def _handle_stream_arm_mac(self) -> None:
-        """Stream handler for Mac."""
-        # TODO
-        # h264 returns segmentation fault
-        # raw-frames lags bluestacks to death
-        # example command:
-        # adb -s 127.0.0.1:5555 shell screenrecord --output-format=raw-frames
-        # --time-limit=1 - | ffmpeg -f rawvideo -pix_fmt rgb24 -s 1080x1920 -i -
-        # -f image2 -vcodec png frame%04d.png
-        # maybe we can just brew install scrcpy and try with that?
-        logging.error("Device Stream is not implemented for macOS")
-        self.stop()
-
-    def _handle_stream_windows(self) -> None:
-        """Stream handler for Windows."""
+    def _handle_stream(self) -> None:
+        """Generic stream handler."""
         self._process = self.device.shell(
             cmdargs="screenrecord --output-format=h264 --time-limit=1 -",
             stream=True,
@@ -143,10 +130,7 @@ class DeviceStream:
         """Background thread that continuously captures frames."""
         while self._running:
             try:
-                if self.is_arm_mac:
-                    self._handle_stream_arm_mac()
-                else:
-                    self._handle_stream_windows()
+                self._handle_stream()
             except Exception as e:
                 if "was aborted by the software in your host machine" not in str(e):
                     logging.error(f"Stream error: {e}")
@@ -155,3 +139,13 @@ class DeviceStream:
                 if self._process:
                     self._process.close()
                     self._process = None
+
+
+def _device_is_emulator(device: AdbDevice) -> bool:
+    """Checks if the device is an emulator."""
+    result = str(device.shell('getprop | grep "Build"'))
+    if "Build" in result:
+        logging.debug('getprop contains "Build" assuming Emulator')
+        return True
+    logging.debug('getprop does not contain "Build" assuming Phone')
+    return False
