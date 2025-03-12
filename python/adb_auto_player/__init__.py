@@ -4,11 +4,11 @@ from .command import Command
 from .config_loader import ConfigLoader
 from .device_stream import DeviceStream, StreamingNotSupportedError
 from .exceptions import (
+    GameTimeoutError,
     GenericAdbError,
     NoPreviousScreenshotError,
     NotFoundError,
     NotInitializedError,
-    TimeoutError,
     UnsupportedResolutionError,
 )
 from .game import Coordinates, Game
@@ -21,12 +21,12 @@ __all__: list[str] = [
     "CropRegions",
     "DeviceStream",
     "Game",
+    "GameTimeoutError",
     "GenericAdbError",
     "MatchMode",
     "NoPreviousScreenshotError",
     "NotFoundError",
     "NotInitializedError",
     "StreamingNotSupportedError",
-    "TimeoutError",
     "UnsupportedResolutionError",
 ]

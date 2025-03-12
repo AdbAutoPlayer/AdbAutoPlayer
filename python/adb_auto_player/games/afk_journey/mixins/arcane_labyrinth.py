@@ -5,7 +5,7 @@ from abc import ABC
 from time import sleep
 from typing import NoReturn
 
-from adb_auto_player import Coordinates, CropRegions, MatchMode, TimeoutError
+from adb_auto_player import Coordinates, CropRegions, GameTimeoutError, MatchMode
 from adb_auto_player.games.afk_journey import AFKJourneyBase
 
 
@@ -131,7 +131,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 while self._handle_arcane_labyrinth():
                     sleep(1)
 
-            except TimeoutError as e:
+            except GameTimeoutError as e:
                 logging.warning(f"{e}")
                 continue
             except BattleCannotBeStartedError as e:

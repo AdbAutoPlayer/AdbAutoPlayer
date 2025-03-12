@@ -13,11 +13,11 @@ from adb_auto_player import (
     Command,
     ConfigLoader,
     DeviceStream,
+    GameTimeoutError,
     GenericAdbError,
     NoPreviousScreenshotError,
     NotInitializedError,
     StreamingNotSupportedError,
-    TimeoutError,
     UnsupportedResolutionError,
 )
 from adb_auto_player.adb import get_adb_device, get_screen_resolution, is_portrait
@@ -541,7 +541,7 @@ class Game:
         """Waits for the template to appear in the screen.
 
         Raises:
-            TimeoutException: Template not found.
+            TimeoutError: Template not found.
         """
 
         def find_template() -> tuple[int, int] | None:
@@ -756,7 +756,7 @@ class Game:
         """Repeatedly executes an operation until a desired result is reached.
 
         Raises:
-            TimeoutException: Operation did not return the desired result.
+            TimeoutError: Operation did not return the desired result.
         """
         time_spent_waiting: float = 0
         end_time: float = time() + timeout
@@ -773,7 +773,7 @@ class Game:
             time_spent_waiting += delay
 
             if time_spent_waiting >= timeout or end_time_exceeded:
-                raise TimeoutError(f"{timeout_message}")
+                raise GameTimeoutError(f"{timeout_message}")
 
             if end_time <= time():
                 end_time_exceeded = True

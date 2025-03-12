@@ -25,7 +25,7 @@ class NotInitializedError(Exception):
     pass
 
 
-class TimeoutError(Exception):
+class GameTimeoutError(Exception):
     """Raised when an operation exceeds the given timeout."""
 
     pass

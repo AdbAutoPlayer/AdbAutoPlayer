@@ -4,7 +4,7 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player import Coordinates, CropRegions, NotFoundError, TimeoutError
+from adb_auto_player import Coordinates, CropRegions, GameTimeoutError, NotFoundError
 from adb_auto_player.games.afk_journey import AFKJourneyBase
 
 
@@ -17,7 +17,7 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
         self.store[self.STORE_MODE] = self.MODE_LEGEND_TRIALS
         try:
             self._navigate_to_legend_trials_select_tower()
-        except TimeoutError as e:
+        except GameTimeoutError as e:
             logging.error(f"{e}")
             return None
 
@@ -69,7 +69,7 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
             self.click(Coordinates(*result))
             try:
                 self._select_legend_trials_floor(faction)
-            except (TimeoutError, NotFoundError) as e:
+            except (GameTimeoutError, NotFoundError) as e:
                 logging.error(f"{e}")
                 self.press_back_button()
                 sleep(3)
@@ -90,7 +90,7 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
                 result: bool = self._handle_battle_screen(
                     self.get_config().legend_trials.use_suggested_formations
                 )
-            except TimeoutError as e:
+            except GameTimeoutError as e:
                 logging.warning(f"{e}")
                 return None
 
