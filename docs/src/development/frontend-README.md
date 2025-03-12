@@ -5,7 +5,7 @@ Install the latest version here: [https://nodejs.org/en/download/](https://nodej
 
 ## Svelte with SvelteKit and Skeleton
 This project is built using [**Svelte**](https://svelte.dev/docs/kit/introduction#What-is-Svelte) with [**SvelteKit**](https://svelte.dev/docs/kit/introduction#What-is-SvelteKit).  
-We also use [**Skeleton**](https://www.skeleton.dev/docs/introduction) (soon not yet actually), a UI toolkit for Svelte, to help with styling and components.
+We also use [**Skeleton**](https://www.skeleton.dev/docs/get-started/introduction) (soon not yet actually), a UI toolkit for Svelte, to help with styling and components.
 
 ## Setup
 Follow the [Go Setup](go-README.md#setup)
