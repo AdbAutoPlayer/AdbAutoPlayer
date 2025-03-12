@@ -447,30 +447,34 @@ class AFKJourneyBase(Game, ABC):
             )
 
             if result is None:
+                logging.debug("back")
                 self.press_back_button()
                 sleep(3)
                 continue
 
             template, x, y = result
+            logging.debug(template)
             match template:
                 case "notice.png":
                     self.click(Coordinates(x=530, y=1630), scale=True)
                     sleep(3)
+                    continue
                 case "exit.png":
                     pass
                 case "confirm.png":
                     if self.game_find_template_match(
                         "exit_the_game.png",
-                        crop=CropRegions(top=0.4, bottom=0.4),
-                        use_previous_screenshot=True,
                     ):
                         x_btn: tuple[int, int] | None = self.game_find_template_match(
                             "x.png",
-                            crop=CropRegions(left=0.6, right=0.3, top=0.6, bottom=0.2),
-                            use_previous_screenshot=True,
                         )
                         if x_btn:
+                            logging.debug("x")
                             self.click(Coordinates(*x_btn))
+                            sleep(1)
+                            continue
+                        self.press_back_button()
+                        sleep(1)
                     else:
                         self.click(Coordinates(x=x, y=y))
                         sleep(1)
