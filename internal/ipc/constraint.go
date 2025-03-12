@@ -102,6 +102,7 @@ func GetMainConfigConstraints() map[string]interface{} {
 				string(LogLevelError),
 				string(LogLevelFatal),
 			}),
+			"Debug Screenshot Limit": NewNumberConstraint(nil, nil, nil),
 		},
 		"Order": []string{
 			"ADB", "Device", "Logging",

@@ -2,6 +2,7 @@
 
 import io
 import logging
+import os
 from abc import abstractmethod
 from collections.abc import Callable
 from pathlib import Path
@@ -50,6 +51,7 @@ class Game:
         """Initialize a game."""
         self._device: AdbDevice | None = None
         self.config: BaseModel | None = None
+        self.main_config: dict[str, Any] = {}
         self.store: dict[str, Any] = {}
         self.previous_screenshot: Image.Image | None = None
         self._resolution: tuple[int, int] | None = None
@@ -58,6 +60,7 @@ class Game:
         self.supports_landscape: bool = False
         self.stream: DeviceStream | None = None
         self.package_names: list[str] = []
+        self.debug_screenshot_counter: int = 0
 
     @abstractmethod
     def get_template_dir_path(self) -> Path:
@@ -222,9 +225,8 @@ class Game:
         self.device = get_adb_device(suggested_resolution)
         self.check_requirements()
 
-        main_config: dict[str, Any] = ConfigLoader().main_config
-        config_streaming = main_config.get("device", {}).get("streaming", True)
-
+        self.main_config = ConfigLoader().main_config
+        config_streaming = self.main_config.get("device", {}).get("streaming", True)
         if not config_streaming:
             logging.warning("Device Streaming is disabled in Main Config")
             return
@@ -290,6 +292,7 @@ class Game:
             image: Image.Image | None = self.stream.get_latest_frame()
             if image:
                 self.previous_screenshot = image
+                self._debug_save_screenshot()
                 return image
             logging.error(
                 "Could not retrieve latest Frame from Device Stream using screencap..."
@@ -302,6 +305,7 @@ class Game:
             if png_start_index != -1:
                 screenshot_data = screenshot_data[png_start_index:]
             self.previous_screenshot = Image.open(io.BytesIO(screenshot_data))
+            self._debug_save_screenshot()
             return self.previous_screenshot
         raise GenericAdbError(
             f"Screenshots cannot be recorded from device: {self.device.serial}"
@@ -781,3 +785,21 @@ class Game:
             coordinates = tuple(int(round(c * scale_factor)) for c in coordinates)
 
         return coordinates
+
+    def _debug_save_screenshot(self) -> None:
+        logging_config = self.main_config.get("logging", {})
+        debug_screenshot_save_num = logging_config.get("debug_save_screenshots", 0)
+        log_level = logging_config.get("level", "INFO")
+
+        screenshot = self.previous_screenshot
+        if debug_screenshot_save_num <= 0 or not screenshot or log_level != "DEBUG":
+            return
+
+        file_index = self.debug_screenshot_counter % debug_screenshot_save_num
+        os.makedirs("debug", exist_ok=True)
+
+        file_name = f"debug/{file_index}.png"
+        screenshot.save(file_name)
+        self.debug_screenshot_counter = file_index + 1
+        logging.debug(f"Saved screenshot: {file_name}")
+        return
