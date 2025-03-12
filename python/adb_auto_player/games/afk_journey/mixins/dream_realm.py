@@ -24,9 +24,10 @@ class DreamRealmMixin(AFKJourneyBase, ABC):
 
         self._enter_dr()
 
-        logging.debug("Check stop condition.")
         while self._stop_condition(paid_attempts):
             self._start_dr()
+
+    ############################## Helper Functions ##############################
 
     def _start_dr(self) -> None:
         """Start Dream Realm battle."""
@@ -43,6 +44,7 @@ class DreamRealmMixin(AFKJourneyBase, ABC):
         Returns:
             bool: True if we have attempts to use, False otherwise.
         """
+        logging.debug("Check stop condition.")
         no_attempts: tuple[int, int] | None = self.game_find_template_match(
             "dream_realm/done.png"
         )
@@ -52,7 +54,7 @@ class DreamRealmMixin(AFKJourneyBase, ABC):
 
         logging.debug("Free DR attempts used.")
         if not spend_gold:
-            logging.debug("Not spending gold. Dream Realm finished.")
+            logging.info("Not spending gold. Dream Realm finished.")
             return False
 
         return self._attempt_purchase()
@@ -81,15 +83,15 @@ class DreamRealmMixin(AFKJourneyBase, ABC):
             self.click(Coordinates(*buy))
             return True
         except GameTimeoutError:
-            logging.debug("No more DR attempts to purchase.")
+            logging.info("No more DR attempts to purchase.")
             return False
 
     def _enter_dr(self) -> None:
         """Enter Dream Realm."""
         logging.info("Entering Dream Realm...")
         self._navigate_to_default_state()
-        self.click(Coordinates(460, 1830))
-        dr_mode = self.wait_for_template(
+        self.click(Coordinates(460, 1830))  # Battle Modes
+        dr_mode: tuple[int, int] = self.wait_for_template(
             "dream_realm/label.png",
             timeout_message="Could not find Dream Realm.",
             timeout=self.MIN_TIMEOUT,
