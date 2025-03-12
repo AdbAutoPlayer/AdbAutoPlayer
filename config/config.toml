@@ -9,3 +9,4 @@ port = 5037
 
 [logging]
 level = 'INFO'
+debug_save_screenshots = 30

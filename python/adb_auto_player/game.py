@@ -790,7 +790,6 @@ class Game:
         logging_config = self.main_config.get("logging", {})
         debug_screenshot_save_num = logging_config.get("debug_save_screenshots", 0)
         log_level = logging_config.get("level", "INFO")
-        print(log_level)
 
         screenshot = self.previous_screenshot
         if debug_screenshot_save_num <= 0 or not screenshot or log_level != "DEBUG":
