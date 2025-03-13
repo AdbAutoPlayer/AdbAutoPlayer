@@ -3,7 +3,7 @@
 import logging
 from abc import ABC
 
-from adb_auto_player import Coordinates, TimeoutError
+from adb_auto_player import Coordinates, GameTimeoutError
 from adb_auto_player.games.afk_journey import AFKJourneyBase
 
 
@@ -23,13 +23,13 @@ class AFKStagesMixin(AFKJourneyBase, ABC):
             self.store[self.STORE_SEASON] = season
             try:
                 self._start_afk_stage()
-            except TimeoutError as e:
+            except GameTimeoutError as e:
                 logging.warning(f"{e}")
             if self.get_config().afk_stages.push_both_modes:
                 self.store[self.STORE_SEASON] = not season
                 try:
                     self._start_afk_stage()
-                except TimeoutError as e:
+                except GameTimeoutError as e:
                     logging.warning(f"{e}")
             if not self.get_config().afk_stages.repeat:
                 break

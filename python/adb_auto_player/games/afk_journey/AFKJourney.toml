@@ -25,3 +25,6 @@ Formations = 7
 'Spend Gold' = false
 'Suggested Formations' = true
 Towers = ['Lightbearer', 'Wilder', 'Graveborn', 'Mauler']
+
+['Dream Realm']
+'Spend Gold' = true

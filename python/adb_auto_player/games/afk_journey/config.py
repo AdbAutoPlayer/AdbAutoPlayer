@@ -167,6 +167,12 @@ class ArcaneLabyrinthConfig(BaseModel):
     difficulty: int = Field(ge=1, le=15, default=13, alias="Difficulty")
 
 
+class DreamRealmConfig(BaseModel):
+    """Dream Realm config model."""
+
+    spend_gold: bool = Field(default=False, alias="Spend Gold")
+
+
 class Config(BaseModel):
     """Config model."""
 
@@ -175,6 +181,7 @@ class Config(BaseModel):
     duras_trials: DurasTrialsConfig = Field(alias="Dura's Trials")
     legend_trials: LegendTrialsConfig = Field(alias="Legend Trial")
     arcane_labyrinth: ArcaneLabyrinthConfig = Field(alias="Arcane Labyrinth")
+    dream_realm: DreamRealmConfig = Field(alias="Dream Realm")
 
     @classmethod
     def from_toml(cls, file_path: Path):
@@ -234,5 +241,8 @@ class Config(BaseModel):
                 "Towers": create_image_checkbox_constraint(
                     [e.value for e in TowerEnum]  # type: ignore
                 ),
+            },
+            "Dream Realm": {
+                "Spend Gold": create_checkbox_constraint(),
             },
         }
