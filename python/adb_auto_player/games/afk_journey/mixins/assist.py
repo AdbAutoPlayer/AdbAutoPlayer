@@ -4,7 +4,7 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player import Coordinates, CropRegions, TimeoutError
+from adb_auto_player import Coordinates, CropRegions, GameTimeoutError
 from adb_auto_player.games.afk_journey import AFKJourneyBase
 
 
@@ -91,7 +91,7 @@ class AssistMixin(AFKJourneyBase, ABC):
                 delay=0.1,
                 timeout=self.FAST_TIMEOUT,
             )
-        except TimeoutError:
+        except GameTimeoutError:
             return False
         if template == "assist/chat_button.png":
             if (
@@ -111,7 +111,7 @@ class AssistMixin(AFKJourneyBase, ABC):
                 logging.info("Clicking Corrupt Creature join now button")
                 try:
                     return self._handle_corrupt_creature()
-                except TimeoutError:
+                except GameTimeoutError:
                     logging.warning(
                         "Clicked join now button too late or something went wrong"
                     )

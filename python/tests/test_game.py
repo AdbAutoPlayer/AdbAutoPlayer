@@ -9,7 +9,8 @@ from adb_auto_player import (
     Command,
     CropRegions,
     Game,
-    TimeoutError,
+    GameTimeoutError,
+    NoPreviousScreenshotError,
 )
 from adb_auto_player.ipc.game_gui import GameGUIOptions
 from adb_auto_player.template_matching import load_image
@@ -111,7 +112,7 @@ class TestGame(unittest.TestCase):
         start_image = load_image(f1)
         get_screenshot.return_value = load_image(f1)
 
-        with self.assertRaises(TimeoutError):
+        with self.assertRaises(GameTimeoutError):
             game.wait_for_roi_change(
                 start_image=start_image,
                 timeout=1.0,
@@ -138,7 +139,7 @@ class TestGame(unittest.TestCase):
         start_image = load_image(f1)
         get_screenshot.return_value = load_image(f1)
 
-        with self.assertRaises(TimeoutError):
+        with self.assertRaises(GameTimeoutError):
             game.wait_for_roi_change(
                 start_image=start_image,
                 crop=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
