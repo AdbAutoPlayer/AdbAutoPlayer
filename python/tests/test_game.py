@@ -10,7 +10,6 @@ from adb_auto_player import (
     CropRegions,
     Game,
     GameTimeoutError,
-    NoPreviousScreenshotError,
 )
 from adb_auto_player.ipc.game_gui import GameGUIOptions
 from adb_auto_player.template_matching import load_image
