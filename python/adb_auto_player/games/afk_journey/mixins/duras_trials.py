@@ -22,11 +22,11 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             grayscale=True,
             crop=CropRegions(top=0.6, bottom=0.2),
         )
+        sleep(0.5)
         rate_up_banners = self.find_all_template_matches(
             template="duras_trials/rate_up.png",
             grayscale=True,
             crop=CropRegions(top=0.6, bottom=0.2),
-            use_previous_screenshot=True,
         )
 
         if not rate_up_banners:
@@ -61,7 +61,6 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
         featured_heroes = self.game_find_template_match(
             template="duras_trials/featured_heroes.png",
             crop=CropRegions(left=0.7, bottom=0.8),
-            use_previous_screenshot=True,
         )
         if featured_heroes is not None:
             return
@@ -85,6 +84,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
                     "duras_trials/sweep.png",
                     "guide/close.png",
                     "guide/next.png",
+                    "duras_trials/continue_gray.png",
                 ],
             )
 
@@ -111,6 +111,9 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             """
             # Get current state; if we already see records, skip nightmare handling.
             template, _, _ = self._dura_resolve_state()
+
+            if template == "duras_trials/continue_gray.png":
+                return False
             if template == "battle/records.png":
                 return True
 
