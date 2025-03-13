@@ -74,19 +74,25 @@ class TestGame(unittest.TestCase):
         """
         game = MockGame()
 
-        with self.assertRaises(NoPreviousScreenshotError):
-            game.wait_for_roi_change()
-
-        game.previous_screenshot = load_image(TEST_DATA_DIR / "records_formation_1.png")
+        start_image = load_image(TEST_DATA_DIR / "records_formation_1.png")
 
         with self.assertRaises(ValueError):
-            game.wait_for_roi_change(crop=CropRegions(left=-0.5))
+            game.wait_for_roi_change(
+                start_image=start_image,
+                crop=CropRegions(left=-0.5),
+            )
 
         with self.assertRaises(ValueError):
-            game.wait_for_roi_change(crop=CropRegions(left=1.5))
+            game.wait_for_roi_change(
+                start_image=start_image,
+                crop=CropRegions(left=1.5),
+            )
 
         with self.assertRaises(ValueError):
-            game.wait_for_roi_change(crop=CropRegions(left=0.8, right=0.5))
+            game.wait_for_roi_change(
+                start_image=start_image,
+                crop=CropRegions(left=0.8, right=0.5),
+            )
 
     @patch.object(Game, "get_screenshot")
     def test_wait_for_roi_change_no_crop(self, get_screenshot) -> None:
@@ -103,14 +109,17 @@ class TestGame(unittest.TestCase):
         f1: Path = TEST_DATA_DIR / "records_formation_1.png"
         f2: Path = TEST_DATA_DIR / "records_formation_2.png"
 
-        game.previous_screenshot = load_image(f1)
+        start_image = load_image(f1)
         get_screenshot.return_value = load_image(f1)
 
         with self.assertRaises(GameTimeoutError):
-            game.wait_for_roi_change(timeout=1.0)
+            game.wait_for_roi_change(
+                start_image=start_image,
+                timeout=1.0,
+            )
 
         get_screenshot.return_value = load_image(f2)
-        self.assertTrue(game.wait_for_roi_change(timeout=0))
+        self.assertTrue(game.wait_for_roi_change(start_image=start_image, timeout=0))
 
     @patch.object(Game, "get_screenshot")
     def test_wait_for_roi_change_with_crop(self, get_screenshot) -> None:
@@ -127,18 +136,22 @@ class TestGame(unittest.TestCase):
         f1: Path = TEST_DATA_DIR / "records_formation_1.png"
         f2: Path = TEST_DATA_DIR / "records_formation_2.png"
 
-        game.previous_screenshot = load_image(f1)
+        start_image = load_image(f1)
         get_screenshot.return_value = load_image(f1)
 
         with self.assertRaises(GameTimeoutError):
             game.wait_for_roi_change(
-                crop=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8), timeout=1.0
+                start_image=start_image,
+                crop=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
+                timeout=1.0,
             )
 
         get_screenshot.return_value = load_image(f2)
         self.assertTrue(
             game.wait_for_roi_change(
-                crop=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8), timeout=0
+                start_image=start_image,
+                crop=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
+                timeout=0,
             )
         )
 

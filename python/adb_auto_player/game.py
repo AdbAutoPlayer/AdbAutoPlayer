@@ -15,7 +15,6 @@ from adb_auto_player import (
     DeviceStream,
     GameTimeoutError,
     GenericAdbError,
-    NoPreviousScreenshotError,
     NotInitializedError,
     StreamingNotSupportedError,
     UnsupportedResolutionError,
@@ -329,6 +328,7 @@ class Game:
 
     def wait_for_roi_change(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
+        start_image: Image.Image,
         threshold: float = 0.9,
         grayscale: bool = False,
         crop: CropRegions = CropRegions(),
@@ -346,6 +346,7 @@ class Game:
         previous screen regions.
 
         Args:
+            start_image (Image.Image): Image to start monitoring.
             threshold (float): Similarity threshold. Defaults to 0.9.
             grayscale (bool): Whether to convert images to grayscale before comparison.
                 Defaults to False.
@@ -362,19 +363,7 @@ class Game:
             TimeoutException: If no change is detected within the timeout period.
             ValueError: Invalid crop values.
         """
-        # Not using get_previous_screenshot is intentional here.
-        # If you execute an action (e.g. click a button) then call wait_for_roi_change
-        # There is a chance that by the time get_previous_screenshot takes
-        # a screenshot because none exists that the animations are completed
-        # this means the roi will never change
-        prev: Image.Image | None = self.previous_screenshot
-        if prev is None:
-            raise NoPreviousScreenshotError(
-                "Region of interest cannot have changed if "
-                "there is no previous screenshot."
-            )
-
-        cropped, _, _ = crop_image(image=prev, crop=crop)
+        cropped, _, _ = crop_image(image=start_image, crop=crop)
 
         def roi_changed() -> Literal[True] | None:
             screenshot, _, _ = crop_image(image=self.get_screenshot(), crop=crop)

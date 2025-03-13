@@ -174,9 +174,12 @@ class AFKJourneyBase(Game, ABC):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message=f"Formation #{formation_num} not found",
             )
+            start_image = self.get_screenshot()
             self.click(Coordinates(*formation_next))
             self.wait_for_roi_change(
+                start_image=start_image,
                 crop=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
+                threshold=0.8,
                 timeout=self.MIN_TIMEOUT,
             )
             counter -= 1
@@ -440,6 +443,7 @@ class AFKJourneyBase(Game, ABC):
                     "confirm.png",
                     "time_of_day.png",
                     "dotdotdot.png",
+                    "battle/copy.png",
                     "guide/close.png",
                     "guide/next.png",
                     "battle/copy.png",
@@ -483,7 +487,7 @@ class AFKJourneyBase(Game, ABC):
                 case "dotdotdot.png":
                     self.press_back_button()
                     sleep(1)
-                case ("guide/close.png", "guide/next.png", "battle/copy.png"):
+                case "guide/close.png" | "guide/next.png" | "battle/copy.png":
                     self.click(Coordinates(x=x, y=y))
                     sleep(0.5)
         return None
