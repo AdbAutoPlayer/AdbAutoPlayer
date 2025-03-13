@@ -25,7 +25,8 @@ type ADBConfig struct {
 }
 
 type LoggingConfig struct {
-	Level string `toml:"level"`
+	Level                string `toml:"level"`
+	DebugSaveScreenshots int    `toml:"debug_save_screenshots" json:"Debug Screenshot Limit"`
 }
 
 func NewMainConfig() MainConfig {
@@ -40,7 +41,8 @@ func NewMainConfig() MainConfig {
 			Port: 5037,
 		},
 		Logging: LoggingConfig{
-			Level: string(ipc.LogLevelInfo),
+			Level:                string(ipc.LogLevelInfo),
+			DebugSaveScreenshots: 30,
 		},
 	}
 }
