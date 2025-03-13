@@ -7,6 +7,7 @@ from adb_auto_player.games.afk_journey.config import Config
 from adb_auto_player.games.afk_journey.mixins import (
     AFKStagesMixin,
     ArcaneLabyrinthMixin,
+    ArenaMixin,
     AssistMixin,
     DreamRealmMixin,
     DurasTrialsMixin,
@@ -31,6 +32,7 @@ class AFKJourney(
     EventMixin,
     LegendTrialMixin,
     DreamRealmMixin,
+    ArenaMixin,
 ):
     """AFK Journey Game."""
 
@@ -116,6 +118,15 @@ class AFKJourney(
                 kwargs={},
                 menu_option=MenuOption(
                     label="Dream Realm",
+                    category=ModeCategory.GAME_MODES,
+                ),
+            ),
+            Command(
+                name="Arena",
+                action=self.run_arena,
+                kwargs={},
+                menu_option=MenuOption(
+                    label="Arena",
                     category=ModeCategory.GAME_MODES,
                 ),
             ),
