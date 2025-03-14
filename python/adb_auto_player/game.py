@@ -272,14 +272,16 @@ class Game:
             coordinates (Coordinates): Coordinates to click on.
             scale (bool, optional): Whether to scale the coordinates.
         """
-        if not scale:
-            self.device.click(coordinates.x, coordinates.y)
-            return None
+        if scale:
+            coordinates = Coordinates(*self._scale_coordinates(*coordinates))
+        self._click(coordinates)
 
-        coordinates = Coordinates(*self._scale_coordinates(*coordinates))
-        self.device.click(coordinates.x, coordinates.y)
-
-        return None
+    def _click(self, coordinates: Coordinates) -> None:
+        self.device.shell(
+            f"input tap {coordinates.x} {coordinates.y}",
+            timeout=10,  # if the click didn't happen in 10 seconds it's never happening
+            stream=True,
+        )
 
     def get_screenshot(self) -> Image.Image:
         """Gets screenshot from device using stream or screencap.
