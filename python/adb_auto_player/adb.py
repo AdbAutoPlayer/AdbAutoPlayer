@@ -4,6 +4,7 @@ import logging
 import os
 import shutil
 import sys
+from pathlib import Path
 from typing import Any
 
 import adbutils._utils
@@ -26,19 +27,15 @@ def _set_adb_path() -> None:
         adb_env_path: str | None = os.getenv("ADBUTILS_ADB_PATH")
 
         if not adb_env_path or not os.path.isfile(adb_env_path):
-            adb_path: str | None = os.path.join(config_loader.binaries_dir, "adb.exe")
-            if adb_path is not None:
-                os.environ["ADBUTILS_ADB_PATH"] = adb_path
-            adb_env_path = adb_path
-
-        # Dev fallback
-        if not adb_env_path or not os.path.isfile(adb_env_path):
-            adb_path = os.path.join(
-                config_loader.binaries_dir,
-                "windows",
-                "adb.exe",
+            candidates: list[Path] = [
+                config_loader.binaries_dir / "adb.exe",
+                config_loader.binaries_dir / "windows" / "adb.exe",
+            ]
+            adb_env_path = str(
+                next((c for c in candidates if c.exists()), candidates[0])
             )
-            os.environ["ADBUTILS_ADB_PATH"] = adb_path
+
+        os.environ["ADBUTILS_ADB_PATH"] = adb_env_path
         logging.debug(f"ADBUTILS_ADB_PATH: {os.getenv('ADBUTILS_ADB_PATH')}")
 
     if os.name != "nt":
