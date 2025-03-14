@@ -16,13 +16,15 @@ class ArenaMixin(AFKJourneyBase, ABC):
         self.start_up()
 
         self._enter_arena()
-        for _ in range(2):
-            done: bool = self._claim_free_attempts()
-
-            if done:
-                break
 
         while not self.game_find_template_match("arena/no_attempts.png"):
+            self._choose_opponent()
+            self._battle()
+
+        for _ in range(2):
+            if not self._claim_free_attempt():
+                break
+
             self._choose_opponent()
             self._battle()
 
@@ -41,6 +43,7 @@ class ArenaMixin(AFKJourneyBase, ABC):
             timeout=self.MIN_TIMEOUT,
         )
         self.click(Coordinates(*arena_mode))
+        sleep(2)
 
     def _choose_opponent(self) -> None:
         """Choose Arena opponent."""
@@ -95,11 +98,11 @@ class ArenaMixin(AFKJourneyBase, ABC):
         except GameTimeoutError as fail:
             logging.error(fail)
 
-    def _claim_free_attempts(self) -> bool:
+    def _claim_free_attempt(self) -> bool:
         """Claim free Arena attempts.
 
         Returns:
-            bool: True if free attempts are all claimed, False otherwise.
+            bool: True if free attempt claimed, False not available.
         """
         try:
             logging.debug("Claiming free attempts.")
@@ -110,7 +113,7 @@ class ArenaMixin(AFKJourneyBase, ABC):
             )
             self.click(Coordinates(*buy))
         except GameTimeoutError:
-            return False  # Not breaking, but would be interested in why it failed.
+            return True  # Not breaking, but would be interested in why it failed.
 
         try:
             _: tuple[int, int] = self.wait_for_template(
@@ -130,7 +133,7 @@ class ArenaMixin(AFKJourneyBase, ABC):
                 else self.click(Coordinates(550, 1790))  # Cancel fallback
             )
 
-            return True
+            return False
 
         confirm_purchase: tuple[int, int] | None = self.game_find_template_match(
             "arena/confirm_purchase.png"
@@ -139,4 +142,4 @@ class ArenaMixin(AFKJourneyBase, ABC):
             logging.debug("Purchasing free attempt.")
             self.click(Coordinates(*confirm_purchase))
 
-        return False
+        return True
