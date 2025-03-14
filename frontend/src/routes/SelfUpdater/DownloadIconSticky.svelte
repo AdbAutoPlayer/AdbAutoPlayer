@@ -266,21 +266,39 @@
 
 <DownloadModal bind:showModal>
   {#snippet modalContent()}
-    <h2 class="text-center h2 text-2xl">
-      {#if modalAsset}
-        Update Available: {modalRelease?.tag_name}
-      {:else}
-        Update Downloaded: {modalRelease?.tag_name}
-      {/if}
-    </h2>
-    {@html marked(modalChangeLog || "")}
-    {#if modalAsset}
-      <button
-        class="btn preset-filled-primary-100-900 hover:preset-filled-primary-500"
-        onclick={downloadAsset}
+    <div class="flex h-full flex-col">
+      <h2 class="mb-4 text-center h2 text-2xl">
+        {#if modalAsset}
+          Update Available: {modalRelease?.tag_name}
+        {:else}
+          Update Downloaded: {modalRelease?.tag_name}
+        {/if}
+      </h2>
+
+      <div
+        class="min-h-0 flex-grow overflow-y-auto pr-2 break-words whitespace-normal"
       >
-        Download
-      </button>
-    {/if}
+        {@html marked(modalChangeLog || "")}
+      </div>
+
+      <div
+        class="border-surface-200-700 mt-4 flex justify-end gap-2 border-t pt-4"
+      >
+        {#if modalAsset}
+          <button
+            class="btn preset-filled-primary-100-900 hover:preset-filled-primary-500"
+            onclick={downloadAsset}
+          >
+            Download
+          </button>
+        {/if}
+        <button
+          class="btn preset-filled-primary-100-900 hover:preset-filled-primary-500"
+          onclick={() => (showModal = false)}
+        >
+          Close
+        </button>
+      </div>
+    </div>
   {/snippet}
 </DownloadModal>
