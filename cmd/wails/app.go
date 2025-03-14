@@ -3,15 +3,13 @@ package main
 import (
 	"adb-auto-player/internal/config"
 	"adb-auto-player/internal/ipc"
-	"archive/zip"
+	"adb-auto-player/internal/updater"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	stdruntime "runtime"
@@ -275,69 +273,29 @@ func (a *App) IsGameProcessRunning() bool {
 }
 
 func (a *App) UpdatePatch(assetUrl string) error {
+	runtime.LogInfo(a.ctx, "Downloading update")
 	pm := GetProcessManager()
 	pm.blocked = true
-	_, _ = pm.KillProcess()
-	time.Sleep(time.Duration(3) * time.Second)
 	defer func() { pm.blocked = false }()
-	runtime.LogInfo(a.ctx, "Downloading update")
-	response, err := http.Get(assetUrl)
+
+	maxRetries := 3
+	for i := 0; i < maxRetries; i++ {
+		_, err := pm.KillProcess()
+		if err == nil {
+			break
+		}
+		if i < maxRetries-1 {
+			time.Sleep(1 * time.Second)
+		} else {
+			runtime.LogDebugf(a.ctx, "Failed to kill process after retries: %v", err)
+		}
+	}
+	time.Sleep(3 * time.Second)
+
+	err := updater.UpdatePatch(assetUrl)
 	if err != nil {
-		return fmt.Errorf("failed to download file: %v", err)
-	}
-	defer response.Body.Close()
-
-	tempFile, err := os.CreateTemp("", "patch-*.zip")
-	if err != nil {
-		return fmt.Errorf("failed to create temp file: %v", err)
-	}
-	defer tempFile.Close()
-
-	_, err = io.Copy(tempFile, response.Body)
-	if err != nil {
-		return fmt.Errorf("failed to save downloaded file: %v", err)
-	}
-
-	zipReader, err := zip.OpenReader(tempFile.Name())
-	if err != nil {
-		return fmt.Errorf("failed to open zip file: %v", err)
-	}
-	defer zipReader.Close()
-
-	if err = os.MkdirAll(".", 0755); err != nil {
-		return fmt.Errorf("failed to create target directory: %v", err)
-	}
-
-	for _, file := range zipReader.File {
-		outputPath := filepath.Join(".", file.Name)
-
-		if file.FileInfo().IsDir() {
-			if err = os.MkdirAll(outputPath, file.Mode()); err != nil {
-				return fmt.Errorf("failed to create directory: %v", err)
-			}
-			continue
-		}
-
-		if err = os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
-			return fmt.Errorf("failed to create directories: %v", err)
-		}
-
-		fileInZip, err := file.Open()
-		if err != nil {
-			return fmt.Errorf("failed to open file in zip archive: %v", err)
-		}
-		defer fileInZip.Close()
-
-		outputFile, err := os.Create(outputPath)
-		if err != nil {
-			return fmt.Errorf("failed to create extracted file: %v", err)
-		}
-		defer outputFile.Close()
-
-		_, err = io.Copy(outputFile, fileInZip)
-		if err != nil {
-			return fmt.Errorf("failed to copy file data: %v", err)
-		}
+		runtime.LogErrorf(a.ctx, "Failed to update: %v", err)
+		return err
 	}
 
 	runtime.LogInfo(a.ctx, "Update successful")
