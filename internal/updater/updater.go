@@ -42,7 +42,7 @@ func UpdatePatch(assetUrl string) error {
 		outputPath := filepath.Join(".", file.Name)
 
 		if file.FileInfo().IsDir() {
-			if err = os.MkdirAll(outputPath, file.Mode()); err != nil {
+			if err = os.MkdirAll(outputPath, 0755); err != nil {
 				return fmt.Errorf("failed to create directory: %v", err)
 			}
 			continue
