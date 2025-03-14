@@ -671,7 +671,7 @@ class Game:
 
     def press_back_button(self) -> None:
         """Presses the back button."""
-        self.device.keyevent(4)
+        self.device.shell("input keyevent 4", stream=True)
 
     def swipe_down(self, sy: int = 1350, ey: int = 500, duration: float = 1.0) -> None:
         """Swipes the screen down.
