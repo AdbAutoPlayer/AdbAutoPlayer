@@ -52,6 +52,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             self.click(Coordinates(520, 1420), scale=True)
             sleep(1)
 
+        logging.info("Looking for free hourglasses.")
         while self._claim_hourglasses():
             logging.info("Claimed a free hourglass.")
 
@@ -65,7 +66,6 @@ class DailiesMixin(AFKJourneyBase, ABC):
             bool: True if a free hourglass was claimed, False otherwise.
         """
         try:
-            logging.debug("Looking for free hourglass.")
             free_hourglass: tuple[int, int] = self.wait_for_template(
                 "dailies/daily_rewards/free_hourglass.png",
                 timeout=self.FAST_TIMEOUT,
@@ -87,7 +87,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def buy_emporium(self) -> None:
         """Purchase single pull and optionally affinity items."""
-        logging.debug("Opening Mystical House.")
+        logging.info("Entering Mystical House...")
         self.click(Coordinates(310, 1840), scale=True)
 
         try:
@@ -110,6 +110,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def _buy_single_pull(self) -> None:
         """Buy the daily single pull."""
+        logging.info("Looking for discount Invite Letter...")
         try:
             logging.debug("Opening Guild Store.")
             guild_store: tuple[int, int] = self.wait_for_template(
@@ -147,11 +148,12 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def _buy_affinity_items(self) -> None:
         """Buy affinity items."""
+        logging.info("Looking for affinity items...")
         buy_discount: bool = self.get_config().dailies.buy_discount_affinity
         buy_all: bool = self.get_config().dailies.buy_all_affinity
 
         if not buy_discount and not buy_all:
-            logging.info("Not buying affinity items.")
+            logging.info("Affinity item purchasing disabled. Skipping.")
             return
 
         try:
@@ -204,10 +206,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def single_pull(self) -> None:
         """Complete a single pull."""
+        logging.info("Navigating to Noble Tavern for daily single pull...")
         do_single: bool = self.get_config().dailies.single_pull
 
         if not do_single:
-            logging.info("Not doing single pull.")
+            logging.info("Single pull disabled. Skipping.")
             return
 
         logging.info("Doing daily single pull.")

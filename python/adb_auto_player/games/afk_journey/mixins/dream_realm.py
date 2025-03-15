@@ -132,12 +132,14 @@ class DreamRealmMixin(AFKJourneyBase, ABC):
         try:
             logging.debug("Click Tap to Close, if available.")
             tap_to_close: tuple[int, int] = self.wait_for_template(
-                "tap_to_close.png", timeout=self.FAST_TIMEOUT
+                "tap_to_close.png",
+                timeout=self.FAST_TIMEOUT,
+                timeout_message="Dream Realm rewards already claimed.",
             )
             self.click(Coordinates(*tap_to_close))
             sleep(1)
         except GameTimeoutError as fail:
-            logging.error(fail)
+            logging.info(fail)
 
         logging.debug("Return to Dream Realm.")
         self.press_back_button()
