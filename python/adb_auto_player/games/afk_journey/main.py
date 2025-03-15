@@ -9,6 +9,7 @@ from adb_auto_player.games.afk_journey.mixins import (
     ArcaneLabyrinthMixin,
     ArenaMixin,
     AssistMixin,
+    DailiesMixin,
     DreamRealmMixin,
     DurasTrialsMixin,
     EventMixin,
@@ -33,6 +34,7 @@ class AFKJourney(
     LegendTrialMixin,
     DreamRealmMixin,
     ArenaMixin,
+    DailiesMixin,
 ):
     """AFK Journey Game."""
 
@@ -127,6 +129,15 @@ class AFKJourney(
                 kwargs={},
                 menu_option=MenuOption(
                     label="Arena",
+                    category=ModeCategory.GAME_MODES,
+                ),
+            ),
+            Command(
+                name="Dailies",
+                action=self.run_dailies,
+                kwargs={},
+                menu_option=MenuOption(
+                    label="Dailies",
                     category=ModeCategory.GAME_MODES,
                 ),
             ),

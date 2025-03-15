@@ -28,3 +28,8 @@ Towers = ['Lightbearer', 'Wilder', 'Graveborn', 'Mauler']
 
 ['Dream Realm']
 'Spend Gold' = false
+
+['Dailies']
+'Buy Discount Affinity' = false
+'Buy All Affinity' = false
+'Single Pull' = false
