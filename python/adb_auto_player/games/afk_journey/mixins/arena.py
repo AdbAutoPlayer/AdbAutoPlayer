@@ -37,13 +37,16 @@ class ArenaMixin(AFKJourneyBase, ABC):
         logging.info("Entering Arena...")
         self._navigate_to_default_state()
         self.click(Coordinates(460, 1830))  # Battle Modes
-        arena_mode: tuple[int, int] = self.wait_for_template(
-            "arena/label.png",
-            timeout_message="Failed to find Arena.",
-            timeout=self.MIN_TIMEOUT,
-        )
-        self.click(Coordinates(*arena_mode))
-        sleep(2)
+        try:
+            arena_mode: tuple[int, int] = self.wait_for_template(
+                "arena/label.png",
+                timeout_message="Failed to find Arena.",
+                timeout=self.MIN_TIMEOUT,
+            )
+            self.click(Coordinates(*arena_mode))
+            sleep(2)
+        except GameTimeoutError as fail:
+            logging.error(fail)
 
     def _choose_opponent(self) -> None:
         """Choose Arena opponent."""
@@ -123,7 +126,7 @@ class ArenaMixin(AFKJourneyBase, ABC):
             )
             logging.debug("Free attempt found.")
         except GameTimeoutError as fail:
-            logging.error(fail)
+            logging.info(fail)
             cancel: tuple[int, int] | None = self.game_find_template_match(
                 "arena/cancel_purchase.png"
             )
