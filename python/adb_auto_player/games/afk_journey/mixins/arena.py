@@ -135,11 +135,7 @@ class ArenaMixin(AFKJourneyBase, ABC):
 
             return False
 
-        confirm_purchase: tuple[int, int] | None = self.game_find_template_match(
-            "arena/confirm_purchase.png"
-        )
-        if confirm_purchase:
-            logging.debug("Purchasing free attempt.")
-            self.click(Coordinates(*confirm_purchase))
+        logging.debug("Purchasing free attempt.")
+        self._click_confirm_on_popup()
 
         return True
