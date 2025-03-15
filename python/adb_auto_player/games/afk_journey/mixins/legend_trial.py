@@ -119,7 +119,7 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
         Args:
             faction (str): Faction name.
         """
-        logging.debug("__select_legend_trials_floor")
+        logging.debug("_select_legend_trials_floor")
         _ = self.wait_for_template(
             template=f"legend_trials/tower_icon_{faction}.png",
             crop=CropRegions(right=0.8, bottom=0.8),
