@@ -4,6 +4,7 @@ from .afk_stages import AFKStagesMixin
 from .arcane_labyrinth import ArcaneLabyrinthMixin
 from .arena import ArenaMixin
 from .assist import AssistMixin
+from .dailies import DailiesMixin
 from .dream_realm import DreamRealmMixin
 from .duras_trials import DurasTrialsMixin
 from .event import EventMixin
@@ -14,6 +15,7 @@ __all__: list[str] = [
     "ArcaneLabyrinthMixin",
     "ArenaMixin",
     "AssistMixin",
+    "DailiesMixin",
     "DreamRealmMixin",
     "DurasTrialsMixin",
     "EventMixin",

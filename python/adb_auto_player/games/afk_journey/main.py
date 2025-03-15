@@ -9,6 +9,7 @@ from adb_auto_player.games.afk_journey.mixins import (
     ArcaneLabyrinthMixin,
     ArenaMixin,
     AssistMixin,
+    DailiesMixin,
     DreamRealmMixin,
     DurasTrialsMixin,
     EventMixin,
@@ -33,6 +34,7 @@ class AFKJourney(
     LegendTrialMixin,
     DreamRealmMixin,
     ArenaMixin,
+    DailiesMixin,
 ):
     """AFK Journey Game."""
 
@@ -40,6 +42,15 @@ class AFKJourney(
         """Get the CLI menu commands."""
         # Add new commands/gui buttons here
         return [
+            Command(
+                name="Dailies",
+                action=self.run_dailies,
+                kwargs={},
+                menu_option=MenuOption(
+                    label="Dailies",
+                    category=ModeCategory.GAME_MODES,
+                ),
+            ),
             Command(
                 name="SeasonTalentStages",
                 action=self.push_afk_stages,

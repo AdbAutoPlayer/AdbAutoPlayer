@@ -173,6 +173,14 @@ class DreamRealmConfig(BaseModel):
     spend_gold: bool = Field(default=False, alias="Spend Gold")
 
 
+class DailiesConfig(BaseModel):
+    """Dailies config model."""
+
+    buy_discount_affinity: bool = Field(default=True, alias="Buy Discount Affinity")
+    buy_all_affinity: bool = Field(default=False, alias="Buy All Affinity")
+    single_pull: bool = Field(default=False, alias="Single Pull")
+
+
 class Config(BaseModel):
     """Config model."""
 
@@ -182,6 +190,7 @@ class Config(BaseModel):
     legend_trials: LegendTrialsConfig = Field(alias="Legend Trial")
     arcane_labyrinth: ArcaneLabyrinthConfig = Field(alias="Arcane Labyrinth")
     dream_realm: DreamRealmConfig = Field(alias="Dream Realm")
+    dailies: DailiesConfig = Field(alias="Dailies")
 
     @classmethod
     def from_toml(cls, file_path: Path):

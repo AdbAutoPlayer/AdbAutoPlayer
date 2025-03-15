@@ -17,15 +17,20 @@ class DreamRealmMixin(AFKJourneyBase, ABC):
         # Battle and Skip buttons are in the same coordinates.
         self.battle_skip_coor = Coordinates(550, 1790)
 
-    def run_dream_realm(self) -> None:
+    def run_dream_realm(self, daily: bool = False) -> None:
         """Use Dream Realm attempts."""
         self.start_up()
         paid_attempts: bool = self.get_config().dream_realm.spend_gold
 
         self._enter_dr()
 
-        while self._stop_condition(paid_attempts):
+        if daily:
+            self._claim_reward()
+
+        while self._stop_condition(paid_attempts, daily):
             self._start_dr()
+
+        logging.info("Dream Realm finished.")
 
     ############################## Helper Functions ##############################
 
@@ -35,11 +40,12 @@ class DreamRealmMixin(AFKJourneyBase, ABC):
         self.click(self.battle_skip_coor)
         sleep(2)
 
-    def _stop_condition(self, spend_gold: bool = False) -> bool:
+    def _stop_condition(self, spend_gold: bool, daily: bool) -> bool:
         """Determine whether to continue with Dream Realm battles.
 
         Args:
             spend_gold (bool, optional): Buy DR attempts. Defaults to False.
+            daily (bool, optional): Daily run. Defaults to False.
 
         Returns:
             bool: True if we have attempts to use, False otherwise.
@@ -49,12 +55,19 @@ class DreamRealmMixin(AFKJourneyBase, ABC):
             "dream_realm/done.png"
         )
 
+        if (
+            daily
+            and self.game_find_template_match("dream_realm/daily_done.png") is not None
+        ):
+            logging.info("Daily Dream Realm battle finished.")
+            return False
+
         if not no_attempts:
             return True
 
         logging.debug("Free DR attempts used.")
         if not spend_gold:
-            logging.info("Not spending gold. Dream Realm finished.")
+            logging.info("Not spending gold.")
             return False
 
         return self._attempt_purchase()
@@ -65,6 +78,7 @@ class DreamRealmMixin(AFKJourneyBase, ABC):
         Returns:
             bool: True if a purchase was made, False if no attempt could be purchased.
         """
+        # TODO: Can use _click_confirm_on_popup instead.
         buy: tuple[int, int] | None = self.game_find_template_match(
             "dream_realm/buy.png"
         )
@@ -78,7 +92,9 @@ class DreamRealmMixin(AFKJourneyBase, ABC):
         self.click(self.battle_skip_coor)
 
         try:
-            buy = self.wait_for_template(template="dream_realm/buy.png", timeout=3)
+            buy = self.wait_for_template(
+                template="dream_realm/buy.png", timeout=self.FAST_TIMEOUT
+            )
             logging.debug("Purchasing DR attempt.")
             self.click(Coordinates(*buy))
             return True
@@ -98,3 +114,33 @@ class DreamRealmMixin(AFKJourneyBase, ABC):
         )
         self.click(Coordinates(*dr_mode))
         sleep(2)
+
+    def _claim_reward(self) -> None:
+        """Claim Dream Realm reward."""
+        logging.debug("Claim yesterday's rewards.")
+        reward: tuple[int, int] | None = self.game_find_template_match(
+            "dream_realm/dr_ranking.png"
+        )
+
+        if not reward:
+            logging.debug("Failed to find rankings.")
+            return
+
+        self.click(Coordinates(*reward))
+        sleep(2)
+
+        try:
+            logging.debug("Click Tap to Close, if available.")
+            tap_to_close: tuple[int, int] = self.wait_for_template(
+                "tap_to_close.png",
+                timeout=self.FAST_TIMEOUT,
+                timeout_message="Dream Realm rewards already claimed.",
+            )
+            self.click(Coordinates(*tap_to_close))
+            sleep(1)
+        except GameTimeoutError as fail:
+            logging.info(fail)
+
+        logging.debug("Return to Dream Realm.")
+        self.press_back_button()
+        sleep(4)
