@@ -106,24 +106,6 @@ class AFKJourney(
                 ),
             ),
             Command(
-                name="EventGuildChatClaim",
-                action=self.event_guild_chat_claim,
-                kwargs={},
-                menu_option=MenuOption(
-                    label="Guild Chat Claim",
-                    category=ModeCategory.EVENTS_AND_OTHER,
-                ),
-            ),
-            Command(
-                name="EventMonopolyAssist",
-                action=self.event_monopoly_assist,
-                kwargs={},
-                menu_option=MenuOption(
-                    label="Monopoly Assist",
-                    category=ModeCategory.EVENTS_AND_OTHER,
-                ),
-            ),
-            Command(
                 name="DreamRealm",
                 action=self.run_dream_realm,
                 kwargs={},
@@ -139,6 +121,24 @@ class AFKJourney(
                 menu_option=MenuOption(
                     label="Arena",
                     category=ModeCategory.GAME_MODES,
+                ),
+            ),
+            Command(
+                name="EventGuildChatClaim",
+                action=self.event_guild_chat_claim,
+                kwargs={},
+                menu_option=MenuOption(
+                    label="Guild Chat Claim",
+                    category=ModeCategory.EVENTS_AND_OTHER,
+                ),
+            ),
+            Command(
+                name="EventMonopolyAssist",
+                action=self.event_monopoly_assist,
+                kwargs={},
+                menu_option=MenuOption(
+                    label="Monopoly Assist",
+                    category=ModeCategory.EVENTS_AND_OTHER,
                 ),
             ),
         ]

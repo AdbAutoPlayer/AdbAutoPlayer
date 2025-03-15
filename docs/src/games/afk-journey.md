@@ -6,6 +6,21 @@
 - **1080x1920**
 
 ## Features
+- **Dailies**: Completes common daily tasks. The all-in-one button.
+  - Claim daily resources
+  - Buy single pull and, optionally, affinity items.
+  - Optionally do daily single pull
+  - Claim Dream Realm ranking rewards
+  - Unlock skip functionality in Dream Realm (through single battle)
+  - Use all free server Arena attacks
+  - Claim Friend rewards
+  - Claim Mail
+  - Claim Battle Pass rewards
+  - Claim daily quest and guild quest rewards
+  - Raise all hero affinity
+  - Run Legend Trials
+  - End with infinite AFK stage pushing
+
 - **Automated Stage Progression**:
   - Supports *Season Talent Stages*, *AFK Stages*, *Dura's Trials*, and *Legend Trial*.
   - Loads suggested formations, starts battles, and progresses to the next stage automatically.
@@ -13,6 +28,10 @@
 - **Synergy & CC**: Farms Synergy requests and Corrupt Creature battles for **Guild Quest** and **Pal-Coins**.
 
 - **Arcane Labyrinth**: Farms Difficulty 13 in Arcane Labyrinth for Lucky Pick Keys.
+
+- **Dream Realm**: Uses all Dream Realm attempts. Optionally, use all paid attempts. Bundled in Dailies.
+
+- **Arena**: Uses all server Arena attempts. Bundled in Dailies.
 
 - **[Event] Guild Chat Claim**: Claims rewards in Guild Chat, e.g. Happy Satchels.
 
