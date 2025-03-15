@@ -43,6 +43,15 @@ class AFKJourney(
         # Add new commands/gui buttons here
         return [
             Command(
+                name="Dailies",
+                action=self.run_dailies,
+                kwargs={},
+                menu_option=MenuOption(
+                    label="Dailies",
+                    category=ModeCategory.GAME_MODES,
+                ),
+            ),
+            Command(
                 name="SeasonTalentStages",
                 action=self.push_afk_stages,
                 kwargs={"season": True},
@@ -129,15 +138,6 @@ class AFKJourney(
                 kwargs={},
                 menu_option=MenuOption(
                     label="Arena",
-                    category=ModeCategory.GAME_MODES,
-                ),
-            ),
-            Command(
-                name="Dailies",
-                action=self.run_dailies,
-                kwargs={},
-                menu_option=MenuOption(
-                    label="Dailies",
                     category=ModeCategory.GAME_MODES,
                 ),
             ),
