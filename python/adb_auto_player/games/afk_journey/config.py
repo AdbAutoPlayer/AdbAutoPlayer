@@ -222,6 +222,11 @@ class Config(BaseModel):
                 ),
                 "Assist Limit": create_number_constraint(),
             },
+            "Dailies": {
+                "Buy Discount Affinity": create_checkbox_constraint(),
+                "Buy All Affinity": create_checkbox_constraint(),
+                "Single Pull": create_checkbox_constraint(),
+            },
             "AFK Stages": {
                 "Attempts": create_number_constraint(),
                 "Formations": formations_constraint,
