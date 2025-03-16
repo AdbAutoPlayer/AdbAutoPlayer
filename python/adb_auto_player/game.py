@@ -277,11 +277,13 @@ class Game:
         self._click(coordinates)
 
     def _click(self, coordinates: Coordinates) -> None:
-        self.device.shell(
+        with self.device.shell(
             f"input tap {coordinates.x} {coordinates.y}",
             timeout=10,  # if the click didn't happen in 10 seconds it's never happening
             stream=True,
-        )
+        ):
+            # Connection automatically closes after the block
+            pass
 
     def get_screenshot(self) -> Image.Image:
         """Gets screenshot from device using stream or screencap.
