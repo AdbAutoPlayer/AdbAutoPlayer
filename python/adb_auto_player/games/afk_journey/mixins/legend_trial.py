@@ -133,6 +133,8 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
             grayscale=True,
             crop=CropRegions(left=0.3, right=0.3, top=0.2, bottom=0.2),
             timeout=self.MIN_TIMEOUT,
+            timeout_message="Cannot find Challenge button "
+            "assuming Trial is already cleared",
         )
         _, x, y = challenge_btn
         self.click(Coordinates(x, y))
