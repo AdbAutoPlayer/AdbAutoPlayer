@@ -53,7 +53,7 @@
   });
 </script>
 
-<div class="flex min-h-[20vh] flex-grow flex-col p-4">
+<div class="flex min-h-6 flex-grow flex-col p-4">
   <div class="h-full flex-grow flex-col card bg-surface-100-900/50 p-4">
     <div
       class="h-full flex-grow overflow-y-scroll font-mono break-words whitespace-normal select-text"

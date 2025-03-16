@@ -278,7 +278,7 @@
   {activeGame?.game_title ?? "Start any supported Game!"}
 </h1>
 <div
-  class="flex max-h-[50vh] min-h-[20vh] flex-col overflow-hidden card bg-surface-100-900/50 p-4 text-center select-none"
+  class="flex max-h-[70vh] min-h-[20vh] flex-col overflow-hidden card bg-surface-100-900/50 p-4 text-center select-none"
 >
   {#if showConfigForm}
     <div class="flex-grow overflow-y-scroll">

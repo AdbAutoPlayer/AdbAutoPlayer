@@ -34,8 +34,6 @@
 </script>
 
 <div class="h-full max-h-full overflow-y-auto">
-  <h2 class="pb-2 text-center h2 text-2xl">Menu</h2>
-
   {#if categories.length > 0}
     <Accordion multiple>
       {#each categories as category}

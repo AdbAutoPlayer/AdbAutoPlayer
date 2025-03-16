@@ -151,8 +151,6 @@
 </script>
 
 <div class="h-full max-h-full overflow-y-auto">
-  <h2 class="pb-2 text-center h2 text-2xl">Config</h2>
-
   <form id="config-form" class="config-form">
     {#each configSections as { sectionKey, sectionConfig }}
       <fieldset
