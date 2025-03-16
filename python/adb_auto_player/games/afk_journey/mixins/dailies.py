@@ -45,12 +45,12 @@ class DailiesMixin(AFKJourneyBase, ABC):
         """Claim daily AFK rewards."""
         logging.debug("Open AFK Progress.")
         self.click(Coordinates(90, 1830), scale=True)
-        sleep(1)
+        sleep(4)
 
         logging.info("Claim AFK rewards twice for battle pass.")
         for _ in range(4):
             self.click(Coordinates(520, 1420), scale=True)
-            sleep(1)
+            sleep(2)
 
         logging.info("Looking for free hourglasses.")
         while self._claim_hourglasses():
@@ -58,6 +58,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         logging.debug("Back.")
         self.press_back_button()
+        sleep(2)
 
     def _claim_hourglasses(self) -> bool:
         """Claim free hourglass.
@@ -418,6 +419,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def raise_hero_affinity(self) -> None:
         """Raise hero affinity with 3 clicks per day."""
         self._navigate_to_default_state()
+        sleep(2)
 
         logging.debug("Open Resonating Hall.")
         self.click(Coordinates(620, 1830), scale=True)
