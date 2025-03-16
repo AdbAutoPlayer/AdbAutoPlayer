@@ -12,10 +12,12 @@ from .exceptions import (
     UnsupportedResolutionError,
 )
 from .game import Coordinates, Game
+from .game_config_base import ConfigBase
 from .template_matching import CropRegions, MatchMode
 
 __all__: list[str] = [
     "Command",
+    "ConfigBase",
     "ConfigLoader",
     "Coordinates",
     "CropRegions",
