@@ -45,7 +45,7 @@ func main() {
 
 	err = wails.Run(&options.App{
 		Title:  "AdbAutoPlayer",
-		Width:  1024,
+		Width:  1296,
 		Height: 768,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
