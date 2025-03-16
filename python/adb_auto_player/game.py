@@ -284,8 +284,11 @@ class Game:
             f"input tap {coordinates.x} {coordinates.y}",
             timeout=10,  # if the click didn't happen in 10 seconds it's never happening
             stream=True,
-        ):
+        ) as connection:
             logging.debug(f"Clicked Coordinates: {coordinates}")
+            # without this it breaks for people with slower CPUs
+            # need to think of a better solution
+            connection.read_until_close()
 
     def get_screenshot(self) -> Image.Image:
         """Gets screenshot from device using stream or screencap.
@@ -675,8 +678,9 @@ class Game:
 
     def press_back_button(self) -> None:
         """Presses the back button."""
-        with self.device.shell("input keyevent 4", stream=True):
+        with self.device.shell("input keyevent 4", stream=True) as connection:
             logging.debug("pressed back button")
+            connection.read_until_close()
 
     def swipe_down(self, sy: int = 1350, ey: int = 500, duration: float = 1.0) -> None:
         """Swipes the screen down.
