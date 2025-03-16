@@ -4,6 +4,7 @@ import logging
 import os
 import shutil
 import sys
+from logging import DEBUG, WARNING
 from pathlib import Path
 from typing import Any
 
@@ -140,19 +141,20 @@ def _get_devices(client: AdbClient) -> list[AdbDeviceInfo]:
         )
 
 
-def _log_devices(devices: list[AdbDeviceInfo]) -> None:
+def _log_devices(devices: list[AdbDeviceInfo], log_level: int = DEBUG) -> None:
     """Logs the list of ADB devices.
 
     Args:
         devices (list[AdbDeviceInfo]): ADB devices.
+        log_level (int): Logging level.
     """
     if not devices:
-        logging.warning("No devices found")
+        return
     else:
-        devices_str = "Devices:"
-        for device_info in devices:
-            devices_str += f"\n- {device_info.serial}"
-        logging.debug(devices_str)
+        devices_str = "Devices: " + ", ".join(
+            device_info.serial for device_info in devices
+        )
+        logging.log(log_level, devices_str)
 
 
 def _resolve_device(
@@ -183,6 +185,10 @@ def _resolve_device(
         device = _try_incrementing_ports(client, device_id)
 
     if device is None:
+        if len(devices) == 0:
+            logging.warning("No devices found")
+        else:
+            _log_devices(devices, WARNING)
         raise GenericAdbError(f"Device: {device_id} not found")
     return device
 
