@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any, TypeVar
 
-from adb_auto_player.ipc import constraint
+from adb_auto_player.ipc.constraint import ConstraintType
 
 
 @dataclass
@@ -24,7 +24,7 @@ class GameGUIOptions:
     config_path: str
     menu_options: list[MenuOption]
     categories: list[str]
-    constraints: dict[str, dict[str, constraint.ConstraintType]]
+    constraints: dict[str, dict[str, ConstraintType]]
 
     def to_dict(self):
         """Converts the GameGUIOptions to a dictionary."""

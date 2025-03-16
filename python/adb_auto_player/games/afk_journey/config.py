@@ -1,18 +1,9 @@
 """AFK Journey Config Module."""
 
-import tomllib
 from enum import StrEnum, auto
-from pathlib import Path
 from typing import Annotated
 
-from adb_auto_player.ipc import NumberConstraintDict
-from adb_auto_player.ipc.constraint import (
-    ConstraintType,
-    create_checkbox_constraint,
-    create_image_checkbox_constraint,
-    create_multicheckbox_constraint,
-    create_number_constraint,
-)
+from adb_auto_player import ConfigBase
 from pydantic import BaseModel, Field, field_validator
 
 # Type constraints
@@ -118,7 +109,9 @@ class GeneralConfig(BaseModel):
     """General config model."""
 
     excluded_heroes: list[HeroesEnum] = Field(
-        default_factory=list, alias="Exclude Heroes"
+        default_factory=list,
+        alias="Exclude Heroes",
+        json_schema_extra={"constraint_type": "multicheckbox"},
     )
     assist_limit: PositiveInt = Field(default=20, alias="Assist Limit")
 
@@ -150,7 +143,11 @@ class LegendTrialsConfig(BaseModel):
     formations: FormationsInt = Field(default=7, alias="Formations")
     use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
     spend_gold: bool = Field(default=False, alias="Spend Gold")
-    towers: list[TowerEnum] = Field(default_factory=list, alias="Towers")
+    towers: list[TowerEnum] = Field(
+        default_factory=list,
+        alias="Towers",
+        json_schema_extra={"constraint_type": "image_checkbox"},
+    )
 
     @field_validator("towers", mode="before")
     @classmethod
@@ -181,82 +178,13 @@ class DailiesConfig(BaseModel):
     single_pull: bool = Field(default=False, alias="Single Pull")
 
 
-class Config(BaseModel):
+class Config(ConfigBase):
     """Config model."""
 
     general: GeneralConfig = Field(alias="General")
+    dailies: DailiesConfig = Field(alias="Dailies")
     afk_stages: AFKStagesConfig = Field(alias="AFK Stages")
     duras_trials: DurasTrialsConfig = Field(alias="Dura's Trials")
     legend_trials: LegendTrialsConfig = Field(alias="Legend Trial")
     arcane_labyrinth: ArcaneLabyrinthConfig = Field(alias="Arcane Labyrinth")
     dream_realm: DreamRealmConfig = Field(alias="Dream Realm")
-    dailies: DailiesConfig = Field(alias="Dailies")
-
-    @classmethod
-    def from_toml(cls, file_path: Path):
-        """Create a Config instance from a TOML file.
-
-        Args:
-            file_path (Path): Path to the TOML file.
-
-        Returns:
-            Config: An instance of the Config class initialized with data
-            from the TOML file.
-        """
-        with open(file_path, "rb") as f:
-            toml_data = tomllib.load(f)
-
-        return cls(**toml_data)
-
-    @staticmethod
-    def get_constraints() -> dict[str, dict[str, ConstraintType]]:
-        """Get contraints from ADB Auto Player IPC."""
-        formations_constraint: NumberConstraintDict = create_number_constraint(
-            maximum=7
-        )
-
-        return {
-            "General": {
-                "Exclude Heroes": create_multicheckbox_constraint(
-                    [e.value for e in HeroesEnum]  # type: ignore
-                ),
-                "Assist Limit": create_number_constraint(),
-            },
-            "Dailies": {
-                "Buy Discount Affinity": create_checkbox_constraint(),
-                "Buy All Affinity": create_checkbox_constraint(),
-                "Single Pull": create_checkbox_constraint(),
-            },
-            "AFK Stages": {
-                "Attempts": create_number_constraint(),
-                "Formations": formations_constraint,
-                "Suggested Formations": create_checkbox_constraint(),
-                "Both Modes": create_checkbox_constraint(),
-                "Spend Gold": create_checkbox_constraint(),
-                "Repeat": create_checkbox_constraint(),
-            },
-            "Arcane Labyrinth": {
-                "Difficulty": create_number_constraint(
-                    minimum=1,
-                    maximum=15,
-                ),
-            },
-            "Dura's Trials": {
-                "Attempts": create_number_constraint(),
-                "Formations": formations_constraint,
-                "Suggested Formations": create_checkbox_constraint(),
-                "Spend Gold": create_checkbox_constraint(),
-            },
-            "Legend Trial": {
-                "Attempts": create_number_constraint(),
-                "Formations": formations_constraint,
-                "Suggested Formations": create_checkbox_constraint(),
-                "Spend Gold": create_checkbox_constraint(),
-                "Towers": create_image_checkbox_constraint(
-                    [e.value for e in TowerEnum]  # type: ignore
-                ),
-            },
-            "Dream Realm": {
-                "Spend Gold": create_checkbox_constraint(),
-            },
-        }
