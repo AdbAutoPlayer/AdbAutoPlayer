@@ -269,7 +269,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         """Claim rewards from hamburger menu."""
         self._navigate_to_default_state()
 
-        logging.debug("Navigate to Hamburger.")
+        logging.info("Navigating to Hamburger.")
         self.click(Coordinates(990, 1840), scale=True)
         sleep(1)
 
@@ -285,7 +285,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Click Friends.")
             friends: tuple[int, int] = self.wait_for_template(
                 "dailies/hamburger/friends.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Friends. Sadge.",
             )
             self.click(Coordinates(*friends))
@@ -300,6 +300,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             self.click(Coordinates(*send_receive))
             sleep(2)
             self.click(Coordinates(540, 1620))  # Close confirmation
+            sleep(1)
         except GameTimeoutError as fail:
             logging.info(fail)
 
@@ -314,7 +315,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Click Mail.")
             mail: tuple[int, int] = self.wait_for_template(
                 "dailies/hamburger/mail.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Mail.",
             )
             self.click(Coordinates(*mail))
@@ -333,6 +334,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             self.click(Coordinates(*read_all))
             sleep(1)
             self.click(Coordinates(540, 1620))  # Close confirmation
+            sleep(1)
         except GameTimeoutError as fail:
             logging.info(fail)
 
@@ -347,7 +349,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Click Noble Path.")
             battle_pass: tuple[int, int] = self.wait_for_template(
                 "dailies/hamburger/battle_pass.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Battle Pass.",
             )
             self.click(Coordinates(*battle_pass))
@@ -364,6 +366,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             self.click(Coordinates(*bp_reward))
             sleep(2)
             self._quick_claim()
+            sleep(1)
 
         logging.debug("Back.")
         back: tuple[int, int] | None = self.game_find_template_match("back.png")
@@ -376,7 +379,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Click Quests.")
             quests: tuple[int, int] = self.wait_for_template(
                 "dailies/hamburger/quests.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find daily Quests.",
             )
             self.click(Coordinates(*quests))
@@ -388,13 +391,13 @@ class DailiesMixin(AFKJourneyBase, ABC):
         logging.info("Claim Daily Quest rewards.")
         self._quick_claim()
         self.click(Coordinates(370, 180))  # Claim top row
-        sleep(1)
+        sleep(2)
         self.click(Coordinates(530, 1740))  # Close confirmation
-        sleep(1)
+        sleep(2)
 
         logging.info("Claim Guild Quest rewards.")
         self.click(Coordinates(830, 1670))  # Guild Quests
-        sleep(1)
+        sleep(2)
         self._quick_claim()
 
     def _quick_claim(self) -> None:
@@ -406,9 +409,9 @@ class DailiesMixin(AFKJourneyBase, ABC):
             return
 
         self.click(Coordinates(*claim))
-        sleep(1)
+        sleep(2)
         self.click(Coordinates(540, 1620))  # Close confirmation
-        sleep(1)
+        sleep(2)
 
     ############################# Hero Affinity ##############################
 
