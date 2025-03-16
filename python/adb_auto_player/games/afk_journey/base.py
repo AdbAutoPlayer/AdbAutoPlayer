@@ -436,6 +436,7 @@ class AFKJourneyBase(Game, ABC):
         """
         while True:
             if check_callable and check_callable():
+                sleep(1)
                 return None
             result: tuple[str, int, int] | None = self.find_any_template(
                 [
@@ -483,14 +484,15 @@ class AFKJourneyBase(Game, ABC):
                         self.click(Coordinates(x=x, y=y))
                         sleep(1)
                 case "time_of_day.png":
-                    return None
+                    break
                 case "dotdotdot.png":
                     self.press_back_button()
                     sleep(1)
                 case "guide/close.png" | "guide/next.png" | "battle/copy.png":
                     self.click(Coordinates(x=x, y=y))
                     sleep(0.5)
-        return None
+        sleep(1)
+        return
 
     def _select_afk_stage(self) -> None:
         """Selects an AFK stage template."""

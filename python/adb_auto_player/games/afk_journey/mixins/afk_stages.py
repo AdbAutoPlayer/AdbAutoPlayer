@@ -2,6 +2,7 @@
 
 import logging
 from abc import ABC
+from time import sleep
 
 from adb_auto_player import Coordinates, GameTimeoutError
 from adb_auto_player.games.afk_journey import AFKJourneyBase
@@ -59,5 +60,7 @@ class AFKStagesMixin(AFKJourneyBase, ABC):
         logging.info("Navigating to default state")
         self._navigate_to_default_state()
         logging.info("Navigating to AFK Stage Battle screen")
-        self.click(Coordinates(90, 1830), scale=True)
+        while self.game_find_template_match("time_of_day.png"):
+            self.click(Coordinates(90, 1830), scale=True)
+            sleep(1)
         self._select_afk_stage()
