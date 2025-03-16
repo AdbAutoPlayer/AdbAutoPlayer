@@ -184,6 +184,7 @@ class Game:
             self.scale_factor = 1.0
         else:
             self.scale_factor = self.resolution[0] / reference_resolution[0]
+        logging.debug(f"scale_factor: {self.scale_factor}")
         return self.scale_factor
 
     @property
