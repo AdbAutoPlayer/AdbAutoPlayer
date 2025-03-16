@@ -39,12 +39,19 @@ class ImageCheckboxConstraintDict(TypedDict):
     choices: list[str]
 
 
+class TextConstraintDict(TypedDict):
+    """Text constraint."""
+
+    type: Literal["text"]
+
+
 ConstraintType = (
     NumberConstraintDict
     | SelectConstraintDict
     | CheckboxConstraintDict
     | MultiCheckboxConstraintDict
     | ImageCheckboxConstraintDict
+    | TextConstraintDict
 )
 
 
@@ -78,3 +85,8 @@ def create_multicheckbox_constraint(choices: list[str]) -> MultiCheckboxConstrai
 def create_image_checkbox_constraint(choices: list[str]) -> ImageCheckboxConstraintDict:
     """Create an image checkbox constraint."""
     return ImageCheckboxConstraintDict(type="imagecheckbox", choices=choices)
+
+
+def create_text_constraint() -> TextConstraintDict:
+    """Create a text constraint."""
+    return TextConstraintDict(type="text")

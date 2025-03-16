@@ -9,6 +9,7 @@ from adb_auto_player.ipc.constraint import (
     create_image_checkbox_constraint,
     create_multicheckbox_constraint,
     create_number_constraint,
+    create_text_constraint,
 )
 from pydantic import BaseModel
 
@@ -37,7 +38,6 @@ class ConfigBase(BaseModel):
         schema = cls.model_json_schema()
         constraints: dict[str, dict[str, ConstraintType]] = {}
 
-        # Process each section in the main properties
         for section_name, section_ref in schema.get("properties", {}).items():
             # If it's a reference, look up the actual definition
             if "$ref" in section_ref:
@@ -52,47 +52,38 @@ class ConfigBase(BaseModel):
                 for field_name, field_schema in section_def.get(
                     "properties", {}
                 ).items():
-                    # Handle custom constraint types
                     constraint_type = field_schema.get("constraint_type")
-
-                    if constraint_type == "multicheckbox":
-                        # Get the enum reference and look up values
+                    if constraint_type is not None:
                         items_ref = field_schema.get("items", {}).get("$ref", "")
                         enum_name = items_ref.split("/")[-1]
                         enum_values = (
                             schema.get("$defs", {}).get(enum_name, {}).get("enum", [])
                         )
-                        section_constraints[field_name] = (
-                            create_multicheckbox_constraint(enum_values)
-                        )
 
-                    elif constraint_type == "image_checkbox":
-                        # Get the enum reference and look up values
-                        items_ref = field_schema.get("items", {}).get("$ref", "")
-                        enum_name = items_ref.split("/")[-1]
-                        enum_values = (
-                            schema.get("$defs", {}).get(enum_name, {}).get("enum", [])
-                        )
-                        section_constraints[field_name] = (
-                            create_image_checkbox_constraint(enum_values)
-                        )
+                        if constraint_type == "multicheckbox":
+                            section_constraints[field_name] = (
+                                create_multicheckbox_constraint(enum_values)
+                            )
+                        elif constraint_type == "image_checkbox":
+                            section_constraints[field_name] = (
+                                create_image_checkbox_constraint(enum_values)
+                            )
+                        else:
+                            raise ValueError(
+                                f"Unknown constraint_type {constraint_type}"
+                            )
+                        continue
 
-                    # Handle integer fields with constraints
-                    elif field_schema.get("type") == "integer":
-                        # Get minimum and maximum if they exist
+                    if field_schema.get("type") == "integer":
                         minimum = field_schema.get("minimum")
                         maximum = field_schema.get("maximum")
                         section_constraints[field_name] = create_number_constraint(
                             minimum=minimum, maximum=maximum
                         )
-
-                    # Handle boolean fields
                     elif field_schema.get("type") == "boolean":
                         section_constraints[field_name] = create_checkbox_constraint()
-
-                    # Default to number constraint if type is not recognized
                     else:
-                        section_constraints[field_name] = create_number_constraint()
+                        section_constraints[field_name] = create_text_constraint()
 
                 constraints[section_name] = section_constraints
 
