@@ -185,7 +185,7 @@ def _resolve_device(
         device = _try_incrementing_ports(client, device_id)
 
     if device is None:
-        if len(devices) == 0:
+        if not devices:
             logging.warning("No devices found")
         else:
             _log_devices(devices, WARNING)
