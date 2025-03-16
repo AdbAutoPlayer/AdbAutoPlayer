@@ -52,8 +52,8 @@ func main() {
 		},
 		BackgroundColour: &options.RGBA{R: 0, G: 0, B: 0, A: 0},
 		Windows: &windows.Options{
-			WindowIsTranslucent:  true,
-			WebviewIsTransparent: true,
+			WindowIsTranslucent:  false,
+			WebviewIsTransparent: false,
 			Theme:                windows.Dark,
 			BackdropType:         windows.Mica,
 			WebviewGpuIsDisabled: false,
