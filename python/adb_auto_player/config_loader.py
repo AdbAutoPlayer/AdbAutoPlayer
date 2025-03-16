@@ -12,11 +12,11 @@ class ConfigLoader:
     def __init__(self) -> None:
         """Initialize ConfigLoader."""
         self._working_dir: Path = Path.cwd()
+        logging.debug(f"Python working dir: {self._working_dir}")
 
     @property
     def working_dir(self) -> Path:
         """Return the current working directory."""
-        logging.debug(f"Python working dir: {self._working_dir}")
         return self._working_dir
 
     @property
