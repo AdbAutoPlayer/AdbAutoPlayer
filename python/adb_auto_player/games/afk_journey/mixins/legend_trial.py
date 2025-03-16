@@ -95,20 +95,21 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
                 return None
 
             if result is True:
-                next_btn: tuple[int, int] = self.wait_for_template(
-                    template="next.png",
-                    crop=CropRegions(left=0.6, top=0.9),
+                template, x, y = self.wait_for_any_template(
+                    templates=[
+                        "next.png",
+                        "legend_trials/top_floor_reached.png",
+                    ]
                 )
-                if next_btn is not None:
-                    count += 1
-                    logging.info(f"{faction.capitalize()} Trials pushed: {count}")
-                    self.click(Coordinates(*next_btn))
-                    continue
-                else:
-                    logging.warning(
-                        "Not implemented assuming this shows up after the last floor?"
-                    )
-                    return None
+                count += 1
+                logging.info(f"{faction.capitalize()} Trials pushed: {count}")
+                match template:
+                    case "next.png":
+                        self.click(Coordinates(x, y))
+                        continue
+                    case _:
+                        logging.info(f"{faction.capitalize()} Top Floor Reached")
+                return None
             logging.info(f"{faction.capitalize()} Trials failed")
             return None
         return None
