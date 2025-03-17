@@ -15,7 +15,10 @@ class ArenaMixin(AFKJourneyBase, ABC):
         """Use Arena attempts."""
         self.start_up()
 
-        self._enter_arena()
+        try:
+            self._enter_arena()
+        except GameTimeoutError:
+            return
 
         while not self.game_find_template_match("arena/no_attempts.png"):
             self._choose_opponent()
@@ -47,6 +50,32 @@ class ArenaMixin(AFKJourneyBase, ABC):
             sleep(2)
         except GameTimeoutError as fail:
             logging.error(fail)
+            raise
+
+        logging.debug("Checking for weekly arena notices.")
+        all(self._confirm_notices() for _ in range(2))
+
+    def _confirm_notices(self) -> bool:
+        """Close out weekly reward and weekly notice popups.
+
+        Returns:
+            bool: True if notices were closed, False otherwise.
+        """
+        try:
+            _: tuple[str, int, int] = self.wait_for_any_template(
+                templates=["arena/weekly_rewards.png", "arena/weekly_notice.png"],
+                timeout=self.MIN_TIMEOUT,
+                timeout_message="No notices found.",
+            )
+            self.click(Coordinates(380, 1890))
+            sleep(4)
+
+            return True
+        except GameTimeoutError as fail:
+            logging.debug(fail)
+            pass
+
+        return False
 
     def _choose_opponent(self) -> None:
         """Choose Arena opponent."""

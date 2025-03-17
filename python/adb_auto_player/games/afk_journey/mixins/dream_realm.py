@@ -22,7 +22,10 @@ class DreamRealmMixin(AFKJourneyBase, ABC):
         self.start_up()
         paid_attempts: bool = self.get_config().dream_realm.spend_gold
 
-        self._enter_dr()
+        try:
+            self._enter_dr()
+        except GameTimeoutError:
+            return
 
         if daily:
             self._claim_reward()
@@ -107,13 +110,17 @@ class DreamRealmMixin(AFKJourneyBase, ABC):
         logging.info("Entering Dream Realm...")
         self._navigate_to_default_state()
         self.click(Coordinates(460, 1830))  # Battle Modes
-        dr_mode: tuple[int, int] = self.wait_for_template(
-            "dream_realm/label.png",
-            timeout_message="Could not find Dream Realm.",
-            timeout=self.MIN_TIMEOUT,
-        )
-        self.click(Coordinates(*dr_mode))
-        sleep(2)
+        try:
+            dr_mode: tuple[int, int] = self.wait_for_template(
+                "dream_realm/label.png",
+                timeout_message="Could not find Dream Realm.",
+                timeout=self.MIN_TIMEOUT,
+            )
+            self.click(Coordinates(*dr_mode))
+            sleep(2)
+        except GameTimeoutError as fail:
+            logging.error(fail)
+            raise
 
     def _claim_reward(self) -> None:
         """Claim Dream Realm reward."""

@@ -390,6 +390,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
             return
 
         logging.info("Claim Daily Quest rewards.")
+        self.click(Coordinates(300, 1820))  # Focus on Dailies
+        sleep(2)
         self._quick_claim()
         self.click(Coordinates(370, 180))  # Claim top row
         sleep(2)
