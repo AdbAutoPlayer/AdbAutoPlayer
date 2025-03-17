@@ -134,7 +134,8 @@ def _get_devices(client: AdbClient) -> list[AdbDeviceInfo]:
     """
     try:
         return client.list()
-    except Exception:
+    except Exception as e:
+        logging.debug(f"client.list exception: {e}")
         raise GenericAdbError(
             "Failed to connect to AdbClient; check the Main Config and "
             "https://yulesxoxo.github.io/AdbAutoPlayer/user-guide/emulator-settings.html"
