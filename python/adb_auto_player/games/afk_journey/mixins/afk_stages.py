@@ -60,7 +60,6 @@ class AFKStagesMixin(AFKJourneyBase, ABC):
         logging.info("Navigating to default state")
         self._navigate_to_default_state()
         logging.info("Navigating to AFK Stage Battle screen")
-        while self.game_find_template_match("time_of_day.png"):
-            self.click(Coordinates(90, 1830), scale=True)
-            sleep(1)
+        self.click(Coordinates(90, 1830), scale=True)
+        sleep(1)
         self._select_afk_stage()
