@@ -305,7 +305,9 @@ class Game:
             logging.error(
                 "Could not retrieve latest Frame from Device Stream using screencap..."
             )
-        screenshot_data = self.device.shell("screencap -p", encoding=None)
+        # using shell with encoding directly does not close the file descriptor
+        with self.device.shell("screencap -p", stream=True) as c:
+            screenshot_data = c.read_until_close(encoding=None)
         if isinstance(screenshot_data, bytes):
             png_start_index = screenshot_data.find(b"\x89PNG\r\n\x1a\n")
             # Slice the screenshot data to remove the warning

@@ -12,6 +12,8 @@ class ConfigLoader:
     def __init__(self) -> None:
         """Initialize ConfigLoader."""
         self._working_dir: Path = Path.cwd()
+        self._games_dir: Path | None = None
+        self._main_config: dict[str, Any] | None = None
         logging.debug(f"Python working dir: {self._working_dir}")
 
     @property
@@ -22,16 +24,18 @@ class ConfigLoader:
     @property
     def games_dir(self) -> Path:
         """Determine and return the games directory."""
+        if self._games_dir:
+            return self._games_dir
         candidates: list[Path] = [
             self.working_dir / "games",  # distributed GUI Context
             self.working_dir.parent / "games",  # distributed CLI Context
             self.working_dir / "adb_auto_player" / "games",
             self.working_dir.parent.parent / "python" / "adb_auto_player" / "games",
         ]
-        games: Path = next((c for c in candidates if c.exists()), candidates[0])
+        self._games_dir = next((c for c in candidates if c.exists()), candidates[0])
 
-        logging.debug(f"Python games dir: {games}")
-        return games
+        logging.debug(f"Python games dir: {self._games_dir}")
+        return self._games_dir
 
     @property
     def binaries_dir(self) -> Path:
@@ -41,6 +45,9 @@ class ConfigLoader:
     @property
     def main_config(self) -> dict[str, Any]:
         """Locate and load the main config.toml file."""
+        if self._main_config:
+            return self._main_config
+
         candidates: list[Path] = [
             self.working_dir / "config.toml",  # distributed GUI context
             self.working_dir.parent / "config.toml",  # distributed CLI context
@@ -55,4 +62,6 @@ class ConfigLoader:
 
         logging.debug(f"Python config.toml path: {config_toml_path}")
         with open(config_toml_path, "rb") as f:
-            return tomllib.load(f)
+            self._main_config = tomllib.load(f)
+
+        return self._main_config
