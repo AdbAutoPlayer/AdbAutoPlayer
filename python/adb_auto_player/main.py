@@ -4,6 +4,7 @@ import argparse
 import json
 import logging
 import sys
+from logging import DEBUG
 from typing import NoReturn
 
 from adb_auto_player import Command, Game
@@ -150,6 +151,8 @@ def _print_running_game() -> None:
     """
     running_game: str | None = _get_running_game()
     if running_game:
+        # Need to force debug here for
+        logging.getLogger().setLevel(DEBUG)
         logging.debug(f"Running game: {running_game}")
     else:
         logging.debug("No running game")

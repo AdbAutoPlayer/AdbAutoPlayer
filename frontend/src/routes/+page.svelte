@@ -259,7 +259,7 @@
 
     try {
       if ($pollRunningGame) {
-        activeGame = await GetRunningSupportedGame(logGetRunningSupportedGame);
+        activeGame = await GetRunningSupportedGame(!logGetRunningSupportedGame);
         logGetRunningSupportedGame = false;
       }
     } catch (error) {
