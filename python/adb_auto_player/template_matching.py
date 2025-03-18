@@ -51,8 +51,8 @@ def load_image(image_path: Path, image_scale_factor: float = 1.0) -> Image.Image
     if cache_key in template_cache:
         return template_cache[cache_key]
 
-    image = Image.open(image_path)
-    image.load()
+    with Image.open(image_path) as img:
+        image = img.copy()
 
     if image_scale_factor != 1.0:
         new_width = int(image.width * image_scale_factor)
