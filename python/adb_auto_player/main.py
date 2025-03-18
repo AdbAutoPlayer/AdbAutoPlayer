@@ -52,19 +52,22 @@ def main() -> None:
     )
     parser.add_argument(
         "--log-level",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        choices=["DISABLE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         default="DEBUG",
         help="Log level",
     )
 
     args = parser.parse_args()
+    log_level = args.log_level
+    if log_level == "DISABLE":
+        log_level = 99
     match args.output:
         case "json":
-            setup_json_log_handler(args.log_level)
+            setup_json_log_handler(log_level)
         case "text":
-            setup_text_log_handler(args.log_level)
+            setup_text_log_handler(log_level)
         case _:
-            logging.getLogger().setLevel(args.log_level)
+            logging.getLogger().setLevel(log_level)
 
     for cmd in commands:
         if str.lower(cmd.name) == str.lower(args.command):
