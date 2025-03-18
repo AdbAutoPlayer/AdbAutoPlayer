@@ -88,6 +88,8 @@ def get_adb_device(override_size: str | None = None) -> AdbDevice:
         host=adb_config.get("host", "127.0.0.1"),
         port=adb_config.get("port", 5037),
     )
+    server_version = client.server_version()
+    logging.debug(f"adb server_version: {server_version}")
 
     return _get_adb_device(client, device_id, override_size)
 
