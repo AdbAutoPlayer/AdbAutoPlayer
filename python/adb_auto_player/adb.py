@@ -36,7 +36,6 @@ def _set_adb_path() -> None:
             )
 
         os.environ["ADBUTILS_ADB_PATH"] = adb_env_path
-        logging.debug(f"ADBUTILS_ADB_PATH: {os.getenv('ADBUTILS_ADB_PATH')}")
 
     if os.name != "nt":
         logging.debug(f"OS: {os.name}")
@@ -65,9 +64,8 @@ def _set_adb_path() -> None:
         if not adb_path:
             raise FileNotFoundError("adb not found in system PATH")
         os.environ["ADBUTILS_ADB_PATH"] = adb_path
-        logging.debug(f"ADBUTILS_ADB_PATH: {os.getenv('ADBUTILS_ADB_PATH')}")
 
-    logging.debug(f"adb path: {adbutils._utils.adb_path()}")
+    logging.debug(f"ADBUTILS_ADB_PATH: {adbutils._utils.adb_path()}")
 
 
 def get_adb_device(override_size: str | None = None) -> AdbDevice:
