@@ -61,8 +61,8 @@ class AFKStagesMixin(AFKJourneyBase, ABC):
         self._navigate_to_default_state()
         logging.info("Clicking Battle Modes button")
         self.click(Coordinates(x=460, y=1830), scale=True)
-        x, y = self.wait_for_template("afk_stage.png")
-        while self.game_find_template_match("afk_stage.png"):
+        x, y = self.wait_for_template("afk_stage.png", threshold=0.75)
+        while self.game_find_template_match("afk_stage.png", threshold=0.75):
             self.click(Coordinates(x, y))
             sleep(2)
         self._select_afk_stage()
