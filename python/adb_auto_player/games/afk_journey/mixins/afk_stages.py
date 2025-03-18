@@ -59,7 +59,10 @@ class AFKStagesMixin(AFKJourneyBase, ABC):
         """Navigate to stages screen."""
         logging.info("Navigating to default state")
         self._navigate_to_default_state()
-        logging.info("Navigating to AFK Stage Battle screen")
-        self.click(Coordinates(90, 1830), scale=True)
-        sleep(1)
+        logging.info("Clicking Battle Modes button")
+        self.click(Coordinates(x=460, y=1830), scale=True)
+        x, y = self.wait_for_template("afk_stage.png")
+        while self.game_find_template_match("afk_stage.png"):
+            self.click(Coordinates(x, y))
+            sleep(2)
         self._select_afk_stage()
