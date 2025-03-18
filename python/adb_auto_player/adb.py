@@ -21,7 +21,6 @@ def _set_adb_path() -> None:
         FileNotFoundError: ADB executable not found in PATH.
     """
     is_frozen: bool = hasattr(sys, "frozen") or "__compiled__" in globals()
-    logging.debug(f"{is_frozen=}")
 
     if is_frozen and os.name == "nt":
         adb_env_path: str | None = os.getenv("ADBUTILS_ADB_PATH")
