@@ -1,6 +1,7 @@
 """ADB Auto Player Template Matching Module."""
 
 from enum import StrEnum, auto
+from io import BytesIO
 from pathlib import Path
 from typing import NamedTuple
 
@@ -51,7 +52,12 @@ def load_image(image_path: Path, image_scale_factor: float = 1.0) -> Image.Image
     if cache_key in template_cache:
         return template_cache[cache_key]
 
-    image = Image.open(image_path)
+    # Close file descriptor immediately
+    with open(image_path, "rb") as f:
+        image_data = BytesIO(f.read())
+
+    # Load the image from memory
+    image = Image.open(image_data)
     image.load()
 
     if image_scale_factor != 1.0:
