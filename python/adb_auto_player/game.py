@@ -803,5 +803,4 @@ class Game:
         file_name = f"debug/{file_index}.png"
         screenshot.save(file_name)
         self.debug_screenshot_counter = file_index + 1
-        logging.debug(f"Saved screenshot: {file_name}")
         return
