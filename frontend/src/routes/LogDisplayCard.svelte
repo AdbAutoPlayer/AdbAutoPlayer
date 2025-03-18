@@ -33,6 +33,10 @@
     logs.push(message);
   });
 
+  EventsOn("log-clear", () => {
+    logs = logs.slice(0, 2);
+  });
+
   let logContainer: HTMLDivElement;
 
   function getLogColor(message: string): string {

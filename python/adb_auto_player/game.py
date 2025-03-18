@@ -50,7 +50,6 @@ class Game:
         """Initialize a game."""
         self._device: AdbDevice | None = None
         self.config: BaseModel | None = None
-        self.main_config: dict[str, Any] = {}
         self.store: dict[str, Any] = {}
         self.previous_screenshot: Image.Image | None = None
         self._resolution: tuple[int, int] | None = None
@@ -225,8 +224,9 @@ class Game:
         self.device = get_adb_device(suggested_resolution)
         self.check_requirements()
 
-        self.main_config = ConfigLoader().main_config
-        config_streaming = self.main_config.get("device", {}).get("streaming", True)
+        config_streaming = (
+            ConfigLoader().main_config.get("device", {}).get("streaming", True)
+        )
         if not config_streaming:
             logging.warning("Device Streaming is disabled in Main Config")
             return
@@ -789,7 +789,7 @@ class Game:
         return coordinates
 
     def _debug_save_screenshot(self) -> None:
-        logging_config = self.main_config.get("logging", {})
+        logging_config = ConfigLoader().main_config.get("logging", {})
         debug_screenshot_save_num = logging_config.get("debug_save_screenshots", 0)
         log_level = logging_config.get("level", "INFO")
 
@@ -803,5 +803,4 @@ class Game:
         file_name = f"debug/{file_index}.png"
         screenshot.save(file_name)
         self.debug_screenshot_counter = file_index + 1
-        logging.debug(f"Saved screenshot: {file_name}")
         return

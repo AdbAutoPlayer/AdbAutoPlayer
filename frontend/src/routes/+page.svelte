@@ -20,6 +20,7 @@
   let showConfigForm: boolean = $state(false);
   let configFormProps: Record<string, any> = $state({});
   let activeGame: ipc.GameGUI | null = $state(null);
+  let logGetRunningSupportedGame: boolean = $state(true);
 
   let openFormIsMainConfig: boolean = $state(false);
 
@@ -170,6 +171,7 @@
     }
 
     showConfigForm = false;
+    logGetRunningSupportedGame = true;
     $pollRunningGame = true;
     $pollRunningProcess = true;
   }
@@ -257,7 +259,8 @@
 
     try {
       if ($pollRunningGame) {
-        activeGame = await GetRunningSupportedGame();
+        activeGame = await GetRunningSupportedGame(!logGetRunningSupportedGame);
+        logGetRunningSupportedGame = false;
       }
     } catch (error) {
       console.error(error);

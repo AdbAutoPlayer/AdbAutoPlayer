@@ -20,7 +20,6 @@ def _set_adb_path() -> None:
     Raises:
         FileNotFoundError: ADB executable not found in PATH.
     """
-    config_loader = ConfigLoader()
     is_frozen: bool = hasattr(sys, "frozen") or "__compiled__" in globals()
     logging.debug(f"{is_frozen=}")
 
@@ -29,8 +28,8 @@ def _set_adb_path() -> None:
 
         if not adb_env_path or not os.path.isfile(adb_env_path):
             candidates: list[Path] = [
-                config_loader.binaries_dir / "adb.exe",
-                config_loader.binaries_dir / "windows" / "adb.exe",
+                ConfigLoader().binaries_dir / "adb.exe",
+                ConfigLoader().binaries_dir / "windows" / "adb.exe",
             ]
             adb_env_path = str(
                 next((c for c in candidates if c.exists()), candidates[0])
@@ -68,7 +67,7 @@ def _set_adb_path() -> None:
         os.environ["ADBUTILS_ADB_PATH"] = adb_path
         logging.debug(f"ADBUTILS_ADB_PATH: {os.getenv('ADBUTILS_ADB_PATH')}")
 
-    logging.debug(f"adb_path: {adbutils._utils.adb_path()}")
+    logging.debug(f"adb path: {adbutils._utils.adb_path()}")
 
 
 def get_adb_device(override_size: str | None = None) -> AdbDevice:

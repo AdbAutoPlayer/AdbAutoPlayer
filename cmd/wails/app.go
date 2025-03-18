@@ -93,9 +93,10 @@ func (a *App) SaveMainConfig(mainConfig config.MainConfig) error {
 	if err := config.SaveConfig[config.MainConfig](a.getMainConfigPath(), &mainConfig); err != nil {
 		return err
 	}
-	runtime.LogInfo(a.ctx, "Saved Main config")
+	runtime.EventsEmit(a.ctx, "log-clear")
 	GetProcessManager().logger.SetLogLevelFromString(mainConfig.Logging.Level)
 	runtime.LogSetLogLevel(a.ctx, logger.LogLevel(ipc.GetLogLevelFromString(mainConfig.Logging.Level)))
+	runtime.LogInfo(a.ctx, "Saved Main config")
 	return nil
 }
 
@@ -155,7 +156,7 @@ func (a *App) SaveGameConfig(gameConfig map[string]interface{}) error {
 	return nil
 }
 
-func (a *App) GetRunningSupportedGame() (*ipc.GameGUI, error) {
+func (a *App) GetRunningSupportedGame(disableLogging bool) (*ipc.GameGUI, error) {
 	if a.pythonBinaryPath == nil {
 		err := a.setPythonBinaryPath()
 		if err != nil {
@@ -174,7 +175,11 @@ func (a *App) GetRunningSupportedGame() (*ipc.GameGUI, error) {
 	pm := GetProcessManager()
 
 	runningGame := ""
-	output, err := pm.Exec(*a.pythonBinaryPath, "GetRunningGame")
+	args := []string{"GetRunningGame"}
+	if disableLogging {
+		args = append(args, "--log-level=DISABLE")
+	}
+	output, err := pm.Exec(*a.pythonBinaryPath, args...)
 
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "%v", err)
