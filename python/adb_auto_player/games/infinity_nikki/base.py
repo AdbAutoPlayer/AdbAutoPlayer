@@ -41,9 +41,10 @@ class InfinityNikkiBase(Game, ABC):
         if self.template_dir_path is not None:
             return self.template_dir_path
 
-        games_dir = ConfigLoader().games_dir
-        self.template_dir_path = games_dir / "infinity_nikki" / "templates"
-        logging.debug(f"Infinity Nikki template dir: {self.template_dir_path}")
+        self.template_dir_path = (
+            ConfigLoader().games_dir / "infinity_nikki" / "templates"
+        )
+        logging.debug(f"Infinity Nikki template path: {self.template_dir_path}")
         return self.template_dir_path
 
     def load_config(self) -> None:

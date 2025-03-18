@@ -30,8 +30,6 @@ class AFKJourneyBase(Game, ABC):
             "com.farlightgames.igame.gp",
         ]
 
-    config_loader = ConfigLoader()
-    games_dir: Path = config_loader.games_dir
     template_dir_path: Path | None = None
     config_file_path: Path | None = None
 
@@ -64,14 +62,16 @@ class AFKJourneyBase(Game, ABC):
         if self.template_dir_path is not None:
             return self.template_dir_path
 
-        self.template_dir_path = self.games_dir / "afk_journey" / "templates"
-        logging.debug(f"AFKJourney template dir: {self.template_dir_path}")
+        self.template_dir_path = ConfigLoader().games_dir / "afk_journey" / "templates"
+        logging.debug(f"AFKJourney template path: {self.template_dir_path}")
         return self.template_dir_path
 
     def load_config(self) -> None:
         """Load config TOML."""
         if self.config_file_path is None:
-            self.config_file_path = self.games_dir / "afk_journey" / "AFKJourney.toml"
+            self.config_file_path = (
+                ConfigLoader().games_dir / "afk_journey" / "AFKJourney.toml"
+            )
             logging.debug(f"AFK Journey config path: {self.config_file_path}")
         self.config = Config.from_toml(self.config_file_path)
 

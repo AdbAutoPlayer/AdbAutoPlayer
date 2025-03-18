@@ -26,7 +26,7 @@ class ConfigLoader:
         self._working_dir = Path.cwd()
         self._games_dir = None
         self._main_config = None
-        logging.debug(f"Python working dir: {self._working_dir}")
+        logging.debug(f"Python working dir path: {self._working_dir}")
 
     @property
     def working_dir(self) -> Path:
@@ -44,7 +44,7 @@ class ConfigLoader:
                 self.working_dir.parent.parent / "python" / "adb_auto_player" / "games",
             ]
             self._games_dir = next((c for c in candidates if c.exists()), candidates[0])
-            logging.debug(f"Python games dir: {self._games_dir}")
+            logging.debug(f"Python games path: {self._games_dir}")
         return self._games_dir
 
     @property
