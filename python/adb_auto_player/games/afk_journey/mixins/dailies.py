@@ -425,11 +425,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         logging.debug("Open Resonating Hall.")
         self.click(Coordinates(620, 1830), scale=True)
-        sleep(1)
+        sleep(2)
 
         logging.info("Begin raising hero affinity.")
         self.click(Coordinates(130, 1040), scale=True)
-        sleep(1)
+        sleep(2)
 
         while not self.game_find_template_match("dailies/resonating_hall/chippy.png"):
             self._click_hero()
