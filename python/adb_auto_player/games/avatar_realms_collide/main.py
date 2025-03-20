@@ -35,11 +35,12 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             if search:
                 logging.info("Returning to city")
                 self.click(Coordinates(100, 1000))
-                self.wait_for_template(
-                    "gui/map.png", crop=CropRegions(right=0.8, top=0.8)
-                )
-                sleep(3)
-
+            self.wait_for_template(
+                "gui/map.png",
+                crop=CropRegions(right=0.8, top=0.8),
+                timeout=10,
+            )
+            sleep(3)
             self._click_help()
             if self.get_config().auto_play_config.research:
                 self._research()
@@ -172,16 +173,29 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             )
 
             self.click(Coordinates(*research_btn))
-            military = self.wait_for_template("research/military.png", timeout=5)
-            self.click(Coordinates(*military))
+            template, x, y = self.wait_for_any_template(
+                templates=[
+                    "research/military.png",
+                    "research/economy.png",
+                ],
+                timeout=5,
+            )
+            sleep(2)
+            if template == "research/military.png":
+                self.click(Coordinates(x, y))
 
             def click_and_hope_research_pops_up() -> tuple[int, int] | None:
-                for y in y_coords:
-                    self.click(Coordinates(1250, y))
+                for y_coord in y_coords:
+                    self.click(Coordinates(1250, y_coord))
                     sleep(2)
                     result = self.game_find_template_match("research/research.png")
                     if result:
                         return result
+                    if self.game_find_template_match("research/max_level.png"):
+                        x_btn = self.game_find_template_match("gui/x.png")
+                        if x_btn:
+                            self.click(Coordinates(*x_btn))
+                            sleep(2)
                 return None
 
             y_coords = [250, 450, 550, 650, 850]
@@ -242,7 +256,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     # "recruitment/t4/fire.png",
                     # "recruitment/t4/air.png",
                     "recruitment/t3/water.png",
-                    # "recruitment/t3/earth.png",
+                    "recruitment/t3/earth.png",
                     "recruitment/t3/fire.png",
                     # "recruitment/t3/air.png",
                     "recruitment/t2/water.png",

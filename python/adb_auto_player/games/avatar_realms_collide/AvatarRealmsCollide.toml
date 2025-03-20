@@ -1,5 +1,5 @@
 ['Auto Play']
-Research = false
+Research = true
 Build = true
 "Recruit Troops" = true
 "Alliance Research & Gifts" = true
