@@ -61,6 +61,7 @@ func UpdatePatch(assetUrl string) error {
 		var outputFile *os.File
 
 		const maxRetries = 3
+		const timeout = 2 * time.Second
 		for attempt := 1; attempt <= maxRetries; attempt++ {
 			outputFile, err = os.OpenFile(outputPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, file.Mode())
 			if err == nil {
@@ -69,7 +70,7 @@ func UpdatePatch(assetUrl string) error {
 			if attempt == maxRetries {
 				return fmt.Errorf("failed to create file (attempt %d/%d): %v\n", attempt, maxRetries, err)
 			}
-			time.Sleep(time.Second)
+			time.Sleep(timeout)
 		}
 
 		for attempt := 1; attempt <= maxRetries; attempt++ {
@@ -80,7 +81,7 @@ func UpdatePatch(assetUrl string) error {
 			if attempt == maxRetries {
 				return fmt.Errorf("failed to copy file data after %d attempts: %v", maxRetries, err)
 			}
-			time.Sleep(time.Second)
+			time.Sleep(timeout)
 		}
 	}
 
