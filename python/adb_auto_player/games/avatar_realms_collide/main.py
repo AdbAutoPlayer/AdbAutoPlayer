@@ -234,6 +234,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         while not_found_count < max_count:
             result = self.find_any_template(
                 [
+                    "recruitment/t3/fire.png",
                     "recruitment/t2/air.png",
                     "recruitment/t2/earth.png",
                     "recruitment/t2/fire.png",
