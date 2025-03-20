@@ -2,7 +2,7 @@
 
 import logging
 from enum import StrEnum
-from time import sleep
+from time import sleep, time
 
 from adb_auto_player import Coordinates, CropRegions, GameTimeoutError
 from adb_auto_player.command import Command
@@ -21,9 +21,11 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
     """Avatar Realms Collide Game."""
 
     gather_count: int = 0
+    last_campaign_collection: float = 0
+    last_alliance_research_and_gift: float = 0
 
     def auto_play(self) -> None:
-        """WIP."""
+        """Auto Play."""
         self.start_up(device_streaming=True)
         while True:
             search = self.game_find_template_match(
@@ -39,16 +41,72 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 sleep(3)
 
             self._click_help()
-            self._research()
+            if self.get_config().auto_play_config.research:
+                self._research()
+
             self._click_resources()
-            self._build()
-            self._click_help()
-            self._collect_troops()
-            self._recruit_troops()
-            self._click_help()
-            self._alliance_research_and_gift()
-            self._gather_resources()
+            if self.get_config().auto_play_config.build:
+                self._build()
+                self._click_help()
+
+            if self.get_config().auto_play_config.recruit_troops:
+                self._collect_troops()
+                self._recruit_troops()
+                self._click_help()
+
+            if self.get_config().auto_play_config.alliance_research_and_gifts:
+                self._alliance_research_and_gift()
+
+            if self.get_config().auto_play_config.collect_campaign_chest:
+                self._collect_campaign_chest()
+
+            if self.get_config().auto_play_config.gather_resources:
+                self._gather_resources()
+
             sleep(10)
+
+    def _collect_campaign_chest(self):
+        one_hour = 3600
+        if (
+            self.last_campaign_collection
+            and time() - self.last_campaign_collection < one_hour
+        ):
+            logging.info(
+                "Skipping Campaign Chest collection: 1 hour cooldown period not over."
+            )
+
+        logging.info("Collecting Campaign Chest")
+        self.click(Coordinates(1420, 970))
+        try:
+            x, y = self.wait_for_template(
+                "campaign/avatar_trail.png",
+                timeout=5,
+            )
+            self.click(Coordinates(x, y))
+        except GameTimeoutError as e:
+            logging.error(f"{e}")
+            return
+        try:
+            self.wait_for_template(
+                "campaign/lobby_hero.png",
+                timeout=5,
+            )
+            sleep(1)
+
+            if chest := self.game_find_template_match("campaign/chest.png"):
+                self.click(Coordinates(*chest))
+                _ = self.wait_for_template("gui/claim.png")
+                while claim := self.game_find_template_match("gui/claim.png"):
+                    self.click(Coordinates(*claim))
+                    sleep(0.5)
+            self.last_campaign_collection = time()
+        except GameTimeoutError as e:
+            logging.error(f"{e}")
+
+        self.press_back_button()
+        self.wait_for_template("gui/map.png")
+        sleep(1)
+        return
 
     def _build(self) -> None:
         logging.info("Building.")
@@ -75,12 +133,19 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             timeout=5,
         )
         self.click(Coordinates(x, y))
-        x, y = self.wait_for_template("build/upgrade.png")
-        self.click(Coordinates(x, y))
-        sleep(2)
+        while upgrade := self.wait_for_template("build/upgrade.png"):
+            self.click(Coordinates(*upgrade))
+            sleep(2)
 
     def _center_city_view_by_using_research(self) -> None:
         logging.info("Center City View by using research.")
+        x_button = self.game_find_template_match("gui/x.png")
+        if x_button:
+            self.click(Coordinates(*x_button))
+            sleep(0.5)
+        else:
+            self.click(Coordinates(80, 700))
+
         research_btn = self.wait_for_template(
             "gui/left_side_research.png",
             crop=CropRegions(right=0.8, top=0.3, bottom=0.4),
@@ -187,6 +252,9 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             self.click(Coordinates(x, y))
 
     def _gather_resources(self) -> None:
+        if self._troops_are_dispatched():
+            logging.info("All Troops dispatched skipping resource gathering.")
+            return
         logging.info("Gathering Resources.")
         search = self.game_find_template_match(
             "gathering/search.png",
@@ -202,20 +270,25 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 "gathering/search.png",
                 crop=CropRegions(right=0.8, top=0.6),
             )
-
+            sleep(2)
         try:
             self._start_gathering(Coordinates(*search))
         except GameTimeoutError as e:
             logging.warning(f"{e}")
         return
 
-    def _start_gathering(self, search_coordinates: Coordinates) -> None:
-        while not self.find_any_template(
+    def _troops_are_dispatched(self) -> bool:
+        if self.find_any_template(
             templates=[
                 "gathering/troop_max_3.png",
             ],
             crop=CropRegions(left=0.8, bottom=0.5),
         ):
+            return True
+        return False
+
+    def _start_gathering(self, search_coordinates: Coordinates) -> None:
+        while not self._troops_are_dispatched():
             self.click(search_coordinates)
 
             nodes = [
@@ -238,17 +311,34 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             sleep(0.5)
             self.click(Coordinates(x, y))
             sleep(0.5)
-            x, y = self.wait_for_template("gui/create_new_troop.png")
+            template, x, y = self.wait_for_any_template(
+                templates=["gui/create_new_troop.png", "gui/march_blue.png"]
+            )
+            if template == "gui/march_blue.png":
+                self.press_back_button()
+                sleep(1)
+                logging.warning("Troops already dispatched cancelling gathering.")
+                return
             sleep(0.5)
             self.click(Coordinates(x, y))
             x, y = self.wait_for_template("gui/march.png")
             sleep(0.5)
             self.click(Coordinates(x, y))
-            sleep(1)
+            sleep(3)
             self.gather_count += 1
-        logging.info("Troops already dispatched.")
+        return
 
     def _alliance_research_and_gift(self) -> None:
+        one_hour = 3600
+        if (
+            self.last_alliance_research_and_gift
+            and time() - self.last_alliance_research_and_gift < one_hour
+        ):
+            logging.info(
+                "Skipping Alliance Research and Gift: 1 hour cooldown period not over."
+            )
+            return
+
         logging.info("Alliance Research and Gift.")
         if not self.game_find_template_match("gui/map.png"):
             logging.warning("Map not found skipping alliance research and gift.")
@@ -268,6 +358,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         while x_btn := self.game_find_template_match("gui/x.png"):
             self.click(Coordinates(*x_btn))
             sleep(2)
+        self.last_alliance_research_and_gift = time()
         return
 
     def _handle_alliance_gift(self) -> None:
@@ -290,7 +381,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             return
         self.click(Coordinates(*gift_chest))
         sleep(0.5)
-        while claim := self.game_find_template_match("alliance/claim.png"):
+        while claim := self.game_find_template_match("gui/claim.png"):
             self.click(Coordinates(*claim))
             sleep(0.5)
             refresh = self.game_find_template_match("alliance/gift_chest_refresh.png")

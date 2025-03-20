@@ -28,7 +28,6 @@ class AvatarRealmsCollideBase(Game, ABC):
             self.open_eyes(device_streaming=device_streaming)
         if self.config is None:
             self.load_config()
-            pass
 
     def get_template_dir_path(self) -> Path:
         """Retrieve path to images."""
@@ -43,7 +42,14 @@ class AvatarRealmsCollideBase(Game, ABC):
 
     def load_config(self) -> None:
         """Load config TOML."""
-        pass
+        if self.config_file_path is None:
+            self.config_file_path = (
+                ConfigLoader().games_dir
+                / "avatar_realms_collide"
+                / "AvatarRealmsCollide.toml"
+            )
+            logging.debug(f"Avatar Realms Collide config path: {self.config_file_path}")
+        self.config = Config.from_toml(self.config_file_path)
 
     def get_config(self) -> Config:
         """Get config."""
