@@ -33,7 +33,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 crop=CropRegions(right=0.8, top=0.6),
             )
             if search:
-                logging.info("Returning to city.")
+                logging.info("Returning to city")
                 self.click(Coordinates(100, 1000))
                 self.wait_for_template(
                     "gui/map.png", crop=CropRegions(right=0.8, top=0.8)
@@ -72,7 +72,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             and time() - self.last_campaign_collection < one_hour
         ):
             logging.info(
-                "Skipping Campaign Chest collection: 1 hour cooldown period not over."
+                "Skipping Campaign Chest collection: 1 hour cooldown period not over"
             )
 
         logging.info("Collecting Campaign Chest")
@@ -109,7 +109,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         return
 
     def _build(self) -> None:
-        logging.info("Building.")
+        logging.info("Building")
         button_1 = Coordinates(80, 220)
         button_2 = Coordinates(80, 350)
 
@@ -138,7 +138,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             sleep(2)
 
     def _center_city_view_by_using_research(self) -> None:
-        logging.info("Center City View by using research.")
+        logging.info("Center City View by using research")
         x_button = self.game_find_template_match("gui/x.png")
         if x_button:
             self.click(Coordinates(*x_button))
@@ -162,7 +162,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             self.click(Coordinates(80, 700))
 
     def _research(self) -> None:
-        logging.info("Starting Research.")
+        logging.info("Starting Research")
         try:
             research_btn = self.wait_for_template(
                 "gui/left_side_research.png",
@@ -206,7 +206,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             return None
 
     def _recruit_troops(self) -> None:
-        logging.info("Recruiting Troops.")
+        logging.info("Recruiting Troops")
         try:
             while True:
                 btn = self.wait_for_template(
@@ -228,7 +228,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
     def _collect_troops(self) -> None:
         self._center_city_view_by_using_research()
-        logging.info("Collecting Troops.")
+        logging.info("Collecting Troops")
         not_found_count = 0
         max_count = 5
         while not_found_count < max_count:
@@ -254,9 +254,9 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
     def _gather_resources(self) -> None:
         if self._troops_are_dispatched():
-            logging.info("All Troops dispatched skipping resource gathering.")
+            logging.info("All Troops dispatched skipping resource gathering")
             return
-        logging.info("Gathering Resources.")
+        logging.info("Gathering Resources")
         search = self.game_find_template_match(
             "gathering/search.png",
             crop=CropRegions(right=0.8, top=0.6),
@@ -264,7 +264,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         if not search:
             game_map = self.game_find_template_match("gui/map.png")
             if not game_map:
-                logging.warning("Map not found skipping resource gathering.")
+                logging.warning("Map not found skipping resource gathering")
                 return
             self.click(Coordinates(*game_map))
             search = self.wait_for_template(
@@ -318,7 +318,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             if template == "gui/march_blue.png":
                 self.press_back_button()
                 sleep(1)
-                logging.warning("Troops already dispatched cancelling gathering.")
+                logging.warning("Troops already dispatched cancelling gathering")
                 return
             sleep(0.5)
             self.click(Coordinates(x, y))
@@ -336,13 +336,13 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             and time() - self.last_alliance_research_and_gift < one_hour
         ):
             logging.info(
-                "Skipping Alliance Research and Gift: 1 hour cooldown period not over."
+                "Skipping Alliance Research and Gift: 1 hour cooldown period not over"
             )
             return
 
-        logging.info("Alliance Research and Gift.")
+        logging.info("Alliance Research and Gift")
         if not self.game_find_template_match("gui/map.png"):
-            logging.warning("Map not found skipping alliance research and gift.")
+            logging.warning("Map not found skipping alliance research and gift")
             return
         self.click(Coordinates(1560, 970))
         self.wait_for_template("alliance/alliance_shop.png")
@@ -400,7 +400,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 timeout=5,
             )
         except GameTimeoutError:
-            logging.warning("Alliance Research window not found.")
+            logging.warning("Alliance Research window not found")
             return None
         recommended = self.game_find_template_match("alliance/research_recommended.png")
         if not recommended:
@@ -416,7 +416,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             )
 
         if not recommended:
-            logging.warning("No recommended alliance research.")
+            logging.warning("No recommended alliance research")
             return
         x, y = recommended
         self.click(Coordinates(x + 80, y - 150))
