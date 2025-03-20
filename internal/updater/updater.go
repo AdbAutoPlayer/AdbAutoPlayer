@@ -64,15 +64,23 @@ func UpdatePatch(assetUrl string) error {
 		for attempt := 1; attempt <= maxRetries; attempt++ {
 			outputFile, err = os.OpenFile(outputPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, file.Mode())
 			if err == nil {
-				break // Success, exit loop
+				break
 			}
-			fmt.Printf("Failed to create file (attempt %d/%d): %v\n", attempt, maxRetries, err)
+			if attempt == maxRetries {
+				return fmt.Errorf("failed to create file (attempt %d/%d): %v\n", attempt, maxRetries, err)
+			}
 			time.Sleep(time.Second)
 		}
 
-		_, err = io.Copy(outputFile, fileInZip)
-		if err != nil {
-			return fmt.Errorf("failed to copy file data: %v", err)
+		for attempt := 1; attempt <= maxRetries; attempt++ {
+			_, err = io.Copy(outputFile, fileInZip)
+			if err == nil {
+				break
+			}
+			if attempt == maxRetries {
+				return fmt.Errorf("failed to copy file data after %d attempts: %v", maxRetries, err)
+			}
+			time.Sleep(time.Second)
 		}
 	}
 
