@@ -4,4 +4,4 @@ Build = true
 "Recruit Troops" = true
 "Alliance Research & Gifts" = true
 "Collect Campaign Chest" = true
-"Gather Resources" = true
+"Gather Resources" = ['Food', 'Wood', 'Stone', 'Gold']

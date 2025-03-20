@@ -1,7 +1,22 @@
 """Avatar Realms Collide Config Module."""
 
+from enum import StrEnum, auto
+
 from adb_auto_player import ConfigBase
 from pydantic import BaseModel, Field
+
+
+class ResourceEnum(StrEnum):
+    """All faction towers."""
+
+    @staticmethod
+    def _generate_next_value_(name, start, count, last_values):
+        return name
+
+    Food = auto()
+    Wood = auto()
+    Stone = auto()
+    Gold = auto()
 
 
 class AutoPlayConfig(BaseModel):
@@ -14,7 +29,10 @@ class AutoPlayConfig(BaseModel):
         default=True, alias="Alliance Research & Gifts"
     )
     collect_campaign_chest: bool = Field(default=True, alias="Collect Campaign Chest")
-    gather_resources: bool = Field(default=True, alias="Gather Resources")
+    gather_resources: list[ResourceEnum] = Field(
+        default_factory=list,
+        alias="Gather Resources",
+    )
 
 
 class Config(ConfigBase):
