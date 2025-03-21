@@ -28,43 +28,58 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         """Auto Play."""
         self.start_up(device_streaming=True)
         while True:
-            search = self.game_find_template_match(
-                "gathering/search.png",
-                crop=CropRegions(right=0.8, top=0.6),
+            try:
+                self._navigate_to_city()
+                self._auto_play_loop()
+                sleep(10)
+            except GameTimeoutError as e:
+                logging.error(f"{e}")
+                sleep(2)
+                logging.info("Restarting...")
+
+    def _navigate_to_city(self):
+        while True:
+            template, x, y = self.find_any_template(
+                templates=[
+                    "gathering/search.png",
+                    "gui/map.png",
+                ]
             )
-            if search:
-                logging.info("Returning to city")
-                self.click(Coordinates(100, 1000))
-            self.wait_for_template(
-                "gui/map.png",
-                crop=CropRegions(right=0.8, top=0.8),
-                timeout=10,
-            )
-            sleep(3)
+            match template:
+                case "gathering/search.png":
+                    logging.info("Returning to city")
+                    self.click(Coordinates(100, 1000))
+                    sleep(3)
+                    _ = self.wait_for_template("gui/map.png", timeout=5)
+                case "gui/map.png":
+                    break
+                case _:
+                    self.press_back_button()
+        sleep(3)
+
+    def _auto_play_loop(self) -> None:
+        self._click_help()
+        if self.get_config().auto_play_config.research:
+            self._research()
+
+        self._click_resources()
+        if self.get_config().auto_play_config.build:
+            self._build()
             self._click_help()
-            if self.get_config().auto_play_config.research:
-                self._research()
 
-            self._click_resources()
-            if self.get_config().auto_play_config.build:
-                self._build()
-                self._click_help()
+        if self.get_config().auto_play_config.recruit_troops:
+            self._collect_troops()
+            self._recruit_troops()
+            self._click_help()
 
-            if self.get_config().auto_play_config.recruit_troops:
-                self._collect_troops()
-                self._recruit_troops()
-                self._click_help()
+        if self.get_config().auto_play_config.alliance_research_and_gifts:
+            self._alliance_research_and_gift()
 
-            if self.get_config().auto_play_config.alliance_research_and_gifts:
-                self._alliance_research_and_gift()
+        if self.get_config().auto_play_config.collect_campaign_chest:
+            self._collect_campaign_chest()
 
-            if self.get_config().auto_play_config.collect_campaign_chest:
-                self._collect_campaign_chest()
-
-            if self.get_config().auto_play_config.gather_resources:
-                self._gather_resources()
-
-            sleep(10)
+        if self.get_config().auto_play_config.gather_resources:
+            self._gather_resources()
 
     def _collect_campaign_chest(self) -> None:
         one_hour = 3600
@@ -137,6 +152,10 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         self.click(Coordinates(x, y))
         while upgrade := self.wait_for_template("build/upgrade.png", timeout=5):
             self.click(Coordinates(*upgrade))
+            # TODO seal of solidarity bs
+            while x_btn := self.game_find_template_match("gui/x.png"):
+                self.click(Coordinates(*x_btn))
+                sleep(2)
 
     def _center_city_view_by_using_research(self) -> None:
         logging.info("Center City View by using research")
@@ -326,22 +345,23 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 self.get_config().auto_play_config.gather_resources
             )
 
-            resource = resources[self.gather_count % len(nodes)]
+            resource = resources[self.gather_count % len(resources)]
             node = nodes[resource]
-
-            x, y = self.wait_for_template(node)
+            x, y = self.wait_for_template(node, timeout=5)
             self.click(Coordinates(x, y))
-            search_button = self.wait_for_template("gui/search.png")
-            sleep(0.5)
+            _ = self.wait_for_template("gui/search.png", timeout=5)
+            sleep(1)
+            search_button = self.wait_for_template("gui/search.png", timeout=5)
             self.click(Coordinates(*search_button))
             sleep(5)
             self.click(Coordinates(960, 520))
-            x, y = self.wait_for_template("gui/gather.png")
+            x, y = self.wait_for_template("gui/gather.png", timeout=5)
             sleep(0.5)
             self.click(Coordinates(x, y))
             sleep(0.5)
             template, x, y = self.wait_for_any_template(
-                templates=["gui/create_new_troop.png", "gui/march_blue.png"]
+                templates=["gui/create_new_troop.png", "gui/march_blue.png"],
+                timeout=5,
             )
             if template == "gui/march_blue.png":
                 self.press_back_button()
@@ -350,7 +370,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 return
             sleep(0.5)
             self.click(Coordinates(x, y))
-            x, y = self.wait_for_template("gui/march.png")
+            x, y = self.wait_for_template("gui/march.png", timeout=5)
             sleep(0.5)
             self.click(Coordinates(x, y))
             sleep(3)
@@ -486,16 +506,15 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         logging.info("Clicking help")
         while result := self.find_any_template(
             [
-                "alliance/help_bubble.png",
-                "alliance/help_button.png",
                 "alliance/help_request.png",
+                "alliance/help_button.png",
             ],
             threshold=0.7,
             crop=CropRegions(top=0.1, right=0.1),
         ):
             _, x, y = result
             self.click(Coordinates(x, y))
-            sleep(1)
+            sleep(2)
 
     def get_cli_menu_commands(self) -> list[Command]:
         """Get CLI menu commands."""
