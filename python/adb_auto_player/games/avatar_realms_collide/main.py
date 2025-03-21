@@ -152,7 +152,6 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         self.click(Coordinates(x, y))
         while upgrade := self.wait_for_template("build/upgrade.png", timeout=5):
             self.click(Coordinates(*upgrade))
-            # TODO seal of solidarity bs
             while x_btn := self.game_find_template_match("gui/x.png"):
                 self.click(Coordinates(*x_btn))
                 sleep(2)
