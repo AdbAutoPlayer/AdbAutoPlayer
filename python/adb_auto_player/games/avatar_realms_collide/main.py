@@ -276,7 +276,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     "recruitment/t3/water.png",
                     "recruitment/t3/earth.png",
                     "recruitment/t3/fire.png",
-                    # "recruitment/t3/air.png",
+                    "recruitment/t3/air.png",
                     "recruitment/t2/water.png",
                     "recruitment/t2/earth.png",
                     "recruitment/t2/fire.png",
