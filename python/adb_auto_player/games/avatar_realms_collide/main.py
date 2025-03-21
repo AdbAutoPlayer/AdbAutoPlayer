@@ -68,7 +68,6 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             self._click_help()
 
         if self.get_config().auto_play_config.recruit_troops:
-            self._collect_troops()
             self._recruit_troops()
             self._click_help()
 
@@ -243,7 +242,26 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
     def _recruit_troops(self) -> None:
         logging.info("Recruiting Troops")
         try:
+            btn = self.wait_for_template(
+                "gui/left_side_recruit.png",
+                crop=CropRegions(right=0.8, top=0.4, bottom=0.3),
+                timeout=5,
+                threshold=0.7,
+            )
+
+            for i in range(5):
+                self.click(Coordinates(*btn))
+                sleep(0.5)
+
             while True:
+                sleep(1)
+                x, y = self.wait_for_template(
+                    "recruitment/recruit.png",
+                    crop=CropRegions(left=0.5, top=0.6),
+                    timeout=5,
+                )
+                self.click(Coordinates(x, y))
+                sleep(1)
                 btn = self.wait_for_template(
                     "gui/left_side_recruit.png",
                     crop=CropRegions(right=0.8, top=0.4, bottom=0.3),
@@ -251,48 +269,8 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     threshold=0.7,
                 )
                 self.click(Coordinates(*btn))
-                x, y = self.wait_for_template(
-                    "recruitment/recruit.png",
-                    crop=CropRegions(left=0.5, top=0.6),
-                    timeout=5,
-                )
-                self.click(Coordinates(x, y))
-                sleep(2)
         except GameTimeoutError:
             return None
-
-    def _collect_troops(self) -> None:
-        self._center_city_view_by_using_research()
-        logging.info("Collecting Troops")
-        not_found_count = 0
-        max_count = 5
-        while not_found_count < max_count:
-            result = self.find_any_template(
-                [
-                    # "recruitment/t4/water.png",
-                    # "recruitment/t4/earth.png",
-                    # "recruitment/t4/fire.png",
-                    # "recruitment/t4/air.png",
-                    "recruitment/t3/water.png",
-                    "recruitment/t3/earth.png",
-                    "recruitment/t3/fire.png",
-                    "recruitment/t3/air.png",
-                    "recruitment/t2/water.png",
-                    "recruitment/t2/earth.png",
-                    "recruitment/t2/fire.png",
-                    "recruitment/t2/air.png",
-                    "recruitment/t1/water.png",
-                    "recruitment/t1/earth.png",
-                    "recruitment/t1/fire.png",
-                    "recruitment/t1/air.png",
-                ]
-            )
-            if result is None:
-                not_found_count += 1
-                sleep(0.1)
-                continue
-            _, x, y = result
-            self.click(Coordinates(x, y))
 
     def _gather_resources(self) -> None:
         if self._troops_are_dispatched():
