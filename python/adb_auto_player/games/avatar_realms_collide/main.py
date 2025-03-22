@@ -47,6 +47,8 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 ]
             )
             if not result:
+                self.press_back_button()
+                sleep(3)
                 continue
             template, x, y = result
             match template:
@@ -60,8 +62,6 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     _ = self.wait_for_template("gui/map.png", timeout=5)
                 case "gui/map.png":
                     break
-                case _:
-                    self.press_back_button()
         sleep(3)
 
     def _auto_play_loop(self) -> None:
@@ -91,6 +91,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
     def _use_free_scroll(self) -> None:
         self._center_city_view_by_using_research()
+        logging.info("Collecting free scroll")
         scroll = self.game_find_template_match("altar/scroll.png")
         if not scroll:
             return
@@ -215,6 +216,8 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 threshold=0.7,
             )
 
+            self.click(Coordinates(*research_btn))
+            sleep(0.5)
             self.click(Coordinates(*research_btn))
             template, x, y = self.wait_for_any_template(
                 templates=[
@@ -463,23 +466,25 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             logging.warning("Alliance Research window not found")
             return None
 
-        def find_or_swipe(template: str):
+        def find_or_swipe_recommended():
             for _ in range(6):
-                match = self.game_find_template_match(template)
+                match = self.game_find_template_match(
+                    "alliance/research_recommended.png"
+                )
                 if match:
                     return match
                 self.swipe(800, 540, 300, 540)
                 sleep(2)
             return None
 
-        recommended = find_or_swipe("alliance/recommended.png")
+        recommended = find_or_swipe_recommended()
         if not recommended:
             self.game_find_template_match("alliance/research_territory.png")
-            recommended = find_or_swipe("alliance/recommended.png")
+            recommended = find_or_swipe_recommended()
 
         if not recommended:
             self.game_find_template_match("alliance/research_warfare.png")
-            recommended = find_or_swipe("alliance/recommended.png")
+            recommended = find_or_swipe_recommended()
 
         if not recommended:
             logging.warning("No recommended alliance research")
