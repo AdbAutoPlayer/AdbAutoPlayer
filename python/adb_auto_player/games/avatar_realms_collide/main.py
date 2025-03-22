@@ -228,6 +228,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 self.click(Coordinates(x, y))
 
             def click_and_hope_research_pops_up() -> tuple[int, int] | None:
+                y_coords = [250, 450, 550, 650, 850]
                 for y_coord in y_coords:
                     self.click(Coordinates(1250, y_coord))
                     sleep(2)
@@ -241,14 +242,17 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                             sleep(2)
                 return None
 
-            y_coords = [250, 450, 550, 650, 850]
-            for i in range(5):
-                research = click_and_hope_research_pops_up()
-                if research:
-                    break
-                self.swipe(500, 540, 400, 540)
-                sleep(2)
+            def try_to_find_research() -> tuple[int, int] | None:
+                research_coords = click_and_hope_research_pops_up()
+                for i in range(5):
+                    if research_coords:
+                        return research_coords
+                    self.swipe(500, 540, 400, 540)
+                    sleep(2)
+                    research_coords = click_and_hope_research_pops_up()
+                return research_coords
 
+            research = try_to_find_research()
             if not research:
                 economy = self.game_find_template_match("research/economy.png")
                 if not economy:
@@ -258,7 +262,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     return
                 self.click(Coordinates(*economy))
                 sleep(1)
-                research = click_and_hope_research_pops_up()
+                research = try_to_find_research()
 
             if research:
                 self.click(Coordinates(*research))
