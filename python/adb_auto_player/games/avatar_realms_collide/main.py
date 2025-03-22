@@ -39,13 +39,20 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
     def _navigate_to_city(self):
         while True:
-            template, x, y = self.find_any_template(
+            result = self.find_any_template(
                 templates=[
                     "gathering/search.png",
                     "gui/map.png",
+                    "gui/x.png",
                 ]
             )
+            if not result:
+                continue
+            template, x, y = result
             match template:
+                case "gui/x.png":
+                    self.click(Coordinates(x, y))
+                    sleep(1)
                 case "gathering/search.png":
                     logging.info("Returning to city")
                     self.click(Coordinates(100, 1000))
@@ -77,8 +84,27 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         if self.get_config().auto_play_config.collect_campaign_chest:
             self._collect_campaign_chest()
 
+        self._use_free_scroll()
+
         if self.get_config().auto_play_config.gather_resources:
             self._gather_resources()
+
+    def _use_free_scroll(self) -> None:
+        self._center_city_view_by_using_research()
+        scroll = self.game_find_template_match("altar/scroll.png")
+        if not scroll:
+            return
+        self.click(Coordinates(*scroll))
+        sleep(3)
+        free = self.game_find_template_match("altar/free.png")
+        if not free:
+            self._navigate_to_city()
+            return
+        self.click(Coordinates(*free))
+        ok = self.wait_for_template("altar/ok.png", timeout=15)
+        self.click(Coordinates(*ok))
+        sleep(1)
+        self._navigate_to_city()
 
     def _collect_campaign_chest(self) -> None:
         one_hour = 3600
@@ -216,7 +242,12 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 return None
 
             y_coords = [250, 450, 550, 650, 850]
-            research = click_and_hope_research_pops_up()
+            for i in range(5):
+                research = click_and_hope_research_pops_up()
+                if research:
+                    break
+                self.swipe(500, 540, 400, 540)
+                sleep(2)
 
             if not research:
                 economy = self.game_find_template_match("research/economy.png")
@@ -427,18 +458,24 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         except GameTimeoutError:
             logging.warning("Alliance Research window not found")
             return None
-        recommended = self.game_find_template_match("alliance/research_recommended.png")
+
+        def find_or_swipe(template: str):
+            for _ in range(6):
+                match = self.game_find_template_match(template)
+                if match:
+                    return match
+                self.swipe(800, 540, 300, 540)
+                sleep(2)
+            return None
+
+        recommended = find_or_swipe("alliance/recommended.png")
         if not recommended:
             self.game_find_template_match("alliance/research_territory.png")
-            recommended = self.game_find_template_match(
-                "alliance/research_recommended.png"
-            )
+            recommended = find_or_swipe("alliance/recommended.png")
 
         if not recommended:
             self.game_find_template_match("alliance/research_warfare.png")
-            recommended = self.game_find_template_match(
-                "alliance/research_recommended.png"
-            )
+            recommended = find_or_swipe("alliance/recommended.png")
 
         if not recommended:
             logging.warning("No recommended alliance research")
