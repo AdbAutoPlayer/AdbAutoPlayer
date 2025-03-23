@@ -48,7 +48,12 @@
         if (Array.isArray(constraint)) {
           continue;
         }
-        newConfig[sectionKey][key] = constraint.default_value;
+        const defaultValue = constraint.default_value;
+        if (Array.isArray(defaultValue)) {
+          newConfig[sectionKey][key] = [];
+        } else {
+          newConfig[sectionKey][key] = constraint.default_value;
+        }
         newConfigInFormData[sectionKey][key] = false;
       }
     }
@@ -68,9 +73,6 @@
         isImageCheckboxConstraint(constraint) ||
         isMultiCheckboxConstraint(constraint)
       ) {
-        if (!newConfig[keys[0]][keys[1]]) {
-          newConfig[keys[0]][keys[1]] = [];
-        }
         newConfig[keys[0]][keys[1]].push(val);
       } else {
         newConfig[keys[0]][keys[1]] = val;
@@ -80,8 +82,12 @@
     for (const sectionKey in constraints) {
       for (const key in constraints[sectionKey]) {
         if (false === newConfigInFormData[sectionKey][key]) {
-          console.log(sectionKey, key, newConfig[sectionKey][key]);
-          newConfig[sectionKey][key] = false;
+          const val = newConfig[sectionKey][key];
+          if (typeof val === "boolean") {
+            newConfig[sectionKey][key] = false;
+          } else {
+            console.log("processFormData unexpected type ", val);
+          }
         }
       }
     }
@@ -179,7 +185,6 @@
       sectionKey in configObject &&
       key in configObject[sectionKey]
     ) {
-      console.log("value: ", configObject[sectionKey][key]);
       return configObject[sectionKey][key];
     }
     if (Array.isArray(constraints[sectionKey][key])) {

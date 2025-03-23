@@ -9,6 +9,14 @@ Repeat = true
 ['Arcane Labyrinth']
 Difficulty = 13
 
+[Dailies]
+'Buy All Affinity' = false
+'Buy Discount Affinity' = true
+'Single Pull' = false
+
+['Dream Realm']
+'Spend Gold' = false
+
 ["Dura's Trials"]
 Attempts = 2
 Formations = 7
@@ -25,11 +33,3 @@ Formations = 7
 'Spend Gold' = false
 'Suggested Formations' = true
 Towers = ['Lightbearer', 'Wilder', 'Graveborn', 'Mauler']
-
-['Dream Realm']
-'Spend Gold' = false
-
-['Dailies']
-'Buy Discount Affinity' = false
-'Buy All Affinity' = false
-'Single Pull' = false
