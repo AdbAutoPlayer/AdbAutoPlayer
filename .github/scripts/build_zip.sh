@@ -35,15 +35,17 @@ mkdir -p "${BINARIES_DIR}"
 # Use find to copy all files from ${WORKSPACE}/python/adb_auto_player/games to ${RELEASE_ZIP_DIR}/games
 # and keep the directory structure except:
 # - .py files
+# - .toml files
 # - Directories starting with "_"
 # - Any directory named "mixins"
 find "${WORKSPACE}/python/adb_auto_player/games" -type f \
   -not -path "*/\_*/*" \
   -not -path "*/mixins/*" \
   -not -name "*.py" \
+  -not -name "*.toml" \
   -print0 | while IFS= read -r -d '' file; do
     # Get the relative path from the source directory
-    rel_path="${file#${WORKSPACE}/python/adb_auto_player/games/}"
+    rel_path="${file#"${WORKSPACE}"/python/adb_auto_player/games/}"
     # Create the destination directory
     dest_dir="${RELEASE_ZIP_DIR}/games/$(dirname "$rel_path")"
     mkdir -p "$dest_dir"
@@ -62,7 +64,6 @@ popd > /dev/null
 # cp -r "cmd/wails/build/bin/AdbAutoPlayer.app" "${RELEASE_ZIP_DIR}/"
 # Copy main binary (handling macOS unsigned app issue)
 cp "cmd/wails/build/bin/AdbAutoPlayer.app/Contents/MacOS/AdbAutoPlayer" "${RELEASE_ZIP_DIR}/"
-cp "config/config.toml" "${RELEASE_ZIP_DIR}/"
 
 echo "Running Nuitka build..."
 pushd "${WORKSPACE}/python" > /dev/null
