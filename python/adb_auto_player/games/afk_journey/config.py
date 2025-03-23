@@ -138,6 +138,9 @@ class DurasTrialsConfig(BaseModel):
     spend_gold: bool = Field(default=False, alias="Spend Gold")
 
 
+DEFAULT_TOWERS = list(TowerEnum.__members__.values())
+
+
 class LegendTrialsConfig(BaseModel):
     """Legend Trials config model."""
 
@@ -146,11 +149,11 @@ class LegendTrialsConfig(BaseModel):
     use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
     spend_gold: bool = Field(default=False, alias="Spend Gold")
     towers: list[TowerEnum] = Field(
-        default_factory=list,
+        default_factory=lambda: DEFAULT_TOWERS,
         alias="Towers",
         json_schema_extra={
             "constraint_type": "imagecheckbox",
-            "default_value": list(TowerEnum.__members__.values()),
+            "default_value": DEFAULT_TOWERS,
         },
     )
 
