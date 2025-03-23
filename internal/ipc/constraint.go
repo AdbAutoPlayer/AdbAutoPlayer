@@ -3,32 +3,43 @@ package ipc
 type Constraint interface{}
 
 type NumberConstraint struct {
-	Type    string  `json:"type"`
-	Step    float64 `json:"step"`
-	Minimum int     `json:"minimum"`
-	Maximum int     `json:"maximum"`
+	Type         string  `json:"type"`
+	Step         float64 `json:"step"`
+	Minimum      int     `json:"minimum"`
+	Maximum      int     `json:"maximum"`
+	DefaultValue int     `json:"default_value"`
 }
 
 type CheckboxConstraint struct {
-	Type string `json:"type"`
+	Type         string `json:"type"`
+	DefaultValue bool   `json:"default_value"`
 }
 
 type MultiCheckboxConstraint struct {
-	Type    string   `json:"type"`
-	Choices []string `json:"choices"`
+	Type         string   `json:"type"`
+	Choices      []string `json:"choices"`
+	DefaultValue []string `json:"default_value"`
 }
 
 type ImageCheckboxConstraint struct {
-	Type    string   `json:"type"`
-	Choices []string `json:"choices"`
+	Type         string   `json:"type"`
+	Choices      []string `json:"choices"`
+	DefaultValue []string `json:"default_value"`
 }
 
 type SelectConstraint struct {
-	Type    string   `json:"type"`
-	Choices []string `json:"choices"`
+	Type         string   `json:"type"`
+	Choices      []string `json:"choices"`
+	DefaultValue string   `json:"default_value"`
 }
 
-func NewNumberConstraint(minimum *int, maximum *int, step *float64) NumberConstraint {
+type TextConstraint struct {
+	Type         string `json:"type"`
+	Regex        string `json:"regex"`
+	DefaultValue string `json:"default_value"`
+}
+
+func NewNumberConstraint(minimum *int, maximum *int, step *float64, defaultValue int) NumberConstraint {
 	if minimum == nil {
 		minimum = new(int)
 		*minimum = 1
@@ -42,37 +53,37 @@ func NewNumberConstraint(minimum *int, maximum *int, step *float64) NumberConstr
 		*step = 1.0
 	}
 	return NumberConstraint{
-		Type:    "number",
-		Step:    *step,
-		Minimum: *minimum,
-		Maximum: *maximum,
+		Type:         "number",
+		Step:         *step,
+		Minimum:      *minimum,
+		Maximum:      *maximum,
+		DefaultValue: defaultValue,
 	}
 }
 
-func NewCheckboxConstraint() *CheckboxConstraint {
+func NewCheckboxConstraint(defaultValue bool) *CheckboxConstraint {
 	return &CheckboxConstraint{
-		Type: "checkbox",
+		Type:         "checkbox",
+		DefaultValue: defaultValue,
 	}
 }
 
-func NewMultiCheckboxConstraint(choices []string) MultiCheckboxConstraint {
-	return MultiCheckboxConstraint{
-		Type:    "multicheckbox",
-		Choices: choices,
-	}
-}
-
-func NewImageCheckboxConstraint(choices []string) ImageCheckboxConstraint {
-	return ImageCheckboxConstraint{
-		Type:    "imagecheckbox",
-		Choices: choices,
-	}
-}
-
-func NewSelectConstraint(choices []string) SelectConstraint {
+func NewSelectConstraint(choices []string, defaultValue string) SelectConstraint {
 	return SelectConstraint{
-		Type:    "select",
-		Choices: choices,
+		Type:         "select",
+		Choices:      choices,
+		DefaultValue: defaultValue,
+	}
+}
+
+func NewTextConstraint(regex *string, defaultValue string) TextConstraint {
+	if regex == nil {
+		regex = new(string)
+	}
+	return TextConstraint{
+		Type:         "text",
+		Regex:        *regex,
+		DefaultValue: defaultValue,
 	}
 }
 
@@ -83,16 +94,16 @@ func GetMainConfigConstraints() map[string]interface{} {
 	// Combine them into a map for use in the config
 	return map[string]interface{}{
 		"Device": map[string]interface{}{
-			"ID":               []string{},
-			"Resize Display":   NewCheckboxConstraint(),
-			"Device Streaming": NewCheckboxConstraint(),
+			"ID":               NewTextConstraint(nil, "127.0.0.1:5555"),
+			"Resize Display":   NewCheckboxConstraint(false),
+			"Device Streaming": NewCheckboxConstraint(true),
 			"Order": []string{
 				"ID", "Device Streaming", "Resize Display",
 			},
 		},
 		"ADB": map[string]interface{}{
-			"Host": []string{},
-			"Port": NewNumberConstraint(&portMin, &portMax, nil),
+			"Host": NewTextConstraint(nil, "127.0.0.1"),
+			"Port": NewNumberConstraint(&portMin, &portMax, nil, 5037),
 		},
 		"Logging": map[string]interface{}{
 			"Level": NewSelectConstraint([]string{
@@ -101,8 +112,8 @@ func GetMainConfigConstraints() map[string]interface{} {
 				string(LogLevelWarning),
 				string(LogLevelError),
 				string(LogLevelFatal),
-			}),
-			"Debug Screenshot Limit": NewNumberConstraint(nil, nil, nil),
+			}, string(LogLevelInfo)),
+			"Debug Screenshot Limit": NewNumberConstraint(nil, nil, nil, 30),
 		},
 		"Order": []string{
 			"ADB", "Device", "Logging",
