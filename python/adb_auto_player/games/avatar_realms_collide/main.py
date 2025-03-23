@@ -529,14 +529,27 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
     def _click_help(self) -> None:
         logging.info("Clicking help")
-        while result := self.find_any_template(
-            [
-                "alliance/help_request.png",
-                "alliance/help_button.png",
-            ],
-            threshold=0.7,
-            crop=CropRegions(top=0.1, right=0.1),
-        ):
+        no_help_found_count = 0
+        max_count = 3
+        while no_help_found_count < max_count:
+            result = self.find_any_template(
+                [
+                    "alliance/help_request.png",
+                    "alliance/help_button.png",
+                    "alliance/help_bubble.png",
+                ],
+                threshold=0.7,
+                crop=CropRegions(
+                    left=0.1,
+                    right=0.1,
+                    top=0.1,
+                    bottom=0.1,
+                ),
+            )
+            if not result:
+                no_help_found_count += 1
+                sleep(0.5)
+                continue
             _, x, y = result
             self.click(Coordinates(x, y))
             sleep(2)
