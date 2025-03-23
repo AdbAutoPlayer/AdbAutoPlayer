@@ -204,12 +204,14 @@ def _try_incrementing_ports(client: AdbClient, device_id: str) -> AdbDevice | No
         address, port_str = device_id.rsplit(":", 1)
         if port_str.isdigit():
             port = int(port_str) + 1
-            for port_increment in range(4):  # 5555-5559
+            # 5556-5559 in case emulator used increments by 1
+            for port_increment in range(4):
                 new_device_id = f"{address}:{port + port_increment}"
                 device = _connect_to_device(client, new_device_id)
                 if device is not None:
                     return device
         if port_str == "5555":
+            # BlueStacks 5 seems to increment by 10 for the next port
             for port in [5565, 5575, 5585]:
                 new_device_id = f"{address}:{port}"
                 device = _connect_to_device(client, new_device_id)
