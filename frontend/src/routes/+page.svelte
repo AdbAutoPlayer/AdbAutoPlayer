@@ -182,6 +182,7 @@
     }
 
     try {
+      console.log(configObject);
       await SaveGameConfig(configObject);
     } catch (error) {
       console.error(error);

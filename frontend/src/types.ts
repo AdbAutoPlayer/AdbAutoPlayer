@@ -18,25 +18,36 @@ interface NumberConstraint extends BaseConstraint {
   step: number;
   minimum: number;
   maximum: number;
+  default_value: number;
 }
 
 interface CheckboxConstraint extends BaseConstraint {
   type: "checkbox";
+  default_value: boolean;
 }
 
 interface MultiCheckboxConstraint extends BaseConstraint {
   type: "multicheckbox";
   choices: string[];
+  default_value: string[];
 }
 
 interface ImageCheckboxConstraint extends BaseConstraint {
   type: "imagecheckbox";
   choices: string[];
+  default_value: string[];
 }
 
 interface SelectConstraint extends BaseConstraint {
   type: "select";
   choices: string[];
+  default_value: string;
+}
+
+interface TextConstraint extends BaseConstraint {
+  type: "text";
+  regex: string;
+  default_value: string;
 }
 
 // Combined constraint type
@@ -46,8 +57,8 @@ type Constraint =
   | MultiCheckboxConstraint
   | ImageCheckboxConstraint
   | SelectConstraint
-  | string[] // For arrays like "Order"
-  | string; // For simple string values
+  | TextConstraint
+  | string[]; // For arrays like "Order"
 
 interface ConstraintSection {
   [key: string]: Constraint;
