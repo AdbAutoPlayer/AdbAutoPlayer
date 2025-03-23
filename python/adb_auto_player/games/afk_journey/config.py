@@ -111,7 +111,9 @@ class GeneralConfig(BaseModel):
     excluded_heroes: list[HeroesEnum] = Field(
         default_factory=list,
         alias="Exclude Heroes",
-        json_schema_extra={"constraint_type": "multicheckbox"},
+        json_schema_extra={
+            "constraint_type": "multicheckbox",
+        },
     )
     assist_limit: PositiveInt = Field(default=20, alias="Assist Limit")
 
@@ -146,7 +148,10 @@ class LegendTrialsConfig(BaseModel):
     towers: list[TowerEnum] = Field(
         default_factory=list,
         alias="Towers",
-        json_schema_extra={"constraint_type": "image_checkbox"},
+        json_schema_extra={
+            "constraint_type": "imagecheckbox",
+            "default_value": list(TowerEnum.__members__.values()),
+        },
     )
 
     @field_validator("towers", mode="before")

@@ -10,6 +10,7 @@ class NumberConstraintDict(TypedDict):
     minimum: int
     maximum: int
     step: float
+    default_value: int
 
 
 class SelectConstraintDict(TypedDict):
@@ -17,12 +18,14 @@ class SelectConstraintDict(TypedDict):
 
     type: Literal["select"]
     choices: list[str]
+    default_value: str
 
 
 class CheckboxConstraintDict(TypedDict):
     """Checkbox constraint."""
 
     type: Literal["checkbox"]
+    default_value: bool
 
 
 class MultiCheckboxConstraintDict(TypedDict):
@@ -30,6 +33,7 @@ class MultiCheckboxConstraintDict(TypedDict):
 
     type: Literal["multicheckbox"]
     choices: list[str]
+    default_value: list[str]
 
 
 class ImageCheckboxConstraintDict(TypedDict):
@@ -37,12 +41,15 @@ class ImageCheckboxConstraintDict(TypedDict):
 
     type: Literal["imagecheckbox"]
     choices: list[str]
+    default_value: list[str]
 
 
 class TextConstraintDict(TypedDict):
     """Text constraint."""
 
     type: Literal["text"]
+    regex: str
+    default_value: str
 
 
 ConstraintType = (
@@ -56,7 +63,7 @@ ConstraintType = (
 
 
 def create_number_constraint(
-    minimum: int = 1, maximum: int = 999, step: float = 1.0
+    default_value: int, minimum: int = 1, maximum: int = 999, step: float = 1.0
 ) -> NumberConstraintDict:
     """Create a number constraint."""
     return NumberConstraintDict(
@@ -64,29 +71,53 @@ def create_number_constraint(
         minimum=minimum,
         maximum=maximum,
         step=step,
+        default_value=default_value,
     )
 
 
-def create_select_constraint(choices: list[str]) -> SelectConstraintDict:
+def create_select_constraint(
+    choices: list[str], default_value: str
+) -> SelectConstraintDict:
     """Create a select constraint."""
-    return SelectConstraintDict(type="select", choices=choices)
+    return SelectConstraintDict(
+        type="select",
+        choices=choices,
+        default_value=default_value,
+    )
 
 
-def create_checkbox_constraint() -> CheckboxConstraintDict:
+def create_checkbox_constraint(default_value: bool) -> CheckboxConstraintDict:
     """Create a checkbox constraint."""
-    return CheckboxConstraintDict(type="checkbox")
+    return CheckboxConstraintDict(
+        type="checkbox",
+        default_value=default_value,
+    )
 
 
-def create_multicheckbox_constraint(choices: list[str]) -> MultiCheckboxConstraintDict:
+def create_multicheckbox_constraint(
+    choices: list[str],
+    default_value: list[str],
+) -> MultiCheckboxConstraintDict:
     """Create a multicheckbox constraint."""
-    return MultiCheckboxConstraintDict(type="multicheckbox", choices=choices)
+    return MultiCheckboxConstraintDict(
+        type="multicheckbox",
+        choices=choices,
+        default_value=default_value,
+    )
 
 
-def create_image_checkbox_constraint(choices: list[str]) -> ImageCheckboxConstraintDict:
+def create_image_checkbox_constraint(
+    choices: list[str],
+    default_value: list[str],
+) -> ImageCheckboxConstraintDict:
     """Create an image checkbox constraint."""
-    return ImageCheckboxConstraintDict(type="imagecheckbox", choices=choices)
+    return ImageCheckboxConstraintDict(
+        type="imagecheckbox",
+        choices=choices,
+        default_value=default_value,
+    )
 
 
-def create_text_constraint() -> TextConstraintDict:
+def create_text_constraint(default_value: str) -> TextConstraintDict:
     """Create a text constraint."""
-    return TextConstraintDict(type="text")
+    return TextConstraintDict(type="text", regex="", default_value=default_value)

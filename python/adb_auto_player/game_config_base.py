@@ -1,7 +1,9 @@
 """Base configuration functionality for all game configs."""
 
+import logging
 import tomllib
 from pathlib import Path
+from typing import cast
 
 from adb_auto_player.ipc.constraint import (
     ConstraintType,
@@ -12,6 +14,7 @@ from adb_auto_player.ipc.constraint import (
     create_text_constraint,
 )
 from pydantic import BaseModel
+from pydantic.fields import FieldInfo
 
 
 class ConfigBase(BaseModel):
@@ -27,10 +30,25 @@ class ConfigBase(BaseModel):
         Returns:
             An instance of the Config class initialized with data from the TOML file.
         """
-        with open(file_path, "rb") as f:
-            toml_data = tomllib.load(f)
+        toml_data = {}
+        if file_path.exists():
+            try:
+                with open(file_path, "rb") as f:
+                    toml_data = tomllib.load(f)
 
-        return cls(**toml_data)
+            except Exception as e:
+                logging.error(f"Error reading config file: {e} - Using default values")
+
+        default_data = {}
+        for field in cls.model_fields.values():
+            field = cast(FieldInfo, field)
+            if field.alias not in toml_data:
+                field_type = field.annotation
+                if hasattr(field_type, "model_fields"):
+                    default_data[field.alias] = field_type().model_dump()
+
+        merged_data = {**default_data, **toml_data}
+        return cls(**merged_data)
 
     @classmethod
     def get_constraints(cls) -> dict[str, dict[str, ConstraintType]]:
@@ -86,18 +104,19 @@ class ConfigBase(BaseModel):
         items_ref = field_schema.get("items", {}).get("$ref", "")
         enum_name = items_ref.split("/")[-1]
         enum_values = schema.get("$defs", {}).get(enum_name, {}).get("enum", [])
-
+        default_value = field_schema.get("default_value", list())
         match constraint_type:
             case "multicheckbox":
-                return create_multicheckbox_constraint(enum_values)
-            case "image_checkbox":
-                return create_image_checkbox_constraint(enum_values)
+                return create_multicheckbox_constraint(enum_values, default_value)
+            case "imagecheckbox":
+                return create_image_checkbox_constraint(enum_values, default_value)
             case _:
                 raise ValueError(f"Unknown constraint_type {constraint_type}")
 
     @classmethod
     def _handle_standard_field_types(cls, field_schema: dict) -> ConstraintType:
         """Handle standard field types like integer, boolean, and default to text."""
+        default_value = field_schema.get("default")
         match field_schema.get("type"):
             case "integer":
                 minimum = field_schema.get("minimum") or 1
@@ -117,8 +136,9 @@ class ConfigBase(BaseModel):
                 return create_number_constraint(
                     minimum=minimum,
                     maximum=maximum,
+                    default_value=cast(int, default_value),
                 )
             case "boolean":
-                return create_checkbox_constraint()
+                return create_checkbox_constraint(cast(bool, default_value))
             case _:
-                return create_text_constraint()
+                return create_text_constraint(cast(str, default_value))
