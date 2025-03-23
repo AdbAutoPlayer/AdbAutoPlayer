@@ -340,6 +340,8 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         if self.find_any_template(
             templates=[
                 "gathering/troop_max_3.png",
+                "gathering/troop_max_4.png",
+                # "gathering/troop_max_5.png",
             ],
             crop=CropRegions(left=0.8, bottom=0.5),
         ):
