@@ -238,11 +238,11 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     result = self.game_find_template_match("research/research.png")
                     if result:
                         return result
-                    if self.game_find_template_match("research/max_level.png"):
-                        x_btn = self.game_find_template_match("gui/x.png")
-                        if x_btn:
-                            self.click(Coordinates(*x_btn))
-                            sleep(2)
+
+                    x_btn = self.game_find_template_match("gui/x.png")
+                    if x_btn:
+                        self.click(Coordinates(*x_btn))
+                        sleep(2)
                 return None
 
             def try_to_find_research() -> tuple[int, int] | None:
@@ -521,7 +521,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 "harvest/gold.png",
             ],
             threshold=0.7,
-            crop=CropRegions(top=0.1),
+            crop=CropRegions(top=0.2, left=0.1, right=0.1, bottom=0.1),
         ):
             _, x, y = result
             self.click(Coordinates(x, y))
