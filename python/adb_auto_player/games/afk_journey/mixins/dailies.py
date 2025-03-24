@@ -90,6 +90,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def buy_emporium(self) -> None:
         """Purchase single pull and optionally affinity items."""
         logging.info("Entering Mystical House...")
+        self._navigate_to_default_state()
         self.click(Coordinates(310, 1840), scale=True)
 
         try:
