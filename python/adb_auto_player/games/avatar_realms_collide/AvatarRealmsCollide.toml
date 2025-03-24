@@ -1,0 +1,7 @@
+['Auto Play']
+Research = true
+Build = true
+"Recruit Troops" = true
+"Alliance Research & Gifts" = true
+"Collect Campaign Chest" = true
+"Gather Resources" = ['Food', 'Wood', 'Stone', 'Gold']

@@ -15,6 +15,7 @@ from adb_auto_player.adb import (
     wm_size_reset,
 )
 from adb_auto_player.games import AFKJourney, InfinityNikki
+from adb_auto_player.games.avatar_realms_collide import AvatarRealmsCollide
 from adb_auto_player.ipc import GameGUIOptions
 from adb_auto_player.logging_setup import setup_json_log_handler, setup_text_log_handler
 from adbutils import AdbError
@@ -24,6 +25,7 @@ from adbutils._device import AdbDevice
 def _get_games() -> list[Game]:
     return [
         AFKJourney(),
+        AvatarRealmsCollide(),
         InfinityNikki(),
     ]
 
