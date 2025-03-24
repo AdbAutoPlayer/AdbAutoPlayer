@@ -12,7 +12,7 @@
 ## 🐍 Python
 - Support for running multiple bots/configs (Yules: Can't find the motivation to do this because I personally have no use for it at the moment.)
 - GFL2 Daily automation
-- Migrate Poetry to https://github.com/astral-sh/uv
+- Refactor backend second pass
 
 ## General
 - Yules - Refactor Config logic

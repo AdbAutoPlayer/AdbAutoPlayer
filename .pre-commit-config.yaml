@@ -32,7 +32,18 @@ repos:
     hooks:
       - id: mypy
         files: python/
-        language_version: python3.12
+
+  # UV
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    # uv version.
+    rev: 0.6.9
+    hooks:
+      - id: uv-lock
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    # uv version.
+    rev: 0.6.9
+    hooks:
+      - id: uv-export
 
   # Golang
   - repo: https://github.com/golangci/golangci-lint

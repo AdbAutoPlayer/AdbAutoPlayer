@@ -9,28 +9,38 @@ If you only want to develop bots or run it in CLI you do not have to set up Go a
 > [!IMPORTANT]
 > Execute these commands in the python directory
 ### Windows
-1. Install [Python](https://www.python.org/downloads/)
-2. Install [Poetry](https://python-poetry.org/docs/#installing-with-the-official-installer)
-3. Create virtualenv and install
+1. Install [UV](https://github.com/astral-sh/uv).
     ```shell
-    poetry shell
-    poetry install
+    curl -LsSf https://astral.sh/uv/install.sh | sh
     ```
-4. You can run the CLI like this:
+2. Install Python.
     ```shell
-    poetry run adb-auto-player
+    uv python install
+    ```
+3. Verify the player runs on CLI by showing the help.
+    ```shell
+    uv run adb-auto-player -h
     ```
 
 ### MacOS
-1. Install [Python](https://formulae.brew.sh/formula/python@3.12)
-2. Install [Poetry](https://python-poetry.org/docs/#installing-with-pipx)
+1. Install [UV](https://github.com/astral-sh/uv).
+    ```shell
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+2. Install Python.
+    ```shell
+    uv python install
+    ```
 3. Install [Adb](https://formulae.brew.sh/cask/android-platform-tools)
-4. Create virtualenv and install
-   ```shell
-   poetry shell
-   poetry install
-   ```
-5. You can run the CLI like this:
-   ```shell
-   poetry run adb-auto-player
-   ```
+4. Verify the player runs on CLI by showing the help.
+    ```shell
+    uv run adb-auto-player -h
+    ```
+
+## Note:
+UV creates a standard python virtual environment by default.
+Standard Unix command:
+```shell
+source .venv/bin/activate
+```
+More examples in [UV Docs](https://docs.astral.sh/uv/pip/environments/#creating-a-virtual-environment).
