@@ -13,6 +13,7 @@ Difficulty = 13
 'Buy All Affinity' = false
 'Buy Discount Affinity' = true
 'Single Pull' = false
+'Arena Battle' = false
 
 ['Dream Realm']
 'Spend Gold' = false

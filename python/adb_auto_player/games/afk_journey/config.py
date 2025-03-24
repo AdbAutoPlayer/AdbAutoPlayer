@@ -184,6 +184,7 @@ class DailiesConfig(BaseModel):
     buy_discount_affinity: bool = Field(default=True, alias="Buy Discount Affinity")
     buy_all_affinity: bool = Field(default=False, alias="Buy All Affinity")
     single_pull: bool = Field(default=False, alias="Single Pull")
+    arena_battle: bool = Field(default=False, alias="Arena Battle")
 
 
 class Config(ConfigBase):
