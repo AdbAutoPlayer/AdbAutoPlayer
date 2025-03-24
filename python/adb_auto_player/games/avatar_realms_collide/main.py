@@ -43,6 +43,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 templates=[
                     "gathering/search.png",
                     "gui/map.png",
+                    "gui/ok.png",
                     "gui/x.png",
                 ]
             )
@@ -59,10 +60,28 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     logging.info("Returning to city")
                     self.click(Coordinates(100, 1000))
                     sleep(3)
-                    _ = self.wait_for_template("gui/map.png", timeout=5)
+                    try:
+                        _ = self.wait_for_template("gui/map.png", timeout=5)
+                    except GameTimeoutError:
+                        # happens on a disconnect
+                        self.click(Coordinates(1560, 970))
+                case "gui/ok.png":
+                    self.click(Coordinates(x, y))
+                    sleep(3)
                 case "gui/map.png":
                     break
         sleep(3)
+
+    def _attempt_to_reconnect(self) -> None:
+        logging.info("Attempting to reconnect...")
+        self.click(Coordinates(1560, 970))
+        try:
+            while ok := self.wait_for_template("gui/ok.png", timeout=5):
+                self.click(Coordinates(*ok))
+                sleep(1)
+        except GameTimeoutError:
+            return
+        return
 
     def _auto_play_loop(self) -> None:
         self._click_help()
@@ -92,10 +111,17 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
     def _use_free_scroll(self) -> None:
         self._center_city_view_by_using_research()
         logging.info("Collecting free scroll")
-        scroll = self.game_find_template_match("altar/scroll.png")
+        scroll = self.find_any_template(
+            [
+                "altar/scroll.png",
+                "altar/scroll2.png",
+            ],
+            threshold=0.7,
+        )
         if not scroll:
             return
-        self.click(Coordinates(*scroll))
+        _, x, y = scroll
+        self.click(Coordinates(x, y))
         sleep(3)
         free = self.game_find_template_match("altar/free.png")
         if not free:
@@ -106,6 +132,18 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         self.click(Coordinates(*ok))
         sleep(1)
         self._navigate_to_city()
+
+    def _healing(self) -> None:
+        try:
+            while heal_complete := self.wait_for_template(
+                template="healing/complete.png",
+                timeout=5,
+            ):
+                self.click(Coordinates(*heal_complete))
+                sleep(1)
+        except GameTimeoutError:
+            return
+        return
 
     def _collect_campaign_chest(self) -> None:
         one_hour = 3600
@@ -239,7 +277,9 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     if result:
                         return result
 
-                    x_btn = self.game_find_template_match("gui/x.png")
+                    x_btn = self.game_find_template_match(
+                        "gui/x.png", crop=CropRegions(right=0.1)
+                    )
                     if x_btn:
                         self.click(Coordinates(*x_btn))
                         sleep(2)
@@ -368,9 +408,26 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             self.click(Coordinates(x, y))
             _ = self.wait_for_template("gui/search.png", timeout=5)
             sleep(1)
-            search_button = self.wait_for_template("gui/search.png", timeout=5)
+            search_button = self.wait_for_template(
+                "gui/search.png",
+                threshold=0.7,
+                timeout=5,
+            )
             self.click(Coordinates(*search_button))
-            sleep(5)
+            sleep(1)
+            try:
+                self.wait_until_template_disappears(
+                    "gui/search.png",
+                    threshold=0.7,
+                    timeout=3,
+                )
+            except GameTimeoutError:
+                logging.warning(f"{resource} not found, trying next one")
+                self.press_back_button()
+                self.gather_count += 1
+                sleep(0.5)
+                continue
+            sleep(4)
             self.click(Coordinates(960, 520))
             x, y = self.wait_for_template("gui/gather.png", timeout=5)
             sleep(0.5)

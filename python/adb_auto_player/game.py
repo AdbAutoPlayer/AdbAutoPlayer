@@ -768,7 +768,7 @@ class Game:
             result = operation()
             if result_should_be_none and result is None:
                 return None  # type: ignore
-            elif result is not None:
+            if not result_should_be_none and result is not None:
                 return result
 
             sleep(delay)
