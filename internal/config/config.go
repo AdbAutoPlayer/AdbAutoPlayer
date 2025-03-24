@@ -2,8 +2,10 @@ package config
 
 import (
 	"adb-auto-player/internal/ipc"
+	"fmt"
 	"github.com/pelletier/go-toml/v2"
 	"os"
+	"path/filepath"
 	"regexp"
 )
 
@@ -61,6 +63,8 @@ func LoadConfig[T any](filePath string) (*T, error) {
 }
 
 func SaveConfig[T any](filePath string, config *T) error {
+	fmt.Printf("Saving config to %s\n", filePath)
+	fmt.Printf("Config: %+v\n", config)
 	newConfigData, err := toml.Marshal(config)
 	if err != nil {
 		return err
@@ -72,6 +76,9 @@ func SaveConfig[T any](filePath string, config *T) error {
 	modifiedConfigStr := regexp.MustCompile(`=(\s\d+)\.0(\s|$)`).ReplaceAllString(configStr, `=$1$2`)
 	newConfigData = []byte(modifiedConfigStr)
 
+	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
+		return err
+	}
 	if err := os.WriteFile(filePath, newConfigData, 0644); err != nil {
 		return err
 	}

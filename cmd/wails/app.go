@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"os"
@@ -76,17 +75,19 @@ func (a *App) shutdown(ctx context.Context) {
 	}
 }
 
-func (a *App) GetEditableMainConfig() (map[string]interface{}, error) {
+func (a *App) GetEditableMainConfig() map[string]interface{} {
 	mainConfig, err := config.LoadConfig[config.MainConfig](a.getMainConfigPath())
-	if err != nil {
-		return nil, err
+	if err == nil {
+		runtime.LogDebugf(a.ctx, "%v", err)
+		tmp := config.NewMainConfig()
+		mainConfig = &tmp
 	}
 
 	response := map[string]interface{}{
 		"config":      mainConfig,
 		"constraints": ipc.GetMainConfigConstraints(),
 	}
-	return response, nil
+	return response
 }
 
 func (a *App) SaveMainConfig(mainConfig config.MainConfig) error {
@@ -120,13 +121,13 @@ func (a *App) GetEditableGameConfig(game ipc.GameGUI) (map[string]interface{}, e
 	configPath := GetFirstPathThatExists(paths)
 
 	if configPath == nil {
-		errorText := fmt.Sprintf(
-			"no %s config found at %s",
-			game.GameTitle,
-			strings.Join(paths, ", "),
-		)
-		runtime.LogErrorf(a.ctx, "%s", errorText)
-		return nil, errors.New(errorText)
+		a.lastOpenGameConfigPath = &paths[0]
+		response := map[string]interface{}{
+			"config":      map[string]interface{}{},
+			"constraints": game.Constraints,
+		}
+
+		return response, nil
 	}
 
 	a.lastOpenGameConfigPath = configPath
@@ -322,5 +323,8 @@ func (a *App) getMainConfigPath() string {
 
 	a.mainConfigPath = configPath
 
+	if a.mainConfigPath == nil {
+		return paths[0]
+	}
 	return *configPath
 }

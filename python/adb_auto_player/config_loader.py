@@ -69,6 +69,10 @@ class ConfigLoader:
                 (c for c in candidates if c.exists()), candidates[0]
             )
             logging.debug(f"Python config.toml path: {config_toml_path}")
-            with open(config_toml_path, "rb") as f:
-                self._main_config = tomllib.load(f)
+            try:
+                with open(config_toml_path, "rb") as f:
+                    self._main_config = tomllib.load(f)
+            except Exception as e:
+                logging.debug(f"Failed to load main config: {e}")
+                return {}
         return self._main_config

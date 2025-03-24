@@ -36,36 +36,61 @@
   }
 
   function processFormData(formData: FormData): Record<string, any> {
-    const newConfig: { [key: string]: Record<string, any> } = JSON.parse(
-      JSON.stringify(configObject),
-    );
+    const newConfig: Record<string, any> = {};
+    const newConfigInFormData: Record<string, any> = {};
+    for (const sectionKey in constraints) {
+      if (!newConfig[sectionKey]) {
+        newConfig[sectionKey] = {};
+        newConfigInFormData[sectionKey] = {};
+      }
+      for (const key in constraints[sectionKey]) {
+        const constraint = constraints[sectionKey][key];
+        if (Array.isArray(constraint)) {
+          continue;
+        }
+        const defaultValue = constraint.default_value;
+        if (Array.isArray(defaultValue)) {
+          newConfig[sectionKey][key] = [];
+        } else {
+          newConfig[sectionKey][key] = constraint.default_value;
+        }
+        newConfigInFormData[sectionKey][key] = false;
+      }
+    }
+    formData.forEach((value, key) => {
+      const keys = key.split("-");
+      newConfigInFormData[keys[0]][keys[1]] = true;
+      let val: any = value;
+      const constraint = constraints[keys[0]]?.[keys[1]];
+      if (isCheckboxConstraint(constraint)) {
+        val = Boolean(value);
+      }
+      if (isNumberConstraint(constraint)) {
+        val = Number(value);
+      }
 
-    for (const [sectionKey, sectionConfig] of Object.entries(newConfig)) {
-      if (sectionKey === "plugin") continue;
+      if (
+        isImageCheckboxConstraint(constraint) ||
+        isMultiCheckboxConstraint(constraint)
+      ) {
+        newConfig[keys[0]][keys[1]].push(val);
+      } else {
+        newConfig[keys[0]][keys[1]] = val;
+      }
+    });
 
-      for (const key of Object.keys(sectionConfig)) {
-        const inputName = `${sectionKey}-${key}`;
-        const inputValues = formData.getAll(inputName);
-
-        switch (typeof sectionConfig[key]) {
-          case "boolean":
-            sectionConfig[key] = formData.has(inputName);
-            break;
-          case "number":
-            sectionConfig[key] = Number(formData.get(inputName));
-            break;
-          case "object":
-            if (Array.isArray(sectionConfig[key])) {
-              sectionConfig[key] = inputValues.map(String);
-            }
-            break;
-          default:
-            sectionConfig[key] = formData.get(inputName);
-            break;
+    for (const sectionKey in constraints) {
+      for (const key in constraints[sectionKey]) {
+        if (false === newConfigInFormData[sectionKey][key]) {
+          const val = newConfig[sectionKey][key];
+          if (typeof val === "boolean") {
+            newConfig[sectionKey][key] = false;
+          } else {
+            console.log("processFormData unexpected type ", val);
+          }
         }
       }
     }
-
     return newConfig;
   }
 
@@ -143,10 +168,34 @@
     );
   }
 
+  function isCheckboxConstraint(value: any): value is CheckboxConstraint {
+    return value.type === "checkbox";
+  }
+
   function isSelectConstraint(value: any): value is SelectConstraint {
     return (
       typeof value === "object" && value !== null && value.type === "select"
     );
+  }
+
+  function getValueOrDefault(sectionKey: string, key: string): any {
+    if (
+      configObject &&
+      configObject[sectionKey] &&
+      sectionKey in configObject &&
+      key in configObject[sectionKey]
+    ) {
+      return configObject[sectionKey][key];
+    }
+    if (Array.isArray(constraints[sectionKey][key])) {
+      console.error("Should not happen");
+      return null;
+    }
+    return constraints[sectionKey][key].default_value;
+  }
+
+  function isTextConstraint(value: any): value is TextConstraint {
+    return value.type === "text";
   }
 </script>
 
@@ -171,7 +220,7 @@
                     type="checkbox"
                     id="{sectionKey}-{key}"
                     name="{sectionKey}-{key}"
-                    checked={Boolean(configObject[sectionKey][key])}
+                    checked={Boolean(getValueOrDefault(sectionKey, key))}
                     class="checkbox"
                   />
                 {:else if isNumberConstraint(value)}
@@ -179,7 +228,7 @@
                     type="number"
                     id="{sectionKey}-{key}"
                     name="{sectionKey}-{key}"
-                    value={configObject[sectionKey][key]}
+                    value={getValueOrDefault(sectionKey, key)}
                     min={value.minimum}
                     max={value.maximum}
                     step={value.step}
@@ -189,7 +238,7 @@
                   <MultiCheckbox
                     choices={value.choices}
                     value={getStringArrayOrEmptyArray(
-                      configObject[sectionKey][key],
+                      getValueOrDefault(sectionKey, key),
                     )}
                     name="{sectionKey}-{key}"
                   />
@@ -197,7 +246,7 @@
                   <ImageCheckbox
                     choices={value.choices}
                     value={getStringArrayOrEmptyArray(
-                      configObject[sectionKey][key],
+                      getValueOrDefault(sectionKey, key),
                     )}
                     name="{sectionKey}-{key}"
                   />
@@ -210,18 +259,19 @@
                     {#each value.choices as option}
                       <option
                         value={option}
-                        selected={configObject[sectionKey][key] === option}
+                        selected={getValueOrDefault(sectionKey, key) === option}
                         >{option}</option
                       >
                     {/each}
                   </select>
-                {:else}
+                {:else if isTextConstraint(value)}
                   <input
                     type="text"
                     id="{sectionKey}-{key}"
                     name="{sectionKey}-{key}"
-                    value={configObject[sectionKey][key]}
+                    value={getValueOrDefault(sectionKey, key)}
                     class="input w-full"
+                    {...value.regex ? { pattern: value.regex } : {}}
                   />
                 {/if}
               </div>
