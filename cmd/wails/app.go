@@ -77,7 +77,7 @@ func (a *App) shutdown(ctx context.Context) {
 
 func (a *App) GetEditableMainConfig() map[string]interface{} {
 	mainConfig, err := config.LoadConfig[config.MainConfig](a.getMainConfigPath())
-	if err == nil {
+	if err != nil {
 		runtime.LogDebugf(a.ctx, "%v", err)
 		tmp := config.NewMainConfig()
 		mainConfig = &tmp

@@ -34,7 +34,7 @@ type LoggingConfig struct {
 func NewMainConfig() MainConfig {
 	return MainConfig{
 		Device: DeviceConfig{
-			ID:          "emulator-5554",
+			ID:          "127.0.0.1:5555",
 			UseWMResize: false,
 			Streaming:   true,
 		},

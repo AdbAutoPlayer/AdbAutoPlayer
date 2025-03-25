@@ -378,16 +378,19 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         return
 
     def _troops_are_dispatched(self) -> bool:
-        if self.find_any_template(
-            templates=[
-                "gathering/troop_max_3.png",
-                "gathering/troop_max_4.png",
-                # "gathering/troop_max_5.png",
-            ],
-            crop=CropRegions(left=0.8, bottom=0.5),
-        ):
-            return True
-        return False
+        try:
+            self.wait_for_any_template(
+                templates=[
+                    "gathering/troop_max_3.png",
+                    "gathering/troop_max_4.png",
+                    # "gathering/troop_max_5.png",
+                ],
+                crop=CropRegions(left=0.8, bottom=0.5),
+                timeout=3,
+            )
+        except GameTimeoutError:
+            return False
+        return True
 
     def _start_gathering(self, search_coordinates: Coordinates) -> None:
         while not self._troops_are_dispatched():
