@@ -53,10 +53,6 @@ jobs:
         working-directory: python
         run: uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version "${{ github.event.release.tag_name }}"
 
-      - name: uv install
-        working-directory: python
-        run: uv install
-
       - uses: actions/setup-go@v5
         with:
           go-version: '1.23'
