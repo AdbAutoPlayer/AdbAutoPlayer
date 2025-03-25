@@ -23,7 +23,7 @@ var assets embed.FS
 func main() {
 	changeWorkingDirForProd()
 
-	logLevel := logger.DEBUG
+	logLevel := logger.INFO
 	mainConfig, err := config.LoadConfig[config.MainConfig]("config.toml")
 	if err == nil {
 		switch mainConfig.Logging.Level {
