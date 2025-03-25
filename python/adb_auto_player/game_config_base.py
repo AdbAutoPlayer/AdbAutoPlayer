@@ -107,9 +107,19 @@ class ConfigBase(BaseModel):
         default_value = field_schema.get("default_value", list())
         match constraint_type:
             case "multicheckbox":
-                return create_multicheckbox_constraint(enum_values, default_value)
+                return create_multicheckbox_constraint(
+                    choices=enum_values,
+                    default_value=default_value,
+                    group_alphabetically=field_schema.get(
+                        "group_alphabetically", False
+                    ),
+                )
             case "imagecheckbox":
-                return create_image_checkbox_constraint(enum_values, default_value)
+                return create_image_checkbox_constraint(
+                    choices=enum_values,
+                    default_value=default_value,
+                    image_dir_path=field_schema.get("image_dir_path", ""),
+                )
             case _:
                 raise ValueError(f"Unknown constraint_type {constraint_type}")
 
@@ -140,5 +150,10 @@ class ConfigBase(BaseModel):
                 )
             case "boolean":
                 return create_checkbox_constraint(cast(bool, default_value))
+            case "array":
+                raise ValueError(
+                    "array config properties need to define "
+                    "json_schema_extra.constraint_type"
+                )
             case _:
                 return create_text_constraint(cast(str, default_value))

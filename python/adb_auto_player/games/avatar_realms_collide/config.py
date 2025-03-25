@@ -19,6 +19,9 @@ class ResourceEnum(StrEnum):
     Gold = auto()
 
 
+DEFAULT_RESOURCES = list(ResourceEnum.__members__.values())
+
+
 class AutoPlayConfig(BaseModel):
     """AutoPlay config model."""
 
@@ -30,8 +33,12 @@ class AutoPlayConfig(BaseModel):
     )
     collect_campaign_chest: bool = Field(default=True, alias="Collect Campaign Chest")
     gather_resources: list[ResourceEnum] = Field(
-        default_factory=list,
+        default_factory=lambda: DEFAULT_RESOURCES,
         alias="Gather Resources",
+        json_schema_extra={
+            "constraint_type": "multicheckbox",
+            "default_value": DEFAULT_RESOURCES,
+        },
     )
 
 

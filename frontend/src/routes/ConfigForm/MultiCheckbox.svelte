@@ -1,10 +1,10 @@
 <script lang="ts">
   let {
-    choices,
+    constraint,
     value,
     name,
   }: {
-    choices: string[];
+    constraint: MultiCheckboxConstraint;
     value: string[];
     name: string;
   } = $props();
@@ -20,11 +20,13 @@
     }, new Map<string, string[]>());
   }
 
-  const groupedOptions = groupOptionsByFirstLetter(choices || []);
+  const groupedOptions = groupOptionsByFirstLetter(constraint.choices || []);
 </script>
 
 <div class="flex flex-wrap gap-2.5">
-  {#if groupedOptions.size > 0}
+  {#if groupedOptions.size <= 0}
+    <p>No options available</p>
+  {:else if constraint.group_alphabetically}
     {#each [...groupedOptions.entries()] as [letter, options]}
       <div class="rounded border border-white/20 p-1.25">
         <div class="mb-1.25 bg-white/10 p-0.5 font-bold">
@@ -47,6 +49,17 @@
       </div>
     {/each}
   {:else}
-    <p>No options available</p>
+    {#each constraint.choices as choice}
+      <label class="m-0.5 flex items-center">
+        <input
+          type="checkbox"
+          class="mr-0.5 ml-0.25 checkbox"
+          {name}
+          value={choice}
+          checked={Array.isArray(value) ? value.includes(choice) : false}
+        />
+        <span class="mr-0.25">{choice}</span>
+      </label>
+    {/each}
   {/if}
 </div>

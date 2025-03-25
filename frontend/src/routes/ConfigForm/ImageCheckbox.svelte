@@ -1,10 +1,10 @@
 <script lang="ts">
   let {
-    choices,
+    constraint,
     value,
     name,
   }: {
-    choices: string[];
+    constraint: ImageCheckboxConstraint;
     value: string[];
     name: string;
   } = $props();
@@ -14,13 +14,13 @@
   }
 
   const choicesWithImages: Array<string> = $derived(
-    choices?.map((choice) => sanitizeForImage(choice)),
+    constraint.choices?.map((choice) => sanitizeForImage(choice)),
   );
 </script>
 
 <div class="flex flex-wrap gap-2.5">
   {#if choicesWithImages.length > 0}
-    {#each choices as choice, i}
+    {#each constraint.choices as choice, i}
       <label class="badge flex items-center bg-surface-950 p-4">
         <input
           class="checkbox"
@@ -30,7 +30,7 @@
           checked={Array.isArray(value) ? value.includes(choice) : false}
         />
         <img
-          src={"/imagecheckbox/" + choicesWithImages[i]}
+          src={`/imagecheckbox/${constraint.image_dir_path.replace(/\/$/, "")}/${choicesWithImages[i]}`}
           alt={choice}
           class="h-6 w-6"
         />

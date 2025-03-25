@@ -113,6 +113,7 @@ class GeneralConfig(BaseModel):
         alias="Exclude Heroes",
         json_schema_extra={
             "constraint_type": "multicheckbox",
+            "group_alphabetically": True,
         },
     )
     assist_limit: PositiveInt = Field(default=20, alias="Assist Limit")
@@ -154,6 +155,7 @@ class LegendTrialsConfig(BaseModel):
         json_schema_extra={
             "constraint_type": "imagecheckbox",
             "default_value": DEFAULT_TOWERS,
+            "image_dir_path": "afk_journey",
         },
     )
 

@@ -236,7 +236,7 @@
                   />
                 {:else if isMultiCheckboxConstraint(value)}
                   <MultiCheckbox
-                    choices={value.choices}
+                    constraint={value}
                     value={getStringArrayOrEmptyArray(
                       getValueOrDefault(sectionKey, key),
                     )}
@@ -244,7 +244,7 @@
                   />
                 {:else if isImageCheckboxConstraint(value)}
                   <ImageCheckbox
-                    choices={value.choices}
+                    constraint={value}
                     value={getStringArrayOrEmptyArray(
                       getValueOrDefault(sectionKey, key),
                     )}

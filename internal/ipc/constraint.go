@@ -16,15 +16,17 @@ type CheckboxConstraint struct {
 }
 
 type MultiCheckboxConstraint struct {
-	Type         string   `json:"type"`
-	Choices      []string `json:"choices"`
-	DefaultValue []string `json:"default_value"`
+	Type                string   `json:"type"`
+	Choices             []string `json:"choices"`
+	DefaultValue        []string `json:"default_value"`
+	GroupAlphabetically bool     `json:"group_alphabetically"`
 }
 
 type ImageCheckboxConstraint struct {
 	Type         string   `json:"type"`
 	Choices      []string `json:"choices"`
 	DefaultValue []string `json:"default_value"`
+	ImageDirPath string   `json:"image_dir_path"`
 }
 
 type SelectConstraint struct {

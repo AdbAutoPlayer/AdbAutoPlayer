@@ -30,12 +30,14 @@ interface MultiCheckboxConstraint extends BaseConstraint {
   type: "multicheckbox";
   choices: string[];
   default_value: string[];
+  group_alphabetically: boolean;
 }
 
 interface ImageCheckboxConstraint extends BaseConstraint {
   type: "imagecheckbox";
   choices: string[];
   default_value: string[];
+  image_dir_path: string;
 }
 
 interface SelectConstraint extends BaseConstraint {
