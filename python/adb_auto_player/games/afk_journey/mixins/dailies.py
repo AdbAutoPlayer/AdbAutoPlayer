@@ -54,7 +54,9 @@ class DailiesMixin(AFKJourneyBase, ABC):
             sleep(2)
 
         logging.info("Looking for free hourglasses.")
-        while self._claim_hourglasses():
+        claim_limit = 3
+        while self._claim_hourglasses() and claim_limit > 0:
+            claim_limit -= 1
             logging.info("Claimed a free hourglass.")
 
         logging.debug("Back.")
