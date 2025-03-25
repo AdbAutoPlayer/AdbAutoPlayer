@@ -15,7 +15,7 @@
 <button
   type="button"
   {disabled}
-  class="btn w-auto max-w-[200px]"
+  class="btn w-auto max-w-[300px]"
   class:preset-filled-primary-100-900={!isProcessRunning}
   class:hover:preset-filled-primary-500={!isProcessRunning}
   class:preset-outlined-primary-100-900={isProcessRunning}
