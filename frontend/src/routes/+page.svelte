@@ -40,7 +40,7 @@
         callback: () => openMainConfigForm(),
         isProcessRunning: false,
         option: ipc.MenuOption.createFrom({
-          label: "Edit Main Config",
+          label: "Main Config",
           category: "Config",
           tooltip:
             "Global settings that apply to the app as a whole, not specific to any game.",
@@ -88,7 +88,7 @@
           callback: () => openGameConfigForm(activeGame),
           isProcessRunning: false,
           option: ipc.MenuOption.createFrom({
-            label: `Edit ${activeGame.game_title} Config`,
+            label: `${activeGame.game_title} Config`,
             category: "Config",
           }),
         },
