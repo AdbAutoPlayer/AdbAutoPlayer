@@ -170,7 +170,8 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         try:
             self.wait_for_template(
                 "campaign/lobby_hero.png",
-                timeout=5,
+                timeout=15,
+                threshold=0.7,
             )
             sleep(2)
 
@@ -572,6 +573,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         logging.info("Clicking resources")
         while result := self.find_any_template(
             [
+                "gui/ok.png",
                 "harvest/food.png",
                 "harvest/wood.png",
                 "harvest/stone.png",
