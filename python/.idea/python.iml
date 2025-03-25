@@ -6,7 +6,7 @@
       <excludeFolder url="file://$MODULE_DIR$/main.build" />
       <excludeFolder url="file://$MODULE_DIR$/main.dist" />
     </content>
-    <orderEntry type="jdk" jdkName="Poetry (python)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="uv (python)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PackageRequirementsSettings">
