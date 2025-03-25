@@ -7,7 +7,7 @@
     - [GitHub Issue #1178](https://github.com/wailsapp/wails/issues/1178)
 
 ## 🎨 Frontend
-- Yules - Group Buttons I'm thinking just some [Accordion](https://next.skeleton.dev/docs/components/accordion/svelte#multiple) solution 
+- Nothing :)
 
 ## 🐍 Python
 - Support for running multiple bots/configs (Yules: Can't find the motivation to do this because I personally have no use for it at the moment.)
@@ -16,14 +16,7 @@
 
 ## General
 - Yules - Refactor Config logic
-  - Patch: Don't ship config files
-  - Go 
-    - saves configs
-    - passes config data, config form data and path to FE
-    - remove all main config specific logic and structs
+  - Go
+    - remove all main config specific logic and structs?
   - Python
-    - reads configs
-    - define main config
-    - use defaults defined in code when config not found
-    - default path for config will be same path as in distributed app
-    - pass config data, config form data and path to Go
+    - define main config ?
