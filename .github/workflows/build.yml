@@ -51,7 +51,7 @@ jobs:
       - name: update pyproject.toml version
         if: github.event_name == 'release' && github.event.action == 'published'
         working-directory: python
-        run: uvx --from=toml-cli toml set --toml-path=pyproject.toml tool.poetry.version "${{ github.event.release.tag_name }}"
+        run: uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version "${{ github.event.release.tag_name }}"
 
       - name: uv install
         working-directory: python
