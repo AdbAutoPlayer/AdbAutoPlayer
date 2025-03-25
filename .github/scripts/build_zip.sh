@@ -67,7 +67,7 @@ cp "cmd/wails/build/bin/AdbAutoPlayer.app/Contents/MacOS/AdbAutoPlayer" "${RELEA
 
 echo "Running Nuitka build..."
 pushd "${WORKSPACE}/python" > /dev/null
-poetry run nuitka --standalone --output-filename=adb_auto_player_py_app --assume-yes-for-downloads adb_auto_player/main.py
+uv run nuitka --standalone --output-filename=adb_auto_player_py_app --assume-yes-for-downloads adb_auto_player/main.py
 popd > /dev/null
 
 # Copy compiled Nuitka binary

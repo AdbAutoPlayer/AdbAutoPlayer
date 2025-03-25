@@ -12,7 +12,7 @@
   - Optionally do daily single pull
   - Claim Dream Realm ranking rewards
   - Unlock skip functionality in Dream Realm (through single battle)
-  - Use all free server Arena attacks
+  - Optionally use all free server Arena attacks
   - Claim Friend rewards
   - Claim Mail
   - Claim Battle Pass rewards

@@ -26,6 +26,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def run_dailies(self) -> None:
         """Complete daily chores."""
+        do_arena: bool = self.get_config().dailies.arena_battle
         self.start_up()
         self._navigate_to_default_state()
 
@@ -33,7 +34,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         self.buy_emporium()
         self.single_pull()
         DreamRealmMixin().run_dream_realm(daily=True)  # type: ignore[abstract]
-        ArenaMixin().run_arena()  # type: ignore[abstract]
+        ArenaMixin().run_arena() if do_arena else logging.info("Arena battle disabled.")  # type: ignore[abstract]
         self.claim_hamburger()
         self.raise_hero_affinity()
         LegendTrialMixin().push_legend_trials()  # type: ignore[abstract]
@@ -89,6 +90,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def buy_emporium(self) -> None:
         """Purchase single pull and optionally affinity items."""
         logging.info("Entering Mystical House...")
+        self._navigate_to_default_state()
         self.click(Coordinates(310, 1840), scale=True)
 
         try:
