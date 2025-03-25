@@ -9,7 +9,7 @@
 
   let showDownloadIcon: boolean = $state(false);
   let releaseHtmlDownloadUrl: string = $state(
-    "https://github.com/yulesxoxo/AdbAutoPlayer/releases",
+    "https://github.com/AdbAutoPlayer/AdbAutoPlayer/releases",
   );
   let showModal = $state(false);
   let modalRelease: Release | undefined = $state();
@@ -70,7 +70,7 @@
     latestVersion: string,
   ): Promise<string> {
     const releasesResponse = await fetch(
-      "https://api.github.com/repos/yulesxoxo/AdbAutoPlayer/releases",
+      "https://api.github.com/repos/AdbAutoPlayer/AdbAutoPlayer/releases",
     );
     const allReleases: Release[] = await releasesResponse.json();
 
@@ -90,7 +90,7 @@
       if (changeLogs.length > 0) {
         changeLog = changeLogs.join("\n___\n");
         changeLog +=
-          "\n___\n**Full Changelog**: https://github.com/yulesxoxo/AdbAutoPlayer/compare/" +
+          "\n___\n**Full Changelog**: https://github.com/AdbAutoPlayer/AdbAutoPlayer/compare/" +
           `${currentVersion}...${latestVersion}`;
       }
     });
@@ -101,7 +101,7 @@
   async function checkForNewRelease(currentVersion: string): Promise<void> {
     try {
       const response = await fetch(
-        "https://api.github.com/repos/yulesxoxo/AdbAutoPlayer/releases/latest",
+        "https://api.github.com/repos/AdbAutoPlayer/AdbAutoPlayer/releases/latest",
       );
       const releaseData: Release = await response.json();
 
@@ -130,7 +130,7 @@
         if (latestParts[0] > currentParts[0]) {
           modalRelease = releaseData;
           LogWarning(
-            "You need to manually download the latest Version: https://github.com/yulesxoxo/AdbAutoPlayer/releases",
+            "You need to manually download the latest Version: https://github.com/AdbAutoPlayer/AdbAutoPlayer/releases",
           );
           notifyUpdate(modalAsset);
           return;

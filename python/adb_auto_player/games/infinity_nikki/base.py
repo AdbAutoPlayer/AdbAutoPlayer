@@ -32,7 +32,7 @@ class InfinityNikkiBase(Game, ABC):
             self.load_config()
         logging.warning(
             "This game does not automatically scale on resolution change: "
-            "https://yulesxoxo.github.io/AdbAutoPlayer/user-guide/troubleshoot.html"
+            "https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/troubleshoot.html"
             "#tap-to-restart-this-app-for-a-better-view"
         )
 
