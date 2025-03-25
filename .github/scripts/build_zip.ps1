@@ -30,9 +30,9 @@ if (-not $cli) {
 Write-Output "Running Nuitka build..."
 Push-Location (Join-Path $Workspace "python")
 if (-not $cli) {
-    poetry run nuitka --standalone --output-filename=adb_auto_player.exe --assume-yes-for-downloads --windows-console-mode=attach adb_auto_player/main.py
+    uv run nuitka --standalone --output-filename=adb_auto_player.exe --assume-yes-for-downloads --windows-console-mode=attach adb_auto_player/main.py
 } else {
-    poetry run nuitka --standalone --output-filename=adb_auto_player.exe --assume-yes-for-downloads --windows-console-mode=force adb_auto_player/main.py
+    uv run nuitka --standalone --output-filename=adb_auto_player.exe --assume-yes-for-downloads --windows-console-mode=force adb_auto_player/main.py
 }
 Pop-Location
 

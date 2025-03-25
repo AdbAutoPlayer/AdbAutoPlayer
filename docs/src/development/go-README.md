@@ -17,10 +17,10 @@ Follow the [Python README](https://github.com/yulesxoxo/AdbAutoPlayer/blob/main/
 > Execute the build command in the python directory
 #### Windows
 ```shell
-poetry run nuitka --standalone --output-filename=adb_auto_player.exe --assume-yes-for-downloads --windows-console-mode=hide adb_auto_player/main.py
+uv run nuitka --standalone --output-filename=adb_auto_player.exe --assume-yes-for-downloads --windows-console-mode=hide adb_auto_player/main.py
 ```
 
 #### MacOS
 ```shell
-poetry run nuitka --standalone --output-filename=adb_auto_player_py_app --assume-yes-for-downloads adb_auto_player/main.py
+uv run nuitka --standalone --output-filename=adb_auto_player_py_app --assume-yes-for-downloads adb_auto_player/main.py
 ```

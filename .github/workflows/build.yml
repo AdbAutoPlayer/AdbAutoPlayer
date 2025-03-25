@@ -45,17 +45,17 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: install poetry
-        run: python -m pip install poetry
+      - name: install uv
+        run: python -m pip install uv
 
-      - name: poetry version tag_name
+      - name: uv version tag_name
         if: github.event_name == 'release' && github.event.action == 'published'
         working-directory: python
-        run: poetry version "${{ github.event.release.tag_name }}"
+        run: uv version "${{ github.event.release.tag_name }}"
 
-      - name: poetry install
+      - name: uv install
         working-directory: python
-        run: poetry install
+        run: uv install
 
       - uses: actions/setup-go@v5
         with:

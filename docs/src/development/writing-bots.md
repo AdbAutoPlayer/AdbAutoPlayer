@@ -41,7 +41,7 @@ If you want to add any feature to the AFK Journey Bot:
                      ),
                  ]
     ```
-3. You can now run your Mixin using `poetry run adb-auto-player YourCommandName`.
+3. You can now run your Mixin using `uv run adb-auto-player YourCommandName`.
 
 Check out these classes:  
 [Game](https://github.com/yulesxoxo/AdbAutoPlayer/tree/main/python/adb_auto_player/game.py) and AFK Journey [Base](https://github.com/yulesxoxo/AdbAutoPlayer/tree/main/python/adb_auto_player/games/afk_journey/base.py) for functions you can use in your Mixin.

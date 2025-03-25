@@ -6,7 +6,7 @@ authors = [
     { name = "yulesxoxo <https://github.com/yulesxoxo/yulesxoxo>" },
     { name = "Vale <https://github.com/Valextr/Valextr>" },
 ]
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.12,<3.13"  # Limited to Python 3.12 until Nuitka fixed
 readme = "README.md"
 dependencies = [
     "pillow>=11.0.0,<12",

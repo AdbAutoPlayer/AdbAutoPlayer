@@ -23,13 +23,9 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: install poetry
-        run: python -m pip install poetry
+      - name: Install UV
+        run: python -m pip install uv
 
-      - name: poetry install
+      - name: Run Pytests with UV
         working-directory: python
-        run: poetry install
-
-      - name: Run Python tests with Poetry
-        working-directory: python
-        run: poetry run pytest --maxfail=1 --disable-warnings -q
+        run: uv run pytest --maxfail=1 --disable-warnings -q
