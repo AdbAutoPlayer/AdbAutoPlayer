@@ -20,21 +20,13 @@ The self-updater automatically downloads the `Patch_*.zip` and overwrites existi
 - For a **Major** version update, the user will be asked to download the latest version and replace the app completely.
 
 ## Installing Pre-commit
-We will assume you have python installed otherwise go to [Python README](https://github.com/yulesxoxo/AdbAutoPlayer/blob/main/docs/src/development/python-README.md)
+We will assume you have uv installed otherwise go to [Python README](https://github.com/yulesxoxo/AdbAutoPlayer/blob/main/docs/src/development/python-README.md)
 
 > [!IMPORTANT]
 > Execute these commands in the project root directory
 
-### Windows
 ```shell
-pip install -r .\requirements-dev.txt
-pre-commit install
-```
-
-### 
-```shell
-brew install pre-commit
-pre-commit install
+uvx pre-commit
 ```
 
 ## Build scripts
