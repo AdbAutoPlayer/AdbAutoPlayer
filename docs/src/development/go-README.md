@@ -12,7 +12,7 @@ wails dev
 ```
 
 ### Building Python Executable
-Follow the [Python README](https://github.com/yulesxoxo/AdbAutoPlayer/blob/main/docs/src/development/python-README.md) and when you are done try the build command this can take up to 30 minutes:
+Follow the [Python README](https://github.com/AdbAutoPlayer/AdbAutoPlayer/blob/main/docs/src/development/python-README.md) and when you are done try the build command this can take up to 30 minutes:
 > [!IMPORTANT]
 > Execute the build command in the python directory
 #### Windows

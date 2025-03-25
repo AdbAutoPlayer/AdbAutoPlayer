@@ -1,3 +1,3 @@
 # Development
 
-## [Click Here for Documentation](https://yulesxoxo.github.io/AdbAutoPlayer/development/general.html)
+## [Click Here for Documentation](https://AdbAutoPlayer.github.io/AdbAutoPlayer/development/general.html)

@@ -38,7 +38,7 @@ func (a *App) setGamesFromPython() error {
 	pm := GetProcessManager()
 
 	if a.pythonBinaryPath == nil {
-		return errors.New("missing files: https://yulesxoxo.github.io/AdbAutoPlayer/user-guide/troubleshoot.html#missing-files")
+		return errors.New("missing files: https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/troubleshoot.html#missing-files")
 	}
 
 	gamesString, err := pm.Exec(*a.pythonBinaryPath, "GUIGamesMenu")

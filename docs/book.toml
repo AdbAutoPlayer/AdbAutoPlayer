@@ -1,5 +1,5 @@
 [book]
-authors = ["yulesxoxo"]
+authors = ["AdbAutoPlayer"]
 language = "en"
 multilingual = false
 src = "src"
@@ -9,7 +9,7 @@ title = "AdbAutoPlayer Documentation"
 edition = "2021"
 
 [output.html]
-git-repository-url = "https://github.com/yulesxoxo/AdbAutoPlayer"
-edit-url-template = "https://github.com/yulesxoxo/AdbAutoPlayer/edit/main/docs/{path}"
+git-repository-url = "https://github.com/AdbAutoPlayer/AdbAutoPlayer"
+edit-url-template = "https://github.com/AdbAutoPlayer/AdbAutoPlayer/edit/main/docs/{path}"
 
 [preprocessor.alerts]

@@ -149,7 +149,7 @@ class Game:
         ):
             raise UnsupportedResolutionError(
                 "This bot only works in Portrait mode: "
-                "https://yulesxoxo.github.io/AdbAutoPlayer/user-guide/"
+                "https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/"
                 "troubleshoot.html#this-bot-only-works-in-portrait-mode"
             )
 
@@ -160,7 +160,7 @@ class Game:
         ):
             raise UnsupportedResolutionError(
                 "This bot only works in Landscape mode: "
-                "https://yulesxoxo.github.io/AdbAutoPlayer/user-guide/"
+                "https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/"
                 "troubleshoot.html#this-bot-only-works-in-portrait-mode"
             )
 

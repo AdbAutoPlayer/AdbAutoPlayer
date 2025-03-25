@@ -192,7 +192,7 @@ func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
 	output, err := cmd.Output()
 	if err != nil {
 		if strings.Contains(err.Error(), "contains a virus") {
-			return "", fmt.Errorf("%w Read: https://yulesxoxo.github.io/AdbAutoPlayer/user-guide/troubleshoot.html#file-contains-a-virus-or-potentially-unwanted-software", err)
+			return "", fmt.Errorf("%w Read: https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/troubleshoot.html#file-contains-a-virus-or-potentially-unwanted-software", err)
 		}
 		return "", fmt.Errorf("failed to execute command: %w", err)
 	}

@@ -14,7 +14,7 @@ AdbAutoPlayer is a tool designed to automate repetitive tasks and dailies in And
 
 ---
 
-## [Download](https://github.com/yulesxoxo/AdbAutoPlayer/releases/latest)
+## [Download](https://github.com/AdbAutoPlayer/AdbAutoPlayer/releases/latest)
 > [!IMPORTANT]
 > Make sure you read the User Guides on the left!
 

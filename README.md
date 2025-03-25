@@ -1,6 +1,6 @@
 # AdbAutoPlayer
 
-## [Click Here to Access the Full Documentation and Usage Details](https://yulesxoxo.github.io/AdbAutoPlayer/)
+## [Click Here to Access the Full Documentation and Usage Details](https://AdbAutoPlayer.github.io/AdbAutoPlayer/)
 ![gui.png](docs/src/images/app/app.png)
 
 ## Supported Games
@@ -10,7 +10,7 @@ _____
 
 # Development
 
-## [Click Here for Documentation](https://yulesxoxo.github.io/AdbAutoPlayer/development/general.html)
+## [Click Here for Documentation](https://AdbAutoPlayer.github.io/AdbAutoPlayer/development/general.html)
 
 ___
 

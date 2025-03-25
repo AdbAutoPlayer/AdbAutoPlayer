@@ -9,7 +9,7 @@
   "frontend:dev:watcher": "npm run dev",
   "frontend:dev:serverUrl": "auto",
   "author": {
-    "name": "yulesxoxo"
+    "name": "AdbAutoPlayer"
   },
   "wailsjsdir": "../../frontend/src/lib"
 }
