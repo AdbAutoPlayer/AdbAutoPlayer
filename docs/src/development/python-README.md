@@ -9,10 +9,7 @@ If you only want to develop bots or run it in CLI you do not have to set up Go a
 > [!IMPORTANT]
 > Execute these commands in the python directory
 ### Windows
-1. Install [UV](https://github.com/astral-sh/uv).
-    ```shell
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    ```
+1. Install [uv](https://docs.astral.sh/uv/getting-started/installation).  
 2. Install Python.
     ```shell
     uv python install
@@ -23,10 +20,7 @@ If you only want to develop bots or run it in CLI you do not have to set up Go a
     ```
 
 ### MacOS
-1. Install [UV](https://github.com/astral-sh/uv).
-    ```shell
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    ```
+1. Install [uv](https://docs.astral.sh/uv/getting-started/installation).  
 2. Install Python.
     ```shell
     uv python install
