@@ -3,7 +3,7 @@
 import logging
 import tomllib
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 
 class ConfigLoader:
@@ -12,7 +12,8 @@ class ConfigLoader:
     _instance: Optional["ConfigLoader"] = None
     _working_dir: Path
     _games_dir: Path | None
-    _main_config: dict[str, Any] | None
+    # False = no config using default values
+    _main_config: dict[str, Any] | None | Literal[False]
 
     def __new__(cls) -> "ConfigLoader":
         """New for Singleton."""
@@ -55,24 +56,30 @@ class ConfigLoader:
     @property
     def main_config(self) -> dict[str, Any]:
         """Locate and load the main config.toml file."""
-        if self._main_config is None:
-            candidates: list[Path] = [
-                self.working_dir / "config.toml",  # distributed GUI context
-                self.working_dir.parent / "config.toml",  # distributed CLI context
-                self.working_dir.parent
-                / "config"
-                / "config.toml",  # Python CLI in /python
-                self.working_dir.parent.parent / "config" / "config.toml",  # PyCharm
-            ]
+        if isinstance(self._main_config, dict):
+            return self._main_config
 
-            config_toml_path: Path = next(
-                (c for c in candidates if c.exists()), candidates[0]
-            )
-            logging.debug(f"Python config.toml path: {config_toml_path}")
-            try:
-                with open(config_toml_path, "rb") as f:
-                    self._main_config = tomllib.load(f)
-            except Exception as e:
-                logging.debug(f"Failed to load main config: {e}")
-                return {}
-        return self._main_config
+        if self._main_config is False:
+            return {}
+
+        candidates: list[Path] = [
+            self.working_dir / "config.toml",  # distributed GUI context
+            self.working_dir.parent / "config.toml",  # distributed CLI context
+            self.working_dir.parent / "config" / "config.toml",  # Python CLI in /python
+            self.working_dir.parent.parent / "config" / "config.toml",  # PyCharm
+        ]
+
+        config_toml_path: Path = next(
+            (c for c in candidates if c.exists()), candidates[0]
+        )
+        logging.debug(f"Python config.toml path: {config_toml_path}")
+        try:
+            with open(config_toml_path, "rb") as f:
+                main_config = tomllib.load(f)
+            self._main_config = main_config
+            return main_config
+        except Exception as e:
+            logging.debug(f"Failed to load main config: {e}")
+            logging.info("Using default main config values")
+            self._main_config = False
+        return {}
