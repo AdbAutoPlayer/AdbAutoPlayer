@@ -13,6 +13,8 @@ class SheepMinigameMixin(InfinityNikkiBase, ABC):
 
     def afk_sheep_minigame(self) -> None:
         """Automate sheep minigame."""
+        logging.error("Update 1.4 ruined this :(, sheep no longer move after eating")
+        return None
         self.start_up(device_streaming=True)
         config = self.get_config().sheep_minigame_config
 
@@ -42,6 +44,17 @@ class SheepMinigameMixin(InfinityNikkiBase, ABC):
                     bling_visible = True
                 logging.debug("Bling visible")
                 self.click(Coordinates(950, 950), scale=True)
+            if retry := self.game_find_template_match(
+                "minigame/retry.png",
+                threshold=0.7,
+            ):
+                history_visible_before_bling_count = 0
+                self.click(Coordinates(*retry))
+                confirm = self.wait_for_template(
+                    "minigame/confirm.png",
+                    timeout=5,
+                )
+                self.click(Coordinates(*confirm))
             if history_visible_before_bling_count > bling_cap:
                 logging.warning("Exiting because Bling cap has been reached.")
                 return None
