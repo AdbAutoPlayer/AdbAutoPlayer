@@ -41,9 +41,10 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         while True:
             result = self.find_any_template(
                 templates=[
+                    "gui/cancel.png",
+                    "gui/ok.png",
                     "gathering/search.png",
                     "gui/map.png",
-                    "gui/ok.png",
                     "gui/x.png",
                 ]
             )
@@ -53,9 +54,9 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 continue
             template, x, y = result
             match template:
-                case "gui/x.png":
+                case "gui/x.png" | "gui/cancel.png" | "gui/ok.png":
                     self.click(Coordinates(x, y))
-                    sleep(1)
+                    sleep(2)
                 case "gathering/search.png":
                     logging.info("Returning to city")
                     self.click(Coordinates(100, 1000))
@@ -65,9 +66,6 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     except GameTimeoutError:
                         # happens on a disconnect
                         self.click(Coordinates(1560, 970))
-                case "gui/ok.png":
-                    self.click(Coordinates(x, y))
-                    sleep(3)
                 case "gui/map.png":
                     break
         sleep(3)
@@ -217,6 +215,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         self.click(Coordinates(x, y))
         while upgrade := self.wait_for_template("build/upgrade.png", timeout=5):
             self.click(Coordinates(*upgrade))
+            self._handle_replenish_all("build/upgrade.png")
             while x_btn := self.game_find_template_match("gui/x.png"):
                 self.click(Coordinates(*x_btn))
                 sleep(2)
@@ -266,7 +265,11 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 timeout=5,
             )
             sleep(2)
-            if template == "research/military.png":
+
+            if self.get_config().auto_play_config.military_first:
+                if template == "research/military.png":
+                    self.click(Coordinates(x, y))
+            elif template == "research/economy.png":
                 self.click(Coordinates(x, y))
 
             def click_and_hope_research_pops_up() -> tuple[int, int] | None:
@@ -298,18 +301,23 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
             research = try_to_find_research()
             if not research:
-                economy = self.game_find_template_match("research/economy.png")
-                if not economy:
-                    logging.error("Economy research not found")
+                if self.get_config().auto_play_config.military_first:
+                    btn = self.game_find_template_match("research/economy.png")
+
+                else:
+                    btn = self.game_find_template_match("research/military.png")
+
+                if not btn:
                     self.press_back_button()
                     sleep(2)
                     return
-                self.click(Coordinates(*economy))
+                self.click(Coordinates(*btn))
                 sleep(1)
                 research = try_to_find_research()
 
             if research:
                 self.click(Coordinates(*research))
+                self._handle_replenish_all("research/research.png")
             else:
                 logging.error("No research found")
                 self.press_back_button()
@@ -317,6 +325,19 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             return
         except GameTimeoutError:
             return None
+
+    def _handle_replenish_all(self, button_template: str) -> None:
+        try:
+            replenish = self.wait_for_template(
+                "gui/replenish_all.png",
+                timeout=3,
+            )
+            self.click(Coordinates(*replenish))
+            btn = self.wait_for_template(button_template, timeout=5)
+            self.click(Coordinates(*btn))
+        except GameTimeoutError:
+            return
+        return
 
     def _recruit_troops(self) -> None:
         logging.info("Recruiting Troops")
@@ -340,6 +361,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     timeout=5,
                 )
                 self.click(Coordinates(x, y))
+                self._handle_replenish_all("recruitment/recruit.png")
                 sleep(1)
                 btn = self.wait_for_template(
                     "gui/left_side_recruit.png",
@@ -562,6 +584,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         if donate:
             for i in range(5):
                 self.click(Coordinates(*donate))
+                self._handle_replenish_all("alliance/research_donate.png")
                 sleep(0.1)
         x_button = self.game_find_template_match("gui/x.png")
         if x_button:

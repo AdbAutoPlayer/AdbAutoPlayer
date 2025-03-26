@@ -26,6 +26,7 @@ class AutoPlayConfig(BaseModel):
     """AutoPlay config model."""
 
     research: bool = Field(default=True, alias="Research")
+    military_first: bool = Field(default=True, alias="Research Military First")
     build: bool = Field(default=True, alias="Build")
     recruit_troops: bool = Field(default=True, alias="Recruit Troops")
     alliance_research_and_gifts: bool = Field(
