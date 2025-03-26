@@ -26,8 +26,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def run_dailies(self) -> None:
         """Complete daily chores."""
-        do_arena: bool = self.get_config().dailies.arena_battle
         self.start_up()
+        do_arena: bool = self.get_config().dailies.arena_battle
         self._navigate_to_default_state()
 
         self.claim_daily_rewards()
