@@ -543,8 +543,12 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
     def _handle_alliance_research(self) -> None:
         try:
-            self.wait_for_template(
-                "alliance/research_development.png",
+            self.wait_for_any_template(
+                templates=[
+                    "alliance/research_development.png",
+                    "alliance/research_territory.png",
+                    "alliance/research_warfare.png",
+                ],
                 timeout=5,
             )
         except GameTimeoutError:
