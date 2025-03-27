@@ -6,3 +6,4 @@ Build = true
 'Recruit Troops' = true
 Research = true
 'Research Military First' = false
+'Building Slot 2' = true

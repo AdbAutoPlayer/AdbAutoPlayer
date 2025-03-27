@@ -41,6 +41,7 @@ class AutoPlayConfig(BaseModel):
             "default_value": DEFAULT_RESOURCES,
         },
     )
+    building_slot_2: bool = Field(default=True, alias="Building Slot 2")
 
 
 class Config(ConfigBase):

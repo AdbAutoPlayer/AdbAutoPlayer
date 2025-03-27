@@ -197,11 +197,14 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             self._handle_build_button(button_1)
         except GameTimeoutError:
             pass
-        try:
-            logging.info("Building Slot 2")
-            self._handle_build_button(button_2)
-        except GameTimeoutError:
-            pass
+        if self.get_config().auto_play_config.building_slot_2:
+            try:
+                logging.info("Building Slot 2")
+                self._handle_build_button(button_2)
+            except GameTimeoutError:
+                pass
+        else:
+            logging.info("Building Slot 2 disabled in config")
 
     def _handle_build_button(self, button_coordinates: Coordinates) -> None:
         self.click(button_coordinates)
@@ -404,9 +407,10 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         try:
             self.wait_for_any_template(
                 templates=[
-                    "gathering/troop_max_3.png",
-                    "gathering/troop_max_4.png",
                     # "gathering/troop_max_5.png",
+                    "gathering/troop_max_4.png",
+                    "gathering/troop_max_3.png",
+                    "gathering/troop_max_2.png",
                 ],
                 crop=CropRegions(left=0.8, bottom=0.5),
                 timeout=3,
