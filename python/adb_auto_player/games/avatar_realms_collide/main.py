@@ -210,6 +210,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 "build/double_arrow_button.png",
                 "build/double_arrow_button2.png",
             ],
+            threshold=0.7,
             timeout=5,
         )
         self.click(Coordinates(x, y))
