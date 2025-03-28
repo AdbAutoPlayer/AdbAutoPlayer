@@ -370,10 +370,29 @@ class AFKJourneyBase(Game, ABC):
                 result = False
                 break
 
+            # TODO: Because we iteratively look for templates, it can match something
+            # later in the list first causing non-deterministic behavior.
+            _, x, y = self.wait_for_any_template(
+                [
+                    "duras_trials/no_next.png",
+                    "duras_trials/first_clear.png",
+                    "duras_trials/end_sunrise.png",
+                    "next.png",
+                    "battle/victory_rewards.png",
+                    "retry.png",
+                    "confirm.png",
+                    "battle/victory_rewards.png",  # TODO: Duplicate? Check if needed.
+                    "battle/power_up.png",
+                    "battle/result.png",
+                ],
+                timeout=self.BATTLE_TIMEOUT,
+            )
+            # TODO: Temporary fix of restarting search once battle end is determined.
             template, x, y = self.wait_for_any_template(
                 [
                     "duras_trials/no_next.png",
                     "duras_trials/first_clear.png",
+                    "duras_trials/end_sunrise.png",
                     "next.png",
                     "battle/victory_rewards.png",
                     "retry.png",
@@ -405,7 +424,11 @@ class AFKJourneyBase(Game, ABC):
                 sleep(3)
                 result = False
                 break
-            elif template in ("next.png", "duras_trials/first_clear.png"):
+            elif template in (
+                "next.png",
+                "duras_trials/first_clear.png",
+                "duras_trials/end_sunrise.png",
+            ):
                 result = True
                 break
             elif template == "retry.png":
