@@ -86,6 +86,7 @@ class ArenaMixin(AFKJourneyBase, ABC):
                 timeout=self.FAST_TIMEOUT,
                 timeout_message="Failed to start Arena runs.",
             )
+            sleep(2)
             self.click(Coordinates(x, y))
 
             logging.debug("Choosing opponent.")
@@ -108,6 +109,7 @@ class ArenaMixin(AFKJourneyBase, ABC):
                 timeout=self.FAST_TIMEOUT,
                 timeout_message="Failed to start Arena battle.",
             )
+            sleep(2)
             self.click(Coordinates(*start))
 
             logging.debug("Skip battle.")
