@@ -8,7 +8,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.3
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/stretchr/testify v1.10.0
-	github.com/wailsapp/wails/v2 v2.10.0
+	github.com/wailsapp/wails/v2 v2.10.1
 )
 
 require (
