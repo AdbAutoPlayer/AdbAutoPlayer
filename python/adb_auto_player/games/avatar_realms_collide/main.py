@@ -83,30 +83,31 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
     def _auto_play_loop(self) -> None:
         self._click_help()
-        if self.get_config().auto_play_config.research:
-            self._research()
+        self._research()
 
         self._click_resources()
-        if self.get_config().auto_play_config.build:
-            self._build()
-            self._click_help()
+        self._build()
+        self._click_help()
 
         if self.get_config().auto_play_config.recruit_troops:
             self._recruit_troops()
             self._click_help()
+        else:
+            logging.info("Recruiting Troops disabled")
 
-        if self.get_config().auto_play_config.alliance_research_and_gifts:
-            self._alliance_research_and_gift()
+        self._alliance_research_and_gift()
 
-        if self.get_config().auto_play_config.collect_campaign_chest:
-            self._collect_campaign_chest()
+        self._collect_campaign_chest()
 
         self._use_free_scroll()
 
-        if self.get_config().auto_play_config.gather_resources:
-            self._gather_resources()
+        self._gather_resources()
 
     def _use_free_scroll(self) -> None:
+        if not self.get_config().auto_play_config.collect_free_scrolls:
+            logging.info("Collecting Free Scrolls disabled")
+            return
+
         self._center_city_view_by_using_research()
         logging.info("Collecting free scroll")
         scroll = self.find_any_template(
@@ -144,6 +145,10 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         return
 
     def _collect_campaign_chest(self) -> None:
+        if not self.get_config().auto_play_config.collect_campaign_chest:
+            logging.info("Collecting Campaign Chest disabled")
+            return
+
         one_hour = 3600
         if (
             self.last_campaign_collection
@@ -192,11 +197,14 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         button_1 = Coordinates(80, 220)
         button_2 = Coordinates(80, 350)
 
-        try:
-            logging.info("Building Slot 1")
-            self._handle_build_button(button_1)
-        except GameTimeoutError:
-            pass
+        if self.get_config().auto_play_config.building_slot_1:
+            try:
+                logging.info("Building Slot 1")
+                self._handle_build_button(button_1)
+            except GameTimeoutError:
+                pass
+        else:
+            logging.info("Building Slot 1 disabled")
         if self.get_config().auto_play_config.building_slot_2:
             try:
                 logging.info("Building Slot 2")
@@ -204,7 +212,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             except GameTimeoutError:
                 pass
         else:
-            logging.info("Building Slot 2 disabled in config")
+            logging.info("Building Slot 2 disabled")
 
     def _handle_build_button(self, button_coordinates: Coordinates) -> None:
         self.click(button_coordinates)
@@ -248,7 +256,11 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         else:
             self.click(Coordinates(80, 700))
 
-    def _research(self) -> None:
+    def _research(self) -> None:  # noqa: PLR0915
+        if not self.get_config().auto_play_config.research:
+            logging.info("Research disabled")
+            return
+
         logging.info("Starting Research")
         try:
             research_btn = self.wait_for_template(
@@ -271,9 +283,11 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             sleep(2)
 
             if self.get_config().auto_play_config.military_first:
+                logging.info("Checking Military Research first")
                 if template == "research/military.png":
                     self.click(Coordinates(x, y))
             elif template == "research/economy.png":
+                logging.info("Checking Economy Research first")
                 self.click(Coordinates(x, y))
 
             def click_and_hope_research_pops_up() -> tuple[int, int] | None:
@@ -307,7 +321,6 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             if not research:
                 if self.get_config().auto_play_config.military_first:
                     btn = self.game_find_template_match("research/economy.png")
-
                 else:
                     btn = self.game_find_template_match("research/military.png")
 
@@ -315,6 +328,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     self.press_back_button()
                     sleep(2)
                     return
+
                 self.click(Coordinates(*btn))
                 sleep(1)
                 research = try_to_find_research()
@@ -378,9 +392,14 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             return None
 
     def _gather_resources(self) -> None:
+        if not self.get_config().auto_play_config.gather_resources:
+            logging.info("Gathering Resources disabled")
+            return
+
         if self._troops_are_dispatched():
             logging.info("All Troops dispatched skipping resource gathering")
             return
+
         logging.info("Gathering Resources")
         search = self.game_find_template_match(
             "gathering/search.png",
@@ -484,6 +503,13 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         return
 
     def _alliance_research_and_gift(self) -> None:
+        if (
+            not self.get_config().auto_play_config.alliance_research
+            and not self.get_config().auto_play_config.alliance_gifts
+        ):
+            logging.info("Alliance Research & Gifts disabled.")
+            return
+
         one_hour = 3600
         if (
             self.last_alliance_research_and_gift
@@ -494,22 +520,29 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             )
             return
 
-        logging.info("Alliance Research and Gift")
+        logging.info("Opening Alliance window")
         if not self.game_find_template_match("gui/map.png"):
             logging.warning("Map not found skipping alliance research and gift")
             return
         self.click(Coordinates(1560, 970))
         self.wait_for_template("alliance/alliance_shop.png")
         sleep(0.5)
-        research = self.game_find_template_match("alliance/research.png")
-        if research:
-            self.click(Coordinates(*research))
-            self._handle_alliance_research()
-        gift = self.game_find_template_match("alliance/gift.png")
-        if gift:
-            self.click(Coordinates(*gift))
-            sleep(2)
-            self._handle_alliance_gift()
+
+        if self.get_config().auto_play_config.alliance_research:
+            research = self.game_find_template_match("alliance/research.png")
+            if research:
+                self.click(Coordinates(*research))
+                self._handle_alliance_research()
+        else:
+            logging.info("Alliance Research disabled")
+        if self.get_config().auto_play_config.alliance_gifts:
+            gift = self.game_find_template_match("alliance/gift.png")
+            if gift:
+                self.click(Coordinates(*gift))
+                sleep(2)
+                self._handle_alliance_gift()
+        else:
+            logging.info("Alliance Gifts disabled")
         while x_btn := self.game_find_template_match("gui/x.png"):
             self.click(Coordinates(*x_btn))
             sleep(2)

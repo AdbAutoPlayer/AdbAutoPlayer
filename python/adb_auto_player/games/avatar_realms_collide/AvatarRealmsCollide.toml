@@ -1,9 +1,11 @@
 ['Auto Play']
-'Alliance Research & Gifts' = true
-Build = true
+'Alliance Gifts' = true
+'Alliance Research' = true
+'Building Slot 1' = true
+'Building Slot 2' = true
 'Collect Campaign Chest' = true
+'Collect Free Scrolls' = true
 'Gather Resources' = ['Food', 'Wood', 'Stone', 'Gold']
 'Recruit Troops' = true
 Research = true
-'Research Military First' = false
-'Building Slot 2' = true
+'Research Military First' = true
