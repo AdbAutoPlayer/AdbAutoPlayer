@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"os"
@@ -232,6 +233,8 @@ func (a *App) setPythonBinaryPath() error {
 		return err
 	}
 
+	fmt.Printf("Working dir: %s", workingDir)
+
 	executable := "adb_auto_player_py_app"
 	if stdruntime.GOOS == "windows" {
 		executable = "adb_auto_player.exe"
@@ -243,6 +246,8 @@ func (a *App) setPythonBinaryPath() error {
 
 	if stdruntime.GOOS == "darwin" {
 		paths = append(paths, filepath.Join(workingDir, "../../../../../python/main.dist/", executable))
+		paths = append(paths, filepath.Join(workingDir, "../../../../python/main.dist/", executable))
+
 	} else {
 		paths = append(paths, filepath.Join(workingDir, "../../python/main.dist/", executable))
 	}
