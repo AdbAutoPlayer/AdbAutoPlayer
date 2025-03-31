@@ -169,7 +169,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             self.wait_for_template(
                 "campaign/lobby_hero.png",
                 timeout=15,
-                threshold=0.7,
+                threshold=0.6,
             )
             sleep(2)
 
@@ -237,7 +237,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             "gui/left_side_research.png",
             crop=CropRegions(right=0.8, top=0.3, bottom=0.4),
             timeout=5,
-            threshold=0.7,
+            threshold=0.6,
         )
         self.click(Coordinates(*research_btn))
         sleep(0.5)
@@ -385,6 +385,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         search = self.game_find_template_match(
             "gathering/search.png",
             crop=CropRegions(right=0.8, top=0.6),
+            threshold=0.7,
         )
         if not search:
             game_map = self.game_find_template_match("gui/map.png")
@@ -615,7 +616,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 "harvest/gold.png",
             ],
             threshold=0.7,
-            crop=CropRegions(top=0.2, left=0.1, right=0.1, bottom=0.1),
+            crop=CropRegions(top=0.3, left=0.1, right=0.1, bottom=0.1),
         ):
             _, x, y = result
             self.click(Coordinates(x, y))
