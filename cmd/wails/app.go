@@ -231,7 +231,7 @@ func (a *App) setPythonBinaryPath() error {
 		fmt.Printf("Working dir: %s\n", workingDir)
 		path := filepath.Join(workingDir, "../../python")
 		if stdruntime.GOOS == "darwin" {
-			path = "adb_auto_player.exe"
+			path = filepath.Join(workingDir, "../../../../python")
 		}
 		a.pythonBinaryPath = &path
 		fmt.Print("Process Manager is dev = true\n")
