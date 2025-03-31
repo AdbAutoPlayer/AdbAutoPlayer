@@ -587,15 +587,13 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         x, y = recommended
         self.click(Coordinates(x + 80, y - 150))
         sleep(2)
-        donate = self.game_find_template_match(
+        while donate := self.game_find_template_match(
             "alliance/research_donate.png", crop=CropRegions(left=0.6, top=0.6)
-        )
-
-        if donate:
-            for i in range(5):
+        ):
+            for i in range(10):
                 self.click(Coordinates(*donate))
-                self._handle_replenish_all("alliance/research_donate.png")
                 sleep(0.1)
+            self._handle_replenish_all("alliance/research_donate.png")
         x_button = self.game_find_template_match("gui/x.png")
         if x_button:
             self.click(Coordinates(*x_button))
@@ -630,10 +628,11 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             result = self.find_any_template(
                 [
                     "alliance/help_request.png",
+                    "alliance/help_request2.png",
                     "alliance/help_button.png",
                     "alliance/help_bubble.png",
                 ],
-                threshold=0.7,
+                threshold=0.6,
                 crop=CropRegions(
                     left=0.1,
                     right=0.1,
