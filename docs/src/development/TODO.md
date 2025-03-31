@@ -5,6 +5,7 @@
   _Waiting for Wails v3 release_
     - [Wails v3 Status](https://v3alpha.wails.io/status/)
     - [GitHub Issue #1178](https://github.com/wailsapp/wails/issues/1178)
+- Main config option to write debug_{yyyymmddhhiiss}.txt file in debug dir, create new log file when app starts/main config file changes
 
 ## 🎨 Frontend
 - Nothing :)
