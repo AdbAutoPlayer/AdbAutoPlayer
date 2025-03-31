@@ -220,6 +220,7 @@ func (a *App) setPythonBinaryPath() error {
 		runtime.LogErrorf(a.ctx, "%v", err)
 		return err
 	}
+
     if runtime.Environment(a.ctx).BuildType == "dev" {
     	fmt.Printf("Working dir: %s", workingDir)
 		path := filepath.Join(workingDir, "../../python")
@@ -229,12 +230,10 @@ func (a *App) setPythonBinaryPath() error {
 		return nil
 	}
 
-	executable := "adb_auto_player_py_app"
-	if stdruntime.GOOS == "windows" {
-		executable = "adb_auto_player.exe"
+	executable := "adb_auto_player.exe"
+	if stdruntime.GOOS == "darwin" {
+		executable = "adb_auto_player_py_app"
 	}
-
-
 
 	paths := []string{
 		filepath.Join(workingDir, "binaries", executable),
@@ -247,6 +246,7 @@ func (a *App) setPythonBinaryPath() error {
 	} else {
 		paths = append(paths, filepath.Join(workingDir, "../../python/main.dist/", executable))
 	}
+
 	runtime.LogDebugf(a.ctx, "Paths: %s", strings.Join(paths, ", "))
 	a.pythonBinaryPath = GetFirstPathThatExists(paths)
 	return nil
