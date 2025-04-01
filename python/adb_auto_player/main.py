@@ -36,6 +36,8 @@ def main() -> None:
     This function parses the command line arguments, sets up the logging based on the
     output format and log level, and then runs the specified command.
     """
+    logging.getLogger("PIL").setLevel(logging.ERROR)
+    logging.getLogger("PIL.PngImagePlugin").setLevel(logging.ERROR)
     commands: list[Command] = _get_commands()
     command_names = []
     for cmd in commands:
@@ -218,5 +220,4 @@ def _run_command(cmd: Command) -> NoReturn:
 
 
 if __name__ == "__main__":
-    logging.getLogger("PIL").setLevel(logging.INFO)
     main()

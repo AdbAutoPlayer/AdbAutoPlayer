@@ -313,6 +313,9 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     self.swipe(500, 540, 400, 540)
                     sleep(2)
                     research_coords = click_and_hope_research_pops_up()
+                logging.warning("No research found, swiping back")
+                for _ in range(5):
+                    self.swipe(400, 540, 500, 540)
                 return research_coords
 
             research = try_to_find_research()
@@ -527,13 +530,17 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         sleep(2)
 
         if self.get_config().auto_play_config.alliance_research:
+            logging.info("Opening Alliance Research window")
             research = self.game_find_template_match("alliance/research.png")
             if research:
                 self.click(Coordinates(*research))
                 self._handle_alliance_research()
+            else:
+                logging.info("Alliance Research button not found")
         else:
             logging.info("Alliance Research disabled")
         if self.get_config().auto_play_config.alliance_gifts:
+            logging.info("Opening Alliance Gifts window")
             gift = self.game_find_template_match("alliance/gift.png")
             if gift:
                 self.click(Coordinates(*gift))
@@ -592,26 +599,22 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             logging.warning("Alliance Research window not found")
             return None
 
-        def find_or_swipe_recommended():
+        def find_or_swipe_recommended() -> tuple[int, int] | None:
             for _ in range(6):
                 match = self.game_find_template_match(
                     "alliance/research_recommended.png",
+                    threshold=0.8,
                     crop=CropRegions(left=0.2, right=0.2, top=0.1, bottom=0.1),
                 )
                 if match:
                     return match
-                self.swipe(800, 540, 300, 540)
                 sleep(2)
+            logging.warning("Recommended research not found, swiping back")
+            for _ in range(6):
+                self.swipe(300, 540, 800, 540)
             return None
 
         recommended = find_or_swipe_recommended()
-        if not recommended:
-            self.game_find_template_match("alliance/research_territory.png")
-            recommended = find_or_swipe_recommended()
-
-        if not recommended:
-            self.game_find_template_match("alliance/research_warfare.png")
-            recommended = find_or_swipe_recommended()
 
         if not recommended:
             logging.warning("No recommended alliance research")
