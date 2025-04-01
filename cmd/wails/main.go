@@ -24,8 +24,18 @@ func main() {
 	changeWorkingDirForProd()
 
 	logLevel := logger.INFO
-	mainConfig, err := config.LoadConfig[config.MainConfig]("config.toml")
+
+	paths := []string{
+		"config.toml",                    // distributed
+		"../../config/config.toml",       // dev
+		"../../../../config/config.toml", // macOS dev no not a joke
+	}
+
+	configPath := GetFirstPathThatExists(paths)
+
+	mainConfig, err := config.LoadConfig[config.MainConfig](*configPath)
 	if err == nil {
+		println(mainConfig.Logging.Level)
 		switch mainConfig.Logging.Level {
 		case string(ipc.LogLevelTrace):
 			logLevel = logger.TRACE
@@ -38,7 +48,10 @@ func main() {
 		default:
 			logLevel = logger.INFO
 		}
+	} else {
+		println(err.Error())
 	}
+	println(logLevel)
 	frontendLogger := ipc.NewFrontendLogger(uint8(logLevel))
 
 	app := NewApp()
