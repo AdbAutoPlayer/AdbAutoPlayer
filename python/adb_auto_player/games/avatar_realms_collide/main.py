@@ -82,9 +82,6 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         return
 
     def _auto_play_loop(self) -> None:
-        self._click_help()
-        self._research()
-
         self._click_resources()
         self._build()
         self._click_help()
@@ -102,6 +99,8 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         self._use_free_scroll()
 
         self._gather_resources()
+        self._navigate_to_city()
+        self._research()
 
     def _use_free_scroll(self) -> None:
         if not self.get_config().auto_play_config.collect_free_scrolls:
