@@ -20,7 +20,6 @@ import (
 type App struct {
 	ctx                    context.Context
 	pythonBinaryPath       *string
-	killAdbOnShutdown      bool
 	games                  []ipc.GameGUI
 	lastOpenGameConfigPath *string
 	mainConfigPath         *string
@@ -28,9 +27,8 @@ type App struct {
 
 func NewApp() *App {
 	newApp := &App{
-		pythonBinaryPath:  nil,
-		killAdbOnShutdown: false,
-		games:             []ipc.GameGUI{},
+		pythonBinaryPath: nil,
+		games:            []ipc.GameGUI{},
 	}
 	return newApp
 }
@@ -61,16 +59,12 @@ func (a *App) setGamesFromPython() error {
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	a.killAdbOnShutdown = !IsAdbRunning()
 }
 
 func (a *App) shutdown(ctx context.Context) {
 	a.ctx = ctx
 	pm := GetProcessManager()
 	_, err := pm.KillProcess()
-	if a.killAdbOnShutdown {
-		KillAdbProcess()
-	}
 	if err != nil {
 		panic(err)
 	}
