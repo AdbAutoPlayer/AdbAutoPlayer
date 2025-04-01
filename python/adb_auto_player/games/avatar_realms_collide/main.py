@@ -663,7 +663,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     "alliance/help_button.png",
                     "alliance/help_bubble.png",
                 ],
-                threshold=0.6,
+                threshold=0.7,
                 crop=CropRegions(
                     left=0.1,
                     right=0.1,
