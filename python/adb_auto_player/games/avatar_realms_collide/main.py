@@ -595,7 +595,8 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         def find_or_swipe_recommended():
             for _ in range(6):
                 match = self.game_find_template_match(
-                    "alliance/research_recommended.png"
+                    "alliance/research_recommended.png",
+                    crop=CropRegions(left=0.2, right=0.2, top=0.1, bottom=0.1),
                 )
                 if match:
                     return match
