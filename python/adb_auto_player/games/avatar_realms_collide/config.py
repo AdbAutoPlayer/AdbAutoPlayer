@@ -25,14 +25,20 @@ DEFAULT_RESOURCES = list(ResourceEnum.__members__.values())
 class AutoPlayConfig(BaseModel):
     """AutoPlay config model."""
 
+    building_slot_1: bool = Field(default=True, alias="Building Slot 1")
+    building_slot_2: bool = Field(default=True, alias="Building Slot 2")
+
     research: bool = Field(default=True, alias="Research")
     military_first: bool = Field(default=True, alias="Research Military First")
-    build: bool = Field(default=True, alias="Build")
+
     recruit_troops: bool = Field(default=True, alias="Recruit Troops")
-    alliance_research_and_gifts: bool = Field(
-        default=True, alias="Alliance Research & Gifts"
-    )
+
+    alliance_research: bool = Field(default=True, alias="Alliance Research")
+    alliance_gifts: bool = Field(default=True, alias="Alliance Gifts")
+
     collect_campaign_chest: bool = Field(default=True, alias="Collect Campaign Chest")
+    collect_free_scrolls: bool = Field(default=True, alias="Collect Free Scrolls")
+
     gather_resources: list[ResourceEnum] = Field(
         default_factory=lambda: DEFAULT_RESOURCES,
         alias="Gather Resources",
@@ -41,7 +47,6 @@ class AutoPlayConfig(BaseModel):
             "default_value": DEFAULT_RESOURCES,
         },
     )
-    building_slot_2: bool = Field(default=True, alias="Building Slot 2")
 
 
 class Config(ConfigBase):
