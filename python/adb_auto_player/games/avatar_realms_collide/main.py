@@ -196,16 +196,17 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             threshold=0.7,
         ):
             self.click(Coordinates(*chest))
-            _ = self.wait_for_template(
-                "campaign/claim.png",
-                threshold=0.7,
-            )
-            while claim := self.game_find_template_match(
-                "campaign/claim.png",
-                threshold=0.7,
-            ):
-                self.click(Coordinates(*claim))
-                sleep(1)
+            sleep(1)
+        _ = self.wait_for_template(
+            "campaign/claim.png",
+            threshold=0.7,
+        )
+        while claim := self.game_find_template_match(
+            "campaign/claim.png",
+            threshold=0.7,
+        ):
+            self.click(Coordinates(*claim))
+            sleep(1)
         self.last_campaign_collection = time()
         self.press_back_button()
         self.wait_for_template("gui/map.png")
