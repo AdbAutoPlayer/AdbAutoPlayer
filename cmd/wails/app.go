@@ -61,8 +61,7 @@ func (a *App) startup(ctx context.Context) {
 
 func (a *App) shutdown(ctx context.Context) {
 	a.ctx = ctx
-	pm := GetProcessManager()
-	_, err := pm.KillProcess()
+	_, err := GetProcessManager().KillProcess()
 	if err != nil {
 		panic(err)
 	}
@@ -223,16 +222,14 @@ func (a *App) setPythonBinaryPath() error {
 	}
 
 	if runtime.Environment(a.ctx).BuildType == "dev" {
-		fmt.Printf("Working dir: %s\n", workingDir)
+		fmt.Printf("Working dir: %s", workingDir)
 		path := filepath.Join(workingDir, "../../python")
 		if stdruntime.GOOS == "darwin" {
 			path = filepath.Join(workingDir, "../../../../python")
 		}
 		a.pythonBinaryPath = &path
 		fmt.Print("Process Manager is dev = true\n")
-
 		GetProcessManager().isDev = true
-
 		return nil
 	}
 
@@ -243,6 +240,14 @@ func (a *App) setPythonBinaryPath() error {
 
 	paths := []string{
 		filepath.Join(workingDir, "binaries", executable),
+	}
+
+	if stdruntime.GOOS == "darwin" {
+		paths = append(paths, filepath.Join(workingDir, "../../../../../python/main.dist/", executable))
+		paths = append(paths, filepath.Join(workingDir, "../../../../python/main.dist/", executable))
+
+	} else {
+		paths = append(paths, filepath.Join(workingDir, "../../python/main.dist/", executable))
 	}
 
 	runtime.LogDebugf(a.ctx, "Paths: %s", strings.Join(paths, ", "))
