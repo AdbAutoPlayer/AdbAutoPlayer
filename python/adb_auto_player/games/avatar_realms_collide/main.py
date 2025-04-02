@@ -626,6 +626,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 )
                 if match:
                     return match
+                self.swipe(800, 540, 300, 540)
                 sleep(2)
             logging.warning("Recommended research not found, swiping back")
             for _ in range(6):
