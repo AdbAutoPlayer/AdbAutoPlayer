@@ -627,6 +627,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             logging.warning("Recommended research not found, swiping back")
             for _ in range(6):
                 self.swipe(300, 540, 800, 540)
+                sleep(2)
             return None
 
         recommended = find_or_swipe_recommended()
@@ -637,9 +638,10 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         x, y = recommended
         self.click(Coordinates(x + 80, y - 150))
         sleep(2)
-        while donate := self.game_find_template_match(
+        donate = self.game_find_template_match(
             "alliance/research_donate.png", crop=CropRegions(left=0.6, top=0.6)
-        ):
+        )
+        if donate:
             for i in range(10):
                 self.click(Coordinates(*donate))
                 sleep(0.1)
