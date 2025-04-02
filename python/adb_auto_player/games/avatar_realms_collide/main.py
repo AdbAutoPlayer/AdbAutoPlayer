@@ -1,6 +1,7 @@
 """Avatar Realms Collide Main Module."""
 
 import logging
+from collections.abc import Callable
 from enum import StrEnum
 from time import sleep, time
 
@@ -82,24 +83,41 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         return
 
     def _auto_play_loop(self) -> None:
-        self._alliance_research_and_gift()
-        self._click_resources()
-        self._build()
+        def safe_execute(action_func: Callable[[], None]):
+            try:
+                action_func()
+            except GameTimeoutError as e:
+                logging.error(f"{e}")
+                self._navigate_to_city()
+
+        safe_execute(self._build)
         self._click_help()
 
-        if self.get_config().auto_play_config.recruit_troops:
-            self._recruit_troops()
+        config = self.get_config().auto_play_config
+
+        if config.research:
+            safe_execute(self._research)
+            self._click_help()
+        else:
+            logging.info("Research disabled")
+
+        self._click_resources()
+
+        if config.recruit_troops:
+            safe_execute(self._recruit_troops)
             self._click_help()
         else:
             logging.info("Recruiting Troops disabled")
 
-        self._collect_campaign_chest()
-
-        self._use_free_scroll()
+        for action in [
+            self._collect_campaign_chest,
+            self._use_free_scroll,
+            self._alliance_research_and_gift,
+        ]:
+            safe_execute(action)
 
         self._gather_resources()
         self._navigate_to_city()
-        self._research()
 
     def _use_free_scroll(self) -> None:
         if not self.get_config().auto_play_config.collect_free_scrolls:
@@ -255,10 +273,6 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             self.click(Coordinates(80, 700))
 
     def _research(self) -> None:  # noqa: PLR0915
-        if not self.get_config().auto_play_config.research:
-            logging.info("Research disabled")
-            return
-
         logging.info("Starting Research")
         try:
             research_btn = self.wait_for_template(
