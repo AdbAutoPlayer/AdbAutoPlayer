@@ -221,9 +221,12 @@ func (a *App) setPythonBinaryPath() error {
 		return err
 	}
 
-    if runtime.Environment(a.ctx).BuildType == "dev" {
-    	fmt.Printf("Working dir: %s", workingDir)
+	if runtime.Environment(a.ctx).BuildType == "dev" {
+		fmt.Printf("Working dir: %s", workingDir)
 		path := filepath.Join(workingDir, "../../python")
+		if stdruntime.GOOS == "darwin" {
+			path = filepath.Join(workingDir, "../../../../python")
+		}
 		a.pythonBinaryPath = &path
 		fmt.Print("Process Manager is dev = true\n")
 		GetProcessManager().isDev = true
