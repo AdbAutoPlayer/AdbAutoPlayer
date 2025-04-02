@@ -34,13 +34,11 @@ func NewApp() *App {
 }
 
 func (a *App) setGamesFromPython() error {
-	pm := GetProcessManager()
-
 	if a.pythonBinaryPath == nil {
 		return errors.New("missing files: https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/troubleshoot.html#missing-files")
 	}
 
-	gamesString, err := pm.Exec(*a.pythonBinaryPath, "GUIGamesMenu")
+	gamesString, err := GetProcessManager().Exec(*a.pythonBinaryPath, "GUIGamesMenu")
 	if err != nil {
 		return err
 	}
@@ -63,8 +61,7 @@ func (a *App) startup(ctx context.Context) {
 
 func (a *App) shutdown(ctx context.Context) {
 	a.ctx = ctx
-	pm := GetProcessManager()
-	_, err := pm.KillProcess()
+	_, err := GetProcessManager().KillProcess()
 	if err != nil {
 		panic(err)
 	}
@@ -168,14 +165,12 @@ func (a *App) GetRunningSupportedGame(disableLogging bool) (*ipc.GameGUI, error)
 		}
 	}
 
-	pm := GetProcessManager()
-
 	runningGame := ""
 	args := []string{"GetRunningGame"}
 	if disableLogging {
 		args = append(args, "--log-level=DISABLE")
 	}
-	output, err := pm.Exec(*a.pythonBinaryPath, args...)
+	output, err := GetProcessManager().Exec(*a.pythonBinaryPath, args...)
 
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "%v", err)
@@ -190,7 +185,7 @@ func (a *App) GetRunningSupportedGame(disableLogging bool) (*ipc.GameGUI, error)
 
 		var logMessage ipc.LogMessage
 		if err := json.Unmarshal([]byte(line), &logMessage); err != nil {
-			pm.logger.Errorf("Failed to parse JSON log message: %v", err)
+			runtime.LogErrorf(a.ctx, "Failed to parse JSON log message: %v", err)
 			continue
 		}
 
@@ -198,8 +193,7 @@ func (a *App) GetRunningSupportedGame(disableLogging bool) (*ipc.GameGUI, error)
 			runningGame = strings.TrimSpace(strings.TrimPrefix(logMessage.Message, "Running game: "))
 			break
 		}
-
-		pm.logger.LogMessage(logMessage)
+		GetProcessManager().logger.LogMessage(logMessage)
 	}
 
 	if runningGame == "" {
@@ -226,13 +220,21 @@ func (a *App) setPythonBinaryPath() error {
 		runtime.LogErrorf(a.ctx, "%v", err)
 		return err
 	}
-
-	fmt.Printf("Working dir: %s", workingDir)
+    if runtime.Environment(a.ctx).BuildType == "dev" {
+    	fmt.Printf("Working dir: %s", workingDir)
+		path := filepath.Join(workingDir, "../../python")
+		a.pythonBinaryPath = &path
+		fmt.Print("Process Manager is dev = true\n")
+		GetProcessManager().isDev = true
+		return nil
+	}
 
 	executable := "adb_auto_player_py_app"
 	if stdruntime.GOOS == "windows" {
 		executable = "adb_auto_player.exe"
 	}
+
+
 
 	paths := []string{
 		filepath.Join(workingDir, "binaries", executable),
@@ -251,8 +253,7 @@ func (a *App) setPythonBinaryPath() error {
 }
 
 func (a *App) StartGameProcess(args []string) error {
-	pm := GetProcessManager()
-	if err := pm.StartProcess(*a.pythonBinaryPath, args); err != nil {
+	if err := GetProcessManager().StartProcess(*a.pythonBinaryPath, args); err != nil {
 		runtime.LogErrorf(a.ctx, "Starting process: %v", err)
 		return err
 	}
@@ -260,8 +261,7 @@ func (a *App) StartGameProcess(args []string) error {
 }
 
 func (a *App) TerminateGameProcess() error {
-	pm := GetProcessManager()
-	terminated, err := pm.KillProcess()
+	terminated, err := GetProcessManager().KillProcess()
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "Terminating process: %v", err)
 		return err
@@ -273,19 +273,17 @@ func (a *App) TerminateGameProcess() error {
 }
 
 func (a *App) IsGameProcessRunning() bool {
-	pm := GetProcessManager()
-	return pm.IsProcessRunning()
+	return GetProcessManager().isProcessRunning()
 }
 
 func (a *App) UpdatePatch(assetUrl string) error {
 	runtime.LogInfo(a.ctx, "Downloading update")
-	pm := GetProcessManager()
-	pm.blocked = true
-	defer func() { pm.blocked = false }()
+	GetProcessManager().blocked = true
+	defer func() { GetProcessManager().blocked = false }()
 
 	maxRetries := 3
 	for i := 0; i < maxRetries; i++ {
-		_, err := pm.KillProcess()
+		_, err := GetProcessManager().KillProcess()
 		if err == nil {
 			break
 		}
