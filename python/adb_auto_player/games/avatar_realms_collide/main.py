@@ -179,6 +179,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         self.click(Coordinates(1420, 970))
         x, y = self.wait_for_template(
             "campaign/avatar_trail.png",
+            threshold=0.7,
             timeout=5,
         )
         self.click(Coordinates(x, y))
@@ -190,10 +191,19 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         )
         sleep(2)
 
-        if chest := self.game_find_template_match("campaign/chest.png"):
+        if chest := self.game_find_template_match(
+            "campaign/chest.png",
+            threshold=0.7,
+        ):
             self.click(Coordinates(*chest))
-            _ = self.wait_for_template("campaign/claim.png")
-            while claim := self.game_find_template_match("campaign/claim.png"):
+            _ = self.wait_for_template(
+                "campaign/claim.png",
+                threshold=0.7,
+            )
+            while claim := self.game_find_template_match(
+                "campaign/claim.png",
+                threshold=0.7,
+            ):
                 self.click(Coordinates(*claim))
                 sleep(1)
         self.last_campaign_collection = time()
