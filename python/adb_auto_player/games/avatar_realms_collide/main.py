@@ -196,11 +196,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             threshold=0.7,
         ):
             self.click(Coordinates(*chest))
-            sleep(1)
-        _ = self.wait_for_template(
-            "campaign/claim.png",
-            threshold=0.7,
-        )
+            sleep(3)
         while claim := self.game_find_template_match(
             "campaign/claim.png",
             threshold=0.7,
