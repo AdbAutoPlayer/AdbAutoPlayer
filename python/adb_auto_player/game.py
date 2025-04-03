@@ -268,7 +268,7 @@ class Game:
         self,
         coordinates: Coordinates,
         scale: bool = False,
-        blocking: bool = False,
+        blocking: bool = True,
     ) -> None:
         """Tap the screen on the given coordinates.
 
@@ -290,6 +290,8 @@ class Game:
                 target=self._click, args=(coordinates,), daemon=True
             )
             thread.start()
+            # Sleep at least 1 frame assuming 30 FPS
+            sleep(1 / 30)
 
     @deprecated(details="Use 'tap' instead.")
     def click(
@@ -312,7 +314,7 @@ class Game:
     def _click(self, coordinates: Coordinates) -> None:
         with self.device.shell(
             f"input tap {coordinates.x} {coordinates.y}",
-            timeout=10,  # if the click didn't happen in 10 seconds it's never happening
+            timeout=3,  # if the click didn't happen in 3 seconds it's never happening
             stream=True,
         ) as connection:
             logging.debug(f"Clicked Coordinates: {coordinates}")
