@@ -784,7 +784,7 @@ class Game:
         """Scale a variable number of coordinates by the given scale factor."""
         scale_factor: float = self.get_scale_factor()
         if scale_factor != 1.0:
-            coordinates = tuple(int(round(c * scale_factor)) for c in coordinates)
+            coordinates = tuple(round(c * scale_factor) for c in coordinates)
 
         return coordinates
 
