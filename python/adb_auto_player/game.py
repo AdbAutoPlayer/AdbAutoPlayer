@@ -269,6 +269,7 @@ class Game:
         coordinates: Coordinates,
         scale: bool = False,
         blocking: bool = True,
+        non_blocking_sleep_duration: float = 1 / 30,  # Assuming 30 FPS, 1 Tap per Frame
     ) -> None:
         """Tap the screen on the given coordinates.
 
@@ -276,7 +277,9 @@ class Game:
             coordinates (Coordinates): Coordinates to click on.
             scale (bool, optional): Whether to scale the coordinates.
             blocking (bool, optional): Whether to block the process and
-                wait for AdbServer to confirm the tap has happened.
+                wait for ADBServer to confirm the tap has happened.
+            non_blocking_sleep_duration (float, optional): Sleep time in seconds for
+                non-blocking taps, needed to not DoS the ADBServer.
         """
         if scale:
             scaled_coords = Coordinates(*self._scale_coordinates(*coordinates))
@@ -290,8 +293,7 @@ class Game:
                 target=self._click, args=(coordinates,), daemon=True
             )
             thread.start()
-            # Sleep at least 1 frame assuming 30 FPS
-            sleep(1 / 30)
+            sleep(non_blocking_sleep_duration)
 
     @deprecated(details="Use 'tap' instead.")
     def click(
