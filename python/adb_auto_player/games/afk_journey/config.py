@@ -173,6 +173,7 @@ class ArcaneLabyrinthConfig(BaseModel):
     """Arcane Labyrinth config model."""
 
     difficulty: int = Field(ge=1, le=15, default=13, alias="Difficulty")
+    key_quota: int = Field(default=2700, alias="Key Quota")
 
 
 class DreamRealmConfig(BaseModel):

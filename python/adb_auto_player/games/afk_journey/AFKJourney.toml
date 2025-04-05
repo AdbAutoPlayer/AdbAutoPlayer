@@ -9,6 +9,7 @@ Repeat = true
 
 ['Arcane Labyrinth']
 Difficulty = 13
+'Key Quota' = 2700
 
 [Dailies]
 'Buy All Affinity' = false
