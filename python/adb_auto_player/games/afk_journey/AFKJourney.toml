@@ -5,9 +5,11 @@ Formations = 7
 Repeat = true
 'Spend Gold' = false
 'Suggested Formations' = true
+'Skip Manual Formations' = false
 
 ['Arcane Labyrinth']
 Difficulty = 13
+'Key Quota' = 2700
 
 [Dailies]
 'Buy All Affinity' = false

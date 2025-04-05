@@ -37,7 +37,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
         ArenaMixin().run_arena() if do_arena else logging.info("Arena battle disabled.")  # type: ignore[abstract]
         self.claim_hamburger()
         self.raise_hero_affinity()
-        LegendTrialMixin().push_legend_trials()  # type: ignore[abstract]
+        if self.get_config().legend_trials.towers:
+            LegendTrialMixin().push_legend_trials()  # type: ignore[abstract]
         AFKStagesMixin().push_afk_stages(season=True)  # type: ignore[abstract]
 
     ############################# Daily Rewards ##############################

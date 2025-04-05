@@ -17,6 +17,21 @@ from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
 
+class InvalidIntegerConstraintsError(ValueError):
+    """Raise when default value is outside min-max bounds.
+
+    This means you have to set ge and/or le in the Pydantic Field schema.
+    """
+
+    pass
+
+
+class MissingDefaultValueError(ValueError):
+    """Raised when a config field is missing a default value."""
+
+    pass
+
+
 class ConfigBase(BaseModel):
     """Base configuration class with shared functionality."""
 
@@ -127,10 +142,25 @@ class ConfigBase(BaseModel):
     def _handle_standard_field_types(cls, field_schema: dict) -> ConstraintType:
         """Handle standard field types like integer, boolean, and default to text."""
         default_value = field_schema.get("default")
+
+        if default_value is None:
+            raise MissingDefaultValueError(
+                f"Field '{field_schema.get('title') or field_schema.get('name')}' "
+                "is missing a default value."
+            )
+
         match field_schema.get("type"):
             case "integer":
                 minimum = field_schema.get("minimum") or 1
                 maximum = field_schema.get("maximum") or 999
+
+                if default_value > maximum or default_value < minimum:
+                    raise InvalidIntegerConstraintsError(
+                        f"Default value {default_value} is outside the expected range "
+                        f"{minimum}-{maximum}. Set 'le' and/or 'ge' in the "
+                        f"Pydantic Field schema explicitly."
+                    )
+
                 if not isinstance(minimum, int):
                     raise TypeError(
                         f"Expected 'minimum' to be an int, "

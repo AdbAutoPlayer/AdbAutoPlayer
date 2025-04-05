@@ -128,6 +128,7 @@ class AFKStagesConfig(BaseModel):
     push_both_modes: bool = Field(default=True, alias="Both Modes")
     spend_gold: bool = Field(default=False, alias="Spend Gold")
     repeat: bool = Field(default=True, alias="Repeat")
+    skip_manual_formations: bool = Field(default=False, alias="Skip Manual Formations")
 
 
 class DurasTrialsConfig(BaseModel):
@@ -172,6 +173,7 @@ class ArcaneLabyrinthConfig(BaseModel):
     """Arcane Labyrinth config model."""
 
     difficulty: int = Field(ge=1, le=15, default=13, alias="Difficulty")
+    key_quota: int = Field(ge=1, le=9999, default=2700, alias="Key Quota")
 
 
 class DreamRealmConfig(BaseModel):

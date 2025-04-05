@@ -43,7 +43,8 @@ class AFKStagesMixin(AFKJourneyBase, ABC):
         logging.info(f"Pushing: {stages_name}")
         self._navigate_to_afk_stages_screen()
         while self._handle_battle_screen(
-            self.get_config().afk_stages.use_suggested_formations
+            self.get_config().afk_stages.use_suggested_formations,
+            self.get_config().afk_stages.skip_manual_formations,
         ):
             stages_pushed += 1
             logging.info(f"{stages_name} pushed: {stages_pushed}")

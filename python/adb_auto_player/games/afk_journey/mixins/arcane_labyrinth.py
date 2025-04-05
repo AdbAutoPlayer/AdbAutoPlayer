@@ -2,8 +2,8 @@
 
 import logging
 from abc import ABC
+from math import floor
 from time import sleep
-from typing import NoReturn
 
 from adb_auto_player import Coordinates, CropRegions, GameTimeoutError, MatchMode
 from adb_auto_player.games.afk_journey import AFKJourneyBase
@@ -105,13 +105,13 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         Args:
             keys (int): Number of keys.
         """
-        self.arcane_lucky_flip_keys += keys
+        self.arcane_lucky_flip_keys += floor(keys * 1.2)
         logging.info(
             f"Lucky Flip Keys farmed: {self.arcane_lucky_flip_keys} "
-            f"(Guild Keys: {self.arcane_lucky_flip_keys // 5})"
+            f"(Guild Keys: {self.arcane_lucky_flip_keys // 5}) "
         )
 
-    def handle_arcane_labyrinth(self) -> NoReturn:
+    def handle_arcane_labyrinth(self) -> None:
         """Handle Arcane Labyrinth."""
         logging.warning("This is made for farming Lucky Flip Keys")
         logging.warning(
@@ -124,8 +124,10 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             "https://discord.com/channels/1332082220013322240/1338732933057347655"
         )
         self.start_up(device_streaming=True)
+        key_quota: int = self.get_config().arcane_labyrinth.key_quota
         clear_count = 0
-        while True:
+
+        while self.arcane_lucky_flip_keys < key_quota:
             try:
                 self._start_arcane_labyrinth()
                 while self._handle_arcane_labyrinth():
@@ -147,6 +149,10 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 crop=CropRegions(top=0.8, left=0.3),
                 timeout=self.MIN_TIMEOUT,
             )
+        logging.info("Arcane Labyrinth done.")
+        logging.info(
+            f"Key quota ({key_quota}) reached. Total: {self.arcane_lucky_flip_keys}"
+        )
 
     def _select_a_crest(self) -> None:
         """Crest selection."""
