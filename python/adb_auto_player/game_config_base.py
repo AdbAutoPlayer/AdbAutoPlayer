@@ -5,6 +5,7 @@ import tomllib
 from pathlib import Path
 from typing import cast
 
+from adb_auto_player.ipc import NumberConstraintDict
 from adb_auto_player.ipc.constraint import (
     ConstraintType,
     create_checkbox_constraint,
@@ -17,7 +18,7 @@ from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
 
-class InvalidIntegerConstraintsError(ValueError):
+class InvalidBoundaryError(ValueError):
     """Raise when default value is outside min-max bounds.
 
     This means you have to set ge and/or le in the Pydantic Field schema.
@@ -26,8 +27,23 @@ class InvalidIntegerConstraintsError(ValueError):
     pass
 
 
+class MissingBoundaryValueError(ValueError):
+    """Raised when a number config is missing its min or max boundary.
+
+    This means you have to set ge or gt and le or lt in the Pydantic Field schema.
+    """
+
+    pass
+
+
 class MissingDefaultValueError(ValueError):
     """Raised when a config field is missing a default value."""
+
+    pass
+
+
+class InvalidDefaultValueError(ValueError):
+    """Raised when a config field default value is invalid."""
 
     pass
 
@@ -142,42 +158,18 @@ class ConfigBase(BaseModel):
     def _handle_standard_field_types(cls, field_schema: dict) -> ConstraintType:
         """Handle standard field types like integer, boolean, and default to text."""
         default_value = field_schema.get("default")
-
+        field_name = field_schema.get("title") or field_schema.get("name")
         if default_value is None:
             raise MissingDefaultValueError(
-                f"Field '{field_schema.get('title') or field_schema.get('name')}' "
-                "is missing a default value."
+                f"Field '{field_name}' is missing a default value."
             )
+        field_type = field_schema.get("type")
+        match field_type:
+            case "integer":  # case ("integer" | "number"):
+                if field_type == "integer":
+                    return _get_integer_constraint(field_schema)
 
-        match field_schema.get("type"):
-            case "integer":
-                minimum = field_schema.get("minimum") or 1
-                maximum = field_schema.get("maximum") or 999
-
-                if default_value > maximum or default_value < minimum:
-                    raise InvalidIntegerConstraintsError(
-                        f"Default value {default_value} is outside the expected range "
-                        f"{minimum}-{maximum}. Set 'le' and/or 'ge' in the "
-                        f"Pydantic Field schema explicitly."
-                    )
-
-                if not isinstance(minimum, int):
-                    raise TypeError(
-                        f"Expected 'minimum' to be an int, "
-                        f"but got {type(minimum).__name__}"
-                    )
-
-                if not isinstance(maximum, int):
-                    raise TypeError(
-                        f"Expected 'maximum' to be an int, "
-                        f"but got {type(maximum).__name__}"
-                    )
-
-                return create_number_constraint(
-                    minimum=minimum,
-                    maximum=maximum,
-                    default_value=cast(int, default_value),
-                )
+                return _get_number_constraint(field_schema)
             case "boolean":
                 return create_checkbox_constraint(cast(bool, default_value))
             case "array":
@@ -185,5 +177,108 @@ class ConfigBase(BaseModel):
                     "array config properties need to define "
                     "json_schema_extra.constraint_type"
                 )
+            case "string":
+                return create_text_constraint(
+                    default_value=cast(str, default_value),
+                    regex=field_schema.get("regex", ""),
+                )
             case _:
-                return create_text_constraint(cast(str, default_value))
+                raise NotImplementedError(
+                    f"Field Schema Type '{field_type}' not implemented."
+                )
+
+
+def _get_number_constraint(field_schema: dict) -> NumberConstraintDict:
+    """Returns number constraint.
+
+    TODO version 6.0.0 implement this in FE
+    """
+    field_name = field_schema.get("title") or field_schema.get("name")
+    default_value = field_schema.get("default")
+
+    if not isinstance(default_value, int) or not isinstance(default_value, float):
+        raise InvalidDefaultValueError(
+            f"Field '{field_name}' default_value should be an int or float."
+        )
+
+    minimum = field_schema.get("minimum")
+    maximum = field_schema.get("maximum")
+
+    if minimum is None or maximum is None:
+        raise MissingBoundaryValueError(
+            f"Field '{field_name}' is missing boundaries. "
+            f"Set 'le' or 'lt and 'ge' or 'gt' in the "
+            f"Pydantic Field schema explicitly."
+        )
+
+    if not isinstance(minimum, int) and not isinstance(minimum, float):
+        raise TypeError(
+            f"Expected 'minimum' to be an int or float, but got "
+            f"{type(minimum).__name__}"
+        )
+
+    if not isinstance(maximum, int) and not isinstance(maximum, float):
+        raise TypeError(
+            f"Expected 'maximum' to be an int or float, "
+            f"but got {type(maximum).__name__}"
+        )
+
+    if default_value > maximum or default_value < minimum:
+        raise InvalidBoundaryError(
+            f"Field '{field_name}' "
+            f"Default value {default_value} is outside the expected range "
+            f"{minimum}-{maximum}. Set 'le' or 'lt and 'ge' or 'gt' in the "
+            f"Pydantic Field schema explicitly."
+        )
+
+    raise NotImplementedError(":(")
+    return create_number_constraint(
+        minimum=minimum,
+        maximum=maximum,
+        default_value=cast(float, default_value),
+    )
+
+
+def _get_integer_constraint(field_schema: dict) -> NumberConstraintDict:
+    """Returns integer number constraint."""
+    field_name = field_schema.get("title") or field_schema.get("name")
+    default_value = field_schema.get("default")
+
+    if not isinstance(default_value, int):
+        raise InvalidDefaultValueError(
+            f"Field '{field_name}' default_value should be an int."
+        )
+
+    minimum = field_schema.get("minimum")
+    maximum = field_schema.get("maximum")
+
+    if minimum is None or maximum is None:
+        raise MissingBoundaryValueError(
+            f"Field '{field_name}' is missing boundaries. "
+            f"Set 'le' or 'lt and 'ge' or 'gt' in the "
+            f"Pydantic Field schema explicitly."
+        )
+
+    if not isinstance(minimum, int):
+        raise TypeError(
+            f"Expected 'minimum' to be an int, but got {type(minimum).__name__}"
+        )
+
+    if not isinstance(maximum, int):
+        raise TypeError(
+            f"Expected 'maximum' to be an int, but got {type(maximum).__name__}"
+        )
+
+    if default_value > maximum or default_value < minimum:
+        raise InvalidBoundaryError(
+            f"Field '{field_name}' "
+            f"Default value {default_value} is outside the expected range "
+            f"{minimum}-{maximum}. Set 'le' or 'lt and 'ge' or 'gt' in the "
+            f"Pydantic Field schema explicitly."
+        )
+
+    return create_number_constraint(
+        minimum=minimum,
+        maximum=maximum,
+        default_value=cast(int, default_value),
+    )

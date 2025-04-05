@@ -124,6 +124,6 @@ def create_image_checkbox_constraint(
     )
 
 
-def create_text_constraint(default_value: str) -> TextConstraintDict:
+def create_text_constraint(default_value: str, regex: str) -> TextConstraintDict:
     """Create a text constraint."""
-    return TextConstraintDict(type="text", regex="", default_value=default_value)
+    return TextConstraintDict(type="text", regex=regex, default_value=default_value)
