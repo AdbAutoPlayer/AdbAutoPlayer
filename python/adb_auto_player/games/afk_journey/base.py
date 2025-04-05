@@ -103,11 +103,14 @@ class AFKJourneyBase(Game, ABC):
             case _:
                 return getattr(self.get_config().afk_stages, attribute)
 
-    def _handle_battle_screen(self, use_suggested_formations: bool = True) -> bool:
+    def _handle_battle_screen(
+        self, use_suggested_formations: bool = True, skip_manual: bool = False
+    ) -> bool:
         """Handles logic for battle screen.
 
         Args:
             use_suggested_formations: if True copy formations from Records
+            skip_manual: Skip formations labeled as manual clear.
 
         Returns:
             True if the battle was won, False otherwise.
@@ -125,7 +128,9 @@ class AFKJourneyBase(Game, ABC):
 
             if (
                 use_suggested_formations
-                and not self._copy_suggested_formation_from_records(formations)
+                and not self._copy_suggested_formation_from_records(
+                    formations, skip_manual
+                )
             ):
                 continue
             else:
@@ -193,7 +198,9 @@ class AFKJourneyBase(Game, ABC):
             return self._copy_suggested_formation(formations, start_count)
         return True
 
-    def _copy_suggested_formation_from_records(self, formations: int = 1) -> bool:
+    def _copy_suggested_formation_from_records(
+        self, formations: int = 1, skip_manual: bool = False
+    ) -> bool:
         """Copy suggested formations from records.
 
         Returns:
@@ -210,11 +217,23 @@ class AFKJourneyBase(Game, ABC):
             timeout=self.MIN_TIMEOUT,
             timeout_message="No formations available for this battle",
         )
-
         start_count = 1
+
         while True:
             if not self._copy_suggested_formation(formations, start_count):
                 return False
+            if skip_manual:
+                sleep(2)
+                manual_clear: tuple[int, int] | None = self.game_find_template_match(
+                    "battle/manual_battle.png",
+                    crop=CropRegions(top=0.5),
+                )
+                if manual_clear:
+                    logging.info("Manual formation found, skipping.")
+                    start_count = self.store.get(self.STORE_FORMATION_NUM, 1)
+                    self.store[self.STORE_FORMATION_NUM] += 1
+                    continue
+
             self.click(Coordinates(*copy))
             sleep(1)
 

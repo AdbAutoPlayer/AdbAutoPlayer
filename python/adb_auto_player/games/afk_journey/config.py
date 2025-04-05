@@ -128,6 +128,7 @@ class AFKStagesConfig(BaseModel):
     push_both_modes: bool = Field(default=True, alias="Both Modes")
     spend_gold: bool = Field(default=False, alias="Spend Gold")
     repeat: bool = Field(default=True, alias="Repeat")
+    skip_manual_formations: bool = Field(default=True, alias="Skip Manual Formations")
 
 
 class DurasTrialsConfig(BaseModel):
