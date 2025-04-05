@@ -108,7 +108,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         self.arcane_lucky_flip_keys += floor(keys * 1.2)
         logging.info(
             f"Lucky Flip Keys farmed: {self.arcane_lucky_flip_keys} "
-            f"(Guild Keys: {self.arcane_lucky_flip_keys // 5}) "
+            f"(Guild Keys: {self.arcane_lucky_flip_keys // 6}) "
         )
 
     def handle_arcane_labyrinth(self) -> None:
