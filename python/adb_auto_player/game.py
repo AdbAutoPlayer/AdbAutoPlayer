@@ -3,6 +3,7 @@
 import io
 import logging
 import os
+import threading
 from abc import abstractmethod
 from collections.abc import Callable
 from pathlib import Path
@@ -32,6 +33,7 @@ from adb_auto_player.template_matching import (
     similar_image,
 )
 from adbutils._device import AdbDevice
+from deprecation import deprecated
 from PIL import Image
 from pydantic import BaseModel
 
@@ -262,6 +264,38 @@ class Game:
             sleep(1)
             time_waiting_for_stream_to_start += 1
 
+    def tap(
+        self,
+        coordinates: Coordinates,
+        scale: bool = False,
+        blocking: bool = True,
+        non_blocking_sleep_duration: float = 1 / 30,  # Assuming 30 FPS, 1 Tap per Frame
+    ) -> None:
+        """Tap the screen on the given coordinates.
+
+        Args:
+            coordinates (Coordinates): Coordinates to click on.
+            scale (bool, optional): Whether to scale the coordinates.
+            blocking (bool, optional): Whether to block the process and
+                wait for ADBServer to confirm the tap has happened.
+            non_blocking_sleep_duration (float, optional): Sleep time in seconds for
+                non-blocking taps, needed to not DoS the ADBServer.
+        """
+        if scale:
+            scaled_coords = Coordinates(*self._scale_coordinates(*coordinates))
+            logging.debug(f"Scaled coordinates: {coordinates} => {scaled_coords}")
+            coordinates = scaled_coords
+
+        if blocking:
+            self._click(coordinates)
+        else:
+            thread = threading.Thread(
+                target=self._click, args=(coordinates,), daemon=True
+            )
+            thread.start()
+            sleep(non_blocking_sleep_duration)
+
+    @deprecated(details="Use 'tap' instead.")
     def click(
         self,
         coordinates: Coordinates,
@@ -282,7 +316,7 @@ class Game:
     def _click(self, coordinates: Coordinates) -> None:
         with self.device.shell(
             f"input tap {coordinates.x} {coordinates.y}",
-            timeout=10,  # if the click didn't happen in 10 seconds it's never happening
+            timeout=3,  # if the click didn't happen in 3 seconds it's never happening
             stream=True,
         ) as connection:
             logging.debug(f"Clicked Coordinates: {coordinates}")
