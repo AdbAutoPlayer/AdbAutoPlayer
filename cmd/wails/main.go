@@ -32,31 +32,32 @@ func main() {
 	}
 
 	configPath := GetFirstPathThatExists(paths)
-
-	mainConfig, err := config.LoadConfig[config.MainConfig](*configPath)
-	if err == nil {
-		println(mainConfig.Logging.Level)
-		switch mainConfig.Logging.Level {
-		case string(ipc.LogLevelTrace):
-			logLevel = logger.TRACE
-		case string(ipc.LogLevelDebug):
-			logLevel = logger.DEBUG
-		case string(ipc.LogLevelWarning):
-			logLevel = logger.WARNING
-		case string(ipc.LogLevelError):
-			logLevel = logger.ERROR
-		default:
-			logLevel = logger.INFO
+	if nil != configPath {
+		mainConfig, err := config.LoadConfig[config.MainConfig](*configPath)
+		if err == nil {
+			println(mainConfig.Logging.Level)
+			switch mainConfig.Logging.Level {
+			case string(ipc.LogLevelTrace):
+				logLevel = logger.TRACE
+			case string(ipc.LogLevelDebug):
+				logLevel = logger.DEBUG
+			case string(ipc.LogLevelWarning):
+				logLevel = logger.WARNING
+			case string(ipc.LogLevelError):
+				logLevel = logger.ERROR
+			default:
+				logLevel = logger.INFO
+			}
+		} else {
+			println(err.Error())
 		}
-	} else {
-		println(err.Error())
 	}
 	println(logLevel)
 	frontendLogger := ipc.NewFrontendLogger(uint8(logLevel))
 
 	app := NewApp()
 
-	err = wails.Run(&options.App{
+	err := wails.Run(&options.App{
 		Title:  "AdbAutoPlayer",
 		Width:  1168,
 		Height: 776,
