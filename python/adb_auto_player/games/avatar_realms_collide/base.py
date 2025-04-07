@@ -18,9 +18,6 @@ class AvatarRealmsCollideBase(Game, ABC):
             "com.angames.android.google.avatarbendingtheworld",
         ]
 
-    template_dir_path: Path | None = None
-    config_file_path: Path | None = None
-
     def start_up(self, device_streaming: bool = False) -> None:
         """Give the bot eyes."""
         if self.device is None:
@@ -57,7 +54,3 @@ class AvatarRealmsCollideBase(Game, ABC):
             raise NotInitializedError()
 
         return self.config
-
-    def get_supported_resolutions(self) -> list[str]:
-        """Get supported resolutions."""
-        return ["1080x1920"]

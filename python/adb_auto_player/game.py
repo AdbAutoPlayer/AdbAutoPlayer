@@ -61,6 +61,9 @@ class Game:
         self.stream: DeviceStream | None = None
         self.package_names: list[str] = []
         self.debug_screenshot_counter: int = 0
+        self.template_dir_path: Path | None = None
+        self.config_file_path: Path | None = None
+        self.supported_resolutions: list[str] = ["1080x1920"]
 
     @abstractmethod
     def get_template_dir_path(self) -> Path:
@@ -80,11 +83,6 @@ class Game:
     @abstractmethod
     def get_gui_options(self) -> GameGUIOptions:
         """Required method to return the GUI options."""
-        ...
-
-    @abstractmethod
-    def get_supported_resolutions(self) -> list[str]:
-        """Required method to return the supported resolutions."""
         ...
 
     @abstractmethod
@@ -110,7 +108,6 @@ class Game:
              UnsupportedResolutionException: Device resolution is not supported.
         """
         resolution: str = get_screen_resolution(self.device)
-        supported_resolutions: list[str] = self.get_supported_resolutions()
 
         try:
             width, height = map(int, resolution.split("x"))
@@ -118,7 +115,7 @@ class Game:
             raise UnsupportedResolutionError(f"Invalid resolution format: {resolution}")
 
         is_supported = False
-        for supported_resolution in supported_resolutions:
+        for supported_resolution in self.supported_resolutions:
             if "x" in supported_resolution:
                 if resolution == supported_resolution:
                     is_supported = True
@@ -139,7 +136,7 @@ class Game:
         if not is_supported:
             raise UnsupportedResolutionError(
                 "This bot only supports these resolutions: "
-                f"{', '.join(supported_resolutions)}"
+                f"{', '.join(self.supported_resolutions)}"
             )
 
         self.resolution = width, height
@@ -218,9 +215,8 @@ class Game:
         Args:
             device_streaming (bool, optional): Whether to start the device stream.
         """
-        resolutions: list[str] = self.get_supported_resolutions()
         suggested_resolution: str | None = next(
-            (res for res in resolutions if "x" in res), None
+            (res for res in self.supported_resolutions if "x" in res), None
         )
         logging.debug(f"Suggested Resolution: {suggested_resolution}")
         self.device = get_adb_device(suggested_resolution)

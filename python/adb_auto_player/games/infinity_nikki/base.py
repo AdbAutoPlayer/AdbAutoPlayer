@@ -18,9 +18,6 @@ class InfinityNikkiBase(Game, ABC):
             "com.infoldgames.infinitynikki",
         ]
 
-    template_dir_path: Path | None = None
-    config_file_path: Path | None = None
-
     FAST_TIMEOUT: int = 3
 
     def start_up(self, device_streaming: bool = False) -> None:
@@ -61,7 +58,3 @@ class InfinityNikkiBase(Game, ABC):
         if self.config is None:
             raise NotInitializedError()
         return self.config
-
-    def get_supported_resolutions(self) -> list[str]:
-        """Get supported resolutions."""
-        return ["1080x1920"]

@@ -49,10 +49,6 @@ class MockGame(Game):
             constraints={},
         )
 
-    def get_supported_resolutions(self) -> list[str]:
-        """Mocked method."""
-        return ["1080x1920"]
-
     def get_config(self) -> BaseModel:
         """Mocked method."""
         return MockConfig()
