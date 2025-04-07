@@ -18,7 +18,7 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
         try:
             self._navigate_to_legend_trials_select_tower()
         except GameTimeoutError as e:
-            logging.error(f"{e}")
+            logging.error(f"{e} {self.LANG_ERROR}")
             return None
 
         towers = self.get_config().legend_trials.towers
