@@ -30,9 +30,6 @@ class AFKJourneyBase(Game, ABC):
             "com.farlightgames.igame.gp",
         ]
 
-    template_dir_path: Path | None = None
-    config_file_path: Path | None = None
-
     # Timeout constants (in seconds)
     BATTLE_TIMEOUT: int = 180
     MIN_TIMEOUT: int = 10
@@ -83,10 +80,6 @@ class AFKJourneyBase(Game, ABC):
         if self.config is None:
             raise NotInitializedError()
         return self.config
-
-    def get_supported_resolutions(self) -> list[str]:
-        """Get supported resolutions."""
-        return ["1080x1920"]
 
     def _get_config_attribute_from_mode(self, attribute: str) -> Any:
         """Retrieve a configuration attribute based on the current game mode.
