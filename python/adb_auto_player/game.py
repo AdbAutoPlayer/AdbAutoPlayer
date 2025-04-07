@@ -66,11 +66,6 @@ class Game:
         self.supported_resolutions: list[str] = ["1080x1920"]
 
     @abstractmethod
-    def get_template_dir_path(self) -> Path:
-        """Required method to return the template directory path."""
-        ...
-
-    @abstractmethod
     def load_config(self) -> None:
         """Required method to load the game configuration."""
         ...
@@ -834,3 +829,29 @@ class Game:
         screenshot.save(file_name)
         self.debug_screenshot_counter = file_index + 1
         return
+
+    def _get_config_file_path(self) -> Path:
+        if self.config_file_path is None:
+            module = self.__class__.__module__.split(".")[-2]
+
+            self.config_file_path = (
+                ConfigLoader().games_dir / module / (snake_to_pascal(module) + ".toml")
+            )
+            logging.debug(f"{module} config path: {self.config_file_path}")
+
+        return self.config_file_path
+
+    def get_template_dir_path(self) -> Path:
+        """Retrieve path to images."""
+        if self.template_dir_path is None:
+            module = self.__class__.__module__.split(".")[-2]
+
+            self.template_dir_path = ConfigLoader().games_dir / module / "templates"
+            logging.debug(f"{module} template path: {self.template_dir_path}")
+
+        return self.template_dir_path
+
+
+def snake_to_pascal(s: str):
+    """snake_case to PascalCase."""
+    return "".join(word.capitalize() for word in s.split("_"))
