@@ -1,6 +1,7 @@
 """Infinity Nikki Sheep Minigame Mixin."""
 
 import logging
+import sys
 from abc import ABC
 from time import sleep
 
@@ -13,6 +14,8 @@ class SheepMinigameMixin(InfinityNikkiBase, ABC):
 
     def afk_sheep_minigame(self) -> None:
         """Automate sheep minigame."""
+        print(self.__class__.__module__)
+        sys.exit(1)
         logging.error("Update 1.4 ruined this :(, sheep no longer move after eating")
         return None
         self.start_up(device_streaming=True)
