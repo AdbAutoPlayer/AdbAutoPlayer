@@ -49,7 +49,7 @@ class ArenaMixin(AFKJourneyBase, ABC):
             self.click(Coordinates(*arena_mode))
             sleep(2)
         except GameTimeoutError as fail:
-            logging.error(fail)
+            logging.error(f"{fail} {self.LANG_ERROR}")
             raise
 
         logging.debug("Checking for weekly arena notices.")

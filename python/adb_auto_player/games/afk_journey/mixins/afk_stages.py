@@ -25,7 +25,7 @@ class AFKStagesMixin(AFKJourneyBase, ABC):
             try:
                 self._start_afk_stage()
             except GameTimeoutError as e:
-                logging.warning(f"{e}")
+                logging.warning(f"{e} {self.LANG_ERROR}")
             if self.get_config().afk_stages.push_both_modes:
                 self.store[self.STORE_SEASON] = not season
                 try:

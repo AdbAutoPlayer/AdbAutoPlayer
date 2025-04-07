@@ -49,6 +49,9 @@ class AFKJourneyBase(Game, ABC):
     MODE_AFK_STAGES: str = "AFK_STAGES"
     MODE_LEGEND_TRIALS: str = "LEGEND_TRIALS"
 
+    # Language Requirements
+    LANG_ERROR: str = "Is the game language set to English?"
+
     def start_up(self, device_streaming: bool = False) -> None:
         """Give the bot eyes."""
         if self.device is None:

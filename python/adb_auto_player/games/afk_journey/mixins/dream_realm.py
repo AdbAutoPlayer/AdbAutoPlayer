@@ -119,7 +119,7 @@ class DreamRealmMixin(AFKJourneyBase, ABC):
             self.click(Coordinates(*dr_mode))
             sleep(2)
         except GameTimeoutError as fail:
-            logging.error(fail)
+            logging.error(f"{fail} {self.LANG_ERROR}")
             raise
 
     def _claim_reward(self) -> None:

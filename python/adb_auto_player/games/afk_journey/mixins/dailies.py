@@ -126,7 +126,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             )
             self.click(Coordinates(*guild_store))
         except GameTimeoutError as fail:
-            logging.error(fail)
+            logging.error(f"{fail} {self.LANG_ERROR}")
             return
 
         try:
@@ -172,7 +172,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             self.click(Coordinates(*friendship_store))
             sleep(1)
         except GameTimeoutError as fail:
-            logging.error(fail)
+            logging.error(f"{fail} {self.LANG_ERROR}")
             return
 
         logging.debug("Looking for discount affinity item.")
@@ -264,7 +264,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             self.click(Coordinates(*confirm_summon))
             sleep(2)
         except GameTimeoutError as fail:
-            logging.error(fail)
+            logging.error(f"{fail} {self.LANG_ERROR}")
 
         logging.debug("Back.")
         self.press_back_button()
@@ -308,7 +308,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             self.click(Coordinates(540, 1620))  # Close confirmation
             sleep(1)
         except GameTimeoutError as fail:
-            logging.info(fail)
+            logging.info(f"{fail} {self.LANG_ERROR}")
 
         logging.debug("Back.")  # TODO: Create generic back method.
         back: tuple[int, int] | None = self.game_find_template_match("back.png")
