@@ -67,7 +67,7 @@ class Game:
         self._template_dir_path: Path | None = None
 
     @abstractmethod
-    def load_config(self) -> None:
+    def _load_config(self):
         """Required method to load the game configuration."""
         ...
 
