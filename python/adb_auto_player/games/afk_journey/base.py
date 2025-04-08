@@ -12,7 +12,6 @@ from adb_auto_player import (
     CropRegions,
     Game,
     MatchMode,
-    NotInitializedError,
 )
 from adb_auto_player.games.afk_journey.config import Config
 
@@ -55,17 +54,16 @@ class AFKJourneyBase(Game, ABC):
         if self.device is None:
             logging.debug("start_up")
             self.open_eyes(device_streaming=device_streaming)
-        if self.config is None:
-            self.load_config()
 
-    def load_config(self) -> None:
+    def _load_config(self) -> Config:
         """Load config TOML."""
         self.config = Config.from_toml(self._get_config_file_path())
+        return self.config
 
     def get_config(self) -> Config:
         """Get config."""
         if self.config is None:
-            raise NotInitializedError()
+            return self._load_config()
         return self.config
 
     def _get_config_attribute_from_mode(self, attribute: str) -> Any:

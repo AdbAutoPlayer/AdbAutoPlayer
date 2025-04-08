@@ -31,7 +31,7 @@ class MockGame(Game):
         """Mocked method."""
         return TEST_DATA_DIR
 
-    def load_config(self) -> None:
+    def _load_config(self) -> None:
         """Mocked method."""
         pass
 

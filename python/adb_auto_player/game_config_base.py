@@ -68,8 +68,11 @@ class ConfigBase(BaseModel):
                     toml_data = tomllib.load(f)
 
             except Exception as e:
-                logging.error(f"Error reading config file: {e} - Using default values")
-
+                logging.error(
+                    f"Error reading config file: {e} - using default config values"
+                )
+        else:
+            logging.info("Using default config values")
         default_data = {}
         for field in cls.model_fields.values():
             field = cast(FieldInfo, field)
