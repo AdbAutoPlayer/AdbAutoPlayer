@@ -72,7 +72,7 @@ class ConfigBase(BaseModel):
                     f"Error reading config file: {e} - using default config values"
                 )
         else:
-            logging.info("Using default config values")
+            logging.debug("Using default config values")
         default_data = {}
         for field in cls.model_fields.values():
             field = cast(FieldInfo, field)
