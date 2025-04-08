@@ -28,6 +28,9 @@ class AFKJourneyBase(Game, ABC):
             "com.farlightgames.igame.gp",
         ]
 
+        # to allow passing properties over multiple functions
+        self.store: dict[str, Any] = {}
+
     # Timeout constants (in seconds)
     BATTLE_TIMEOUT: int = 180
     MIN_TIMEOUT: int = 10
