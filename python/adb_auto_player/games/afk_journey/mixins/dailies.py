@@ -431,15 +431,15 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def raise_hero_affinity(self) -> None:
         """Raise hero affinity with 3 clicks per day."""
         self._navigate_to_default_state()
-        sleep(2)
+        sleep(5)
 
         logging.debug("Open Resonating Hall.")
         self.click(Coordinates(620, 1830), scale=True)
-        sleep(2)
+        sleep(5)
 
         logging.info("Begin raising hero affinity.")
         self.click(Coordinates(130, 1040), scale=True)
-        sleep(2)
+        sleep(5)
 
         while not self.game_find_template_match("dailies/resonating_hall/chippy.png"):
             self._click_hero()
