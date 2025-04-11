@@ -63,7 +63,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     self.click(Coordinates(100, 1000))
                     sleep(3)
                     try:
-                        _ = self.wait_for_template("gui/map.png", timeout=5)
+                        _ = self.wait_for_template("gui/map.png", timeout=10)
                     except GameTimeoutError:
                         # happens on a disconnect
                         self.click(Coordinates(1560, 970))
@@ -75,7 +75,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         logging.info("Attempting to reconnect...")
         self.click(Coordinates(1560, 970))
         try:
-            while ok := self.wait_for_template("gui/ok.png", timeout=5):
+            while ok := self.wait_for_template("gui/ok.png", timeout=10):
                 self.click(Coordinates(*ok))
                 sleep(1)
         except GameTimeoutError:
@@ -152,7 +152,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         try:
             while heal_complete := self.wait_for_template(
                 template="healing/complete.png",
-                timeout=5,
+                timeout=10,
             ):
                 self.click(Coordinates(*heal_complete))
                 sleep(1)
@@ -180,7 +180,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         x, y = self.wait_for_template(
             "campaign/avatar_trail.png",
             threshold=0.7,
-            timeout=5,
+            timeout=10,
         )
         self.click(Coordinates(x, y))
 
@@ -238,15 +238,17 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 "build/double_arrow_button2.png",
             ],
             threshold=0.7,
-            timeout=5,
+            timeout=10,
         )
         self.click(Coordinates(x, y))
-        while upgrade := self.wait_for_template("build/upgrade.png", timeout=5):
+        while upgrade := self.wait_for_template("build/upgrade.png", timeout=10):
             self.click(Coordinates(*upgrade))
             self._handle_replenish_all("build/upgrade.png")
-            while x_btn := self.game_find_template_match("gui/x.png"):
-                self.click(Coordinates(*x_btn))
-                sleep(2)
+            if self.get_config().auto_play_config.purchase_seal_of_solidarity:
+                self._purchase_seal_of_solidarity_if_needed()
+        while x_btn := self.game_find_template_match("gui/x.png"):
+            self.click(Coordinates(*x_btn))
+            sleep(2)
 
     def _center_city_view_by_using_research(self) -> None:
         logging.info("Center City View by using research")
@@ -260,7 +262,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         _ = self.wait_for_template(
             "gui/map.png",
             crop=CropRegions(right=0.8, top=0.8),
-            timeout=5,
+            timeout=10,
             threshold=0.7,
         )
         self.click(Coordinates(80, 480))
@@ -277,7 +279,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         _ = self.wait_for_template(
             "gui/map.png",
             crop=CropRegions(right=0.8, top=0.8),
-            timeout=5,
+            timeout=10,
             threshold=0.7,
         )
 
@@ -290,7 +292,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     "research/military.png",
                     "research/economy.png",
                 ],
-                timeout=5,
+                timeout=10,
             )
         except GameTimeoutError:
             return None
@@ -359,14 +361,43 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         sleep(2)
         return
 
+    def _purchase_seal_of_solidarity_if_needed(self) -> None:
+        try:
+            sleep(3)
+            seal = self.game_find_template_match(
+                "build/seal_of_solidarity.png",
+                threshold=0.7,
+            )
+
+            if not seal:
+                return
+            purchase = self.game_find_template_match(
+                "build/purchase.png",
+                threshold=0.7,
+            )
+
+            if not purchase:
+                return
+
+            self.click(Coordinates(*purchase))
+            sleep(2)
+            purchase_ok = self.game_find_template_match("build/gem_purchase_ok.png")
+            if not purchase_ok:
+                return
+            self.click(Coordinates(*purchase_ok))
+            btn = self.wait_for_template("build/upgrade.png", timeout=10)
+            self.click(Coordinates(*btn))
+        except GameTimeoutError:
+            return
+
     def _handle_replenish_all(self, button_template: str) -> None:
         try:
             replenish = self.wait_for_template(
                 "gui/replenish_all.png",
-                timeout=3,
+                timeout=5,
             )
             self.click(Coordinates(*replenish))
-            btn = self.wait_for_template(button_template, timeout=5)
+            btn = self.wait_for_template(button_template, timeout=10)
             self.click(Coordinates(*btn))
         except GameTimeoutError:
             return
@@ -377,7 +408,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         _ = self.wait_for_template(
             "gui/map.png",
             crop=CropRegions(right=0.8, top=0.8),
-            timeout=5,
+            timeout=10,
             threshold=0.7,
         )
 
@@ -391,7 +422,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 x, y = self.wait_for_template(
                     "recruitment/recruit.png",
                     crop=CropRegions(left=0.5, top=0.6),
-                    timeout=5,
+                    timeout=10,
                 )
             except GameTimeoutError:
                 return None
@@ -401,7 +432,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             _ = self.wait_for_template(
                 "gui/map.png",
                 crop=CropRegions(right=0.8, top=0.8),
-                timeout=5,
+                timeout=10,
                 threshold=0.7,
             )
             self.click(Coordinates(80, 610))
@@ -442,13 +473,13 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         try:
             self.wait_for_any_template(
                 templates=[
-                    # "gathering/troop_max_5.png",
+                    "gathering/troop_max_5.png",
                     "gathering/troop_max_4.png",
                     "gathering/troop_max_3.png",
                     "gathering/troop_max_2.png",
                 ],
                 crop=CropRegions(left=0.8, bottom=0.5),
-                timeout=3,
+                timeout=5,
             )
         except GameTimeoutError:
             return False
@@ -470,14 +501,14 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
             resource = resources[self.gather_count % len(resources)]
             node = nodes[resource]
-            x, y = self.wait_for_template(node, timeout=5)
+            x, y = self.wait_for_template(node, timeout=10)
             self.click(Coordinates(x, y))
-            _ = self.wait_for_template("gui/search.png", timeout=5)
+            _ = self.wait_for_template("gui/search.png", timeout=10)
             sleep(1)
             search_button = self.wait_for_template(
                 "gui/search.png",
                 threshold=0.7,
-                timeout=5,
+                timeout=10,
             )
             self.click(Coordinates(*search_button))
             sleep(1)
@@ -485,7 +516,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 self.wait_until_template_disappears(
                     "gui/search.png",
                     threshold=0.7,
-                    timeout=3,
+                    timeout=5,
                 )
             except GameTimeoutError:
                 logging.warning(f"{resource} not found, trying next one")
@@ -495,13 +526,13 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 continue
             sleep(4)
             self.click(Coordinates(960, 520))
-            x, y = self.wait_for_template("gui/gather.png", timeout=5)
+            x, y = self.wait_for_template("gui/gather.png", timeout=10)
             sleep(1)
             self.click(Coordinates(x, y))
             sleep(1)
             template, x, y = self.wait_for_any_template(
                 templates=["gui/create_new_troop.png", "gui/march_blue.png"],
-                timeout=5,
+                timeout=10,
             )
             if template == "gui/march_blue.png":
                 self.press_back_button()
@@ -510,7 +541,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 return
             sleep(1)
             self.click(Coordinates(x, y))
-            x, y = self.wait_for_template("gui/march.png", timeout=5)
+            x, y = self.wait_for_template("gui/march.png", timeout=10)
             sleep(1)
             self.click(Coordinates(x, y))
             sleep(3)
@@ -607,7 +638,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     "alliance/research_territory.png",
                     "alliance/research_warfare.png",
                 ],
-                timeout=5,
+                timeout=10,
             )
         except GameTimeoutError:
             logging.warning("Alliance Research window not found")

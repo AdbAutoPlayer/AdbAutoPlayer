@@ -27,6 +27,10 @@ class AutoPlayConfig(BaseModel):
 
     building_slot_1: bool = Field(default=True, alias="Building Slot 1")
     building_slot_2: bool = Field(default=True, alias="Building Slot 2")
+    purchase_seal_of_solidarity: bool = Field(
+        default=False,
+        alias="Purchase Seal of Solidarity",
+    )
 
     research: bool = Field(default=True, alias="Research")
     military_first: bool = Field(default=True, alias="Research Military First")
