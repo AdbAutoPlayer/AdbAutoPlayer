@@ -4,17 +4,14 @@ import logging
 import re
 from abc import ABC
 from collections.abc import Callable
-from pathlib import Path
 from time import sleep
 from typing import Any
 
 from adb_auto_player import (
-    ConfigLoader,
     Coordinates,
     CropRegions,
     Game,
     MatchMode,
-    NotInitializedError,
 )
 from adb_auto_player.games.afk_journey.config import Config
 
@@ -30,8 +27,8 @@ class AFKJourneyBase(Game, ABC):
             "com.farlightgames.igame.gp",
         ]
 
-    template_dir_path: Path | None = None
-    config_file_path: Path | None = None
+        # to allow passing properties over multiple functions
+        self.store: dict[str, Any] = {}
 
     # Timeout constants (in seconds)
     BATTLE_TIMEOUT: int = 180
@@ -57,36 +54,17 @@ class AFKJourneyBase(Game, ABC):
         if self.device is None:
             logging.debug("start_up")
             self.open_eyes(device_streaming=device_streaming)
-        if self.config is None:
-            self.load_config()
 
-    def get_template_dir_path(self) -> Path:
-        """Retrieve path to images."""
-        if self.template_dir_path is not None:
-            return self.template_dir_path
-
-        self.template_dir_path = ConfigLoader().games_dir / "afk_journey" / "templates"
-        logging.debug(f"AFKJourney template path: {self.template_dir_path}")
-        return self.template_dir_path
-
-    def load_config(self) -> None:
+    def _load_config(self) -> Config:
         """Load config TOML."""
-        if self.config_file_path is None:
-            self.config_file_path = (
-                ConfigLoader().games_dir / "afk_journey" / "AFKJourney.toml"
-            )
-            logging.debug(f"AFK Journey config path: {self.config_file_path}")
-        self.config = Config.from_toml(self.config_file_path)
+        self.config = Config.from_toml(self._get_config_file_path())
+        return self.config
 
     def get_config(self) -> Config:
         """Get config."""
         if self.config is None:
-            raise NotInitializedError()
+            return self._load_config()
         return self.config
-
-    def get_supported_resolutions(self) -> list[str]:
-        """Get supported resolutions."""
-        return ["1080x1920"]
 
     def _get_config_attribute_from_mode(self, attribute: str) -> Any:
         """Retrieve a configuration attribute based on the current game mode.

@@ -15,7 +15,7 @@ class AssistMixin(AFKJourneyBase, ABC):
         """Assist Synergy and Corrupt Creature."""
         self.start_up(device_streaming=True)
 
-        if self.stream is None:
+        if self._stream is None:
             logging.warning(
                 "This feature is quite slow without Device Streaming "
                 "you will miss a lot of Synergy and CC requests"

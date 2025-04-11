@@ -31,7 +31,7 @@ class MockGame(Game):
         """Mocked method."""
         return TEST_DATA_DIR
 
-    def load_config(self) -> None:
+    def _load_config(self) -> None:
         """Mocked method."""
         pass
 
@@ -48,10 +48,6 @@ class MockGame(Game):
             categories=[],
             constraints={},
         )
-
-    def get_supported_resolutions(self) -> list[str]:
-        """Mocked method."""
-        return ["1080x1920"]
 
     def get_config(self) -> BaseModel:
         """Mocked method."""

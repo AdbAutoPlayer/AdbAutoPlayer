@@ -2,9 +2,8 @@
 
 import logging
 from abc import ABC
-from pathlib import Path
 
-from adb_auto_player import ConfigLoader, Game, NotInitializedError
+from adb_auto_player import Game
 from adb_auto_player.games.infinity_nikki import Config
 
 
@@ -18,9 +17,6 @@ class InfinityNikkiBase(Game, ABC):
             "com.infoldgames.infinitynikki",
         ]
 
-    template_dir_path: Path | None = None
-    config_file_path: Path | None = None
-
     FAST_TIMEOUT: int = 3
 
     def start_up(self, device_streaming: bool = False) -> None:
@@ -28,40 +24,19 @@ class InfinityNikkiBase(Game, ABC):
         if self.device is None:
             logging.debug("start_up")
             self.open_eyes(device_streaming=device_streaming)
-        if self.config is None:
-            self.load_config()
         logging.warning(
             "This game does not automatically scale on resolution change: "
             "https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/troubleshoot.html"
             "#tap-to-restart-this-app-for-a-better-view"
         )
 
-    def get_template_dir_path(self) -> Path:
-        """Retrieve path to images."""
-        if self.template_dir_path is not None:
-            return self.template_dir_path
-
-        self.template_dir_path = (
-            ConfigLoader().games_dir / "infinity_nikki" / "templates"
-        )
-        logging.debug(f"Infinity Nikki template path: {self.template_dir_path}")
-        return self.template_dir_path
-
-    def load_config(self) -> None:
+    def _load_config(self) -> Config:
         """Load config TOML."""
-        if self.config_file_path is None:
-            self.config_file_path = (
-                ConfigLoader().games_dir / "infinity_nikki" / "InfinityNikki.toml"
-            )
-            logging.debug(f"Infinity Nikki config path: {self.config_file_path}")
-        self.config = Config.from_toml(self.config_file_path)
+        self.config = Config.from_toml(self._get_config_file_path())
+        return self.config
 
     def get_config(self) -> Config:
         """Get config."""
         if self.config is None:
-            raise NotInitializedError()
+            return self._load_config()
         return self.config
-
-    def get_supported_resolutions(self) -> list[str]:
-        """Get supported resolutions."""
-        return ["1080x1920"]

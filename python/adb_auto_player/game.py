@@ -8,7 +8,7 @@ from abc import abstractmethod
 from collections.abc import Callable
 from pathlib import Path
 from time import sleep, time
-from typing import Any, Literal, NamedTuple, TypeVar
+from typing import Literal, NamedTuple, TypeVar
 
 from adb_auto_player import (
     Command,
@@ -50,25 +50,24 @@ class Game:
 
     def __init__(self) -> None:
         """Initialize a game."""
-        self._device: AdbDevice | None = None
         self.config: BaseModel | None = None
-        self.store: dict[str, Any] = {}
-        self.previous_screenshot: Image.Image | None = None
-        self._resolution: tuple[int, int] | None = None
-        self.scale_factor: float | None = None
-        self.supports_portrait: bool = False
-        self.supports_landscape: bool = False
-        self.stream: DeviceStream | None = None
+
         self.package_names: list[str] = []
-        self.debug_screenshot_counter: int = 0
+        self.supports_landscape: bool = False
+        self.supports_portrait: bool = False
+        self.supported_resolutions: list[str] = ["1080x1920"]
+
+        self._config_file_path: Path | None = None
+        self._debug_screenshot_counter: int = 0
+        self._device: AdbDevice | None = None
+        self._previous_screenshot: Image.Image | None = None
+        self._resolution: tuple[int, int] | None = None
+        self._scale_factor: float | None = None
+        self._stream: DeviceStream | None = None
+        self._template_dir_path: Path | None = None
 
     @abstractmethod
-    def get_template_dir_path(self) -> Path:
-        """Required method to return the template directory path."""
-        ...
-
-    @abstractmethod
-    def load_config(self) -> None:
+    def _load_config(self):
         """Required method to load the game configuration."""
         ...
 
@@ -80,11 +79,6 @@ class Game:
     @abstractmethod
     def get_gui_options(self) -> GameGUIOptions:
         """Required method to return the GUI options."""
-        ...
-
-    @abstractmethod
-    def get_supported_resolutions(self) -> list[str]:
-        """Required method to return the supported resolutions."""
         ...
 
     @abstractmethod
@@ -110,7 +104,6 @@ class Game:
              UnsupportedResolutionException: Device resolution is not supported.
         """
         resolution: str = get_screen_resolution(self.device)
-        supported_resolutions: list[str] = self.get_supported_resolutions()
 
         try:
             width, height = map(int, resolution.split("x"))
@@ -118,7 +111,7 @@ class Game:
             raise UnsupportedResolutionError(f"Invalid resolution format: {resolution}")
 
         is_supported = False
-        for supported_resolution in supported_resolutions:
+        for supported_resolution in self.supported_resolutions:
             if "x" in supported_resolution:
                 if resolution == supported_resolution:
                     is_supported = True
@@ -139,7 +132,7 @@ class Game:
         if not is_supported:
             raise UnsupportedResolutionError(
                 "This bot only supports these resolutions: "
-                f"{', '.join(supported_resolutions)}"
+                f"{', '.join(self.supported_resolutions)}"
             )
 
         self.resolution = width, height
@@ -178,15 +171,15 @@ class Game:
         Returns:
             float: Scale factor of the current resolution.
         """
-        if self.scale_factor:
-            return self.scale_factor
+        if self._scale_factor:
+            return self._scale_factor
         reference_resolution = (1080, 1920)
         if self.resolution == reference_resolution:
-            self.scale_factor = 1.0
+            self._scale_factor = 1.0
         else:
-            self.scale_factor = self.resolution[0] / reference_resolution[0]
-        logging.debug(f"scale_factor: {self.scale_factor}")
-        return self.scale_factor
+            self._scale_factor = self.resolution[0] / reference_resolution[0]
+        logging.debug(f"scale_factor: {self._scale_factor}")
+        return self._scale_factor
 
     @property
     def resolution(self) -> tuple[int, int]:
@@ -218,9 +211,8 @@ class Game:
         Args:
             device_streaming (bool, optional): Whether to start the device stream.
         """
-        resolutions: list[str] = self.get_supported_resolutions()
         suggested_resolution: str | None = next(
-            (res for res in resolutions if "x" in res), None
+            (res for res in self.supported_resolutions if "x" in res), None
         )
         logging.debug(f"Suggested Resolution: {suggested_resolution}")
         self.device = get_adb_device(suggested_resolution)
@@ -238,27 +230,27 @@ class Game:
     def start_stream(self) -> None:
         """Start the device stream."""
         try:
-            self.stream = DeviceStream(
+            self._stream = DeviceStream(
                 self.device,
             )
         except StreamingNotSupportedError as e:
             logging.warning(f"{e}")
 
-        if self.stream is None:
+        if self._stream is None:
             return
 
-        self.stream.start()
+        self._stream.start()
         logging.info("Starting Device Stream...")
         time_waiting_for_stream_to_start = 0
         attempts = 10
         while True:
             if time_waiting_for_stream_to_start >= attempts:
                 logging.error("Could not start Device Stream using screenshots instead")
-                if self.stream:
-                    self.stream.stop()
-                    self.stream = None
+                if self._stream:
+                    self._stream.stop()
+                    self._stream = None
                 break
-            if self.stream and self.stream.get_latest_frame():
+            if self._stream and self._stream.get_latest_frame():
                 logging.info("Device Stream started")
                 break
             sleep(1)
@@ -330,10 +322,10 @@ class Game:
         Raises:
             AdbException: Screenshot cannot be recorded
         """
-        if self.stream:
-            image: Image.Image | None = self.stream.get_latest_frame()
+        if self._stream:
+            image: Image.Image | None = self._stream.get_latest_frame()
             if image:
-                self.previous_screenshot = image
+                self._previous_screenshot = image
                 self._debug_save_screenshot()
                 return image
             logging.error(
@@ -348,23 +340,23 @@ class Game:
             # and keep only the PNG image data
             if png_start_index != -1:
                 screenshot_data = screenshot_data[png_start_index:]
-            self.previous_screenshot = Image.open(io.BytesIO(screenshot_data))
+            self._previous_screenshot = Image.open(io.BytesIO(screenshot_data))
             self._debug_save_screenshot()
-            return self.previous_screenshot
+            return self._previous_screenshot
         raise GenericAdbError(
             f"Screenshots cannot be recorded from device: {self.device.serial}"
         )
 
     def get_previous_screenshot(self) -> Image.Image:
         """Get the previous screenshot."""
-        if self.previous_screenshot is not None:
-            return self.previous_screenshot
+        if self._previous_screenshot is not None:
+            return self._previous_screenshot
         logging.warning("No previous screenshot")
         return self.get_screenshot()
 
     def _get_screenshot(self, previous_screenshot: bool) -> Image.Image:
         """Get screenshot depending on stream or not."""
-        if self.stream:
+        if self._stream:
             return self.get_screenshot()
         if previous_screenshot:
             return self.get_previous_screenshot()
@@ -827,14 +819,40 @@ class Game:
         debug_screenshot_save_num = logging_config.get("debug_save_screenshots", 0)
         log_level = logging_config.get("level", "INFO")
 
-        screenshot = self.previous_screenshot
+        screenshot = self._previous_screenshot
         if debug_screenshot_save_num <= 0 or not screenshot or log_level != "DEBUG":
             return
 
-        file_index = self.debug_screenshot_counter % debug_screenshot_save_num
+        file_index = self._debug_screenshot_counter % debug_screenshot_save_num
         os.makedirs("debug", exist_ok=True)
 
         file_name = f"debug/{file_index}.png"
         screenshot.save(file_name)
-        self.debug_screenshot_counter = file_index + 1
+        self._debug_screenshot_counter = file_index + 1
         return
+
+    def _get_config_file_path(self) -> Path:
+        if self._config_file_path is None:
+            module = self.__class__.__module__.split(".")[-2]
+
+            self._config_file_path = (
+                ConfigLoader().games_dir / module / (snake_to_pascal(module) + ".toml")
+            )
+            logging.debug(f"{module} config path: {self._config_file_path}")
+
+        return self._config_file_path
+
+    def get_template_dir_path(self) -> Path:
+        """Retrieve path to images."""
+        if self._template_dir_path is None:
+            module = self.__class__.__module__.split(".")[-2]
+
+            self._template_dir_path = ConfigLoader().games_dir / module / "templates"
+            logging.debug(f"{module} template path: {self._template_dir_path}")
+
+        return self._template_dir_path
+
+
+def snake_to_pascal(s: str):
+    """snake_case to PascalCase."""
+    return "".join(word.capitalize() for word in s.split("_"))
