@@ -145,6 +145,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout_message="Failed to purchase Invite Letter.",
             )
             self.click(Coordinates(*buy_letter))
+            sleep(2)  # pop up takes time to appear in slow devices
         except GameTimeoutError as fail:
             logging.info(fail)
 
