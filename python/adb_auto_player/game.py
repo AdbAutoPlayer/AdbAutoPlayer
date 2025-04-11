@@ -338,7 +338,7 @@ class Game:
                 with self.device.shell("screencap -p", stream=True) as c:
                     screenshot_data = c.read_until_close(encoding=None)
                 if isinstance(screenshot_data, bytes):
-                    return self._get_screenshot_from_bytes(screenshot_data)
+                    return self._get_image_from_bytes(screenshot_data)
             except (OSError, UnidentifiedImageError, ValueError) as e:
                 logging.debug(
                     f"Attempt {attempt + 1}/{max_retries}: "
@@ -350,7 +350,15 @@ class Game:
             f"Screenshots cannot be recorded from device: {self.device.serial}"
         )
 
-    def _get_screenshot_from_bytes(self, screenshot_data: bytes) -> Image.Image:
+    def _get_image_from_bytes(self, screenshot_data: bytes) -> Image.Image:
+        """Converts bytes to PIL.Image.
+
+        Raises:
+            IOError
+            OSError
+            UnidentifiedImageError
+            ValueError
+        """
         png_start_index = screenshot_data.find(b"\x89PNG\r\n\x1a\n")
         # Slice the screenshot data to remove the warning
         # and keep only the PNG image data
