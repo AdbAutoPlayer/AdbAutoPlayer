@@ -344,6 +344,7 @@ class Game:
                     f"Attempt {attempt + 1}/{max_retries}: "
                     f"Failed to process screenshot: {e}"
                 )
+                sleep(0.1)
 
         raise GenericAdbError(
             f"Screenshots cannot be recorded from device: {self.device.serial}"
