@@ -18,12 +18,20 @@ class ModeCategory(StrEnum):
     ALL = "All"
 
 
+class NoRechargeableAPError(Exception):
+    """No rechargeable AP (pots or free AP)."""
+
+    pass
+
+
 class AvatarRealmsCollide(AvatarRealmsCollideBase):
     """Avatar Realms Collide Game."""
 
     gather_count: int = 0
     last_campaign_collection: float = 0
     last_alliance_research_and_gift: float = 0
+    unchecked_hold_position_after_attack: bool = False
+    no_ap: bool = False
 
     def auto_play(self) -> None:
         """Auto Play."""
@@ -33,6 +41,9 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 self._navigate_to_city()
                 self._auto_play_loop()
                 sleep(10)
+            except NoRechargeableAPError:
+                logging.error("AP cannot be recharged disabling Expedition")
+                self.no_ap = True
             except GameTimeoutError as e:
                 logging.error(f"{e}")
                 sleep(2)
@@ -116,8 +127,225 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         ]:
             safe_execute(action)
 
+        self._expedition()
+        self._navigate_to_city()
         self._gather_resources()
         self._navigate_to_city()
+
+    def _recharge_ap(self) -> bool:
+        sleep(1)
+        go = self.game_find_template_match("expedition/go.png")
+        if not go:
+            return False
+        self.click(Coordinates(*go))
+        use = self.game_find_template_match("expedition/use.png")
+        if use:
+            self.click(Coordinates(*use))
+            sleep(1)
+            self.press_back_button()
+            return True
+        raise NoRechargeableAPError()
+
+    def _expedition(self) -> None:  # noqa: PLR0915 PLR0912
+        if not self.get_config().auto_play_config.expedition or self.no_ap:
+            logging.info("Expedition disabled")
+            return
+
+        if self._troops_are_dispatched():
+            logging.info("All Troops dispatched skipping expedition")
+            return
+
+        logging.info("Expedition")
+        gui_map = self.game_find_template_match(
+            "gui/map.png",
+            crop=CropRegions(right=0.8, top=0.6),
+            threshold=0.7,
+        )
+
+        if gui_map:
+            self.click(Coordinates(*gui_map))
+            _ = self.wait_for_template(
+                "gathering/search.png",
+                crop=CropRegions(right=0.8, top=0.6),
+            )
+
+        if (
+            not self.unchecked_hold_position_after_attack
+            and not self.get_config().auto_play_config.skip_hold_position_check
+        ):
+            logging.info("Unchecking Hold Position after Attack")
+            count = 0
+            max_attempts = 3
+            while count < max_attempts:
+                try:
+                    search = self.wait_for_template(
+                        "gathering/search.png",
+                        crop=CropRegions(right=0.8, top=0.6),
+                        timeout=5,
+                    )
+                    self.click(Coordinates(*search))
+                    shattered_skulls = self.wait_for_template(
+                        "expedition/shattered_skulls.png"
+                    )
+                    self.click(Coordinates(*shattered_skulls))
+                    while True:
+                        search = self.wait_for_template(
+                            "gui/search.png",
+                            timeout=5,
+                        )
+                        self.click(Coordinates(*search))
+                        sleep(1)
+                        self.click(Coordinates(1920 // 2, 1080 // 2))
+                        template, x, y = self.wait_for_any_template(
+                            [
+                                "expedition/attack.png",
+                                "gui/ok.png",
+                            ],
+                            timeout=5,
+                        )
+
+                        if template == "gui/ok.png":
+                            self.click(Coordinates(x, y))
+                            sleep(2)
+                            minus = self.game_find_template_match(
+                                "expedition/minus.png"
+                            )
+
+                            if minus:
+                                self.click(Coordinates(*minus))
+
+                            continue
+                        break
+
+                    checked_box = self.game_find_template_match(
+                        "expedition/checked_box.png",
+                    )
+                    if checked_box:
+                        self.click(Coordinates(*checked_box))
+                    self.press_back_button()
+                    self.unchecked_hold_position_after_attack = True
+                    break
+                except GameTimeoutError:
+                    count += 1
+
+        self.click(Coordinates(80, 230))
+        _ = self.wait_for_template("expedition/expedition.png")
+        sleep(3)
+
+        # types = ["cave", "scout", "troops", "chest"]
+        # colors = ["green", "blue", "purple", "orange"]
+        # templates = [f"expedition/{t}/{c}.png" for t in types for c in colors]
+
+        templates = [
+            "expedition/chest/green.png",
+            "expedition/chest/blue.png",
+            # "expedition/chest/purple.png",
+            "expedition/chest/orange.png",
+            "expedition/cave/green.png",
+            "expedition/cave/blue.png",
+            "expedition/cave/purple.png",
+            "expedition/cave/orange.png",
+            "expedition/scout/green.png",
+            "expedition/scout/blue.png",
+            "expedition/scout/purple.png",
+            # "expedition/scout/orange.png",
+            "expedition/troops/green.png",
+            "expedition/troops/blue.png",
+            # "expedition/troops/purple.png",
+            "expedition/troops/orange.png",
+        ]
+
+        while True:
+            if not self.game_find_template_match("expedition/expedition.png"):
+                self.click(Coordinates(80, 230))
+                self.wait_for_template("expedition/expedition.png", timeout=10)
+
+            try:
+                result = self.wait_for_any_template(
+                    templates=templates,
+                    threshold=0.8,
+                    timeout=10,
+                )
+            except GameTimeoutError:
+                break
+            template, x, y = result
+            self.click(Coordinates(x, y))
+            if "chest" in template:
+                ok = self.wait_for_template("gui/ok.png", timeout=10)
+                sleep(1)
+                self.click(Coordinates(*ok))
+                continue
+
+            go = self.wait_for_template("expedition/go.png", timeout=10)
+            self.click(Coordinates(*go))
+            sleep(1)
+            timeout_count = 0
+            max_timeout_count = 2
+            while timeout_count < max_timeout_count:
+                self.click(Coordinates(1920 // 2, 1080 // 2))
+                try:
+                    template, x, y = self.wait_for_any_template(
+                        templates=[
+                            "expedition/survey.png",
+                            "expedition/enter.png",
+                            "expedition/murong.png",
+                        ],
+                        timeout=5,
+                    )
+                    match template:
+                        case "expedition/enter.png":
+                            self.click(Coordinates(x, y))
+                            if self._recharge_ap():
+                                self.click(Coordinates(x, y))
+                            start = self.wait_for_template(
+                                "expedition/start.png", timeout=10
+                            )
+                            self.click(Coordinates(*start))
+                            ok = self.wait_for_template("gui/ok.png", timeout=10)
+                            self.click(Coordinates(*ok))
+                            sleep(3)
+                            break
+                        case "expedition/survey.png":
+                            self.click(Coordinates(x, y))
+                            if self._recharge_ap():
+                                self.click(Coordinates(x, y))
+                            break
+                        case "expedition/murong.png":
+                            attack = self.game_find_template_match(
+                                "expedition/attack.png"
+                            )
+                            if not attack:
+                                continue
+                            self.click(Coordinates(*attack))
+                            template, x, y = self.wait_for_any_template(
+                                [
+                                    "expedition/create_a_new_troop.png",
+                                    "expedition/march_troops.png",
+                                ],
+                                threshold=0.7,
+                                timeout=5,
+                            )
+
+                            self.click(Coordinates(x, y))
+
+                            if template == "expedition/create_a_new_troop.png":
+                                x, y = self.wait_for_template(
+                                    "expedition/march.png",
+                                    threshold=0.7,
+                                    timeout=5,
+                                )
+                                self.click(Coordinates(x, y))
+
+                            if self._recharge_ap():
+                                self.click(Coordinates(x, y))
+
+                            logging.info("Waiting 90 seconds.")
+                            sleep(90)  # make sure it is dead
+                            break
+                except GameTimeoutError:
+                    timeout_count += 1
+                    continue
+        return
 
     def _use_free_scroll(self) -> None:
         if not self.get_config().auto_play_config.collect_free_scrolls:
@@ -205,7 +433,12 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             sleep(1)
         self.last_campaign_collection = time()
         self.press_back_button()
-        self.wait_for_template("gui/map.png")
+        _ = self.wait_for_template(
+            "gui/map.png",
+            crop=CropRegions(right=0.8, top=0.8),
+            timeout=10,
+            threshold=0.7,
+        )
         sleep(1)
         return
 
@@ -453,7 +686,11 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             threshold=0.7,
         )
         if not search:
-            game_map = self.game_find_template_match("gui/map.png")
+            game_map = self.game_find_template_match(
+                "gui/map.png",
+                crop=CropRegions(right=0.8, top=0.6),
+                threshold=0.7,
+            )
             if not game_map:
                 logging.warning("Map not found skipping resource gathering")
                 return
