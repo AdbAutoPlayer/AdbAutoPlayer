@@ -111,6 +111,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         self._buy_single_pull()
         self._buy_affinity_items()
 
+        sleep(1)
         logging.debug("Back to Mystical House.")
         self.press_back_button()
 
@@ -281,8 +282,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
         sleep(1)
 
         self._claim_friend_rewards()
+        sleep(1)
         self._claim_mail()
+        sleep(1)
         self._claim_battle_pass()
+        sleep(1)
         self._claim_quests()
 
     def _claim_friend_rewards(self) -> None:
