@@ -354,7 +354,6 @@ class Game:
         """Converts bytes to PIL.Image.
 
         Raises:
-            IOError
             OSError
             UnidentifiedImageError
             ValueError
