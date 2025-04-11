@@ -34,7 +34,7 @@ from adb_auto_player.template_matching import (
 )
 from adbutils._device import AdbDevice
 from deprecation import deprecated
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from pydantic import BaseModel
 
 
@@ -332,20 +332,32 @@ class Game:
                 "Could not retrieve latest Frame from Device Stream using screencap..."
             )
         # using shell with encoding directly does not close the file descriptor
-        with self.device.shell("screencap -p", stream=True) as c:
-            screenshot_data = c.read_until_close(encoding=None)
-        if isinstance(screenshot_data, bytes):
-            png_start_index = screenshot_data.find(b"\x89PNG\r\n\x1a\n")
-            # Slice the screenshot data to remove the warning
-            # and keep only the PNG image data
-            if png_start_index != -1:
-                screenshot_data = screenshot_data[png_start_index:]
-            self._previous_screenshot = Image.open(io.BytesIO(screenshot_data))
-            self._debug_save_screenshot()
-            return self._previous_screenshot
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                with self.device.shell("screencap -p", stream=True) as c:
+                    screenshot_data = c.read_until_close(encoding=None)
+                if isinstance(screenshot_data, bytes):
+                    return self._get_screenshot_from_bytes(screenshot_data)
+            except (OSError, UnidentifiedImageError, ValueError) as e:
+                logging.debug(
+                    f"Attempt {attempt + 1}/{max_retries}: "
+                    f"Failed to process screenshot: {e}"
+                )
+
         raise GenericAdbError(
             f"Screenshots cannot be recorded from device: {self.device.serial}"
         )
+
+    def _get_screenshot_from_bytes(self, screenshot_data: bytes) -> Image.Image:
+        png_start_index = screenshot_data.find(b"\x89PNG\r\n\x1a\n")
+        # Slice the screenshot data to remove the warning
+        # and keep only the PNG image data
+        if png_start_index != -1:
+            screenshot_data = screenshot_data[png_start_index:]
+        self._previous_screenshot = Image.open(io.BytesIO(screenshot_data))
+        self._debug_save_screenshot()
+        return self._previous_screenshot
 
     def get_previous_screenshot(self) -> Image.Image:
         """Get the previous screenshot."""
