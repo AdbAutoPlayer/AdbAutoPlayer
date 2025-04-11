@@ -56,7 +56,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         logging.info("Looking for free hourglasses.")
         claim_limit = 3
-        while self._claim_hourglasses() and claim_limit > 0:
+        while claim_limit > 0 and self._claim_hourglasses():
             claim_limit -= 1
             logging.info("Claimed a free hourglass.")
 
@@ -73,7 +73,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         try:
             free_hourglass: tuple[int, int] = self.wait_for_template(
                 "dailies/daily_rewards/free_hourglass.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="No more free hourglasses.",
             )
             self.click(Coordinates(*free_hourglass))
@@ -100,7 +100,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Opening Emporium.")
             emporium: tuple[int, int] = self.wait_for_template(
                 "dailies/emporium/emporium.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Emporium.",
             )
             self.click(Coordinates(*emporium))
@@ -111,6 +111,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         self._buy_single_pull()
         self._buy_affinity_items()
 
+        sleep(1)
         logging.debug("Back to Mystical House.")
         self.press_back_button()
 
@@ -121,7 +122,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Opening Guild Store.")
             guild_store: tuple[int, int] = self.wait_for_template(
                 "dailies/emporium/guild_store.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Guild Store.",
             )
             self.click(Coordinates(*guild_store))
@@ -133,7 +134,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Look for discount Invite Letter.")
             invite_letter: tuple[int, int] = self.wait_for_template(
                 "dailies/emporium/invite_letter.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="Discount Invite Letter already purchased.",
             )
             self.click(Coordinates(*invite_letter))
@@ -141,10 +142,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Confirm purchase.")
             buy_letter: tuple[int, int] = self.wait_for_template(
                 "dailies/emporium/buy_letter.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to purchase Invite Letter.",
             )
             self.click(Coordinates(*buy_letter))
+            sleep(2)  # pop up takes time to appear in slow devices
         except GameTimeoutError as fail:
             logging.info(fail)
 
@@ -166,7 +168,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Open Friendship Store.")
             friendship_store: tuple[int, int] = self.wait_for_template(
                 "dailies/emporium/friendship_store.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Friendship Store.",
             )
             self.click(Coordinates(*friendship_store))
@@ -224,7 +226,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Opening Noble Tavern.")
             tavern: tuple[int, int] = self.wait_for_template(
                 "dailies/noble_tavern/noble_tavern.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find the Noble Tavern.",
             )
             self.click(Coordinates(*tavern))
@@ -233,7 +235,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Select All-Hero Recruitment.")
             all_hero_recruit: tuple[int, int] = self.wait_for_template(
                 "dailies/noble_tavern/all_hero_recruit.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find All-Hero Recruitment.",
             )
             self.click(Coordinates(*all_hero_recruit))
@@ -242,7 +244,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Click Recruit 1.")
             recruit: tuple[int, int] = self.wait_for_template(
                 "dailies/noble_tavern/recruit.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="No Invite Letters.",
             )
             self.click(Coordinates(*recruit))
@@ -280,8 +282,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
         sleep(1)
 
         self._claim_friend_rewards()
+        sleep(1)
         self._claim_mail()
+        sleep(1)
         self._claim_battle_pass()
+        sleep(1)
         self._claim_quests()
 
     def _claim_friend_rewards(self) -> None:
@@ -300,7 +305,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Click Send & Receive.")
             send_receive: tuple[int, int] = self.wait_for_template(
                 "dailies/hamburger/send_receive.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="Friend rewards already claimed.",
             )
             self.click(Coordinates(*send_receive))
@@ -334,7 +339,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Click Read All.")
             read_all: tuple[int, int] = self.wait_for_template(
                 "dailies/hamburger/read_all.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="No mail.",
             )
             self.click(Coordinates(*read_all))
@@ -426,15 +431,15 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def raise_hero_affinity(self) -> None:
         """Raise hero affinity with 3 clicks per day."""
         self._navigate_to_default_state()
-        sleep(2)
+        sleep(5)
 
         logging.debug("Open Resonating Hall.")
         self.click(Coordinates(620, 1830), scale=True)
-        sleep(2)
+        sleep(5)
 
         logging.info("Begin raising hero affinity.")
         self.click(Coordinates(130, 1040), scale=True)
-        sleep(2)
+        sleep(5)
 
         while not self.game_find_template_match("dailies/resonating_hall/chippy.png"):
             self._click_hero()
