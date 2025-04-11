@@ -363,7 +363,8 @@ class Game:
         # and keep only the PNG image data
         if png_start_index != -1:
             screenshot_data = screenshot_data[png_start_index:]
-        self._previous_screenshot = Image.open(io.BytesIO(screenshot_data))
+        with Image.open(io.BytesIO(screenshot_data)) as img:
+            self._previous_screenshot = img
         self._debug_save_screenshot()
         return self._previous_screenshot
 
