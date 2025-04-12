@@ -250,7 +250,7 @@ class Game:
                     self._stream.stop()
                     self._stream = None
                 break
-            if self._stream and self._stream.get_latest_frame():
+            if self._stream and self._stream.get_latest_frame() is not None:
                 logging.info("Device Stream started")
                 break
             sleep(1)
@@ -324,7 +324,7 @@ class Game:
         """
         if self._stream:
             image = self._stream.get_latest_frame()
-            if image:
+            if image is not None:
                 self._previous_screenshot = image
                 self._debug_save_screenshot()
                 return image

@@ -51,7 +51,7 @@ def load_image(image_path: Path, image_scale_factor: float = 1.0) -> np.ndarray:
         return template_cache[cache_key]
 
     image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
-
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     if image is None:
         raise FileNotFoundError(f"Failed to load image from path: {image_path}")
 
