@@ -230,7 +230,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
         self.click(Coordinates(80, 230))
         _ = self.wait_for_template("expedition/expedition.png")
-        sleep(3)
+        sleep(5)
 
         # types = ["cave", "scout", "troops", "chest"]
         # colors = ["green", "blue", "purple", "orange"]
@@ -269,15 +269,37 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             except GameTimeoutError:
                 break
             template, x, y = result
-            self.click(Coordinates(x, y))
-            if "chest" in template:
-                ok = self.wait_for_template("gui/ok.png", timeout=10)
+
+            max_attempts = 3
+            attempt = 0
+            while attempt < max_attempts and not self.find_any_template(
+                [
+                    "gui/ok.png",
+                    "expedition/go.png",
+                ]
+            ):
+                attempt += 1
+                self.click(Coordinates(x, y))
+                sleep(3)
+
+            button_result = self.find_any_template(
+                [
+                    "gui/ok.png",
+                    "expedition/go.png",
+                ]
+            )
+
+            if not button_result:
+                raise GameTimeoutError("Could not find ok or go button.")
+
+            template, x, y = button_result
+
+            if template == "gui/ok.png":
                 sleep(1)
-                self.click(Coordinates(*ok))
+                self.click(Coordinates(x, y))
                 continue
 
-            go = self.wait_for_template("expedition/go.png", timeout=10)
-            self.click(Coordinates(*go))
+            self.click(Coordinates(x, y))
             sleep(1)
             timeout_count = 0
             max_timeout_count = 2
@@ -353,7 +375,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             return
 
         self._center_city_view_by_using_research()
-        logging.info("Collecting free scroll")
+        logging.info("Looking for free Scroll")
         scroll = self.find_any_template(
             [
                 "altar/scroll.png",
@@ -362,7 +384,10 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             threshold=0.7,
         )
         if not scroll:
+            logging.info("Free Scroll not found")
             return
+
+        logging.info("Collecting free Scroll")
         _, x, y = scroll
         self.click(Coordinates(x, y))
         sleep(3)
