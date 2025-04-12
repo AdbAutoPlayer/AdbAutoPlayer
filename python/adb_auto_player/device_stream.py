@@ -6,6 +6,7 @@ import queue
 import threading
 import time
 
+import cv2
 import numpy as np
 from adbutils import AdbConnection, AdbDevice
 from av.codec.context import CodecContext
@@ -111,13 +112,13 @@ class DeviceStream:
                     frames = self.codec.decode(packet)
                     for frame in frames:
                         ndarray = frame.to_ndarray(format="rgb24")
-
+                        bgr_frame = cv2.cvtColor(ndarray, cv2.COLOR_RGB2BGR)
                         if self.frame_queue.full():
                             try:
                                 self.frame_queue.get_nowait()
                             except queue.Empty:
                                 pass
-                        self.frame_queue.put(ndarray)
+                        self.frame_queue.put(bgr_frame)
 
                 buffer = b""
 

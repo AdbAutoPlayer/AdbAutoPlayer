@@ -51,7 +51,6 @@ def load_image(image_path: Path, image_scale_factor: float = 1.0) -> np.ndarray:
         return template_cache[cache_key]
 
     image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     if image is None:
         raise FileNotFoundError(f"Failed to load image from path: {image_path}")
 
@@ -127,8 +126,8 @@ def similar_image(
         template_image=template_image,
     )
 
-    base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
-    template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
+    base_cv = np.array(base_image)
+    template_cv = np.array(template_image)
     if grayscale:
         base_cv = cv2.cvtColor(base_cv, cv2.COLOR_BGR2GRAY)
         template_cv = cv2.cvtColor(template_cv, cv2.COLOR_BGR2GRAY)
@@ -162,9 +161,8 @@ def find_template_match(
         template_image=template_image,
     )
 
-    base_np_array = np.array(base_image)
-    base_cv = cv2.cvtColor(base_np_array, cv2.COLOR_RGB2BGR)
-    template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
+    base_cv = np.array(base_image)
+    template_cv = np.array(template_image)
 
     if grayscale:
         base_cv = cv2.cvtColor(base_cv, cv2.COLOR_BGR2GRAY)
@@ -231,8 +229,8 @@ def find_all_template_matches(
         template_image=template_image,
     )
 
-    base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
-    template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
+    base_cv = np.array(base_image)
+    template_cv = np.array(template_image)
 
     if grayscale:
         base_cv = cv2.cvtColor(base_cv, cv2.COLOR_BGR2GRAY)
@@ -278,8 +276,8 @@ def find_worst_template_match(
         template_image=template_image,
     )
 
-    base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
-    template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
+    base_cv = np.array(base_image)
+    template_cv = np.array(template_image)
 
     if grayscale:
         base_cv = cv2.cvtColor(base_cv, cv2.COLOR_BGR2GRAY)
