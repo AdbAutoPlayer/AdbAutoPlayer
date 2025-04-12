@@ -5,6 +5,7 @@ on:
     branches:
       - "*"
     paths:
+      - '.github/workflows/python-tests.yml'
       - 'python/**'
   workflow_dispatch:
 
