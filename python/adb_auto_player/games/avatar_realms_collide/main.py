@@ -120,7 +120,6 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         self._expedition()
         self._navigate_to_city()
         self._gather_resources()
-        self._navigate_to_city()
 
     def _recharge_ap(self) -> bool:
         sleep(1)
