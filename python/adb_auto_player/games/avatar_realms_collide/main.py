@@ -461,20 +461,20 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
         if self.get_config().auto_play_config.building_slot_1:
             try:
-                logging.info("Checking Building Slot 1")
+                logging.info("Checking Build Slot 1")
                 self._handle_build_button(button_1)
             except GameTimeoutError:
                 pass
         else:
-            logging.info("Building Slot 1 disabled")
+            logging.info("Build Slot 1 disabled")
         if self.get_config().auto_play_config.building_slot_2:
             try:
-                logging.info("Checking Building Slot 2")
+                logging.info("Checking Build Slot 2")
                 self._handle_build_button(button_2)
             except GameTimeoutError:
                 pass
         else:
-            logging.info("Building Slot 2 disabled")
+            logging.info("Build Slot 2 disabled")
 
     def _handle_build_button(self, button_coordinates: Coordinates) -> None:
         self.click(button_coordinates)

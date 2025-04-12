@@ -1,13 +1,13 @@
 ['Auto Play']
 'Alliance Gifts' = true
 'Alliance Research' = true
-'Building Slot 1' = true
-'Building Slot 2' = true
+'Build Slot 1' = true
+'Build Slot 2' = true
 'Collect Campaign Chest' = true
 'Collect Free Scrolls' = true
 'Gather Resources' = ['Food', 'Wood', 'Stone', 'Gold']
 'Recruit Troops' = true
-Research = true
-'Research Military First' = true
+Research = false
+'Research Military First' = false
 'Purchase Seal of Solidarity' = false
 'Skip Hold Position Check' = true

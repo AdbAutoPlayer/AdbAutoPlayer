@@ -25,8 +25,8 @@ DEFAULT_RESOURCES = list(ResourceEnum.__members__.values())
 class AutoPlayConfig(BaseModel):
     """AutoPlay config model."""
 
-    building_slot_1: bool = Field(default=True, alias="Building Slot 1")
-    building_slot_2: bool = Field(default=True, alias="Building Slot 2")
+    building_slot_1: bool = Field(default=True, alias="Build Slot 1")
+    building_slot_2: bool = Field(default=True, alias="Build Slot 2")
     purchase_seal_of_solidarity: bool = Field(
         default=False,
         alias="Purchase Seal of Solidarity",
