@@ -27,6 +27,10 @@ class AutoPlayConfig(BaseModel):
 
     building_slot_1: bool = Field(default=True, alias="Building Slot 1")
     building_slot_2: bool = Field(default=True, alias="Building Slot 2")
+    purchase_seal_of_solidarity: bool = Field(
+        default=False,
+        alias="Purchase Seal of Solidarity",
+    )
 
     research: bool = Field(default=True, alias="Research")
     military_first: bool = Field(default=True, alias="Research Military First")
@@ -38,6 +42,11 @@ class AutoPlayConfig(BaseModel):
 
     collect_campaign_chest: bool = Field(default=True, alias="Collect Campaign Chest")
     collect_free_scrolls: bool = Field(default=True, alias="Collect Free Scrolls")
+
+    expedition: bool = Field(default=True, alias="Expedition")
+    skip_hold_position_check: bool = Field(
+        default=False, alias="Skip Hold Position Check"
+    )
 
     gather_resources: list[ResourceEnum] = Field(
         default_factory=lambda: DEFAULT_RESOURCES,
