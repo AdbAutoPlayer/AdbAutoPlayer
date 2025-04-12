@@ -6,9 +6,9 @@ import queue
 import threading
 import time
 
+import numpy as np
 from adbutils import AdbConnection, AdbDevice
 from av.codec.context import CodecContext
-from PIL import Image
 
 
 class StreamingNotSupportedError(Exception):
@@ -35,7 +35,7 @@ class DeviceStream:
         self.fps = fps
         self.buffer_size = buffer_size
         self.frame_queue: queue.Queue = queue.Queue(maxsize=buffer_size)
-        self.latest_frame: Image.Image | None = None
+        self.latest_frame: np.ndarray | None = None
         self._running = False
         self._stream_thread: threading.Thread | None = None
         self._process: AdbConnection | None = None
@@ -77,7 +77,7 @@ class DeviceStream:
             except queue.Empty:
                 break
 
-    def get_latest_frame(self) -> Image.Image | None:
+    def get_latest_frame(self) -> np.ndarray | None:
         """Get the most recent frame from the stream."""
         try:
             while not self.frame_queue.empty():
@@ -110,14 +110,14 @@ class DeviceStream:
                 for packet in packets:
                     frames = self.codec.decode(packet)
                     for frame in frames:
-                        image = Image.fromarray(frame.to_ndarray(format="rgb24"))
+                        ndarray = frame.to_ndarray(format="rgb24")
 
                         if self.frame_queue.full():
                             try:
                                 self.frame_queue.get_nowait()
                             except queue.Empty:
                                 pass
-                        self.frame_queue.put(image)
+                        self.frame_queue.put(ndarray)
 
                 buffer = b""
 

@@ -100,6 +100,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Opening Emporium.")
             emporium: tuple[int, int] = self.wait_for_template(
                 "dailies/emporium/emporium.png",
+                threshold=0.7,
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Emporium.",
             )

@@ -9,7 +9,6 @@ authors = [
 requires-python = ">=3.12,<3.13"  # Limited to Python 3.12 until Nuitka fixed
 readme = "README.md"
 dependencies = [
-    "pillow>=11.0.0,<12",
     "adbutils>=2.8.0,<3",
     "opencv-python>=4.10.0.84,<5",
     "pydantic>=2.10.5,<3",

@@ -15,7 +15,6 @@ dependencies = [
     { name = "adbutils" },
     { name = "av" },
     { name = "opencv-python" },
-    { name = "pillow" },
     { name = "pydantic" },
 ]
 
@@ -31,7 +30,6 @@ requires-dist = [
     { name = "adbutils", specifier = ">=2.8.0,<3" },
     { name = "av", specifier = ">=14.1.0,<15" },
     { name = "opencv-python", specifier = ">=4.10.0.84,<5" },
-    { name = "pillow", specifier = ">=11.0.0,<12" },
     { name = "pydantic", specifier = ">=2.10.5,<3" },
 ]
 

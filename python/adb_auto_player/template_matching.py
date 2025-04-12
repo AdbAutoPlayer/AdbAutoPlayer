@@ -6,7 +6,6 @@ from typing import NamedTuple
 
 import cv2
 import numpy as np
-from PIL import Image
 
 
 class MatchMode(StrEnum):
@@ -32,10 +31,10 @@ class CropRegions(NamedTuple):
     bottom: float = 0  # Percentage to crop from the bottom side
 
 
-template_cache: dict[str, Image.Image] = {}
+template_cache: dict[str, np.ndarray] = {}
 
 
-def load_image(image_path: Path, image_scale_factor: float = 1.0) -> Image.Image:
+def load_image(image_path: Path, image_scale_factor: float = 1.0) -> np.ndarray:
     """Loads an image from disk or returns the cached version if available.
 
     Resizes the image if needed and stores it in the global template_cache.
@@ -45,29 +44,33 @@ def load_image(image_path: Path, image_scale_factor: float = 1.0) -> Image.Image
         image_scale_factor: Scale factor for resizing the image.
 
     Returns:
-        PIL Image.Image
+        np.ndarray
     """
     cache_key = f"{image_path}_{image_scale_factor}"
     if cache_key in template_cache:
         return template_cache[cache_key]
 
-    with Image.open(image_path) as img:
-        image = img.copy()
+    image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
+
+    if image is None:
+        raise FileNotFoundError(f"Failed to load image from path: {image_path}")
 
     if image_scale_factor != 1.0:
-        new_width = int(image.width * image_scale_factor)
-        new_height = int(image.height * image_scale_factor)
-        image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        new_width = int(image.shape[1] * image_scale_factor)
+        new_height = int(image.shape[0] * image_scale_factor)
+        image = cv2.resize(
+            image, (new_width, new_height), interpolation=cv2.INTER_LANCZOS4
+        )
 
     template_cache[cache_key] = image
     return image
 
 
-def crop_image(image: Image.Image, crop: CropRegions) -> tuple[Image.Image, int, int]:
+def crop_image(image: np.ndarray, crop: CropRegions) -> tuple[np.ndarray, int, int]:
     """Crop an image based on percentage values for each side.
 
     Args:
-        image (Image.Image): The input image to be cropped.
+        image (np.ndarray): The input image to be cropped.
         crop (Crop): The crop percentage values for each edge.
 
     Returns:
@@ -90,18 +93,19 @@ def crop_image(image: Image.Image, crop: CropRegions) -> tuple[Image.Image, int,
     if crop.top + crop.bottom >= 1.0:
         raise ValueError("top + bottom must be less than 1.0.")
 
-    width, height = image.size
+    height, width = image.shape[:2]
     left_px = int(width * crop.left)
     right_px = int(width * (1 - crop.right))
     top_px = int(height * crop.top)
     bottom_px = int(height * (1 - crop.bottom))
-    cropped_image = image.crop((left_px, top_px, right_px, bottom_px))
+
+    cropped_image = image[top_px:bottom_px, left_px:right_px]
     return cropped_image, left_px, top_px
 
 
 def similar_image(
-    base_image: Image.Image,
-    template_image: Image.Image,
+    base_image: np.ndarray,
+    template_image: np.ndarray,
     threshold: float = 0.9,
     grayscale: bool = False,
 ) -> bool:
@@ -134,8 +138,8 @@ def similar_image(
 
 
 def find_template_match(
-    base_image: Image.Image,
-    template_image: Image.Image,
+    base_image: np.ndarray,
+    template_image: np.ndarray,
     match_mode: MatchMode = MatchMode.BEST,
     threshold: float = 0.9,
     grayscale: bool = False,
@@ -158,7 +162,8 @@ def find_template_match(
         template_image=template_image,
     )
 
-    base_cv = cv2.cvtColor(np.array(base_image), cv2.COLOR_RGB2BGR)
+    base_np_array = np.array(base_image)
+    base_cv = cv2.cvtColor(base_np_array, cv2.COLOR_RGB2BGR)
     template_cv = cv2.cvtColor(np.array(template_image), cv2.COLOR_RGB2BGR)
 
     if grayscale:
@@ -202,8 +207,8 @@ def find_template_match(
 
 
 def find_all_template_matches(
-    base_image: Image.Image,
-    template_image: Image.Image,
+    base_image: np.ndarray,
+    template_image: np.ndarray,
     threshold: float = 0.9,
     grayscale: bool = False,
     min_distance: int = 10,
@@ -211,8 +216,8 @@ def find_all_template_matches(
     """Find all matches.
 
     Args:
-        base_image (Image.Image): Base image.
-        template_image (Image.Image): Template image.
+        base_image (np.ndarray): Base image.
+        template_image (np.ndarray): Template image.
         threshold (float, optional): Image similarity threshold. Defaults to 0.9.
         grayscale (bool, optional): Convert to grayscale boolean. Defaults to False.
         min_distance (int, optional): Minimum distance between matches. Defaults to 10.
@@ -251,8 +256,8 @@ def find_all_template_matches(
 
 
 def find_worst_template_match(
-    base_image: Image.Image,
-    template_image: Image.Image,
+    base_image: np.ndarray,
+    template_image: np.ndarray,
     grayscale: bool = False,
 ) -> tuple[int, int] | None:
     """Find the area in the base image that is most different from the template.
@@ -333,20 +338,18 @@ def _validate_threshold(threshold: float) -> None:
         raise ValueError(f"Threshold must be between 0 and 1, got {threshold}")
 
 
-def _validate_template_size(
-    base_image: Image.Image, template_image: Image.Image
-) -> None:
+def _validate_template_size(base_image: np.ndarray, template_image: np.ndarray) -> None:
     """Validate that the template image is smaller than the base image.
 
     Args:
-        base_image: The base PIL Image
-        template_image: The template PIL Image
+        base_image: The base Image as ndarray
+        template_image: The template Image as ndarray
 
     Raises:
         ValueError: If the template is larger than the base image in any dimension
     """
-    base_width, base_height = base_image.size
-    template_width, template_height = template_image.size
+    base_height, base_width = base_image.shape[:2]
+    template_height, template_width = template_image.shape[:2]
 
     if template_height > base_height or template_width > base_width:
         raise ValueError(

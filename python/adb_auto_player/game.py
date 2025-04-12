@@ -1,6 +1,5 @@
 """ADB Auto Player Game Base Module."""
 
-import io
 import logging
 import os
 import threading
@@ -10,6 +9,8 @@ from pathlib import Path
 from time import sleep, time
 from typing import Literal, NamedTuple, TypeVar
 
+import cv2
+import numpy as np
 from adb_auto_player import (
     Command,
     ConfigLoader,
@@ -34,7 +35,6 @@ from adb_auto_player.template_matching import (
 )
 from adbutils._device import AdbDevice
 from deprecation import deprecated
-from PIL import Image, UnidentifiedImageError
 from pydantic import BaseModel
 
 
@@ -60,7 +60,7 @@ class Game:
         self._config_file_path: Path | None = None
         self._debug_screenshot_counter: int = 0
         self._device: AdbDevice | None = None
-        self._previous_screenshot: Image.Image | None = None
+        self._previous_screenshot: np.ndarray | None = None
         self._resolution: tuple[int, int] | None = None
         self._scale_factor: float | None = None
         self._stream: DeviceStream | None = None
@@ -316,14 +316,14 @@ class Game:
             # need to think of a better solution
             connection.read_until_close()
 
-    def get_screenshot(self) -> Image.Image:
+    def get_screenshot(self) -> np.ndarray:
         """Gets screenshot from device using stream or screencap.
 
         Raises:
             AdbException: Screenshot cannot be recorded
         """
         if self._stream:
-            image: Image.Image | None = self._stream.get_latest_frame()
+            image = self._stream.get_latest_frame()
             if image:
                 self._previous_screenshot = image
                 self._debug_save_screenshot()
@@ -338,8 +338,8 @@ class Game:
                 with self.device.shell("screencap -p", stream=True) as c:
                     screenshot_data = c.read_until_close(encoding=None)
                 if isinstance(screenshot_data, bytes):
-                    return self._get_image_from_bytes(screenshot_data)
-            except (OSError, UnidentifiedImageError, ValueError) as e:
+                    return self._get_numpy_array_from_bytes(screenshot_data)
+            except (OSError, ValueError) as e:
                 logging.debug(
                     f"Attempt {attempt + 1}/{max_retries}: "
                     f"Failed to process screenshot: {e}"
@@ -350,12 +350,11 @@ class Game:
             f"Screenshots cannot be recorded from device: {self.device.serial}"
         )
 
-    def _get_image_from_bytes(self, screenshot_data: bytes) -> Image.Image:
-        """Converts bytes to PIL.Image.
+    def _get_numpy_array_from_bytes(self, screenshot_data: bytes) -> np.ndarray:
+        """Converts bytes to numpy array.
 
         Raises:
             OSError
-            UnidentifiedImageError
             ValueError
         """
         png_start_index = screenshot_data.find(b"\x89PNG\r\n\x1a\n")
@@ -363,18 +362,23 @@ class Game:
         # and keep only the PNG image data
         if png_start_index != -1:
             screenshot_data = screenshot_data[png_start_index:]
-        self._previous_screenshot = Image.open(io.BytesIO(screenshot_data))
+
+        np_data = np.frombuffer(screenshot_data, dtype=np.uint8)
+        img = cv2.imdecode(np_data, cv2.IMREAD_COLOR)
+        if img is None:
+            raise ValueError("Failed to decode screenshot image data")
+        self._previous_screenshot = img
         self._debug_save_screenshot()
         return self._previous_screenshot
 
-    def get_previous_screenshot(self) -> Image.Image:
+    def get_previous_screenshot(self) -> np.ndarray:
         """Get the previous screenshot."""
         if self._previous_screenshot is not None:
             return self._previous_screenshot
         logging.warning("No previous screenshot")
         return self.get_screenshot()
 
-    def _get_screenshot(self, previous_screenshot: bool) -> Image.Image:
+    def _get_screenshot(self, previous_screenshot: bool) -> np.ndarray:
         """Get screenshot depending on stream or not."""
         if self._stream:
             return self.get_screenshot()
@@ -385,7 +389,7 @@ class Game:
 
     def wait_for_roi_change(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
-        start_image: Image.Image,
+        start_image: np.ndarray,
         threshold: float = 0.9,
         grayscale: bool = False,
         crop: CropRegions = CropRegions(),
@@ -403,7 +407,7 @@ class Game:
         previous screen regions.
 
         Args:
-            start_image (Image.Image): Image to start monitoring.
+            start_image (np.ndarray): Image to start monitoring.
             threshold (float): Similarity threshold. Defaults to 0.9.
             grayscale (bool): Whether to convert images to grayscale before comparison.
                 Defaults to False.
@@ -840,7 +844,7 @@ class Game:
         log_level = logging_config.get("level", "INFO")
 
         screenshot = self._previous_screenshot
-        if debug_screenshot_save_num <= 0 or not screenshot or log_level != "DEBUG":
+        if debug_screenshot_save_num <= 0 or screenshot is None or log_level != "DEBUG":
             return
 
         file_index = self._debug_screenshot_counter % debug_screenshot_save_num
@@ -851,9 +855,19 @@ class Game:
         self._debug_screenshot_counter = file_index + 1
         return
 
+    def _get_game_module(self) -> str:
+        parts = self.__class__.__module__.split(".")
+        try:
+            index = parts.index("games")
+            return parts[index + 1]
+        except ValueError:
+            raise ValueError("'games' not found in module path")
+        except IndexError:
+            raise ValueError("No module found after 'games' in module path")
+
     def _get_config_file_path(self) -> Path:
         if self._config_file_path is None:
-            module = self.__class__.__module__.split(".")[-2]
+            module = self._get_game_module()
 
             self._config_file_path = (
                 ConfigLoader().games_dir / module / (snake_to_pascal(module) + ".toml")
@@ -865,7 +879,7 @@ class Game:
     def get_template_dir_path(self) -> Path:
         """Retrieve path to images."""
         if self._template_dir_path is None:
-            module = self.__class__.__module__.split(".")[-2]
+            module = self._get_game_module()
 
             self._template_dir_path = ConfigLoader().games_dir / module / "templates"
             logging.debug(f"{module} template path: {self._template_dir_path}")
