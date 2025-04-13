@@ -320,6 +320,9 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                             ok = self.wait_for_template("gui/ok.png", timeout=10)
                             self.click(Coordinates(*ok))
                             self.expedition_count += 1
+                            logging.info(
+                                f"Expeditions completed: {self.expedition_count}"
+                            )
                             sleep(3)
                             break
                         case "expedition/survey.png":
@@ -358,13 +361,15 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                                 self.click(Coordinates(x, y))
 
                             self.expedition_count += 1
+                            logging.info(
+                                f"Expeditions completed: {self.expedition_count}"
+                            )
                             logging.info("Waiting 90 seconds.")
                             sleep(90)  # make sure it is dead
                             break
                 except GameTimeoutError:
                     timeout_count += 1
                     continue
-        logging.info(f"Expeditions completed: {self.expedition_count}")
         return
 
     def _use_free_scroll(self) -> None:
