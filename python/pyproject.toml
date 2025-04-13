@@ -6,7 +6,7 @@ authors = [
     { name = "yulesxoxo <https://github.com/yulesxoxo/yulesxoxo>" },
     { name = "Vale <https://github.com/Valextr/Valextr>" },
 ]
-requires-python = ">=3.12,<3.13"  # Limited to Python 3.12 until Nuitka fixed
+requires-python = ">=3.13"
 readme = "README.md"
 dependencies = [
     "adbutils>=2.8.0,<3",
@@ -20,7 +20,7 @@ adb-auto-player = "adb_auto_player.main:main"
 
 [dependency-groups]
 dev = [
-    "nuitka>=2.5.9,<3",
+    "nuitka>=2.6.9,<3",
     "pytest>=8.3.4,<9",
     "commitizen>=4.2.2,<5",
 ]

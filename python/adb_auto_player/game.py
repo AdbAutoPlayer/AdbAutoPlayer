@@ -275,8 +275,9 @@ class Game:
         """
         if scale:
             scaled_coords = Coordinates(*self._scale_coordinates(*coordinates))
-            logging.debug(f"Scaled coordinates: {coordinates} => {scaled_coords}")
-            coordinates = scaled_coords
+            if coordinates != scaled_coords:
+                logging.debug(f"Scaled coordinates: {coordinates} => {scaled_coords}")
+                coordinates = scaled_coords
 
         if blocking:
             self._click(coordinates)
