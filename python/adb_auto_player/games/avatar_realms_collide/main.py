@@ -255,7 +255,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             try:
                 result = self.wait_for_any_template(
                     templates=templates,
-                    threshold=0.8,
+                    threshold=0.7,
                     timeout=10,
                 )
             except GameTimeoutError:
