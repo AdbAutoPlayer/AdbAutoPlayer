@@ -36,6 +36,7 @@ class AutoPlayConfig(BaseModel):
     military_first: bool = Field(default=True, alias="Research Military First")
 
     recruit_troops: bool = Field(default=True, alias="Recruit Troops")
+    upgrade_troops: bool = Field(default=True, alias="Upgrade Troops")
 
     alliance_research: bool = Field(default=True, alias="Alliance Research")
     alliance_gifts: bool = Field(default=True, alias="Alliance Gifts")

@@ -32,6 +32,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
     last_campaign_collection: float = 0
     last_alliance_research_and_gift: float = 0
     unchecked_hold_position_after_attack: bool = False
+    recruitment_max_tier: int = 6
     no_ap: bool = False
 
     def auto_play(self) -> None:
@@ -69,16 +70,16 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             template, x, y = result
             match template:
                 case "gui/x.png" | "gui/cancel.png" | "gui/ok.png":
-                    self.click(Coordinates(x, y))
+                    self.tap(Coordinates(x, y))
                     sleep(2)
                 case "gathering/search.png":
-                    self.click(Coordinates(100, 1000))
+                    self.tap(Coordinates(100, 1000))
                     sleep(3)
                     try:
                         _ = self.wait_for_template("gui/map.png", timeout=10)
                     except GameTimeoutError:
                         # happens on a disconnect
-                        self.click(Coordinates(1560, 970))
+                        self.tap(Coordinates(1560, 970))
                 case "gui/map.png":
                     break
         sleep(3)
@@ -126,10 +127,10 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         go = self.game_find_template_match("expedition/go.png")
         if not go:
             return False
-        self.click(Coordinates(*go))
+        self.tap(Coordinates(*go))
         use = self.game_find_template_match("expedition/use.png")
         if use:
-            self.click(Coordinates(*use))
+            self.tap(Coordinates(*use))
             sleep(1)
             self.press_back_button()
             return True
@@ -152,19 +153,19 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     crop=CropRegions(right=0.8, top=0.6),
                     timeout=5,
                 )
-                self.click(Coordinates(*search))
+                self.tap(Coordinates(*search))
                 shattered_skulls = self.wait_for_template(
                     "expedition/shattered_skulls.png"
                 )
-                self.click(Coordinates(*shattered_skulls))
+                self.tap(Coordinates(*shattered_skulls))
                 while True:
                     search = self.wait_for_template(
                         "gui/search.png",
                         timeout=5,
                     )
-                    self.click(Coordinates(*search))
+                    self.tap(Coordinates(*search))
                     sleep(1)
-                    self.click(Coordinates(1920 // 2, 1080 // 2))
+                    self.tap(Coordinates(1920 // 2, 1080 // 2))
                     template, x, y = self.wait_for_any_template(
                         [
                             "expedition/attack.png",
@@ -174,12 +175,12 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     )
 
                     if template == "gui/ok.png":
-                        self.click(Coordinates(x, y))
+                        self.tap(Coordinates(x, y))
                         sleep(2)
                         minus = self.game_find_template_match("expedition/minus.png")
 
                         if minus:
-                            self.click(Coordinates(*minus))
+                            self.tap(Coordinates(*minus))
                         continue
                     break
 
@@ -187,7 +188,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     "expedition/checked_box.png",
                 )
                 if checked_box:
-                    self.click(Coordinates(*checked_box))
+                    self.tap(Coordinates(*checked_box))
                 self.press_back_button()
                 self.unchecked_hold_position_after_attack = True
                 break
@@ -212,7 +213,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         )
 
         if gui_map:
-            self.click(Coordinates(*gui_map))
+            self.tap(Coordinates(*gui_map))
             _ = self.wait_for_template(
                 "gathering/search.png",
                 crop=CropRegions(right=0.8, top=0.6),
@@ -220,7 +221,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
         self._uncheck_hold_position_after_attack()
 
-        self.click(Coordinates(80, 230))
+        self.tap(Coordinates(80, 230))
         _ = self.wait_for_template("expedition/expedition.png")
         sleep(5)
 
@@ -249,7 +250,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
         while True:
             if not self.game_find_template_match("expedition/expedition.png"):
-                self.click(Coordinates(80, 230))
+                self.tap(Coordinates(80, 230))
                 self.wait_for_template("expedition/expedition.png", timeout=10)
 
             try:
@@ -272,7 +273,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 ]
             ):
                 attempt += 1
-                self.click(Coordinates(x, y))
+                self.tap(Coordinates(x, y))
                 sleep(3)
 
             button_result = self.find_any_template(
@@ -289,16 +290,16 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
             if template == "gui/ok.png":
                 sleep(1)
-                self.click(Coordinates(x, y))
+                self.tap(Coordinates(x, y))
                 self.expedition_count += 1
                 continue
 
-            self.click(Coordinates(x, y))
+            self.tap(Coordinates(x, y))
             sleep(1)
             timeout_count = 0
             max_timeout_count = 2
             while timeout_count < max_timeout_count:
-                self.click(Coordinates(1920 // 2, 1080 // 2))
+                self.tap(Coordinates(1920 // 2, 1080 // 2))
                 try:
                     template, x, y = self.wait_for_any_template(
                         templates=[
@@ -310,15 +311,15 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     )
                     match template:
                         case "expedition/enter.png":
-                            self.click(Coordinates(x, y))
+                            self.tap(Coordinates(x, y))
                             if self._recharge_ap():
-                                self.click(Coordinates(x, y))
+                                self.tap(Coordinates(x, y))
                             start = self.wait_for_template(
                                 "expedition/start.png", timeout=10
                             )
-                            self.click(Coordinates(*start))
+                            self.tap(Coordinates(*start))
                             ok = self.wait_for_template("gui/ok.png", timeout=10)
-                            self.click(Coordinates(*ok))
+                            self.tap(Coordinates(*ok))
                             self.expedition_count += 1
                             logging.info(
                                 f"Expeditions completed: {self.expedition_count}"
@@ -326,9 +327,9 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                             sleep(3)
                             break
                         case "expedition/survey.png":
-                            self.click(Coordinates(x, y))
+                            self.tap(Coordinates(x, y))
                             if self._recharge_ap():
-                                self.click(Coordinates(x, y))
+                                self.tap(Coordinates(x, y))
                             self.expedition_count += 1
                             break
                         case "expedition/murong.png":
@@ -337,7 +338,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                             )
                             if not attack:
                                 continue
-                            self.click(Coordinates(*attack))
+                            self.tap(Coordinates(*attack))
                             template, x, y = self.wait_for_any_template(
                                 [
                                     "expedition/create_a_new_troop.png",
@@ -347,7 +348,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                                 timeout=5,
                             )
 
-                            self.click(Coordinates(x, y))
+                            self.tap(Coordinates(x, y))
 
                             if template == "expedition/create_a_new_troop.png":
                                 x, y = self.wait_for_template(
@@ -355,10 +356,10 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                                     threshold=0.7,
                                     timeout=5,
                                 )
-                                self.click(Coordinates(x, y))
+                                self.tap(Coordinates(x, y))
 
                             if self._recharge_ap():
-                                self.click(Coordinates(x, y))
+                                self.tap(Coordinates(x, y))
 
                             self.expedition_count += 1
                             logging.info(
@@ -392,15 +393,15 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
         logging.info("Collecting free Scroll")
         _, x, y = scroll
-        self.click(Coordinates(x, y))
+        self.tap(Coordinates(x, y))
         sleep(3)
         free = self.game_find_template_match("altar/free.png")
         if not free:
             self._navigate_to_city()
             return
-        self.click(Coordinates(*free))
+        self.tap(Coordinates(*free))
         ok = self.wait_for_template("altar/ok.png", timeout=15)
-        self.click(Coordinates(*ok))
+        self.tap(Coordinates(*ok))
         sleep(1)
         self._navigate_to_city()
 
@@ -420,13 +421,13 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             return
 
         logging.info("Checking Campaign Chest")
-        self.click(Coordinates(1420, 970))
+        self.tap(Coordinates(1420, 970))
         x, y = self.wait_for_template(
             "campaign/avatar_trail.png",
             threshold=0.7,
             timeout=10,
         )
-        self.click(Coordinates(x, y))
+        self.tap(Coordinates(x, y))
 
         self.wait_for_template(
             "campaign/lobby_hero.png",
@@ -439,13 +440,13 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             "campaign/chest.png",
             threshold=0.7,
         ):
-            self.click(Coordinates(*chest))
+            self.tap(Coordinates(*chest))
             sleep(3)
         while claim := self.game_find_template_match(
             "campaign/claim.png",
             threshold=0.7,
         ):
-            self.click(Coordinates(*claim))
+            self.tap(Coordinates(*claim))
             logging.info("Claimed Campaign Chest")
             sleep(1)
         self.last_campaign_collection = time()
@@ -481,7 +482,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             logging.info("Build Slot 2 disabled")
 
     def _handle_build_button(self, button_coordinates: Coordinates) -> None:
-        self.click(button_coordinates)
+        self.tap(button_coordinates)
         _, x, y = self.wait_for_any_template(
             templates=[
                 "build/double_arrow_button.png",
@@ -490,25 +491,25 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             threshold=0.7,
             timeout=10,
         )
-        self.click(Coordinates(x, y))
+        self.tap(Coordinates(x, y))
         while upgrade := self.wait_for_template("build/upgrade.png", timeout=10):
             logging.info("Upgrading Building")
-            self.click(Coordinates(*upgrade))
+            self.tap(Coordinates(*upgrade))
             self._handle_replenish_all("build/upgrade.png")
             if self.get_config().auto_play_config.purchase_seal_of_solidarity:
                 self._purchase_seal_of_solidarity_if_needed()
         while x_btn := self.game_find_template_match("gui/x.png"):
-            self.click(Coordinates(*x_btn))
+            self.tap(Coordinates(*x_btn))
             sleep(2)
 
     def _center_city_view_on_research_lab(self) -> None:
         logging.info("Center City View on Research Lab")
         x_button = self.game_find_template_match("gui/x.png")
         if x_button:
-            self.click(Coordinates(*x_button))
+            self.tap(Coordinates(*x_button))
             sleep(1)
         else:
-            self.click(Coordinates(80, 700))
+            self.tap(Coordinates(80, 700))
 
         _ = self.wait_for_template(
             "gui/map.png",
@@ -516,14 +517,14 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             timeout=10,
             threshold=0.7,
         )
-        self.click(Coordinates(80, 480))
+        self.tap(Coordinates(80, 480))
         sleep(1)
         x_button = self.game_find_template_match("gui/x.png")
         if x_button:
-            self.click(Coordinates(*x_button))
+            self.tap(Coordinates(*x_button))
             sleep(1)
         else:
-            self.click(Coordinates(80, 700))
+            self.tap(Coordinates(80, 700))
 
     def _research(self) -> None:  # noqa: PLR0915
         logging.info("Checking Research")
@@ -534,9 +535,9 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             threshold=0.7,
         )
 
-        self.click(Coordinates(80, 480))
+        self.tap(Coordinates(80, 480))
         sleep(1)
-        self.click(Coordinates(80, 480))
+        self.tap(Coordinates(80, 480))
         try:
             template, x, y = self.wait_for_any_template(
                 templates=[
@@ -552,15 +553,15 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         if self.get_config().auto_play_config.military_first:
             logging.info("Checking Military Research first")
             if template == "research/military.png":
-                self.click(Coordinates(x, y))
+                self.tap(Coordinates(x, y))
         elif template == "research/economy.png":
             logging.info("Checking Economy Research first")
-            self.click(Coordinates(x, y))
+            self.tap(Coordinates(x, y))
 
         def click_and_hope_research_pops_up() -> tuple[int, int] | None:
             y_coords = [250, 450, 550, 650, 850]
             for y_coord in y_coords:
-                self.click(Coordinates(1250, y_coord))
+                self.tap(Coordinates(1250, y_coord))
                 sleep(2)
                 result = self.game_find_template_match("research/research.png")
                 if result:
@@ -570,7 +571,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                     "gui/x.png", crop=CropRegions(right=0.1)
                 )
                 if x_btn:
-                    self.click(Coordinates(*x_btn))
+                    self.tap(Coordinates(*x_btn))
                     sleep(2)
             return None
 
@@ -599,12 +600,12 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 sleep(2)
                 return
 
-            self.click(Coordinates(*btn))
+            self.tap(Coordinates(*btn))
             sleep(1)
             research = try_to_find_research()
 
         if research:
-            self.click(Coordinates(*research))
+            self.tap(Coordinates(*research))
             self._handle_replenish_all("research/research.png")
         else:
             logging.error("No research found")
@@ -630,14 +631,14 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             if not purchase:
                 return
 
-            self.click(Coordinates(*purchase))
+            self.tap(Coordinates(*purchase))
             sleep(2)
             purchase_ok = self.game_find_template_match("build/gem_purchase_ok.png")
             if not purchase_ok:
                 return
-            self.click(Coordinates(*purchase_ok))
+            self.tap(Coordinates(*purchase_ok))
             btn = self.wait_for_template("build/upgrade.png", timeout=10)
-            self.click(Coordinates(*btn))
+            self.tap(Coordinates(*btn))
         except GameTimeoutError:
             return
 
@@ -647,9 +648,9 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 "gui/replenish_all.png",
                 timeout=5,
             )
-            self.click(Coordinates(*replenish))
+            self.tap(Coordinates(*replenish))
             btn = self.wait_for_template(button_template, timeout=10)
-            self.click(Coordinates(*btn))
+            self.tap(Coordinates(*btn))
         except GameTimeoutError:
             return
         return
@@ -664,20 +665,51 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         )
 
         for i in range(5):
-            self.click(Coordinates(80, 610))
+            self.tap(Coordinates(80, 610))
             sleep(1)
 
         while True:
             sleep(1)
             try:
-                x, y = self.wait_for_template(
+                recruitment_x, recruitment_y = self.wait_for_template(
                     "recruitment/recruit.png",
                     crop=CropRegions(left=0.5, top=0.6),
                     timeout=10,
                 )
             except GameTimeoutError:
                 return None
-            self.click(Coordinates(x, y))
+
+            tier_icon_y = 300
+            tier_icon_xs = [860, 980, 1120, 1260, 1380]
+            if self.get_config().auto_play_config.recruit_troops:
+                prev_tier_icon_x = tier_icon_xs[0]
+                for i, tier_icon_x in enumerate(tier_icon_xs):
+                    if self.recruitment_max_tier - 1 == i:
+                        break
+                    self.tap(Coordinates(tier_icon_x, tier_icon_y))
+                    result = self.find_any_template(
+                        templates=[
+                            "recruitment/go.png",
+                            "recruitment/upgrade.png",
+                        ],
+                    )
+                    if result is None:
+                        prev_tier_icon_x = tier_icon_x
+                        continue
+
+                    template, x, y = result
+                    match template:
+                        case "recruitment/go.png":
+                            self.recruitment_max_tier = i + 1
+                            self.click(Coordinates(prev_tier_icon_x, y))
+                            sleep(1)
+                            break
+                        case "recruitment/upgrade.png":
+                            self.click(Coordinates(x, y))
+                            sleep(1)
+                            break
+
+            self.tap(Coordinates(recruitment_x, recruitment_y))
             self._handle_replenish_all("recruitment/recruit.png")
             sleep(1)
             _ = self.wait_for_template(
@@ -686,7 +718,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 timeout=10,
                 threshold=0.7,
             )
-            self.click(Coordinates(80, 610))
+            self.tap(Coordinates(80, 610))
 
     def _gather_resources(self) -> None:
         if not self.get_config().auto_play_config.gather_resources:
@@ -712,7 +744,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             if not game_map:
                 logging.warning("Map not found skipping resource gathering")
                 return
-            self.click(Coordinates(*game_map))
+            self.tap(Coordinates(*game_map))
             search = self.wait_for_template(
                 "gathering/search.png",
                 crop=CropRegions(right=0.8, top=0.6),
@@ -742,7 +774,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
     def _start_gathering(self, search_coordinates: Coordinates) -> None:
         while not self._troops_are_dispatched():
-            self.click(search_coordinates)
+            self.tap(search_coordinates)
 
             nodes = {
                 "Food": "gathering/farmland.png",
@@ -758,7 +790,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             node = nodes[resource]
             logging.info(f"Searching {resource}")
             x, y = self.wait_for_template(node, timeout=10)
-            self.click(Coordinates(x, y))
+            self.tap(Coordinates(x, y))
             _ = self.wait_for_template("gui/search.png", timeout=10)
             sleep(1)
             search_button = self.wait_for_template(
@@ -766,7 +798,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 threshold=0.7,
                 timeout=10,
             )
-            self.click(Coordinates(*search_button))
+            self.tap(Coordinates(*search_button))
             sleep(1)
             try:
                 self.wait_until_template_disappears(
@@ -781,10 +813,10 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 sleep(1)
                 continue
             sleep(4)
-            self.click(Coordinates(960, 520))
+            self.tap(Coordinates(960, 520))
             x, y = self.wait_for_template("gui/gather.png", timeout=10)
             sleep(1)
-            self.click(Coordinates(x, y))
+            self.tap(Coordinates(x, y))
             sleep(1)
             template, x, y = self.wait_for_any_template(
                 templates=["gui/create_new_troop.png", "gui/march_blue.png"],
@@ -796,10 +828,10 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 logging.warning("Troops already dispatched cancelling gathering")
                 return
             sleep(1)
-            self.click(Coordinates(x, y))
+            self.tap(Coordinates(x, y))
             x, y = self.wait_for_template("gui/march.png", timeout=10)
             sleep(1)
-            self.click(Coordinates(x, y))
+            self.tap(Coordinates(x, y))
             sleep(3)
             self.gather_count += 1
             resource_count = self.gather_count // 4 + 1
@@ -828,7 +860,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         if not self.game_find_template_match("gui/map.png"):
             logging.warning("Map not found skipping alliance research and gift")
             return
-        self.click(Coordinates(1560, 970))
+        self.tap(Coordinates(1560, 970))
         self.wait_for_template("alliance/alliance_shop.png")
         sleep(2)
 
@@ -836,7 +868,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             logging.info("Opening Alliance Research window")
             research = self.game_find_template_match("alliance/research.png")
             if research:
-                self.click(Coordinates(*research))
+                self.tap(Coordinates(*research))
                 self._handle_alliance_research()
             else:
                 logging.info("Alliance Research button not found")
@@ -846,13 +878,13 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             logging.info("Opening Alliance Gifts window")
             gift = self.game_find_template_match("alliance/gift.png")
             if gift:
-                self.click(Coordinates(*gift))
+                self.tap(Coordinates(*gift))
                 sleep(2)
                 self._handle_alliance_gift()
         else:
             logging.info("Alliance Gifts disabled")
         while x_btn := self.game_find_template_match("gui/x.png"):
-            self.click(Coordinates(*x_btn))
+            self.tap(Coordinates(*x_btn))
             sleep(2)
         self.last_alliance_research_and_gift = time()
         return
@@ -860,29 +892,29 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
     def _handle_alliance_gift(self) -> None:
         treasure_chest = self.game_find_template_match("alliance/treasure_chest.png")
         if treasure_chest:
-            self.click(Coordinates(*treasure_chest))
+            self.tap(Coordinates(*treasure_chest))
             sleep(0.2)
-            self.click(Coordinates(*treasure_chest))
+            self.tap(Coordinates(*treasure_chest))
             sleep(6)
             ok = self.game_find_template_match("gui/ok.png")
             if ok:
-                self.click(Coordinates(*ok))
+                self.tap(Coordinates(*ok))
                 sleep(1)
         claim_all = self.game_find_template_match("alliance/claim_all.png")
         if claim_all:
-            self.click(Coordinates(*claim_all))
+            self.tap(Coordinates(*claim_all))
             sleep(2)
         gift_chest = self.game_find_template_match("alliance/gift_chest.png")
         if not gift_chest:
             return
-        self.click(Coordinates(*gift_chest))
+        self.tap(Coordinates(*gift_chest))
         sleep(1)
         while claim := self.game_find_template_match("gui/claim.png"):
-            self.click(Coordinates(*claim))
+            self.tap(Coordinates(*claim))
             sleep(1)
             refresh = self.game_find_template_match("alliance/gift_chest_refresh.png")
             if refresh:
-                self.click(Coordinates(*refresh))
+                self.tap(Coordinates(*refresh))
                 sleep(1)
         self.press_back_button()
         sleep(1)
@@ -925,19 +957,19 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             logging.warning("No recommended alliance research")
             return
         x, y = recommended
-        self.click(Coordinates(x + 80, y - 150))
+        self.tap(Coordinates(x + 80, y - 150))
         sleep(2)
         donate = self.game_find_template_match(
             "alliance/research_donate.png", crop=CropRegions(left=0.6, top=0.6)
         )
         if donate:
             for i in range(10):
-                self.click(Coordinates(*donate))
+                self.tap(Coordinates(*donate))
                 sleep(0.1)
             self._handle_replenish_all("alliance/research_donate.png")
         x_button = self.game_find_template_match("gui/x.png")
         if x_button:
-            self.click(Coordinates(*x_button))
+            self.tap(Coordinates(*x_button))
             sleep(1)
         self.press_back_button()
         sleep(1)
@@ -962,7 +994,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             crop=CropRegions(top=0.3, left=0.1, right=0.1, bottom=0.1),
         ):
             _, x, y = result
-            self.click(Coordinates(x, y))
+            self.tap(Coordinates(x, y))
             sleep(1)
 
     def _click_help(self) -> None:
@@ -990,7 +1022,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 sleep(1)
                 continue
             _, x, y = result
-            self.click(Coordinates(x, y))
+            self.tap(Coordinates(x, y))
             sleep(2)
 
     def get_cli_menu_commands(self) -> list[Command]:
