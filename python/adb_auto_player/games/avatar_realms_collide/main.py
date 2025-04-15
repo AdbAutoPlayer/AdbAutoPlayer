@@ -5,7 +5,7 @@ from collections.abc import Callable
 from enum import StrEnum
 from time import sleep, time
 
-from adb_auto_player import Coordinates, CropRegions, GameTimeoutError
+from adb_auto_player import Coordinates, CropRegions, GameTimeoutError, MatchMode
 from adb_auto_player.command import Command
 from adb_auto_player.games.avatar_realms_collide.base import AvatarRealmsCollideBase
 from adb_auto_player.games.avatar_realms_collide.config import Config, ResourceEnum
@@ -128,7 +128,10 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         if not go:
             return False
         self.tap(Coordinates(*go))
-        use = self.game_find_template_match("expedition/use.png")
+        use = self.game_find_template_match(
+            "expedition/use.png",
+            match_mode=MatchMode.TOP_RIGHT,
+        )
         if use:
             self.tap(Coordinates(*use))
             sleep(1)
