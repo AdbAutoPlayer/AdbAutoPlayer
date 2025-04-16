@@ -13,9 +13,8 @@
 - [Infinity Nikki](games/infinity-nikki.md)
 
 # App Development
-- [General](development/general.md)
-- [Go README](development/go-README.md)
+- [Dev & Build](development/dev-and-build.md)
+- [General Info](development/general.md)
 - [Frontend README](development/frontend-README.md)
-- [Python README](development/python-README.md)
 - [Writing Bots](development/writing-bots.md)
 - [TODO](development/TODO.md)

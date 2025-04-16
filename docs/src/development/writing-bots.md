@@ -1,4 +1,6 @@
 # Writing Bots
+[!IMPORTANT] This is outdated.
+
 
 Check out [Python README](https://github.com/AdbAutoPlayer/AdbAutoPlayer/blob/main/docs/src/development/python-README.md) if you need help with setting up the project in general.
 

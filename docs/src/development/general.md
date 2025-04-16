@@ -28,19 +28,3 @@ We will assume you have uv installed otherwise go to [Python README](https://git
 ```shell
 uvx pre-commit
 ```
-
-## Build scripts
-### Windows build_zip.ps1
-```powershell
-$env:GITHUB_WORKSPACE = "C:\Users\$env:USERNAME\GolandProjects\AdbAutoPlayer"; .github\scripts\build_zip.ps1
-```
-
-Python CLI only:
-```powershell
-$env:GITHUB_WORKSPACE = "C:\Users\$env:USERNAME\GolandProjects\AdbAutoPlayer"; .github\scripts\build_zip.ps1 -cli
-```
-
-### MacOS build_zip.sh
-```shell
-GITHUB_WORKSPACE=/Users/$USER/GolandProjects/AdbAutoPlayer bash ./.github/scripts/build_zip.sh
-```
