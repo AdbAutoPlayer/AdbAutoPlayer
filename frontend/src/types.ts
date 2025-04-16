@@ -49,6 +49,7 @@ interface SelectConstraint extends BaseConstraint {
 interface TextConstraint extends BaseConstraint {
   type: "text";
   regex: string;
+  title: string;
   default_value: string;
 }
 

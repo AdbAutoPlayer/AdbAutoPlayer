@@ -272,6 +272,7 @@
                     value={getValueOrDefault(sectionKey, key)}
                     class="input w-full"
                     {...value.regex ? { pattern: value.regex } : {}}
+                    {...value.title ? { title: value.title } : {}}
                   />
                 {/if}
               </div>

@@ -74,7 +74,7 @@
   });
 
   let activeGameMenuButtons: MenuButton[] = $derived.by(() => {
-    if (activeGame?.menu_options && activeGame.menu_options.length > 0) {
+    if (activeGame?.menu_options) {
       const menuButtons: MenuButton[] = activeGame.menu_options.map(
         (menuOption) => ({
           callback: () => startGameProcess(menuOption),

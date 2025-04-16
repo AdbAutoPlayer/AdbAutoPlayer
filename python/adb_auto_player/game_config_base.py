@@ -48,6 +48,12 @@ class InvalidDefaultValueError(ValueError):
     pass
 
 
+class RegexMissingTitleError(ValueError):
+    """Raised when a config field defines regex without title."""
+
+    pass
+
+
 class ConfigBase(BaseModel):
     """Base configuration class with shared functionality."""
 
@@ -168,7 +174,7 @@ class ConfigBase(BaseModel):
             )
         field_type = field_schema.get("type")
         match field_type:
-            case "integer":  # case ("integer" | "number"):
+            case "integer" | "number":
                 if field_type == "integer":
                     return _get_integer_constraint(field_schema)
 
@@ -181,9 +187,19 @@ class ConfigBase(BaseModel):
                     "json_schema_extra.constraint_type"
                 )
             case "string":
+                regex = field_schema.get("regex", "")
+                title = field_schema.get("title", "")
+                if regex != "" and title == "":
+                    raise RegexMissingTitleError(
+                        "Regex should not be used without title. "
+                        "Title is displayed when the input is invalid. "
+                        "https://www.w3schools.com/tags/att_title.asp"
+                    )
+
                 return create_text_constraint(
                     default_value=cast(str, default_value),
-                    regex=field_schema.get("regex", ""),
+                    regex=regex,
+                    title=title,
                 )
             case _:
                 raise NotImplementedError(
@@ -192,14 +208,11 @@ class ConfigBase(BaseModel):
 
 
 def _get_number_constraint(field_schema: dict) -> NumberConstraintDict:
-    """Returns number constraint.
-
-    TODO version 6.0.0 implement this in FE
-    """
+    """Returns number constraint."""
     field_name = field_schema.get("title") or field_schema.get("name")
     default_value = field_schema.get("default")
 
-    if not isinstance(default_value, int) or not isinstance(default_value, float):
+    if not isinstance(default_value, int) and not isinstance(default_value, float):
         raise InvalidDefaultValueError(
             f"Field '{field_name}' default_value should be an int or float."
         )
@@ -234,11 +247,11 @@ def _get_number_constraint(field_schema: dict) -> NumberConstraintDict:
             f"Pydantic Field schema explicitly."
         )
 
-    raise NotImplementedError(":(")
     return create_number_constraint(
         minimum=minimum,
         maximum=maximum,
         default_value=cast(float, default_value),
+        step=field_schema.get("step", 1.0),
     )
 
 
@@ -284,4 +297,5 @@ def _get_integer_constraint(field_schema: dict) -> NumberConstraintDict:
         minimum=minimum,
         maximum=maximum,
         default_value=cast(int, default_value),
+        step=field_schema.get("step", 1.0),
     )
