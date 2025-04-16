@@ -72,9 +72,6 @@ func main() {
 			BackdropType:         windows.Mica,
 			WebviewGpuIsDisabled: false,
 		},
-		// Mac: &mac.Options{
-		//
-		// },
 		OnStartup: func(ctx context.Context) {
 			app.startup(ctx)
 		},
@@ -116,7 +113,7 @@ func changeWorkingDirForProd() {
 
 	if !strings.HasSuffix(execPath, "-dev.exe") {
 		execDir := filepath.Dir(execPath)
-		if stdruntime.GOOS == "darwin" && strings.Contains(execDir, "AdbAutoPlayer.app") {
+		if stdruntime.GOOS != "windows" && strings.Contains(execDir, "AdbAutoPlayer.app") {
 			execDir = filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(execPath)))) // Go outside the .app bundle
 		}
 		if err := os.Chdir(execDir); err != nil {

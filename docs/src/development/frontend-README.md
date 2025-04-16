@@ -8,7 +8,7 @@ This project is built using [**Svelte**](https://svelte.dev/docs/kit/introductio
 We also use [**Skeleton**](https://www.skeleton.dev/docs/get-started/introduction) (soon not yet actually), a UI toolkit for Svelte, to help with styling and components.
 
 ## Setup
-Follow the [Go Setup](go-README.md#setup)
+Follow [Dev & Build](dev-and-build.md)
 
 ## Contributing
 Nothing here yet—I would appreciate PRs since I am not very good at this.  

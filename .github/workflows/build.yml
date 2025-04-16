@@ -16,14 +16,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
+        os: [windows-latest]
         include:
           - os: windows-latest
             zip_files: "AdbAutoPlayer_Windows.zip,Patch_Windows.zip"
             build_script: ".github/scripts/build_zip.ps1"
-          - os: macos-latest
-            zip_files: "AdbAutoPlayer_MacOS.zip,Patch_MacOS.zip"
-            build_script: ".github/scripts/build_zip.sh"
 
     steps:
       - uses: actions/checkout@v4
@@ -65,13 +62,6 @@ jobs:
         shell: pwsh
         run: .github/scripts/build_zip.ps1
 
-      - name: build zip macos
-        if: matrix.os == 'macos-latest'
-        shell: bash
-        run: |
-          chmod +x .github/scripts/build_zip.sh
-          .github/scripts/build_zip.sh
-
       - uses: softprops/action-gh-release@v2
         if: github.event_name == 'release' && github.event.action == 'published'
         with:
@@ -83,13 +73,6 @@ jobs:
           if-no-files-found: 'error'
           name: ${{ matrix.os }}-build
           path: "*_Windows.zip"
-
-      - uses: actions/upload-artifact@v4
-        if: github.event_name == 'workflow_dispatch' && matrix.os == 'macos-latest'
-        with:
-          if-no-files-found: 'error'
-          name: ${{ matrix.os }}-build
-          path: "*_MacOS.zip"
 
   publish:
     needs: build

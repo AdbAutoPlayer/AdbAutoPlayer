@@ -107,7 +107,7 @@ func (a *App) GetEditableGameConfig(game ipc.GameGUI) (map[string]interface{}, e
 		filepath.Join(workingDir, "games", game.ConfigPath),
 		filepath.Join(workingDir, "../../python/adb_auto_player/games", game.ConfigPath),
 	}
-	if stdruntime.GOOS == "darwin" {
+	if stdruntime.GOOS != "windows" {
 		paths = append(paths, filepath.Join(workingDir, "../../../../python/adb_auto_player/games", game.ConfigPath))
 	}
 	configPath := GetFirstPathThatExists(paths)
@@ -224,7 +224,7 @@ func (a *App) setPythonBinaryPath() error {
 	if runtime.Environment(a.ctx).BuildType == "dev" {
 		fmt.Printf("Working dir: %s", workingDir)
 		path := filepath.Join(workingDir, "../../python")
-		if stdruntime.GOOS == "darwin" {
+		if stdruntime.GOOS != "windows" {
 			path = filepath.Join(workingDir, "../../../../python")
 		}
 		a.pythonBinaryPath = &path
@@ -234,7 +234,7 @@ func (a *App) setPythonBinaryPath() error {
 	}
 
 	executable := "adb_auto_player.exe"
-	if stdruntime.GOOS == "darwin" {
+	if stdruntime.GOOS != "windows" {
 		executable = "adb_auto_player_py_app"
 	}
 
@@ -242,7 +242,7 @@ func (a *App) setPythonBinaryPath() error {
 		filepath.Join(workingDir, "binaries", executable),
 	}
 
-	if stdruntime.GOOS == "darwin" {
+	if stdruntime.GOOS != "windows" {
 		paths = append(paths, filepath.Join(workingDir, "../../../../../python/main.dist/", executable))
 		paths = append(paths, filepath.Join(workingDir, "../../../../python/main.dist/", executable))
 
