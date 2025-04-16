@@ -1,0 +1,11 @@
+[Numbers]
+Float = 5.5
+Integer = 119
+
+['Select and Choice']
+Checkbox = true
+MultiCheckbox = []
+'MultiCheckbox alpha' = ['c']
+
+[Text]
+'Regex Start With a' = 'a'

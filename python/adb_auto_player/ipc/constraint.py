@@ -7,10 +7,10 @@ class NumberConstraintDict(TypedDict):
     """Number constraint."""
 
     type: Literal["number"]
-    minimum: int
-    maximum: int
+    minimum: float | int
+    maximum: float | int
     step: float
-    default_value: int
+    default_value: float | int
 
 
 class SelectConstraintDict(TypedDict):
@@ -51,6 +51,7 @@ class TextConstraintDict(TypedDict):
 
     type: Literal["text"]
     regex: str
+    title: str
     default_value: str
 
 
@@ -65,7 +66,10 @@ ConstraintType = (
 
 
 def create_number_constraint(
-    default_value: int, minimum: int = 1, maximum: int = 999, step: float = 1.0
+    default_value: int | float,
+    minimum: int | float = 1,
+    maximum: int | float = 999,
+    step: float = 1.0,
 ) -> NumberConstraintDict:
     """Create a number constraint."""
     return NumberConstraintDict(
@@ -124,6 +128,10 @@ def create_image_checkbox_constraint(
     )
 
 
-def create_text_constraint(default_value: str, regex: str) -> TextConstraintDict:
+def create_text_constraint(
+    default_value: str, regex: str, title: str
+) -> TextConstraintDict:
     """Create a text constraint."""
-    return TextConstraintDict(type="text", regex=regex, default_value=default_value)
+    return TextConstraintDict(
+        type="text", regex=regex, title=title, default_value=default_value
+    )

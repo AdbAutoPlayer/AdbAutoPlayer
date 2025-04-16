@@ -5,9 +5,9 @@ type Constraint interface{}
 type NumberConstraint struct {
 	Type         string  `json:"type"`
 	Step         float64 `json:"step"`
-	Minimum      int     `json:"minimum"`
-	Maximum      int     `json:"maximum"`
-	DefaultValue int     `json:"default_value"`
+	Minimum      float64 `json:"minimum"`
+	Maximum      float64 `json:"maximum"`
+	DefaultValue float64 `json:"default_value"`
 }
 
 type CheckboxConstraint struct {
@@ -38,16 +38,17 @@ type SelectConstraint struct {
 type TextConstraint struct {
 	Type         string `json:"type"`
 	Regex        string `json:"regex"`
+	Title        string `json:"title"`
 	DefaultValue string `json:"default_value"`
 }
 
-func NewNumberConstraint(minimum *int, maximum *int, step *float64, defaultValue int) NumberConstraint {
+func NewNumberConstraint(minimum *float64, maximum *float64, step *float64, defaultValue float64) NumberConstraint {
 	if minimum == nil {
-		minimum = new(int)
+		minimum = new(float64)
 		*minimum = 1
 	}
 	if maximum == nil {
-		maximum = new(int)
+		maximum = new(float64)
 		*maximum = 999
 	}
 	if step == nil {
@@ -78,25 +79,25 @@ func NewSelectConstraint(choices []string, defaultValue string) SelectConstraint
 	}
 }
 
-func NewTextConstraint(regex *string, defaultValue string) TextConstraint {
-	if regex == nil {
-		regex = new(string)
-	}
+func NewTextConstraint(defaultValue string) TextConstraint {
+	regex := new(string)
+	title := new(string)
+
 	return TextConstraint{
 		Type:         "text",
 		Regex:        *regex,
+		Title:        *title,
 		DefaultValue: defaultValue,
 	}
 }
 
 func GetMainConfigConstraints() map[string]interface{} {
-	portMin := 1024
-	portMax := 65535
+	portMin := 1024.0
+	portMax := 65535.0
 
-	// Combine them into a map for use in the config
 	return map[string]interface{}{
 		"Device": map[string]interface{}{
-			"ID":               NewTextConstraint(nil, "127.0.0.1:5555"),
+			"ID":               NewTextConstraint("127.0.0.1:5555"),
 			"Resize Display":   NewCheckboxConstraint(false),
 			"Device Streaming": NewCheckboxConstraint(true),
 			"Order": []string{
@@ -104,7 +105,7 @@ func GetMainConfigConstraints() map[string]interface{} {
 			},
 		},
 		"ADB": map[string]interface{}{
-			"Host": NewTextConstraint(nil, "127.0.0.1"),
+			"Host": NewTextConstraint("127.0.0.1"),
 			"Port": NewNumberConstraint(&portMin, &portMax, nil, 5037),
 		},
 		"Logging": map[string]interface{}{

@@ -3,5 +3,6 @@
 from .afk_journey import AFKJourney
 from .avatar_realms_collide import AvatarRealmsCollide
 from .infinity_nikki import InfinityNikki
+from .zzz_config_example import PlayStore
 
-__all__: list[str] = ["AFKJourney", "AvatarRealmsCollide", "InfinityNikki"]
+__all__: list[str] = ["AFKJourney", "AvatarRealmsCollide", "InfinityNikki", "PlayStore"]

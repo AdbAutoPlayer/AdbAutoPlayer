@@ -38,11 +38,10 @@ func (a *App) setGamesFromPython() error {
 		return errors.New("missing files: https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/troubleshoot.html#missing-files")
 	}
 
-	gamesString, err := GetProcessManager().Exec(*a.pythonBinaryPath, "GUIGamesMenu")
+	gamesString, err := GetProcessManager().Exec(*a.pythonBinaryPath, "GUIGamesMenu", "--log-level=DISABLE")
 	if err != nil {
 		return err
 	}
-
 	var gameGUIs []ipc.GameGUI
 
 	err = json.Unmarshal([]byte(gamesString), &gameGUIs)
