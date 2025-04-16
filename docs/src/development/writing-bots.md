@@ -1,5 +1,5 @@
 # Writing Bots
-[!IMPORTANT] This is outdated.
+> [!IMPORTANT] This is outdated.
 
 
 Check out [Dev & Build](dev-and-build.md) if you need help with setting up the project in general.
