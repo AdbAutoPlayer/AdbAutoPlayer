@@ -2,7 +2,7 @@
 [!IMPORTANT] This is outdated.
 
 
-Check out [Dev & Build](https://github.com/AdbAutoPlayer/AdbAutoPlayer/blob/main/docs/src/development/dev-and-build.md) if you need help with setting up the project in general.
+Check out [Dev & Build](dev-and-build.md) if you need help with setting up the project in general.
 
 ## AFK Journey
 If you want to add any feature to the AFK Journey Bot:

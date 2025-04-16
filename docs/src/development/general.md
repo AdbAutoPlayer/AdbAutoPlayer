@@ -20,7 +20,7 @@ The self-updater automatically downloads the `Patch_*.zip` and overwrites existi
 - For a **Major** version update, the user will be asked to download the latest version and replace the app completely.
 
 ## Installing Pre-commit
-We will assume you have uv installed otherwise go to [Dev & Build](https://github.com/AdbAutoPlayer/AdbAutoPlayer/blob/main/docs/src/development/dev-and-build.md)
+We will assume you have uv installed otherwise go to [Dev & Build](dev-and-build.md)
 
 > [!IMPORTANT]
 > Execute these commands in the project root directory
