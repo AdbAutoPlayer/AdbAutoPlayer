@@ -679,12 +679,13 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
             tier_icon_y = 300
             tier_icon_xs = [860, 980, 1120, 1260, 1380]
-            if self.get_config().auto_play_config.recruit_troops:
+            if self.get_config().auto_play_config.upgrade_troops:
                 prev_tier_icon_x = tier_icon_xs[0]
                 for i, tier_icon_x in enumerate(tier_icon_xs):
                     if self.recruitment_max_tier - 1 == i:
                         break
                     self.tap(Coordinates(tier_icon_x, tier_icon_y))
+                    sleep(1)
                     result = self.find_any_template(
                         templates=[
                             "recruitment/go.png",
