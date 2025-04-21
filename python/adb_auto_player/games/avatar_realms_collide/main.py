@@ -1180,7 +1180,18 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             constraints=Config.get_constraints(),
         )
 
-    def _heal_troops(self):
+    def _collect_healed_troops(self) -> None:
+        if bubble := self.game_find_template_match("city/bubble/healing_complete.png"):
+            logging.info("Collected healed troops")
+            self.click(Coordinates(*bubble))
+            sleep(3)
+
+    def _heal_troops(self) -> None:
+        self._collect_healed_troops()
+
+        bandage = self.game_find_template_match("city/bubble/bandage.png")
+        if not bandage:
+            return
+
         logging.warning("Healing Troops not implemented.")
-        # self.game_find_template_match("city/bubble/bandage.png")
-        # self.game_find_template_match("city/bubble/healing_complete.png")
+        # self.click(Coordinates(*bandage))
