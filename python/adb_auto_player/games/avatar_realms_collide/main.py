@@ -938,7 +938,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 match = self.game_find_template_match(
                     "alliance/research_recommended.png",
                     threshold=0.8,
-                    crop=CropRegions(left=0.2, right=0.2, top=0.1, bottom=0.1),
+                    crop=CropRegions(left=0.2, right=0.2, top=0.1),
                 )
                 if match:
                     return match
