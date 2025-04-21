@@ -27,7 +27,7 @@ class NoRechargeableAPError(Exception):
 
 
 screen_center = Coordinates(1920 // 2, 1080 // 2)
-crop_city_bubble = CropRegions(top=0.25, bottom=0.3, left=0.1, right=0.0)
+crop_city_bubble = CropRegions(top=0.25, bottom=0.3, left=0.1, right=0.1)
 crop_bottom_right_circle = CropRegions(top=0.7, bottom=0.15, left=0.75, right=0.05)
 crop_city_map = CropRegions(right=0.8, top=0.8)
 coordinates_map = Coordinates(100, 1000)
@@ -45,6 +45,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
     no_ap: bool = False
     package_name: str = "com.angames.android.google.avatarbendingtheworld"
     utc_datetime: datetime.datetime = datetime.datetime.now(datetime.UTC)
+    last_expedition_datetime: datetime.datetime | None = None
 
     def auto_play(self) -> None:
         """Auto Play."""
@@ -68,10 +69,11 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         Raises:
             GameTimeoutError: Game cannot be restarted.
         """
-        today = datetime.datetime.now(datetime.UTC).date()
-        if self.utc_datetime.date() != today:
+        today = datetime.datetime.now(datetime.UTC)
+        if self.utc_datetime.date() != today.date():
             logging.info("Daily Reset, restarting Game")
             self._start_game(force_stop=True)
+            self.utc_datetime = today
 
     def _start_game(self, force_stop: bool = False) -> None:
         """Restart the game.
@@ -350,8 +352,22 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 count += 1
         return
 
+    def _is_expedition_cleared_this_period(self) -> bool:
+        if self.last_expedition_datetime:
+            last_period = self.last_expedition_datetime.hour // 6
+            current_period = datetime.datetime.now().hour // 6
+
+            if last_period == current_period:
+                print(self.last_expedition_datetime)
+                print(last_period)
+                print(datetime.datetime.now())
+                print(current_period)
+                return True
+        return False
+
     def _search_expedition(self) -> tuple[str, int, int] | None:
         templates = [
+            "expedition/next_refresh.png",
             "expedition/chest/green.png",
             "expedition/chest/blue.png",
             "expedition/chest/purple.png",
@@ -370,17 +386,24 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             "expedition/troops/green.png",
         ]
 
+        now = datetime.datetime.now()
         if not self.game_find_template_match("expedition/expedition.png"):
             self.tap(Coordinates(80, 230))
             self.wait_for_template("expedition/expedition.png", timeout=10)
 
         try:
-            return self.wait_for_any_template(
+            template, x, y = self.wait_for_any_template(
                 templates=templates,
                 threshold=0.7,
                 timeout=10,
                 timeout_message="No Expeditions found",
             )
+
+            if template == "expedition/next_refresh.png":
+                self.last_expedition_datetime = now
+                logging.info("Expedition cleared, waiting for next refresh")
+                return None
+            return template, x, y
         except GameTimeoutError:
             logging.info("No Expeditions found")
             return None
@@ -388,6 +411,10 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
     def _expedition(self) -> None:
         if not self.get_config().auto_play_config.expedition or self.no_ap:
             logging.info("Expedition disabled")
+            return
+
+        if self._is_expedition_cleared_this_period():
+            logging.info("Expedition cleared, waiting for next refresh")
             return
 
         if self._troops_are_dispatched():
@@ -399,7 +426,8 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         self._uncheck_hold_position_after_attack()
 
         while True:
-            _ = self._search_expedition()
+            if not self._search_expedition():
+                return
             sleep(1)
 
             result = self._search_expedition()
