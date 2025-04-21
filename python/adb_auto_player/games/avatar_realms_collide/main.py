@@ -247,6 +247,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         # Deal with Bubbles
         self._close_vip_shop_bubble()
         self._click_resources()
+        self._heal_troops()
         self._shop_trading_post()
         self._click_help_bubbles()
 
@@ -295,12 +296,18 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         max_attempts = 3
         while count < max_attempts:
             try:
-                search = self.wait_for_template(
-                    "gathering/search.png",
+                result = self.wait_for_any_template(
+                    [
+                        "circle/search1.png",
+                        "circle/search2.png",
+                        "circle/search3.png",
+                        "circle/search4.png",
+                    ],
                     crop=CropRegions(right=0.8, top=0.6),
                     timeout=5,
                 )
-                self.tap(Coordinates(*search))
+                _, x, y = result
+                self.tap(Coordinates(x, y))
                 shattered_skulls = self.wait_for_template(
                     "expedition/shattered_skulls.png"
                 )
@@ -1172,3 +1179,8 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             categories=[ModeCategory.ALL],
             constraints=Config.get_constraints(),
         )
+
+    def _heal_troops(self):
+        logging.warning("Healing Troops not implemented.")
+        # self.game_find_template_match("city/bubble/bandage.png")
+        # self.game_find_template_match("city/bubble/healing_complete.png")
