@@ -3,8 +3,8 @@
 'Alliance Research' = true
 'Build Slot 1' = true
 'Build Slot 2' = true
-'Collect Campaign Chest' = false
-'Collect Free Scrolls' = false
+'Collect Campaign Chest' = true
+'Collect Free Scrolls' = true
 'Gather Resources' = ['Food', 'Wood', 'Stone', 'Gold']
 'Recruit Troops' = true
 'Upgrade Troops' = true
