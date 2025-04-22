@@ -181,8 +181,16 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         self._navigate_city_or_outside(inside_city=True)
 
     def _navigate_city_or_outside(self, inside_city: bool = True) -> None:
+        count = 0
+        max_attempts = 30
         while True:
-            self._start_game()
+            if count >= max_attempts:
+                logging.error("Max attempts reached, Restarting Game")
+                self._start_game(force_stop=True)
+                count = 0
+            else:
+                self._start_game()
+                count += 1
 
             inside_condition = inside_city and self._is_inside_city()
             outside_condition = not inside_city and self._is_outside_city()
@@ -231,7 +239,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         ):
             if count > max_retry_count:
                 raise GameTimeoutError("Failed to shop in Trading Post")
-            logging.info("Closing Trading Post Bubble")
+            logging.info("Opening Trading Post")
             self.tap(Coordinates(*trading_post_bubble))
             sleep(2)
             count += 1
@@ -429,13 +437,10 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
     def _is_expedition_cleared_this_period(self) -> bool:
         if self.last_expedition_datetime:
             last_period = self.last_expedition_datetime.hour // 6
-            current_period = datetime.datetime.now().hour // 6
-
+            current_period = datetime.datetime.now(datetime.UTC).hour // 6
+            print(f"last_period {last_period}")
+            print(f"current_period {current_period}")
             if last_period == current_period:
-                print(self.last_expedition_datetime)
-                print(last_period)
-                print(datetime.datetime.now())
-                print(current_period)
                 return True
         return False
 
@@ -460,7 +465,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             "expedition/troops/green.png",
         ]
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.now(datetime.UTC)
         if not self.game_find_template_match("expedition/expedition.png"):
             self.tap(Coordinates(80, 230))
             self.wait_for_template("expedition/expedition.png", timeout=10)
@@ -475,6 +480,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
             if template == "expedition/next_refresh.png":
                 self.last_expedition_datetime = now
+                print(f"set {self.last_expedition_datetime}")
                 logging.info("Expedition cleared, waiting for next refresh")
                 return None
             return template, x, y
@@ -616,7 +622,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         if self._recharge_ap():
             self.tap(Coordinates(x, y))
 
-        logging.info("Waiting 90 seconds.")
+        logging.info("Waiting 90 seconds")
         sleep(90)  # make sure it is dead
         return True
 
@@ -645,13 +651,11 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         sleep(3)
         free = self.game_find_template_match("altar/free.png")
         if not free:
-            self._navigate_to_city()
             return
         self.tap(Coordinates(*free))
         ok = self.wait_for_template("altar/ok.png", timeout=15)
         self.tap(Coordinates(*ok))
         sleep(1)
-        self._navigate_to_city()
 
     def _collect_campaign_chest(self) -> None:
         if not self.get_config().auto_play.collect_campaign_chest:
@@ -699,7 +703,6 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             logging.info("Claimed Campaign Chest")
             sleep(1)
         self.last_campaign_collection = time()
-        self._navigate_to_city()
         return
 
     def _build(self) -> None:
@@ -1052,7 +1055,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             self.tap(Coordinates(x, y))
             sleep(3)
             self.gather_count += 1
-            resource_count = self.gather_count // 4 + 1
+            resource_count = self.gather_count // len(resources) + 1
             logging.info(f"Gathering {resource} #{resource_count}")
         return
 
