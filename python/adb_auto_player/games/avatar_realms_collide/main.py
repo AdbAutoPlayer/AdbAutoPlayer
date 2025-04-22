@@ -1295,3 +1295,14 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
         logging.warning("Healing Troops not implemented.")
         # self.tap(Coordinates(*bandage))
+        # self._handle_heal_troops()
+
+    def _handle_heal_troops(self) -> None:
+        try:
+            # heal = self.wait_for_template("button/heal.png", timeout=10)
+            pass
+        except GameTimeoutError:
+            return
+        # TODO
+        # lower all healing to 0
+        # heal 330 troops changeable in config
