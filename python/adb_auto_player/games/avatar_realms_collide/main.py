@@ -71,7 +71,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         """
         today = datetime.datetime.now(datetime.UTC)
         if self.utc_datetime.date() != today.date():
-            logging.info("Daily Reset, restarting Game")
+            logging.info("Daily Reset, Restarting Game")
             self._start_game(force_stop=True)
             self.utc_datetime = today
 
@@ -220,7 +220,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             sleep(2)
             count += 1
 
-    def _shop_trading_post(self):
+    def _shop_trading_post(self) -> None:
         self._navigate_to_city()
         count = 0
         max_retry_count = 10
@@ -231,12 +231,86 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         ):
             if count > max_retry_count:
                 raise GameTimeoutError("Failed to shop in Trading Post")
-            # TODO implement
-            logging.warning("Shopping at Trading Post not implemented")
             logging.info("Closing Trading Post Bubble")
             self.tap(Coordinates(*trading_post_bubble))
             sleep(2)
             count += 1
+
+        self._handle_trading_post()
+
+    def _skip_trading_post(self) -> bool:
+        config = self.get_config().trading_post
+        return not any(
+            [
+                config.row_1_resources,
+                config.row_2_speedups,
+                config.row_3_hero_upgrade_items,
+                config.row_4_boosts_and_teleports,
+            ]
+        )
+
+    def _handle_trading_post(self) -> None:
+        if not self.game_find_template_match(
+            "trading_post/trading_post.png",
+            crop=CropRegions(left=0.4, right=0.4, top=0.1, bottom=0.8),
+        ):
+            return
+
+        if self._skip_trading_post():
+            logging.info("Skipping Trading Post because all options are disabled")
+            return
+
+        self._purchase_trading_post_round()
+        while refresh := self.game_find_template_match("trading_post/free_refresh.png"):
+            if self.game_find_template_match("trading_post/legendary_spirit_badge.png"):
+                logging.warning("TODO: Legendary Spirit Badge")
+                break
+            self.click(Coordinates(*refresh))
+            sleep(2)
+            self._purchase_trading_post_round()
+        return
+
+    def _purchase_trading_post_round(
+        self,
+    ) -> None:
+        """Performs a full round of trading post purchases and swipe."""
+        crop_top_row = CropRegions(left=0.2, right=0.2, top=0.2, bottom=0.5)
+        crop_bottom_row = CropRegions(left=0.2, right=0.2, top=0.5, bottom=0.1)
+
+        if self.get_config().trading_post.row_1_resources:
+            self._purchase_trading_post(crop_top_row)
+
+        if self.get_config().trading_post.row_2_speedups:
+            self._purchase_trading_post(crop_bottom_row)
+
+        # Swipe to reveal next items
+        self.swipe(1615, 870, 1615, 0)
+        sleep(2)
+
+        if self.get_config().trading_post.row_3_hero_upgrade_items:
+            self._purchase_trading_post(crop_top_row)
+
+        # TODO buy legendary spirit badge?
+        # self.game_find_template_match("trading_post/legendary_spirit_badge.png")
+        # self.game_find_template_match(
+        #   "trading_post/legendary_spirit_badge_80_percent.png"
+        # )
+
+        if self.get_config().trading_post.row_4_boosts_and_teleports:
+            self._purchase_trading_post(crop_bottom_row)
+
+    def _purchase_trading_post(self, crop: CropRegions) -> None:
+        while result := self.find_any_template(
+            [
+                "trading_post/food.png",
+                "trading_post/wood.png",
+                "trading_post/stone.png",
+            ],
+            crop=crop,
+        ):
+            _, x, y = result
+            self.tap(Coordinates(x, y))
+            sleep(2)
 
     def _auto_play_loop(self) -> None:
         def safe_execute(action_func: Callable[[], None]):
@@ -289,7 +363,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
     def _uncheck_hold_position_after_attack(self) -> None:
         if (
             self.unchecked_hold_position_after_attack
-            or self.get_config().auto_play_config.skip_hold_position_check
+            or self.get_config().auto_play.skip_hold_position_check
         ):
             return
 
@@ -409,7 +483,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             return None
 
     def _expedition(self) -> None:
-        if not self.get_config().auto_play_config.expedition or self.no_ap:
+        if not self.get_config().auto_play.expedition or self.no_ap:
             logging.info("Expedition disabled")
             return
 
@@ -547,7 +621,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         return True
 
     def _use_free_scroll(self) -> None:
-        if not self.get_config().auto_play_config.collect_free_scrolls:
+        if not self.get_config().auto_play.collect_free_scrolls:
             logging.info("Collecting Free Scrolls disabled")
             return
 
@@ -580,7 +654,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         self._navigate_to_city()
 
     def _collect_campaign_chest(self) -> None:
-        if not self.get_config().auto_play_config.collect_campaign_chest:
+        if not self.get_config().auto_play.collect_campaign_chest:
             logging.info("Collecting Campaign Chest disabled")
             return
 
@@ -632,7 +706,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         button_1 = Coordinates(80, 220)
         button_2 = Coordinates(80, 350)
 
-        if self.get_config().auto_play_config.building_slot_1:
+        if self.get_config().auto_play.building_slot_1:
             self._navigate_to_city()
             try:
                 logging.info("Checking Build Slot 1")
@@ -642,7 +716,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 pass
         else:
             logging.info("Build Slot 1 disabled")
-        if self.get_config().auto_play_config.building_slot_2:
+        if self.get_config().auto_play.building_slot_2:
             self._navigate_to_city()
             try:
                 logging.info("Checking Build Slot 2")
@@ -672,7 +746,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             logging.info("Upgrading Building")
             self.tap(Coordinates(*upgrade))
             self._handle_replenish_all("button/upgrade.png")
-            if self.get_config().auto_play_config.purchase_seal_of_solidarity:
+            if self.get_config().auto_play.purchase_seal_of_solidarity:
                 self._purchase_seal_of_solidarity_if_needed()
         while x_btn := self.game_find_template_match("button/x.png"):
             self.tap(Coordinates(*x_btn))
@@ -699,7 +773,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         )
         sleep(2)
 
-        if self.get_config().auto_play_config.military_first:
+        if self.get_config().auto_play.military_first:
             logging.info("Checking Military Research first")
             if template == "research/military.png":
                 self.tap(Coordinates(x, y))
@@ -743,7 +817,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         research = try_to_find_research()
         if not research:
             template = "research/military.png"
-            if self.get_config().auto_play_config.military_first:
+            if self.get_config().auto_play.military_first:
                 template = "research/economy.png"
 
             btn = self.game_find_template_match(template)
@@ -762,7 +836,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         return None
 
     def _research(self) -> None:
-        if not self.get_config().auto_play_config.research:
+        if not self.get_config().auto_play.research:
             logging.info("Research disabled")
             return None
 
@@ -849,16 +923,16 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             match template:
                 case "recruitment/go.png":
                     self.recruitment_max_tier = i + 1
-                    self.click(Coordinates(prev_tier_icon_x, y))
+                    self.tap(Coordinates(prev_tier_icon_x, y))
                     sleep(1)
                     break
                 case "recruitment/upgrade.png":
-                    self.click(Coordinates(x, y))
+                    self.tap(Coordinates(x, y))
                     sleep(1)
                     break
 
     def _recruit_troops(self) -> None:
-        if not self.get_config().auto_play_config.recruit_troops:
+        if not self.get_config().auto_play.recruit_troops:
             logging.info("Recruiting Troops disabled")
             return None
 
@@ -879,7 +953,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             except GameTimeoutError:
                 break
 
-            if self.get_config().auto_play_config.upgrade_troops:
+            if self.get_config().auto_play.upgrade_troops:
                 self._handle_upgrade_troops()
 
             self.tap(Coordinates(recruitment_x, recruitment_y))
@@ -890,7 +964,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         return None
 
     def _gather_resources(self) -> None:
-        if not self.get_config().auto_play_config.gather_resources:
+        if not self.get_config().auto_play.gather_resources:
             logging.info("Gathering Resources disabled")
             return
 
@@ -928,9 +1002,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 "Stone": "gathering/mining_site.png",
                 "Gold": "gathering/gold_mine.png",
             }
-            resources: list[ResourceEnum] = (
-                self.get_config().auto_play_config.gather_resources
-            )
+            resources: list[ResourceEnum] = self.get_config().auto_play.gather_resources
 
             resource = resources[self.gather_count % len(resources)]
             node = nodes[resource]
@@ -986,8 +1058,8 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
     def _alliance_research_and_gift(self) -> None:
         if (
-            not self.get_config().auto_play_config.alliance_research
-            and not self.get_config().auto_play_config.alliance_gifts
+            not self.get_config().auto_play.alliance_research
+            and not self.get_config().auto_play.alliance_gifts
         ):
             logging.info("Alliance Research & Gifts disabled.")
             return
@@ -1011,7 +1083,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         self.wait_for_template("alliance/alliance_shop.png")
         sleep(2)
 
-        if self.get_config().auto_play_config.alliance_research:
+        if self.get_config().auto_play.alliance_research:
             logging.info("Opening Alliance Research window")
             research = self.game_find_template_match("alliance/research.png")
             if research:
@@ -1021,7 +1093,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 logging.info("Alliance Research button not found")
         else:
             logging.info("Alliance Research disabled")
-        if self.get_config().auto_play_config.alliance_gifts:
+        if self.get_config().auto_play.alliance_gifts:
             logging.info("Opening Alliance Gifts window")
             gift = self.game_find_template_match("alliance/gift.png")
             if gift:
@@ -1211,7 +1283,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
     def _collect_healed_troops(self) -> None:
         if bubble := self.game_find_template_match("city/bubble/healing_complete.png"):
             logging.info("Collected healed troops")
-            self.click(Coordinates(*bubble))
+            self.tap(Coordinates(*bubble))
             sleep(3)
 
     def _heal_troops(self) -> None:
@@ -1222,4 +1294,4 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             return
 
         logging.warning("Healing Troops not implemented.")
-        # self.click(Coordinates(*bandage))
+        # self.tap(Coordinates(*bandage))

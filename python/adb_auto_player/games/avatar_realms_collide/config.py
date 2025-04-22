@@ -59,7 +59,23 @@ class AutoPlayConfig(BaseModel):
     )
 
 
+class TradingPostConfig(BaseModel):
+    """TradingPost config model."""
+
+    row_1_resources: bool = Field(default=True, alias="Row 1: Resources")
+    row_2_speedups: bool = Field(default=True, alias="Row 2: Speedups")
+    row_3_hero_upgrade_items: bool = Field(
+        default=False,
+        alias="Row 3: Hero Upgrade Items",
+    )
+    row_4_boosts_and_teleports: bool = Field(
+        default=False,
+        alias="Row 4: Boosts & Teleports",
+    )
+
+
 class Config(ConfigBase):
     """Avatar Realms Collide config model."""
 
-    auto_play_config: AutoPlayConfig = Field(alias="Auto Play")
+    auto_play: AutoPlayConfig = Field(alias="Auto Play")
+    trading_post: TradingPostConfig = Field(alias="Trading Post")
