@@ -15,6 +15,6 @@ Research = true
 
 ['Trading Post']
 'Row 1: Resources' = true
-'Row 2: Speedups' = false
-'Row 3: Hero Upgrade Items' = true
+'Row 2: Speedups' = true
+'Row 3: Hero Upgrade Items' = false
 'Row 4: Boosts & Teleports' = false
