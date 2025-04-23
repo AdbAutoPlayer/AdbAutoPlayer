@@ -438,8 +438,6 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         if self.last_expedition_datetime:
             last_period = self.last_expedition_datetime.hour // 6
             current_period = datetime.datetime.now(datetime.UTC).hour // 6
-            print(f"last_period {last_period}")
-            print(f"current_period {current_period}")
             if last_period == current_period:
                 return True
         return False
@@ -482,7 +480,6 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
             if template == "expedition/next_refresh.png":
                 self.last_expedition_datetime = now
-                print(f"set {self.last_expedition_datetime}")
                 logging.info("Expedition cleared, waiting for next refresh")
                 return None
             return template, x, y
