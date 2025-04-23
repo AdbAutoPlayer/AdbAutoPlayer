@@ -451,6 +451,8 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             "expedition/chest/blue.png",
             "expedition/chest/purple.png",
             "expedition/chest/orange.png",
+            "expedition/chest/orange2.png",
+            "expedition/chest/orange3.png",
             "expedition/cave/orange.png",
             # "expedition/scout/orange.png",
             "expedition/troops/orange.png",
