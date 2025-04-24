@@ -18,3 +18,4 @@ Research = true
 'Row 2: Speedups' = true
 'Row 3: Hero Upgrade Items' = false
 'Row 4: Boosts & Teleports' = false
+'Gem: Legendary Spirit Badge' = ['-70%', '-80%']

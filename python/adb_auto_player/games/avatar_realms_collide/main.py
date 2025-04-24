@@ -2,6 +2,7 @@
 
 import datetime
 import logging
+import math
 from collections.abc import Callable
 from enum import StrEnum
 from time import sleep, time
@@ -10,7 +11,11 @@ from adb_auto_player import Coordinates, CropRegions, GameTimeoutError, MatchMod
 from adb_auto_player.adb import get_running_app
 from adb_auto_player.command import Command
 from adb_auto_player.games.avatar_realms_collide.base import AvatarRealmsCollideBase
-from adb_auto_player.games.avatar_realms_collide.config import Config, ResourceEnum
+from adb_auto_player.games.avatar_realms_collide.config import (
+    Config,
+    PercentOffEnum,
+    ResourceEnum,
+)
 from adb_auto_player.ipc.game_gui import GameGUIOptions, MenuOption
 
 
@@ -50,6 +55,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
     def auto_play(self) -> None:
         """Auto Play."""
         self.start_up(device_streaming=True)
+        self._handle_trading_post()
         while True:
             try:
                 self._restart_for_daily_reset()
@@ -293,19 +299,69 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
         # Swipe to reveal next items
         self.swipe(1615, 870, 1615, 0)
-        sleep(2)
+        sleep(3)
 
         if self.get_config().trading_post.row_3_hero_upgrade_items:
             self._purchase_trading_post(crop_top_row)
 
-        # TODO buy legendary spirit badge?
-        # self.game_find_template_match("trading_post/legendary_spirit_badge.png")
-        # self.game_find_template_match(
-        #   "trading_post/legendary_spirit_badge_80_percent.png"
-        # )
+        self._buy_legendary_spirit_badge()
 
         if self.get_config().trading_post.row_4_boosts_and_teleports:
             self._purchase_trading_post(crop_bottom_row)
+
+    def _buy_legendary_spirit_badge(self) -> None:
+        if not self.game_find_template_match("trading_post/legendary_spirit_badge.png"):
+            return
+
+        percentage_list = self.get_config().trading_post.gem_legendary_spirit_badge
+
+        templates = []
+        if PercentOffEnum.percent_off_70 in percentage_list:
+            templates.append("trading_post/legendary_spirit_badge_70_percent.png")
+        if PercentOffEnum.percent_off_80 in percentage_list:
+            templates.append("trading_post/legendary_spirit_badge_80_percent.png")
+
+        if not templates:
+            return
+
+        while result := self.find_any_template(templates):
+            _, badge_x, badge_y = result
+            gems = self.find_all_template_matches("trading_post/gem.png")
+
+            item_width = 150
+            nearby_gems = [
+                (x, y)
+                for x, y in gems
+                if (
+                    y > badge_y
+                    and abs(x - badge_x) <= item_width
+                    and abs(y - badge_y) <= item_width
+                )
+            ]
+
+            if not nearby_gems:
+                logging.warning(
+                    f"No nearby gems found for badge at ({badge_x}, {badge_y})",
+                )
+                continue
+
+            if len(nearby_gems) > 1:
+                logging.warning(
+                    f"Multiple gem candidates found ({len(nearby_gems)}) ",
+                    f"near badge at ({badge_x}, {badge_y}), choosing closest",
+                )
+
+            closest_gem = min(
+                nearby_gems, key=lambda g: math.hypot(g[0] - badge_x, g[1] - badge_y)
+            )
+
+            self.tap(Coordinates(*closest_gem))
+            sleep(2)
+            ok = self.game_find_template_match("button/gem_purchase_ok.png")
+            if ok:
+                self.tap(Coordinates(*ok))
+            self._close_single_menu_item()
+        return
 
     def _purchase_trading_post(self, crop: CropRegions) -> None:
         while result := self.find_any_template(

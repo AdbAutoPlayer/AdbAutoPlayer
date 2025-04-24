@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 
 class ResourceEnum(StrEnum):
-    """All faction towers."""
+    """Resources."""
 
     @staticmethod
     def _generate_next_value_(name, start, count, last_values):
@@ -20,6 +20,16 @@ class ResourceEnum(StrEnum):
 
 
 DEFAULT_RESOURCES = list(ResourceEnum.__members__.values())
+
+
+class PercentOffEnum(StrEnum):
+    """Percentage off."""
+
+    percent_off_70 = "-70%"
+    percent_off_80 = "-80%"
+
+
+DEFAULT_PERCENTAGES_OFF = list(PercentOffEnum.__members__.values())
 
 
 class AutoPlayConfig(BaseModel):
@@ -71,6 +81,14 @@ class TradingPostConfig(BaseModel):
     row_4_boosts_and_teleports: bool = Field(
         default=False,
         alias="Row 4: Boosts & Teleports",
+    )
+    gem_legendary_spirit_badge: list[PercentOffEnum] = Field(
+        default_factory=lambda: DEFAULT_PERCENTAGES_OFF,
+        alias="Gem: Legendary Spirit Badge",
+        json_schema_extra={
+            "constraint_type": "multicheckbox",
+            "default_value": DEFAULT_PERCENTAGES_OFF,
+        },
     )
 
 
