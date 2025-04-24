@@ -409,10 +409,13 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
 
     def _recharge_ap(self) -> bool:
         sleep(1)
-        go = self.game_find_template_match("expedition/go.png")
-        if not go:
+        if go := self.game_find_template_match("expedition/go.png"):
+            self.tap(Coordinates(*go))
+            sleep(3)
+
+        if not self.game_find_template_match("expedition/ap.png"):
             return False
-        self.tap(Coordinates(*go))
+
         use = self.game_find_template_match(
             "expedition/use.png",
             match_mode=MatchMode.TOP_RIGHT,
