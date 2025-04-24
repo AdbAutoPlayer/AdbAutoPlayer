@@ -647,6 +647,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         logging.info("Collecting free Scroll")
         _, x, y = scroll
         self.tap(Coordinates(x, y))
+        self.tap(Coordinates(x, y))
         sleep(3)
         free = self.game_find_template_match("altar/free.png")
         if not free:
