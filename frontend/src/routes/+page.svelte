@@ -6,6 +6,8 @@
     GetEditableGameConfig,
     SaveGameConfig,
     StartGameProcess,
+    Debug,
+    SaveDebugZip,
     TerminateGameProcess,
     IsGameProcessRunning,
   } from "$lib/wailsjs/go/main/App";
@@ -41,9 +43,25 @@
         isProcessRunning: false,
         option: ipc.MenuOption.createFrom({
           label: "Main Config",
-          category: "Config",
+          category: "Settings, Phone & Debug",
           tooltip:
             "Global settings that apply to the app as a whole, not specific to any game.",
+        }),
+      },
+      {
+        callback: () => debug(),
+        isProcessRunning: "Show Debug info" === activeButtonLabel,
+        option: ipc.MenuOption.createFrom({
+          label: "Show Debug info",
+          category: "Settings, Phone & Debug",
+        }),
+      },
+      {
+        callback: () => SaveDebugZip(),
+        isProcessRunning: false,
+        option: ipc.MenuOption.createFrom({
+          label: "Save debug.zip",
+          category: "Settings, Phone & Debug",
         }),
       },
       {
@@ -55,7 +73,8 @@
         isProcessRunning: "Set Display Size 1080x1920" === activeButtonLabel,
         option: ipc.MenuOption.createFrom({
           label: "Set Display Size 1080x1920",
-          category: "Phone",
+          category: "Settings, Phone & Debug",
+          tooltip: "This is for real Phones not Emulators!",
         }),
       },
       {
@@ -67,7 +86,8 @@
         isProcessRunning: "Reset Display Size" === activeButtonLabel,
         option: ipc.MenuOption.createFrom({
           label: "Reset Display Size",
-          category: "Phone",
+          category: "Settings, Phone & Debug",
+          tooltip: "This is for real Phones not Emulators!",
         }),
       },
     ];
@@ -89,7 +109,7 @@
           isProcessRunning: false,
           option: ipc.MenuOption.createFrom({
             label: `${activeGame.game_title} Config`,
-            category: "Config",
+            category: "Settings, Phone & Debug",
           }),
         },
         {
@@ -109,7 +129,7 @@
   });
 
   let categories: string[] = $derived.by(() => {
-    let tempCategories = ["Config", "Phone"];
+    let tempCategories = ["Settings, Phone & Debug"];
     if (!activeGame) {
       return tempCategories;
     }
@@ -140,6 +160,23 @@
     setTimeout(updateStateHandler, 1000);
   }
 
+  async function debug() {
+    if (activeButtonLabel !== null) {
+      return;
+    }
+    clearTimeout(updateStateTimeout);
+
+    try {
+      activeButtonLabel = "Show Debug info";
+      await Debug();
+    } catch (error) {
+      console.error(error);
+
+      alert(error);
+    }
+    setTimeout(updateStateHandler, 1000);
+  }
+
   async function startGameProcess(menuOption: ipc.MenuOption) {
     if (activeButtonLabel !== null) {
       return;
@@ -149,7 +186,6 @@
     try {
       activeButtonLabel = menuOption.label;
       await StartGameProcess(menuOption.args);
-      activeButtonLabel = menuOption.label;
     } catch (error) {
       console.error(error);
 
