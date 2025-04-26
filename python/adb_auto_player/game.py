@@ -21,7 +21,13 @@ from adb_auto_player import (
     StreamingNotSupportedError,
     UnsupportedResolutionError,
 )
-from adb_auto_player.adb import get_adb_device, get_screen_resolution, is_portrait
+from adb_auto_player.adb import (
+    get_adb_device,
+    get_running_app,
+    get_screen_resolution,
+    is_portrait,
+)
+from adb_auto_player.exceptions import GameNotRunningError
 from adb_auto_player.ipc.game_gui import GameGUIOptions, MenuOption
 from adb_auto_player.template_matching import (
     CropRegions,
@@ -52,7 +58,8 @@ class Game:
         """Initialize a game."""
         self.config: BaseModel | None = None
 
-        self.package_names: list[str] = []
+        self.package_name_substrings: list[str] = []
+        self.package_name: str | None = None
         self.supports_landscape: bool = False
         self.supports_portrait: bool = False
         self.supported_resolutions: list[str] = ["1080x1920"]
@@ -223,9 +230,11 @@ class Game:
         )
         if not config_streaming:
             logging.warning("Device Streaming is disabled in Main Config")
-            return
-        if device_streaming:
+
+        if config_streaming and device_streaming:
             self.start_stream()
+        if not self.is_game_running():
+            raise GameNotRunningError("Game is not running")
 
     def start_stream(self) -> None:
         """Start the device stream."""
@@ -387,6 +396,34 @@ class Game:
             return self.get_previous_screenshot()
         else:
             return self.get_screenshot()
+
+    def force_stop_game(self):
+        """Force stops the Game."""
+        self.device.shell(["am", "force-stop", self.package_name])
+
+    def is_game_running(self) -> bool:
+        """Check if Game is still running."""
+        package_name = get_running_app(self.device)
+        if package_name is None:
+            return False
+
+        if any(pn in package_name for pn in self.package_name_substrings):
+            self.package_name = package_name
+
+        return get_running_app(self.device) == self.package_name
+
+    def start_game(self) -> None:
+        """Start the Game."""
+        self.device.shell(
+            [
+                "monkey",
+                "-p",
+                self.package_name,
+                "-c",
+                "android.intent.category.LAUNCHER",
+                "1",
+            ]
+        )
 
     def wait_for_roi_change(  # noqa: PLR0913 - TODO: Consolidate more.
         self,

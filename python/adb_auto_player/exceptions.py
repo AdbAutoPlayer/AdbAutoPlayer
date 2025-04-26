@@ -31,6 +31,12 @@ class GameTimeoutError(Exception):
     pass
 
 
+class GameNotRunningError(Exception):
+    """Raised when the Game is not running."""
+
+    pass
+
+
 class UnsupportedResolutionError(Exception):
     """Raised when the resolution is not supported."""
 

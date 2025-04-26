@@ -89,8 +89,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         """
         if force_stop:
             logging.info("Exiting Game...")
-            # TODO should be a device function device.close_game(self.package_name)
-            self.device.shell(["am", "force-stop", self.package_name])
+            self.force_stop_game()
             sleep(5)
 
         if get_running_app(self.device) == self.package_name:
@@ -103,20 +102,9 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             if seconds_since_restart_attempt > max_seconds:
                 raise GameTimeoutError("Could not restart game after 90 seconds.")
 
-            # TODO should be a helper function self.is_game_running()
-            if get_running_app(self.device) != self.package_name:
+            if not self.is_game_running():
                 logging.info("Restarting Game...")
-                # TODO should be a device function device.start_game(self.package_name)
-                self.device.shell(
-                    [
-                        "monkey",
-                        "-p",
-                        self.package_name,
-                        "-c",
-                        "android.intent.category.LAUNCHER",
-                        "1",
-                    ]
-                )
+                self.start_game()
                 sleep(10)
                 seconds_since_restart_attempt = 0
 
