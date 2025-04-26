@@ -880,17 +880,16 @@ class Game:
     def _debug_save_screenshot(self) -> None:
         logging_config = ConfigLoader().main_config.get("logging", {})
         debug_screenshot_save_num = logging_config.get("debug_save_screenshots", 0)
-        log_level = logging_config.get("level", "INFO")
 
         screenshot = self._previous_screenshot
-        if debug_screenshot_save_num <= 0 or screenshot is None or log_level != "DEBUG":
+        if debug_screenshot_save_num <= 0 or screenshot is None:
             return
 
         file_index = self._debug_screenshot_counter % debug_screenshot_save_num
         os.makedirs("debug", exist_ok=True)
 
         file_name = f"debug/{file_index}.png"
-        screenshot.save(file_name)
+        cv2.imwrite(file_name, screenshot)
         self._debug_screenshot_counter = file_index + 1
         return
 
