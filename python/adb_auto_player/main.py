@@ -7,11 +7,13 @@ import sys
 from logging import DEBUG
 from typing import NoReturn
 
-from adb_auto_player import Command, Game
+from adb_auto_player import Command, ConfigLoader, Game
 from adb_auto_player.adb import (
     exec_wm_size,
     get_adb_device,
     get_running_app,
+    get_screen_resolution,
+    is_portrait,
     wm_size_reset,
 )
 from adb_auto_player.games import (
@@ -135,12 +137,32 @@ def _get_commands() -> list[Command]:
             name="GetRunningGame",
             action=_print_running_game,
         ),
+        Command(name="Debug", action=_print_debug),
     ]
 
     for game in _get_games():
         commands += game.get_cli_menu_commands()
 
     return commands
+
+
+def _print_debug() -> None:
+    logging.info("--- Debug Info Start ---")
+    logging.info("--- Loading Main Config ---")
+    _ = ConfigLoader().main_config
+    logging.info("--- Get ADB Device ---")
+    device = get_adb_device()
+
+    if device:
+        logging.info("--- Device Info ---")
+        logging.info(f"Device Serial: {device.serial}")
+        logging.info(f"Device Info: {device.info}")
+        _ = get_running_app(device)
+        logging.info("--- Device Display ---")
+        _ = get_screen_resolution(device)
+        _ = is_portrait(device)
+
+    logging.info("--- Debug Info End ---")
 
 
 def _print_gui_games_menu() -> None:

@@ -8,7 +8,7 @@ import (
 
 type FrontendLogger struct {
 	ctx       context.Context
-	logLevel  uint8
+	LogLevel  uint8
 	sanitizer *PathSanitizer
 }
 
@@ -27,17 +27,17 @@ func (l *FrontendLogger) Startup(ctx context.Context) {
 
 func NewFrontendLogger(logLevel uint8) *FrontendLogger {
 	return &FrontendLogger{
-		logLevel:  logLevel,
+		LogLevel:  logLevel,
 		sanitizer: NewPathSanitizer(),
 	}
 }
 
 func (l *FrontendLogger) SetLogLevelFromInt(logLevel uint8) {
-	l.logLevel = logLevel
+	l.LogLevel = logLevel
 }
 
 func (l *FrontendLogger) SetLogLevelFromIPCLogLevel(logLevel LogLevel) {
-	l.logLevel = logLevelPriority[logLevel]
+	l.LogLevel = logLevelPriority[logLevel]
 }
 
 func GetLogLevelFromString(logLevel string) uint8 {
@@ -58,7 +58,7 @@ func GetLogLevelFromString(logLevel string) uint8 {
 }
 
 func (l *FrontendLogger) SetLogLevelFromString(logLevel string) {
-	l.logLevel = GetLogLevelFromString(logLevel)
+	l.LogLevel = GetLogLevelFromString(logLevel)
 }
 
 func (l *FrontendLogger) Print(message string) {
@@ -123,7 +123,7 @@ func (l *FrontendLogger) buildLogMessage(level LogLevel, message string) {
 }
 
 func (l *FrontendLogger) LogMessage(message LogMessage) {
-	if l.logLevel > logLevelPriority[message.Level] {
+	if l.LogLevel > logLevelPriority[message.Level] {
 		return
 	}
 	message.Message = l.sanitizer.SanitizePath(message.Message)
