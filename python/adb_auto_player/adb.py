@@ -67,7 +67,27 @@ def _set_adb_path() -> None:
     logging.debug(f"ADBUTILS_ADB_PATH: {adbutils._utils.adb_path()}")
 
 
-def get_adb_device(override_size: str | None = None) -> AdbDevice:
+def get_adb_client() -> AdbClient:
+    """Return AdbClient instance."""
+    _set_adb_path()
+    main_config: dict[str, Any] = ConfigLoader().main_config
+    adb_config: Any = main_config.get("adb", {})
+    client = AdbClient(
+        host=adb_config.get("host", "127.0.0.1"),
+        port=adb_config.get("port", 5037),
+    )
+
+    logging.debug(f"adb host: {client.host}")
+    logging.debug(f"adb port: {client.port}")
+    server_version = client.server_version()
+    logging.debug(f"adb server_version: {server_version}")
+    return client
+
+
+def get_adb_device(
+    override_size: str | None = None,
+    adb_client: AdbClient | None = None,
+) -> AdbDevice:
     """Connects to an Android device using ADB and returns the device object.
 
     This function connects to a device by fetching configuration settings,
@@ -76,20 +96,12 @@ def get_adb_device(override_size: str | None = None) -> AdbDevice:
     Raises:
         AdbException: Device not found.
     """
-    _set_adb_path()
+    if not adb_client:
+        adb_client = get_adb_client()
+
     main_config: dict[str, Any] = ConfigLoader().main_config
     device_id: Any = main_config.get("device", {}).get("ID", "127.0.0.1:5555")
-    adb_config: Any = main_config.get("adb", {})
-    client = AdbClient(
-        host=adb_config.get("host", "127.0.0.1"),
-        port=adb_config.get("port", 5037),
-    )
-    logging.debug(f"adb host: {client.host}")
-    logging.debug(f"adb port: {client.port}")
-    server_version = client.server_version()
-    logging.debug(f"adb server_version: {server_version}")
-
-    return _get_adb_device(client, device_id, override_size)
+    return _get_adb_device(adb_client, device_id, override_size)
 
 
 def _connect_client(client: AdbClient, device_id: str) -> None:
@@ -142,7 +154,7 @@ def _get_devices(client: AdbClient) -> list[AdbDeviceInfo]:
         )
 
 
-def _log_devices(devices: list[AdbDeviceInfo], log_level: int = DEBUG) -> None:
+def log_devices(devices: list[AdbDeviceInfo], log_level: int = DEBUG) -> None:
     """Logs the list of ADB devices.
 
     Args:
@@ -189,7 +201,7 @@ def _resolve_device(
         if not devices:
             logging.warning("No devices found")
         else:
-            _log_devices(devices, WARNING)
+            log_devices(devices, WARNING)
         raise GenericAdbError(f"Device: {device_id} not found")
     return device
 
@@ -258,7 +270,7 @@ def _get_adb_device(
     # Connect the client and list devices
     _connect_client(client, device_id)
     devices: list[AdbDeviceInfo] = _get_devices(client)
-    _log_devices(devices)
+    log_devices(devices)
 
     # Try to resolve the correct device
     device = _resolve_device(client, device_id, devices)
