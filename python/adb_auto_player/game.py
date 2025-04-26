@@ -898,7 +898,7 @@ class Game:
 
     def _debug_save_screenshot(self) -> None:
         logging_config = ConfigLoader().main_config.get("logging", {})
-        debug_screenshot_save_num = logging_config.get("debug_save_screenshots", 0)
+        debug_screenshot_save_num = logging_config.get("debug_save_screenshots", 30)
 
         screenshot = self._previous_screenshot
         if debug_screenshot_save_num <= 0 or screenshot is None:

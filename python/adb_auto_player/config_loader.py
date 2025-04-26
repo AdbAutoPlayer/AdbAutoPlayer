@@ -80,6 +80,6 @@ class ConfigLoader:
             return main_config
         except Exception as e:
             logging.debug(f"Failed to load main config: {e}")
-            logging.info("Using default main config values")
+            logging.debug("Using default main config values")
             self._main_config = False
         return {}
