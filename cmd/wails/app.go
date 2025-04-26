@@ -4,12 +4,14 @@ import (
 	"adb-auto-player/internal/config"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/updater"
+	"archive/zip"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"io"
 	"os"
 	"path/filepath"
 	stdruntime "runtime"
@@ -67,7 +69,7 @@ func (a *App) shutdown(ctx context.Context) {
 }
 
 func (a *App) GetEditableMainConfig() map[string]interface{} {
-	mainConfig, err := config.LoadConfig[config.MainConfig](a.getMainConfigPath())
+	mainConfig, err := config.LoadMainConfig(a.getMainConfigPath())
 	if err != nil {
 		runtime.LogDebugf(a.ctx, "%v", err)
 		tmp := config.NewMainConfig()
@@ -252,6 +254,108 @@ func (a *App) setPythonBinaryPath() error {
 	runtime.LogDebugf(a.ctx, "Paths: %s", strings.Join(paths, ", "))
 	a.pythonBinaryPath = GetFirstPathThatExists(paths)
 	return nil
+}
+
+func (a *App) Debug() error {
+	args := []string{"Debug"}
+
+	if err := GetProcessManager().StartProcess(*a.pythonBinaryPath, args, 2); err != nil {
+		runtime.LogErrorf(a.ctx, "Starting process: %v", err)
+
+		return err
+	}
+	return nil
+}
+
+func (a *App) SaveDebugZip() {
+	const debugDir = "debug"
+	const zipName = "debug.zip"
+
+	if _, err := os.Stat(debugDir); os.IsNotExist(err) {
+		runtime.LogErrorf(a.ctx, "debug directory does not exist")
+		return
+	}
+
+	zipFile, err := os.Create(zipName)
+	if err != nil {
+		runtime.LogErrorf(
+			a.ctx,
+			"%s",
+			fmt.Errorf("failed to create zip file: %w", err),
+		)
+		return
+	}
+	defer func(zipFile *os.File) {
+		err = zipFile.Close()
+		if err != nil {
+			runtime.LogErrorf(
+				a.ctx,
+				"%s",
+				fmt.Errorf("%w", err),
+			)
+		}
+	}(zipFile)
+
+	zipWriter := zip.NewWriter(zipFile)
+	defer func(zipWriter *zip.Writer) {
+		err = zipWriter.Close()
+		if err != nil {
+			runtime.LogErrorf(
+				a.ctx,
+				"%s",
+				fmt.Errorf("%w", err),
+			)
+		}
+	}(zipWriter)
+
+	err = filepath.Walk(debugDir, func(filePath string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		relPath, err := filepath.Rel(debugDir, filePath)
+		if err != nil {
+			return err
+		}
+
+		zipEntry, err := zipWriter.Create(relPath)
+		if err != nil {
+			return err
+		}
+
+		file, err := os.Open(filePath)
+		if err != nil {
+			return err
+		}
+		defer func(file *os.File) {
+			err = file.Close()
+			if err != nil {
+				runtime.LogErrorf(
+					a.ctx,
+					"%s",
+					fmt.Errorf("%w", err),
+				)
+			}
+		}(file)
+
+		_, err = io.Copy(zipEntry, file)
+		return err
+	})
+
+	if err != nil {
+		runtime.LogErrorf(
+			a.ctx,
+			"%s",
+			fmt.Errorf("failed to create zip archive: %w", err),
+		)
+		return
+	}
+
+	runtime.LogInfof(a.ctx, "debug.zip saved")
 }
 
 func (a *App) StartGameProcess(args []string) error {

@@ -29,6 +29,7 @@ type ADBConfig struct {
 type LoggingConfig struct {
 	Level                string `toml:"level"`
 	DebugSaveScreenshots int    `toml:"debug_save_screenshots" json:"Debug Screenshot Limit"`
+	ActionLogLimit       int    `toml:"action_log_limit" json:"Action Log Limit"`
 }
 
 func NewMainConfig() MainConfig {
@@ -45,8 +46,29 @@ func NewMainConfig() MainConfig {
 		Logging: LoggingConfig{
 			Level:                string(ipc.LogLevelInfo),
 			DebugSaveScreenshots: 30,
+			ActionLogLimit:       10,
 		},
 	}
+}
+
+func LoadMainConfig(filePath string) (*MainConfig, error) {
+	defaultConfig := NewMainConfig()
+
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &defaultConfig, nil
+		}
+		return nil, err
+	}
+
+	config := defaultConfig
+
+	if err = toml.Unmarshal(data, &config); err != nil {
+		return nil, err
+	}
+
+	return &config, nil
 }
 
 func LoadConfig[T any](filePath string) (*T, error) {

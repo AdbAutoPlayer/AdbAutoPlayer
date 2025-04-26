@@ -32,28 +32,32 @@ func main() {
 	}
 
 	configPath := GetFirstPathThatExists(paths)
+	mainConfig := config.NewMainConfig()
 	if nil != configPath {
-		mainConfig, err := config.LoadConfig[config.MainConfig](*configPath)
-		if err == nil {
-			println(mainConfig.Logging.Level)
-			switch mainConfig.Logging.Level {
-			case string(ipc.LogLevelTrace):
-				logLevel = logger.TRACE
-			case string(ipc.LogLevelDebug):
-				logLevel = logger.DEBUG
-			case string(ipc.LogLevelWarning):
-				logLevel = logger.WARNING
-			case string(ipc.LogLevelError):
-				logLevel = logger.ERROR
-			default:
-				logLevel = logger.INFO
-			}
-		} else {
+		loadedConfig, err := config.LoadMainConfig(*configPath)
+		if err != nil {
 			println(err.Error())
+		} else {
+			mainConfig = *loadedConfig
 		}
 	}
+	println(mainConfig.Logging.Level)
+	switch mainConfig.Logging.Level {
+	case string(ipc.LogLevelTrace):
+		logLevel = logger.TRACE
+	case string(ipc.LogLevelDebug):
+		logLevel = logger.DEBUG
+	case string(ipc.LogLevelWarning):
+		logLevel = logger.WARNING
+	case string(ipc.LogLevelError):
+		logLevel = logger.ERROR
+	default:
+		logLevel = logger.INFO
+	}
+
 	println(logLevel)
 	frontendLogger := ipc.NewFrontendLogger(uint8(logLevel))
+	GetProcessManager().actionLogLimit = mainConfig.Logging.ActionLogLimit
 
 	app := NewApp()
 

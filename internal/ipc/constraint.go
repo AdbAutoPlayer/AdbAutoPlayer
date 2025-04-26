@@ -94,6 +94,7 @@ func NewTextConstraint(defaultValue string) TextConstraint {
 func GetMainConfigConstraints() map[string]interface{} {
 	portMin := 1024.0
 	portMax := 65535.0
+	actionLogLimitMin := 0.0
 
 	return map[string]interface{}{
 		"Device": map[string]interface{}{
@@ -117,6 +118,7 @@ func GetMainConfigConstraints() map[string]interface{} {
 				string(LogLevelFatal),
 			}, string(LogLevelInfo)),
 			"Debug Screenshot Limit": NewNumberConstraint(nil, nil, nil, 30),
+			"Action Log Limit":       NewNumberConstraint(&actionLogLimitMin, nil, nil, 10),
 		},
 		"Order": []string{
 			"ADB", "Device", "Logging",

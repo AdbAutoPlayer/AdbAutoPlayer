@@ -9,17 +9,22 @@ import (
 	"github.com/shirou/gopsutil/process"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"regexp"
 	stdruntime "runtime"
+	"sort"
 	"strings"
 	"sync"
+	"time"
 )
 
 type Manager struct {
-	mutex   sync.Mutex
-	running *process.Process
-	logger  *ipc.FrontendLogger
-	blocked bool
-	isDev   bool
+	mutex          sync.Mutex
+	running        *process.Process
+	logger         *ipc.FrontendLogger
+	blocked        bool
+	isDev          bool
+	actionLogLimit int
 }
 
 var (
@@ -34,7 +39,7 @@ func GetProcessManager() *Manager {
 	return instance
 }
 
-func (pm *Manager) StartProcess(binaryPath string, args []string) error {
+func (pm *Manager) StartProcess(binaryPath string, args []string, logLevel ...uint8) error {
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
 
@@ -68,11 +73,49 @@ func (pm *Manager) StartProcess(binaryPath string, args []string) error {
 	}
 	pm.logger.Debugf("Started process with PID: %d", cmd.Process.Pid)
 
+	originalLogLevel := pm.logger.LogLevel
+	if len(logLevel) > 0 {
+		pm.logger.LogLevel = logLevel[0]
+	}
+
 	proc, err := process.NewProcess(int32(cmd.Process.Pid))
 	if err != nil {
 		return fmt.Errorf("failed to create process handle: %w", err)
 	}
 	pm.running = proc
+
+	debugDir := "debug"
+	if err = os.MkdirAll(debugDir, 0755); err != nil {
+		pm.logger.Errorf("Failed to create debug directory: %v", err)
+	}
+
+	timestamp := time.Now().Format("20060102_150405")
+	sanitizedArgs := strings.Join(args, "_")
+	sanitizedArgs = regexp.MustCompile(`[^a-zA-Z0-9_-]`).ReplaceAllString(sanitizedArgs, "")
+	logFileName := fmt.Sprintf("%s_%s.log", timestamp, sanitizedArgs)
+	logFilePath := filepath.Join(debugDir, logFileName)
+
+	logFile, err := os.Create(logFilePath)
+	if err != nil {
+		pm.logger.Errorf("Failed to create log file: %v", err)
+	}
+	if pm.actionLogLimit > 0 {
+		files, err := filepath.Glob(filepath.Join(debugDir, "*.log"))
+		if err == nil && len(files) > pm.actionLogLimit {
+			sort.Slice(files, func(i, j int) bool {
+				infoI, _ := os.Stat(files[i])
+				infoJ, _ := os.Stat(files[j])
+				return infoI.ModTime().Before(infoJ.ModTime())
+			})
+
+			filesToDelete := len(files) - pm.actionLogLimit
+			for i := 0; i < filesToDelete; i++ {
+				if err := os.Remove(files[i]); err != nil {
+					pm.logger.Errorf("Failed to delete old log file %s: %v", files[i], err)
+				}
+			}
+		}
+	}
 
 	go func() {
 		scanner := bufio.NewScanner(stdoutPipe)
@@ -80,12 +123,17 @@ func (pm *Manager) StartProcess(binaryPath string, args []string) error {
 
 		for scanner.Scan() {
 			line := scanner.Text()
+			if logFile != nil {
+				if _, err = fmt.Fprintln(logFile, line); err != nil {
+					pm.logger.Errorf("Failed to write to log file: %v", err)
+				}
+			}
+
 			var logMessage ipc.LogMessage
 			if err = json.Unmarshal([]byte(line), &logMessage); err != nil {
 				pm.logger.Errorf("Failed to parse JSON log message: %v", err)
 				continue
 			}
-
 			pm.logger.LogMessage(logMessage)
 		}
 
@@ -103,6 +151,7 @@ func (pm *Manager) StartProcess(binaryPath string, args []string) error {
 		}
 
 		pm.mutex.Lock()
+		pm.logger.LogLevel = originalLogLevel
 		pm.running = nil
 		pm.mutex.Unlock()
 	}()
