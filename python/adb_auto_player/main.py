@@ -184,7 +184,7 @@ def _get_running_game() -> str | None:
         if not package_name:
             return None
         for game in _get_games():
-            if any(pn in package_name for pn in game.package_names):
+            if any(pn in package_name for pn in game.package_name_substrings):
                 return game.get_gui_options().game_title
     except AdbError as e:
         if str(e) == "closed":

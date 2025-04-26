@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 
 class ResourceEnum(StrEnum):
-    """All faction towers."""
+    """Resources."""
 
     @staticmethod
     def _generate_next_value_(name, start, count, last_values):
@@ -20,6 +20,16 @@ class ResourceEnum(StrEnum):
 
 
 DEFAULT_RESOURCES = list(ResourceEnum.__members__.values())
+
+
+class PercentOffEnum(StrEnum):
+    """Percentage off."""
+
+    percent_off_70 = "-70%"
+    percent_off_80 = "-80%"
+
+
+DEFAULT_PERCENTAGES_OFF = list(PercentOffEnum.__members__.values())
 
 
 class AutoPlayConfig(BaseModel):
@@ -59,7 +69,31 @@ class AutoPlayConfig(BaseModel):
     )
 
 
+class TradingPostConfig(BaseModel):
+    """TradingPost config model."""
+
+    row_1_resources: bool = Field(default=True, alias="Row 1: Resources")
+    row_2_speedups: bool = Field(default=True, alias="Row 2: Speedups")
+    row_3_hero_upgrade_items: bool = Field(
+        default=False,
+        alias="Row 3: Hero Upgrade Items",
+    )
+    row_4_boosts_and_teleports: bool = Field(
+        default=False,
+        alias="Row 4: Boosts & Teleports",
+    )
+    gem_legendary_spirit_badge: list[PercentOffEnum] = Field(
+        default_factory=lambda: DEFAULT_PERCENTAGES_OFF,
+        alias="Gem: Legendary Spirit Badge",
+        json_schema_extra={
+            "constraint_type": "multicheckbox",
+            "default_value": DEFAULT_PERCENTAGES_OFF,
+        },
+    )
+
+
 class Config(ConfigBase):
     """Avatar Realms Collide config model."""
 
-    auto_play_config: AutoPlayConfig = Field(alias="Auto Play")
+    auto_play: AutoPlayConfig = Field(alias="Auto Play")
+    trading_post: TradingPostConfig = Field(alias="Trading Post")

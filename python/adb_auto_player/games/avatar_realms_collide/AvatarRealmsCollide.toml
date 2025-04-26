@@ -1,14 +1,21 @@
 ['Auto Play']
 'Alliance Gifts' = true
 'Alliance Research' = true
-'Build Slot 1' = false
-'Build Slot 2' = false
-'Collect Campaign Chest' = false
-'Collect Free Scrolls' = false
+'Build Slot 1' = true
+'Build Slot 2' = true
+'Collect Campaign Chest' = true
+'Collect Free Scrolls' = true
 'Gather Resources' = ['Food', 'Wood', 'Stone', 'Gold']
 'Recruit Troops' = true
 'Upgrade Troops' = true
-Research = false
-'Research Military First' = false
+Research = true
+'Research Military First' = true
 'Purchase Seal of Solidarity' = false
-'Skip Hold Position Check' = true
+'Skip Hold Position Check' = false
+
+['Trading Post']
+'Row 1: Resources' = true
+'Row 2: Speedups' = true
+'Row 3: Hero Upgrade Items' = false
+'Row 4: Boosts & Teleports' = false
+'Gem: Legendary Spirit Badge' = ['-70%', '-80%']
