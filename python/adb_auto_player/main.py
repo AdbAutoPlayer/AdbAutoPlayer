@@ -8,7 +8,7 @@ import sys
 from logging import DEBUG
 from typing import NoReturn
 
-from adb_auto_player import Command, ConfigLoader, Game
+from adb_auto_player import Command, ConfigLoader, Game, GenericAdbError
 from adb_auto_player.adb import (
     exec_wm_size,
     get_adb_client,
@@ -255,6 +255,12 @@ def _run_command(cmd: Command) -> NoReturn:
     """
     try:
         cmd.run()
+    except GenericAdbError as e:
+        if "java.lang.SecurityException" in str(e):
+            logging.error(
+                "Missing permissions, check if your device has the setting: "
+                '"USB debugging (Security settings)" and enable it.'
+            )
     except Exception as e:
         logging.error(f"{e}")
         sys.exit(1)
