@@ -3,6 +3,7 @@ package main
 import (
 	"adb-auto-player/internal/ipc"
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -274,17 +275,24 @@ func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
 		return "", err
 	}
 
-	output, err := cmd.Output()
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err = cmd.Run()
 
 	if err != nil {
+		output := stdout.String()
+		errorOutput := stderr.String()
+
 		if pm.isDev {
-			return "", fmt.Errorf("failed to execute 'uv run adb-auto-player': %w\n Output: %s", err, string(output))
+			return "", fmt.Errorf("failed to execute '%s': %w\nStdout: %s\nStderr: %s", binaryPath, err, output, errorOutput)
 		}
-		if strings.Contains(err.Error(), "contains a virus") {
-			return "", fmt.Errorf("%w Read: https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/troubleshoot.html#file-contains-a-virus-or-potentially-unwanted-software", err)
+		if strings.Contains(errorOutput, "contains a virus") || strings.Contains(err.Error(), "contains a virus") {
+			return "", fmt.Errorf("%w\nRead: https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/troubleshoot.html#file-contains-a-virus-or-potentially-unwanted-software", err)
 		}
-		return "", fmt.Errorf("failed to execute command: %w", err)
+		return "", fmt.Errorf("failed to execute command: %w\nStderr: %s", err, errorOutput)
 	}
 
-	return string(output), nil
+	return stdout.String(), nil
 }
