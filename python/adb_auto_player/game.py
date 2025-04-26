@@ -235,7 +235,7 @@ class Game:
         if config_streaming and device_streaming:
             self.start_stream()
             height, width = self.get_screenshot().shape[:2]
-            if (width, height) != self.resolution or True:
+            if (width, height) != self.resolution:
                 logging.warning(
                     f"Device Stream resolution ({width}, {height}) "
                     f"does not match Display Resolution {self.resolution}, "
@@ -244,7 +244,7 @@ class Game:
                 self.stop_stream()
 
         height, width = self.get_screenshot().shape[:2]
-        if (width, height) != self.resolution or True:
+        if (width, height) != self.resolution:
             logging.error(
                 f"Screenshot resolution ({width}, {height}) "
                 f"does not match Display Resolution {self.resolution}, "
