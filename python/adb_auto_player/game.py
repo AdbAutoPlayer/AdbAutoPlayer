@@ -2,6 +2,7 @@
 
 import logging
 import os
+import sys
 import threading
 from abc import abstractmethod
 from collections.abc import Callable
@@ -104,6 +105,19 @@ class Game:
             menu_options.append(menu_option)
         return menu_options
 
+    def is_supported_resolution(self, width: int, height: int) -> bool:
+        """Return True if the resolution is supported."""
+        for supported_resolution in self.supported_resolutions:
+            if "x" in supported_resolution:
+                res_width, res_height = map(int, supported_resolution.split("x"))
+                if res_width == width and res_height == height:
+                    return True
+            elif ":" in supported_resolution:
+                aspect_width, aspect_height = map(int, supported_resolution.split(":"))
+                if width * aspect_height == height * aspect_width:
+                    return True
+        return False
+
     def check_requirements(self) -> None:
         """Validates Device properties such as resolution and orientation.
 
@@ -117,26 +131,7 @@ class Game:
         except ValueError:
             raise UnsupportedResolutionError(f"Invalid resolution format: {resolution}")
 
-        is_supported = False
-        for supported_resolution in self.supported_resolutions:
-            if "x" in supported_resolution:
-                if resolution == supported_resolution:
-                    is_supported = True
-                    break
-            elif ":" in supported_resolution:
-                try:
-                    aspect_width, aspect_height = map(
-                        int, supported_resolution.split(":")
-                    )
-                    if width * aspect_height == height * aspect_width:
-                        is_supported = True
-                        break
-                except ValueError:
-                    raise UnsupportedResolutionError(
-                        f"Invalid aspect ratio format: {supported_resolution}"
-                    )
-
-        if not is_supported:
+        if not self.is_supported_resolution(width, height):
             raise UnsupportedResolutionError(
                 "This bot only supports these resolutions: "
                 f"{', '.join(self.supported_resolutions)}"
@@ -210,6 +205,12 @@ class Game:
         """Set device."""
         self._device = value
 
+    def stop_stream(self):
+        """Stop the device stream."""
+        if self._stream:
+            self._stream.stop()
+            self._stream = None
+
     def open_eyes(self, device_streaming: bool = False) -> None:
         """Give the bot eyes.
 
@@ -233,6 +234,24 @@ class Game:
 
         if config_streaming and device_streaming:
             self.start_stream()
+            height, width = self.get_screenshot().shape[:2]
+            if (width, height) != self.resolution or True:
+                logging.warning(
+                    f"Device Stream resolution ({width}, {height}) "
+                    f"does not match Display Resolution {self.resolution}, "
+                    "stopping Device Streaming"
+                )
+                self.stop_stream()
+
+        height, width = self.get_screenshot().shape[:2]
+        if (width, height) != self.resolution or True:
+            logging.error(
+                f"Screenshot resolution ({width}, {height}) "
+                f"does not match Display Resolution {self.resolution}, "
+                f"exiting..."
+            )
+            sys.exit(1)
+
         if not self.is_game_running():
             raise GameNotRunningError("Game is not running")
 
