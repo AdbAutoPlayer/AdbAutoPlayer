@@ -15,7 +15,7 @@ from adbutils._proto import AdbDeviceInfo
 
 
 def _set_adb_path() -> None:
-    """Helper function to set environment varaible ADBUTILS_ADB_PATH depending on OS.
+    """Helper function to set environment variable ADBUTILS_ADB_PATH depending on OS.
 
     Raises:
         FileNotFoundError: ADB executable not found in PATH.
@@ -223,13 +223,9 @@ def _try_incrementing_ports(client: AdbClient, device_id: str) -> AdbDevice | No
 def _override_size(device: AdbDevice, override_size: str) -> None:
     logging.debug(f"Overriding size: {override_size}")
     try:
-        output = device.shell(f"wm size {override_size}")
-        if "java.lang.SecurityException" in output:
-            logging.debug(f"wm size {override_size} Error: {output}")
-            raise GenericAdbError("No permission to override size")
+        device.shell(f"wm size {override_size}")
     except Exception as e:
-        logging.debug(f"wm size {override_size} Error: {e}")
-        raise GenericAdbError(f"Error overriding size: {e}")
+        raise GenericAdbError(f"wm size {override_size}: {e}")
 
 
 def _get_adb_device(

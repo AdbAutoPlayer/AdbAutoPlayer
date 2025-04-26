@@ -23,7 +23,7 @@ class AFKJourneyBase(Game, ABC):
         """Initialize AFKJourneyBase."""
         super().__init__()
         self.supports_portrait = True
-        self.package_names = [
+        self.package_name_substrings = [
             "com.farlightgames.igame.gp",
         ]
 
@@ -446,7 +446,11 @@ class AFKJourneyBase(Game, ABC):
 
         return result
 
-    def _navigate_to_default_state(
+    def _start_game(self):
+        self.start_game()
+        sleep(5)
+
+    def _navigate_to_default_state(  # noqa: PLR0912
         self, check_callable: Callable[[], bool] | None = None
     ) -> None:
         """Navigate to main default screen.
@@ -455,22 +459,30 @@ class AFKJourneyBase(Game, ABC):
             check_callable (Callable[[], bool] | None, optional): Callable to check.
                 Defaults to None.
         """
+        templates = [
+            "notice.png",
+            "confirm.png",
+            "time_of_day.png",
+            "dotdotdot.png",
+            "battle/copy.png",
+            "guide/close.png",
+            "guide/next.png",
+            "battle/copy.png",
+        ]
+
         while True:
+            if not self.is_game_running():
+                logging.warning("Trying to restart app this is still WIP.")
+                self.start_game()
+                sleep(15)
+                while not self.find_any_template(templates):
+                    self.tap(Coordinates(1080 // 2, 1920 // 2))
+                    sleep(3)
+
             if check_callable and check_callable():
                 sleep(1)
                 return None
-            result: tuple[str, int, int] | None = self.find_any_template(
-                [
-                    "notice.png",
-                    "confirm.png",
-                    "time_of_day.png",
-                    "dotdotdot.png",
-                    "battle/copy.png",
-                    "guide/close.png",
-                    "guide/next.png",
-                    "battle/copy.png",
-                ]
-            )
+            result: tuple[str, int, int] | None = self.find_any_template(templates)
 
             if result is None:
                 logging.debug("back")

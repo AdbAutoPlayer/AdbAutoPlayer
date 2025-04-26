@@ -13,7 +13,7 @@ class AvatarRealmsCollideBase(Game, ABC):
     def __init__(self) -> None:
         """Initialize AvatarRealmsCollideBase."""
         super().__init__()
-        self.package_names = [
+        self.package_name_substrings = [
             "com.angames.android.google.avatarbendingtheworld",
         ]
 

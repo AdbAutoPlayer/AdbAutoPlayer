@@ -13,7 +13,7 @@ class InfinityNikkiBase(Game, ABC):
     def __init__(self) -> None:
         """Initialize InfinityNikkiBase."""
         super().__init__()
-        self.package_names = [
+        self.package_name_substrings = [
             "com.infoldgames.infinitynikki",
         ]
 

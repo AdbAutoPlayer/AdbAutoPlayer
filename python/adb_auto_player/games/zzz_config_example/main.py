@@ -12,7 +12,7 @@ class PlayStore(Game):
     def __init__(self) -> None:
         """Initialize PlayStore."""
         super().__init__()
-        self.package_names = [
+        self.package_name_substrings = [
             "com.android.vending",
         ]
 

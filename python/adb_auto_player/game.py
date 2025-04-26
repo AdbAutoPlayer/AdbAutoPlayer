@@ -409,8 +409,9 @@ class Game:
 
         if any(pn in package_name for pn in self.package_name_substrings):
             self.package_name = package_name
+            return True
 
-        return get_running_app(self.device) == self.package_name
+        return package_name == self.package_name
 
     def start_game(self) -> None:
         """Start the Game."""
