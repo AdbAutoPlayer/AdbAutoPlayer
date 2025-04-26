@@ -433,7 +433,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         self.click(Coordinates(460, 1830), scale=True)
         self.wait_for_template(
             "duras_trials/label.png",
-            timeout_message="Battle Modes screen not found",
+            timeout_message=f"Battle Modes screen not found. {self.LANG_ERROR}",
             timeout=self.MIN_TIMEOUT,
         )
         self.swipe_down()
