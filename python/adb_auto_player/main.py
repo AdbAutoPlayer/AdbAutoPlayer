@@ -178,6 +178,17 @@ def _print_debug() -> None:
         logging.info("--- Device Display ---")
         _ = get_screen_resolution(device)
         _ = is_portrait(device)
+        logging.info("--- Test Resize Display ---")
+        try:
+            exec_wm_size("1080x1920", device)
+            logging.info("Set Display Size 1080x1920 - OK")
+        except Exception as e:
+            logging.error(f"Set Display Size to 1080x1920 - Error: : {e}")
+        try:
+            wm_size_reset(device)
+            logging.info("Reset Display Size - OK")
+        except Exception as e:
+            logging.error(f"Reset Display Size - Error: {e}")
 
     logging.info("--- Debug Info End ---")
 
