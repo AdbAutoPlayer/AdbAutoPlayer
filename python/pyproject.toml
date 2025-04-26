@@ -9,7 +9,7 @@ authors = [
 requires-python = ">=3.13"
 readme = "README.md"
 dependencies = [
-    "adbutils>=2.8.0,<3",
+    "adbutils>=2.8.7,<3",
     "opencv-python>=4.10.0.84,<5",
     "pydantic>=2.10.5,<3",
     "av>=14.1.0,<15",

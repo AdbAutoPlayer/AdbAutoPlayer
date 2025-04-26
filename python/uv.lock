@@ -27,7 +27,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "adbutils", specifier = ">=2.8.0,<3" },
+    { name = "adbutils", specifier = ">=2.8.7,<3" },
     { name = "av", specifier = ">=14.1.0,<15" },
     { name = "opencv-python", specifier = ">=4.10.0.84,<5" },
     { name = "pydantic", specifier = ">=2.10.5,<3" },
@@ -42,21 +42,20 @@ dev = [
 
 [[package]]
 name = "adbutils"
-version = "2.8.2"
+version = "2.8.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "apkutils2" },
     { name = "deprecation" },
     { name = "pillow" },
     { name = "requests" },
     { name = "retry" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/66/27/f0569a3bf095df8b4c3589211e5f6335e3f2dba7336cf4aa73930ed39190/adbutils-2.8.2.tar.gz", hash = "sha256:2c33e8da3929e9340f56ac99816144ef3d7592082654b39efbc3366b0ac401f8", size = 185192 }
+sdist = { url = "https://files.pythonhosted.org/packages/f8/b8/d90093a3bc54c9d61195500213d929c92bde085579cf54f2eb97a25400c0/adbutils-2.8.7.tar.gz", hash = "sha256:8e3489d4a8369500951f08cfe6dbfde1ddbdf86b9aaa96641f822181195fa0cf", size = 185622 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/da/75/0b88600fb7ea4e3b42d9f6da0356100d39b3072a560f33d0d02a6299f305/adbutils-2.8.2-py3-none-macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl", hash = "sha256:ba906e9f854d17fa72c58a2c4c31240023aa77fca16449b80cca4ff8ea39b865", size = 6061044 },
-    { url = "https://files.pythonhosted.org/packages/e8/d0/e8d6e283fd38bdcf42f8c5a9c15a810ca4fd392dc727672cd2ddaa97fbb4/adbutils-2.8.2-py3-none-manylinux1_x86_64.whl", hash = "sha256:77eb50b56266b093f6231e77d186b98c0274382efbf6dd68becebd925302fac8", size = 3254730 },
-    { url = "https://files.pythonhosted.org/packages/c3/50/3a17a03d5c7f2781ac0d5da3e59c68b5dd1d0ea727bda29caabbc27e9199/adbutils-2.8.2-py3-none-win32.whl", hash = "sha256:e120a3612f1f319607ab9f2561c5d3704abbc5af5a69236ceb9de13e8fbf9265", size = 3000744 },
-    { url = "https://files.pythonhosted.org/packages/2e/5f/5c0e1aa5b26338343912e96245d0e61a2bd96467855e3522a78b4ed7ee18/adbutils-2.8.2-py3-none-win_amd64.whl", hash = "sha256:3bcf6a2e8a87fbcfc8b775ecb4f7df8538183ddb8bb50ce9fecae9686e6a507c", size = 3000749 },
+    { url = "https://files.pythonhosted.org/packages/4c/02/bc01843446aef003e01642292bc31f728b7528cb999488a107d609c3ab9b/adbutils-2.8.7-py3-none-macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl", hash = "sha256:443ffbb0f72532d6cfa88f5df1735b401bcd73265fab6430b3d8fc434f445d30", size = 6705052 },
+    { url = "https://files.pythonhosted.org/packages/53/c8/7d65da1a2de875ee6aa44e3e743e3d586c0bd4fb415a2ae7a5a9ce5d524d/adbutils-2.8.7-py3-none-manylinux1_x86_64.whl", hash = "sha256:b44d521f9ef8453738f1d8abac84e86242715a7a6446f23e36536a6efea37c41", size = 3576001 },
+    { url = "https://files.pythonhosted.org/packages/b1/98/75b6f6f85a81ed9e0de79391642ddf367f6442d764fe7b24dd7d8fb8c891/adbutils-2.8.7-py3-none-win32.whl", hash = "sha256:258686a43d5fc7820ffa72416bd57883b5fdf304f231718ed8f134105475b89f", size = 3336619 },
+    { url = "https://files.pythonhosted.org/packages/ae/e9/c181fc4bfd220a89bc0fe0d1f32e86c1797710d2a76c64bb2522cfe76b68/adbutils-2.8.7-py3-none-win_amd64.whl", hash = "sha256:e74dbf9dc6b83e75dec9f6758a880557c263fc7ee4bff7d09ee736aab7b7b762", size = 3336623 },
 ]
 
 [[package]]
@@ -67,17 +66,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/ee/67/531ea369ba64dcff5
 wheels = [
     { url = "https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl", hash = "sha256:1f02e8b43a8fbbc3f3e0d4f0f4bfc8131bcb4eebe8849b8e5c773f3a1c582a53", size = 13643 },
 ]
-
-[[package]]
-name = "apkutils2"
-version = "1.0.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "cigam" },
-    { name = "pyelftools" },
-    { name = "xmltodict" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/e5/d0/432fb6fb1fe48aa0ea1c80e8dec4a26f70c868999c076f92af88582ae91a/apkutils2-1.0.0.tar.gz", hash = "sha256:c5ae8f86d3ebee6a59fc014d88507741d7f3f9ab183bab34b44d011fe878660b", size = 60986 }
 
 [[package]]
 name = "argcomplete"
@@ -153,14 +141,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/cd/e5/131d2fb1b0dddafc37be4f3a2fa79aa4c037368be9423061dccadfd90091/charset_normalizer-3.4.1-cp313-cp313-win32.whl", hash = "sha256:eb8178fe3dba6450a3e024e95ac49ed3400e506fd4e9e5c32d30adda88cbd407", size = 95391 },
     { url = "https://files.pythonhosted.org/packages/27/f2/4f9a69cc7712b9b5ad8fdb87039fd89abba997ad5cbe690d1835d40405b0/charset_normalizer-3.4.1-cp313-cp313-win_amd64.whl", hash = "sha256:b1ac5992a838106edb89654e0aebfc24f5848ae2547d22c2c3f66454daa11971", size = 102702 },
     { url = "https://files.pythonhosted.org/packages/0e/f6/65ecc6878a89bb1c23a086ea335ad4bf21a588990c3f535a227b9eea9108/charset_normalizer-3.4.1-py3-none-any.whl", hash = "sha256:d98b1668f06378c6dbefec3b92299716b931cd4e6061f3c875a71ced1780ab85", size = 49767 },
-]
-
-[[package]]
-name = "cigam"
-version = "0.0.3"
-source = { registry = "https://pypi.org/simple" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3c/d0/19ff49c1938aea4e0076ee084ca23845408cffb51582b2be975f926533b5/cigam-0.0.3-py3-none-any.whl", hash = "sha256:8fcf65d7361f0372c53780e861307abd1f11a94b6204fa653ba3f38277822783", size = 3788 },
 ]
 
 [[package]]
@@ -460,15 +440,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pyelftools"
-version = "0.32"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b9/ab/33968940b2deb3d92f5b146bc6d4009a5f95d1d06c148ea2f9ee965071af/pyelftools-0.32.tar.gz", hash = "sha256:6de90ee7b8263e740c8715a925382d4099b354f29ac48ea40d840cf7aa14ace5", size = 15047199 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/af/43/700932c4f0638c3421177144a2e86448c0d75dbaee2c7936bda3f9fd0878/pyelftools-0.32-py3-none-any.whl", hash = "sha256:013df952a006db5e138b1edf6d8a68ecc50630adbd0d83a2d41e7f846163d738", size = 188525 },
-]
-
-[[package]]
 name = "pytest"
 version = "8.3.5"
 source = { registry = "https://pypi.org/simple" }
@@ -583,15 +554,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/6c/63/53559446a878410fc5a5974feb13d31d78d752eb18aeba59c7fef1af7598/wcwidth-0.2.13.tar.gz", hash = "sha256:72ea0c06399eb286d978fdedb6923a9eb47e1c486ce63e9b4e64fc18303972b5", size = 101301 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fd/84/fd2ba7aafacbad3c4201d395674fc6348826569da3c0937e75505ead3528/wcwidth-0.2.13-py2.py3-none-any.whl", hash = "sha256:3da69048e4540d84af32131829ff948f1e022c1c6bdb8d6102117aac784f6859", size = 34166 },
-]
-
-[[package]]
-name = "xmltodict"
-version = "0.14.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/50/05/51dcca9a9bf5e1bce52582683ce50980bcadbc4fa5143b9f2b19ab99958f/xmltodict-0.14.2.tar.gz", hash = "sha256:201e7c28bb210e374999d1dde6382923ab0ed1a8a5faeece48ab525b7810a553", size = 51942 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d6/45/fc303eb433e8a2a271739c98e953728422fa61a3c1f36077a49e395c972e/xmltodict-0.14.2-py2.py3-none-any.whl", hash = "sha256:20cc7d723ed729276e808f26fb6b3599f786cbc37e06c65e192ba77c40f20aac", size = 9981 },
 ]
 
 [[package]]
