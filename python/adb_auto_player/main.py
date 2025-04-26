@@ -3,6 +3,7 @@
 import argparse
 import json
 import logging
+import pprint
 import sys
 from logging import DEBUG
 from typing import NoReturn
@@ -10,10 +11,12 @@ from typing import NoReturn
 from adb_auto_player import Command, ConfigLoader, Game
 from adb_auto_player.adb import (
     exec_wm_size,
+    get_adb_client,
     get_adb_device,
     get_running_app,
     get_screen_resolution,
     is_portrait,
+    log_devices,
     wm_size_reset,
 )
 from adb_auto_player.games import (
@@ -148,10 +151,24 @@ def _get_commands() -> list[Command]:
 
 def _print_debug() -> None:
     logging.info("--- Debug Info Start ---")
-    logging.info("--- Loading Main Config ---")
-    _ = ConfigLoader().main_config
-    logging.info("--- Get ADB Device ---")
-    device = get_adb_device()
+    logging.info("--- Main Config ---")
+    config = ConfigLoader().main_config
+    logging.info(f"Config: {pprint.pformat(config)}")
+    logging.info("--- ADB Client ---")
+    client = None
+    try:
+        client = get_adb_client()
+        log_devices(client.list(), logging.INFO)
+    except Exception as e:
+        logging.error(f"Error: {e}")
+
+    device = None
+    if client:
+        logging.info("--- ADB Device ---")
+        try:
+            device = get_adb_device(adb_client=client)
+        except Exception as e:
+            logging.error(f"Error: {e}")
 
     if device:
         logging.info("--- Device Info ---")
