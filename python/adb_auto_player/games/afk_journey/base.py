@@ -249,8 +249,7 @@ class AFKJourneyBase(Game, ABC):
             return None
 
         excluded_heroes_missing_icon: set[str] = {
-            "Faramor",
-            "Shemira",
+            "Nothing as of now :)",
         }
         filtered_dict = {}
 
