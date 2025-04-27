@@ -467,6 +467,7 @@ class AFKJourneyBase(Game, ABC):
             "guide/close.png",
             "guide/next.png",
             "battle/copy.png",
+            "login/claim.png",
         ]
 
         while True:
@@ -520,7 +521,7 @@ class AFKJourneyBase(Game, ABC):
                 case "dotdotdot.png":
                     self.press_back_button()
                     sleep(1)
-                case "guide/close.png" | "guide/next.png" | "battle/copy.png":
+                case _:
                     self.click(Coordinates(x=x, y=y))
                     sleep(0.5)
         sleep(1)
