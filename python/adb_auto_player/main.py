@@ -19,6 +19,7 @@ from adb_auto_player.adb import (
     log_devices,
     wm_size_reset,
 )
+from adb_auto_player.argparse_formatter_factory import build_argparse_formatter
 from adb_auto_player.games import (
     AFKJourney,
     AvatarRealmsCollide,
@@ -46,12 +47,15 @@ def main() -> None:
     This function parses the command line arguments, sets up the logging based on the
     output format and log level, and then runs the specified command.
     """
-    commands: list[Command] = _get_commands()
+    commands_by_category: dict[str, list[Command]] = _get_commands()
     command_names = []
-    for cmd in commands:
-        command_names.append(cmd.name)
+    for category_commands in commands_by_category.values():
+        for cmd in category_commands:
+            command_names.append(cmd.name)
 
-    parser = argparse.ArgumentParser(description="AFK Journey")
+    parser = argparse.ArgumentParser(
+        formatter_class=build_argparse_formatter(commands_by_category)
+    )
     parser.add_argument(
         "command",
         help="Command to run",
@@ -82,9 +86,10 @@ def main() -> None:
         case _:
             logging.getLogger().setLevel(log_level)
 
-    for cmd in commands:
-        if str.lower(cmd.name) == str.lower(args.command):
-            _run_command(cmd)
+    for category_commands in commands_by_category.values():
+        for cmd in category_commands:
+            if str.lower(cmd.name) == str.lower(args.command):
+                _run_command(cmd)
 
     sys.exit(1)
 
@@ -109,44 +114,54 @@ def get_gui_games_menu() -> str:
     return json.dumps(menu)
 
 
-def _get_commands() -> list[Command]:
-    """Retrieve a list of CLI commands.
+def _get_commands() -> dict[str, list[Command]]:
+    """Retrieve a dictionary of categorized CLI commands.
 
-    This function compiles a list of commands for the application, including
-    GUI-related commands and game-specific commands. It starts with a set of
-    predefined commands, such as displaying the GUI games menu, resetting the
-    window size, and getting the running game information. It then extends this
-    list by fetching additional commands from each game instance.
+    This function organizes commands into categories, starting with generic commands,
+    and extends the categories with game-specific commands based on each game's title.
 
     Returns:
-        list[Command]: A list of Command objects representing available CLI
-        commands for the application.
+        dict[str, list[Command]]: Mapped category names to lists of Command objects.
     """
-    commands: list[Command] = [
-        Command(
-            name="GUIGamesMenu",
-            action=_print_gui_games_menu,
-        ),
-        Command(
-            name="WMSizeReset",
-            action=wm_size_reset,
-        ),
-        Command(
-            name="WMSize1080x1920",
-            action=exec_wm_size,
-            kwargs={"resolution": "1080x1920"},
-        ),
-        Command(
-            name="GetRunningGame",
-            action=_print_running_game,
-        ),
-        Command(name="Debug", action=_print_debug),
-    ]
+    commands_by_category: dict[str, list[Command]] = {
+        "Generic": [
+            Command(
+                name="GUIGamesMenu",
+                action=_print_gui_games_menu,
+            ),
+            Command(
+                name="WMSizeReset",
+                action=wm_size_reset,
+            ),
+            Command(
+                name="WMSize1080x1920",
+                action=exec_wm_size,
+                kwargs={"resolution": "1080x1920"},
+            ),
+            Command(
+                name="GetRunningGame",
+                action=_print_running_game,
+            ),
+            Command(
+                name="Debug",
+                action=_print_debug,
+            ),
+        ]
+    }
 
     for game in _get_games():
-        commands += game.get_cli_menu_commands()
+        game_title = game.get_gui_options().game_title
+        if game_title not in commands_by_category:
+            commands_by_category[game_title] = []
+        commands_by_category[game_title].extend(game.get_cli_menu_commands())
 
-    return commands
+    commands_by_category = {
+        category: cmds
+        for category, cmds in commands_by_category.items()
+        if cmds  # Only keep if list is not empty
+    }
+
+    return commands_by_category
 
 
 def _print_debug() -> None:
