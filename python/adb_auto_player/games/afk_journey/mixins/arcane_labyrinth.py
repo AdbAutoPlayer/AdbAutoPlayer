@@ -564,7 +564,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         while True:
             self.wait_for_any_template(
                 templates=[
-                    "arcane_labyrinth/onwards.png",
+                    "arcane_labyrinth/move_forward.png",
                     "arcane_labyrinth/select_a_crest.png",
                 ],
                 crop=CropRegions(top=0.8),
@@ -574,7 +574,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             sleep(1)
             result: tuple[str, int, int] | None = self.find_any_template(
                 [
-                    "arcane_labyrinth/onwards.png",
+                    "arcane_labyrinth/move_forward.png",
                     "arcane_labyrinth/select_a_crest.png",
                 ],
                 crop=CropRegions(top=0.8),
@@ -585,7 +585,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             template, x, y = result
             purchase_limit = 2
             match template:
-                case "arcane_labyrinth/onwards.png":
+                case "arcane_labyrinth/move_forward.png":
                     if purchase_count >= purchase_limit:
                         break
 
@@ -616,7 +616,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         while True:
             template, x, y = self.wait_for_any_template(
                 templates=[
-                    "arcane_labyrinth/onwards.png",
+                    "arcane_labyrinth/move_forward.png",
                     "arcane_labyrinth/select_a_crest.png",
                 ],
                 crop=CropRegions(top=0.8),
