@@ -13,6 +13,9 @@ class AvatarRealmsCollideBase(Game, ABC):
     def __init__(self) -> None:
         """Initialize AvatarRealmsCollideBase."""
         super().__init__()
+        self.supported_resolutions = [
+            "1920x1080",
+        ]
         self.package_name_substrings = [
             "com.angames.android.google.avatarbendingtheworld",
         ]

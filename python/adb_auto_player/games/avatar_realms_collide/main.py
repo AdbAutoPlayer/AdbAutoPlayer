@@ -55,7 +55,6 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
     def auto_play(self) -> None:
         """Auto Play."""
         self.start_up(device_streaming=True)
-        self._handle_trading_post()
         while True:
             try:
                 self._restart_for_daily_reset()
@@ -128,14 +127,11 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             # TODO if update is bigger should check if update is still downloading
 
     def _is_inside_city(self) -> bool:
-        return (
-            self.game_find_template_match(
-                "city/map.png",
-                crop=crop_city_map,
-                threshold=0.8,
-            )
-            is not None
+        test = self.game_find_template_match(
+            "city/map.png",
+            threshold=0.8,
         )
+        return test is not None
 
     def _is_outside_city(self) -> bool:
         return (
@@ -254,7 +250,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
     def _handle_trading_post(self) -> None:
         if not self.game_find_template_match(
             "trading_post/trading_post.png",
-            crop=CropRegions(left=0.4, right=0.4, top=0.1, bottom=0.8),
+            crop=CropRegions(left=0.3, right=0.3, top=0.1, bottom=0.8),
         ):
             return
 
