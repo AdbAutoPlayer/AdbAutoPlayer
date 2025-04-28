@@ -58,7 +58,10 @@ def build_argparse_formatter(commands_by_category: dict[str, list[Command]]):
             if action.dest == "command":
                 parts = ["\nGame Commands:"]
 
-                for group_name, group_cmds in sorted(commands_by_category.items()):
+                for group_name, group_cmds in sorted(
+                    commands_by_category.items(),
+                    key=lambda item: (item[0].lower() == "generic", item[0].lower()),
+                ):
                     parts.append(f"- {group_name}:")
                     for cmd in sorted(group_cmds, key=lambda c: c.name.lower()):
                         tooltip = getattr(cmd.menu_option, "tooltip", "")
