@@ -396,8 +396,11 @@ def get_screen_resolution(device: AdbDevice) -> str:
 
         if resolution_str:
             logging.debug(f"Device screen resolution: {resolution_str}")
-            return resolution_str
-
+            if is_portrait(device):
+                return resolution_str
+            else:
+                width, height = resolution_str.split("x")
+                return f"{height}x{width}"
     logging.debug(result)
     raise GenericAdbError("Unable to determine screen resolution")
 

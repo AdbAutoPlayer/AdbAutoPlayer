@@ -175,7 +175,10 @@ class Game:
         """
         if self._scale_factor:
             return self._scale_factor
-        reference_resolution = (1080, 1920)
+
+        resolution_str = self.supported_resolutions[0]
+        width, height = map(int, resolution_str.split("x"))
+        reference_resolution = (width, height)
         if self.resolution == reference_resolution:
             self._scale_factor = 1.0
         else:
