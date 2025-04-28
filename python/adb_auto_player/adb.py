@@ -376,7 +376,7 @@ def get_screen_resolution(device: AdbDevice) -> str:
         str: Resolution as string.
     """
     try:
-        result = str(device.shell("wm size"))
+        result = str(device.shell("wm size", timeout=5))
     except Exception as e:
         raise GenericAdbError(f"wm size: {e}")
     if result:
