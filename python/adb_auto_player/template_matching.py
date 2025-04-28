@@ -350,6 +350,8 @@ def _validate_template_size(base_image: np.ndarray, template_image: np.ndarray) 
     template_height, template_width = template_image.shape[:2]
 
     if template_height > base_height or template_width > base_width:
+        cv2.imwrite("debug/validate_template_size_base_image.png", base_image)
+        cv2.imwrite("debug/validate_template_size_template_image.png", template_image)
         raise ValueError(
             f"Template must be smaller than the base image. "
             f"Base size: ({base_width}, {base_height}), "
