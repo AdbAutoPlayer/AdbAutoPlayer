@@ -27,7 +27,7 @@ from adb_auto_player.games import (
     PlayStore,
 )
 from adb_auto_player.ipc import GameGUIOptions
-from adb_auto_player.logging_setup import setup_json_log_handler, setup_text_log_handler
+from adb_auto_player.logging_setup import setup_logging
 from adbutils import AdbError
 from adbutils._device import AdbDevice
 
@@ -63,7 +63,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--output",
-        choices=["json", "text", "raw"],
+        choices=["json", "terminal", "text", "raw"],
         default="json",
         help="Output format",
     )
@@ -78,13 +78,8 @@ def main() -> None:
     log_level = args.log_level
     if log_level == "DISABLE":
         log_level = 99
-    match args.output:
-        case "json":
-            setup_json_log_handler(log_level)
-        case "text":
-            setup_text_log_handler(log_level)
-        case _:
-            logging.getLogger().setLevel(log_level)
+
+    setup_logging(args.output, log_level)
 
     for category_commands in commands_by_category.values():
         for cmd in category_commands:

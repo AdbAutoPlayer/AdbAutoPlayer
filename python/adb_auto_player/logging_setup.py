@@ -5,7 +5,8 @@ import logging
 import os
 import re
 import sys
-from typing import ClassVar
+from datetime import datetime
+from typing import ClassVar, Literal
 
 from adb_auto_player.ipc import LogLevel, LogMessage
 
@@ -41,7 +42,33 @@ def sanitize_path(log_message: str) -> str:
     return log_message
 
 
-class JsonLogHandler(logging.Handler):
+class BaseLogHandler(logging.Handler):
+    """Base log handler with common functionality."""
+
+    def get_sanitized_message(self, record: logging.LogRecord) -> str:
+        """Get sanitized log message.
+
+        Args:
+            record (logging.LogRecord): The log record
+
+        Returns:
+            str: Sanitized log message
+        """
+        return sanitize_path(record.getMessage())
+
+    def get_debug_info(self, record: logging.LogRecord) -> str:
+        """Get debug information string.
+
+        Args:
+            record (logging.LogRecord): The log record
+
+        Returns:
+            str: Formatted debug information
+        """
+        return f"({record.module}.py::{record.funcName}::{record.lineno})"
+
+
+class JsonLogHandler(BaseLogHandler):
     """JSON log handler."""
 
     def emit(self, record: logging.LogRecord) -> None:
@@ -58,11 +85,9 @@ class JsonLogHandler(logging.Handler):
             logging.CRITICAL: LogLevel.FATAL,
         }
 
-        sanitized_message: str = sanitize_path(record.getMessage())
-
         log_message: LogMessage = LogMessage.create_log_message(
             level=level_mapping.get(record.levelno, LogLevel.DEBUG),
-            message=sanitized_message,
+            message=self.get_sanitized_message(record),
             source_file=record.module + ".py",
             function_name=record.funcName,
             line_number=record.lineno,
@@ -73,22 +98,8 @@ class JsonLogHandler(logging.Handler):
         sys.stdout.flush()
 
 
-def setup_json_log_handler(level: int | str) -> None:
-    """Sets up a JSON log handler instance.
-
-    Args:
-        level (int | str): The log level to set.
-    """
-    logger: logging.Logger = logging.getLogger()
-    logger.setLevel(level)
-    for handler in logger.handlers:
-        logger.removeHandler(handler)
-    json_log_handler = JsonLogHandler()
-    logger.addHandler(json_log_handler)
-
-
-class TextLogHandler(logging.StreamHandler):
-    """Text log handler for logging to the console."""
+class TerminalLogHandler(BaseLogHandler):
+    """Terminal log handler for logging to the console with colors."""
 
     COLORS: ClassVar[dict[str, str]] = {
         "DEBUG": "\033[94m",  # Blue
@@ -100,33 +111,74 @@ class TextLogHandler(logging.StreamHandler):
     }
 
     def emit(self, record: logging.LogRecord) -> None:
-        """Emit a log message in text format.
+        """Emit a log message in colored text format.
 
         Args:
             record (logging.LogRecord): The log record to emit.
         """
         log_level: str = record.levelname
-        sanitized_message: str = sanitize_path(record.getMessage())
         color: str = self.COLORS.get(log_level, self.COLORS["RESET"])
 
-        debug_info: str = f"({record.module}.py::{record.funcName}::{record.lineno})"
         formatted_message: str = (
             f"{color}"
-            f"[{log_level}] {debug_info} {sanitized_message}{self.COLORS['RESET']}"
+            f"[{log_level}] "
+            f"{self.get_debug_info(record)} {self.get_sanitized_message(record)}"
+            f"{self.COLORS['RESET']}"
         )
         print(formatted_message)
         sys.stdout.flush()
 
 
-def setup_text_log_handler(level: int | str) -> None:
-    """Sets up a text log handler for logging to the console.
+class TextLogHandler(BaseLogHandler):
+    """Text log handler for logging to the console with timestamps."""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        """Emit a log message in text format with timestamp.
+
+        Args:
+            record (logging.LogRecord): The log record to emit.
+        """
+        log_level: str = record.levelname
+        timestamp: str = datetime.fromtimestamp(record.created).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+        timestamp_with_ms: str = f"{timestamp}.{int(record.msecs):03d}"
+
+        formatted_message: str = (
+            f"{timestamp_with_ms} [{log_level}] {self.get_debug_info(record)} "
+            f"{self.get_sanitized_message(record)}"
+        )
+        print(formatted_message)
+        sys.stdout.flush()
+
+
+LogHandlerType = Literal["json", "terminal", "text", "raw"]
+
+
+def setup_logging(handler_type: LogHandlerType, level: int | str) -> None:
+    """Set up logging with specified handler type and level.
 
     Args:
-        level (int | str): The log level to set.
+        handler_type (LogHandlerType): Type of log handler to use
+        level (int | str): The log level to set
     """
     logger: logging.Logger = logging.getLogger()
     logger.setLevel(level)
+
+    if "raw" == handler_type:
+        return
+
     for handler in logger.handlers:
         logger.removeHandler(handler)
-    text_log_handler = TextLogHandler()
-    logger.addHandler(text_log_handler)
+
+    handler_mapping = {
+        "json": JsonLogHandler,
+        "terminal": TerminalLogHandler,
+        "text": TextLogHandler,
+    }
+
+    handler_class = handler_mapping.get(handler_type)
+    if handler_class:
+        logger.addHandler(handler_class())
+    else:
+        raise ValueError(f"Unknown handler type: {handler_type}")
