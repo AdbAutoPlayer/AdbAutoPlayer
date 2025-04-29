@@ -49,13 +49,13 @@ func (ps *PathSanitizer) SanitizePath(message string) string {
 	var pattern, replacement string
 	if ps.runtime == "windows" {
 		pattern = `:\\Users\\` + regexp.QuoteMeta(ps.username)
-		replacement = `:\Users\{redacted}`
+		replacement = `:\Users\$$env:USERNAME`
 	} else if ps.runtime == "darwin" {
 		pattern = `/Users/` + regexp.QuoteMeta(ps.username)
-		replacement = `/Users/{redacted}`
+		replacement = `/Users/$$USER`
 	} else {
 		pattern = `/home/` + regexp.QuoteMeta(ps.username)
-		replacement = `/home/{redacted}`
+		replacement = `/home/$$USER`
 	}
 
 	re, err := regexp.Compile(pattern)

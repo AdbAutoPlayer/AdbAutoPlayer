@@ -13,7 +13,7 @@ class TestSanitizePath(unittest.TestCase):
     def test_windows_path(self, mock_expanduser: MagicMock) -> None:
         """Test Windows path."""
         log = rf"adb_path: {mock_expanduser.return_value}\AppData\Local\file.txt"
-        expected = r"adb_path: C:\Users\{redacted}\AppData\Local\file.txt"
+        expected = r"adb_path: C:\Users\$env:USERNAME\AppData\Local\file.txt"
         self.assertEqual(expected, adb_auto_player.logging_setup.sanitize_path(log))
 
     @patch("os.path.expanduser", return_value=r"C:\\Users\\mockuser")
@@ -21,7 +21,7 @@ class TestSanitizePath(unittest.TestCase):
         """Test Windows path with double backslash."""
         log = f"No such file or directory: '{mock_expanduser.return_value}"
         r"\\GolandProjects\\AdbAutoPlayer\\python\\config.toml"
-        expected = r"No such file or directory: 'C:\\Users\\{redacted}"
+        expected = r"No such file or directory: 'C:\\Users\\$env:USERNAME"
         r"\\GolandProjects\\AdbAutoPlayer\\python\\config.toml"
         self.assertEqual(expected, adb_auto_player.logging_setup.sanitize_path(log))
 
@@ -29,7 +29,7 @@ class TestSanitizePath(unittest.TestCase):
     def test_unix_path(self, mock_expanduser: MagicMock) -> None:
         """Test Unix path."""
         log = f"{mock_expanduser.return_value}/.config/file.txt"
-        expected = "/home/{redacted}/.config/file.txt"
+        expected = "/home/$USER/.config/file.txt"
         self.assertEqual(expected, adb_auto_player.logging_setup.sanitize_path(log))
 
     @patch("os.path.expanduser", return_value=r"C:\Users\mockuser")
@@ -37,6 +37,6 @@ class TestSanitizePath(unittest.TestCase):
         """Test multiple occurrences of username in path."""
         log = rf"adb_path: {mock_expanduser.return_value}\AppData\file.txt"
         r" and D:\Users\mockuser\Desktop\file2.txt"
-        expected = r"adb_path: C:\Users\{redacted}\AppData\file.txt"
-        r" and D:\Users\{redacted}\Desktop\file2.txt"
+        expected = r"adb_path: C:\Users\$env:USERNAME\AppData\file.txt"
+        r" and D:\Users\$env:USERNAME\Desktop\file2.txt"
         self.assertEqual(expected, adb_auto_player.logging_setup.sanitize_path(log))

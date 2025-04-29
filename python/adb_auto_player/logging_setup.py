@@ -12,7 +12,7 @@ from adb_auto_player.ipc import LogLevel, LogMessage
 
 
 def sanitize_path(log_message: str) -> str:
-    """Sanitizes file paths in log messages by replacing the username with '{redacted}'.
+    """Replaces the username in file paths with $USER or $env:USERNAME.
 
     Works with both Windows and Unix-style paths.
 
@@ -20,23 +20,23 @@ def sanitize_path(log_message: str) -> str:
         log_message (str): The log message containing file paths
 
     Returns:
-        str: The sanitized log message with usernames redacted
+        str: The sanitized log message with environment variable placeholders
     """
     home_dir: str = os.path.expanduser("~")
 
     if "\\" in home_dir:  # Windows path
         username: str = home_dir.split("\\")[-1]
         pattern: str = re.escape(f":\\Users\\{username}")
-        replacement = r":\\Users\\{redacted}"
+        replacement = r":\\Users\\$env:USERNAME"
         log_message = re.sub(pattern, replacement, log_message)
         pattern = re.escape(f":\\\\Users\\\\{username}")
-        replacement = r":\\\\Users\\\\{redacted}"
+        replacement = r":\\\\Users\\\\$env:USERNAME"
         log_message = re.sub(pattern, replacement, log_message)
 
     else:  # Unix path
         username = home_dir.split("/")[-1]
         pattern = f"/home/{username}"
-        replacement = "/home/{redacted}"
+        replacement = "/home/$USER"
         log_message = re.sub(pattern, replacement, log_message)
 
     return log_message
