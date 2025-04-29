@@ -13,6 +13,11 @@ class AssistMixin(AFKJourneyBase, ABC):
 
     def assist_synergy_corrupt_creature(self) -> None:
         """Assist Synergy and Corrupt Creature."""
+        # TODO this needs to be refactored
+        # because the chat window can be moved
+        # the crop region for "assist/empty_chat.png"
+        # needs to be dynamically derived based on the location from the world chat
+        # or tap to enter labels
         self.start_up(device_streaming=True)
 
         if self._stream is None:
@@ -60,6 +65,7 @@ class AssistMixin(AFKJourneyBase, ABC):
 
         profile_icon = self.find_worst_match(
             "assist/empty_chat.png",
+            crop=CropRegions(left=0.2, right=0.7, top=0.7, bottom=0.22),
         )
 
         if profile_icon is None:
