@@ -39,7 +39,6 @@ class AssistMixin(AFKJourneyBase, ABC):
                 "assist/tap_to_enter.png",
                 "assist/label_team-up_chat.png",
             ],
-            crop=CropRegions(left=0.1, right=0.5, top=0.1, bottom=0.1),
         )
         if result is None:
             logging.info("Navigating to World Chat")
@@ -61,7 +60,6 @@ class AssistMixin(AFKJourneyBase, ABC):
 
         profile_icon = self.find_worst_match(
             "assist/empty_chat.png",
-            crop=CropRegions(left=0.2, right=0.7, top=0.7, bottom=0.22),
         )
 
         if profile_icon is None:
@@ -97,7 +95,6 @@ class AssistMixin(AFKJourneyBase, ABC):
             if (
                 self.game_find_template_match(
                     template="assist/label_world_chat.png",
-                    crop=CropRegions(right=0.5, top=0.1, bottom=0.8),
                 )
                 is None
             ):
@@ -167,7 +164,6 @@ class AssistMixin(AFKJourneyBase, ABC):
         while True:
             cc_ready: tuple[int, int] | None = self.game_find_template_match(
                 template="assist/cc_ready.png",
-                crop=CropRegions(top=0.9, left=0.1, right=0.2),
             )
             if cc_ready:
                 self.click(Coordinates(*cc_ready))
@@ -186,7 +182,6 @@ class AssistMixin(AFKJourneyBase, ABC):
         """Handle Synergy."""
         go: tuple[int, int] | None = self.game_find_template_match(
             template="assist/go.png",
-            crop=CropRegions(left=0.1, right=0.6, top=0.7, bottom=0.2),
         )
         if go is None:
             logging.info("Clicked Synergy button too late")
