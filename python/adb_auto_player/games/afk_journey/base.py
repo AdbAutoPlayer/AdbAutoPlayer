@@ -369,6 +369,12 @@ class AFKJourneyBase(Game, ABC):
                 result = False
                 break
 
+            # TODO: would have to be refactored completely to check if
+            #       a battle is still going on afk stages and season talent stages
+            #       have a label at the top, not sure about other game modes
+            #       would also have to check every couple seconds if the frame
+            #       changed to see if the game froze.
+
             # TODO: Because we iteratively look for templates, it can match something
             # later in the list first causing non-deterministic behavior.
             _, x, y = self.wait_for_any_template(
