@@ -8,7 +8,7 @@ import sys
 from logging import DEBUG
 from typing import NoReturn
 
-from adb_auto_player import Command, ConfigLoader, Game, GenericAdbError
+from adb_auto_player import Command, ConfigLoader, Game, GenericAdbError, games
 from adb_auto_player.adb import (
     exec_wm_size,
     get_adb_client,
@@ -20,12 +20,6 @@ from adb_auto_player.adb import (
     wm_size_reset,
 )
 from adb_auto_player.argparse_formatter_factory import build_argparse_formatter
-from adb_auto_player.games import (
-    AFKJourney,
-    AvatarRealmsCollide,
-    InfinityNikki,
-    PlayStore,
-)
 from adb_auto_player.ipc import GameGUIOptions
 from adb_auto_player.logging_setup import setup_logging
 from adbutils import AdbError
@@ -33,12 +27,11 @@ from adbutils._device import AdbDevice
 
 
 def _get_games() -> list[Game]:
-    return [
-        AFKJourney(),
-        AvatarRealmsCollide(),
-        InfinityNikki(),
-        PlayStore(),
-    ]
+    game_objects = []
+    for class_name in games.__all__:
+        cls = getattr(games, class_name)
+        game_objects.append(cls())
+    return game_objects
 
 
 def main() -> None:
