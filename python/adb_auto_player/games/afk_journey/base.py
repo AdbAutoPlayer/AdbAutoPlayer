@@ -481,7 +481,7 @@ class AFKJourneyBase(Game, ABC):
                 logging.warning("Trying to restart app this is still WIP.")
                 self.start_game()
                 sleep(15)
-                while not self.find_any_template(templates):
+                while not self.find_any_template(templates) and self.is_game_running():
                     self.tap(Coordinates(1080 // 2, 1920 // 2))
                     sleep(3)
 
