@@ -436,7 +436,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             timeout_message=f"Battle Modes screen not found. {self.LANG_ERROR}",
             timeout=self.MIN_TIMEOUT,
         )
-        self.swipe_down()
+        self.swipe_up(sy=1350, ey=500)
         label: tuple[int, int] = self.wait_for_template(
             "arcane_labyrinth/label.png",
             timeout=self.MIN_TIMEOUT,

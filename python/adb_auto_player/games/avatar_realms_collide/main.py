@@ -282,7 +282,7 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             self._purchase_trading_post(crop_bottom_row)
 
         # Swipe to reveal next items
-        self.swipe(1615, 870, 1615, 0)
+        self.swipe_up(x=1615, sy=870, ey=0)
         sleep(3)
 
         if self.get_config().trading_post.row_3_hero_upgrade_items:
@@ -852,12 +852,12 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
             for i in range(5):
                 if research_coords:
                     return research_coords
-                self.swipe(500, 540, 400, 540)
+                self.swipe_left(y=540, sx=500, ex=400)
                 sleep(2)
                 research_coords = click_and_hope_research_pops_up()
             logging.warning("No research found, swiping back")
             for _ in range(5):
-                self.swipe(400, 540, 500, 540)
+                self.swipe_right(y=540, sx=400, ex=500)
             return research_coords
 
         research = try_to_find_research()
@@ -1208,11 +1208,11 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
                 )
                 if match:
                     return match
-                self.swipe(800, 540, 300, 540)
+                self.swipe_left(y=540, sx=800, ex=300)
                 sleep(2)
             logging.warning("Recommended research not found, swiping back")
             for _ in range(6):
-                self.swipe(300, 540, 800, 540)
+                self.swipe_right(y=540, sx=300, ex=800)
                 sleep(2)
             return None
 
