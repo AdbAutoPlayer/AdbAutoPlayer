@@ -197,6 +197,10 @@
   async function onMainConfigSave(configObject: object) {
     console.log("onMainConfigSave");
     const configForm = config.MainConfig.createFrom(configObject);
+    document.documentElement.setAttribute(
+      "data-theme",
+      configForm["User Interface"].Theme,
+    );
     console.log(configForm);
 
     try {

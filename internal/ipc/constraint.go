@@ -109,6 +109,31 @@ func GetMainConfigConstraints() map[string]interface{} {
 			"Host": NewTextConstraint("127.0.0.1"),
 			"Port": NewNumberConstraint(&portMin, &portMax, nil, 5037),
 		},
+		"User Interface": map[string]interface{}{
+			"Theme": NewSelectConstraint([]string{
+				"catppuccin",
+				"cerberus",
+				"crimson",
+				"fennec",
+				"hamlindigo",
+				"legacy",
+				"mint",
+				"modern",
+				"mona",
+				"nosh",
+				"nouveau",
+				"pine",
+				"reign",
+				"rocket",
+				"rose",
+				"sahara",
+				"seafoam",
+				"terminus",
+				"vintage",
+				"vox",
+				"wintry",
+			}, "catppuccin"),
+		},
 		"Logging": map[string]interface{}{
 			"Level": NewSelectConstraint([]string{
 				string(LogLevelDebug),
@@ -121,7 +146,7 @@ func GetMainConfigConstraints() map[string]interface{} {
 			"Action Log Limit":       NewNumberConstraint(&actionLogLimitMin, nil, nil, 10),
 		},
 		"Order": []string{
-			"ADB", "Device", "Logging",
+			"ADB", "Device", "Logging", "User Interface",
 		},
 	}
 }

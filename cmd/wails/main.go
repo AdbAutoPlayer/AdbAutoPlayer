@@ -61,6 +61,9 @@ func main() {
 
 	app := NewApp()
 
+	// TODO I want to pass  the theme to the frontend so it can use it directly
+	// mainConfig.UI.Theme
+
 	err := wails.Run(&options.App{
 		Title:  "AdbAutoPlayer",
 		Width:  1168,

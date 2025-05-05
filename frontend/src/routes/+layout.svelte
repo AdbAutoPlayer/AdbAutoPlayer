@@ -2,11 +2,12 @@
   import "../app.css";
 
   import { BrowserOpenURL } from "$lib/wailsjs/runtime";
-
+  import { GetTheme } from "$lib/wailsjs/go/main/App";
   import LogoSticky from "./LogoSticky.svelte";
   import DocumentationIconSticky from "./DocumentationIconSticky.svelte";
   import DownloadIconSticky from "./SelfUpdater/DownloadIconSticky.svelte";
   import LogDisplayCard from "./LogDisplayCard.svelte";
+  import { onMount } from "svelte";
 
   let { children } = $props();
 
@@ -27,6 +28,13 @@
       e.preventDefault();
       BrowserOpenURL(url);
     }
+  });
+
+  onMount(async () => {
+    const theme = await GetTheme();
+    // Now apply theme via a <link> tag, class, or dynamically import the CSS
+    console.log("Selected theme:", theme);
+    document.documentElement.setAttribute("data-theme", theme);
   });
 </script>
 
