@@ -10,9 +10,10 @@ import (
 )
 
 type MainConfig struct {
-	Device  DeviceConfig  `toml:"device"`
 	ADB     ADBConfig     `toml:"adb"`
+	Device  DeviceConfig  `toml:"device"`
 	Logging LoggingConfig `toml:"logging"`
+	UI      UIConfig      `toml:"ui" json:"User Interface"`
 }
 
 type DeviceConfig struct {
@@ -32,21 +33,28 @@ type LoggingConfig struct {
 	ActionLogLimit       int    `toml:"action_log_limit" json:"Action Log Limit"`
 }
 
+type UIConfig struct {
+	Theme string `toml:"theme"`
+}
+
 func NewMainConfig() MainConfig {
 	return MainConfig{
+		ADB: ADBConfig{
+			Host: "127.0.0.1",
+			Port: 5037,
+		},
 		Device: DeviceConfig{
 			ID:          "127.0.0.1:5555",
 			UseWMResize: false,
 			Streaming:   true,
 		},
-		ADB: ADBConfig{
-			Host: "127.0.0.1",
-			Port: 5037,
-		},
 		Logging: LoggingConfig{
 			Level:                string(ipc.LogLevelInfo),
 			DebugSaveScreenshots: 30,
 			ActionLogLimit:       10,
+		},
+		UI: UIConfig{
+			Theme: "catppuccin",
 		},
 	}
 }
