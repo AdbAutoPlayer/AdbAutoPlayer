@@ -44,6 +44,7 @@ from adb_auto_player.template_matching import (
 )
 from adbutils._device import AdbDevice
 from deprecation import deprecated
+from PIL import Image
 from pydantic import BaseModel
 
 
@@ -1035,7 +1036,16 @@ class Game:
         os.makedirs("debug", exist_ok=True)
 
         file_name = f"debug/{file_index}.png"
-        cv2.imwrite(file_name, screenshot)
+        try:
+            os.makedirs(os.path.dirname(file_name), exist_ok=True)
+            image = Image.fromarray(screenshot)
+            image.save(file_name)
+        except Exception as e:
+            logging.warning(
+                f"Cannot save debug screenshot: {file_name}, disabling. Error: {e}"
+            )
+            logging_config["debug_save_screenshots"] = 0
+
         self._debug_screenshot_counter = file_index + 1
         return
 
