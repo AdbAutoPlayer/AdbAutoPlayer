@@ -6,6 +6,8 @@ import sys
 import threading
 from abc import abstractmethod
 from collections.abc import Callable
+from dataclasses import dataclass
+from enum import StrEnum, auto
 from pathlib import Path
 from time import sleep, time
 from typing import Literal, NamedTuple, TypeVar
@@ -50,6 +52,33 @@ class Coordinates(NamedTuple):
 
     x: int
     y: int
+
+
+class _SwipeDirection(StrEnum):
+    UP = auto()
+    DOWN = auto()
+    LEFT = auto()
+    RIGHT = auto()
+
+    @property
+    def is_vertical(self) -> bool:
+        """Return True if the direction is vertical (UP or DOWN)."""
+        return self in {_SwipeDirection.UP, _SwipeDirection.DOWN}
+
+    @property
+    def is_increasing(self) -> bool:
+        """Return True if the coordinate increases in the direction (DOWN or RIGHT)."""
+        return self in {_SwipeDirection.DOWN, _SwipeDirection.RIGHT}
+
+
+@dataclass
+class _SwipeParams:
+    direction: _SwipeDirection
+    x: int | None = None
+    y: int | None = None
+    start: int | None = None
+    end: int | None = None
+    duration: float = 1.0
 
 
 class Game:
@@ -795,41 +824,129 @@ class Game:
             logging.debug("pressed back button")
             connection.read_until_close()
 
-    def swipe_down(self, sy: int = 1350, ey: int = 500, duration: float = 1.0) -> None:
-        """Swipes the screen down.
+    def swipe_down(
+        self,
+        x: int | None = None,
+        sy: int | None = None,
+        ey: int | None = None,
+        duration: float = 1.0,
+    ) -> None:
+        """Perform a vertical swipe from top to bottom.
 
         Args:
-            sy (int, optional): Start Y coordinate. Defaults to 1350.
-            ey (int, optional): End Y coordinate. Defaults to 500.
-            duration (float, optional): Swipe duration. Defaults to 1.0.
-
-        Raises:
-            ValueError: If sy is greater than or equal to ey.
+            x (int, optional): X coordinate of the swipe.
+                Defaults to the horizontal center of the display.
+            sy (int, optional): Start Y coordinate. Defaults to the top edge (0).
+            ey (int, optional): End Y coordinate.
+                Defaults to the bottom edge of the display.
+            duration (float, optional): Duration of the swipe in seconds.
+                Defaults to 1.0.
         """
-        if sy <= ey:
+        self._swipe_direction(
+            _SwipeParams(_SwipeDirection.DOWN, x=x, start=sy, end=ey, duration=duration)
+        )
+
+    def swipe_up(
+        self,
+        x: int | None = None,
+        sy: int | None = None,
+        ey: int | None = None,
+        duration: float = 1.0,
+    ) -> None:
+        """Perform a vertical swipe from bottom to top.
+
+        Args:
+            x (int, optional): X coordinate of the swipe.
+                Defaults to the horizontal center of the display.
+            sy (int, optional): Start Y coordinate.
+                Defaults to the bottom edge of the display.
+            ey (int, optional): End Y coordinate. Defaults to the top edge (0).
+            duration (float, optional): Duration of the swipe in seconds.
+                Defaults to 1.0.
+        """
+        self._swipe_direction(
+            _SwipeParams(_SwipeDirection.UP, x=x, start=sy, end=ey, duration=duration)
+        )
+
+    def swipe_right(
+        self,
+        y: int | None = None,
+        sx: int | None = None,
+        ex: int | None = None,
+        duration: float = 1.0,
+    ) -> None:
+        """Perform a horizontal swipe from left to right.
+
+        Args:
+            y (int, optional): Y coordinate of the swipe.
+                Defaults to the vertical center of the display.
+            sx (int, optional): Start X coordinate.
+                Defaults to the left edge (0).
+            ex (int, optional): End X coordinate.
+                Defaults to the right edge of the display.
+            duration (float, optional): Duration of the swipe in seconds.
+                Defaults to 1.0.
+        """
+        self._swipe_direction(
+            _SwipeParams(
+                _SwipeDirection.RIGHT, y=y, start=sx, end=ex, duration=duration
+            )
+        )
+
+    def swipe_left(
+        self,
+        y: int | None = None,
+        sx: int | None = None,
+        ex: int | None = None,
+        duration: float = 1.0,
+    ) -> None:
+        """Perform a horizontal swipe from right to left.
+
+        Args:
+            y (int, optional): Y coordinate of the swipe.
+                Defaults to the vertical center of the display.
+            sx (int, optional): Start X coordinate.
+                Defaults to the right edge of the display.
+            ex (int, optional): End X coordinate. Defaults to the left edge (0).
+            duration (float, optional): Duration of the swipe in seconds.
+                Defaults to 1.0.
+        """
+        self._swipe_direction(
+            _SwipeParams(_SwipeDirection.LEFT, y=y, start=sx, end=ex, duration=duration)
+        )
+
+    def _swipe_direction(self, params: _SwipeParams) -> None:
+        rx, ry = self.resolution
+        direction = params.direction
+
+        coord = params.x if direction.is_vertical else params.y
+        coord = (
+            (rx // 2 if direction.is_vertical else ry // 2) if coord is None else coord
+        )
+
+        start = params.start or (
+            0 if direction.is_increasing else (ry if direction.is_vertical else rx)
+        )
+        end = params.end or (
+            (ry if direction.is_vertical else rx) if direction.is_increasing else 0
+        )
+
+        if (direction.is_increasing and start >= end) or (
+            not direction.is_increasing and start <= end
+        ):
             raise ValueError(
-                "sy (start y) must be greater than ey (end y) to swipe down."
+                f"Start must be {'less' if direction.is_increasing else 'greater'} "
+                f"than end to swipe {direction.value}."
             )
 
-        logging.debug(f"swipe_down: {sy} to {ey}")
-        self.swipe(sx=540, sy=sy, ex=540, ey=ey, duration=duration)
+        sx, sy, ex, ey = (
+            (coord, start, coord, end)
+            if direction.is_vertical
+            else (start, coord, end, coord)
+        )
 
-    def swipe_up(self, sy: int = 500, ey: int = 1350, duration: float = 1.0) -> None:
-        """Swipes the screen up.
-
-        Args:
-            sy (int, optional): Start Y coordinate. Defaults to 500.
-            ey (int, optional): End Y coordinate. Defaults to 1350.
-            duration (float, optional): Swipe duration. Defaults to 1.0.
-
-        Raises:
-            ValueError: If ey is less than or equal to sy.
-        """
-        if ey >= sy:
-            raise ValueError("s (start y) must be smaller than ey (end y) to swipe up.")
-
-        logging.debug(f"swipe_up: {sy} to {ey}")
-        self.swipe(sx=540, sy=sy, ex=540, ey=ey, duration=duration)
+        logging.debug(f"swipe_{direction} - from ({sx}, {sy}) to ({ex}, {ey})")
+        self._swipe(sx=sx, sy=sy, ex=ex, ey=ey, duration=params.duration)
 
     def hold(self, x: int, y: int, duration: float = 3.0) -> None:
         """Holds a point on the screen.
@@ -840,9 +957,9 @@ class Game:
             duration (float, optional): Hold duration. Defaults to 3.0.
         """
         logging.debug(f"hold: ({x}, {y}) for {duration} seconds")
-        self.swipe(sx=x, sy=y, ex=x, ey=y, duration=duration)
+        self._swipe(sx=x, sy=y, ex=x, ey=y, duration=duration)
 
-    def swipe(self, sx: int, sy: int, ex: int, ey: int, duration: float = 1.0) -> None:
+    def _swipe(self, sx: int, sy: int, ex: int, ey: int, duration: float = 1.0) -> None:
         """Swipes the screen.
 
         Args:

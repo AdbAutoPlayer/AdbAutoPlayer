@@ -75,7 +75,7 @@ class EventMixin(AFKJourneyBase, ABC):
                         break
                     count += 1
                 if next_assist is None:
-                    self.swipe_down()
+                    self.swipe_up(sy=1350, ey=500)
 
             self.click(Coordinates(*next_assist))
             sleep(3)

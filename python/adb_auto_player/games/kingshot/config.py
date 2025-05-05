@@ -33,6 +33,10 @@ class AutoPlayConfig(BaseModel):
             "default_value": DEFAULT_RESOURCES,
         },
     )
+    auto_join: bool = Field(
+        default=False,
+        alias="Rally Auto-Join",
+    )
 
 
 class Config(ConfigBase):
