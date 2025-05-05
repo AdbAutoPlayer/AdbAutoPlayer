@@ -537,8 +537,11 @@ class KingShot(Game):
         self.tap(Coordinates(*conquest))
 
         self.wait_for_template("conquest/conquer.png", timeout=5)
-
-        claim = self.game_find_template_match("conquest/claim_chest.png")
+        sleep(1)
+        claim = self.game_find_template_match(
+            "conquest/claim_chest.png",
+            threshold=0.95,
+        )
         if not claim:
             logging.info("Conquest treasure chest not ready")
             return
