@@ -4,18 +4,19 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player import Coordinates, GameTimeoutError
+from adb_auto_player import Coordinates, CropRegions, GameTimeoutError
 from adb_auto_player.games.afk_journey import AFKJourneyBase
 
 
 class AFKStagesMixin(AFKJourneyBase, ABC):
     """AFK Stages Mixin."""
 
-    def push_afk_stages(self, season: bool) -> None:
+    def push_afk_stages(self, season: bool, my_custom_routine: bool = False) -> None:
         """Entry for pushing AFK Stages.
 
         Args:
             season: Push Season Stage if True otherwise push regular AFK Stages
+            my_custom_routine: If True then do not push both modes and do not repeat
         """
         self.start_up()
         self.store[self.STORE_MODE] = self.MODE_AFK_STAGES
@@ -26,6 +27,18 @@ class AFKStagesMixin(AFKJourneyBase, ABC):
                 self._start_afk_stage()
             except GameTimeoutError as e:
                 logging.warning(f"{e} {self.LANG_ERROR}")
+
+            if my_custom_routine:
+                if (
+                    self.get_config().afk_stages.push_both_modes
+                    or self.get_config().afk_stages.repeat
+                ):
+                    logging.info(
+                        "My Custom Routine ignores AFK Stages "
+                        '"Both Modes" and "Repeat" config'
+                    )
+                return
+
             if self.get_config().afk_stages.push_both_modes:
                 self.store[self.STORE_SEASON] = not season
                 try:
@@ -67,3 +80,24 @@ class AFKStagesMixin(AFKJourneyBase, ABC):
             self.click(Coordinates(x, y))
             sleep(2)
         self._select_afk_stage()
+
+    def _select_afk_stage(self) -> None:
+        """Selects an AFK stage template."""
+        self.wait_for_template(
+            template="resonating_hall.png",
+            crop=CropRegions(left=0.3, right=0.3, top=0.9),
+        )
+        self.click(Coordinates(x=550, y=1080), scale=True)  # click rewards popup
+        sleep(1)
+        if self.store.get(self.STORE_SEASON, False):
+            logging.debug("Clicking Talent Trials button")
+            self.click(Coordinates(x=300, y=1610), scale=True)
+        else:
+            logging.debug("Clicking Battle button")
+            self.click(Coordinates(x=800, y=1610), scale=True)
+        sleep(2)
+        confirm = self.game_find_template_match(
+            template="confirm.png", crop=CropRegions(left=0.5, top=0.5)
+        )
+        if confirm:
+            self.click(Coordinates(*confirm))

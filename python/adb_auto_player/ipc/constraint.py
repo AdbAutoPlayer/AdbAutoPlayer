@@ -46,6 +46,14 @@ class ImageCheckboxConstraintDict(TypedDict):
     image_dir_path: str
 
 
+class MyCustomRoutineConstraintDict(TypedDict):
+    """My Custom Routine constraint."""
+
+    type: Literal["MyCustomRoutine"]
+    choices: list[str]
+    default_value: list[str]
+
+
 class TextConstraintDict(TypedDict):
     """Text constraint."""
 
@@ -62,6 +70,7 @@ ConstraintType = (
     | MultiCheckboxConstraintDict
     | ImageCheckboxConstraintDict
     | TextConstraintDict
+    | MyCustomRoutineConstraintDict
 )
 
 
@@ -125,6 +134,17 @@ def create_image_checkbox_constraint(
         choices=choices,
         default_value=default_value,
         image_dir_path=image_dir_path,
+    )
+
+
+def create_my_custom_routine_constraint(
+    choices: list[str],
+) -> MyCustomRoutineConstraintDict:
+    """Create a My Custom Routine constraint."""
+    return MyCustomRoutineConstraintDict(
+        type="MyCustomRoutine",
+        default_value=[],
+        choices=choices,
     )
 
 

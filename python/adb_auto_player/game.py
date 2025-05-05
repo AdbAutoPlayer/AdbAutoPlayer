@@ -30,7 +30,7 @@ from adb_auto_player.adb import (
     get_screen_resolution,
     is_portrait,
 )
-from adb_auto_player.exceptions import GameNotRunningError
+from adb_auto_player.exceptions import GameNotRunningError, GameStartError
 from adb_auto_player.ipc.game_gui import GameGUIOptions, MenuOption
 from adb_auto_player.template_matching import (
     CropRegions,
@@ -465,8 +465,12 @@ class Game:
         return package_name == self.package_name
 
     def start_game(self) -> None:
-        """Start the Game."""
-        self.device.shell(
+        """Start the Game.
+
+        Raises:
+            GameStartError: Game cannot be started.
+        """
+        output = self.device.shell(
             [
                 "monkey",
                 "-p",
@@ -476,6 +480,9 @@ class Game:
                 "1",
             ]
         )
+        if "No activities found to run" in output:
+            logging.debug(f"start_game: {output}")
+            raise GameStartError("Game cannot be started")
 
     def wait_for_roi_change(  # noqa: PLR0913 - TODO: Consolidate more.
         self,

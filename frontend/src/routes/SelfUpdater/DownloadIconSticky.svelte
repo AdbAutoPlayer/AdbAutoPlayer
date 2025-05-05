@@ -192,6 +192,12 @@
       return;
     }
 
+    if (version.includes("alpha")) {
+      LogInfo(`App Version: ${version}`);
+      LogInfo("Skipping update for Alpha build");
+      return;
+    }
+
     let patchVersion = await getItem<string>("patch");
     let lastAppVersion = await getItem<string>("lastAppVersion");
 

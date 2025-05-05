@@ -451,10 +451,6 @@ class AFKJourneyBase(Game, ABC):
 
         return result
 
-    def _start_game(self):
-        self.start_game()
-        sleep(5)
-
     def _navigate_to_default_state(  # noqa: PLR0912
         self, check_callable: Callable[[], bool] | None = None
     ) -> None:
@@ -532,27 +528,6 @@ class AFKJourneyBase(Game, ABC):
                     sleep(0.5)
         sleep(1)
         return
-
-    def _select_afk_stage(self) -> None:
-        """Selects an AFK stage template."""
-        self.wait_for_template(
-            template="resonating_hall.png",
-            crop=CropRegions(left=0.3, right=0.3, top=0.9),
-        )
-        self.click(Coordinates(x=550, y=1080), scale=True)  # click rewards popup
-        sleep(1)
-        if self.store.get(self.STORE_SEASON, False):
-            logging.debug("Clicking Talent Trials button")
-            self.click(Coordinates(x=300, y=1610), scale=True)
-        else:
-            logging.debug("Clicking Battle button")
-            self.click(Coordinates(x=800, y=1610), scale=True)
-        sleep(2)
-        confirm = self.game_find_template_match(
-            template="confirm.png", crop=CropRegions(left=0.5, top=0.5)
-        )
-        if confirm:
-            self.click(Coordinates(*confirm))
 
     def _handle_guide_popup(
         self,

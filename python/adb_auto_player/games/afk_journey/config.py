@@ -4,7 +4,7 @@ from enum import StrEnum, auto
 from typing import Annotated
 
 from adb_auto_player import ConfigBase
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 # Type constraints
 PositiveInt = Annotated[int, Field(ge=1, le=999)]
@@ -160,14 +160,6 @@ class LegendTrialsConfig(BaseModel):
         },
     )
 
-    @field_validator("towers", mode="before")
-    @classmethod
-    def parse_towers(cls, v):
-        """Parse the tower names."""
-        if isinstance(v, list):
-            return [TowerEnum(tower) for tower in v]
-        return v
-
 
 class ArcaneLabyrinthConfig(BaseModel):
     """Arcane Labyrinth config model."""
@@ -199,7 +191,7 @@ class MyCustomRoutineConfig(BaseModel):
         default_factory=list,
         alias="Daily Tasks",
         json_schema_extra={
-            "constraint_type": "imagecheckbox",
+            "constraint_type": "MyCustomRoutine",
             "default_value": [],
         },
     )
@@ -207,7 +199,7 @@ class MyCustomRoutineConfig(BaseModel):
         default_factory=list,
         alias="Repeating Tasks",
         json_schema_extra={
-            "constraint_type": "imagecheckbox",
+            "constraint_type": "MyCustomRoutine",
             "default_value": [],
         },
     )

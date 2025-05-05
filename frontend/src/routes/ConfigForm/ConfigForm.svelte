@@ -2,6 +2,11 @@
   import { onMount } from "svelte";
   import MultiCheckbox from "./MultiCheckbox.svelte";
   import ImageCheckbox from "./ImageCheckbox.svelte";
+  import MyCustomRoutine from "./MyCustomRoutine.svelte";
+  import {
+    isConstraintOfType,
+    isArrayInputConstraint,
+  } from "$lib/utils/constraint";
 
   let {
     configObject,
@@ -38,6 +43,7 @@
   function processFormData(formData: FormData): Record<string, any> {
     const newConfig: Record<string, any> = {};
     const newConfigInFormData: Record<string, any> = {};
+
     for (const sectionKey in constraints) {
       if (!newConfig[sectionKey]) {
         newConfig[sectionKey] = {};
@@ -57,22 +63,19 @@
         newConfigInFormData[sectionKey][key] = false;
       }
     }
+
     formData.forEach((value, key) => {
       const keys = key.split("-");
       newConfigInFormData[keys[0]][keys[1]] = true;
       let val: any = value;
       const constraint = constraints[keys[0]]?.[keys[1]];
-      if (isCheckboxConstraint(constraint)) {
+      if (isConstraintOfType(constraint, "checkbox")) {
         val = Boolean(value);
       }
-      if (isNumberConstraint(constraint)) {
+      if (isConstraintOfType(constraint, "number")) {
         val = Number(value);
       }
-
-      if (
-        isImageCheckboxConstraint(constraint) ||
-        isMultiCheckboxConstraint(constraint)
-      ) {
+      if (isArrayInputConstraint(constraint)) {
         newConfig[keys[0]][keys[1]].push(val);
       } else {
         newConfig[keys[0]][keys[1]] = val;
@@ -85,8 +88,17 @@
           const val = newConfig[sectionKey][key];
           if (typeof val === "boolean") {
             newConfig[sectionKey][key] = false;
+          } else if (
+            isArrayInputConstraint(constraints[sectionKey][key]) &&
+            Array.isArray(val) &&
+            val.length === 0
+          ) {
+            newConfig[sectionKey][key] = val;
           } else {
-            console.log("processFormData unexpected type ", val);
+            console.log(
+              `processFormData unexpected type for ${sectionKey}.${key}:`,
+              val,
+            );
           }
         }
       }
@@ -137,45 +149,15 @@
     ) {
       return value as string[];
     }
-    console.log("Should not happen: ");
-    console.log(value);
+    console.error(
+      "Should not happen getStringArrayOrEmptyArray!",
+      "isArray:",
+      Array.isArray(value),
+      "constructor:",
+      value.constructor?.name,
+      value,
+    );
     return [];
-  }
-
-  function isNumberConstraint(value: any): value is NumberConstraint {
-    return (
-      typeof value === "object" && value !== null && value.type === "number"
-    );
-  }
-
-  function isMultiCheckboxConstraint(
-    value: any,
-  ): value is MultiCheckboxConstraint {
-    return (
-      typeof value === "object" &&
-      value !== null &&
-      value.type === "multicheckbox"
-    );
-  }
-
-  function isImageCheckboxConstraint(
-    value: any,
-  ): value is ImageCheckboxConstraint {
-    return (
-      typeof value === "object" &&
-      value !== null &&
-      value.type === "imagecheckbox"
-    );
-  }
-
-  function isCheckboxConstraint(value: any): value is CheckboxConstraint {
-    return value.type === "checkbox";
-  }
-
-  function isSelectConstraint(value: any): value is SelectConstraint {
-    return (
-      typeof value === "object" && value !== null && value.type === "select"
-    );
   }
 
   function getValueOrDefault(sectionKey: string, key: string): any {
@@ -188,14 +170,16 @@
       return configObject[sectionKey][key];
     }
     if (Array.isArray(constraints[sectionKey][key])) {
-      console.error("Should not happen");
+      console.error(
+        "Should not happen getValueOrDefault!",
+        "sectionKey:",
+        sectionKey,
+        "key:",
+        key,
+      );
       return null;
     }
     return constraints[sectionKey][key].default_value;
-  }
-
-  function isTextConstraint(value: any): value is TextConstraint {
-    return value.type === "text";
   }
 </script>
 
@@ -223,7 +207,7 @@
                     checked={Boolean(getValueOrDefault(sectionKey, key))}
                     class="checkbox"
                   />
-                {:else if isNumberConstraint(value)}
+                {:else if isConstraintOfType(value, "number")}
                   <input
                     type="number"
                     id="{sectionKey}-{key}"
@@ -234,7 +218,7 @@
                     step={value.step}
                     class="input w-full"
                   />
-                {:else if isMultiCheckboxConstraint(value)}
+                {:else if isConstraintOfType(value, "multicheckbox")}
                   <MultiCheckbox
                     constraint={value}
                     value={getStringArrayOrEmptyArray(
@@ -242,7 +226,7 @@
                     )}
                     name="{sectionKey}-{key}"
                   />
-                {:else if isImageCheckboxConstraint(value)}
+                {:else if isConstraintOfType(value, "imagecheckbox")}
                   <ImageCheckbox
                     constraint={value}
                     value={getStringArrayOrEmptyArray(
@@ -250,7 +234,7 @@
                     )}
                     name="{sectionKey}-{key}"
                   />
-                {:else if isSelectConstraint(value)}
+                {:else if isConstraintOfType(value, "select")}
                   <select
                     id="{sectionKey}-{key}"
                     name="{sectionKey}-{key}"
@@ -260,11 +244,12 @@
                       <option
                         value={option}
                         selected={getValueOrDefault(sectionKey, key) === option}
-                        >{option}</option
                       >
+                        {option}
+                      </option>
                     {/each}
                   </select>
-                {:else if isTextConstraint(value)}
+                {:else if isConstraintOfType(value, "text")}
                   <input
                     type="text"
                     id="{sectionKey}-{key}"
@@ -274,6 +259,20 @@
                     {...value.regex ? { pattern: value.regex } : {}}
                     {...value.title ? { title: value.title } : {}}
                   />
+                {:else if isConstraintOfType(value, "MyCustomRoutine")}
+                  <MyCustomRoutine
+                    constraint={value}
+                    value={getStringArrayOrEmptyArray(
+                      getValueOrDefault(sectionKey, key),
+                    )}
+                    name="{sectionKey}-{key}"
+                  />
+                {:else}
+                  <p>
+                    {Array.isArray(value)
+                      ? "Value (array)"
+                      : (value?.type ?? "Value")} cannot be displayed
+                  </p>
                 {/if}
               </div>
             </div>

@@ -36,3 +36,8 @@ Formations = 7
 'Spend Gold' = false
 'Suggested Formations' = true
 Towers = []
+
+['My Custom Routine']
+'Daily Tasks' = ['Season Talent Stages', 'AFK Stages', 'Season Talent Stages']
+'Repeating Tasks' = ['Legend Trial', 'Season Talent Stages', 'AFK Stages']
+'Skip Daily Tasks Today' = true
