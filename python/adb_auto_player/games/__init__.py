@@ -32,13 +32,13 @@ def has_required_methods(cls):
             method = getattr(instance, method_name, None)
 
             if not callable(method) or method() is None:
-                print(f"Class {cls.__name__} failed check for method: {method_name}")
+                # print(f"Class {cls.__name__} failed check for method: {method_name}")
                 return False
 
         return True
 
-    except TypeError as e:
-        print(f"Error instantiating class {cls.__name__}: {e}")
+    except TypeError:
+        # print(f"Error instantiating class {cls.__name__}: {e}")
         return False
 
 
