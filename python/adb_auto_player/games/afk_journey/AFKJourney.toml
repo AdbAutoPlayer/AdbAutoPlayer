@@ -3,22 +3,22 @@ Attempts = 5
 'Both Modes' = true
 Formations = 7
 Repeat = true
-'Spend Gold' = false
+'Skip Manual Formations' = true
+'Spend Gold' = true
 'Suggested Formations' = true
-'Skip Manual Formations' = false
 
 ['Arcane Labyrinth']
 Difficulty = 13
 'Key Quota' = 2700
 
 [Dailies]
-'Buy All Affinity' = false
+'Arena Battle' = true
+'Buy All Affinity' = true
 'Buy Discount Affinity' = true
-'Single Pull' = false
-'Arena Battle' = false
+'Single Pull' = true
 
 ['Dream Realm']
-'Spend Gold' = false
+'Spend Gold' = true
 
 ["Dura's Trials"]
 Attempts = 2
@@ -35,4 +35,4 @@ Attempts = 5
 Formations = 7
 'Spend Gold' = false
 'Suggested Formations' = true
-Towers = ['Lightbearer', 'Wilder', 'Graveborn', 'Mauler']
+Towers = []
