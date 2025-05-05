@@ -138,6 +138,17 @@ func (a *App) GetEditableGameConfig(game ipc.GameGUI) (map[string]interface{}, e
 	return response, nil
 }
 
+func (a *App) GetTheme() string {
+	mainConfig := config.NewMainConfig()
+	loadedConfig, err := config.LoadMainConfig(a.getMainConfigPath())
+	if err != nil {
+		println(err.Error())
+	} else {
+		mainConfig = *loadedConfig
+	}
+	return mainConfig.UI.Theme
+}
+
 func (a *App) SaveGameConfig(gameConfig map[string]interface{}) error {
 	if nil == a.lastOpenGameConfigPath {
 		return errors.New("cannot save game config: no game config found")
