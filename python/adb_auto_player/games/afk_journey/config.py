@@ -191,6 +191,28 @@ class DailiesConfig(BaseModel):
     arena_battle: bool = Field(default=False, alias="Arena Battle")
 
 
+class MyCustomRoutineConfig(BaseModel):
+    """My Custom Routine config model."""
+
+    skip_daily_tasks_today: bool = Field(default=False, alias="Skip Daily Tasks Today")
+    daily_tasks: list = Field(
+        default_factory=list,
+        alias="Daily Tasks",
+        json_schema_extra={
+            "constraint_type": "imagecheckbox",
+            "default_value": [],
+        },
+    )
+    repeating_tasks: list = Field(
+        default_factory=list,
+        alias="Repeating Tasks",
+        json_schema_extra={
+            "constraint_type": "imagecheckbox",
+            "default_value": [],
+        },
+    )
+
+
 class Config(ConfigBase):
     """Config model."""
 
@@ -201,3 +223,4 @@ class Config(ConfigBase):
     legend_trials: LegendTrialsConfig = Field(alias="Legend Trial")
     arcane_labyrinth: ArcaneLabyrinthConfig = Field(alias="Arcane Labyrinth")
     dream_realm: DreamRealmConfig = Field(alias="Dream Realm")
+    my_custom_routine: MyCustomRoutineConfig = Field(alias="My Custom Routine")
