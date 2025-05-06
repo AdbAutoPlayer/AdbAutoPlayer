@@ -199,6 +199,7 @@ class KingShot(Game):
                 for icon in [
                     "marching/recall.png",
                     "marching/recall_speedup.png",
+                    "marching/eye.png",
                 ]
             )
             minimized_marching_window_return_count = 2
@@ -413,16 +414,15 @@ class KingShot(Game):
                 len(self.find_all_template_matches(icon, crop=crop_info_left_icons))
                 for icon in [
                     "info/flag.png",
-                    "info/attacking.png",
+                    "info/waiting_for_rally",
                     "info/returning.png",
-                    "info/returning2.png",
                 ]
             )
 
             returns = sum(
                 len(self.find_all_template_matches(icon, crop=crop_info_right_icons))
                 for icon in [
-                    "info/button/return.png",
+                    "info/button/goto.png",
                 ]
             )
             available_marches = gathering_march_count + other_march_count - returns
@@ -431,7 +431,7 @@ class KingShot(Game):
             if self.get_config().auto_play.auto_join:  # Auto-Join
                 if (
                     available_marches < auto_join_march_puffer
-                    and not self.game_find_template_match("info/attacking.png")
+                    and not self.game_find_template_match("info/waiting_for_rally.png")
                 ):
                     return False
 
