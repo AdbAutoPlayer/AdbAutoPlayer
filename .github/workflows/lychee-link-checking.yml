@@ -3,7 +3,7 @@ name: mdBook validate links
 on:
   push:
     branches:
-      - "*"
+      - main
   workflow_dispatch:
 
 jobs:
