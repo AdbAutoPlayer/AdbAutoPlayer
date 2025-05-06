@@ -33,6 +33,22 @@ class AutoPlayConfig(BaseModel):
             "default_value": DEFAULT_RESOURCES,
         },
     )
+    building: bool = Field(
+        default=True,
+        alias="Building",
+    )
+    research: bool = Field(
+        default=True,
+        alias="Research",
+    )
+    train_troops: bool = Field(
+        default=True,
+        alias="Train Troops",
+    )
+    upgrade_troops: bool = Field(
+        default=True,
+        alias="Upgrade Troops",
+    )
     auto_join: bool = Field(
         default=False,
         alias="Rally Auto-Join",
