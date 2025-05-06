@@ -414,7 +414,7 @@ class KingShot(Game):
                 len(self.find_all_template_matches(icon, crop=crop_info_left_icons))
                 for icon in [
                     "info/flag.png",
-                    "info/waiting_for_rally",
+                    "info/waiting_for_rally.png",
                     "info/returning.png",
                 ]
             )

@@ -46,9 +46,14 @@ def load_image(image_path: Path, image_scale_factor: float = 1.0) -> np.ndarray:
     Returns:
         np.ndarray
     """
+    if image_path.suffix == "":
+        image_path = image_path.with_suffix(".png")
+
     cache_key = f"{image_path}_{image_scale_factor}"
     if cache_key in template_cache:
         return template_cache[cache_key]
+
+    # todo if image_path has no extension assume .png
 
     image = cv2.imdecode(np.fromfile(image_path, dtype=np.uint8), cv2.IMREAD_COLOR)
     if image is None:
