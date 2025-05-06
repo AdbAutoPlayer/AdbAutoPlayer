@@ -6,6 +6,7 @@ from enum import StrEnum
 from time import sleep
 
 from adb_auto_player import Command, Coordinates, CropRegions, Game, GameTimeoutError
+from adb_auto_player.exceptions import GameNotRunningError
 from adb_auto_player.games.kingshot.config import Config
 from adb_auto_player.ipc import GameGUIOptions, MenuOption
 
@@ -110,7 +111,8 @@ class KingShot(Game):
     def _is_info_closed(self) -> bool:
         return (
             self.game_find_template_match(
-                "info/open_arrow.png", crop=CropRegions(right=0.8, top=0.3, bottom=0.3)
+                "info/button/open_arrow.png",
+                crop=CropRegions(right=0.8, top=0.3, bottom=0.3),
             )
             is not None
         )
@@ -118,7 +120,8 @@ class KingShot(Game):
     def _is_info_open(self) -> bool:
         return (
             self.game_find_template_match(
-                "info/close_arrow.png", crop=CropRegions(left=0.5, top=0.3, bottom=0.3)
+                "info/button/close_arrow.png",
+                crop=CropRegions(left=0.5, top=0.3, bottom=0.3),
             )
             is not None
         )
@@ -187,18 +190,27 @@ class KingShot(Game):
             if info_open_and_tab_switched():
                 break
 
-            returns = self.find_all_template_matches(
-                "marching/return.png",
-                crop=crop_marching_window_returns,
+            returns = sum(
+                len(
+                    self.find_all_template_matches(
+                        icon, crop=crop_marching_window_returns
+                    )
+                )
+                for icon in [
+                    "marching/recall.png",
+                    "marching/recall_speedup.png",
+                ]
             )
             minimized_marching_window_return_count = 2
-            if len(returns) > minimized_marching_window_return_count:
+            if returns > minimized_marching_window_return_count:
                 self.tap(Coordinates(40, 320))  # minimize Marching window
                 sleep(0.5)
                 continue
 
             if self._is_info_closed():
-                if info_button := self.game_find_template_match("info/open_arrow.png"):
+                if info_button := self.game_find_template_match(
+                    "info/button/open_arrow.png"
+                ):
                     self.tap(Coordinates(*info_button))
                     sleep(3)
                     continue
@@ -207,7 +219,7 @@ class KingShot(Game):
         return
 
     def _close_info(self) -> None:
-        if info_button := self.game_find_template_match("info/close_arrow.png"):
+        if info_button := self.game_find_template_match("info/button/close_arrow.png"):
             self.tap(Coordinates(*info_button))
             sleep(3)
 
@@ -236,7 +248,7 @@ class KingShot(Game):
         self.swipe_up(sy=1150)
         sleep(1)
         check_mark = self.game_find_template_match(
-            "info/check_mark.png",
+            "info/button/check_mark.png",
             crop=CropRegions(left=0.5, right=0.35, top=0.5, bottom=0.3),
         )
         if check_mark:
@@ -250,7 +262,7 @@ class KingShot(Game):
         self._navigate_to_town()
         self._open_info(town=True)
         troops_completed = self.find_all_template_matches(
-            "info/check_mark.png",
+            "info/button/check_mark.png",
             crop=crop_info_right_icons,
         )
 
@@ -268,7 +280,7 @@ class KingShot(Game):
         self._navigate_to_town()
         self._open_info(town=True)
         actions = self.find_all_template_matches(
-            "info/action.png",
+            "info/button/action.png",
             crop=crop_info_right_icons,
         )
 
@@ -291,12 +303,45 @@ class KingShot(Game):
     def _handle_research(self) -> bool:
         if not self.game_find_template_match("research/back.png"):
             return False
+
+        if not self.get_config().auto_play.research:
+            logging.info("Research disabled")
+            return True
+
+        if self.game_find_template_match("research/speedups.png"):
+            logging.info("Research already started")
+            return True
+
+        # TODO need to check all 3 tabs
+        matches = self.find_all_template_matches(
+            "research/03.png",
+        )
+        matches += self.find_all_template_matches(
+            "research/13.png",
+        )
+        matches += self.find_all_template_matches(
+            "research/23.png",
+        )
+        logging.info(f"Dev Output Research Matches: {matches}")
         logging.warning("Research not implemented")
         return True
 
     def _handle_training(self) -> bool:
         if not self.game_find_template_match("training/back.png"):
             return False
+
+        if not self.get_config().auto_play.train_troops:
+            logging.info("Training disabled")
+            return True
+
+        if self.get_config().auto_play.upgrade_troops and self._upgrade_troops():
+            return True
+
+        self.tap(Coordinates(800, 1800))
+        sleep(1)
+        return True
+
+    def _upgrade_troops(self) -> bool:
         if upgrade_left := self.game_find_template_match("training/upgrade_left.png"):
             self.tap(Coordinates(*upgrade_left))
             sleep(2)
@@ -307,9 +352,7 @@ class KingShot(Game):
             self.tap(Coordinates(*promotion))
             sleep(1)
             return True
-        self.tap(Coordinates(800, 1800))
-        sleep(1)
-        return True
+        return False
 
     def _tap_finger(self) -> bool:
         try:
@@ -329,22 +372,27 @@ class KingShot(Game):
             return False
 
     def _handle_building_upgrade(self) -> bool:
-        if upgrade := self.game_find_template_match("building/upgrade.png"):
-            self.tap(Coordinates(*upgrade))
-            sleep(1)
-            try:
-                help_request = self.wait_for_template(
-                    "help_request.png",
-                    timeout=10,
-                    crop=CropRegions(left=0.35, right=0.35, top=0.3, bottom=0.5),
-                )
-                self.tap(Coordinates(*help_request))
-            except GameTimeoutError:
-                logging.warning(
-                    "Not able to find and click help request for building upgrade"
-                )
+        upgrade = self.game_find_template_match("building/upgrade.png")
+        if not upgrade:
+            return False
+        if not self.get_config().auto_play.buildingresearch:
+            logging.info("Building disabled")
             return True
-        return False
+
+        self.tap(Coordinates(*upgrade))
+        sleep(1)
+        try:
+            help_request = self.wait_for_template(
+                "help_request.png",
+                timeout=10,
+                crop=CropRegions(left=0.35, right=0.35, top=0.3, bottom=0.5),
+            )
+            self.tap(Coordinates(*help_request))
+        except GameTimeoutError:
+            logging.warning(
+                "Not able to find and click help request for building upgrade"
+            )
+        return True
 
     def _gather_resources(self) -> None:
         def _is_march_available() -> bool:
@@ -365,18 +413,19 @@ class KingShot(Game):
                 len(self.find_all_template_matches(icon, crop=crop_info_left_icons))
                 for icon in [
                     "info/flag.png",
-                    "info/march_returning.png",
                     "info/attacking.png",
                     "info/returning.png",
+                    "info/returning2.png",
                 ]
             )
 
-            returns = self.find_all_template_matches(
-                "info/return.png",
-                crop=crop_info_right_icons,
+            returns = sum(
+                len(self.find_all_template_matches(icon, crop=crop_info_right_icons))
+                for icon in [
+                    "info/button/return.png",
+                ]
             )
-
-            available_marches = gathering_march_count + other_march_count - len(returns)
+            available_marches = gathering_march_count + other_march_count - returns
             auto_join_march_puffer = 2
 
             if self.get_config().auto_play.auto_join:  # Auto-Join
@@ -464,16 +513,29 @@ class KingShot(Game):
             )
             return
         logging.info("Contributing to Alliance Tech")
-        if menu_button := self.game_find_template_match("alliance/menu_button.png"):
+        max_count = 5
+        count = 0
+        while menu_button := self.game_find_template_match("alliance/menu_button.png"):
+            if self.game_find_template_match("alliance/tech.png"):
+                break
+            if count >= max_count:
+                raise GameNotRunningError("Game frozen")
             self.tap(Coordinates(*menu_button))
-        tech = self.wait_for_template("alliance/tech.png", timeout=5)
-        self.tap(Coordinates(*tech))
-        recommended_tech = self.wait_for_template(
-            "alliance/recommended_tech.png",
-            timeout=3,
-        )
-        self.tap(Coordinates(*recommended_tech))
+            sleep(1)
+            count += 1
+
         try:
+            tech = self.wait_for_template("alliance/tech.png", timeout=5)
+        except GameTimeoutError:
+            raise GameNotRunningError("Game frozen")
+        self.tap(Coordinates(*tech))
+
+        try:
+            recommended_tech = self.wait_for_template(
+                "alliance/recommended_tech.png",
+                timeout=3,
+            )
+            self.tap(Coordinates(*recommended_tech))
             while contribute := self.wait_for_template(
                 "alliance/contribute.png",
                 timeout=3,

@@ -1,14 +1,3 @@
-type LogLevel = "TRACE" | "DEBUG" | "INFO" | "WARNING" | "ERROR" | "FATAL";
-
-interface LogMessage {
-  level: LogLevel;
-  message: string;
-  timestamp: string;
-  source_file?: string;
-  function_name?: string;
-  line_number?: number;
-}
-
 interface BaseConstraint {
   type: string;
 }
@@ -46,6 +35,12 @@ interface SelectConstraint extends BaseConstraint {
   default_value: string;
 }
 
+interface MyCustomRoutineConstraint extends BaseConstraint {
+  type: "MyCustomRoutine";
+  choices: string[];
+  default_value: string[];
+}
+
 interface TextConstraint extends BaseConstraint {
   type: "text";
   regex: string;
@@ -53,28 +48,14 @@ interface TextConstraint extends BaseConstraint {
   default_value: string;
 }
 
-// Combined constraint type
-type Constraint =
-  | NumberConstraint
-  | CheckboxConstraint
-  | MultiCheckboxConstraint
-  | ImageCheckboxConstraint
-  | SelectConstraint
-  | TextConstraint
-  | string[]; // For arrays like "Order"
+type ConstraintTypeMap = {
+  number: NumberConstraint;
+  checkbox: CheckboxConstraint;
+  multicheckbox: MultiCheckboxConstraint;
+  imagecheckbox: ImageCheckboxConstraint;
+  select: SelectConstraint;
+  text: TextConstraint;
+  MyCustomRoutine: MyCustomRoutineConstraint;
+};
 
-interface ConstraintSection {
-  [key: string]: Constraint;
-}
-
-interface Constraints {
-  [sectionKey: string]: ConstraintSection;
-}
-
-interface ConfigSection {
-  [key: string]: any;
-}
-
-interface ConfigObject {
-  [sectionKey: string]: ConfigSection;
-}
+type Constraint = ConstraintTypeMap[keyof ConstraintTypeMap] | string[];

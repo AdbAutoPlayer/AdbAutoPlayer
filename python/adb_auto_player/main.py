@@ -6,9 +6,8 @@ import logging
 import pprint
 import sys
 from logging import DEBUG
-from typing import NoReturn
 
-from adb_auto_player import Command, ConfigLoader, Game, GenericAdbError, games
+from adb_auto_player import Command, ConfigLoader, Game, games
 from adb_auto_player.adb import (
     exec_wm_size,
     get_adb_client,
@@ -77,7 +76,10 @@ def main() -> None:
     for category_commands in commands_by_category.values():
         for cmd in category_commands:
             if str.lower(cmd.name) == str.lower(args.command):
-                _run_command(cmd)
+                if cmd.run() is None:
+                    sys.exit(0)
+                else:
+                    sys.exit(1)
 
     sys.exit(1)
 
@@ -250,35 +252,6 @@ def _get_running_game() -> str | None:
     except Exception as e:
         logging.error(f"{e}")
     return None
-
-
-def _run_command(cmd: Command) -> NoReturn:
-    """Execute a command and handle exceptions.
-
-    This function runs the specified command and manages any exceptions
-    that occur during execution. If an exception occurs, it logs the error
-    message and exits the program with a status of 1. If the command runs
-    successfully, it exits the program with a status of 0.
-
-    Args:
-        cmd (Command): The command to execute.
-
-    Raises:
-        SystemExit: Exits with status 1 if an exception occurs, or status 0
-        if the command completes successfully.
-    """
-    try:
-        cmd.run()
-    except GenericAdbError as e:
-        if "java.lang.SecurityException" in str(e):
-            logging.error(
-                "Missing permissions, check if your device has the setting: "
-                '"USB debugging (Security settings)" and enable it.'
-            )
-    except Exception as e:
-        logging.error(f"{e}")
-        sys.exit(1)
-    sys.exit(0)
 
 
 if __name__ == "__main__":

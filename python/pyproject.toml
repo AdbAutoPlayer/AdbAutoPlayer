@@ -13,6 +13,7 @@ dependencies = [
     "opencv-python>=4.10.0.84,<5",
     "pydantic>=2.10.5,<3",
     "av>=14.1.0,<15",
+    "pillow>=11.1.0",
 ]
 
 [project.scripts]
@@ -20,7 +21,7 @@ adb-auto-player = "adb_auto_player.main:main"
 
 [dependency-groups]
 dev = [
-    "nuitka>=2.6.9,<3",
+    "nuitka>=2.7,<3",
     "pytest>=8.3.4,<9",
     "commitizen>=4.2.2,<5",
 ]

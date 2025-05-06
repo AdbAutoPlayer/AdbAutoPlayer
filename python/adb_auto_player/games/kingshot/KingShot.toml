@@ -1,3 +1,3 @@
 ['Auto Play']
 'Gather Resources' = ['Bread', 'Wood', 'Stone', 'Iron']
-'Rally Auto-Join' = true
+'Rally Auto-Join' = false

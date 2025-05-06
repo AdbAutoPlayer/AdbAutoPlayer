@@ -4,7 +4,7 @@ from enum import StrEnum, auto
 from typing import Annotated
 
 from adb_auto_player import ConfigBase
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 # Type constraints
 PositiveInt = Annotated[int, Field(ge=1, le=999)]
@@ -160,14 +160,6 @@ class LegendTrialsConfig(BaseModel):
         },
     )
 
-    @field_validator("towers", mode="before")
-    @classmethod
-    def parse_towers(cls, v):
-        """Parse the tower names."""
-        if isinstance(v, list):
-            return [TowerEnum(tower) for tower in v]
-        return v
-
 
 class ArcaneLabyrinthConfig(BaseModel):
     """Arcane Labyrinth config model."""
@@ -191,6 +183,28 @@ class DailiesConfig(BaseModel):
     arena_battle: bool = Field(default=False, alias="Arena Battle")
 
 
+class MyCustomRoutineConfig(BaseModel):
+    """My Custom Routine config model."""
+
+    skip_daily_tasks_today: bool = Field(default=False, alias="Skip Daily Tasks Today")
+    daily_tasks: list = Field(
+        default_factory=list,
+        alias="Daily Tasks",
+        json_schema_extra={
+            "constraint_type": "MyCustomRoutine",
+            "default_value": [],
+        },
+    )
+    repeating_tasks: list = Field(
+        default_factory=list,
+        alias="Repeating Tasks",
+        json_schema_extra={
+            "constraint_type": "MyCustomRoutine",
+            "default_value": [],
+        },
+    )
+
+
 class Config(ConfigBase):
     """Config model."""
 
@@ -201,3 +215,4 @@ class Config(ConfigBase):
     legend_trials: LegendTrialsConfig = Field(alias="Legend Trial")
     arcane_labyrinth: ArcaneLabyrinthConfig = Field(alias="Arcane Labyrinth")
     dream_realm: DreamRealmConfig = Field(alias="Dream Realm")
+    my_custom_routine: MyCustomRoutineConfig = Field(alias="My Custom Routine")

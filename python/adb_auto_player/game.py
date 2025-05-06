@@ -30,7 +30,7 @@ from adb_auto_player.adb import (
     get_screen_resolution,
     is_portrait,
 )
-from adb_auto_player.exceptions import GameNotRunningError
+from adb_auto_player.exceptions import GameNotRunningError, GameStartError
 from adb_auto_player.ipc.game_gui import GameGUIOptions, MenuOption
 from adb_auto_player.template_matching import (
     CropRegions,
@@ -44,6 +44,7 @@ from adb_auto_player.template_matching import (
 )
 from adbutils._device import AdbDevice
 from deprecation import deprecated
+from PIL import Image
 from pydantic import BaseModel
 
 
@@ -465,8 +466,12 @@ class Game:
         return package_name == self.package_name
 
     def start_game(self) -> None:
-        """Start the Game."""
-        self.device.shell(
+        """Start the Game.
+
+        Raises:
+            GameStartError: Game cannot be started.
+        """
+        output = self.device.shell(
             [
                 "monkey",
                 "-p",
@@ -476,6 +481,9 @@ class Game:
                 "1",
             ]
         )
+        if "No activities found to run" in output:
+            logging.debug(f"start_game: {output}")
+            raise GameStartError("Game cannot be started")
 
     def wait_for_roi_change(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
@@ -1028,7 +1036,16 @@ class Game:
         os.makedirs("debug", exist_ok=True)
 
         file_name = f"debug/{file_index}.png"
-        cv2.imwrite(file_name, screenshot)
+        try:
+            os.makedirs(os.path.dirname(file_name), exist_ok=True)
+            image = Image.fromarray(screenshot)
+            image.save(file_name)
+        except Exception as e:
+            logging.warning(
+                f"Cannot save debug screenshot: {file_name}, disabling. Error: {e}"
+            )
+            logging_config["debug_save_screenshots"] = 0
+
         self._debug_screenshot_counter = file_index + 1
         return
 

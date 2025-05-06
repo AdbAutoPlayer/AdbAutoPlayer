@@ -5,12 +5,14 @@ import tomllib
 from pathlib import Path
 from typing import cast
 
+from adb_auto_player import Command
 from adb_auto_player.ipc import NumberConstraintDict
 from adb_auto_player.ipc.constraint import (
     ConstraintType,
     create_checkbox_constraint,
     create_image_checkbox_constraint,
     create_multicheckbox_constraint,
+    create_my_custom_routine_constraint,
     create_number_constraint,
     create_text_constraint,
 )
@@ -91,7 +93,9 @@ class ConfigBase(BaseModel):
         return cls(**merged_data)
 
     @classmethod
-    def get_constraints(cls) -> dict[str, dict[str, ConstraintType]]:
+    def get_constraints(
+        cls, commands: list[Command] | None = None
+    ) -> dict[str, dict[str, ConstraintType]]:
         """Get constraints from ADB Auto Player IPC, derived from model schema."""
         schema = cls.model_json_schema()
         constraints: dict[str, dict[str, ConstraintType]] = {}
@@ -100,7 +104,9 @@ class ConfigBase(BaseModel):
             section_def = cls._resolve_section_definition(schema, section_ref)
             if section_def:
                 constraints[section_name] = cls._extract_constraints_from_section(
-                    schema, section_def
+                    schema,
+                    section_def,
+                    commands=commands,
                 )
 
         return constraints
@@ -115,30 +121,43 @@ class ConfigBase(BaseModel):
 
     @classmethod
     def _extract_constraints_from_section(
-        cls, schema: dict, section_def: dict
+        cls, schema: dict, section_def: dict, commands: list[Command] | None = None
     ) -> dict[str, ConstraintType]:
         """Extract constraints from a section definition."""
         section_constraints: dict[str, ConstraintType] = {}
         for field_name, field_schema in section_def.get("properties", {}).items():
-            constraint = cls._determine_constraint(schema, field_schema)
+            constraint = cls._determine_constraint(
+                schema,
+                field_schema,
+                commands=commands,
+            )
             if constraint:
                 section_constraints[field_name] = constraint
         return section_constraints
 
     @classmethod
     def _determine_constraint(
-        cls, schema: dict, field_schema: dict
+        cls, schema: dict, field_schema: dict, commands: list[Command] | None = None
     ) -> ConstraintType | None:
         """Determine the appropriate constraint for a field based on its schema."""
         constraint_type = field_schema.get("constraint_type")
         if constraint_type:
-            return cls._handle_constraint_type(schema, field_schema, constraint_type)
+            return cls._handle_constraint_type(
+                schema,
+                field_schema,
+                constraint_type,
+                commands=commands,
+            )
 
         return cls._handle_standard_field_types(field_schema)
 
     @classmethod
     def _handle_constraint_type(
-        cls, schema: dict, field_schema: dict, constraint_type: str
+        cls,
+        schema: dict,
+        field_schema: dict,
+        constraint_type: str,
+        commands: list[Command] | None = None,
     ) -> ConstraintType:
         """Handle fields with specific constraint types."""
         items_ref = field_schema.get("items", {}).get("$ref", "")
@@ -160,6 +179,16 @@ class ConfigBase(BaseModel):
                     default_value=default_value,
                     image_dir_path=field_schema.get("image_dir_path", ""),
                 )
+            case "MyCustomRoutine":
+                choices = []
+                if commands:
+                    for cmd in commands:
+                        if cmd.allow_in_my_custom_routine:
+                            choices.append(cmd.menu_option.label)
+
+                if not choices:
+                    raise ValueError("MyCustomRoutine constraint requires menu options")
+                return create_my_custom_routine_constraint(choices=choices)
             case _:
                 raise ValueError(f"Unknown constraint_type {constraint_type}")
 

@@ -37,6 +37,12 @@ class GameNotRunningError(Exception):
     pass
 
 
+class GameStartError(Exception):
+    """Raised when the Game cannot be started."""
+
+    pass
+
+
 class UnsupportedResolutionError(Exception):
     """Raised when the resolution is not supported."""
 
