@@ -376,10 +376,13 @@ class AvatarRealmsCollide(AvatarRealmsCollideBase):
         self._click_help_bubbles()
 
         self._build()
+        self._click_help_bubbles()
+
         safe_execute(self._research)
         self._click_help_bubbles()
 
         safe_execute(self._recruit_troops)
+        self._click_help_bubbles()
 
         for action in [
             self._collect_campaign_chest,
