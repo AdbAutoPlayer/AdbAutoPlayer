@@ -33,6 +33,10 @@ class AutoPlayConfig(BaseModel):
             "default_value": DEFAULT_RESOURCES,
         },
     )
+    auto_join: bool = Field(
+        default=False,
+        alias="Rally Auto-Join",
+    )
     building: bool = Field(
         default=True,
         alias="Building",
@@ -49,9 +53,13 @@ class AutoPlayConfig(BaseModel):
         default=True,
         alias="Upgrade Troops",
     )
-    auto_join: bool = Field(
-        default=False,
-        alias="Rally Auto-Join",
+    clear_intel: bool = Field(
+        default=True,
+        alias="Clear Intel",
+    )
+    intel_use_formation_1: bool = Field(
+        default=True,
+        alias="Intel use Formation 1",
     )
 
 

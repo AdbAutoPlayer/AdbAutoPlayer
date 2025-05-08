@@ -103,6 +103,7 @@ class Game:
         self._scale_factor: float | None = None
         self._stream: DeviceStream | None = None
         self._template_dir_path: Path | None = None
+        self.default_threshold: float = 0.9
 
     @abstractmethod
     def _load_config(self):
@@ -488,7 +489,7 @@ class Game:
     def wait_for_roi_change(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
         start_image: np.ndarray,
-        threshold: float = 0.9,
+        threshold: float | None = None,
         grayscale: bool = False,
         crop: CropRegions = CropRegions(),
         delay: float = 0.5,
@@ -530,7 +531,7 @@ class Game:
             result = not similar_image(
                 base_image=cropped,
                 template_image=screenshot,
-                threshold=threshold,
+                threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
             )
 
@@ -553,7 +554,7 @@ class Game:
         self,
         template: str | Path,
         match_mode: MatchMode = MatchMode.BEST,
-        threshold: float = 0.9,
+        threshold: float | None = None,
         grayscale: bool = False,
         crop: CropRegions = CropRegions(),
         use_previous_screenshot: bool = False,
@@ -585,7 +586,7 @@ class Game:
                 image_scale_factor=self.get_scale_factor(),
             ),
             match_mode=match_mode,
-            threshold=threshold,
+            threshold=threshold or self.default_threshold,
             grayscale=grayscale,
         )
 
@@ -633,7 +634,7 @@ class Game:
     def find_all_template_matches(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
         template: str | Path,
-        threshold: float = 0.9,
+        threshold: float | None = None,
         grayscale: bool = False,
         crop: CropRegions = CropRegions(),
         min_distance: int = 10,
@@ -666,7 +667,7 @@ class Game:
                 image_path=template_path,
                 image_scale_factor=self.get_scale_factor(),
             ),
-            threshold=threshold,
+            threshold=threshold or self.default_threshold,
             grayscale=grayscale,
             min_distance=min_distance,
         )
@@ -679,7 +680,7 @@ class Game:
     def wait_for_template(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
         template: str | Path,
-        threshold: float = 0.9,
+        threshold: float | None = None,
         grayscale: bool = False,
         crop: CropRegions = CropRegions(),
         delay: float = 0.5,
@@ -695,7 +696,7 @@ class Game:
         def find_template() -> tuple[int, int] | None:
             result: tuple[int, int] | None = self.game_find_template_match(
                 template,
-                threshold=threshold,
+                threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
                 crop=crop,
             )
@@ -715,7 +716,7 @@ class Game:
     def wait_until_template_disappears(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
         template: str | Path,
-        threshold: float = 0.9,
+        threshold: float | None = None,
         grayscale: bool = False,
         crop: CropRegions = CropRegions(),
         delay: float = 0.5,
@@ -731,7 +732,7 @@ class Game:
         def find_best_template() -> tuple[int, int] | None:
             result: tuple[int, int] | None = self.game_find_template_match(
                 template,
-                threshold=threshold,
+                threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
                 crop=crop,
             )
@@ -758,7 +759,7 @@ class Game:
     def wait_for_any_template(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
         templates: list[str],
-        threshold: float = 0.9,
+        threshold: float | None = None,
         grayscale: bool = False,
         crop: CropRegions = CropRegions(),
         delay: float = 0.5,
@@ -774,7 +775,7 @@ class Game:
         def find_template() -> tuple[str, int, int] | None:
             return self.find_any_template(
                 templates,
-                threshold=threshold,
+                threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
                 crop=crop,
             )
@@ -792,7 +793,7 @@ class Game:
         self,
         templates: list[str],
         match_mode: MatchMode = MatchMode.BEST,
-        threshold: float = 0.9,
+        threshold: float | None = None,
         grayscale: bool = False,
         crop: CropRegions = CropRegions(),
         use_previous_screenshot: bool = False,
@@ -816,7 +817,7 @@ class Game:
             result: tuple[int, int] | None = self.game_find_template_match(
                 template,
                 match_mode=match_mode,
-                threshold=threshold,
+                threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
                 crop=crop,
                 use_previous_screenshot=True,

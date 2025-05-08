@@ -58,6 +58,7 @@ class KingShot(Game):
         self.package_name_substrings = [
             "com.run.tower.defense",
         ]
+        self.default_threshold = 0.8
 
     def _start_up(self, device_streaming: bool = False) -> None:
         """Give the bot eyes."""
@@ -74,7 +75,7 @@ class KingShot(Game):
         max_seconds: int = 90
         while True:
             if seconds_since_restart_attempt > max_seconds:
-                raise GameTimeoutError("Could not restart game after 90 seconds.")
+                raise GameNotRunningError("Could not restart game after 90 seconds.")
 
             if not self.is_game_running():
                 logging.info("Restarting game...")
@@ -87,6 +88,8 @@ class KingShot(Game):
                 break
 
             self.tap(screen_center)
+            if self.game_find_template_match("purchase_button_yellow.png"):
+                self.press_back_button()
             sleep(3)
             seconds_since_restart_attempt += 3
 
@@ -227,10 +230,7 @@ class KingShot(Game):
     def _auto_play_loop(self) -> None:
         self._click_alliance_help()
         self._collect_online_rewards()
-        try:
-            self._claim_conquest()
-        except GameTimeoutError as e:
-            logging.warning(f"{e}")
+
         self._handle_troops_completed()
         self._handle_info_actions()
 
@@ -240,9 +240,130 @@ class KingShot(Game):
             logging.warning(f"{e}")
 
         try:
+            self._clear_intel()
+        except GameTimeoutError as e:
+            logging.warning(f"{e}")
+        try:
             self._gather_resources()
         except GameTimeoutError as e:
             logging.warning(f"{e}")
+        try:
+            self._claim_conquest()
+        except GameTimeoutError as e:
+            logging.warning(f"{e}")
+
+    def _clear_intel(self) -> None:
+        if not self.get_config().auto_play.clear_intel:
+            logging.info("Skipping Intel")
+
+        if not self._is_march_available():
+            logging.info("No marches available for Intel")
+
+        logging.info("Checking Intel")
+        self._enter_intel()
+        while self._handle_intel():
+            self._enter_intel()
+
+    def _enter_intel(self) -> None:
+        if self.game_find_template_match("intel/activity.png"):
+            return
+        if not self.game_find_template_match("intel/compass.png"):
+            self._navigate_outside_town()
+        compass = self.wait_for_template("intel/compass.png", timeout=5)
+        self.click(Coordinates(*compass))
+
+    def _handle_intel(self) -> bool:
+        _ = self.wait_for_template("intel/activity.png", timeout=5)
+        sleep(1)
+        result = self.find_any_template(
+            templates=[
+                "intel/completed.png",
+                "intel/rescue/orange.png",
+                # "intel/rescue/purple.png",
+                # "intel/rescue/blue.png",
+                "intel/inn/orange.png",
+                "intel/inn/purple.png",
+                # "intel/inn/blue.png",
+                "intel/beast/orange.png",
+                "intel/beast/purple.png",
+                "intel/beast/blue.png",
+                "intel/rebel.png",
+            ]
+        )
+
+        if not result:
+            logging.info("No Intel found")
+            return False
+
+        template, x, y = result
+
+        self.click(Coordinates(x, y))
+
+        if template == "intel/completed.png":
+            sleep(2)
+            self.press_back_button()
+            return True
+
+        view = self.wait_for_template("intel/view.png", timeout=5)
+        self.click(Coordinates(*view))
+
+        template, x, y = self.wait_for_any_template(
+            templates=[
+                "intel/rescue.png",
+                "intel/conquer.png",
+                "intel/attack.png",
+            ],
+            timeout=5,
+        )
+
+        self.click(Coordinates(x, y))
+
+        match template:
+            case "intel/rescue.png":
+                # Nothing to do here
+                pass
+            case "intel/conquer.png":
+                fight = self.wait_for_template("intel/fight.png", timeout=5)
+                self.click(Coordinates(*fight))
+                _ = self.wait_for_template("intel/victory.png", timeout=5)
+            case "intel/attack.png":
+                return self._handle_attack()
+        return True
+
+    def _handle_attack(self) -> bool:
+        _ = self.wait_for_template("attack/return.png", timeout=5)
+        if self.get_config().auto_play.intel_use_formation_1:
+            if btn := self.game_find_template_match("attack/formation_1.png"):
+                self.click(Coordinates(*btn))
+            else:
+                logging.warning("Formation 1 not found")
+
+        sleep(1)
+        if self.game_find_template_match("attack/add_hero.png"):
+            logging.warning("Missing heroes skipping Intel Beast attack")
+            return False
+
+        if self.game_find_template_match("attack/almost_certain_to_fail.png"):
+            logging.warning("Attack almost certain to fail skipping")
+            return False
+
+        if deploy := self.game_find_template_match("attack/deploy.png"):
+            self.click(Coordinates(*deploy))
+            sleep(1)
+            self._wait_for_attack_to_finish()
+            return True
+
+        return False
+
+    def _wait_for_attack_to_finish(self) -> None:
+        logging.info("Waiting for attack to finish")
+        self._open_info(town=False)
+        _ = self.wait_for_template("info/beast.png", timeout=5)
+        while self.game_find_template_match("info/beast.png"):
+            sleep(3)
+        _ = self.wait_for_template("info/returning.png", timeout=5)
+        while self.game_find_template_match("info/returning.png"):
+            sleep(3)
 
     def _collect_online_rewards(self) -> None:
         self._open_info(town=True)
@@ -323,8 +444,21 @@ class KingShot(Game):
         matches += self.find_all_template_matches(
             "research/23.png",
         )
-        logging.info(f"Dev Output Research Matches: {matches}")
-        logging.warning("Research not implemented")
+        for match in matches:
+            self.tap(Coordinates(*match))
+            sleep(3)
+            research = self.game_find_template_match("research/research.png")
+            if not research:
+                self.press_back_button()
+                sleep(2)
+                continue
+            self.tap(Coordinates(*research))
+            sleep(3)
+
+            if help_btn := self.game_find_template_match("research/help.png"):
+                self.tap(Coordinates(*help_btn))
+                return True
+        logging.warning("Research not fully implemented")
         return True
 
     def _handle_training(self) -> bool:
@@ -376,7 +510,7 @@ class KingShot(Game):
         upgrade = self.game_find_template_match("building/upgrade.png")
         if not upgrade:
             return False
-        if not self.get_config().auto_play.buildingresearch:
+        if not self.get_config().auto_play.building:
             logging.info("Building disabled")
             return True
 
@@ -395,49 +529,53 @@ class KingShot(Game):
             )
         return True
 
+    def _is_march_available(self) -> bool:
+        self._navigate_outside_town()
+        self._open_info(town=False)
+
+        gathering_march_count = sum(
+            len(self.find_all_template_matches(icon, crop=crop_info_left_icons))
+            for icon in [
+                "info/bread.png",
+                "info/wood.png",
+                "info/stone.png",
+                "info/iron.png",
+            ]
+        )
+
+        other_march_count = sum(
+            len(
+                self.find_all_template_matches(
+                    icon, crop=crop_info_left_icons, threshold=0.9
+                )
+            )
+            for icon in [
+                "info/flag.png",
+                "info/waiting_for_rally.png",
+                "info/returning.png",
+            ]
+        )
+
+        returns = sum(
+            len(self.find_all_template_matches(icon, crop=crop_info_right_icons))
+            for icon in [
+                "info/button/goto.png",
+            ]
+        )
+        available_marches = gathering_march_count + other_march_count - returns
+        auto_join_march_puffer = 1
+
+        if self.get_config().auto_play.auto_join:  # Auto-Join
+            if (
+                available_marches <= auto_join_march_puffer
+                and not self.game_find_template_match("info/waiting_for_rally.png")
+            ):
+                return False
+
+        return available_marches >= 1
+
     def _gather_resources(self) -> None:
-        def _is_march_available() -> bool:
-            self._navigate_outside_town()
-            self._open_info(town=False)
-
-            gathering_march_count = sum(
-                len(self.find_all_template_matches(icon, crop=crop_info_left_icons))
-                for icon in [
-                    "info/bread.png",
-                    "info/wood.png",
-                    "info/stone.png",
-                    "info/iron.png",
-                ]
-            )
-
-            other_march_count = sum(
-                len(self.find_all_template_matches(icon, crop=crop_info_left_icons))
-                for icon in [
-                    "info/flag.png",
-                    "info/waiting_for_rally.png",
-                    "info/returning.png",
-                ]
-            )
-
-            returns = sum(
-                len(self.find_all_template_matches(icon, crop=crop_info_right_icons))
-                for icon in [
-                    "info/button/goto.png",
-                ]
-            )
-            available_marches = gathering_march_count + other_march_count - returns
-            auto_join_march_puffer = 2
-
-            if self.get_config().auto_play.auto_join:  # Auto-Join
-                if (
-                    available_marches < auto_join_march_puffer
-                    and not self.game_find_template_match("info/waiting_for_rally.png")
-                ):
-                    return False
-
-            return available_marches >= 1
-
-        if not _is_march_available():
+        if not self._is_march_available():
             if self.get_config().auto_play.auto_join:
                 logging.info(
                     "No march available for gathering - keeping one for Auto-Join"
@@ -455,31 +593,70 @@ class KingShot(Game):
             "gathering/iron.png",
         ]
 
-        while _is_march_available():
+        while self._is_march_available():
             self._close_info()
             self.tap(Coordinates(60, 1300))
-            sleep(3)
-            search = self.wait_for_template("search.png", timeout=3)
+            search = self.wait_for_template("search.png", timeout=5)
             self.swipe_left(y=1400, sx=1000, ex=500)
             node_template = gathering_nodes[self.gathering_count % len(gathering_nodes)]
             node = self.wait_for_template(node_template, timeout=3)
             logging.info(f"Gathering {node_template}")
             self.tap(Coordinates(*node))
             sleep(0.5)
-            self.tap(Coordinates(*search))
-            gather = self.wait_for_template("gathering/gather.png", timeout=10)
-            self.tap(Coordinates(*gather))
-            sleep(3)
+
+            self._handle_search(Coordinates(*search))
+
             while minus := self.game_find_template_match(
                 "minus.png",
                 crop=CropRegions(left=0.5, bottom=0.5),
             ):
                 self.tap(Coordinates(*minus))
-            deploy = self.wait_for_template("deploy.png", timeout=3)
+                sleep(1)
+            deploy = self.wait_for_template(
+                "deploy.png",
+                timeout=3,
+            )
             self.tap(Coordinates(*deploy))
             sleep(2)
             self.gathering_count += 1
         return
+
+    def _handle_search(self, search_btn_coords: Coordinates) -> None:
+        count_max_level_reached = 0
+        while True:
+            self.tap(search_btn_coords)
+            try:
+                gather = self.wait_for_template("gathering/gather.png", timeout=10)
+                self.tap(Coordinates(*gather))
+                sleep(3)
+                break
+            except GameTimeoutError:
+                if plus := self.game_find_template_match(
+                    "gathering/plus.png",
+                    threshold=0.9,
+                ):
+                    self.tap(Coordinates(*plus))
+                    continue
+
+                max_count = 2
+                if self.game_find_template_match(
+                    "gathering/plus_grayed_out.png",
+                    threshold=0.9,
+                ):
+                    count_max_level_reached += 1
+                    if count_max_level_reached >= max_count:
+                        logging.warning("Cannot gather Resource, trying next Resource")
+                        self.gathering_count += 1
+                        break
+                    if minus := self.game_find_template_match(
+                        "gathering/minus.png",
+                        threshold=0.9,
+                    ):
+                        while not self.game_find_template_match(
+                            "gathering/minus_grayed_out.png",
+                            threshold=0.9,
+                        ):
+                            self.tap(Coordinates(*minus))
 
     def _click_alliance_help(self) -> None:
         logging.info("Clicking Alliance help")
@@ -515,13 +692,16 @@ class KingShot(Game):
         logging.info("Contributing to Alliance Tech")
         max_count = 5
         count = 0
-        while menu_button := self.game_find_template_match("alliance/menu_button.png"):
+        while menu_button := self.game_find_template_match(
+            "alliance/menu_button.png",
+        ):
+            self.tap(Coordinates(*menu_button))
+            sleep(1)
             if self.game_find_template_match("alliance/tech.png"):
                 break
             if count >= max_count:
                 raise GameNotRunningError("Game frozen")
-            self.tap(Coordinates(*menu_button))
-            sleep(1)
+
             count += 1
 
         try:
@@ -540,6 +720,7 @@ class KingShot(Game):
                 "alliance/contribute.png",
                 timeout=3,
                 crop=CropRegions(left=0.5, top=0.5),
+                threshold=0.9,
             ):
                 self.tap(Coordinates(*contribute), blocking=False)
         except GameTimeoutError:
@@ -598,11 +779,10 @@ class KingShot(Game):
         conquest = self.wait_for_template("bottom_menu/conquest.png", timeout=5)
         self.tap(Coordinates(*conquest))
 
-        self.wait_for_template("conquest/conquer.png", timeout=5)
+        self.wait_for_template("conquest/conquer.png", timeout=5, threshold=0.9)
         sleep(1)
         claim = self.game_find_template_match(
             "conquest/claim_chest.png",
-            threshold=0.95,
         )
         if not claim:
             logging.info("Conquest treasure chest not ready")

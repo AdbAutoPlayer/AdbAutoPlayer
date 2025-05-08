@@ -1,3 +1,7 @@
 ['Auto Play']
 'Gather Resources' = ['Bread', 'Wood', 'Stone', 'Iron']
 'Rally Auto-Join' = false
+'Building' = false
+'Research' = true
+'Train Troops' = true
+'Upgrade Troops' = false

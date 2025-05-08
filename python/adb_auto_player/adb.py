@@ -162,6 +162,7 @@ def log_devices(devices: list[AdbDeviceInfo], log_level: int = DEBUG) -> None:
         log_level (int): Logging level.
     """
     if not devices:
+        logging.log(log_level, "No devices found.")
         return
     else:
         devices_str = "Devices: " + ", ".join(
@@ -359,7 +360,7 @@ def _is_device_connection_active(device: AdbDevice) -> bool:
         device.get_state()
         return True
     except Exception as e:
-        logging.debug(f"device.get_state(): {e}")
+        logging.debug(f"state(): {e}")
         return False
 
 
