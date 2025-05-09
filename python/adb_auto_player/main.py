@@ -196,8 +196,8 @@ def _print_debug() -> None:
 
         average_time = total_time / iterations
         logging.info(
-            "Average time taken to tap screen over "
-            f"{iterations} iterations: {average_time:.2f} ms"
+            "Average time taken to tap screen "
+            f"{iterations} times: {average_time:.2f} ms"
         )
 
         logging.info("--- Device Display ---")
