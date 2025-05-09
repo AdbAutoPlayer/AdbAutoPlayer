@@ -42,12 +42,17 @@ class ModeCategory(StrEnum):
     ALL = "All"
 
 
+class _MissingHeroError(Exception):
+    pass
+
+
 class KingShot(Game):
     """KingShot."""
 
     gathering_count = 0
     next_alliance_tech_contribution_at = datetime.datetime.now(datetime.UTC)
     next_claim_conquest_at = datetime.datetime.now(datetime.UTC)
+    next_intel_at = datetime.datetime.now(datetime.UTC)
 
     def __init__(self) -> None:
         """Initialize KingShot."""
@@ -132,6 +137,7 @@ class KingShot(Game):
     def auto_play(self) -> None:
         """AutoPlay."""
         self._start_up(device_streaming=True)
+
         while True:
             try:
                 self._auto_play_loop()
@@ -239,12 +245,19 @@ class KingShot(Game):
         except GameTimeoutError as e:
             logging.warning(f"{e}")
 
+        skip_gathering_for_intel = False
         try:
             self._clear_intel()
+        except _MissingHeroError:
+            skip_gathering_for_intel = True
         except GameTimeoutError as e:
             logging.warning(f"{e}")
         try:
-            self._gather_resources()
+            # TODO config
+            if not skip_gathering_for_intel:
+                self._gather_resources()
+            else:
+                logging.info("Skipping gathering to complete Intel")
         except GameTimeoutError as e:
             logging.warning(f"{e}")
         try:
@@ -256,21 +269,37 @@ class KingShot(Game):
         if not self.get_config().auto_play.clear_intel:
             logging.info("Skipping Intel")
 
+        now = datetime.datetime.now(datetime.UTC)
+        if now < self.next_intel_at:
+            delta = self.next_intel_at - now
+            hours, remainder = divmod(delta.total_seconds(), 3600)
+            minutes, _ = divmod(remainder, 60)
+            logging.info(
+                "Skipping Intel, "
+                f"next check in {int(hours)} hours and {int(minutes)} minutes"
+            )
+            return
+
         if not self._is_march_available():
             logging.info("No marches available for Intel")
 
         logging.info("Checking Intel")
-        self._enter_intel()
+        self._navigate_to_intel()
         while self._handle_intel():
-            self._enter_intel()
+            self._navigate_to_intel()
 
-    def _enter_intel(self) -> None:
+    def _navigate_to_intel(self) -> None:
         if self.game_find_template_match("intel/activity.png"):
             return
         if not self.game_find_template_match("intel/compass.png"):
             self._navigate_outside_town()
         compass = self.wait_for_template("intel/compass.png", timeout=5)
         self.click(Coordinates(*compass))
+
+    def _set_next_intel_at(self) -> None:
+        self.next_intel_at = datetime.datetime.now(datetime.UTC) + datetime.timedelta(
+            hours=1
+        )
 
     def _handle_intel(self) -> bool:
         _ = self.wait_for_template("intel/activity.png", timeout=5)
@@ -292,7 +321,8 @@ class KingShot(Game):
         )
 
         if not result:
-            logging.info("No Intel found")
+            logging.info("No Intel found, waiting 1 hour till the next check")
+            self._set_next_intel_at()
             return False
 
         template, x, y = result
@@ -302,6 +332,7 @@ class KingShot(Game):
         if template == "intel/completed.png":
             sleep(2)
             self.press_back_button()
+            sleep(1)
             return True
 
         view = self.wait_for_template("intel/view.png", timeout=5)
@@ -341,29 +372,46 @@ class KingShot(Game):
         sleep(1)
         if self.game_find_template_match("attack/add_hero.png"):
             logging.warning("Missing heroes skipping Intel Beast attack")
-            return False
+            raise _MissingHeroError()
 
         if self.game_find_template_match("attack/almost_certain_to_fail.png"):
-            logging.warning("Attack almost certain to fail skipping")
+            logging.warning("'Attack 'almost certain to fail' skipping")
+            self._set_next_intel_at()
+            return False
+
+        if self.game_find_template_match("attack/you_are_not_likely_to_prevail.png"):
+            logging.warning("'You are not likely to prevail' skipping")
+            self._set_next_intel_at()
             return False
 
         if deploy := self.game_find_template_match("attack/deploy.png"):
             self.click(Coordinates(*deploy))
             sleep(1)
+            if self._empty_stamina_handled():
+                self.click(Coordinates(*deploy))
             self._wait_for_attack_to_finish()
             return True
 
         return False
 
+    def _empty_stamina_handled(self) -> bool:
+        try:
+            _ = self.wait_for_template("attack/stamina.png", timeout=5)
+        except GameTimeoutError:
+            return False
+        if use := self.game_find_template_match("attack/use.png"):
+            self.click(Coordinates(*use))
+            sleep(1)
+        self.press_back_button()
+        return True
+
     def _wait_for_attack_to_finish(self) -> None:
         logging.info("Waiting for attack to finish")
         self._open_info(town=False)
         _ = self.wait_for_template("info/beast.png", timeout=5)
-        while self.game_find_template_match("info/beast.png"):
-            sleep(3)
+        self.wait_until_template_disappears("info/beast.png", timeout=180)
         _ = self.wait_for_template("info/returning.png", timeout=5)
-        while self.game_find_template_match("info/returning.png"):
-            sleep(3)
+        self.wait_until_template_disappears("info/returning.png", timeout=180)
 
     def _collect_online_rewards(self) -> None:
         self._open_info(town=True)
@@ -408,19 +456,26 @@ class KingShot(Game):
 
         for action in actions:
             self._navigate_to_town()
+            self._click_alliance_help()
             self._open_info(town=True)
             sleep(1)
             self.tap(Coordinates(*action))
             sleep(3)
             if not self._tap_finger():
-                return
+                if self.game_find_template_match("building/furniture.png"):
+                    self._handle_furniture_building_upgrade()
+                continue
             if self._handle_building_upgrade():
                 continue
             if self._handle_research():
                 continue
             if self._handle_training():
                 continue
-        return
+
+    def _handle_furniture_building_upgrade(self):
+        self.tap(Coordinates(900, 800))
+        sleep(2)
+        self.tap(Coordinates(800, 1800))
 
     def _handle_research(self) -> bool:
         if not self.game_find_template_match("research/back.png"):
@@ -660,6 +715,13 @@ class KingShot(Game):
 
     def _click_alliance_help(self) -> None:
         logging.info("Clicking Alliance help")
+
+        if help_request := self.game_find_template_match(
+            "alliance/help_request.png",
+        ):
+            self.tap(Coordinates(*help_request))
+            sleep(0.5)
+
         if alliance_help := self.game_find_template_match(
             "alliance/help.png",
             crop=CropRegions(left=0.5, top=0.8),
@@ -765,8 +827,8 @@ class KingShot(Game):
 
     def _claim_conquest(self) -> None:
         now = datetime.datetime.now(datetime.UTC)
-        if now < self.next_alliance_tech_contribution_at:
-            delta = self.next_alliance_tech_contribution_at - now
+        if now < self.next_claim_conquest_at:
+            delta = self.next_claim_conquest_at - now
             hours, remainder = divmod(delta.total_seconds(), 3600)
             minutes, _ = divmod(remainder, 60)
             logging.info(
@@ -793,3 +855,4 @@ class KingShot(Game):
         self.tap(Coordinates(*claim))
         sleep(1)
         self.tap(Coordinates(*claim))
+        self.next_claim_conquest_at = now + datetime.timedelta(hours=1)
