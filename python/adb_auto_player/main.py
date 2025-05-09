@@ -5,6 +5,7 @@ import json
 import logging
 import pprint
 import sys
+import time
 from logging import DEBUG
 
 from adb_auto_player import Command, ConfigLoader, Game, games
@@ -180,6 +181,25 @@ def _print_debug() -> None:
         logging.info(f"Device Serial: {device.serial}")
         logging.info(f"Device Info: {device.info}")
         _ = get_running_app(device)
+
+        logging.info("--- Testing Input Delay ---")
+        total_time: float = 0.0
+        iterations = 10
+
+        for i in range(iterations):
+            start_time = time.time()
+            device.click(-1, -1)
+            end_time = time.time()
+
+            elapsed_time = (end_time - start_time) * 1000  # convert to milliseconds
+            total_time += elapsed_time
+
+        average_time = total_time / iterations
+        logging.info(
+            "Average time taken to tap screen over "
+            f"{iterations} iterations: {average_time:.2f} ms"
+        )
+
         logging.info("--- Device Display ---")
         _ = get_screen_resolution(device)
         _ = is_portrait(device)
