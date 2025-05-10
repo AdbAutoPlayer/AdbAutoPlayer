@@ -4,6 +4,7 @@ import datetime
 import logging
 from enum import StrEnum
 from time import sleep
+from typing import NoReturn
 
 from adb_auto_player import Command, Coordinates, CropRegions, Game, GameTimeoutError
 from adb_auto_player.exceptions import GameNotRunningError
@@ -53,6 +54,7 @@ class KingShot(Game):
     next_alliance_tech_contribution_at = datetime.datetime.now(datetime.UTC)
     next_claim_conquest_at = datetime.datetime.now(datetime.UTC)
     next_intel_at = datetime.datetime.now(datetime.UTC)
+    next_auto_join_extend_at = datetime.datetime.now(datetime.UTC)
 
     def __init__(self) -> None:
         """Initialize KingShot."""
@@ -134,7 +136,7 @@ class KingShot(Game):
             is not None
         )
 
-    def auto_play(self) -> None:
+    def auto_play(self) -> NoReturn:
         """AutoPlay."""
         self._start_up(device_streaming=True)
 
@@ -233,7 +235,33 @@ class KingShot(Game):
             self.tap(Coordinates(*info_button))
             sleep(3)
 
+    def _extend_auto_join(self) -> None:
+        if not self.get_config().auto_play.auto_join:
+            return
+
+        if self._skip_if_too_early(
+            target_time=self.next_auto_join_extend_at,
+            message_prefix="Extending Auto-Join in ",
+        ):
+            return
+
+        self._navigate_to_alliance_screen()
+        logging.info("Extending Auto-Join")
+        war = self.wait_for_template("alliance/war.png")
+        self.tap(Coordinates(*war))
+        _ = self.wait_for_template("alliance/war_return.png")
+        self.tap(Coordinates(500, 1800))
+        enable = self.wait_for_template("alliance/enable.png")
+        self.tap(Coordinates(*enable))
+        self._add_time("next_auto_join_extend_at", hours=4)
+        return
+
     def _auto_play_loop(self) -> None:
+        try:
+            self._extend_auto_join()
+        except GameTimeoutError as e:
+            logging.warning(f"{e}")
+
         self._click_alliance_help()
         self._collect_online_rewards()
 
@@ -269,24 +297,21 @@ class KingShot(Game):
         if not self.get_config().auto_play.clear_intel:
             logging.info("Skipping Intel")
 
-        now = datetime.datetime.now(datetime.UTC)
-        if now < self.next_intel_at:
-            delta = self.next_intel_at - now
-            hours, remainder = divmod(delta.total_seconds(), 3600)
-            minutes, _ = divmod(remainder, 60)
-            logging.info(
-                "Skipping Intel, "
-                f"next check in {int(hours)} hours and {int(minutes)} minutes"
-            )
+        if self._skip_if_too_early(
+            target_time=self.next_intel_at,
+            message_prefix="Skipping Intel, next check in ",
+        ):
             return
 
         if not self._is_march_available():
             logging.info("No marches available for Intel")
+            return
 
         logging.info("Checking Intel")
         self._navigate_to_intel()
         while self._handle_intel():
             self._navigate_to_intel()
+        return
 
     def _navigate_to_intel(self) -> None:
         if self.game_find_template_match("intel/activity.png"):
@@ -295,11 +320,7 @@ class KingShot(Game):
             self._navigate_outside_town()
         compass = self.wait_for_template("intel/compass.png", timeout=5)
         self.click(Coordinates(*compass))
-
-    def _set_next_intel_at(self) -> None:
-        self.next_intel_at = datetime.datetime.now(datetime.UTC) + datetime.timedelta(
-            hours=1
-        )
+        return
 
     def _handle_intel(self) -> bool:
         _ = self.wait_for_template("intel/activity.png", timeout=5)
@@ -322,7 +343,7 @@ class KingShot(Game):
 
         if not result:
             logging.info("No Intel found, waiting 1 hour till the next check")
-            self._set_next_intel_at()
+            self._add_time("next_intel_at", hours=1)
             return False
 
         template, x, y = result
@@ -376,12 +397,12 @@ class KingShot(Game):
 
         if self.game_find_template_match("attack/almost_certain_to_fail.png"):
             logging.warning("'Attack 'almost certain to fail' skipping")
-            self._set_next_intel_at()
+            self._add_time("next_intel_at", hours=1)
             return False
 
         if self.game_find_template_match("attack/you_are_not_likely_to_prevail.png"):
             logging.warning("'You are not likely to prevail' skipping")
-            self._set_next_intel_at()
+            self._add_time("next_intel_at", hours=1)
             return False
 
         if deploy := self.game_find_template_match("attack/deploy.png"):
@@ -472,7 +493,7 @@ class KingShot(Game):
             if self._handle_training():
                 continue
 
-    def _handle_furniture_building_upgrade(self):
+    def _handle_furniture_building_upgrade(self) -> None:
         self.tap(Coordinates(900, 800))
         sleep(2)
         self.tap(Coordinates(800, 1800))
@@ -557,9 +578,9 @@ class KingShot(Game):
             )
             self.tap(Coordinates(x, y))
             sleep(2)
-            return True
         except GameTimeoutError:
             return False
+        return True
 
     def _handle_building_upgrade(self) -> bool:
         upgrade = self.game_find_template_match("building/upgrade.png")
@@ -714,8 +735,8 @@ class KingShot(Game):
                             self.tap(Coordinates(*minus))
 
     def _click_alliance_help(self) -> None:
+        self._navigate_to_town()
         logging.info("Clicking Alliance help")
-
         if help_request := self.game_find_template_match(
             "alliance/help_request.png",
         ):
@@ -739,19 +760,9 @@ class KingShot(Game):
             self.tap(Coordinates(*chat))
             sleep(0.5)
 
-    def _alliance_tech_contribute(self) -> None:
+    def _navigate_to_alliance_screen(self) -> None:
         self._navigate_to_town()
-        now = datetime.datetime.now(datetime.UTC)
-        if now < self.next_alliance_tech_contribution_at:
-            delta = self.next_alliance_tech_contribution_at - now
-            hours, remainder = divmod(delta.total_seconds(), 3600)
-            minutes, _ = divmod(remainder, 60)
-            logging.info(
-                "Skipping Alliance Tech contribution, "
-                f"next contribution in {int(hours)} hours and {int(minutes)} minutes"
-            )
-            return
-        logging.info("Contributing to Alliance Tech")
+        logging.info("Opening Alliance screen")
         max_count = 5
         count = 0
         while menu_button := self.game_find_template_match(
@@ -765,6 +776,16 @@ class KingShot(Game):
                 raise GameNotRunningError("Game frozen")
 
             count += 1
+
+    def _alliance_tech_contribute(self) -> None:
+        if self._skip_if_too_early(
+            target_time=self.next_alliance_tech_contribution_at,
+            message_prefix="Skipping Alliance Tech contribution, next contribution in ",
+        ):
+            return
+
+        self._navigate_to_alliance_screen()
+        logging.info("Contributing to Alliance Tech")
 
         try:
             tech = self.wait_for_template("alliance/tech.png", timeout=5)
@@ -786,7 +807,7 @@ class KingShot(Game):
             ):
                 self.tap(Coordinates(*contribute), blocking=False)
         except GameTimeoutError:
-            self.next_alliance_tech_contribution_at = now + datetime.timedelta(hours=1)
+            self._add_time("next_alliance_tech_contribution_at", hours=1)
         return
 
     def get_cli_menu_commands(self) -> list[Command]:
@@ -826,15 +847,10 @@ class KingShot(Game):
         return self.config
 
     def _claim_conquest(self) -> None:
-        now = datetime.datetime.now(datetime.UTC)
-        if now < self.next_claim_conquest_at:
-            delta = self.next_claim_conquest_at - now
-            hours, remainder = divmod(delta.total_seconds(), 3600)
-            minutes, _ = divmod(remainder, 60)
-            logging.info(
-                "Skipping Conquest treasure chest, "
-                f"next claim in {int(hours)} hours and {int(minutes)} minutes"
-            )
+        if self._skip_if_too_early(
+            target_time=self.next_claim_conquest_at,
+            message_prefix="Skipping Conquest treasure chest, next claim in ",
+        ):
             return
         logging.info("Claiming Conquest treasure chest")
         self._navigate_to_town()
@@ -855,4 +871,27 @@ class KingShot(Game):
         self.tap(Coordinates(*claim))
         sleep(1)
         self.tap(Coordinates(*claim))
-        self.next_claim_conquest_at = now + datetime.timedelta(hours=1)
+        self._add_time("next_claim_conquest_at", hours=1)
+        return
+
+    def _add_time(self, attr_name: str, **kwargs) -> None:
+        """Adds time to a datetime attribute by name using timedelta kwargs."""
+        current = getattr(self, attr_name)
+        updated = current + datetime.timedelta(**kwargs)
+        setattr(self, attr_name, updated)
+
+    @staticmethod
+    def _skip_if_too_early(
+        target_time: datetime.datetime,
+        message_prefix: str,
+    ):
+        now = datetime.datetime.now(datetime.UTC)
+        if now < target_time:
+            delta = target_time - now
+            hours, remainder = divmod(delta.total_seconds(), 3600)
+            minutes, _ = divmod(remainder, 60)
+            logging.info(
+                f"{message_prefix} {int(hours)} hours and {int(minutes)} minutes"
+            )
+            return True
+        return False
