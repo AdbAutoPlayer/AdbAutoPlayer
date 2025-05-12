@@ -250,6 +250,11 @@ class KingShot(Game):
         war = self.wait_for_template("alliance/war.png")
         self.tap(Coordinates(*war))
         _ = self.wait_for_template("alliance/war_return.png")
+
+        if rally := self.game_find_template_match("alliance/rally.png"):
+            self.tap(Coordinates(*rally))
+            sleep(0.5)
+
         self.tap(Coordinates(500, 1800))
         enable = self.wait_for_template("alliance/enable.png")
         self.tap(Coordinates(*enable))
@@ -281,7 +286,6 @@ class KingShot(Game):
         except GameTimeoutError as e:
             logging.warning(f"{e}")
         try:
-            # TODO config
             if not skip_gathering_for_intel:
                 self._gather_resources()
             else:
@@ -375,6 +379,17 @@ class KingShot(Game):
                 # Nothing to do here
                 pass
             case "intel/conquer.png":
+                template, _, _ = self.wait_for_any_template(
+                    templates=[
+                        "intel/fight.png",
+                        "attack/stamina.png",
+                    ]
+                )
+
+                if template == "attack/stamina.png":
+                    self._empty_stamina_handled()
+                    return True
+
                 fight = self.wait_for_template("intel/fight.png", timeout=5)
                 self.click(Coordinates(*fight))
                 _ = self.wait_for_template("intel/victory.png", timeout=5)
@@ -392,7 +407,7 @@ class KingShot(Game):
 
         sleep(1)
         if self.game_find_template_match("attack/add_hero.png"):
-            logging.warning("Missing heroes skipping Intel Beast attack")
+            logging.warning("Missing heroes skipping Intel Attack")
             raise _MissingHeroError()
 
         if self.game_find_template_match("attack/almost_certain_to_fail.png"):
@@ -430,9 +445,9 @@ class KingShot(Game):
         logging.info("Waiting for attack to finish")
         self._open_info(town=False)
         _ = self.wait_for_template("info/beast.png", timeout=5)
-        self.wait_until_template_disappears("info/beast.png", timeout=180)
+        self.wait_until_template_disappears("info/beast.png", timeout=90)
         _ = self.wait_for_template("info/returning.png", timeout=5)
-        self.wait_until_template_disappears("info/returning.png", timeout=180)
+        self.wait_until_template_disappears("info/returning.png", timeout=90)
 
     def _collect_online_rewards(self) -> None:
         self._open_info(town=True)
@@ -651,6 +666,8 @@ class KingShot(Game):
         return available_marches >= 1
 
     def _gather_resources(self) -> None:
+        if not self.get_config().auto_play.gather_resources:
+            logging.warning("Gathering disabled, no resources selected")
         if not self._is_march_available():
             if self.get_config().auto_play.auto_join:
                 logging.info(
@@ -663,10 +680,8 @@ class KingShot(Game):
         logging.info("Gathering resources")
 
         gathering_nodes = [
-            "gathering/bread.png",
-            "gathering/wood.png",
-            "gathering/stone.png",
-            "gathering/iron.png",
+            f"gathering/{resource.value.lower()}.png"
+            for resource in self.get_config().auto_play.gather_resources
         ]
 
         while self._is_march_available():
