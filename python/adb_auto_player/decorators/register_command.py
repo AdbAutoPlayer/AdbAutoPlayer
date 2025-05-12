@@ -1,0 +1,88 @@
+"""Provides a registry mechanism for Commands.
+
+Each command can optionally include GUI metadata for display on the GUI.
+
+The commands are stored in a nested dictionary `command_registry` with the structure:
+    { module_name (e.g., 'AFKJourney'): { command_name: Command } }
+
+Use the `@register_command()` decorator to register a function as a command.
+"""
+
+from collections.abc import Callable
+from dataclasses import dataclass
+from enum import StrEnum
+
+from adb_auto_player import Command
+from adb_auto_player.ipc import MenuOption
+from adb_auto_player.util.module_helper import get_game_module
+
+# Nested dictionary: { module_name (e.g., 'AFKJourney'): { name: Command } }
+command_registry: dict[str, dict[str, Command]] = {}
+
+
+@dataclass
+class GuiMetadata:
+    """Metadata used to describe how a command should appear in the GUI.
+
+    Attributes:
+        label (str): Display name for the command in the menu.
+        category (str | StrEnum): Category grouping for UI organization.
+        tooltip (str): Help text shown when hovering over the command.
+    """
+
+    label: str
+    category: str | StrEnum
+    tooltip: str
+
+
+def register_command(
+    gui: GuiMetadata | None = None,
+    name: str | None = None,
+    kwargs: dict | None = None,
+):
+    """Decorator to register a function as a command associated with a game module.
+
+    Optionally includes metadata for rendering the command in a GUI menu,
+    and supports passing default keyword arguments to the Command object.
+
+    Args:
+        gui (GuiMetadata | None): Optional GUI metadata for display in menus.
+        name (str | None): Optional explicit CLI arg name for the command. If not
+            provided, a default name of 'module_name.function_name' is used.
+        kwargs (dict | None): Optional default keyword arguments to pass to the
+            function.
+
+    Returns:
+        Callable: A decorator that registers the function as a Command and returns it.
+
+    Raises:
+        ValueError: If the command name is already registered for the module.
+    """
+
+    def decorator(func: Callable):
+        module_key = get_game_module(func.__module__)
+        if module_key not in command_registry:
+            command_registry[module_key] = {}
+
+        resolved_name = name or f"{module_key}.{func.__name__}"
+        if resolved_name in command_registry[module_key]:
+            raise ValueError(f"Command '{resolved_name}' is already registered.")
+
+        menu_option = None
+        if gui:
+            category_value = gui.category
+            if isinstance(gui.category, StrEnum):
+                category_value = gui.category.value
+            menu_option = MenuOption(
+                label=gui.label, category=category_value, tooltip=gui.tooltip
+            )
+
+        command_registry[module_key][resolved_name] = Command(
+            name=resolved_name,
+            action=func,
+            kwargs=kwargs or {},
+            menu_option=menu_option,
+        )
+        return func
+
+    return decorator
