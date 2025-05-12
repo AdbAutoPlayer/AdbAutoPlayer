@@ -4,6 +4,7 @@ from enum import StrEnum, auto
 from typing import Annotated
 
 from adb_auto_player import ConfigBase
+from adb_auto_player.config.my_custom_routine import MyCustomRoutineConfig
 from pydantic import BaseModel, Field
 
 # Type constraints
@@ -181,28 +182,6 @@ class DailiesConfig(BaseModel):
     buy_all_affinity: bool = Field(default=False, alias="Buy All Affinity")
     single_pull: bool = Field(default=False, alias="Single Pull")
     arena_battle: bool = Field(default=False, alias="Arena Battle")
-
-
-class MyCustomRoutineConfig(BaseModel):
-    """My Custom Routine config model."""
-
-    skip_daily_tasks_today: bool = Field(default=False, alias="Skip Daily Tasks Today")
-    daily_tasks: list = Field(
-        default_factory=list,
-        alias="Daily Tasks",
-        json_schema_extra={
-            "constraint_type": "MyCustomRoutine",
-            "default_value": [],
-        },
-    )
-    repeating_tasks: list = Field(
-        default_factory=list,
-        alias="Repeating Tasks",
-        json_schema_extra={
-            "constraint_type": "MyCustomRoutine",
-            "default_value": [],
-        },
-    )
 
 
 class Config(ConfigBase):
