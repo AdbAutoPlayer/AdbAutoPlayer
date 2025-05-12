@@ -7,11 +7,17 @@ from adb_auto_player.decorators.register_command import GuiMetadata, register_co
 from adb_auto_player.decorators.register_custom_routine_choice import (
     register_custom_routine_choice,
 )
+from adb_auto_player.decorators.register_game import GameGUIMetadata, register_game
 from adb_auto_player.games.zzz_config_example.config import Config
 from adb_auto_player.ipc import GameGUIOptions
 from pydantic import BaseModel
 
 
+@register_game(
+    name="Google Play",
+    config_file_path="zzz_config_example/ZzzConfigExample.toml",
+    gui_metadata=GameGUIMetadata(config_class=Config),
+)
 class PlayStore(Game):
     """Just for GUI testing."""
 
