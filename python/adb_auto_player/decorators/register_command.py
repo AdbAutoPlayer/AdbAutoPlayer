@@ -28,6 +28,7 @@ class GuiMetadata:
         label (str): Display name for the command in the menu.
         category (str | StrEnum): Category grouping for UI organization.
         tooltip (str): Help text shown when hovering over the command.
+            This also doubles as CLI Command description.
     """
 
     label: str
