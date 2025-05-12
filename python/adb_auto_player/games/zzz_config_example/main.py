@@ -1,6 +1,12 @@
 """Play Store Main Module."""
 
+import logging
+
 from adb_auto_player import Command, Game
+from adb_auto_player.decorators.register_command import GuiMetadata, register_command
+from adb_auto_player.decorators.register_custom_routine_choice import (
+    register_custom_routine_choice,
+)
 from adb_auto_player.games.zzz_config_example.config import Config
 from adb_auto_player.ipc import GameGUIOptions
 from pydantic import BaseModel
@@ -15,6 +21,20 @@ class PlayStore(Game):
         self.package_name_substrings = [
             "com.android.vending",
         ]
+
+    @register_command(
+        gui=GuiMetadata(label="Label", category="Category", tooltip="Tooltip")
+    )
+    def _test_gui(self) -> None:
+        logging.info("GUI")
+
+    @register_command()
+    def _test_cli(self) -> None:
+        logging.info("CLI")
+
+    @register_custom_routine_choice(label="Choice")
+    def _test_custom_routine(self) -> None:
+        logging.info("CUSTOM ROUTINE")
 
     def get_config(self) -> BaseModel:
         """Not Implemented."""
