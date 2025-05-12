@@ -1,8 +1,7 @@
 """ADB Auto Player Package."""
 
-from adb_auto_player.config.game_config_base import ConfigBase
-
 from .command import Command
+from .config.game_config_base import ConfigBase
 from .config_loader import ConfigLoader
 from .device_stream import DeviceStream, StreamingNotSupportedError
 from .exceptions import (
