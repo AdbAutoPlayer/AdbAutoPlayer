@@ -262,21 +262,21 @@ class KingShot(Game):
         return
 
     def _auto_play_loop(self) -> None:
-        try:
-            self._extend_auto_join()
-        except GameTimeoutError as e:
-            logging.warning(f"{e}")
+        def _safe_call(method):
+            try:
+                method()
+            except GameTimeoutError as e:
+                logging.warning(f"{e}")
+
+        _safe_call(self._extend_auto_join)
+        _safe_call(self._alliance_tech_contribute)
+        _safe_call(self._claim_conquest)
 
         self._click_alliance_help()
         self._collect_online_rewards()
 
         self._handle_troops_completed()
         self._handle_info_actions()
-
-        try:
-            self._alliance_tech_contribute()
-        except GameTimeoutError as e:
-            logging.warning(f"{e}")
 
         skip_gathering_for_intel = False
         try:
@@ -285,15 +285,12 @@ class KingShot(Game):
             skip_gathering_for_intel = True
         except GameTimeoutError as e:
             logging.warning(f"{e}")
+
         try:
             if not skip_gathering_for_intel:
                 self._gather_resources()
             else:
                 logging.info("Skipping gathering to complete Intel")
-        except GameTimeoutError as e:
-            logging.warning(f"{e}")
-        try:
-            self._claim_conquest()
         except GameTimeoutError as e:
             logging.warning(f"{e}")
 
@@ -814,13 +811,14 @@ class KingShot(Game):
                 timeout=3,
             )
             self.tap(Coordinates(*recommended_tech))
-            while contribute := self.wait_for_template(
+            sleep(2)
+            if contribute := self.game_find_template_match(
                 "alliance/contribute.png",
-                timeout=3,
                 crop=CropRegions(left=0.5, top=0.5),
-                threshold=0.9,
+                threshold=0.7,
             ):
-                self.tap(Coordinates(*contribute), blocking=False)
+                x, y = contribute
+                self.hold(x, y, 5)
         except GameTimeoutError:
             self._add_time("next_alliance_tech_contribution_at", hours=1)
         return
