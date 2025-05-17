@@ -46,9 +46,6 @@ def build_argparse_formatter(commands_by_category: dict[str, list[Command]]):
             else:
                 command_str = ""
 
-            # Build the usage string
-            usage_str = f"[-h] {optional_str} {command_str}"
-
             # Format according to argparse's style
             usage_str = f"{prog} [-h] {optional_str} {command_str}"
 
@@ -60,7 +57,7 @@ def build_argparse_formatter(commands_by_category: dict[str, list[Command]]):
 
                 common_cmds = commands_by_category.get("Commands", [])
                 if common_cmds:
-                    parts.append("\nCommon Commands:")
+                    parts.append("  Common Commands:")
                     for cmd in sorted(common_cmds, key=lambda c: c.name.lower()):
                         tooltip = getattr(cmd.menu_option, "tooltip", "")
                         if tooltip:
@@ -72,11 +69,11 @@ def build_argparse_formatter(commands_by_category: dict[str, list[Command]]):
                     k: v for k, v in commands_by_category.items() if k != "Commands"
                 }
                 if other_groups:
-                    parts.append("\nGame Commands:")
+                    parts.append("\n  Game Commands:")
                     for group_name, group_cmds in sorted(
                         other_groups.items(), key=lambda item: item[0].lower()
                     ):
-                        parts.append(f"- {group_name}:")
+                        parts.append(f"  - {group_name}:")
                         for cmd in sorted(group_cmds, key=lambda c: c.name.lower()):
                             tooltip = getattr(cmd.menu_option, "tooltip", "")
                             if tooltip:
