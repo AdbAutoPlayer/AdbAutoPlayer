@@ -33,7 +33,7 @@ class GuiMetadata:
 
     label: str
     category: str | StrEnum
-    tooltip: str
+    tooltip: str | None = None
 
 
 def register_command(
@@ -61,7 +61,12 @@ def register_command(
     """
 
     def decorator(func: Callable):
-        module_key = get_game_module(func.__module__)
+        try:
+            module_key = get_game_module(func.__module__)
+        except ValueError:
+            module_key = (
+                "Commands"  # do not change this it's a special keyword the GUI uses.
+            )
         if module_key not in command_registry:
             command_registry[module_key] = {}
 
