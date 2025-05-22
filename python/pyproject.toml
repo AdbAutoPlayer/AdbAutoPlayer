@@ -61,5 +61,9 @@ ignore = [
     "UP017", # datetime-timezone-utc
 ]
 
+[tool.ruff.lint.per-file-ignores]
+# Ignore D100 (Missing docstring in public module) only in games subdirs
+"**/games/**/*.py" = ["D100"]
+
 [tool.ruff.lint.pydocstyle]
 convention = "google"

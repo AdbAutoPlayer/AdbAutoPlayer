@@ -1,16 +1,44 @@
 """AFK Stages Mixin."""
 
 import logging
-from abc import ABC
 from time import sleep
 
 from adb_auto_player import Coordinates, CropRegions, GameTimeoutError
-from adb_auto_player.games.afk_journey import AFKJourneyBase
+from adb_auto_player.decorators.register_command import GuiMetadata, register_command
+from adb_auto_player.decorators.register_custom_routine_choice import (
+    register_custom_routine_choice,
+)
+from adb_auto_player.games.afk_journey.base import AFKJourneyBase
+from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 
 
-class AFKStagesMixin(AFKJourneyBase, ABC):
+class AFKStagesMixin(AFKJourneyBase):
     """AFK Stages Mixin."""
 
+    @register_command(
+        name="AFKStages",
+        gui=GuiMetadata(
+            label="AFK Stages",
+            category=AFKJCategory.GAME_MODES,
+        ),
+        kwargs={"season": False},
+    )
+    @register_command(
+        name="SeasonTalentStages",
+        gui=GuiMetadata(
+            label="Season Talent Stages",
+            category=AFKJCategory.GAME_MODES,
+        ),
+        kwargs={"season": True},
+    )
+    @register_custom_routine_choice(
+        label="AFK Stages",
+        kwargs={"season": False},
+    )
+    @register_custom_routine_choice(
+        label="Season Talent Stages",
+        kwargs={"season": True},
+    )
     def push_afk_stages(self, season: bool, my_custom_routine: bool = False) -> None:
         """Entry for pushing AFK Stages.
 

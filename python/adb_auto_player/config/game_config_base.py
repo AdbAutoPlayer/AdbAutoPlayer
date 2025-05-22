@@ -185,20 +185,8 @@ class ConfigBase(BaseModel):
                     image_dir_path=field_schema.get("image_dir_path", ""),
                 )
             case "MyCustomRoutine":
-                # TODO REMOVE START
-                choices: list[str] = []
-                if commands:
-                    for cmd in commands:
-                        if cmd.allow_in_my_custom_routine:
-                            choices.append(cmd.menu_option.label)
-                # TODO REMOVE END
-
-                if not choices:
-                    module = get_game_module(cls.__module__)
-                    choices = list(
-                        custom_routine_choice_registry.get(module, {}).keys()
-                    )
-
+                module = get_game_module(cls.__module__)
+                choices = list(custom_routine_choice_registry.get(module, {}).keys())
                 if not choices:
                     raise ValueError("MyCustomRoutine constraint requires menu options")
                 return create_my_custom_routine_constraint(choices=choices)

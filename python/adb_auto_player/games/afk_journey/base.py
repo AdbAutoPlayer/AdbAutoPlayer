@@ -2,7 +2,6 @@
 
 import logging
 import re
-from abc import ABC
 from collections.abc import Callable
 from time import sleep
 from typing import Any
@@ -13,10 +12,20 @@ from adb_auto_player import (
     Game,
     MatchMode,
 )
+from adb_auto_player.decorators.register_game import GameGUIMetadata, register_game
 from adb_auto_player.games.afk_journey.config import Config
+from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 
 
-class AFKJourneyBase(Game, ABC):
+@register_game(
+    name="AFK Journey",
+    config_file_path="afk_journey/AFKJourney.toml",
+    gui_metadata=GameGUIMetadata(
+        config_class=Config,
+        categories=list(AFKJCategory),
+    ),
+)
+class AFKJourneyBase(Game):
     """AFK Journey Base Class."""
 
     def __init__(self) -> None:

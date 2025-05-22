@@ -6,7 +6,9 @@ from math import floor
 from time import sleep
 
 from adb_auto_player import Coordinates, CropRegions, GameTimeoutError, MatchMode
-from adb_auto_player.games.afk_journey import AFKJourneyBase
+from adb_auto_player.decorators.register_command import GuiMetadata, register_command
+from adb_auto_player.games.afk_journey.base import AFKJourneyBase
+from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 
 
 class BattleCannotBeStartedError(Exception):
@@ -111,6 +113,13 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             f"(Guild Keys: {self.arcane_lucky_flip_keys // 5}) "
         )
 
+    @register_command(
+        name="ArcaneLabyrinth",
+        gui=GuiMetadata(
+            label="ArcaneLabyrinth",
+            category=AFKJCategory.GAME_MODES,
+        ),
+    )
     def handle_arcane_labyrinth(self) -> None:
         """Handle Arcane Labyrinth."""
         logging.warning("This is made for farming Lucky Flip Keys")
