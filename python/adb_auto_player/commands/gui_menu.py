@@ -13,10 +13,10 @@ from adb_auto_player.ipc import GameGUIOptions, MenuOption
 
 @register_command(name="GUIGamesMenu")
 def _print_gui_games_menu() -> None:
-    print(_get_gui_games_menu())
+    print(get_gui_games_menu())
 
 
-def _get_gui_games_menu() -> str:
+def get_gui_games_menu() -> str:
     """Get the menu for the GUI.
 
     Returns a JSON string containing a list of dictionaries.
