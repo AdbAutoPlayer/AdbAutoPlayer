@@ -5,12 +5,25 @@ from abc import ABC
 from time import sleep
 
 from adb_auto_player import Coordinates, CropRegions, GameTimeoutError, NotFoundError
-from adb_auto_player.games.afk_journey import AFKJourneyBase
+from adb_auto_player.decorators.register_command import GuiMetadata, register_command
+from adb_auto_player.decorators.register_custom_routine_choice import (
+    register_custom_routine_choice,
+)
+from adb_auto_player.games.afk_journey.base import AFKJourneyBase
+from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 
 
 class LegendTrialMixin(AFKJourneyBase, ABC):
     """Legend Trial Mixin."""
 
+    @register_command(
+        name="LegendTrial",
+        gui=GuiMetadata(
+            label="Legend Trial",
+            category=AFKJCategory.GAME_MODES,
+        ),
+    )
+    @register_custom_routine_choice(label="Legend Trial")
     def push_legend_trials(self) -> None:
         """Push Legend Trials."""
         self.start_up()

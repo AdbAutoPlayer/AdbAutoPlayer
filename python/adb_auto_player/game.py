@@ -1,5 +1,6 @@
 """ADB Auto Player Game Base Module."""
 
+import datetime
 import logging
 import os
 import sys
@@ -15,7 +16,6 @@ from typing import Literal, NamedTuple, TypeVar
 import cv2
 import numpy as np
 from adb_auto_player import (
-    Command,
     ConfigLoader,
     DeviceStream,
     GameTimeoutError,
@@ -30,8 +30,11 @@ from adb_auto_player.adb import (
     get_screen_resolution,
     is_portrait,
 )
+from adb_auto_player.decorators.register_custom_routine_choice import (
+    CustomRoutineEntry,
+    custom_routine_choice_registry,
+)
 from adb_auto_player.exceptions import GameNotRunningError, GameStartError
-from adb_auto_player.ipc.game_gui import GameGUIOptions, MenuOption
 from adb_auto_player.template_matching import (
     CropRegions,
     MatchMode,
@@ -42,6 +45,7 @@ from adb_auto_player.template_matching import (
     load_image,
     similar_image,
 )
+from adb_auto_player.util.execute import execute
 from adbutils._device import AdbDevice
 from deprecation import deprecated
 from PIL import Image
@@ -111,30 +115,9 @@ class Game:
         ...
 
     @abstractmethod
-    def get_cli_menu_commands(self) -> list[Command]:
-        """Required method to return the CLI menu commands."""
-        ...
-
-    @abstractmethod
-    def get_gui_options(self) -> GameGUIOptions:
-        """Required method to return the GUI options."""
-        ...
-
-    @abstractmethod
     def get_config(self) -> BaseModel:
         """Required method to return the game configuration."""
         ...
-
-    def _get_menu_options_from_cli_menu(self) -> list[MenuOption]:
-        """Get the menu options from the CLI menu commands."""
-        menu_options = []
-        for _, command in enumerate(self.get_cli_menu_commands()):
-            menu_option = command.menu_option
-            if menu_option is None:
-                continue
-
-            menu_options.append(menu_option)
-        return menu_options
 
     def is_supported_resolution(self, width: int, height: int) -> bool:
         """Return True if the resolution is supported."""
@@ -1080,6 +1063,89 @@ class Game:
             logging.debug(f"{module} template path: {self._template_dir_path}")
 
         return self._template_dir_path
+
+    def _my_custom_routine(self) -> None:
+        config = self.get_config().my_custom_routine
+        if not config.daily_tasks and not config.repeating_tasks:
+            logging.error(
+                'You need to set Tasks in the Game Config "My Custom Routine" Section'
+            )
+            return
+
+        daily_tasks_executed_at = datetime.datetime.now(datetime.UTC)
+        if config.daily_tasks:
+            if config.skip_daily_tasks_today:
+                logging.warning("Skipping daily tasks today")
+            else:
+                logging.info("Executing Daily Tasks")
+                self._execute_tasks(config.daily_tasks)
+        else:
+            logging.info("No Daily Tasks, skipping")
+
+        while True:
+            logging.info("Executing Repeating Tasks")
+            if config.repeating_tasks:
+                self._execute_tasks(config.repeating_tasks)
+            else:
+                logging.warning("No Repeating Tasks, waiting for next day")
+                sleep(180)
+
+            now = datetime.datetime.now(datetime.UTC)
+            if now.date() != daily_tasks_executed_at.date():
+                logging.info("Executing Daily Tasks")
+                self._execute_tasks(config.daily_tasks)
+                daily_tasks_executed_at = now
+            else:
+                next_day = datetime.datetime.combine(
+                    now.date() + datetime.timedelta(days=1),
+                    datetime.time.min,
+                    tzinfo=datetime.UTC,
+                )
+                remaining = next_day - now
+                hours, remainder = divmod(remaining.seconds, 3600)
+                minutes = remainder // 60
+                logging.info(
+                    f"Time until next Daily Task execution: {hours}h {minutes}m"
+                )
+
+    def _execute_tasks(self, tasks: list[str]) -> None:
+        commands = custom_routine_choice_registry
+
+        game_commands: dict[str, CustomRoutineEntry] | None = None
+        for module, cmds in commands.items():
+            if module in self.__module__:
+                game_commands = cmds
+                break
+
+        if not game_commands:
+            logging.error("Failed to load Custom Routines.")
+            return
+
+        for task in tasks:
+            custom_routine: CustomRoutineEntry | None = None
+            for label, custom_routine_entry in game_commands.items():
+                if task == label:
+                    custom_routine = custom_routine_entry
+                    break
+            if not custom_routine:
+                logging.error(f"Task '{task}' not found")
+                continue
+            error = execute(function=custom_routine.func, kwargs=custom_routine.kwargs)
+            if isinstance(error, GameNotRunningError):
+                self.package_name = "test"
+                if self.package_name:
+                    logging.warning(
+                        f"Task '{task}' failed because the game is not running, "
+                        f"attempting to restart it."
+                    )
+                    self.start_game()
+                    sleep(5)
+                else:
+                    logging.error(
+                        f"Task '{task}' failed because the game is not running"
+                    )
+                    sys.exit(1)
+                continue
 
 
 def snake_to_pascal(s: str):

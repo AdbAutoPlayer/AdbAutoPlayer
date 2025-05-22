@@ -1,22 +1,30 @@
 """Dream Realm Mixin."""
 
 import logging
-from abc import ABC
 from time import sleep
 
 from adb_auto_player import Coordinates, GameTimeoutError
-from adb_auto_player.games.afk_journey import AFKJourneyBase
+from adb_auto_player.decorators.register_command import GuiMetadata, register_command
+from adb_auto_player.games.afk_journey.base import AFKJourneyBase
+from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 
 
-class DreamRealmMixin(AFKJourneyBase, ABC):
+class DreamRealmMixin(AFKJourneyBase):
     """Dream Realm Mixin."""
 
     def __init__(self) -> None:
         """Initialize DreamRealmMixin."""
         super().__init__()
         # Battle and Skip buttons are in the same coordinates.
-        self.battle_skip_coor = Coordinates(550, 1790)
+        self.battle_skip_coord = Coordinates(550, 1790)
 
+    @register_command(
+        name="DreamRealm",
+        gui=GuiMetadata(
+            label="Dream Realm",
+            category=AFKJCategory.GAME_MODES,
+        ),
+    )
     def run_dream_realm(self, daily: bool = False) -> None:
         """Use Dream Realm attempts."""
         self.start_up()
@@ -40,7 +48,7 @@ class DreamRealmMixin(AFKJourneyBase, ABC):
     def _start_dr(self) -> None:
         """Start Dream Realm battle."""
         # No logging because spam from trival method.
-        self.click(self.battle_skip_coor)
+        self.click(self.battle_skip_coord)
         sleep(2)
 
     def _stop_condition(self, spend_gold: bool, daily: bool) -> bool:
@@ -92,7 +100,7 @@ class DreamRealmMixin(AFKJourneyBase, ABC):
             return True
 
         logging.debug("Looking for more DR attempts...")
-        self.click(self.battle_skip_coor)
+        self.click(self.battle_skip_coord)
 
         try:
             buy = self.wait_for_template(

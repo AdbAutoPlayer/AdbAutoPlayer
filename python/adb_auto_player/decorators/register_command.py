@@ -11,6 +11,7 @@ Use the `@register_command()` decorator to register a function as a command.
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Any
 
 from adb_auto_player import Command
 from adb_auto_player.ipc import MenuOption
@@ -39,7 +40,7 @@ class GuiMetadata:
 def register_command(
     gui: GuiMetadata | None = None,
     name: str | None = None,
-    kwargs: dict | None = None,
+    kwargs: dict[str, Any] | None = None,
 ):
     """Decorator to register a function as a command associated with a game module.
 
@@ -50,8 +51,8 @@ def register_command(
         gui (GuiMetadata | None): Optional GUI metadata for display in menus.
         name (str | None): Optional explicit CLI arg name for the command. If not
             provided, a default name of 'module_name.function_name' is used.
-        kwargs (dict | None): Optional default keyword arguments to pass to the
-            function.
+        kwargs (dict[str, Any] | None): Optional default keyword arguments to pass to
+            the function.
 
     Returns:
         Callable: A decorator that registers the function as a Command and returns it.
@@ -71,6 +72,12 @@ def register_command(
             command_registry[module_key] = {}
 
         resolved_name = name or f"{module_key}.{func.__name__}"
+
+        if any(char.isspace() for char in resolved_name):
+            raise ValueError(
+                f"Command name '{resolved_name}' cannot contain whitespace."
+            )
+
         if resolved_name in command_registry[module_key]:
             raise ValueError(f"Command '{resolved_name}' is already registered.")
 
