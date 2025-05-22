@@ -76,3 +76,9 @@ class DeviceCommandError(AutoPlayerError):
         self.stderr = stderr
 
     pass
+
+
+class InteractionFailedError(AutoPlayerError):
+    """Raised when an interaction command fails or encounters an issue."""
+
+    pass
