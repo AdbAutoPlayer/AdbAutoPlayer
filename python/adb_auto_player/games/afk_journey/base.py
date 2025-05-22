@@ -470,6 +470,7 @@ class AFKJourneyBase(Game, ABC):
             "guide/next.png",
             "battle/copy.png",
             "login/claim.png",
+            "arcane_labyrinth/back_arrow.png",
         ]
 
         while True:
