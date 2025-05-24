@@ -41,6 +41,15 @@ func UpdatePatch(assetUrl string) error {
 	for _, file := range zipReader.File {
 		outputPath := filepath.Join(".", file.Name)
 
+		// Validate the output path to prevent directory traversal
+		absOutputPath, err := filepath.Abs(outputPath)
+		if err != nil {
+			return fmt.Errorf("failed to resolve absolute path: %v", err)
+		}
+		if !strings.HasPrefix(absOutputPath, filepath.Clean(".")) {
+			return fmt.Errorf("invalid file path: %s", file.Name)
+		}
+
 		if file.FileInfo().IsDir() {
 			if err = os.MkdirAll(outputPath, 0755); err != nil {
 				return fmt.Errorf("failed to create directory: %v", err)
