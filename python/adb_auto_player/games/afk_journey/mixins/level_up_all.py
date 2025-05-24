@@ -25,7 +25,8 @@ class LevelUpAllHeroes(AFKJourneyBase):
             for _ in range(3):
                 for _ in range(10):
                     self.tap(level_up_all_button, blocking=False)
-                sleep(3)
+                sleep(2)
+            sleep(3)
         logging.info("Level Up All Heroes completed.")
         return
 
@@ -45,7 +46,7 @@ class LevelUpAllHeroes(AFKJourneyBase):
         max_click_count = 3
         click_count = 0
         while self._can_see_time_of_day_button():
-            self.click(Coordinates(620, 1830), scale=True)
+            self.tap(Coordinates(620, 1830), scale=True)
             sleep(3)
             click_count += 1
             if click_count > max_click_count:
