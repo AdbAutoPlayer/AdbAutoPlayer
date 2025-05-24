@@ -20,10 +20,11 @@ class LevelUpAllHeroes(AFKJourneyBase):
             return
 
         logging.info("Clicking Level Up All Heroes.")
-        while level_up_all_button := self._find_level_up_all_button():
-            for _ in range(10):
-                self.tap(level_up_all_button, blocking=False)
-        sleep(3)  # wait for taps to finish
+        if level_up_all_button := self._find_level_up_all_button():
+            for _ in range(3):
+                for _ in range(10):
+                    self.tap(level_up_all_button, blocking=False)
+                sleep(3)
         return
 
     def _find_level_up_all_button(self) -> Coordinates | None:
