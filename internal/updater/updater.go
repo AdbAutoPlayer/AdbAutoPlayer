@@ -55,16 +55,14 @@ func UpdatePatch(assetUrl string) error {
 }
 
 func extractFile(file *zip.File, targetDir string) (err error) {
-	outputPath := filepath.Join(".", file.Name)
+	absOutputPath, err := filepath.Abs(filepath.Join(".", file.Name))
+	if err != nil {
+		return fmt.Errorf("failed to resolve absolute path: %v", err)
+	}
 
 	// Validate the output path to prevent directory traversal (zip slip)
 	if strings.Contains(file.Name, "..") || strings.HasPrefix(file.Name, "/") {
 		return fmt.Errorf("invalid file path (potential zip slip): %s", file.Name)
-	}
-
-	absOutputPath, err := filepath.Abs(outputPath)
-	if err != nil {
-		return fmt.Errorf("failed to resolve absolute path: %v", err)
 	}
 
 	// Check if the resolved path is within the target directory
@@ -73,13 +71,13 @@ func extractFile(file *zip.File, targetDir string) (err error) {
 	}
 
 	if file.FileInfo().IsDir() {
-		if err = os.MkdirAll(outputPath, 0755); err != nil {
+		if err = os.MkdirAll(absOutputPath, 0755); err != nil {
 			return fmt.Errorf("failed to create directory: %v", err)
 		}
 		return nil
 	}
 
-	if err = os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
+	if err = os.MkdirAll(filepath.Dir(absOutputPath), 0755); err != nil {
 		return fmt.Errorf("failed to create directories: %v", err)
 	}
 
@@ -98,7 +96,7 @@ func extractFile(file *zip.File, targetDir string) (err error) {
 	const timeout = 2 * time.Second
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		outputFile, err = os.OpenFile(outputPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, file.Mode())
+		outputFile, err = os.OpenFile(absOutputPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, file.Mode())
 		if err == nil {
 			break
 		}
