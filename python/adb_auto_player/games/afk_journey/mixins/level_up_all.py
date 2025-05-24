@@ -13,6 +13,7 @@ class LevelUpAllHeroes(AFKJourneyBase):
     @register_custom_routine_choice("Level Up All Heroes")
     def _level_up_all_heroes(self) -> None:
         self.start_up(device_streaming=True)
+        logging.info("Starting Level Up All Heroes.")
         self._navigate_to_resonating_hall()
 
         if self._find_level_up_all_button() is None:
@@ -25,6 +26,7 @@ class LevelUpAllHeroes(AFKJourneyBase):
                 for _ in range(10):
                     self.tap(level_up_all_button, blocking=False)
                 sleep(3)
+        logging.info("Level Up All Heroes completed.")
         return
 
     def _find_level_up_all_button(self) -> Coordinates | None:
