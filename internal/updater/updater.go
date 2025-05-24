@@ -35,64 +35,89 @@ func UpdatePatch(assetUrl string) error {
 	}
 	defer zipReader.Close()
 
+	// Get the absolute path of the target directory
+	targetDir, err := filepath.Abs(".")
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path of target directory: %v", err)
+	}
+
 	if err = os.MkdirAll(".", 0755); err != nil {
 		return fmt.Errorf("failed to create target directory: %v", err)
 	}
 
 	for _, file := range zipReader.File {
-		outputPath := filepath.Join(".", file.Name)
-
-		// Validate the output path to prevent directory traversal
-		absOutputPath, err := filepath.Abs(outputPath)
-		if err != nil {
-			return fmt.Errorf("failed to resolve absolute path: %v", err)
+		if err = extractFile(file, targetDir); err != nil {
+			return err
 		}
-		if !strings.HasPrefix(absOutputPath, filepath.Clean(".")) {
-			return fmt.Errorf("invalid file path: %s", file.Name)
-		}
+	}
 
-		if file.FileInfo().IsDir() {
-			if err = os.MkdirAll(outputPath, 0755); err != nil {
-				return fmt.Errorf("failed to create directory: %v", err)
-			}
-			continue
-		}
+	return nil
+}
 
-		if err = os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
-			return fmt.Errorf("failed to create directories: %v", err)
-		}
+func extractFile(file *zip.File, targetDir string) (err error) {
+	outputPath := filepath.Join(".", file.Name)
 
-		fileInZip, err := file.Open()
-		if err != nil {
-			return fmt.Errorf("failed to open file in zip archive: %v", err)
-		}
-		defer fileInZip.Close()
+	// Validate the output path to prevent directory traversal (zip slip)
+	absOutputPath, err := filepath.Abs(outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to resolve absolute path: %v", err)
+	}
 
-		var outputFile *os.File
+	// Check if the resolved path is within the target directory
+	if !strings.HasPrefix(absOutputPath, targetDir+string(filepath.Separator)) && absOutputPath != targetDir {
+		return fmt.Errorf("invalid file path (potential zip slip): %s", file.Name)
+	}
 
-		const maxRetries = 3
-		const timeout = 2 * time.Second
-		for attempt := 1; attempt <= maxRetries; attempt++ {
-			outputFile, err = os.OpenFile(outputPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, file.Mode())
-			if err == nil {
-				break
-			}
-			if attempt == maxRetries {
-				return fmt.Errorf("failed to create file (attempt %d/%d): %v\n", attempt, maxRetries, err)
-			}
-			time.Sleep(timeout)
+	if file.FileInfo().IsDir() {
+		if err = os.MkdirAll(outputPath, 0755); err != nil {
+			return fmt.Errorf("failed to create directory: %v", err)
 		}
+		return nil
+	}
 
-		for attempt := 1; attempt <= maxRetries; attempt++ {
-			_, err = io.Copy(outputFile, fileInZip)
-			if err == nil {
-				break
-			}
-			if attempt == maxRetries {
-				return fmt.Errorf("failed to copy file data after %d attempts: %v", maxRetries, err)
-			}
-			time.Sleep(timeout)
+	if err = os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
+		return fmt.Errorf("failed to create directories: %v", err)
+	}
+
+	fileInZip, err := file.Open()
+	if err != nil {
+		return fmt.Errorf("failed to open file in zip archive: %v", err)
+	}
+	defer func() {
+		if cerr := fileInZip.Close(); cerr != nil && err == nil {
+			err = fmt.Errorf("failed to close file in zip: %w", cerr)
 		}
+	}()
+
+	var outputFile *os.File
+	const maxRetries = 3
+	const timeout = 2 * time.Second
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		outputFile, err = os.OpenFile(outputPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, file.Mode())
+		if err == nil {
+			break
+		}
+		if attempt == maxRetries {
+			return fmt.Errorf("failed to create file (attempt %d/%d): %v", attempt, maxRetries, err)
+		}
+		time.Sleep(timeout)
+	}
+	defer func() {
+		if cerr := outputFile.Close(); cerr != nil && err == nil {
+			err = fmt.Errorf("failed to close output file: %w", cerr)
+		}
+	}()
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		_, err = io.Copy(outputFile, fileInZip)
+		if err == nil {
+			break
+		}
+		if attempt == maxRetries {
+			return fmt.Errorf("failed to copy file data after %d attempts: %v", maxRetries, err)
+		}
+		time.Sleep(timeout)
 	}
 
 	return nil
