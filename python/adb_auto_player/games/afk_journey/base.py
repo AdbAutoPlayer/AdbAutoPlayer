@@ -257,16 +257,10 @@ class AFKJourneyBase(Game):
         if not excluded_heroes_dict:
             return None
 
-        excluded_heroes_missing_icon: set[str] = {
-            "Nothing as of now :)",
-        }
         filtered_dict = {}
 
         for key, value in excluded_heroes_dict.items():
-            if value in excluded_heroes_missing_icon:
-                logging.warning(f"Missing icon for Hero: {value}")
-            else:
-                filtered_dict[key] = value
+            filtered_dict[key] = value
 
         return self._find_any_excluded_hero(filtered_dict)
 
