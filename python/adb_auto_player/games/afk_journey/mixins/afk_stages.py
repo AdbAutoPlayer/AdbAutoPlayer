@@ -39,12 +39,11 @@ class AFKStagesMixin(AFKJourneyBase):
         label="Season Talent Stages",
         kwargs={"season": True},
     )
-    def push_afk_stages(self, season: bool, my_custom_routine: bool = False) -> None:
+    def push_afk_stages(self, season: bool) -> None:
         """Entry for pushing AFK Stages.
 
         Args:
             season: Push Season Stage if True otherwise push regular AFK Stages
-            my_custom_routine: If True then do not push both modes and do not repeat
         """
         self.start_up()
         self.store[self.STORE_MODE] = self.MODE_AFK_STAGES
@@ -55,26 +54,6 @@ class AFKStagesMixin(AFKJourneyBase):
                 self._start_afk_stage()
             except GameTimeoutError as e:
                 logging.warning(f"{e} {self.LANG_ERROR}")
-
-            if my_custom_routine:
-                if (
-                    self.get_config().afk_stages.push_both_modes
-                    or self.get_config().afk_stages.repeat
-                ):
-                    logging.info(
-                        "My Custom Routine ignores AFK Stages "
-                        '"Both Modes" and "Repeat" config'
-                    )
-                return
-
-            if self.get_config().afk_stages.push_both_modes:
-                self.store[self.STORE_SEASON] = not season
-                try:
-                    self._start_afk_stage()
-                except GameTimeoutError as e:
-                    logging.warning(f"{e}")
-            if not self.get_config().afk_stages.repeat:
-                break
 
     def _start_afk_stage(self) -> None:
         """Start push."""

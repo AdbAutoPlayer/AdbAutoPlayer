@@ -131,9 +131,7 @@ class AFKStagesConfig(BaseModel):
     attempts: PositiveInt = Field(default=5, alias="Attempts")
     formations: FormationsInt = Field(default=7, alias="Formations")
     use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
-    push_both_modes: bool = Field(default=True, alias="Both Modes")
     spend_gold: bool = Field(default=False, alias="Spend Gold")
-    repeat: bool = Field(default=True, alias="Repeat")
     skip_manual_formations: bool = Field(default=False, alias="Skip Manual Formations")
 
 
