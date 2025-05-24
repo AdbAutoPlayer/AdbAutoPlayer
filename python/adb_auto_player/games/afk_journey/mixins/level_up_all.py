@@ -14,20 +14,31 @@ class LevelUpAllHeroes(AFKJourneyBase):
     def _level_up_all_heroes(self) -> None:
         self.start_up(device_streaming=True)
         self._navigate_to_resonating_hall()
-        while level_up_all_button := self.game_find_template_match(
+
+        if self._find_level_up_all_button() is None:
+            logging.info("Level Up All Heroes not available.")
+            return
+
+        logging.info("Clicking Level Up All Heroes.")
+        while level_up_all_button := self._find_level_up_all_button():
+            for _ in range(10):
+                self.tap(level_up_all_button, blocking=False)
+        sleep(3)  # wait for taps to finish
+        return
+
+    def _find_level_up_all_button(self) -> Coordinates | None:
+        if level_up_all_button := self.game_find_template_match(
             "resonating_hall/level_up_all.png",
             crop=CropRegions(left=0.3, right=0.3, top=0.7),
             threshold=0.95,
         ):
-            for _ in range(10):
-                self.tap(Coordinates(*level_up_all_button), blocking=False)
-        logging.info("Level Up All Heroes not available.")
-        sleep(3)  # wait for taps to finish
+            return Coordinates(*level_up_all_button)
+        return None
 
     def _navigate_to_resonating_hall(self) -> None:
         self._navigate_to_default_state()
 
-        logging.debug("Navigating to the Resonating Hall.")
+        logging.info("Navigating to the Resonating Hall.")
         max_click_count = 3
         click_count = 0
         while self._can_see_time_of_day_button():
