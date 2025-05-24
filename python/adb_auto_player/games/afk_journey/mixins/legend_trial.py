@@ -12,6 +12,7 @@ from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 
 
+# Tested S4 2025.05.23
 class SeasonLegendTrial(AFKJourneyBase):
     """Season Legend Trial Mixin."""
 
