@@ -11,7 +11,8 @@ from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.games.afk_journey.mixins.afk_stages import AFKStagesMixin
 from adb_auto_player.games.afk_journey.mixins.arena import ArenaMixin
 from adb_auto_player.games.afk_journey.mixins.dream_realm import DreamRealmMixin
-from adb_auto_player.games.afk_journey.mixins.legend_trial import LegendTrialMixin
+
+from .legend_trial import SeasonLegendTrial
 
 # from adb_auto_player.games.afk_journey.mixins import (
 #     AFKStagesMixin,
@@ -48,7 +49,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         self.claim_hamburger()
         self.raise_hero_affinity()
         if self.get_config().legend_trials.towers:
-            LegendTrialMixin().push_legend_trials()  # type: ignore[abstract]
+            SeasonLegendTrial().push_legend_trials()  # type: ignore[abstract]
         AFKStagesMixin().push_afk_stages(season=True)  # type: ignore[abstract]
 
     ############################# Daily Rewards ##############################
