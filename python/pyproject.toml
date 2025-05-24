@@ -63,7 +63,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 # Ignore D100 (Missing docstring in public module) only in games subdirs
-"**/games/**/*.py" = ["D100"]
+"**/games/**/*.py" = ["D100", "D101"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
