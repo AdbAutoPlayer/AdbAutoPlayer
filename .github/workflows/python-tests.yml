@@ -9,6 +9,9 @@ on:
       - 'python/**'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   python-tests:
     name: ${{ matrix.os }}
