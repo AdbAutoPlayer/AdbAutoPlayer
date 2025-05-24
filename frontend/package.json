@@ -30,7 +30,7 @@
 	"dependencies": {
 		"@skeletonlabs/floating-ui-svelte": "^0.3.9",
 		"@tailwindcss/vite": "^4.1.7",
-		"idb": "^8.0.2",
+		"idb": "^8.0.3",
 		"marked": "^15.0.12",
 		"tailwindcss": "^4.1.7"
 	}
