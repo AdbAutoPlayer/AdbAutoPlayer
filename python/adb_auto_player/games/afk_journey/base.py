@@ -174,7 +174,7 @@ class AFKJourneyBase(Game):
             self.wait_for_roi_change(
                 start_image=start_image,
                 crop=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
-                threshold=0.5,
+                threshold=0.8,
                 timeout=self.MIN_TIMEOUT,
             )
             counter -= 1
