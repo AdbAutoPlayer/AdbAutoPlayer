@@ -58,6 +58,10 @@ func extractFile(file *zip.File, targetDir string) (err error) {
 	outputPath := filepath.Join(".", file.Name)
 
 	// Validate the output path to prevent directory traversal (zip slip)
+	if strings.Contains(file.Name, "..") || strings.HasPrefix(file.Name, "/") {
+		return fmt.Errorf("invalid file path (potential zip slip): %s", file.Name)
+	}
+
 	absOutputPath, err := filepath.Abs(outputPath)
 	if err != nil {
 		return fmt.Errorf("failed to resolve absolute path: %v", err)
