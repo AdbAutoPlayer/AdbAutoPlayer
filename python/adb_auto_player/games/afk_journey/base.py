@@ -308,8 +308,6 @@ class AFKJourneyBase(Game):
             crop=CropRegions(top=0.5),
         )
 
-        if result is None:
-            return False
         self.click(Coordinates(x=850, y=1780), scale=True)
         template, x, y = result
         self.wait_until_template_disappears(template, crop=CropRegions(top=0.5))

@@ -21,6 +21,12 @@ class ClaimAFKRewards(AFKJourneyBase):
             self.tap(Coordinates(x=520, y=1400), scale=True)
             sleep(1)
         sleep(1)
+        if self.get_config().claim_afk_rewards:
+            for _ in range(3):
+                self.tap(Coordinates(x=770, y=500), scale=True)
+                self.tap(Coordinates(x=770, y=500), scale=True)
+                sleep(1)
+            sleep(1)
         logging.info("AFK Rewards claimed.")
 
     # copied from afk_stages.py will refactor later

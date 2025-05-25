@@ -190,6 +190,10 @@ class DailiesConfig(BaseModel):
     arena_battle: bool = Field(default=False, alias="Arena Battle")
 
 
+class ClaimAFKRewardsConfig(BaseModel):
+    claim_stage_rewards: bool = Field(default=False, alias="Claim Stage Rewards")
+
+
 class Config(ConfigBase):
     """Config model."""
 
@@ -200,4 +204,5 @@ class Config(ConfigBase):
     legend_trials: LegendTrialsConfig = Field(alias="Legend Trial")
     arcane_labyrinth: ArcaneLabyrinthConfig = Field(alias="Arcane Labyrinth")
     dream_realm: DreamRealmConfig = Field(alias="Dream Realm")
+    claim_afk_rewards: ClaimAFKRewardsConfig = Field(alias="Claim AFK Rewards")
     my_custom_routine: MyCustomRoutineConfig = Field(alias="My Custom Routine")
