@@ -6,6 +6,9 @@ from pathlib import Path
 from typing import cast
 
 from adb_auto_player import Command
+from adb_auto_player.decorators.register_custom_routine_choice import (
+    custom_routine_choice_registry,
+)
 from adb_auto_player.ipc import NumberConstraintDict
 from adb_auto_player.ipc.constraint import (
     ConstraintType,
@@ -16,6 +19,7 @@ from adb_auto_player.ipc.constraint import (
     create_number_constraint,
     create_text_constraint,
 )
+from adb_auto_player.util.module_helper import get_game_module
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
@@ -94,7 +98,8 @@ class ConfigBase(BaseModel):
 
     @classmethod
     def get_constraints(
-        cls, commands: list[Command] | None = None
+        cls,
+        commands: list[Command] | None = None,
     ) -> dict[str, dict[str, ConstraintType]]:
         """Get constraints from ADB Auto Player IPC, derived from model schema."""
         schema = cls.model_json_schema()
@@ -180,12 +185,8 @@ class ConfigBase(BaseModel):
                     image_dir_path=field_schema.get("image_dir_path", ""),
                 )
             case "MyCustomRoutine":
-                choices = []
-                if commands:
-                    for cmd in commands:
-                        if cmd.allow_in_my_custom_routine:
-                            choices.append(cmd.menu_option.label)
-
+                module = get_game_module(cls.__module__)
+                choices = list(custom_routine_choice_registry.get(module, {}).keys())
                 if not choices:
                     raise ValueError("MyCustomRoutine constraint requires menu options")
                 return create_my_custom_routine_constraint(choices=choices)

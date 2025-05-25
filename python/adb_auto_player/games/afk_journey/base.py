@@ -2,7 +2,6 @@
 
 import logging
 import re
-from abc import ABC
 from collections.abc import Callable
 from time import sleep
 from typing import Any
@@ -13,10 +12,20 @@ from adb_auto_player import (
     Game,
     MatchMode,
 )
+from adb_auto_player.decorators.register_game import GameGUIMetadata, register_game
 from adb_auto_player.games.afk_journey.config import Config
+from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 
 
-class AFKJourneyBase(Game, ABC):
+@register_game(
+    name="AFK Journey",
+    config_file_path="afk_journey/AFKJourney.toml",
+    gui_metadata=GameGUIMetadata(
+        config_class=Config,
+        categories=list(AFKJCategory),
+    ),
+)
+class AFKJourneyBase(Game):
     """AFK Journey Base Class."""
 
     def __init__(self) -> None:
@@ -103,6 +112,15 @@ class AFKJourneyBase(Game, ABC):
         self.store[self.STORE_FORMATION_NUM] = 0
         if not use_suggested_formations:
             formations = 1
+
+        if (
+            self._get_config_attribute_from_mode(
+                "use_current_formation_before_suggested_formation"
+            )
+            and self._handle_single_stage()
+        ):
+            logging.info("Battle using current Formation.")
+            return True
 
         while self.store.get(self.STORE_FORMATION_NUM, 0) < formations:
             self.store[self.STORE_FORMATION_NUM] += 1
@@ -248,16 +266,10 @@ class AFKJourneyBase(Game, ABC):
         if not excluded_heroes_dict:
             return None
 
-        excluded_heroes_missing_icon: set[str] = {
-            "Nothing as of now :)",
-        }
         filtered_dict = {}
 
         for key, value in excluded_heroes_dict.items():
-            if value in excluded_heroes_missing_icon:
-                logging.warning(f"Missing icon for Hero: {value}")
-            else:
-                filtered_dict[key] = value
+            filtered_dict[key] = value
 
         return self._find_any_excluded_hero(filtered_dict)
 
@@ -451,7 +463,7 @@ class AFKJourneyBase(Game, ABC):
 
         return result
 
-    def _navigate_to_default_state(  # noqa: PLR0912
+    def _navigate_to_default_state(  # noqa: PLR0912, PLR0915
         self, check_callable: Callable[[], bool] | None = None
     ) -> None:
         """Navigate to main default screen.
@@ -470,11 +482,24 @@ class AFKJourneyBase(Game, ABC):
             "guide/next.png",
             "battle/copy.png",
             "login/claim.png",
+            "arcane_labyrinth/back_arrow.png",
         ]
 
+        max_attempts = 20
+        attempts = 0
+
         while True:
+            restart = False
             if not self.is_game_running():
+                logging.error("Game not running.")
+                restart = True
+            if attempts >= max_attempts:
+                logging.error("Failed to navigate to default state.")
+                restart = True
+            if restart:
                 logging.warning("Trying to restart app this is still WIP.")
+                self.force_stop_game()
+                sleep(5)
                 self.start_game()
                 sleep(15)
                 while not self.find_any_template(templates) and self.is_game_running():

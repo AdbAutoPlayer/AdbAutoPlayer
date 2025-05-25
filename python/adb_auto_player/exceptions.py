@@ -31,6 +31,12 @@ class GameTimeoutError(Exception):
     pass
 
 
+class GameActionFailedError(Exception):
+    """Generic Exception that can be used when any action fails."""
+
+    pass
+
+
 class GameNotRunningError(Exception):
     """Raised when the Game is not running."""
 
