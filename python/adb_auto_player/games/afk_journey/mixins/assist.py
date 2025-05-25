@@ -56,7 +56,7 @@ class AssistMixin(AFKJourneyBase, ABC):
         )
         if result is None:
             logging.info("Navigating to World Chat")
-            self._navigate_to_default_state()
+            self.navigate_to_default_state()
             self.tap(Coordinates(1010, 1080), scale=True)
             sleep(1)
             self.tap(Coordinates(110, 350), scale=True)
@@ -154,7 +154,7 @@ class AssistMixin(AFKJourneyBase, ABC):
                     "guide/close.png",
                     "guide/next.png",
                     "assist/label_world_chat.png",
-                    "time_of_day.png",
+                    "navigation/time_of_day.png",
                 ],
                 timeout=self.BATTLE_TIMEOUT,
             )

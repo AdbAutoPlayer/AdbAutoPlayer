@@ -1,7 +1,6 @@
 """AFK Journey Season Legend Trial."""
 
 import logging
-from time import sleep
 
 from adb_auto_player import Coordinates, CropRegions, GameTimeoutError, NotFoundError
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
@@ -31,7 +30,7 @@ class SeasonLegendTrial(AFKJourneyBase):
 
         if not self._is_on_season_legend_trial_select():
             try:
-                self._navigate_to_legend_trials_select_tower()
+                self.navigate_to_legend_trials_select_tower()
             except GameTimeoutError as e:
                 logging.error(f"{e} {self.LANG_ERROR}")
                 return None
@@ -47,7 +46,7 @@ class SeasonLegendTrial(AFKJourneyBase):
 
         for faction in factions:
             if not self._is_on_season_legend_trial_select():
-                self._navigate_to_legend_trials_select_tower()
+                self.navigate_to_legend_trials_select_tower()
 
             if faction.capitalize() not in towers:
                 logging.info(f"{faction.capitalize()}s excluded in config")
@@ -141,25 +140,6 @@ class SeasonLegendTrial(AFKJourneyBase):
         )
         _, x, y = challenge_btn
         self.tap(Coordinates(x, y))
-
-    def _navigate_to_legend_trials_select_tower(self) -> None:
-        """Navigate to Legend Trials select tower screen."""
-        self._navigate_to_default_state()
-
-        logging.info("Navigating to Legend Trials tower selection")
-        logging.info("Clicking Battle Modes button")
-        self.tap(Coordinates(460, 1830), scale=True)
-        label = self.wait_for_template(
-            template="legend_trials/label.png",
-            timeout_message="Could not find Legend Trial Label",
-        )
-        self.tap(Coordinates(*label))
-        self.wait_for_template(
-            template="legend_trials/s_header.png",
-            crop=CropRegions(right=0.8, bottom=0.8),
-            timeout_message="Could not find Season Legend Trial Header",
-        )
-        sleep(1)
 
     def _is_on_season_legend_trial_select(self) -> bool:
         return (

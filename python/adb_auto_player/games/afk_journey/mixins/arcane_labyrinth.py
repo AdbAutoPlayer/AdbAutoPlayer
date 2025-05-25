@@ -364,14 +364,14 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "arcane_labyrinth/pure_crystal_icon.png",
                 "arcane_labyrinth/quit_door.png",
                 "arcane_labyrinth/select_a_crest.png",
-                "confirm.png",
+                "navigation/confirm.png",
                 "confirm_text.png",
             ],
             threshold=0.8,
         )
 
         if template in (
-            "confirm.png",
+            "navigation/confirm.png",
             "confirm_text.png",
         ):
             checkbox = self.game_find_template_match(
@@ -413,54 +413,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             logging.info("Arcane Labyrinth already started")
             return
 
-        logging.info("Navigating to Arcane Labyrinth screen")
-        # Possibility of getting stuck
-        # Back button does not work on Arcane Labyrinth screen
+        self.navigate_to_arcane_labyrinth()
 
-        def stop_condition() -> bool:
-            """Stop condition."""
-            match: tuple[str, int, int] | None = self.find_any_template(
-                templates=[
-                    "arcane_labyrinth/select_a_crest.png",
-                    "arcane_labyrinth/confirm.png",
-                    "arcane_labyrinth/quit.png",
-                ],
-                crop=CropRegions(top=0.8),
-            )
-
-            if match is not None:
-                logging.info("Select a Crest screen open")
-                return True
-            return False
-
-        self._navigate_to_default_state(check_callable=stop_condition)
-
-        if self.find_any_template(
-            templates=[
-                "arcane_labyrinth/select_a_crest.png",
-                "arcane_labyrinth/confirm.png",
-                "arcane_labyrinth/quit.png",
-            ],
-            crop=CropRegions(top=0.8),
-        ):
-            return
-        # TODO have a navigate to battle modes function...
-        self.tap(Coordinates(460, 1830), scale=True)
-        self.wait_for_any_template(
-            [
-                "afk_stage.png",
-                "duras_trials/label.png",
-                "arcane_labyrinth/label.png",
-            ],
-            timeout_message=f"Battle Modes screen not found. {self.LANG_ERROR}",
-            timeout=self.MIN_TIMEOUT,
-        )
-        self.swipe_up(sy=1350, ey=500)
-        label: tuple[int, int] = self.wait_for_template(
-            "arcane_labyrinth/label.png",
-            timeout=self.MIN_TIMEOUT,
-        )
-        self.tap(Coordinates(*label))
         template, x, y = self.wait_for_any_template(
             templates=[
                 "arcane_labyrinth/enter.png",
@@ -484,7 +438,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             "arcane_labyrinth/heroes_icon.png",
             "arcane_labyrinth/confirm.png",
             "arcane_labyrinth/quit.png",
-            "confirm.png",
+            "navigation/confirm.png",
         ]
 
         if self.arcane_skip_coordinates is None:
