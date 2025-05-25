@@ -116,7 +116,7 @@ class DreamRealmMixin(AFKJourneyBase):
     def _enter_dr(self) -> None:
         """Enter Dream Realm."""
         logging.info("Entering Dream Realm...")
-        self._navigate_to_default_state()
+        self.navigate_to_default_state()
         self.tap(Coordinates(460, 1830))  # Battle Modes
         try:
             dr_mode: tuple[int, int] = self.wait_for_template(

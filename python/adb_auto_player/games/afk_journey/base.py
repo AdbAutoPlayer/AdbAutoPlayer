@@ -2,7 +2,6 @@
 
 import logging
 import re
-from collections.abc import Callable
 from time import sleep
 from typing import Any
 
@@ -13,8 +12,10 @@ from adb_auto_player import (
     MatchMode,
 )
 from adb_auto_player.decorators.register_game import GameGUIMetadata, register_game
-from adb_auto_player.games.afk_journey.config import Config
-from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+
+from .afkjourneynavigation import AFKJourneyNavigation
+from .config import Config
+from .gui_category import AFKJCategory
 
 
 @register_game(
@@ -25,7 +26,7 @@ from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
         categories=list(AFKJCategory),
     ),
 )
-class AFKJourneyBase(Game):
+class AFKJourneyBase(AFKJourneyNavigation, Game):
     """AFK Journey Base Class."""
 
     def __init__(self) -> None:
@@ -355,7 +356,8 @@ class AFKJourneyBase(Game):
             bool: True if confirmed, False if not.
         """
         result: tuple[str, int, int] | None = self.find_any_template(
-            templates=["confirm.png", "confirm_text.png"], crop=CropRegions(top=0.4)
+            templates=["navigation/confirm.png", "confirm_text.png"],
+            crop=CropRegions(top=0.4),
         )
         if result:
             _, x, y = result
@@ -399,7 +401,7 @@ class AFKJourneyBase(Game):
                     "next.png",
                     "battle/victory_rewards.png",
                     "retry.png",
-                    "confirm.png",
+                    "navigation/confirm.png",
                     "battle/victory_rewards.png",  # TODO: Duplicate? Check if needed.
                     "battle/power_up.png",
                     "battle/result.png",
@@ -415,7 +417,7 @@ class AFKJourneyBase(Game):
                     "next.png",
                     "battle/victory_rewards.png",
                     "retry.png",
-                    "confirm.png",
+                    "navigation/confirm.png",
                     "battle/victory_rewards.png",  # TODO: Duplicate? Check if needed.
                     "battle/power_up.png",
                     "battle/result.png",
@@ -435,7 +437,7 @@ class AFKJourneyBase(Game):
                 self.tap(Coordinates(x=550, y=1800), scale=True)
                 result = False
                 break
-            elif template == "confirm.png":
+            elif template == "navigation/confirm.png":
                 logging.error(
                     "Network Error or Battle data differs between client and server"
                 )
@@ -464,97 +466,6 @@ class AFKJourneyBase(Game):
             result = False
 
         return result
-
-    def _navigate_to_default_state(  # noqa: PLR0912, PLR0915
-        self, check_callable: Callable[[], bool] | None = None
-    ) -> None:
-        """Navigate to main default screen.
-
-        Args:
-            check_callable (Callable[[], bool] | None, optional): Callable to check.
-                Defaults to None.
-        """
-        templates = [
-            "notice.png",
-            "confirm.png",
-            "time_of_day.png",
-            "dotdotdot.png",
-            "battle/copy.png",
-            "guide/close.png",
-            "guide/next.png",
-            "battle/copy.png",
-            "login/claim.png",
-            "arcane_labyrinth/back_arrow.png",
-        ]
-
-        max_attempts = 20
-        attempts = 0
-
-        while True:
-            restart = False
-            if not self.is_game_running():
-                logging.error("Game not running.")
-                restart = True
-            if attempts >= max_attempts:
-                logging.error("Failed to navigate to default state.")
-                restart = True
-            if restart:
-                logging.warning("Trying to restart app this is still WIP.")
-                self.force_stop_game()
-                sleep(5)
-                self.start_game()
-                sleep(15)
-                while not self.find_any_template(templates) and self.is_game_running():
-                    self.tap(Coordinates(1080 // 2, 1920 // 2))
-                    sleep(3)
-
-            if check_callable and check_callable():
-                sleep(1)
-                return None
-            result: tuple[str, int, int] | None = self.find_any_template(templates)
-
-            if result is None:
-                logging.debug("back")
-                self.press_back_button()
-                sleep(3)
-                continue
-
-            template, x, y = result
-            logging.debug(template)
-            match template:
-                case "notice.png":
-                    self.tap(Coordinates(x=530, y=1630), scale=True)
-                    sleep(3)
-                    continue
-                case "exit.png":
-                    pass
-                case "confirm.png":
-                    if self.game_find_template_match(
-                        "exit_the_game.png",
-                    ):
-                        x_btn: tuple[int, int] | None = self.game_find_template_match(
-                            "x.png",
-                        )
-                        if x_btn:
-                            logging.debug("x")
-                            self.tap(Coordinates(*x_btn))
-                            sleep(1)
-                            continue
-                        self.press_back_button()
-                        sleep(1)
-                    else:
-                        self.tap(Coordinates(x=x, y=y))
-                        sleep(1)
-                case "time_of_day.png":
-                    break
-                case "dotdotdot.png":
-                    self.press_back_button()
-                    sleep(1)
-                case _:
-                    self.tap(Coordinates(x=x, y=y))
-                    sleep(0.5)
-        sleep(1)
-        return
 
     def _handle_guide_popup(
         self,

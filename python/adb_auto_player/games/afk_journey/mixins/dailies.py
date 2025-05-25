@@ -39,7 +39,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         """Complete daily chores."""
         self.start_up()
         do_arena: bool = self.get_config().dailies.arena_battle
-        self._navigate_to_default_state()
+        self.navigate_to_default_state()
 
         self.claim_daily_rewards()
         self.buy_emporium()
@@ -104,7 +104,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def buy_emporium(self) -> None:
         """Purchase single pull and optionally affinity items."""
         logging.info("Entering Mystical House...")
-        self._navigate_to_default_state()
+        self.navigate_to_default_state()
         self.tap(Coordinates(310, 1840), scale=True)
 
         try:
@@ -287,7 +287,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def claim_hamburger(self) -> None:
         """Claim rewards from hamburger menu."""
-        self._navigate_to_default_state()
+        self.navigate_to_default_state()
 
         logging.info("Navigating to Hamburger.")
         self.tap(Coordinates(990, 1840), scale=True)
@@ -442,7 +442,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def raise_hero_affinity(self) -> None:
         """Raise hero affinity with 3 clicks per day."""
-        self._navigate_to_default_state()
+        self.navigate_to_default_state()
         sleep(5)
 
         logging.debug("Open Resonating Hall.")

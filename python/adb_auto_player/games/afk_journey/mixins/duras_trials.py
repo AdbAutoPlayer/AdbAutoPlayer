@@ -28,7 +28,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
         """Push Dura's Trials."""
         self.start_up()
         self.store[self.STORE_MODE] = self.MODE_DURAS_TRIALS
-        self._navigate_to_duras_trials_screen()
+        self.navigate_to_duras_trials_screen()
 
         self.wait_for_template(
             template="duras_trials/rate_up.png",
@@ -51,41 +51,12 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
         first_banner = True
         for banner in rate_up_banners:
             if not first_banner:
-                self._navigate_to_duras_trials_screen()
+                self.navigate_to_duras_trials_screen()
             self._handle_dura_screen(*banner)
-            self._navigate_to_duras_trials_screen()
+            self.navigate_to_duras_trials_screen()
             self._handle_dura_screen(*banner, nightmare_mode=True)
             first_banner = False
 
-        return None
-
-    def _navigate_to_duras_trials_screen(self) -> None:
-        logging.info("Navigating to Dura's Trial select")
-
-        def check_for_duras_trials_label() -> bool:
-            match = self.game_find_template_match(
-                template="duras_trials/featured_heroes.png",
-                crop=CropRegions(left=0.7, bottom=0.8),
-            )
-            return match is not None
-
-        self._navigate_to_default_state(check_callable=check_for_duras_trials_label)
-
-        featured_heroes = self.game_find_template_match(
-            template="duras_trials/featured_heroes.png",
-            crop=CropRegions(left=0.7, bottom=0.8),
-        )
-        if featured_heroes is not None:
-            return
-
-        logging.info("Clicking Battle Modes button")
-        self.tap(Coordinates(x=460, y=1830), scale=True)
-        duras_trials_label = self.wait_for_template(template="duras_trials/label.png")
-        self.tap(Coordinates(*duras_trials_label))
-        self.wait_for_template(
-            template="duras_trials/featured_heroes.png",
-            crop=CropRegions(left=0.7, bottom=0.8),
-        )
         return None
 
     def _dura_resolve_state(self) -> tuple[str, int, int]:

@@ -46,7 +46,7 @@ class ArenaMixin(AFKJourneyBase):
     def _enter_arena(self) -> None:
         """Enter Arena."""
         logging.info("Entering Arena...")
-        self._navigate_to_default_state()
+        self.navigate_to_default_state()
         self.tap(Coordinates(460, 1830))  # Battle Modes
         try:
             arena_mode: tuple[int, int] = self.wait_for_template(

@@ -37,7 +37,7 @@ class GameActionFailedError(Exception):
     pass
 
 
-class GameNotRunningError(Exception):
+class GameNotRunningOrFrozenError(Exception):
     """Raised when the Game is not running."""
 
     pass

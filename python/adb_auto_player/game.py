@@ -36,7 +36,7 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
 )
 from adb_auto_player.exceptions import (
     GameActionFailedError,
-    GameNotRunningError,
+    GameNotRunningOrFrozenError,
     GameStartError,
 )
 from adb_auto_player.template_matching import (
@@ -273,7 +273,7 @@ class Game:
             sys.exit(1)
 
         if not self.is_game_running():
-            raise GameNotRunningError("Game is not running")
+            raise GameNotRunningOrFrozenError("Game is not running")
 
     def start_stream(self) -> None:
         """Start the device stream."""
@@ -422,6 +422,7 @@ class Game:
     def force_stop_game(self):
         """Force stops the Game."""
         self.device.shell(["am", "force-stop", self.package_name])
+        sleep(5)
 
     def is_game_running(self) -> bool:
         """Check if Game is still running."""
@@ -454,6 +455,7 @@ class Game:
         if "No activities found to run" in output:
             logging.debug(f"start_game: {output}")
             raise GameStartError("Game cannot be started")
+        sleep(15)
 
     def wait_for_roi_change(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
@@ -1013,7 +1015,8 @@ class Game:
             screenshot_rgb = cv2.cvtColor(screenshot, cv2.COLOR_BGR2RGB)
             image = Image.fromarray(screenshot_rgb)
             image.save(file_name)
-            logging.debug(f"Saved screenshot {file_name}")
+            if file_index == 0:
+                logging.debug(f"Saved screenshot {file_name}")
         except Exception as e:
             logging.warning(
                 f"Cannot save debug screenshot: {file_name}, disabling. Error: {e}"
@@ -1121,14 +1124,14 @@ class Game:
                 logging.error(f"Task '{task}' not found")
                 continue
             error = execute(function=custom_routine.func, kwargs=custom_routine.kwargs)
-            if isinstance(error, GameNotRunningError):
+            if isinstance(error, GameNotRunningOrFrozenError):
                 if self.package_name:
                     logging.warning(
-                        f"Task '{task}' failed because the game is not running, "
-                        "attempting to restart it."
+                        f"Task '{task}' failed because the game is not running or "
+                        "frozen, attempting to restart it."
                     )
+                    self.force_stop_game()
                     self.start_game()
-                    sleep(5)
                 else:
                     logging.error(
                         f"Task '{task}' failed because the game is not running, "
