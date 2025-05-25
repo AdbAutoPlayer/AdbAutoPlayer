@@ -1022,7 +1022,10 @@ class Game:
         file_name = f"debug/{file_index}.png"
         try:
             os.makedirs(os.path.dirname(file_name), exist_ok=True)
-            image = Image.fromarray(screenshot)
+
+            # Convert BGR (OpenCV) to RGB (PIL)
+            screenshot_rgb = cv2.cvtColor(screenshot, cv2.COLOR_BGR2RGB)
+            image = Image.fromarray(screenshot_rgb)
             image.save(file_name)
         except Exception as e:
             logging.warning(
