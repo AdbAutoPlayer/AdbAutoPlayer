@@ -48,12 +48,11 @@ class AFKStagesMixin(AFKJourneyBase):
         self.start_up()
         self.store[self.STORE_MODE] = self.MODE_AFK_STAGES
 
-        while True:
-            self.store[self.STORE_SEASON] = season
-            try:
-                self._start_afk_stage()
-            except GameTimeoutError as e:
-                logging.warning(f"{e} {self.LANG_ERROR}")
+        self.store[self.STORE_SEASON] = season
+        try:
+            self._start_afk_stage()
+        except GameTimeoutError as e:
+            logging.warning(f"{e} {self.LANG_ERROR}")
 
     def _start_afk_stage(self) -> None:
         """Start push."""
