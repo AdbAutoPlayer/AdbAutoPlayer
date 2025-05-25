@@ -1132,17 +1132,17 @@ class Game:
                 continue
             error = execute(function=custom_routine.func, kwargs=custom_routine.kwargs)
             if isinstance(error, GameNotRunningError):
-                self.package_name = "test"
                 if self.package_name:
                     logging.warning(
                         f"Task '{task}' failed because the game is not running, "
-                        f"attempting to restart it."
+                        "attempting to restart it."
                     )
                     self.start_game()
                     sleep(5)
                 else:
                     logging.error(
-                        f"Task '{task}' failed because the game is not running"
+                        f"Task '{task}' failed because the game is not running, "
+                        "exiting..."
                     )
                     sys.exit(1)
                 continue

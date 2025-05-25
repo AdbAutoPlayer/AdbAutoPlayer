@@ -113,6 +113,15 @@ class AFKJourneyBase(Game):
         if not use_suggested_formations:
             formations = 1
 
+        if (
+            self._get_config_attribute_from_mode(
+                "use_current_formation_before_suggested_formation"
+            )
+            and self._handle_single_stage()
+        ):
+            logging.info("Battle using current Formation.")
+            return True
+
         while self.store.get(self.STORE_FORMATION_NUM, 0) < formations:
             self.store[self.STORE_FORMATION_NUM] += 1
 

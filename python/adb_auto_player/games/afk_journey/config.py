@@ -125,35 +125,38 @@ class GeneralConfig(BaseModel):
     assist_limit: PositiveInt = Field(default=20, alias="Assist Limit")
 
 
-class AFKStagesConfig(BaseModel):
-    """AFK Stages config model."""
+class CommonBattleModeConfig(BaseModel):
+    """Common config shared across battle modes."""
 
     attempts: PositiveInt = Field(default=5, alias="Attempts")
-    formations: FormationsInt = Field(default=7, alias="Formations")
     use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
-    spend_gold: bool = Field(default=False, alias="Spend Gold")
+    formations: FormationsInt = Field(default=7, alias="Formations")
     skip_manual_formations: bool = Field(default=False, alias="Skip Manual Formations")
+    use_current_formation_before_suggested_formation: bool = Field(
+        default=True,
+        alias="Start with current Formation",
+    )
+    spend_gold: bool = Field(default=False, alias="Spend Gold")
 
 
-class DurasTrialsConfig(BaseModel):
+class AFKStagesConfig(CommonBattleModeConfig):
+    """AFK Stages config model."""
+
+    pass
+
+
+class DurasTrialsConfig(CommonBattleModeConfig):
     """Dura's Trials config model."""
 
-    attempts: PositiveInt = Field(default=2, alias="Attempts")
-    formations: FormationsInt = Field(default=7, alias="Formations")
-    use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
-    spend_gold: bool = Field(default=False, alias="Spend Gold")
+    pass
 
 
 DEFAULT_TOWERS = list(TowerEnum.__members__.values())
 
 
-class LegendTrialsConfig(BaseModel):
+class LegendTrialsConfig(CommonBattleModeConfig):
     """Legend Trials config model."""
 
-    attempts: PositiveInt = Field(default=5, alias="Attempts")
-    formations: FormationsInt = Field(default=7, alias="Formations")
-    use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
-    spend_gold: bool = Field(default=False, alias="Spend Gold")
     towers: list[TowerEnum] = Field(
         default_factory=lambda: DEFAULT_TOWERS,
         alias="Towers",

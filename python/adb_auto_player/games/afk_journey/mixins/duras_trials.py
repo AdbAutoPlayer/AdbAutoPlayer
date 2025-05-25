@@ -236,7 +236,8 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
 
             # Handle the battle screen.
             result = self._handle_battle_screen(
-                self.get_config().duras_trials.use_suggested_formations
+                self.get_config().duras_trials.use_suggested_formations,
+                self.get_config().duras_trials.skip_manual_formations,
             )
 
             if result is True:

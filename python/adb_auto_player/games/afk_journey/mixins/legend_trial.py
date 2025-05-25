@@ -89,7 +89,8 @@ class SeasonLegendTrial(AFKJourneyBase):
         while True:
             try:
                 result: bool = self._handle_battle_screen(
-                    self.get_config().legend_trials.use_suggested_formations
+                    self.get_config().legend_trials.use_suggested_formations,
+                    self.get_config().legend_trials.skip_manual_formations,
                 )
             except GameTimeoutError as e:
                 logging.warning(f"{e}")
