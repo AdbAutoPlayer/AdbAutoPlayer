@@ -47,14 +47,14 @@ class ArenaMixin(AFKJourneyBase):
         """Enter Arena."""
         logging.info("Entering Arena...")
         self._navigate_to_default_state()
-        self.click(Coordinates(460, 1830))  # Battle Modes
+        self.tap(Coordinates(460, 1830))  # Battle Modes
         try:
             arena_mode: tuple[int, int] = self.wait_for_template(
                 "arena/label.png",
                 timeout_message="Failed to find Arena.",
                 timeout=self.MIN_TIMEOUT,
             )
-            self.click(Coordinates(*arena_mode))
+            self.tap(Coordinates(*arena_mode))
             sleep(2)
         except GameTimeoutError as fail:
             logging.error(f"{fail} {self.LANG_ERROR}")
@@ -75,7 +75,7 @@ class ArenaMixin(AFKJourneyBase):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="No notices found.",
             )
-            self.click(Coordinates(380, 1890))
+            self.tap(Coordinates(380, 1890))
             sleep(4)
 
             return True
@@ -95,7 +95,7 @@ class ArenaMixin(AFKJourneyBase):
                 timeout_message="Failed to start Arena runs.",
             )
             sleep(2)
-            self.click(Coordinates(x, y))
+            self.tap(Coordinates(x, y))
 
             logging.debug("Choosing opponent.")
             opponent: tuple[int, int] = self.wait_for_template(
@@ -104,7 +104,7 @@ class ArenaMixin(AFKJourneyBase):
                 timeout=self.FAST_TIMEOUT,
                 timeout_message="Failed to find Arena opponent.",
             )
-            self.click(Coordinates(*opponent))
+            self.tap(Coordinates(*opponent))
         except GameTimeoutError as fail:
             logging.error(fail)
 
@@ -118,7 +118,7 @@ class ArenaMixin(AFKJourneyBase):
                 timeout_message="Failed to start Arena battle.",
             )
             sleep(2)
-            self.click(Coordinates(*start))
+            self.tap(Coordinates(*start))
 
             logging.debug("Skip battle.")
             skip: tuple[int, int] = self.wait_for_template(
@@ -126,7 +126,7 @@ class ArenaMixin(AFKJourneyBase):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to skip Arena battle.",
             )
-            self.click(Coordinates(*skip))
+            self.tap(Coordinates(*skip))
 
             logging.debug("Battle complete.")
             confirm: tuple[int, int] = self.wait_for_template(
@@ -135,7 +135,7 @@ class ArenaMixin(AFKJourneyBase):
                 timeout_message="Failed to confirm Arena battle completion.",
             )
             sleep(4)
-            self.click(Coordinates(*confirm))
+            self.tap(Coordinates(*confirm))
             sleep(2)
         except GameTimeoutError as fail:
             logging.error(fail)
@@ -153,7 +153,7 @@ class ArenaMixin(AFKJourneyBase):
                 timeout=self.FAST_TIMEOUT,
                 timeout_message="Failed looking for free attempts.",
             )
-            self.click(Coordinates(*buy))
+            self.tap(Coordinates(*buy))
         except GameTimeoutError:
             return True  # Not breaking, but would be interested in why it failed.
 
@@ -170,9 +170,9 @@ class ArenaMixin(AFKJourneyBase):
                 "arena/cancel_purchase.png"
             )
             (
-                self.click(Coordinates(*cancel))
+                self.tap(Coordinates(*cancel))
                 if cancel
-                else self.click(Coordinates(550, 1790))  # Cancel fallback
+                else self.tap(Coordinates(550, 1790))  # Cancel fallback
             )
 
             return False

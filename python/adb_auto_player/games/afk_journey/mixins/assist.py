@@ -57,9 +57,9 @@ class AssistMixin(AFKJourneyBase, ABC):
         if result is None:
             logging.info("Navigating to World Chat")
             self._navigate_to_default_state()
-            self.click(Coordinates(1010, 1080), scale=True)
+            self.tap(Coordinates(1010, 1080), scale=True)
             sleep(1)
-            self.click(Coordinates(110, 350), scale=True)
+            self.tap(Coordinates(110, 350), scale=True)
             return False
 
         template, x, y = result
@@ -67,7 +67,7 @@ class AssistMixin(AFKJourneyBase, ABC):
             # Chat Window is open but not on World Chat
             case "assist/tap_to_enter.png", "assist/label_team-up_chat.png":
                 logging.info("Switching to World Chat")
-                self.click(Coordinates(110, 350), scale=True)
+                self.tap(Coordinates(110, 350), scale=True)
                 return False
             case "assist/label_world_chat.png":
                 pass
@@ -81,7 +81,7 @@ class AssistMixin(AFKJourneyBase, ABC):
             sleep(1)
             return False
 
-        self.click(Coordinates(*profile_icon))
+        self.tap(Coordinates(*profile_icon))
         try:
             self.wait_for_any_template(
                 templates=[
@@ -114,10 +114,10 @@ class AssistMixin(AFKJourneyBase, ABC):
                 is None
             ):
                 # Back button does not always close profile/chat windows
-                self.click(Coordinates(550, 100), scale=True)
+                self.tap(Coordinates(550, 100), scale=True)
                 sleep(1)
             return False
-        self.click(Coordinates(x, y))
+        self.tap(Coordinates(x, y))
         match template:
             case "assist/join_now.png":
                 logging.info("Clicking Corrupt Creature join now button")
@@ -144,7 +144,7 @@ class AssistMixin(AFKJourneyBase, ABC):
         while self.game_find_template_match(
             template="assist/ready.png", crop=CropRegions(left=0.2, right=0.1, top=0.8)
         ):
-            self.click(Coordinates(*ready))
+            self.tap(Coordinates(*ready))
             sleep(0.5)
 
         while True:
@@ -174,14 +174,14 @@ class AssistMixin(AFKJourneyBase, ABC):
         logging.debug("Placing heroes")
         # click first 5 heroes in row 1 and 2
         for x in [110, 290, 470, 630, 800]:
-            self.click(Coordinates(x, 1300), scale=True)
+            self.tap(Coordinates(x, 1300), scale=True)
             sleep(0.5)
         while True:
             cc_ready: tuple[int, int] | None = self.game_find_template_match(
                 template="assist/cc_ready.png",
             )
             if cc_ready:
-                self.click(Coordinates(*cc_ready))
+                self.tap(Coordinates(*cc_ready))
                 sleep(1)
             else:
                 break
@@ -201,10 +201,10 @@ class AssistMixin(AFKJourneyBase, ABC):
         if go is None:
             logging.info("Clicked Synergy button too late")
             return False
-        self.click(Coordinates(*go))
+        self.tap(Coordinates(*go))
         sleep(3)
-        self.click(Coordinates(130, 900), scale=True)
+        self.tap(Coordinates(130, 900), scale=True)
         sleep(1)
-        self.click(Coordinates(630, 1800), scale=True)
+        self.tap(Coordinates(630, 1800), scale=True)
         logging.info("Synergy complete")
         return True

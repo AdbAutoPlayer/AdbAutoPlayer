@@ -69,7 +69,7 @@ class SeasonLegendTrial(AFKJourneyBase):
                 continue
 
             logging.info(f"Starting {faction.capitalize()} Tower")
-            self.click(Coordinates(*result))
+            self.tap(Coordinates(*result))
             try:
                 self._select_legend_trials_floor(faction)
             except (GameTimeoutError, NotFoundError) as e:
@@ -107,7 +107,7 @@ class SeasonLegendTrial(AFKJourneyBase):
                 logging.info(f"{faction.capitalize()} Trials pushed: {count}")
                 match template:
                     case "next.png":
-                        self.click(Coordinates(x, y))
+                        self.tap(Coordinates(x, y))
                         continue
                     case _:
                         logging.info(f"{faction.capitalize()} Top Floor Reached")
@@ -140,7 +140,7 @@ class SeasonLegendTrial(AFKJourneyBase):
             "assuming Trial is already cleared",
         )
         _, x, y = challenge_btn
-        self.click(Coordinates(x, y))
+        self.tap(Coordinates(x, y))
 
     def _navigate_to_legend_trials_select_tower(self) -> None:
         """Navigate to Legend Trials select tower screen."""
@@ -148,12 +148,12 @@ class SeasonLegendTrial(AFKJourneyBase):
 
         logging.info("Navigating to Legend Trials tower selection")
         logging.info("Clicking Battle Modes button")
-        self.click(Coordinates(460, 1830), scale=True)
+        self.tap(Coordinates(460, 1830), scale=True)
         label = self.wait_for_template(
             template="legend_trials/label.png",
             timeout_message="Could not find Legend Trial Label",
         )
-        self.click(Coordinates(*label))
+        self.tap(Coordinates(*label))
         self.wait_for_template(
             template="legend_trials/s_header.png",
             crop=CropRegions(right=0.8, bottom=0.8),

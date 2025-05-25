@@ -80,10 +80,10 @@ class AFKStagesMixin(AFKJourneyBase):
         logging.info("Navigating to default state")
         self._navigate_to_default_state()
         logging.info("Clicking Battle Modes button")
-        self.click(Coordinates(x=460, y=1830), scale=True)
+        self.tap(Coordinates(x=460, y=1830), scale=True)
         x, y = self.wait_for_template("afk_stage.png", threshold=0.75)
         while self.game_find_template_match("afk_stage.png", threshold=0.75):
-            self.click(Coordinates(x, y))
+            self.tap(Coordinates(x, y))
             sleep(2)
         self._select_afk_stage()
 
@@ -93,17 +93,17 @@ class AFKStagesMixin(AFKJourneyBase):
             template="resonating_hall.png",
             crop=CropRegions(left=0.3, right=0.3, top=0.9),
         )
-        self.click(Coordinates(x=550, y=1080), scale=True)  # click rewards popup
+        self.tap(Coordinates(x=550, y=1080), scale=True)  # click rewards popup
         sleep(1)
         if self.store.get(self.STORE_SEASON, False):
             logging.debug("Clicking Talent Trials button")
-            self.click(Coordinates(x=300, y=1610), scale=True)
+            self.tap(Coordinates(x=300, y=1610), scale=True)
         else:
             logging.debug("Clicking Battle button")
-            self.click(Coordinates(x=800, y=1610), scale=True)
+            self.tap(Coordinates(x=800, y=1610), scale=True)
         sleep(2)
         confirm = self.game_find_template_match(
             template="confirm.png", crop=CropRegions(left=0.5, top=0.5)
         )
         if confirm:
-            self.click(Coordinates(*confirm))
+            self.tap(Coordinates(*confirm))

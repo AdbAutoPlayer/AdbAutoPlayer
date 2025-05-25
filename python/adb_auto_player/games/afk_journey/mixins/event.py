@@ -18,7 +18,7 @@ class EventMixin(AFKJourneyBase, ABC):
         logging.info("This claims rewards in Guild Chat (e.g. Happy Satchel)")
         logging.info("Opening chat")
         self._navigate_to_default_state()
-        self.click(Coordinates(1010, 1080), scale=True)
+        self.tap(Coordinates(1010, 1080), scale=True)
         sleep(3)
         while True:
             claim_button = self.game_find_template_match(
@@ -26,24 +26,24 @@ class EventMixin(AFKJourneyBase, ABC):
                 crop=CropRegions(left=0.6, top=0.2, bottom=0.2),
             )
             if claim_button:
-                self.click(Coordinates(*claim_button))
+                self.tap(Coordinates(*claim_button))
                 # click again to close popup
                 sleep(2)
-                self.click(Coordinates(*claim_button))
+                self.tap(Coordinates(*claim_button))
             # switch to world chat and back because sometimes chat stops scrolling
             world_chat_icon = self.game_find_template_match(
                 template="event/guild_chat_claim/world_chat_icon.png",
                 crop=CropRegions(right=0.8, top=0.1, bottom=0.3),
             )
             if world_chat_icon:
-                self.click(Coordinates(*world_chat_icon))
+                self.tap(Coordinates(*world_chat_icon))
                 sleep(1)
             guild_chat_icon = self.game_find_template_match(
                 template="event/guild_chat_claim/guild_chat_icon.png",
                 crop=CropRegions(right=0.8, top=0.1, bottom=0.3),
             )
             if guild_chat_icon:
-                self.click(Coordinates(*guild_chat_icon))
+                self.tap(Coordinates(*guild_chat_icon))
             sleep(1)
 
     def event_monopoly_assist(self) -> NoReturn:
@@ -77,7 +77,7 @@ class EventMixin(AFKJourneyBase, ABC):
                 if next_assist is None:
                     self.swipe_up(sy=1350, ey=500)
 
-            self.click(Coordinates(*next_assist))
+            self.tap(Coordinates(*next_assist))
             sleep(3)
             try:
                 if self._handle_battle_screen(use_suggested_formations=False):

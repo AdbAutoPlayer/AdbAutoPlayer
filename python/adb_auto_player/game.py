@@ -47,7 +47,6 @@ from adb_auto_player.template_matching import (
 )
 from adb_auto_player.util.execute import execute
 from adbutils._device import AdbDevice
-from deprecation import deprecated
 from PIL import Image
 from pydantic import BaseModel
 
@@ -332,24 +331,6 @@ class Game:
             )
             thread.start()
             sleep(non_blocking_sleep_duration)
-
-    @deprecated(details="Use 'tap' instead.")
-    def click(
-        self,
-        coordinates: Coordinates,
-        scale: bool = False,
-    ) -> None:
-        """Click on the given coordinates.
-
-        Args:
-            coordinates (Coordinates): Coordinates to click on.
-            scale (bool, optional): Whether to scale the coordinates.
-        """
-        if scale:
-            scaled_coords = Coordinates(*self._scale_coordinates(*coordinates))
-            logging.debug(f"Scaled coordinates: {coordinates} => {scaled_coords}")
-            coordinates = scaled_coords
-        self._click(coordinates)
 
     def _click(self, coordinates: Coordinates) -> None:
         with self.device.shell(
