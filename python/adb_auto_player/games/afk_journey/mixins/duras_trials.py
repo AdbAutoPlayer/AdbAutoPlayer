@@ -5,12 +5,25 @@ from abc import ABC
 from time import sleep
 
 from adb_auto_player import Coordinates, CropRegions
-from adb_auto_player.games.afk_journey import AFKJourneyBase
+from adb_auto_player.decorators.register_command import GuiMetadata, register_command
+from adb_auto_player.decorators.register_custom_routine_choice import (
+    register_custom_routine_choice,
+)
+from adb_auto_player.games.afk_journey.base import AFKJourneyBase
+from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 
 
 class DurasTrialsMixin(AFKJourneyBase, ABC):
     """Dura's Trials Mixin."""
 
+    @register_command(
+        name="DurasTrials",
+        gui=GuiMetadata(
+            label="Dura's Trials",
+            category=AFKJCategory.GAME_MODES,
+        ),
+    )
+    @register_custom_routine_choice(label="Dura's Trials")
     def push_duras_trials(self) -> None:
         """Push Dura's Trials."""
         self.start_up()
@@ -223,7 +236,8 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
 
             # Handle the battle screen.
             result = self._handle_battle_screen(
-                self.get_config().duras_trials.use_suggested_formations
+                self.get_config().duras_trials.use_suggested_formations,
+                self.get_config().duras_trials.skip_manual_formations,
             )
 
             if result is True:

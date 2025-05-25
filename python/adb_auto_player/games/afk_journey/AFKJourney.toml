@@ -1,10 +1,9 @@
 ['AFK Stages']
 Attempts = 5
-'Both Modes' = true
 Formations = 7
-Repeat = true
 'Skip Manual Formations' = true
 'Spend Gold' = true
+'Start with current Formation' = true
 'Suggested Formations' = true
 
 ['Arcane Labyrinth']
@@ -21,9 +20,11 @@ Difficulty = 13
 'Spend Gold' = true
 
 ["Dura's Trials"]
-Attempts = 2
+Attempts = 5
 Formations = 7
-'Spend Gold' = false
+'Skip Manual Formations' = true
+'Spend Gold' = true
+'Start with current Formation' = true
 'Suggested Formations' = true
 
 [General]
@@ -33,11 +34,13 @@ Formations = 7
 ['Legend Trial']
 Attempts = 5
 Formations = 7
-'Spend Gold' = false
+'Skip Manual Formations' = true
+'Spend Gold' = true
+'Start with current Formation' = true
 'Suggested Formations' = true
-Towers = []
+Towers = ['Lightbearer', 'Wilder', 'Graveborn', 'Mauler']
 
 ['My Custom Routine']
-'Daily Tasks' = ['Season Talent Stages', 'AFK Stages', 'Season Talent Stages']
-'Repeating Tasks' = ['Legend Trial', 'Season Talent Stages', 'AFK Stages']
-'Skip Daily Tasks Today' = true
+'Daily Tasks' = []
+'Repeating Tasks' = ['Claim AFK Rewards', 'Level Up All Heroes', 'Season Talent Stages', 'AFK Stages', 'Season Legend Trial']
+'Skip Daily Tasks Today' = false

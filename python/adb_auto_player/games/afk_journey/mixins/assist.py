@@ -5,12 +5,21 @@ from abc import ABC
 from time import sleep
 
 from adb_auto_player import Coordinates, CropRegions, GameTimeoutError
-from adb_auto_player.games.afk_journey import AFKJourneyBase
+from adb_auto_player.decorators.register_command import GuiMetadata, register_command
+from adb_auto_player.games.afk_journey.base import AFKJourneyBase
+from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 
 
 class AssistMixin(AFKJourneyBase, ABC):
     """Assist Mixin."""
 
+    @register_command(
+        name="AssistSynergyAndCC",
+        gui=GuiMetadata(
+            label="Synergy & CC",
+            category=AFKJCategory.EVENTS_AND_OTHER,
+        ),
+    )
     def assist_synergy_corrupt_creature(self) -> None:
         """Assist Synergy and Corrupt Creature."""
         # TODO this needs to be refactored
