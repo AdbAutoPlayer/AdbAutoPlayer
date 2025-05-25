@@ -90,7 +90,7 @@ class AFKJourneyNavigation(Game, ABC):
                     "Failed to navigate to default state."
                 )
             attempts += 1
-            self.tap(self.CENTER_COORDS)
+            self.tap(AFKJourneyNavigation.CENTER_COORDS)
             sleep(3)
         sleep(1)
 
@@ -117,7 +117,7 @@ class AFKJourneyNavigation(Game, ABC):
         max_click_count = 3
         click_count = 0
         while self._can_see_time_of_day_button():
-            self.tap(self.RESONATING_HALL_COORDS, scale=True)
+            self.tap(AFKJourneyNavigation.RESONATING_HALL_COORDS, scale=True)
             sleep(3)
             click_count += 1
             if click_count > max_click_count:
@@ -159,7 +159,7 @@ class AFKJourneyNavigation(Game, ABC):
     def navigate_to_battle_modes_screen(self) -> None:
         self.navigate_to_default_state()
 
-        self.tap(self.BATTLE_MODES_COORDS, scale=True)
+        self.tap(AFKJourneyNavigation.BATTLE_MODES_COORDS, scale=True)
         _ = self.wait_for_any_template(
             templates=[
                 "battle_modes/afk_stage.png",
