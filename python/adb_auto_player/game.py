@@ -284,7 +284,7 @@ class Game:
             return
 
         self._stream.start()
-        logging.info("Starting Device Stream...")
+        logging.debug("Starting Device Stream...")
         time_waiting_for_stream_to_start = 0
         attempts = 10
         while True:
@@ -295,7 +295,7 @@ class Game:
                     self._stream = None
                 break
             if self._stream and self._stream.get_latest_frame() is not None:
-                logging.info("Device Stream started")
+                logging.debug("Device Stream started")
                 break
             sleep(1)
             time_waiting_for_stream_to_start += 1

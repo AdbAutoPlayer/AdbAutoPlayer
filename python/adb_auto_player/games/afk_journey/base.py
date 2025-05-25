@@ -232,10 +232,11 @@ class AFKJourneyBase(Game):
                     start_count = self.store.get(self.STORE_FORMATION_NUM, 1)
                     self.store[self.STORE_FORMATION_NUM] += 1
                     continue
-
+            sleep(1)
             self._tap_till_template_disappears(
                 template="battle/copy.png",
                 crop=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
+                delay=2.0,
             )
 
             cancel = self.game_find_template_match(
