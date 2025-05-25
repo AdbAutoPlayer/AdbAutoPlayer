@@ -1027,6 +1027,7 @@ class Game:
             screenshot_rgb = cv2.cvtColor(screenshot, cv2.COLOR_BGR2RGB)
             image = Image.fromarray(screenshot_rgb)
             image.save(file_name)
+            logging.debug(f"Saved screenshot {file_name}")
         except Exception as e:
             logging.warning(
                 f"Cannot save debug screenshot: {file_name}, disabling. Error: {e}"
