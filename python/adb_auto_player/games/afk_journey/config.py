@@ -4,6 +4,7 @@ from enum import StrEnum, auto
 from typing import Annotated
 
 from adb_auto_player import ConfigBase
+from adb_auto_player.config.my_custom_routine import MyCustomRoutineConfig
 from pydantic import BaseModel, Field
 
 # Type constraints
@@ -22,6 +23,7 @@ class HeroesEnum(StrEnum):
     Antandra = auto()
     Arden = auto()
     Atalanta = auto()
+    Athalia = auto()
     Berial = auto()
     Bonnie = auto()
     Brutus = auto()
@@ -47,15 +49,18 @@ class HeroesEnum(StrEnum):
     Hodgkin = auto()
     Hugin = auto()
     Igor = auto()
+    Indris = auto()
     Kafra = auto()
     Koko = auto()
     Korin = auto()
     Kruger = auto()
+    Kulu = auto()
     Lenya = auto()
-    LilyMay = auto()
+    Lily_May = auto()
     Lorsan = auto()
     Lucca = auto()
     Lucius = auto()
+    Lucy = auto()
     Ludovic = auto()
     Lumont = auto()
     Lyca = auto()
@@ -63,6 +68,7 @@ class HeroesEnum(StrEnum):
     Mikola = auto()
     Mirael = auto()
     Nara = auto()
+    Natsu = auto()
     Niru = auto()
     Odie = auto()
     Phraesto = auto()
@@ -119,37 +125,38 @@ class GeneralConfig(BaseModel):
     assist_limit: PositiveInt = Field(default=20, alias="Assist Limit")
 
 
-class AFKStagesConfig(BaseModel):
-    """AFK Stages config model."""
+class CommonBattleModeConfig(BaseModel):
+    """Common config shared across battle modes."""
 
     attempts: PositiveInt = Field(default=5, alias="Attempts")
-    formations: FormationsInt = Field(default=7, alias="Formations")
     use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
-    push_both_modes: bool = Field(default=True, alias="Both Modes")
-    spend_gold: bool = Field(default=False, alias="Spend Gold")
-    repeat: bool = Field(default=True, alias="Repeat")
+    formations: FormationsInt = Field(default=7, alias="Formations")
     skip_manual_formations: bool = Field(default=False, alias="Skip Manual Formations")
+    use_current_formation_before_suggested_formation: bool = Field(
+        default=True,
+        alias="Start with current Formation",
+    )
+    spend_gold: bool = Field(default=False, alias="Spend Gold")
 
 
-class DurasTrialsConfig(BaseModel):
+class AFKStagesConfig(CommonBattleModeConfig):
+    """AFK Stages config model."""
+
+    pass
+
+
+class DurasTrialsConfig(CommonBattleModeConfig):
     """Dura's Trials config model."""
 
-    attempts: PositiveInt = Field(default=2, alias="Attempts")
-    formations: FormationsInt = Field(default=7, alias="Formations")
-    use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
-    spend_gold: bool = Field(default=False, alias="Spend Gold")
+    pass
 
 
 DEFAULT_TOWERS = list(TowerEnum.__members__.values())
 
 
-class LegendTrialsConfig(BaseModel):
+class LegendTrialsConfig(CommonBattleModeConfig):
     """Legend Trials config model."""
 
-    attempts: PositiveInt = Field(default=5, alias="Attempts")
-    formations: FormationsInt = Field(default=7, alias="Formations")
-    use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
-    spend_gold: bool = Field(default=False, alias="Spend Gold")
     towers: list[TowerEnum] = Field(
         default_factory=lambda: DEFAULT_TOWERS,
         alias="Towers",
@@ -181,28 +188,6 @@ class DailiesConfig(BaseModel):
     buy_all_affinity: bool = Field(default=False, alias="Buy All Affinity")
     single_pull: bool = Field(default=False, alias="Single Pull")
     arena_battle: bool = Field(default=False, alias="Arena Battle")
-
-
-class MyCustomRoutineConfig(BaseModel):
-    """My Custom Routine config model."""
-
-    skip_daily_tasks_today: bool = Field(default=False, alias="Skip Daily Tasks Today")
-    daily_tasks: list = Field(
-        default_factory=list,
-        alias="Daily Tasks",
-        json_schema_extra={
-            "constraint_type": "MyCustomRoutine",
-            "default_value": [],
-        },
-    )
-    repeating_tasks: list = Field(
-        default_factory=list,
-        alias="Repeating Tasks",
-        json_schema_extra={
-            "constraint_type": "MyCustomRoutine",
-            "default_value": [],
-        },
-    )
 
 
 class Config(ConfigBase):

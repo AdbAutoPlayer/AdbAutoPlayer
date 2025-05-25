@@ -6,7 +6,7 @@ from time import sleep
 from typing import NoReturn
 
 from adb_auto_player import Coordinates, CropRegions
-from adb_auto_player.games.afk_journey import AFKJourneyBase
+from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 
 
 class EventMixin(AFKJourneyBase, ABC):

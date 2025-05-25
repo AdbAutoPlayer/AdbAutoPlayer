@@ -10,10 +10,24 @@ __all__ = []
 
 
 def load_modules():
-    """Discover all submodules in the `games` package."""
-    for _, module_name, _ in pkgutil.iter_modules(__path__):
-        module = importlib.import_module(f".{module_name}", package=__name__)
-        yield module
+    """Recursively discover and import all submodules in the `games` package."""
+    import sys
+
+    package = sys.modules[__name__]
+    yield package  # Yield the root package itself (optional)
+
+    if not hasattr(package, "__path__"):
+        return
+
+    def _load_recursively(pkg):
+        for _, module_name, is_pkg in pkgutil.iter_modules(pkg.__path__):
+            full_name = f"{pkg.__name__}.{module_name}"
+            module = importlib.import_module(full_name)
+            yield module
+            if is_pkg:
+                yield from _load_recursively(module)
+
+    yield from _load_recursively(package)
 
 
 def is_valid_class(cls):
@@ -21,32 +35,11 @@ def is_valid_class(cls):
     return issubclass(cls, Game) and cls is not Game
 
 
-def has_required_methods(cls):
-    """Check if the class implements the required methods."""
-    try:
-        instance = cls()
-
-        method_names = ["get_cli_menu_commands", "get_gui_options"]
-
-        for method_name in method_names:
-            method = getattr(instance, method_name, None)
-
-            if not callable(method) or method() is None:
-                # print(f"Class {cls.__name__} failed check for method: {method_name}")
-                return False
-
-        return True
-
-    except TypeError:
-        # print(f"Error instantiating class {cls.__name__}: {e}")
-        return False
-
-
 def discover_and_add_games():
     """Discover modules, find valid classes, and add them to the globals."""
     for module in load_modules():
         for name, cls in inspect.getmembers(module, inspect.isclass):
-            if is_valid_class(cls) and has_required_methods(cls):
+            if is_valid_class(cls):
                 globals()[name] = cls
                 __all__.append(name)
 

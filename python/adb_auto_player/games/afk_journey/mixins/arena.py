@@ -1,16 +1,24 @@
 """Arena Mixin."""
 
 import logging
-from abc import ABC
 from time import sleep
 
 from adb_auto_player import Coordinates, CropRegions, GameTimeoutError
-from adb_auto_player.games.afk_journey import AFKJourneyBase
+from adb_auto_player.decorators.register_command import GuiMetadata, register_command
+from adb_auto_player.games.afk_journey.base import AFKJourneyBase
+from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 
 
-class ArenaMixin(AFKJourneyBase, ABC):
+class ArenaMixin(AFKJourneyBase):
     """Arena Mixin."""
 
+    @register_command(
+        name="Arena",
+        gui=GuiMetadata(
+            label="Arena",
+            category=AFKJCategory.GAME_MODES,
+        ),
+    )
     def run_arena(self) -> None:
         """Use Arena attempts."""
         self.start_up()

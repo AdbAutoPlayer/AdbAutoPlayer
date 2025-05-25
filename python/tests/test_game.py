@@ -6,12 +6,10 @@ from pathlib import Path
 from unittest.mock import DEFAULT, patch
 
 from adb_auto_player import (
-    Command,
     CropRegions,
     Game,
     GameTimeoutError,
 )
-from adb_auto_player.ipc.game_gui import GameGUIOptions
 from adb_auto_player.template_matching import load_image
 from pydantic import BaseModel
 
@@ -34,20 +32,6 @@ class MockGame(Game):
     def _load_config(self) -> None:
         """Mocked method."""
         pass
-
-    def get_cli_menu_commands(self) -> list[Command]:
-        """Mocked method."""
-        return []
-
-    def get_gui_options(self) -> GameGUIOptions:
-        """Mocked method."""
-        return GameGUIOptions(
-            game_title="Dummy Game",
-            config_path="dummy_config_path",
-            menu_options=[],
-            categories=[],
-            constraints={},
-        )
 
     def get_config(self) -> BaseModel:
         """Mocked method."""

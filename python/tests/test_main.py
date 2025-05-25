@@ -3,7 +3,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from adb_auto_player.main import get_gui_games_menu
+from adb_auto_player.commands.gui_menu import get_gui_games_menu
 
 
 class TestMain(unittest.TestCase):

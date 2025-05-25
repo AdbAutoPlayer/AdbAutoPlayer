@@ -5,11 +5,14 @@ from abc import ABC
 from time import sleep
 
 from adb_auto_player import Coordinates, CropRegions, GameTimeoutError
-from adb_auto_player.games.afk_journey import AFKJourneyBase
+from adb_auto_player.decorators.register_command import GuiMetadata, register_command
+from adb_auto_player.games.afk_journey.base import AFKJourneyBase
+from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.games.afk_journey.mixins.afk_stages import AFKStagesMixin
 from adb_auto_player.games.afk_journey.mixins.arena import ArenaMixin
 from adb_auto_player.games.afk_journey.mixins.dream_realm import DreamRealmMixin
-from adb_auto_player.games.afk_journey.mixins.legend_trial import LegendTrialMixin
+
+from .legend_trial import SeasonLegendTrial
 
 # from adb_auto_player.games.afk_journey.mixins import (
 #     AFKStagesMixin,
@@ -24,6 +27,14 @@ from adb_auto_player.games.afk_journey.mixins.legend_trial import LegendTrialMix
 class DailiesMixin(AFKJourneyBase, ABC):
     """Dailies Mixin."""
 
+    # TODO should be broken up into components and registered for my custom routine
+    @register_command(
+        name="Dailies",
+        gui=GuiMetadata(
+            label="Dailies",
+            category=AFKJCategory.GAME_MODES,
+        ),
+    )
     def run_dailies(self) -> None:
         """Complete daily chores."""
         self.start_up()
@@ -38,7 +49,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         self.claim_hamburger()
         self.raise_hero_affinity()
         if self.get_config().legend_trials.towers:
-            LegendTrialMixin().push_legend_trials()  # type: ignore[abstract]
+            SeasonLegendTrial().push_legend_trials()  # type: ignore[abstract]
         AFKStagesMixin().push_afk_stages(season=True)  # type: ignore[abstract]
 
     ############################# Daily Rewards ##############################

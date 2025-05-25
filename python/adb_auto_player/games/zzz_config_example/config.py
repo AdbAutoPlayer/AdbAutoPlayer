@@ -4,6 +4,7 @@ from enum import StrEnum, auto
 from typing import Annotated
 
 from adb_auto_player import ConfigBase
+from adb_auto_player.config.my_custom_routine import MyCustomRoutineConfig
 from pydantic import BaseModel, Field
 
 # Type constraints
@@ -79,3 +80,4 @@ class Config(ConfigBase):
     section_numbers: SectionNumbersConfig = Field(alias="Numbers")
     section_text: SectionTextConfig = Field(alias="Text")
     section_select: SectionSelectAndChoice = Field(alias="Select and Choice")
+    my_custom_routine: MyCustomRoutineConfig = Field(alias="My Custom Routine")
