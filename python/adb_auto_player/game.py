@@ -371,8 +371,11 @@ class Game:
         if self._stream:
             image = self._stream.get_latest_frame()
             if image is not None:
-                self._previous_screenshot = image
-                self._debug_save_screenshot()
+                if self._previous_screenshot is None or not np.array_equal(
+                    image, self._previous_screenshot
+                ):
+                    self._previous_screenshot = image
+                    self._debug_save_screenshot()
                 return image
             logging.error(
                 "Could not retrieve latest Frame from Device Stream using screencap..."
@@ -426,8 +429,6 @@ class Game:
 
     def _get_screenshot(self, previous_screenshot: bool) -> np.ndarray:
         """Get screenshot depending on stream or not."""
-        if self._stream:
-            return self.get_screenshot()
         if previous_screenshot:
             return self.get_previous_screenshot()
         else:
@@ -1010,7 +1011,7 @@ class Game:
 
     def _debug_save_screenshot(self) -> None:
         logging_config = ConfigLoader().main_config.get("logging", {})
-        debug_screenshot_save_num = logging_config.get("debug_save_screenshots", 30)
+        debug_screenshot_save_num = logging_config.get("debug_save_screenshots", 60)
 
         screenshot = self._previous_screenshot
         if debug_screenshot_save_num <= 0 or screenshot is None:
@@ -1150,6 +1151,20 @@ class Game:
                     )
                     sys.exit(1)
                 continue
+
+    def _tap_till_template_disappears(
+        self,
+        template: str | Path,
+        threshold: float | None = None,
+        grayscale: bool = False,
+        crop: CropRegions = CropRegions(),
+        delay: float = 1.0,
+    ) -> None:
+        while result := self.game_find_template_match(
+            template, threshold=threshold, grayscale=grayscale, crop=crop
+        ):
+            self.tap(Coordinates(*result))
+            sleep(delay)
 
 
 def snake_to_pascal(s: str):

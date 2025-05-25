@@ -179,7 +179,7 @@ class AFKJourneyBase(Game):
                 timeout_message=f"Formation #{formation_num} not found",
             )
             start_image = self.get_screenshot()
-            self.click(Coordinates(*formation_next))
+            self.tap(Coordinates(*formation_next))
             self.wait_for_roi_change(
                 start_image=start_image,
                 crop=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
@@ -209,8 +209,8 @@ class AFKJourneyBase(Game):
             template="battle/records.png",
             crop=CropRegions(right=0.5, top=0.8),
         )
-        self.click(Coordinates(*records))
-        copy: tuple[int, int] = self.wait_for_template(
+        self.tap(Coordinates(*records))
+        _ = self.wait_for_template(
             "battle/copy.png",
             crop=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
             timeout=self.MIN_TIMEOUT,
@@ -233,8 +233,10 @@ class AFKJourneyBase(Game):
                     self.store[self.STORE_FORMATION_NUM] += 1
                     continue
 
-            self.click(Coordinates(*copy))
-            sleep(1)
+            self._tap_till_template_disappears(
+                template="battle/copy.png",
+                crop=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
+            )
 
             cancel = self.game_find_template_match(
                 template="cancel.png",
@@ -244,13 +246,14 @@ class AFKJourneyBase(Game):
                 logging.warning(
                     "Formation contains locked Artifacts or Heroes skipping"
                 )
-                self.click(Coordinates(*cancel))
+                self.tap(Coordinates(*cancel))
                 start_count = self.store.get(self.STORE_FORMATION_NUM, 1)
                 self.store[self.STORE_FORMATION_NUM] += 1
             else:
                 self._click_confirm_on_popup()
                 logging.debug("Formation copied")
                 return True
+        return False
 
     def _formation_contains_excluded_hero(self) -> str | None:
         """Skip formations with excluded heroes.
@@ -308,7 +311,7 @@ class AFKJourneyBase(Game):
             crop=CropRegions(top=0.5),
         )
 
-        self.click(Coordinates(x=850, y=1780), scale=True)
+        self.tap(Coordinates(x=850, y=1780), scale=True)
         template, x, y = result
         self.wait_until_template_disappears(template, crop=CropRegions(top=0.5))
         sleep(1)
@@ -338,7 +341,7 @@ class AFKJourneyBase(Game):
             if checkbox is None:
                 logging.error('Could not find "Don\'t remind for x days" checkbox')
             else:
-                self.click(Coordinates(*checkbox))
+                self.tap(Coordinates(*checkbox))
             self._click_confirm_on_popup()
 
         self._click_confirm_on_popup()
@@ -355,7 +358,7 @@ class AFKJourneyBase(Game):
         )
         if result:
             _, x, y = result
-            self.click(Coordinates(x=x, y=y))
+            self.tap(Coordinates(x=x, y=y))
             sleep(1)
             return True
         return False
@@ -424,18 +427,18 @@ class AFKJourneyBase(Game):
                 result = True
                 break
             elif template == "battle/victory_rewards.png":
-                self.click(Coordinates(x=550, y=1800), scale=True)
+                self.tap(Coordinates(x=550, y=1800), scale=True)
                 result = True
                 break
             elif template == "battle/power_up.png":
-                self.click(Coordinates(x=550, y=1800), scale=True)
+                self.tap(Coordinates(x=550, y=1800), scale=True)
                 result = False
                 break
             elif template == "confirm.png":
                 logging.error(
                     "Network Error or Battle data differs between client and server"
                 )
-                self.click(Coordinates(x=x, y=y))
+                self.tap(Coordinates(x=x, y=y))
                 sleep(3)
                 result = False
                 break
@@ -448,10 +451,10 @@ class AFKJourneyBase(Game):
                 break
             elif template == "retry.png":
                 logging.info(f"Lost Battle #{count}")
-                self.click(Coordinates(x=x, y=y))
+                self.tap(Coordinates(x=x, y=y))
                 # Do not break so the loop continues
             elif template == "battle/result.png":
-                self.click(Coordinates(x=950, y=1800), scale=True)
+                self.tap(Coordinates(x=950, y=1800), scale=True)
                 result = True
                 break
 
@@ -519,7 +522,7 @@ class AFKJourneyBase(Game):
             logging.debug(template)
             match template:
                 case "notice.png":
-                    self.click(Coordinates(x=530, y=1630), scale=True)
+                    self.tap(Coordinates(x=530, y=1630), scale=True)
                     sleep(3)
                     continue
                 case "exit.png":
@@ -533,13 +536,13 @@ class AFKJourneyBase(Game):
                         )
                         if x_btn:
                             logging.debug("x")
-                            self.click(Coordinates(*x_btn))
+                            self.tap(Coordinates(*x_btn))
                             sleep(1)
                             continue
                         self.press_back_button()
                         sleep(1)
                     else:
-                        self.click(Coordinates(x=x, y=y))
+                        self.tap(Coordinates(x=x, y=y))
                         sleep(1)
                 case "time_of_day.png":
                     break
@@ -547,7 +550,7 @@ class AFKJourneyBase(Game):
                     self.press_back_button()
                     sleep(1)
                 case _:
-                    self.click(Coordinates(x=x, y=y))
+                    self.tap(Coordinates(x=x, y=y))
                     sleep(0.5)
         sleep(1)
         return
@@ -564,5 +567,5 @@ class AFKJourneyBase(Game):
             if result is None:
                 break
             _, x, y = result
-            self.click(Coordinates(x=x, y=y))
+            self.tap(Coordinates(x=x, y=y))
             sleep(1)

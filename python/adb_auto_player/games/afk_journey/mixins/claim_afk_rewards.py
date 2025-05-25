@@ -34,7 +34,9 @@ class ClaimAFKRewards(AFKJourneyBase):
         logging.info("Navigating to AFK stages screen.")
         self._navigate_to_default_state()
         self.tap(Coordinates(x=460, y=1830), scale=True)
+        sleep(2)
         x, y = self.wait_for_template("afk_stage.png", threshold=0.75)
+        sleep(1)
         while self.game_find_template_match("afk_stage.png", threshold=0.75):
             self.tap(Coordinates(x, y))
             sleep(2)

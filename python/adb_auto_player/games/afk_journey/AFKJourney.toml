@@ -10,6 +10,9 @@ Formations = 7
 Difficulty = 13
 'Key Quota' = 2700
 
+['Claim AFK Rewards']
+'Claim Stage Rewards' = true
+
 [Dailies]
 'Arena Battle' = true
 'Buy All Affinity' = true

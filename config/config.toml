@@ -9,7 +9,7 @@ streaming = true
 
 [logging]
 level = 'INFO'
-debug_save_screenshots = 30
+debug_save_screenshots = 60
 action_log_limit = 10
 
 [ui]
