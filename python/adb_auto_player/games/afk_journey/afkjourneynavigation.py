@@ -30,7 +30,6 @@ class AFKJourneyNavigation(Game, ABC):
             "battle/copy.png",
             "guide/close.png",
             "guide/next.png",
-            "battle/copy.png",
             "login/claim.png",
             "arcane_labyrinth/back_arrow.png",
         ]
@@ -133,7 +132,7 @@ class AFKJourneyNavigation(Game, ABC):
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
 
-    def _can_see_time_of_day_button(self):
+    def _can_see_time_of_day_button(self) -> bool:
         return (
             self.game_find_template_match(
                 "navigation/time_of_day.png",
