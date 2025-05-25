@@ -463,7 +463,7 @@ class AFKJourneyBase(Game):
 
         return result
 
-    def _navigate_to_default_state(  # noqa: PLR0912
+    def _navigate_to_default_state(  # noqa: PLR0912, PLR0915
         self, check_callable: Callable[[], bool] | None = None
     ) -> None:
         """Navigate to main default screen.
@@ -485,9 +485,21 @@ class AFKJourneyBase(Game):
             "arcane_labyrinth/back_arrow.png",
         ]
 
+        max_attempts = 20
+        attempts = 0
+
         while True:
+            restart = False
             if not self.is_game_running():
+                logging.error("Game not running.")
+                restart = True
+            if attempts >= max_attempts:
+                logging.error("Failed to navigate to default state.")
+                restart = True
+            if restart:
                 logging.warning("Trying to restart app this is still WIP.")
+                self.force_stop_game()
+                sleep(5)
                 self.start_game()
                 sleep(15)
                 while not self.find_any_template(templates) and self.is_game_running():
