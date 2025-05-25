@@ -34,7 +34,11 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
     CustomRoutineEntry,
     custom_routine_choice_registry,
 )
-from adb_auto_player.exceptions import GameNotRunningError, GameStartError
+from adb_auto_player.exceptions import (
+    GameActionFailedError,
+    GameNotRunningError,
+    GameStartError,
+)
 from adb_auto_player.template_matching import (
     CropRegions,
     MatchMode,
@@ -1141,11 +1145,16 @@ class Game:
         crop: CropRegions = CropRegions(),
         delay: float = 1.0,
     ) -> None:
+        max_count = 3
+        count = 0
         while result := self.game_find_template_match(
             template, threshold=threshold, grayscale=grayscale, crop=crop
         ):
+            if count >= max_count:
+                raise GameActionFailedError(f"Failed to tap {template}.")
             self.tap(Coordinates(*result))
             sleep(delay)
+            count += 1
 
 
 def snake_to_pascal(s: str):
