@@ -444,10 +444,11 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             crop=CropRegions(top=0.8),
         ):
             return
-
+        # TODO have a navigate to battle modes function...
         self.tap(Coordinates(460, 1830), scale=True)
         self.wait_for_any_template(
             [
+                "afk_stage.png",
                 "duras_trials/label.png",
                 "arcane_labyrinth/label.png",
             ],
