@@ -54,7 +54,10 @@ def _get_running_game() -> str | None:
         if not package_name:
             return None
         for game_object in _get_games():
-            if any(pn in package_name for pn in game_object.package_name_substrings):
+            if (
+                any(pn in package_name for pn in game_object.package_name_substrings)
+                or game_object.package_name == package_name
+            ):
                 for module, game in game_registry.items():
                     if module in game_object.__module__:
                         return game.name

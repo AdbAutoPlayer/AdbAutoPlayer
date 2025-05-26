@@ -103,25 +103,25 @@
         }),
       );
       menuButtons.push(...defaultButtons);
-      menuButtons.push(
-        {
+      if (activeGame.config_path) {
+        menuButtons.push({
           callback: () => openGameConfigForm(activeGame),
           isProcessRunning: false,
           option: ipc.MenuOption.createFrom({
             label: `${activeGame.game_title} Config`,
             category: "Settings, Phone & Debug",
           }),
-        },
-        {
-          callback: () => stopGameProcess(),
-          isProcessRunning: false,
-          alwaysEnabled: true,
-          option: ipc.MenuOption.createFrom({
-            label: "Stop Action",
-            tooltip: `Stops the currently running process`,
-          }),
-        },
-      );
+        });
+      }
+      menuButtons.push({
+        callback: () => stopGameProcess(),
+        isProcessRunning: false,
+        alwaysEnabled: true,
+        option: ipc.MenuOption.createFrom({
+          label: "Stop Action",
+          tooltip: `Stops the currently running process`,
+        }),
+      });
 
       return menuButtons;
     }

@@ -27,7 +27,7 @@ class AssistMixin(AFKJourneyBase, ABC):
         # the crop region for "assist/empty_chat.png"
         # needs to be dynamically derived based on the location from the world chat
         # or tap to enter labels
-        self.start_up(device_streaming=True)
+        self.start_up()
 
         if self._stream is None:
             logging.warning(

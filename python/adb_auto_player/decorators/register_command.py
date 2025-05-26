@@ -33,7 +33,7 @@ class GuiMetadata:
     """
 
     label: str
-    category: str | StrEnum
+    category: str | StrEnum | None = None
     tooltip: str | None = None
 
 
