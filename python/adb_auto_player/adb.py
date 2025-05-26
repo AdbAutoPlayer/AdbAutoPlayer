@@ -196,7 +196,7 @@ def _resolve_device(
         device = _connect_to_device(client, only_device)
 
     if device is None:
-        device = _try_incrementing_ports(client, device_id)
+        device = _try_common_ports_and_device_ids(client)
 
     if device is None:
         if not devices:
@@ -207,31 +207,40 @@ def _resolve_device(
     return device
 
 
-def _try_incrementing_ports(client: AdbClient, device_id: str) -> AdbDevice | None:
-    """Attempts to connect to a device by incrementing the port number.
+def _try_common_ports_and_device_ids(client: AdbClient) -> AdbDevice | None:
+    """Attempts to connect to a device by using common ports and device IDs.
 
-    This is specifically for cases where Bluestacks prompts the user to create a
+    This is specifically for people who did not read the user guide.
+    And also for cases where Bluestacks prompts the user to create a
     new instance with a different Android version. Even after closing the first
-    instance, it may remain in the device list but not be connectable. This function
-    tries the next 5 ports to find a valid connection.
+    instance, it may remain in the device list but not be connectable.
     """
-    if ":" in device_id:
-        address, port_str = device_id.rsplit(":", 1)
-        if port_str.isdigit():
-            port = int(port_str) + 1
-            # 5556-5559 in case emulator used increments by 1
-            for port_increment in range(4):
-                new_device_id = f"{address}:{port + port_increment}"
-                device = _connect_to_device(client, new_device_id)
-                if device is not None:
-                    return device
-        if port_str == "5555":
-            # BlueStacks 5 seems to increment by 10 for the next port
-            for port in [5565, 5575, 5585]:
-                new_device_id = f"{address}:{port}"
-                device = _connect_to_device(client, new_device_id)
-                if device is not None:
-                    return device
+    logging.debug("Trying common ports and device ids")
+    common_ports: list[int] = [
+        # MuMu
+        7555,
+        7565,
+        7556,
+        # BlueStacks
+        5555,
+        5565,
+        5556,
+    ]
+    for port in common_ports:
+        new_device_id = f"127.0.0.1:{port}"
+        device = _connect_to_device(client, new_device_id)
+        if device is not None:
+            return device
+
+    common_device_ids: list[str] = [
+        "emulator-5554",
+        "emulator-5555",
+    ]
+    for potential_device_id in common_device_ids:
+        device = _connect_to_device(client, potential_device_id)
+        if device is not None:
+            return device
+
     return None
 
 
