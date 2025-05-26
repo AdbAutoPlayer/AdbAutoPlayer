@@ -21,7 +21,7 @@ class ArenaMixin(AFKJourneyBase):
     )
     def run_arena(self) -> None:
         """Use Arena attempts."""
-        self.start_up()
+        self.start_up(device_streaming=False)
 
         try:
             self._enter_arena()

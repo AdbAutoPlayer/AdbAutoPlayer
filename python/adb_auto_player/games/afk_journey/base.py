@@ -6,6 +6,7 @@ from time import sleep
 from typing import Any
 
 from adb_auto_player import (
+    AutoPlayerWarningError,
     Coordinates,
     CropRegions,
     Game,
@@ -14,7 +15,6 @@ from adb_auto_player import (
 )
 from adb_auto_player.decorators.register_game import GameGUIMetadata, register_game
 
-from ...exceptions import GameAdvisoryWarningError
 from .afkjourneynavigation import AFKJourneyNavigation
 from .config import Config
 from .gui_category import AFKJCategory
@@ -61,7 +61,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
     # Language Requirements
     LANG_ERROR: str = "Is the game language set to English?"
 
-    def start_up(self, device_streaming: bool = False) -> None:
+    def start_up(self, device_streaming: bool = True) -> None:
         """Give the bot eyes."""
         if self.device is None:
             logging.debug("start_up")
@@ -108,8 +108,6 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
         Returns:
             True if the battle was won, False otherwise.
         """
-        self.start_up()
-
         formations = self._get_config_attribute_from_mode("formations")
 
         self.store[self.STORE_FORMATION_NUM] = 0
@@ -220,7 +218,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                 timeout=self.MIN_TIMEOUT,
             )
         except GameTimeoutError:
-            raise GameAdvisoryWarningError("No formations available for this battle")
+            raise AutoPlayerWarningError("No formations available for this battle")
 
         start_count = 1
 

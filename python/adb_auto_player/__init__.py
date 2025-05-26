@@ -5,10 +5,15 @@ from .config.game_config_base import ConfigBase
 from .config_loader import ConfigLoader
 from .device_stream import DeviceStream, StreamingNotSupportedError
 from .exceptions import (
+    AutoPlayerError,
+    AutoPlayerUnrecoverableError,
+    AutoPlayerWarningError,
+    GameActionFailedError,
+    GameNotRunningOrFrozenError,
+    GameStartError,
     GameTimeoutError,
     GenericAdbError,
-    NoPreviousScreenshotError,
-    NotFoundError,
+    GenericAdbUnrecoverableError,
     NotInitializedError,
     UnsupportedResolutionError,
 )
@@ -16,6 +21,9 @@ from .game import Coordinates, Game
 from .template_matching import CropRegions, MatchMode
 
 __all__: list[str] = [
+    "AutoPlayerError",
+    "AutoPlayerUnrecoverableError",
+    "AutoPlayerWarningError",
     "Command",
     "ConfigBase",
     "ConfigLoader",
@@ -23,11 +31,13 @@ __all__: list[str] = [
     "CropRegions",
     "DeviceStream",
     "Game",
+    "GameActionFailedError",
+    "GameNotRunningOrFrozenError",
+    "GameStartError",
     "GameTimeoutError",
     "GenericAdbError",
+    "GenericAdbUnrecoverableError",
     "MatchMode",
-    "NoPreviousScreenshotError",
-    "NotFoundError",
     "NotInitializedError",
     "StreamingNotSupportedError",
     "UnsupportedResolutionError",

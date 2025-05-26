@@ -11,8 +11,10 @@ import numpy as np
 from adbutils import AdbConnection, AdbDevice
 from av.codec.context import CodecContext
 
+from .exceptions import AutoPlayerWarningError
 
-class StreamingNotSupportedError(Exception):
+
+class StreamingNotSupportedError(AutoPlayerWarningError):
     """Streaming is not yet implemented for the specified platform."""
 
     pass

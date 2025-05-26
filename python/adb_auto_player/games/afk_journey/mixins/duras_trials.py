@@ -4,12 +4,16 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player import Coordinates, CropRegions, GameTimeoutError
+from adb_auto_player import (
+    AutoPlayerError,
+    AutoPlayerWarningError,
+    Coordinates,
+    CropRegions,
+)
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.decorators.register_custom_routine_choice import (
     register_custom_routine_choice,
 )
-from adb_auto_player.exceptions import GameAdvisoryWarningError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 
@@ -27,7 +31,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
     @register_custom_routine_choice(label="Dura's Trials")
     def push_duras_trials(self) -> None:
         """Push Dura's Trials."""
-        self.start_up(device_streaming=True)
+        self.start_up()
         self.store[self.STORE_MODE] = self.MODE_DURAS_TRIALS
         self.navigate_to_duras_trials_screen()
 
@@ -49,17 +53,16 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
                 self.navigate_to_duras_trials_screen()
             try:
                 self._handle_dura_screen(*banner)
-
-            except GameAdvisoryWarningError as e:
+            except AutoPlayerWarningError as e:
                 logging.warning(f"{e}")
-            except GameTimeoutError as e:
+            except AutoPlayerError as e:
                 logging.error(f"{e}")
             self.navigate_to_duras_trials_screen()
             try:
                 self._handle_dura_screen(*banner, nightmare_mode=True)
-            except GameAdvisoryWarningError as e:
+            except AutoPlayerWarningError as e:
                 logging.warning(f"{e}")
-            except GameTimeoutError as e:
+            except AutoPlayerError as e:
                 logging.error(f"{e}")
             first_banner = False
 

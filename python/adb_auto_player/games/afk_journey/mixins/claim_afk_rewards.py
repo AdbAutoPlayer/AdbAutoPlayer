@@ -11,7 +11,7 @@ from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 class ClaimAFKRewards(AFKJourneyBase):
     @register_custom_routine_choice("Claim AFK Rewards")
     def _claiming_afk_progress_chest(self) -> None:
-        self.start_up(device_streaming=True)
+        self.start_up()
         logging.info("Claiming AFK Rewards.")
         self.navigate_to_afk_stages_screen()
 

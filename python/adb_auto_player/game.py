@@ -16,12 +16,16 @@ from typing import Literal, NamedTuple, TypeVar
 import cv2
 import numpy as np
 from adb_auto_player import (
+    AutoPlayerUnrecoverableError,
+    AutoPlayerWarningError,
     ConfigLoader,
     DeviceStream,
+    GameActionFailedError,
+    GameNotRunningOrFrozenError,
+    GameStartError,
     GameTimeoutError,
-    GenericAdbError,
+    GenericAdbUnrecoverableError,
     NotInitializedError,
-    StreamingNotSupportedError,
     UnsupportedResolutionError,
 )
 from adb_auto_player.adb import (
@@ -33,11 +37,6 @@ from adb_auto_player.adb import (
 from adb_auto_player.decorators.register_custom_routine_choice import (
     CustomRoutineEntry,
     custom_routine_choice_registry,
-)
-from adb_auto_player.exceptions import (
-    GameActionFailedError,
-    GameNotRunningOrFrozenError,
-    GameStartError,
 )
 from adb_auto_player.template_matching import (
     CropRegions,
@@ -231,7 +230,7 @@ class Game:
             self._stream.stop()
             self._stream = None
 
-    def open_eyes(self, device_streaming: bool = False) -> None:
+    def open_eyes(self, device_streaming: bool = True) -> None:
         """Give the bot eyes.
 
         Set the device for the game and start the device stream.
@@ -281,7 +280,7 @@ class Game:
             self._stream = DeviceStream(
                 self.device,
             )
-        except StreamingNotSupportedError as e:
+        except AutoPlayerWarningError as e:
             logging.warning(f"{e}")
 
         if self._stream is None:
@@ -310,6 +309,7 @@ class Game:
         scale: bool = False,
         blocking: bool = True,
         non_blocking_sleep_duration: float = 1 / 30,  # Assuming 30 FPS, 1 Tap per Frame
+        log: bool = True,
     ) -> None:
         """Tap the screen on the given coordinates.
 
@@ -320,6 +320,7 @@ class Game:
                 wait for ADBServer to confirm the tap has happened.
             non_blocking_sleep_duration (float, optional): Sleep time in seconds for
                 non-blocking taps, needed to not DoS the ADBServer.
+            log (bool, optional): Whether to log the tap.
         """
         if scale:
             scaled_coords = Coordinates(*self._scale_coordinates(*coordinates))
@@ -328,21 +329,31 @@ class Game:
                 coordinates = scaled_coords
 
         if blocking:
-            self._click(coordinates)
+            self._click(coordinates, log)
         else:
             thread = threading.Thread(
-                target=self._click, args=(coordinates,), daemon=True
+                target=self._click,
+                args=(
+                    coordinates,
+                    log,
+                ),
+                daemon=True,
             )
             thread.start()
             sleep(non_blocking_sleep_duration)
 
-    def _click(self, coordinates: Coordinates) -> None:
+    def _click(
+        self,
+        coordinates: Coordinates,
+        log: bool = True,
+    ) -> None:
         with self.device.shell(
             f"input tap {coordinates.x} {coordinates.y}",
             timeout=3,  # if the click didn't happen in 3 seconds it's never happening
             stream=True,
         ) as connection:
-            logging.debug(f"Clicked Coordinates: {coordinates}")
+            if log:
+                logging.debug(f"Clicked Coordinates: {coordinates}")
             # without this it breaks for people with slower CPUs
             # need to think of a better solution
             connection.read_until_close()
@@ -380,7 +391,7 @@ class Game:
                 )
                 sleep(0.1)
 
-        raise GenericAdbError(
+        raise GenericAdbUnrecoverableError(
             f"Screenshots cannot be recorded from device: {self.device.serial}"
         )
 
@@ -409,7 +420,6 @@ class Game:
         """Get the previous screenshot."""
         if self._previous_screenshot is not None:
             return self._previous_screenshot
-        logging.warning("No previous screenshot")
         return self.get_screenshot()
 
     def _get_screenshot(self, previous_screenshot: bool) -> np.ndarray:
@@ -1124,6 +1134,11 @@ class Game:
                 logging.error(f"Task '{task}' not found")
                 continue
             error = execute(function=custom_routine.func, kwargs=custom_routine.kwargs)
+            if isinstance(error, AutoPlayerUnrecoverableError):
+                logging.error(
+                    f"Task '{task}' failed with critical error: {error}, exiting..."
+                )
+                sys.exit(1)
             if isinstance(error, GameNotRunningOrFrozenError):
                 if self.package_name:
                     logging.warning(

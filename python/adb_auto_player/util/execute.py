@@ -17,7 +17,7 @@ import logging
 import sys
 from collections.abc import Callable
 
-from adb_auto_player.exceptions import GenericAdbError
+from ..exceptions import GenericAdbError, GenericAdbUnrecoverableError
 
 
 def execute(
@@ -57,11 +57,17 @@ def execute(
             mod = sys.modules[function.__module__]
             cls = getattr(mod, cls_name)
             instance = cls()
-            function(instance, **kwargs)
+            try:
+                function(instance, **kwargs)
+            finally:
+                if hasattr(instance, "stop_stream") and callable(
+                    getattr(instance, "stop_stream")
+                ):
+                    instance.stop_stream()
         else:
             # Function doesn't expect self — call it directly
             function(**kwargs)
-    except GenericAdbError as e:
+    except (GenericAdbError, GenericAdbUnrecoverableError) as e:
         if "java.lang.SecurityException" in str(e):
             logging.error(
                 "Missing permissions, check if your device has the setting: "

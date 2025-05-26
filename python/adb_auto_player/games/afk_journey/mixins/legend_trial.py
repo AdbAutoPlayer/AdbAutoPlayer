@@ -2,12 +2,16 @@
 
 import logging
 
-from adb_auto_player import Coordinates, CropRegions, GameTimeoutError, NotFoundError
+from adb_auto_player import (
+    AutoPlayerWarningError,
+    Coordinates,
+    CropRegions,
+    GameTimeoutError,
+)
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.decorators.register_custom_routine_choice import (
     register_custom_routine_choice,
 )
-from adb_auto_player.exceptions import GameAdvisoryWarningError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 
@@ -26,7 +30,7 @@ class SeasonLegendTrial(AFKJourneyBase):
     @register_custom_routine_choice(label="Season Legend Trial")
     def push_legend_trials(self) -> None:
         """Push Legend Trials."""
-        self.start_up(device_streaming=True)
+        self.start_up()
         self.store[self.STORE_MODE] = self.MODE_LEGEND_TRIALS
 
         if not self._is_on_season_legend_trial_select():
@@ -72,7 +76,7 @@ class SeasonLegendTrial(AFKJourneyBase):
             self.tap(Coordinates(*result))
             try:
                 self._select_legend_trials_floor(faction)
-            except (GameTimeoutError, NotFoundError) as e:
+            except GameTimeoutError as e:
                 logging.error(f"{e}")
                 continue
             self._handle_legend_trials_battle(faction)
@@ -92,7 +96,7 @@ class SeasonLegendTrial(AFKJourneyBase):
                     self.get_config().legend_trials.use_suggested_formations,
                     self.get_config().legend_trials.skip_manual_formations,
                 )
-            except GameAdvisoryWarningError as e:
+            except AutoPlayerWarningError as e:
                 logging.warning(f"{e}")
             except GameTimeoutError as e:
                 logging.error(f"{e}")

@@ -37,11 +37,13 @@ def is_valid_class(cls):
 
 def discover_and_add_games():
     """Discover modules, find valid classes, and add them to the globals."""
+    seen = set()
     for module in load_modules():
         for name, cls in inspect.getmembers(module, inspect.isclass):
-            if is_valid_class(cls):
+            if is_valid_class(cls) and name not in seen:
                 globals()[name] = cls
                 __all__.append(name)
+                seen.add(name)
 
 
 discover_and_add_games()

@@ -21,10 +21,10 @@ class GameGUIOptions:
     """Game GUI Options."""
 
     game_title: str
-    config_path: str
     menu_options: list[MenuOption]
     categories: list[str]
-    constraints: dict[str, dict[str, ConstraintType]]
+    config_path: str | None = None
+    constraints: dict[str, dict[str, ConstraintType]] | None = None
 
     def to_dict(self):
         """Converts the GameGUIOptions to a dictionary."""
