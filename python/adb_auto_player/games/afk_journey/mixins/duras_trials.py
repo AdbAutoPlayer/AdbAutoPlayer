@@ -31,7 +31,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
     @register_custom_routine_choice(label="Dura's Trials")
     def push_duras_trials(self) -> None:
         """Push Dura's Trials."""
-        self.start_up(device_streaming=True)
+        self.start_up()
         self.store[self.STORE_MODE] = self.MODE_DURAS_TRIALS
         self.navigate_to_duras_trials_screen()
 

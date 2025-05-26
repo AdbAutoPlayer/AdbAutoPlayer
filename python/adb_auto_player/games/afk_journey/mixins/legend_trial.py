@@ -30,7 +30,7 @@ class SeasonLegendTrial(AFKJourneyBase):
     @register_custom_routine_choice(label="Season Legend Trial")
     def push_legend_trials(self) -> None:
         """Push Legend Trials."""
-        self.start_up(device_streaming=True)
+        self.start_up()
         self.store[self.STORE_MODE] = self.MODE_LEGEND_TRIALS
 
         if not self._is_on_season_legend_trial_select():

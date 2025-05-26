@@ -11,7 +11,7 @@ from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 class LevelUpAllHeroes(AFKJourneyBase):
     @register_custom_routine_choice("Level Up All Heroes")
     def _level_up_all_heroes(self) -> None:
-        self.start_up(device_streaming=True)
+        self.start_up()
         logging.info("Starting Level Up All Heroes.")
         self.navigate_to_resonating_hall()
 

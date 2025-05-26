@@ -145,7 +145,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             "Channel: "
             "https://discord.com/channels/1332082220013322240/1338732933057347655"
         )
-        self.start_up(device_streaming=True)
+        self.start_up()
         key_quota: int = self.get_config().arcane_labyrinth.key_quota
         clear_count = 0
 
