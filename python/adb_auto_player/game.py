@@ -16,10 +16,15 @@ from typing import Literal, NamedTuple, TypeVar
 import cv2
 import numpy as np
 from adb_auto_player import (
+    AutoPlayerUnrecoverableError,
+    AutoPlayerWarningError,
     ConfigLoader,
     DeviceStream,
+    GameActionFailedError,
+    GameNotRunningOrFrozenError,
+    GameStartError,
     GameTimeoutError,
-    GenericAdbError,
+    GenericAdbUnrecoverableError,
     NotInitializedError,
     UnsupportedResolutionError,
 )
@@ -32,12 +37,6 @@ from adb_auto_player.adb import (
 from adb_auto_player.decorators.register_custom_routine_choice import (
     CustomRoutineEntry,
     custom_routine_choice_registry,
-)
-from adb_auto_player.exceptions import (
-    AutoPlayerWarningError,
-    GameActionFailedError,
-    GameNotRunningOrFrozenError,
-    GameStartError,
 )
 from adb_auto_player.template_matching import (
     CropRegions,
@@ -380,7 +379,7 @@ class Game:
                 )
                 sleep(0.1)
 
-        raise GenericAdbError(
+        raise GenericAdbUnrecoverableError(
             f"Screenshots cannot be recorded from device: {self.device.serial}"
         )
 
@@ -1123,6 +1122,11 @@ class Game:
                 logging.error(f"Task '{task}' not found")
                 continue
             error = execute(function=custom_routine.func, kwargs=custom_routine.kwargs)
+            if isinstance(error, AutoPlayerUnrecoverableError):
+                logging.error(
+                    f"Task '{task}' failed with critical error: {error}, exiting..."
+                )
+                sys.exit(1)
             if isinstance(error, GameNotRunningOrFrozenError):
                 if self.package_name:
                     logging.warning(

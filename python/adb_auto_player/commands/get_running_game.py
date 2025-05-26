@@ -2,7 +2,7 @@
 
 import logging
 
-from adb_auto_player import Game, GenericAdbError, games
+from adb_auto_player import Game, GenericAdbError, GenericAdbUnrecoverableError, games
 from adb_auto_player.adb import get_adb_device, get_running_app
 from adb_auto_player.decorators.register_command import register_command
 from adb_auto_player.decorators.register_game import game_registry
@@ -58,7 +58,7 @@ def _get_running_game() -> str | None:
                 for module, game in game_registry.items():
                     if module in game_object.__module__:
                         return game.name
-    except AdbError | GenericAdbError as e:
+    except (AdbError, GenericAdbError, GenericAdbUnrecoverableError) as e:
         if str(e) == "closed":
             # This error usually happens when you try to initialize an ADB Connection
             # Before the device is ready e.g. emulator is starting

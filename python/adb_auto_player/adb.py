@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import adbutils._utils
-from adb_auto_player import ConfigLoader, GenericAdbError
+from adb_auto_player import ConfigLoader, GenericAdbError, GenericAdbUnrecoverableError
 from adbutils import AdbClient, AdbDevice, AdbError
 from adbutils._proto import AdbDeviceInfo
 
@@ -120,9 +120,9 @@ def _connect_client(client: AdbClient, device_id: str) -> None:
     except AdbError as e:
         err_msg = str(e)
         if "Install adb" in err_msg:
-            raise GenericAdbError(err_msg)
+            raise GenericAdbUnrecoverableError(err_msg)
         elif "Unknown data: b" in err_msg:
-            raise GenericAdbError(
+            raise GenericAdbUnrecoverableError(
                 "Please make sure the adb port is correct "
                 "(in most cases it should be 5037)"
             )
@@ -148,7 +148,7 @@ def _get_devices(client: AdbClient) -> list[AdbDeviceInfo]:
         return client.list()
     except Exception as e:
         logging.debug(f"client.list exception: {e}")
-        raise GenericAdbError(
+        raise GenericAdbUnrecoverableError(
             "Failed to connect to AdbClient; check the Main Config and "
             "https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/emulator-settings.html"
         )
@@ -203,7 +203,7 @@ def _resolve_device(
             logging.warning("No devices found")
         else:
             log_devices(devices, WARNING)
-        raise GenericAdbError(f"Device: {device_id} not found")
+        raise GenericAdbUnrecoverableError(f"Device: {device_id} not found")
     return device
 
 
@@ -240,7 +240,7 @@ def _override_size(device: AdbDevice, override_size: str) -> None:
     try:
         output = device.shell(f"wm size {override_size}")
         if "java.lang.SecurityException" in output:
-            raise GenericAdbError("java.lang.SecurityException")
+            raise GenericAdbUnrecoverableError("java.lang.SecurityException")
     except Exception as e:
         logging.debug(f"wm size {override_size} Error: {e}")
         raise GenericAdbError(f"Error overriding size: {e}")
@@ -403,7 +403,7 @@ def get_screen_resolution(device: AdbDevice) -> str:
                 width, height = resolution_str.split("x")
                 return f"{height}x{width}"
     logging.debug(result)
-    raise GenericAdbError("Unable to determine screen resolution")
+    raise GenericAdbUnrecoverableError("Unable to determine screen resolution")
 
 
 def is_portrait(device: AdbDevice) -> bool:
@@ -420,19 +420,19 @@ def is_portrait(device: AdbDevice) -> bool:
             "dumpsys input | grep 'SurfaceOrientation'"
         ).strip()
     except Exception as e:
-        raise GenericAdbError(f"dumpsys input: {e}")
+        raise GenericAdbUnrecoverableError(f"dumpsys input: {e}")
     logging.debug(f"orientation_check: {orientation_check}")
 
     try:
         rotation_check = device.shell("dumpsys window | grep mCurrentRotation").strip()
     except Exception as e:
-        raise GenericAdbError(f"dumpsys window: {e}")
+        raise GenericAdbUnrecoverableError(f"dumpsys window: {e}")
     logging.debug(f"rotation_check: {rotation_check}")
 
     try:
         display_check = device.shell("dumpsys display | grep -E 'orientation'").strip()
     except Exception as e:
-        raise GenericAdbError(f"dumpsys display: {e}")
+        raise GenericAdbUnrecoverableError(f"dumpsys display: {e}")
     logging.debug(f"display_check: {display_check}")
 
     checks: list[bool] = [

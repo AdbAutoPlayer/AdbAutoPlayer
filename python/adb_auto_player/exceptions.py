@@ -19,19 +19,25 @@ class AutoPlayerError(BaseAutoPlayerError):
     pass
 
 
-class AutoPlayerPanicError(AutoPlayerError):
+class AutoPlayerUnrecoverableError(BaseAutoPlayerError):
     """Base class for critical errors that should halt the program."""
 
     pass
 
 
-class GenericAdbError(AutoPlayerPanicError):
+class GenericAdbUnrecoverableError(AutoPlayerUnrecoverableError):
+    """Raised for non-recoverable ADB related errors."""
+
+    pass
+
+
+class GenericAdbError(AutoPlayerError):
     """Raised for any Adb related issues."""
 
     pass
 
 
-class NotInitializedError(AutoPlayerPanicError):
+class NotInitializedError(AutoPlayerUnrecoverableError):
     """Required variable not initialized."""
 
     pass
@@ -55,13 +61,13 @@ class GameNotRunningOrFrozenError(AutoPlayerError):
     pass
 
 
-class GameStartError(AutoPlayerPanicError):
+class GameStartError(AutoPlayerUnrecoverableError):
     """Raised when the Game cannot be started."""
 
     pass
 
 
-class UnsupportedResolutionError(AutoPlayerPanicError):
+class UnsupportedResolutionError(AutoPlayerUnrecoverableError):
     """Raised when the resolution is not supported."""
 
     pass
