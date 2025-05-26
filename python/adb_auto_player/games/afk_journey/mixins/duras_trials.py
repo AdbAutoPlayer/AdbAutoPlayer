@@ -26,16 +26,10 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
     @register_custom_routine_choice(label="Dura's Trials")
     def push_duras_trials(self) -> None:
         """Push Dura's Trials."""
-        self.start_up()
+        self.start_up(device_streaming=True)
         self.store[self.STORE_MODE] = self.MODE_DURAS_TRIALS
         self.navigate_to_duras_trials_screen()
 
-        self.wait_for_template(
-            template="duras_trials/rate_up.png",
-            grayscale=True,
-            crop=CropRegions(top=0.6, bottom=0.2),
-        )
-        sleep(0.5)
         rate_up_banners = self.find_all_template_matches(
             template="duras_trials/rate_up.png",
             grayscale=True,
@@ -162,8 +156,8 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             Returns:
                 True if the trial is complete, or False to continue pushing battles.
             """
-            self.wait_for_template(
-                template="duras_trials/first_clear.png",
+            self.wait_for_any_template(
+                templates=["duras_trials/first_clear.png", "duras_trials/sweep.png"],
                 crop=CropRegions(left=0.3, right=0.3, top=0.6, bottom=0.3),
             )
             next_button = self.game_find_template_match(
@@ -208,7 +202,6 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             # Handle the battle screen.
             result = self._handle_battle_screen(
                 self.get_config().duras_trials.use_suggested_formations,
-                self.get_config().duras_trials.skip_manual_formations,
             )
 
             if result is True:

@@ -9,6 +9,7 @@ from adb_auto_player import (
     Coordinates,
     CropRegions,
     Game,
+    GameTimeoutError,
     MatchMode,
 )
 from adb_auto_player.decorators.register_game import GameGUIMetadata, register_game
@@ -315,12 +316,21 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
 
         self.tap(Coordinates(x=850, y=1780), scale=True)
         template, x, y = result
-        self.wait_until_template_disappears(template, crop=CropRegions(top=0.5))
+
+        try:
+            self.wait_until_template_disappears(
+                template,
+                crop=CropRegions(top=0.5),
+                timeout=self.MIN_TIMEOUT,
+            )
+        except GameTimeoutError:
+            logging.warning("Failed to start Battle, are no Heroes selected?")
+            return False
         sleep(1)
 
         # Need to double-check the order of prompts here
         if self.find_any_template(["battle/spend.png", "battle/gold.png"]):
-            if spend_gold:
+            if not spend_gold:
                 logging.warning("Not spending gold returning")
                 self.store[self.STORE_MAX_ATTEMPTS_REACHED] = True
                 self.press_back_button()

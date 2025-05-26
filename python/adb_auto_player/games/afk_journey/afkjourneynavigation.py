@@ -90,7 +90,7 @@ class AFKJourneyNavigation(Game, ABC):
                     "Failed to navigate to default state."
                 )
             attempts += 1
-            self.tap(AFKJourneyNavigation.CENTER_COORDS)
+            self.tap(AFKJourneyNavigation.CENTER_COORDS, scale=True)
             sleep(3)
         sleep(1)
 
@@ -210,11 +210,19 @@ class AFKJourneyNavigation(Game, ABC):
             timeout_message="Dura's Trial not found.",
         )
         self.tap(coords)
+        sleep(1)
+
+        # popups
+        self.tap(AFKJourneyNavigation.CENTER_COORDS, scale=True)
+        self.tap(AFKJourneyNavigation.CENTER_COORDS, scale=True)
+        self.tap(AFKJourneyNavigation.CENTER_COORDS, scale=True)
+
         self.wait_for_template(
             template="duras_trials/featured_heroes.png",
             crop=CropRegions(left=0.7, bottom=0.8),
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
+        sleep(1)
         return
 
     def _find_on_battle_modes(self, template: str, timeout_message: str) -> Coordinates:
@@ -287,4 +295,5 @@ class AFKJourneyNavigation(Game, ABC):
             crop=CropRegions(left=0.3, top=0.8),
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
+        sleep(1)
         return

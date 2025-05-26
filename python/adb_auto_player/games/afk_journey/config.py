@@ -131,7 +131,6 @@ class CommonBattleModeConfig(BaseModel):
     attempts: PositiveInt = Field(default=5, alias="Attempts")
     use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
     formations: FormationsInt = Field(default=7, alias="Formations")
-    skip_manual_formations: bool = Field(default=False, alias="Skip Manual Formations")
     use_current_formation_before_suggested_formation: bool = Field(
         default=True,
         alias="Start with current Formation",
@@ -139,7 +138,13 @@ class CommonBattleModeConfig(BaseModel):
     spend_gold: bool = Field(default=False, alias="Spend Gold")
 
 
-class AFKStagesConfig(CommonBattleModeConfig):
+class BattleAllowsManualConfig(CommonBattleModeConfig):
+    """Battle modes that allow manual battles."""
+
+    skip_manual_formations: bool = Field(default=False, alias="Skip Manual Formations")
+
+
+class AFKStagesConfig(BattleAllowsManualConfig):
     """AFK Stages config model."""
 
     pass
@@ -154,7 +159,7 @@ class DurasTrialsConfig(CommonBattleModeConfig):
 DEFAULT_TOWERS = list(TowerEnum.__members__.values())
 
 
-class LegendTrialsConfig(CommonBattleModeConfig):
+class LegendTrialsConfig(BattleAllowsManualConfig):
     """Legend Trials config model."""
 
     towers: list[TowerEnum] = Field(
