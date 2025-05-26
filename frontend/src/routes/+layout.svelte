@@ -8,6 +8,9 @@
   import DownloadIconSticky from "./SelfUpdater/DownloadIconSticky.svelte";
   import LogDisplayCard from "./LogDisplayCard.svelte";
   import { onMount } from "svelte";
+  import posthog from "posthog-js";
+  import { browser } from "$app/environment";
+  import { version } from "$app/environment";
 
   let { children } = $props();
 
@@ -35,6 +38,23 @@
     // Now apply theme via a <link> tag, class, or dynamically import the CSS
     console.log("Selected theme:", theme);
     document.documentElement.setAttribute("data-theme", theme);
+  });
+
+  onMount(() => {
+    if (browser) {
+      // this is going to be exposed in the frontend anyway.
+      posthog.init("phc_GXmHn56fL10ymOt3inmqSER4wh5YuN3AG6lmauJ5b0o", {
+        api_host: "https://eu.i.posthog.com",
+        autocapture: {
+          css_selector_allowlist: [".ph-autocapture"],
+        },
+        person_profiles: "always",
+      });
+    }
+
+    posthog.register({
+      app_version: version,
+    });
   });
 </script>
 
