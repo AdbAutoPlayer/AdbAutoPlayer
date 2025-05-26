@@ -120,7 +120,7 @@ def _connect_client(client: AdbClient, device_id: str) -> None:
     except AdbError as e:
         err_msg = str(e)
         if "Install adb" in err_msg:
-            raise e
+            raise GenericAdbError(err_msg)
         elif "Unknown data: b" in err_msg:
             raise GenericAdbError(
                 "Please make sure the adb port is correct "

@@ -5,7 +5,14 @@ from abc import ABC
 from math import floor
 from time import sleep
 
-from adb_auto_player import Coordinates, CropRegions, GameTimeoutError, MatchMode
+from adb_auto_player import (
+    AutoPlayerError,
+    AutoPlayerWarningError,
+    Coordinates,
+    CropRegions,
+    GameTimeoutError,
+    MatchMode,
+)
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.decorators.register_custom_routine_choice import (
     register_custom_routine_choice,
@@ -14,7 +21,7 @@ from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 
 
-class BattleCannotBeStartedError(Exception):
+class BattleCannotBeStartedError(AutoPlayerError):
     """Battle failed to start."""
 
     pass
@@ -147,13 +154,14 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 self._start_arcane_labyrinth()
                 while self._handle_arcane_labyrinth():
                     sleep(1)
-
+            except AutoPlayerWarningError as e:
+                logging.warning(f"{e}")
+                continue
             except GameTimeoutError as e:
                 logging.warning(f"{e}")
                 continue
-            except BattleCannotBeStartedError as e:
+            except AutoPlayerError as e:
                 logging.error(f"{e}")
-                logging.error("Restarting Arcane Labyrinth")
                 self._quit()
                 continue
             clear_count += 1

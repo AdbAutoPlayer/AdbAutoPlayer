@@ -78,7 +78,6 @@ class ConfigBase(BaseModel):
             try:
                 with open(file_path, "rb") as f:
                     toml_data = tomllib.load(f)
-
             except Exception as e:
                 logging.error(
                     f"Error reading config file: {e} - using default config values"

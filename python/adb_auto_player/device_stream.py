@@ -8,11 +8,12 @@ import time
 
 import cv2
 import numpy as np
+from adb_auto_player import AutoPlayerWarningError
 from adbutils import AdbConnection, AdbDevice
 from av.codec.context import CodecContext
 
 
-class StreamingNotSupportedError(Exception):
+class StreamingNotSupportedError(AutoPlayerWarningError):
     """Streaming is not yet implemented for the specified platform."""
 
     pass

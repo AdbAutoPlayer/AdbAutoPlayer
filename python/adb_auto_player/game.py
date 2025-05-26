@@ -21,7 +21,6 @@ from adb_auto_player import (
     GameTimeoutError,
     GenericAdbError,
     NotInitializedError,
-    StreamingNotSupportedError,
     UnsupportedResolutionError,
 )
 from adb_auto_player.adb import (
@@ -35,6 +34,7 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
     custom_routine_choice_registry,
 )
 from adb_auto_player.exceptions import (
+    AutoPlayerWarningError,
     GameActionFailedError,
     GameNotRunningOrFrozenError,
     GameStartError,
@@ -281,7 +281,7 @@ class Game:
             self._stream = DeviceStream(
                 self.device,
             )
-        except StreamingNotSupportedError as e:
+        except AutoPlayerWarningError as e:
             logging.warning(f"{e}")
 
         if self._stream is None:
@@ -409,7 +409,6 @@ class Game:
         """Get the previous screenshot."""
         if self._previous_screenshot is not None:
             return self._previous_screenshot
-        logging.warning("No previous screenshot")
         return self.get_screenshot()
 
     def _get_screenshot(self, previous_screenshot: bool) -> np.ndarray:
