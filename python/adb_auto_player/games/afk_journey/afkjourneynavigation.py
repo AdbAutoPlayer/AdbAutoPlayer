@@ -23,6 +23,7 @@ class AFKJourneyNavigation(Game, ABC):
     ) -> None:
         """Navigate to main default screen."""
         templates = [
+            "popup/quick_purchase.png",
             "navigation/notice.png",
             "navigation/confirm.png",
             "navigation/time_of_day.png",
@@ -42,10 +43,10 @@ class AFKJourneyNavigation(Game, ABC):
             if not self.is_game_running():
                 logging.error("Game not running.")
                 self._handle_restart(templates)
-            if attempts >= restart_attempts:
+            elif attempts >= restart_attempts:
                 logging.warning("Failed to navigate to default state.")
                 self._handle_restart(templates)
-            if attempts >= max_attempts:
+            elif attempts >= max_attempts:
                 raise GameNotRunningOrFrozenError(
                     "Failed to navigate to default state."
                 )
@@ -54,7 +55,6 @@ class AFKJourneyNavigation(Game, ABC):
             result = self.find_any_template(templates)
 
             if result is None:
-                logging.debug("back")
                 self.press_back_button()
                 sleep(3)
                 continue
@@ -64,12 +64,12 @@ class AFKJourneyNavigation(Game, ABC):
                 case "navigation/time_of_day.png":
                     break
                 case "navigation/notice.png":
-                    # TODO whats this?, make constant
-                    self.tap(Coordinates(x=530, y=1630), scale=True)
+                    # This is the Game Entry Screen
+                    self.tap(AFKJourneyNavigation.CENTER_COORDS, scale=True)
                     sleep(3)
                 case "navigation/confirm.png":
                     self._handle_confirm_button(Coordinates(x=x, y=y))
-                case "navigation/dotdotdot.png":
+                case "navigation/dotdotdot.png" | "popup/quick_purchase.png":
                     self.press_back_button()
                     sleep(1)
                 case _:
@@ -81,7 +81,8 @@ class AFKJourneyNavigation(Game, ABC):
         logging.warning("Trying to restart AFK Journey.")
         self.force_stop_game()
         self.start_game()
-        max_attempts = 40
+        # if your game needs more than 6 minutes to start there is no helping yourself
+        max_attempts = 120
         attempts = 0
         while not self.find_any_template(templates) and self.is_game_running():
             if attempts >= max_attempts:
@@ -94,16 +95,20 @@ class AFKJourneyNavigation(Game, ABC):
         sleep(1)
 
     def _handle_confirm_button(self, coords: Coordinates) -> None:
-        if self.game_find_template_match(
-            "navigation/exit_the_game.png",
+        if self.find_any_template(
+            templates=[
+                "navigation/exit_the_game.png",
+                "navigation/are_you_sure_you_want_to_exit_the_game.png",
+            ],
+            threshold=0.75,
         ):
             x_btn: tuple[int, int] | None = self.game_find_template_match(
                 "navigation/x.png",
             )
             if x_btn:
-                logging.debug("x")
                 self.tap(Coordinates(*x_btn))
                 sleep(1)
+                return
             self.press_back_button()
         else:
             self.tap(coords)
@@ -159,7 +164,22 @@ class AFKJourneyNavigation(Game, ABC):
         self.navigate_to_default_state()
 
         self.tap(AFKJourneyNavigation.BATTLE_MODES_COORDS, scale=True)
-        _ = self.wait_for_any_template(
+        template, _, _ = self.wait_for_any_template(
+            templates=[
+                "battle_modes/afk_stage.png",
+                "battle_modes/duras_trials.png",
+                "battle_modes/arcane_labyrinth.png",
+                "popup/quick_purchase.png",
+            ],
+            threshold=0.75,
+            timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
+        )
+
+        if template == "popup/quick_purchase.png":
+            self.press_back_button()
+            sleep(1)
+
+        template, _, _ = self.wait_for_any_template(
             templates=[
                 "battle_modes/afk_stage.png",
                 "battle_modes/duras_trials.png",
@@ -168,6 +188,7 @@ class AFKJourneyNavigation(Game, ABC):
             threshold=0.75,
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
+
         sleep(1)
 
     def navigate_to_duras_trials_screen(self) -> None:
