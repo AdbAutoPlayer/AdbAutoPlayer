@@ -38,6 +38,7 @@ class GuitarGirl(Game):
 
             if counter == 0:
                 logging.info("Leveling up and activating Skills.")
+                sleep(3)  # wait for queued taps to complete
                 self._level_up()
                 self._activate_skills()
 
@@ -52,10 +53,13 @@ class GuitarGirl(Game):
     def _level_up(self) -> None:
         for _ in range(10):
             self.tap(Coordinates(900, 1450), log=False)
+        sleep(1)
         self.tap(Coordinates(100, 1450), log=False)
-        pass
+        self.tap(Coordinates(100, 1450), log=False)
+        self.tap(Coordinates(100, 1450), log=False)
 
     def _activate_skills(self) -> None:
+        sleep(1)
         self.tap(Coordinates(200, 1280), log=False)
         sleep(1)
         self.tap(Coordinates(430, 1280), log=False)
