@@ -230,7 +230,7 @@ class Game:
             self._stream.stop()
             self._stream = None
 
-    def open_eyes(self, device_streaming: bool = False) -> None:
+    def open_eyes(self, device_streaming: bool = True) -> None:
         """Give the bot eyes.
 
         Set the device for the game and start the device stream.
@@ -309,6 +309,7 @@ class Game:
         scale: bool = False,
         blocking: bool = True,
         non_blocking_sleep_duration: float = 1 / 30,  # Assuming 30 FPS, 1 Tap per Frame
+        log: bool = True,
     ) -> None:
         """Tap the screen on the given coordinates.
 
@@ -319,6 +320,7 @@ class Game:
                 wait for ADBServer to confirm the tap has happened.
             non_blocking_sleep_duration (float, optional): Sleep time in seconds for
                 non-blocking taps, needed to not DoS the ADBServer.
+            log (bool, optional): Whether to log the tap.
         """
         if scale:
             scaled_coords = Coordinates(*self._scale_coordinates(*coordinates))
@@ -327,21 +329,31 @@ class Game:
                 coordinates = scaled_coords
 
         if blocking:
-            self._click(coordinates)
+            self._click(coordinates, log)
         else:
             thread = threading.Thread(
-                target=self._click, args=(coordinates,), daemon=True
+                target=self._click,
+                args=(
+                    coordinates,
+                    log,
+                ),
+                daemon=True,
             )
             thread.start()
             sleep(non_blocking_sleep_duration)
 
-    def _click(self, coordinates: Coordinates) -> None:
+    def _click(
+        self,
+        coordinates: Coordinates,
+        log: bool = True,
+    ) -> None:
         with self.device.shell(
             f"input tap {coordinates.x} {coordinates.y}",
             timeout=3,  # if the click didn't happen in 3 seconds it's never happening
             stream=True,
         ) as connection:
-            logging.debug(f"Clicked Coordinates: {coordinates}")
+            if log:
+                logging.debug(f"Clicked Coordinates: {coordinates}")
             # without this it breaks for people with slower CPUs
             # need to think of a better solution
             connection.read_until_close()

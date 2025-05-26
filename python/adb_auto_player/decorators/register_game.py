@@ -40,7 +40,7 @@ class GameGUIMetadata:
 
     """
 
-    config_class: type[ConfigBase]
+    config_class: type[ConfigBase] | None = None
     categories: list[str | StrEnum] | None = None
 
 
@@ -56,22 +56,24 @@ class GameMetadata:
     """
 
     name: str
-    config_file_path: Path
-    gui_metadata: GameGUIMetadata
+    config_file_path: Path | None = None
+    gui_metadata: GameGUIMetadata | None = None
 
 
 game_registry: dict[str, GameMetadata] = {}
 
 
 def register_game(
-    name: str, config_file_path: Path | str, gui_metadata: GameGUIMetadata
+    name: str,
+    config_file_path: Path | str | None = None,
+    gui_metadata: GameGUIMetadata | None = None,
 ):
     """Decorator to register a game class in the game_registry.
 
     Args:
         name (str): Name of the game.
-        config_file_path (Path | str): Path to the game's configuration file.
-        gui_metadata (GameGUIMetadata): Metadata for GUI configuration.
+        config_file_path (Path | str | None): Path to the game's configuration file.
+        gui_metadata (GameGUIMetadata | None): Metadata for GUI configuration.
 
     Raises:
         TypeError: If the decorator is used on a non-class object.

@@ -31,7 +31,7 @@ def get_gui_games_menu() -> str:
     menu = []
     for module, game in game_registry.items():
         categories: set[str] = set()
-        if game.gui_metadata.categories:
+        if game.gui_metadata and game.gui_metadata.categories:
             for value in game.gui_metadata.categories:
                 if isinstance(value, StrEnum):
                     categories.add(value.value)
@@ -49,10 +49,16 @@ def get_gui_games_menu() -> str:
 
         options: GameGUIOptions = GameGUIOptions(
             game_title=game.name,
-            config_path=game.config_file_path.as_posix(),
+            config_path=(
+                game.config_file_path.as_posix() if game.config_file_path else None
+            ),
             menu_options=menu_options,
             categories=list(categories),
-            constraints=game.gui_metadata.config_class.get_constraints(),
+            constraints=(
+                game.gui_metadata.config_class.get_constraints()
+                if game.gui_metadata and game.gui_metadata.config_class
+                else None
+            ),
         )
         menu.append(options.to_dict())
 
