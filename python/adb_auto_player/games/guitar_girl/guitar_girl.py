@@ -26,7 +26,7 @@ class GuitarGirl(Game):
 
     @register_command(gui=GuiMetadata(label="Play"))
     def play(self) -> NoReturn:
-        self.open_eyes()
+        self.open_eyes(device_streaming=False)
         counter = 0
         y = 200
         y_max = 960
@@ -63,7 +63,7 @@ class GuitarGirl(Game):
         self.tap(Coordinates(660, 1280), log=False)
 
     def _start_game_if_not_running(self) -> None:
-        logging.warning("Restarting Guitar Girl.")
         if not self.is_game_running():
+            logging.warning("Restarting Guitar Girl.")
             self.start_game()
             sleep(15)

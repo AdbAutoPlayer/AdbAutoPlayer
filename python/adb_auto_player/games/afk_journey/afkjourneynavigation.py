@@ -26,6 +26,7 @@ class AFKJourneyNavigation(Game, ABC):
             "popup/quick_purchase.png",
             "navigation/notice.png",
             "navigation/confirm.png",
+            "navigation/confirm_text.png",
             "navigation/time_of_day.png",
             "navigation/dotdotdot.png",
             "battle/copy.png",
