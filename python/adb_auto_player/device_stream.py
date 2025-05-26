@@ -8,9 +8,10 @@ import time
 
 import cv2
 import numpy as np
-from adb_auto_player import AutoPlayerWarningError
 from adbutils import AdbConnection, AdbDevice
 from av.codec.context import CodecContext
+
+from .exceptions import AutoPlayerWarningError
 
 
 class StreamingNotSupportedError(AutoPlayerWarningError):
