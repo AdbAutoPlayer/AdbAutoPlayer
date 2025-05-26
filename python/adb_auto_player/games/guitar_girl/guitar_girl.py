@@ -57,7 +57,9 @@ class GuitarGirl(Game):
 
     def _activate_skills(self) -> None:
         self.tap(Coordinates(200, 1280), log=False)
+        sleep(1)
         self.tap(Coordinates(430, 1280), log=False)
+        sleep(1)
         self.tap(Coordinates(660, 1280), log=False)
 
     def _start_game_if_not_running(self) -> None:
