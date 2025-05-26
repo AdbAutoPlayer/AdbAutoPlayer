@@ -4,7 +4,7 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player import Coordinates, CropRegions
+from adb_auto_player import Coordinates, CropRegions, GameTimeoutError
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.decorators.register_custom_routine_choice import (
     register_custom_routine_choice,
@@ -46,9 +46,15 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
         for banner in rate_up_banners:
             if not first_banner:
                 self.navigate_to_duras_trials_screen()
-            self._handle_dura_screen(*banner)
+            try:
+                self._handle_dura_screen(*banner)
+            except GameTimeoutError as e:
+                logging.error(f"{e}")
             self.navigate_to_duras_trials_screen()
-            self._handle_dura_screen(*banner, nightmare_mode=True)
+            try:
+                self._handle_dura_screen(*banner, nightmare_mode=True)
+            except GameTimeoutError as e:
+                logging.error(f"{e}")
             first_banner = False
 
         return None
