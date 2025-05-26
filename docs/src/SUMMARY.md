@@ -10,7 +10,6 @@
 
 # Games
 - [AFK Journey](games/afk-journey.md)
-- [Infinity Nikki](games/infinity-nikki.md)
 
 # App Development
 - [Dev & Build](development/dev-and-build.md)
