@@ -82,3 +82,6 @@ These settings apply to **AFK Stages**, **Dura's Trials**, and **Legend Trials**
 ### Legend Trials
 
 - **Towers**: Any unselected tower will be skipped.
+
+## Analytics
+<iframe width="100%" height="400" frameborder="0" allowfullscreen src="https://eu.posthog.com/embedded/h7NYr6dIiU7Cn9C1mgDkkr_x3ulDtQ"></iframe>
