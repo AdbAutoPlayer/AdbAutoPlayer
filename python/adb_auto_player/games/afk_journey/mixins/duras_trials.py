@@ -9,6 +9,7 @@ from adb_auto_player.decorators.register_command import GuiMetadata, register_co
 from adb_auto_player.decorators.register_custom_routine_choice import (
     register_custom_routine_choice,
 )
+from adb_auto_player.exceptions import GameAdvisoryWarningError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 
@@ -48,11 +49,16 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
                 self.navigate_to_duras_trials_screen()
             try:
                 self._handle_dura_screen(*banner)
+
+            except GameAdvisoryWarningError as e:
+                logging.warning(f"{e}")
             except GameTimeoutError as e:
                 logging.error(f"{e}")
             self.navigate_to_duras_trials_screen()
             try:
                 self._handle_dura_screen(*banner, nightmare_mode=True)
+            except GameAdvisoryWarningError as e:
+                logging.warning(f"{e}")
             except GameTimeoutError as e:
                 logging.error(f"{e}")
             first_banner = False

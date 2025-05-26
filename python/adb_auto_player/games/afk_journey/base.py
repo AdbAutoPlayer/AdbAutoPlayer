@@ -14,6 +14,7 @@ from adb_auto_player import (
 )
 from adb_auto_player.decorators.register_game import GameGUIMetadata, register_game
 
+from ...exceptions import GameAdvisoryWarningError
 from .afkjourneynavigation import AFKJourneyNavigation
 from .config import Config
 from .gui_category import AFKJCategory
@@ -212,12 +213,15 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
             crop=CropRegions(right=0.5, top=0.8),
         )
         self.tap(Coordinates(*records))
-        _ = self.wait_for_template(
-            "battle/copy.png",
-            crop=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
-            timeout=self.MIN_TIMEOUT,
-            timeout_message="No formations available for this battle",
-        )
+        try:
+            _ = self.wait_for_template(
+                "battle/copy.png",
+                crop=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
+                timeout=self.MIN_TIMEOUT,
+            )
+        except GameTimeoutError:
+            raise GameAdvisoryWarningError("No formations available for this battle")
+
         start_count = 1
 
         while True:

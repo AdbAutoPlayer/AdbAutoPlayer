@@ -37,6 +37,12 @@ class GameActionFailedError(Exception):
     pass
 
 
+class GameAdvisoryWarningError(Exception):
+    """Raised when an expected but non-critical condition occurs."""
+
+    pass
+
+
 class GameNotRunningOrFrozenError(Exception):
     """Raised when the Game is not running."""
 

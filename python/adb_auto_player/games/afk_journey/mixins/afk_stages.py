@@ -8,6 +8,7 @@ from adb_auto_player.decorators.register_command import GuiMetadata, register_co
 from adb_auto_player.decorators.register_custom_routine_choice import (
     register_custom_routine_choice,
 )
+from adb_auto_player.exceptions import GameAdvisoryWarningError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 
@@ -51,8 +52,10 @@ class AFKStagesMixin(AFKJourneyBase):
         self.store[self.STORE_SEASON] = season
         try:
             self._start_afk_stage()
+        except GameAdvisoryWarningError as e:
+            logging.warning(f"{e}")
         except GameTimeoutError as e:
-            logging.warning(f"{e} {self.LANG_ERROR}")
+            logging.error(f"{e} {self.LANG_ERROR}")
 
     def _start_afk_stage(self) -> None:
         """Start push."""

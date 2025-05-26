@@ -6,6 +6,7 @@ from time import sleep
 from typing import NoReturn
 
 from adb_auto_player import Coordinates, CropRegions
+from adb_auto_player.exceptions import GameAdvisoryWarningError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 
 
@@ -86,5 +87,7 @@ class EventMixin(AFKJourneyBase, ABC):
                 else:
                     loss_count += 1
                     logging.warning(f"Loss #{loss_count}")
+            except GameAdvisoryWarningError as e:
+                logging.warning(f"{e}")
             except Exception as e:
                 logging.error(f"{e}")
