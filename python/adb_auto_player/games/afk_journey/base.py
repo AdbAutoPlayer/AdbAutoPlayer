@@ -215,6 +215,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
         self._tap_till_template_disappears(
             template="battle/records.png",
             crop=CropRegions(right=0.5, top=0.8),
+            delay=10.0,
         )
 
         try:
@@ -246,7 +247,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
             self._tap_till_template_disappears(
                 template="battle/copy.png",
                 crop=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
-                delay=2.0,
+                delay=5.0,
             )
 
             cancel = self.game_find_template_match(

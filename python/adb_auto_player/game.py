@@ -1178,20 +1178,26 @@ class Game:
         threshold: float | None = None,
         grayscale: bool = False,
         crop: CropRegions = CropRegions(),
-        delay: float = 1.0,
+        delay: float = 5.0,
     ) -> None:
-        max_count = 3
-        count = 0
+        max_tap_count = 3
+        tap_count = 0
+        time_since_last_tap = delay  # force immediate first tap
+
         while result := self.game_find_template_match(
             template, threshold=threshold, grayscale=grayscale, crop=crop
         ):
-            if count >= max_count:
+            if tap_count >= max_tap_count:
                 message = f"Failed to tap: {template}, Template still visible."
                 logging.debug(message)
                 raise GameActionFailedError(message)
-            self.tap(Coordinates(*result))
-            sleep(delay)
-            count += 1
+            if time_since_last_tap >= delay:
+                self.tap(Coordinates(*result))
+                tap_count += 1
+                time_since_last_tap -= delay  # preserve overflow - more accurate timing
+
+            sleep(0.5)
+            time_since_last_tap += 0.5
 
     def _tap_coordinates_till_template_disappears(
         self,

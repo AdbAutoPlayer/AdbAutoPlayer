@@ -151,9 +151,7 @@ class AFKJourneyNavigation(Game, ABC):
         logging.info("Navigating to AFK stages screen.")
         self.navigate_to_battle_modes_screen()
 
-        self._tap_till_template_disappears(
-            "battle_modes/afk_stage.png", threshold=0.75, delay=2
-        )
+        self._tap_till_template_disappears("battle_modes/afk_stage.png", threshold=0.75)
 
         self.wait_for_template(
             template="navigation/resonating_hall_label.png",
