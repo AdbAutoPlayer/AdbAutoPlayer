@@ -13,10 +13,11 @@ from adb_auto_player import (
     GameActionFailedError,
     GameTimeoutError,
     MatchMode,
+    TapParams,
+    TemplateMatchParams,
 )
 from adb_auto_player.decorators.register_game import GameGUIMetadata, register_game
 
-from ...game import TapParams, TemplateMatchParams
 from .afkjourneynavigation import AFKJourneyNavigation
 from .config import Config
 from .gui_category import AFKJCategory

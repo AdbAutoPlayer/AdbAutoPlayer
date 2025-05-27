@@ -17,7 +17,7 @@ from .exceptions import (
     NotInitializedError,
     UnsupportedResolutionError,
 )
-from .game import Coordinates, Game
+from .game import Coordinates, Game, TapParams, TemplateMatchParams
 from .template_matching import CropRegions, MatchMode
 
 __all__: list[str] = [
@@ -40,5 +40,7 @@ __all__: list[str] = [
     "MatchMode",
     "NotInitializedError",
     "StreamingNotSupportedError",
+    "TapParams",
+    "TemplateMatchParams",
     "UnsupportedResolutionError",
 ]
