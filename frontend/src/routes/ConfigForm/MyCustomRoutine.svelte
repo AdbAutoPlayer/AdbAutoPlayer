@@ -1,4 +1,6 @@
 <script lang="ts">
+  import IconX from "../Icons/IconX.svelte";
+
   let {
     constraint,
     value,
@@ -77,7 +79,7 @@
                 type="button"
                 onclick={() => removeTask(index)}
               >
-                <span class="h3">×</span>
+                <IconX size={24} />
               </button>
               <input type="hidden" {name} value={task} />
             </div>
