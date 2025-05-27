@@ -88,6 +88,24 @@ class _SwipeParams:
     duration: float = 1.0
 
 
+@dataclass
+class TapParams:
+    """Params for Tap functions."""
+
+    coordinates: Coordinates
+    scale: bool = False
+
+
+@dataclass
+class TemplateMatchParams:
+    """Params for Template Matching functions."""
+
+    template: str | Path
+    threshold: float | None = None
+    grayscale: bool = False
+    crop: CropRegions | None = None
+
+
 class Game:
     """Generic Game class."""
 
@@ -1171,6 +1189,32 @@ class Game:
             if count >= max_count:
                 raise GameActionFailedError(f"Failed to tap {template}.")
             self.tap(Coordinates(*result))
+            sleep(delay)
+            count += 1
+
+    def _tap_coordinates_till_template_disappears(
+        self,
+        tap_params: TapParams,
+        template_match_params: TemplateMatchParams,
+        delay: float = 1.0,
+    ) -> None:
+        max_count = 3
+        count = 0
+        while self.game_find_template_match(
+            template=template_match_params.template,
+            threshold=template_match_params.threshold,
+            grayscale=template_match_params.grayscale,
+            crop=(
+                template_match_params.crop
+                if template_match_params.crop
+                else CropRegions()
+            ),
+        ):
+            if count >= max_count:
+                raise GameActionFailedError(
+                    f"Failed to tap {template_match_params.template}."
+                )
+            self.tap(tap_params.coordinates, scale=tap_params.scale)
             sleep(delay)
             count += 1
 

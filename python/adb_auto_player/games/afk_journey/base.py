@@ -10,11 +10,13 @@ from adb_auto_player import (
     Coordinates,
     CropRegions,
     Game,
+    GameActionFailedError,
     GameTimeoutError,
     MatchMode,
 )
 from adb_auto_player.decorators.register_game import GameGUIMetadata, register_game
 
+from ...game import TapParams, TemplateMatchParams
 from .afkjourneynavigation import AFKJourneyNavigation
 from .config import Config
 from .gui_category import AFKJCategory
@@ -206,11 +208,11 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
         Returns:
             True if successful, False otherwise.
         """
-        records: tuple[int, int] = self.wait_for_template(
+        self._tap_till_template_disappears(
             template="battle/records.png",
             crop=CropRegions(right=0.5, top=0.8),
         )
-        self.tap(Coordinates(*records))
+
         try:
             _ = self.wait_for_template(
                 "battle/copy.png",
@@ -308,7 +310,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
         """
         spend_gold: str = self._get_config_attribute_from_mode("spend_gold")
 
-        result: tuple[str, int, int] = self.wait_for_any_template(
+        template, _, _ = self.wait_for_any_template(
             templates=[
                 "battle/records.png",
                 "battle/formations_icon.png",
@@ -316,16 +318,18 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
             crop=CropRegions(top=0.5),
         )
 
-        self.tap(Coordinates(x=850, y=1780), scale=True)
-        template, x, y = result
-
         try:
-            self.wait_until_template_disappears(
-                template,
-                crop=CropRegions(top=0.5),
-                timeout=self.MIN_TIMEOUT,
+            self._tap_coordinates_till_template_disappears(
+                TapParams(
+                    Coordinates(x=850, y=1780),
+                    scale=True,
+                ),
+                TemplateMatchParams(
+                    template=template,
+                ),
+                delay=2,
             )
-        except GameTimeoutError:
+        except GameActionFailedError:
             logging.warning("Failed to start Battle, are no Heroes selected?")
             return False
         sleep(1)
