@@ -208,6 +208,10 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
         Returns:
             True if successful, False otherwise.
         """
+        _ = self.wait_for_template(
+            template="battle/records.png",
+            crop=CropRegions(right=0.5, top=0.8),
+        )
         self._tap_till_template_disappears(
             template="battle/records.png",
             crop=CropRegions(right=0.5, top=0.8),
@@ -220,7 +224,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                 timeout=self.MIN_TIMEOUT,
             )
         except GameTimeoutError:
-            raise AutoPlayerWarningError("No formations available for this battle")
+            raise AutoPlayerWarningError("No more formations available for this battle")
 
         start_count = 1
 
