@@ -332,7 +332,6 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                 TemplateMatchParams(
                     template=template,
                 ),
-                delay=2,
             )
         except GameActionFailedError:
             logging.warning("Failed to start Battle, are no Heroes selected?")

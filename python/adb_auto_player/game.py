@@ -1189,7 +1189,6 @@ class Game:
         ):
             if tap_count >= max_tap_count:
                 message = f"Failed to tap: {template}, Template still visible."
-                logging.debug(message)
                 raise GameActionFailedError(message)
             if time_since_last_tap >= delay:
                 self.tap(Coordinates(*result))
@@ -1203,10 +1202,11 @@ class Game:
         self,
         tap_params: TapParams,
         template_match_params: TemplateMatchParams,
-        delay: float = 1.0,
+        delay: float = 5.0,
     ) -> None:
-        max_count = 3
-        count = 0
+        max_tap_count = 3
+        tap_count = 0
+        time_since_last_tap = delay  # force immediate first tap
         while self.game_find_template_match(
             template=template_match_params.template,
             threshold=template_match_params.threshold,
@@ -1217,16 +1217,19 @@ class Game:
                 else CropRegions()
             ),
         ):
-            if count >= max_count:
+            if tap_count >= max_tap_count:
                 message = (
                     f"Failed to tap: {tap_params.coordinates}, "
                     f"Template: {template_match_params.template} still visible."
                 )
-                logging.debug(message)
                 raise GameActionFailedError(message)
-            self.tap(tap_params.coordinates, scale=tap_params.scale)
-            sleep(delay)
-            count += 1
+            if time_since_last_tap >= delay:
+                self.tap(tap_params.coordinates)
+                tap_count += 1
+                time_since_last_tap -= delay  # preserve overflow - more accurate timing
+
+            sleep(0.5)
+            time_since_last_tap += 0.5
 
 
 def snake_to_pascal(s: str):
