@@ -1187,7 +1187,9 @@ class Game:
             template, threshold=threshold, grayscale=grayscale, crop=crop
         ):
             if count >= max_count:
-                raise GameActionFailedError(f"Failed to tap {template}.")
+                message = f"Failed to tap: {template}, Template still visible."
+                logging.debug(message)
+                raise GameActionFailedError(message)
             self.tap(Coordinates(*result))
             sleep(delay)
             count += 1
@@ -1211,9 +1213,12 @@ class Game:
             ),
         ):
             if count >= max_count:
-                raise GameActionFailedError(
-                    f"Failed to tap {template_match_params.template}."
+                message = (
+                    f"Failed to tap: {tap_params.coordinates}, "
+                    f"Template: {template_match_params.template} still visible."
                 )
+                logging.debug(message)
+                raise GameActionFailedError(message)
             self.tap(tap_params.coordinates, scale=tap_params.scale)
             sleep(delay)
             count += 1
