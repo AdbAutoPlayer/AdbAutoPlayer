@@ -67,7 +67,6 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
     def start_up(self, device_streaming: bool = True) -> None:
         """Give the bot eyes."""
         if self.device is None:
-            logging.debug("start_up")
             self.open_eyes(device_streaming=device_streaming)
 
     def _load_config(self) -> Config:

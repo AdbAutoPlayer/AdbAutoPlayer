@@ -29,10 +29,10 @@ from adb_auto_player import (
     UnsupportedResolutionError,
 )
 from adb_auto_player.adb import (
+    Orientation,
     get_adb_device,
+    get_display_info,
     get_running_app,
-    get_screen_resolution,
-    is_portrait,
 )
 from adb_auto_player.decorators.register_custom_routine_choice import (
     CustomRoutineEntry,
@@ -158,25 +158,20 @@ class Game:
         Raises:
              UnsupportedResolutionException: Device resolution is not supported.
         """
-        resolution: str = get_screen_resolution(self.device)
+        display_info = get_display_info(self.device)
 
-        try:
-            width, height = map(int, resolution.split("x"))
-        except ValueError:
-            raise UnsupportedResolutionError(f"Invalid resolution format: {resolution}")
-
-        if not self.is_supported_resolution(width, height):
+        if not self.is_supported_resolution(display_info.width, display_info.height):
             raise UnsupportedResolutionError(
                 "This bot only supports these resolutions: "
                 f"{', '.join(self.supported_resolutions)}"
             )
 
-        self.resolution = width, height
+        self.resolution = (display_info.width, display_info.height)
 
         if (
             self.supports_portrait
             and not self.supports_landscape
-            and not is_portrait(self.device)
+            and display_info.orientation == Orientation.LANDSCAPE
         ):
             raise UnsupportedResolutionError(
                 "This bot only works in Portrait mode: "
@@ -187,7 +182,7 @@ class Game:
         if (
             self.supports_landscape
             and not self.supports_portrait
-            and is_portrait(self.device)
+            and display_info.orientation == Orientation.PORTRAIT
         ):
             raise UnsupportedResolutionError(
                 "This bot only works in Landscape mode: "
@@ -259,7 +254,6 @@ class Game:
         suggested_resolution: str | None = next(
             (res for res in self.supported_resolutions if "x" in res), None
         )
-        logging.debug(f"Suggested Resolution: {suggested_resolution}")
         self.device = get_adb_device(suggested_resolution)
         self.check_requirements()
 
@@ -280,6 +274,12 @@ class Game:
                 )
                 self.stop_stream()
 
+        self._check_screenshot_matches_display_resolution()
+
+        if not self.is_game_running():
+            raise GameNotRunningOrFrozenError("Game is not running")
+
+    def _check_screenshot_matches_display_resolution(self) -> None:
         height, width = self.get_screenshot().shape[:2]
         if (width, height) != self.resolution:
             logging.error(
@@ -288,9 +288,6 @@ class Game:
                 f"exiting..."
             )
             sys.exit(1)
-
-        if not self.is_game_running():
-            raise GameNotRunningOrFrozenError("Game is not running")
 
     def start_stream(self) -> None:
         """Start the device stream."""
@@ -305,7 +302,6 @@ class Game:
             return
 
         self._stream.start()
-        logging.debug("Starting Device Stream...")
         time_waiting_for_stream_to_start = 0
         attempts = 10
         while True:
@@ -1151,7 +1147,10 @@ class Game:
             if not custom_routine:
                 logging.error(f"Task '{task}' not found")
                 continue
-            error = execute(function=custom_routine.func, kwargs=custom_routine.kwargs)
+            error = execute(
+                function=custom_routine.func,
+                kwargs=custom_routine.kwargs,
+            )
             if isinstance(error, AutoPlayerUnrecoverableError):
                 logging.error(
                     f"Task '{task}' failed with critical error: {error}, exiting..."

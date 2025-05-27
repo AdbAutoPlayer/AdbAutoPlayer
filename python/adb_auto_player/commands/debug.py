@@ -9,9 +9,8 @@ from adb_auto_player.adb import (
     exec_wm_size,
     get_adb_client,
     get_adb_device,
+    get_display_info,
     get_running_app,
-    get_screen_resolution,
-    is_portrait,
     log_devices,
     wm_size_reset,
 )
@@ -72,8 +71,9 @@ def _log_debug() -> None:
         )
 
         logging.info("--- Device Display ---")
-        _ = get_screen_resolution(device)
-        _ = is_portrait(device)
+        display_info = get_display_info(device)
+        logging.info(f"Resolution: {display_info.width}x{display_info.height}")
+        logging.info(f"Orientation: {display_info.orientation}")
         logging.info("--- Test Resize Display ---")
         try:
             exec_wm_size("1080x1920", device)

@@ -4,6 +4,8 @@ import logging
 import os
 import shutil
 import sys
+from dataclasses import dataclass
+from enum import StrEnum
 from logging import DEBUG, WARNING
 from pathlib import Path
 from typing import Any
@@ -12,6 +14,22 @@ import adbutils._utils
 from adb_auto_player import ConfigLoader, GenericAdbError, GenericAdbUnrecoverableError
 from adbutils import AdbClient, AdbDevice, AdbError
 from adbutils._proto import AdbDeviceInfo
+
+
+class Orientation(StrEnum):
+    """Device orientation enumeration."""
+
+    PORTRAIT = "portrait"
+    LANDSCAPE = "landscape"
+
+
+@dataclass
+class DisplayInfo:
+    """Data class containing device display information."""
+
+    width: int
+    height: int
+    orientation: Orientation
 
 
 def _set_adb_path() -> None:
@@ -77,10 +95,14 @@ def get_adb_client() -> AdbClient:
         port=adb_config.get("port", 5037),
     )
 
-    logging.debug(f"adb host: {client.host}")
-    logging.debug(f"adb port: {client.port}")
     server_version = client.server_version()
-    logging.debug(f"adb server_version: {server_version}")
+
+    logging.debug(
+        "ADB Client "
+        f"host: {client.host}, "
+        f"port: {client.port}, "
+        f"server_version: {server_version}"
+    )
     return client
 
 
@@ -283,7 +305,6 @@ def _get_adb_device(
     # Connect the client and list devices
     _connect_client(client, device_id)
     devices: list[AdbDeviceInfo] = _get_devices(client)
-    log_devices(devices)
 
     # Try to resolve the correct device
     device = _resolve_device(client, device_id, devices)
@@ -373,86 +394,6 @@ def _is_device_connection_active(device: AdbDevice) -> bool:
         return False
 
 
-def get_screen_resolution(device: AdbDevice) -> str:
-    """Get screen resolution as string.
-
-    Args:
-        device (AdbDevice): ADB device.
-
-    Raises:
-        AdbException: Unable to determine screen resolution.
-
-    Returns:
-        str: Resolution as string.
-    """
-    try:
-        result = str(device.shell("wm size", timeout=5))
-    except Exception as e:
-        raise GenericAdbError(f"wm size: {e}")
-    if result:
-        lines: list[str] = result.splitlines()
-        override_size = None
-        physical_size = None
-
-        for line in lines:
-            if "Override size:" in line:
-                override_size = line.split("Override size:")[-1].strip()
-                logging.debug(f"Override size: {override_size}")
-            elif "Physical size:" in line:
-                physical_size = line.split("Physical size:")[-1].strip()
-                logging.debug(f"Physical size: {physical_size}")
-
-        resolution_str: str | None = override_size if override_size else physical_size
-
-        if resolution_str:
-            logging.debug(f"Device screen resolution: {resolution_str}")
-            if is_portrait(device):
-                return resolution_str
-            else:
-                width, height = resolution_str.split("x")
-                return f"{height}x{width}"
-    logging.debug(result)
-    raise GenericAdbUnrecoverableError("Unable to determine screen resolution")
-
-
-def is_portrait(device: AdbDevice) -> bool:
-    """Check if device is in portrait mode.
-
-    Args:
-        device (AdbDevice): ADB device.
-
-    Returns:
-        bool: True if all checks pass, False otherwise.
-    """
-    try:
-        orientation_check = device.shell(
-            "dumpsys input | grep 'SurfaceOrientation'"
-        ).strip()
-    except Exception as e:
-        raise GenericAdbUnrecoverableError(f"dumpsys input: {e}")
-    logging.debug(f"orientation_check: {orientation_check}")
-
-    try:
-        rotation_check = device.shell("dumpsys window | grep mCurrentRotation").strip()
-    except Exception as e:
-        raise GenericAdbUnrecoverableError(f"dumpsys window: {e}")
-    logging.debug(f"rotation_check: {rotation_check}")
-
-    try:
-        display_check = device.shell("dumpsys display | grep -E 'orientation'").strip()
-    except Exception as e:
-        raise GenericAdbUnrecoverableError(f"dumpsys display: {e}")
-    logging.debug(f"display_check: {display_check}")
-
-    checks: list[bool] = [
-        "Orientation: 0" in orientation_check if orientation_check else True,
-        "ROTATION_0" in rotation_check if rotation_check else True,
-        "orientation=0" in display_check if display_check else True,
-    ]
-
-    return all(checks)
-
-
 def get_running_app(device: AdbDevice) -> str | None:
     """Get the currently running app.
 
@@ -483,3 +424,120 @@ def get_running_app(device: AdbDevice) -> str | None:
         logging.debug(f"Currently running app: {app}")
         return str(app)
     return None
+
+
+def get_display_info(device: AdbDevice) -> DisplayInfo:
+    """Get display resolution and orientation.
+
+    Args:
+        device (AdbDevice): ADB device.
+
+    Raises:
+        GenericAdbUnrecoverableError: Unable to determine screen resolution or
+            orientation.
+
+    Returns:
+        DisplayInfo: Resolution and orientation.
+    """
+    try:
+        result = str(device.shell("wm size", timeout=5))
+    except Exception as e:
+        raise GenericAdbUnrecoverableError(f"wm size: {e}")
+
+    if not result:
+        raise GenericAdbUnrecoverableError("Unable to determine screen resolution")
+
+    # Parse resolution from wm size output
+    lines: list[str] = result.splitlines()
+    override_size = None
+    physical_size = None
+
+    for line in lines:
+        if "Override size:" in line:
+            override_size = line.split("Override size:")[-1].strip()
+            logging.debug(f"Override size: {override_size}")
+        elif "Physical size:" in line:
+            physical_size = line.split("Physical size:")[-1].strip()
+            logging.debug(f"Physical size: {physical_size}")
+
+    resolution_str: str | None = override_size if override_size else physical_size
+
+    if not resolution_str:
+        raise GenericAdbUnrecoverableError(
+            f"Unable to determine screen resolution: {result}"
+        )
+
+    try:
+        width_str, height_str = resolution_str.split("x")
+        width, height = int(width_str), int(height_str)
+    except (ValueError, AttributeError):
+        raise GenericAdbUnrecoverableError(
+            f"Invalid resolution format: {resolution_str}"
+        )
+
+    device_orientation = _check_orientation(device)
+
+    return DisplayInfo(
+        width=width if Orientation.PORTRAIT == device_orientation else height,
+        height=height if Orientation.PORTRAIT == device_orientation else width,
+        orientation=device_orientation,
+    )
+
+
+def _check_orientation(device: AdbDevice) -> Orientation:
+    """Check device orientation using multiple fallback methods.
+
+    Tries different orientation detection methods in order of reliability,
+    returning as soon as a definitive result is found. Portrait orientation
+    corresponds to rotation 0, while landscape corresponds to rotations 1 and 3.
+
+    Args:
+        device (AdbDevice): ADB device.
+
+    Returns:
+        Orientation: Device orientation (PORTRAIT or LANDSCAPE).
+
+    Raises:
+        GenericAdbUnrecoverableError: If unable to perform any orientation checks.
+    """
+    # Check 1: SurfaceOrientation (most reliable)
+    try:
+        orientation_check = device.shell(
+            "dumpsys input | grep 'SurfaceOrientation'"
+        ).strip()
+        logging.debug(f"orientation_check: {orientation_check}")
+        if orientation_check:
+            if "Orientation: 0" in orientation_check:
+                return Orientation.PORTRAIT
+            elif any(
+                x in orientation_check for x in ["Orientation: 1", "Orientation: 3"]
+            ):
+                return Orientation.LANDSCAPE
+    except Exception as e:
+        logging.debug(f"SurfaceOrientation check failed: {e}")
+
+    # Check 2: Current rotation (fallback)
+    try:
+        rotation_check = device.shell("dumpsys window | grep mCurrentRotation").strip()
+        logging.debug(f"rotation_check: {rotation_check}")
+        if rotation_check:
+            if "ROTATION_0" in rotation_check:
+                return Orientation.PORTRAIT
+            elif any(x in rotation_check for x in ["ROTATION_90", "ROTATION_270"]):
+                return Orientation.LANDSCAPE
+    except Exception as e:
+        logging.debug(f"Rotation check failed: {e}")
+
+    # Check 3: Display orientation (last resort)
+    try:
+        display_check = device.shell("dumpsys display | grep -E 'orientation'").strip()
+        logging.debug(f"display_check: {display_check}")
+        if display_check:
+            if "orientation=0" in display_check:
+                return Orientation.PORTRAIT
+            elif any(x in display_check for x in ["orientation=1", "orientation=3"]):
+                return Orientation.LANDSCAPE
+    except Exception as e:
+        logging.debug(f"Display orientation check failed: {e}")
+
+    raise GenericAdbUnrecoverableError("Unable to determine device orientation")
