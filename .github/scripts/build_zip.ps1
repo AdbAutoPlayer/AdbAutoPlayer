@@ -27,6 +27,17 @@ Push-Location (Join-Path $Workspace "python")
 
 uv run nuitka --standalone --output-filename=adb_auto_player.exe --assume-yes-for-downloads --include-package=adb_auto_player.games --include-plugin-directory=adb_auto_player/games --follow-import-to=adb_auto_player.games --include-package=adb_auto_player.commands --include-plugin-directory=adb_auto_player/commands  --follow-import-to=adb_auto_player.commands --include-module=pkgutil --windows-console-mode=attach adb_auto_player/main.py
 
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Nuitka failed with exit code $LASTEXITCODE"
+    exit $LASTEXITCODE
+}
+
+if (Test-Path "nuitka-crash-report.xml") {
+    Write-Host "Nuitka generated a crash report. Failing the build."
+    Get-Content nuitka-crash-report.xml | Write-Host
+    exit 1
+}
+
 Pop-Location
 
 New-Item -ItemType Directory -Force -Path $ReleaseZipDir
