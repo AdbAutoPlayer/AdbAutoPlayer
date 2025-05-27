@@ -135,8 +135,9 @@ class DeviceStream:
             try:
                 self._handle_stream()
             except Exception as e:
-                if "was aborted by the software in your host machine" not in str(e):
-                    logging.debug(f"Stream error: {e}")
+                if self._running:
+                    if "was aborted by the software in your host machine" not in str(e):
+                        logging.debug(f"Stream error: {e}")
                 time.sleep(1)
             finally:
                 if self._process:
