@@ -1178,7 +1178,7 @@ class Game:
         threshold: float | None = None,
         grayscale: bool = False,
         crop: CropRegions = CropRegions(),
-        delay: float = 5.0,
+        delay: float = 10.0,
     ) -> None:
         max_tap_count = 3
         tap_count = 0
@@ -1202,7 +1202,7 @@ class Game:
         self,
         tap_params: TapParams,
         template_match_params: TemplateMatchParams,
-        delay: float = 5.0,
+        delay: float = 10.0,
     ) -> None:
         max_tap_count = 3
         tap_count = 0
