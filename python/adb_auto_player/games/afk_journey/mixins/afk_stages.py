@@ -85,10 +85,6 @@ class AFKStagesMixin(AFKJourneyBase):
 
     def _select_afk_stage(self) -> None:
         """Selects an AFK stage template."""
-        self.wait_for_template(
-            template="navigation/resonating_hall_label.png",
-            crop=CropRegions(left=0.3, right=0.3, top=0.9),
-        )
         self.tap(Coordinates(x=550, y=1080), scale=True)  # click rewards popup
         sleep(1)
         if self.store.get(self.STORE_SEASON, False):
