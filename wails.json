@@ -11,8 +11,5 @@
   "author": {
     "name": "AdbAutoPlayer"
   },
-  "info": {
-    "productVersion": "0.0.0"
-  },
   "wailsjsdir": "frontend/src/lib"
 }

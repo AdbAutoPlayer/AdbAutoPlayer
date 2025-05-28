@@ -6,7 +6,6 @@ import (
 	"adb-auto-player/internal/ipc"
 	"context"
 	"embed"
-	"encoding/json"
 	"fmt"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/logger"
@@ -22,40 +21,17 @@ import (
 //go:embed all:frontend/build
 var assets embed.FS
 
-//go:embed wails.json
-var wailsJSON []byte
-
-type WailsInfo struct {
-	ProductVersion string `json:"productVersion"`
-}
-
-type WailsConfig struct {
-	Info WailsInfo `json:"info"`
-}
-
-func getWailsConfig() (*WailsConfig, error) {
-	var wailsConfig WailsConfig
-	if err := json.Unmarshal(wailsJSON, &wailsConfig); err != nil {
-		return nil, err
-	}
-	return &wailsConfig, nil
-}
+// Version is set at build time using -ldflags "-X main.Version=..."
+var Version = "dev" // default fallback for local dev runs
 
 func main() {
 	println()
-	wailsConfig, err := getWailsConfig()
-	isDev := false
-
-	if err != nil || wailsConfig == nil {
-		println("Error retrieving config:", err)
-		isDev = true
-	} else {
-		println("ProductVersion:", wailsConfig.Info.ProductVersion)
-		isDev = wailsConfig.Info.ProductVersion == "0.0.0"
-	}
+	println("Version:", Version)
+	isDev := Version == "dev"
 
 	if !isDev {
 		changeWorkingDirForProd()
+		// TODO updater
 	}
 
 	logLevel := logger.INFO
@@ -94,9 +70,9 @@ func main() {
 	frontendLogger := ipc.NewFrontendLogger(uint8(logLevel))
 	internal.GetProcessManager().ActionLogLimit = mainConfig.Logging.ActionLogLimit
 
-	app := NewApp()
+	app := NewApp(Version)
 
-	err = wails.Run(&options.App{
+	appErr := wails.Run(&options.App{
 		Title:  "AdbAutoPlayer",
 		Width:  1168,
 		Height: 776,
@@ -129,8 +105,8 @@ func main() {
 		LogLevelProduction: logLevel,
 	})
 
-	if err != nil {
-		panic(err)
+	if appErr != nil {
+		panic(appErr)
 	}
 }
 

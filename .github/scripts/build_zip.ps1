@@ -1,14 +1,14 @@
+param(
+    [string]$Version = "dev"
+)
+
 $ErrorActionPreference = "Stop"
 
 $Workspace = $env:GITHUB_WORKSPACE
 $ReleaseZipDir = Join-Path $Workspace "AdbAutoPlayer"
-$PatchDir = Join-Path $Workspace "Patch_Windows"
 
 if (Test-Path $ReleaseZipDir) {
     Remove-Item -Recurse -Force $ReleaseZipDir
-}
-if (Test-Path $PatchDir) {
-    Remove-Item -Recurse -Force $PatchDir
 }
 
 if (-not $Workspace) {
@@ -17,7 +17,7 @@ if (-not $Workspace) {
 }
 
 Write-Output "Running Wails build..."
-wails build -devtools
+wails build -devtools -ldflags "-X main.Version=$Version"
 
 
 Write-Output "Running Nuitka build..."
@@ -79,15 +79,6 @@ foreach ($Item in $Items) {
     }
 }
 
-New-Item -ItemType Directory -Force -Path $PatchDir
-Copy-Item -Path (Join-Path $ReleaseZipDir "games") -Destination $PatchDir -Recurse -Force
-Copy-Item -Path $BinariesDir -Destination $PatchDir -Recurse -Force
-$PatchZipFile = Join-Path $Workspace "Patch_Windows.zip"
-Compress-Archive -Path "$PatchDir\*" -DestinationPath $PatchZipFile -Force
-Write-Output "Patch ZIP file created at ${PatchZipFile}"
-
-# We are only shipping static binaries for the full .zip
-# If we ever need to update them we should add a flag to conditionally add them to Patch
 Copy-Item -Path "$Workspace/python/adb_auto_player/binaries/windows/*" -Destination $BinariesDir -Recurse -Force
 
 $ZipFile = Join-Path $Workspace "AdbAutoPlayer_Windows.zip"

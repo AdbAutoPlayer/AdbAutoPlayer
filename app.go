@@ -26,10 +26,12 @@ type App struct {
 	games                  []ipc.GameGUI
 	lastOpenGameConfigPath *string
 	mainConfigPath         *string
+	version                string
 }
 
-func NewApp() *App {
+func NewApp(version string) *App {
 	newApp := &App{
+		version:          version,
 		pythonBinaryPath: nil,
 		games:            []ipc.GameGUI{},
 	}
@@ -421,6 +423,10 @@ func (a *App) UpdatePatch(assetUrl string) error {
 
 	runtime.LogInfo(a.ctx, "Update successful")
 	return nil
+}
+
+func (a *App) GetAppVersion() string {
+	return a.version
 }
 
 func (a *App) getMainConfigPath() string {

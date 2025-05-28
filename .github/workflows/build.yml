@@ -19,8 +19,7 @@ jobs:
         os: [windows-latest]
         include:
           - os: windows-latest
-            zip_files: "AdbAutoPlayer_Windows.zip,Patch_Windows.zip"
-            build_script: ".github/scripts/build_zip.ps1"
+            zip_files: "AdbAutoPlayer_Windows.zip"
 
     steps:
       - uses: actions/checkout@v4
@@ -57,10 +56,15 @@ jobs:
       - name: install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
-      - name: build zip windows
-        if: matrix.os == 'windows-latest'
+      - name: Build with version (release)
+        if: github.event_name == 'release' && github.event.action == 'published'
         shell: pwsh
-        run: .github/scripts/build_zip.ps1
+        run: .\build.ps1 -Version "${{ github.event.release.tag_name }}"
+
+      - name: Build without version (manual)
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: .\build.ps1
 
       - uses: softprops/action-gh-release@v2
         if: github.event_name == 'release' && github.event.action == 'published'

@@ -1,7 +1,7 @@
 <script lang="ts">
   import marked from "$lib/markdownRenderer";
   import { version } from "$app/environment";
-  import { UpdatePatch } from "$lib/wailsjs/go/main/App";
+  import { UpdatePatch, GetAppVersion } from "$lib/wailsjs/go/main/App";
   import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
   import { LogError, LogInfo, LogWarning } from "$lib/wailsjs/runtime";
   import DownloadModal from "./DownloadModal.svelte";
@@ -186,8 +186,9 @@
   }
 
   async function runVersionUpdate() {
+    const appVersion = await GetAppVersion();
     if (version === "0.0.0") {
-      LogInfo(`App Version: dev`);
+      LogInfo(`App Version: ${appVersion}`);
       LogInfo("Skipping update for dev");
       return;
     }
