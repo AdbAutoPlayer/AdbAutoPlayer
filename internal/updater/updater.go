@@ -45,7 +45,7 @@ func NewUpdateManager(ctx context.Context, currentVersion string, isDev bool) *U
 		ctx:             ctx,
 		currentVersion:  currentVersion,
 		isDev:           isDev,
-		processesToKill: []string{"adb.exe"},
+		processesToKill: []string{"adb_auto_player.exe", "adb.exe"},
 	}
 }
 
@@ -280,7 +280,7 @@ func (um *UpdateManager) applyUpdate(extractDir string) error {
 
 	// Step 3: Copy other files (skip the main exe since we already moved it)
 	if err = um.copyOtherFiles(extractDir, currentDir, filepath.Base(currentExe)); err != nil {
-		runtime.LogWarningf(um.ctx, "Failed to copy some files: %v", err)
+		return err
 	}
 
 	// Step 4: Create cleanup batch script and restart
@@ -341,6 +341,7 @@ func (um *UpdateManager) killProcesses() error {
 			lastErr = err
 			runtime.LogWarningf(um.ctx, "Failed to kill process %s: %v", processName, err)
 		}
+		time.Sleep(3 * time.Second)
 	}
 
 	return lastErr

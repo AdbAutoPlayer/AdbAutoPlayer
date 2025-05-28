@@ -1,12 +1,14 @@
 <script lang="ts">
+  import { TerminateGameProcess } from "$lib/wailsjs/go/main/App";
   import marked from "$lib/markdownRenderer";
   import { version } from "$app/environment";
   import { CheckForUpdates, DownloadUpdate } from "$lib/wailsjs/go/main/App";
   import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
   import { EventsOn } from "\$lib/wailsjs/runtime/runtime";
-  import { LogError, LogInfo, LogWarning } from "$lib/wailsjs/runtime";
+  import { LogError, LogInfo } from "$lib/wailsjs/runtime";
   import DownloadModal from "./DownloadModal.svelte";
   import { getItem, setItem } from "$lib/indexedDB";
+  import { ProgressRing } from "@skeletonlabs/skeleton-svelte";
 
   // State management
   let showDownloadIcon: boolean = $state(false);
@@ -102,7 +104,7 @@
       if (info.available) {
         updateInfo = info;
         modalChangeLog = await getModalChangeLog(version, info.version);
-        showModal = true;
+        openModal();
       } else {
         $pollRunningGame = true;
         $pollRunningProcess = true;
@@ -150,7 +152,10 @@
     $pollRunningProcess = true;
   }
 
-  function openModal() {
+  async function openModal() {
+    $pollRunningGame = false;
+    $pollRunningProcess = false;
+    await TerminateGameProcess();
     showDownloadIcon = false;
     showModal = true;
   }
@@ -191,17 +196,11 @@
       </h2>
 
       {#if isDownloading}
-        <!-- Progress Bar -->
+        <!-- Progress Ring -->
         <div class="mb-4">
-          <div class="bg-surface-300-600 h-3 overflow-hidden rounded-full">
-            <div
-              class="h-full bg-primary-500 transition-all duration-300 ease-out"
-              style="width: {downloadProgress}%"
-            ></div>
+          <div class="mb-4 flex justify-center">
+            <ProgressRing value={downloadProgress} max={100} showLabel />
           </div>
-          <p class="text-surface-600-300 mt-2 text-center text-sm">
-            {Math.round(downloadProgress)}% Complete
-          </p>
         </div>
       {:else if updateComplete}
         <!-- Update Complete Message -->
