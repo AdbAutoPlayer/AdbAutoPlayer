@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Masterminds/semver"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
 	"net/http"
@@ -74,8 +75,14 @@ func (um *UpdateManager) CheckForUpdates() UpdateInfo {
 		return UpdateInfo{Error: err.Error()}
 	}
 
-	if release.TagName != um.currentVersion {
-		// Find Windows asset
+	currentVer, err1 := semver.NewVersion(um.currentVersion)
+	latestVer, err2 := semver.NewVersion(release.TagName)
+
+	if err1 != nil || err2 != nil {
+		return UpdateInfo{Error: fmt.Sprintf("version parse error: %v, %v", err1, err2)}
+	}
+
+	if latestVer.GreaterThan(currentVer) {
 		var windowsAsset *struct {
 			BrowserDownloadURL string `json:"browser_download_url"`
 			Size               int64  `json:"size"`
@@ -104,7 +111,7 @@ func (um *UpdateManager) CheckForUpdates() UpdateInfo {
 			}
 		}
 	}
-
+	runtime.LogInfo(um.ctx, "No updates available.")
 	return UpdateInfo{Available: false}
 }
 

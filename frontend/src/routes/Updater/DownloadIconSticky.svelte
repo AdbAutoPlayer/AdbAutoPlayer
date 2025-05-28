@@ -143,6 +143,10 @@
   }
 
   function closeModal() {
+    if (isDownloading) {
+      showModal = true;
+      return;
+    }
     showModal = false;
     if (updateInfo && !updateComplete) {
       // Show download icon if update is available but modal was closed
@@ -156,7 +160,6 @@
     $pollRunningGame = false;
     $pollRunningProcess = false;
     await TerminateGameProcess();
-    showDownloadIcon = false;
     showModal = true;
   }
 
@@ -199,7 +202,11 @@
         <!-- Progress Ring -->
         <div class="mb-4">
           <div class="mb-4 flex justify-center">
-            <ProgressRing value={downloadProgress} max={100} showLabel />
+            <ProgressRing
+              value={Math.round(downloadProgress)}
+              max={100}
+              showLabel
+            />
           </div>
         </div>
       {:else if updateComplete}
