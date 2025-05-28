@@ -2,7 +2,7 @@ import logging
 from time import sleep
 from typing import NoReturn
 
-from adb_auto_player import Coordinates, Game
+from adb_auto_player import Coordinates, Game, TapParams, TemplateMatchParams
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.decorators.register_game import register_game
 from pydantic import BaseModel
@@ -36,8 +36,7 @@ class GuitarGirl(Game):
                 self._start_game_if_not_running()
 
             if counter == 0:
-                logging.info("Leveling up and activating Skills.")
-                sleep(3)  # wait for queued taps to complete
+                self._check_for_popups()
                 self._level_up()
                 self._activate_skills()
                 logging.info("Tapping.")
@@ -51,6 +50,8 @@ class GuitarGirl(Game):
             counter = counter % mod
 
     def _level_up(self) -> None:
+        logging.info("Leveling up and activating Skills.")
+        sleep(3)
         self._open_guitar_girl_tab()
 
         guitar_girl_level_up = Coordinates(900, 1450)
@@ -85,3 +86,15 @@ class GuitarGirl(Game):
         sleep(1)
         self.tap(Coordinates(80, 1850), log=False)
         sleep(1)
+
+    def _check_for_popups(self) -> None:
+        logging.info("Checking for popups.")
+        while result := self.find_any_template(
+            ["close.png", "ok.png"],
+        ):
+            template, x, y = result
+            self._tap_coordinates_till_template_disappears(
+                tap_params=TapParams(Coordinates(x, y)),
+                template_match_params=TemplateMatchParams(template=template),
+            )
+            sleep(5)
