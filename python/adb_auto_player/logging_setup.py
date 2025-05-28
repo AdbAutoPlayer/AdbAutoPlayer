@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import ClassVar, Literal
 
 from adb_auto_player.ipc import LogLevel, LogMessage
+from adb_auto_player.log_types import LogType
 
 
 def sanitize_path(log_message: str) -> str:
@@ -110,6 +111,10 @@ class TerminalLogHandler(BaseLogHandler):
         "RESET": "\033[0m",  # Reset to default
     }
 
+    LOG_TYPE_COLORS: ClassVar[dict[LogType, str]] = {
+        LogType.DEFEAT: "\033[94m",  # change this
+    }
+
     def emit(self, record: logging.LogRecord) -> None:
         """Emit a log message in colored text format.
 
@@ -117,7 +122,13 @@ class TerminalLogHandler(BaseLogHandler):
             record (logging.LogRecord): The log record to emit.
         """
         log_level: str = record.levelname
-        color: str = self.COLORS.get(log_level, self.COLORS["RESET"])
+
+        log_type: LogType | None = getattr(record, "type", None)
+
+        if log_type is not None and log_type in self.LOG_TYPE_COLORS:
+            color: str = self.LOG_TYPE_COLORS[log_type]
+        else:
+            color = self.COLORS.get(log_level, self.COLORS["RESET"])
 
         formatted_message: str = (
             f"{color}"
