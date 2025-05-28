@@ -43,7 +43,7 @@ func NewApp(version string, isDev bool, mainConfig config.MainConfig) *App {
 
 func (a *App) CheckForUpdates() updater.UpdateInfo {
 	updateManager := updater.NewUpdateManager(a.ctx, a.version, a.isDev)
-	return updateManager.CheckForUpdates()
+	return updateManager.CheckForUpdates(a.mainConfig.Update.AutoUpdate, a.mainConfig.Update.EnableAlphaUpdates)
 }
 
 func (a *App) DownloadUpdate(downloadURL string) error {

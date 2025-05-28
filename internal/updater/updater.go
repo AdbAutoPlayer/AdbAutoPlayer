@@ -23,6 +23,7 @@ type UpdateInfo struct {
 	DownloadURL string `json:"downloadURL"`
 	Size        int64  `json:"size"`
 	Error       string `json:"error,omitempty"`
+	AutoUpdate  bool   `json:"autoUpdate"`
 }
 
 type GitHubRelease struct {
@@ -51,16 +52,24 @@ func NewUpdateManager(ctx context.Context, currentVersion string, isDev bool) *U
 	}
 }
 
-func (um *UpdateManager) SetProgressCallback(callback func(float64)) {
-	um.progressCallback = callback
-}
-
-func (um *UpdateManager) CheckForUpdates() UpdateInfo {
+func (um *UpdateManager) CheckForUpdates(autoUpdate bool, enableAlphaUpdates bool) UpdateInfo {
 	if um.isDev {
 		return UpdateInfo{Available: false}
 	}
 
-	resp, err := http.Get("https://api.github.com/repos/AdbAutoPlayer/AdbAutoPlayer/releases/latest")
+	currentVer, err1 := semver.NewVersion(um.currentVersion)
+	isCurrentPrerelease := err1 == nil && currentVer.Prerelease() != ""
+
+	var apiURL string
+	if enableAlphaUpdates || isCurrentPrerelease {
+		// Get all releases to include pre-releases/alphas
+		apiURL = "https://api.github.com/repos/AdbAutoPlayer/AdbAutoPlayer/releases"
+	} else {
+		// Get only the latest stable release
+		apiURL = "https://api.github.com/repos/AdbAutoPlayer/AdbAutoPlayer/releases/latest"
+	}
+
+	resp, err := http.Get(apiURL)
 	if err != nil {
 		return UpdateInfo{Error: err.Error()}
 	}
@@ -70,13 +79,26 @@ func (um *UpdateManager) CheckForUpdates() UpdateInfo {
 		}
 	}()
 
-	var release GitHubRelease
-	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
-		return UpdateInfo{Error: err.Error()}
+	var latestRelease GitHubRelease
+
+	if enableAlphaUpdates || isCurrentPrerelease {
+		var releases []GitHubRelease
+		if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
+			return UpdateInfo{Error: err.Error()}
+		}
+
+		if len(releases) == 0 {
+			return UpdateInfo{Available: false}
+		}
+
+		latestRelease = um.findNewestRelease(releases)
+	} else {
+		if err = json.NewDecoder(resp.Body).Decode(&latestRelease); err != nil {
+			return UpdateInfo{Error: err.Error()}
+		}
 	}
 
-	currentVer, err1 := semver.NewVersion(um.currentVersion)
-	latestVer, err2 := semver.NewVersion(release.TagName)
+	latestVer, err2 := semver.NewVersion(latestRelease.TagName)
 
 	if err1 != nil || err2 != nil {
 		return UpdateInfo{Error: fmt.Sprintf("version parse error: %v, %v", err1, err2)}
@@ -89,7 +111,7 @@ func (um *UpdateManager) CheckForUpdates() UpdateInfo {
 			Name               string `json:"name"`
 		}
 
-		for _, asset := range release.Assets {
+		for _, asset := range latestRelease.Assets {
 			if strings.Contains(strings.ToLower(asset.Name), "windows") ||
 				strings.Contains(strings.ToLower(asset.Name), "win") {
 				windowsAsset = &asset
@@ -97,22 +119,37 @@ func (um *UpdateManager) CheckForUpdates() UpdateInfo {
 			}
 		}
 
-		if windowsAsset == nil && len(release.Assets) > 0 {
+		if windowsAsset == nil && len(latestRelease.Assets) > 0 {
 			// Fallback to first asset if no Windows-specific asset found
-			windowsAsset = &release.Assets[0]
+			windowsAsset = &latestRelease.Assets[0]
 		}
 
 		if windowsAsset != nil {
 			return UpdateInfo{
 				Available:   true,
-				Version:     release.TagName,
+				Version:     latestRelease.TagName,
 				DownloadURL: windowsAsset.BrowserDownloadURL,
 				Size:        windowsAsset.Size,
+				AutoUpdate:  autoUpdate,
 			}
 		}
 	}
 	runtime.LogInfo(um.ctx, "No updates available.")
 	return UpdateInfo{Available: false}
+}
+
+// findNewestRelease finds the newest release from a list of releases
+// This includes alpha, beta, and other pre-release versions
+func (um *UpdateManager) findNewestRelease(releases []GitHubRelease) GitHubRelease {
+	if len(releases) == 0 {
+		return GitHubRelease{}
+	}
+
+	return releases[0]
+}
+
+func (um *UpdateManager) SetProgressCallback(callback func(float64)) {
+	um.progressCallback = callback
 }
 
 func (um *UpdateManager) DownloadAndApplyUpdate(downloadURL string) error {

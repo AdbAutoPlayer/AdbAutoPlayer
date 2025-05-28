@@ -29,8 +29,8 @@ type ADBConfig struct {
 }
 
 type UpdateConfig struct {
-	AutoUpdate         bool `toml:"auto_updates" json:"Automatically install updates"`
-	EnableAlphaUpdates bool `toml:"enable_alpha_updates" json:"Receive alpha updates"`
+	AutoUpdate         bool `toml:"auto_updates" json:"Automatically download updates"`
+	EnableAlphaUpdates bool `toml:"enable_alpha_updates" json:"Download Alpha updates"`
 }
 
 type LoggingConfig struct {
