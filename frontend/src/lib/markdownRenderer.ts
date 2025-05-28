@@ -24,6 +24,15 @@ renderer.strong = function ({ text }) {
   return `<strong class="font-bold">${text}</strong>`;
 };
 
+renderer.image = function ({ href, title, text, tokens }) {
+  // GitHub user attachments do not render.
+  if (href.startsWith("https://github.com/user-attachments/")) {
+    return ``;
+  }
+
+  return `<img src="${href}" alt="${text}" ${title ? `title="${title}"` : ""} />`;
+};
+
 renderer.em = function ({ text }) {
   return `<em class="italic">${text}</em>`;
 };

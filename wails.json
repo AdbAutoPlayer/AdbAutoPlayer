@@ -2,8 +2,8 @@
   "$schema": "https://wails.io/schemas/config.v2.json",
   "name": "AdbAutoPlayer",
   "outputfilename": "AdbAutoPlayer",
-  "reloaddirs": "../../internal/config,../../internal/ipc",
-  "frontend:dir": "../../frontend",
+  "reloaddirs": "internal,internal/config,internal/ipc,internal/updater",
+  "frontend:dir": "frontend",
   "frontend:install": "npm install",
   "frontend:build": "npm run build",
   "frontend:dev:watcher": "npm run dev",
@@ -11,5 +11,5 @@
   "author": {
     "name": "AdbAutoPlayer"
   },
-  "wailsjsdir": "../../frontend/src/lib"
+  "wailsjsdir": "frontend/src/lib"
 }

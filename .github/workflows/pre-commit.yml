@@ -46,8 +46,6 @@ jobs:
 
       - name: Wails build
         run: |
-          cd cmd
-          cd wails
           wails build -tags webkit2_41
 
       - run: uvx pre-commit run --all-files
