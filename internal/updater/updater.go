@@ -121,18 +121,18 @@ func (um *UpdateManager) DownloadAndApplyUpdate(downloadURL string) error {
 
 	// Download the update file
 	zipPath := filepath.Join(tempDir, "update.zip")
-	if err := um.downloadFile(downloadURL, zipPath); err != nil {
+	if err = um.downloadFile(downloadURL, zipPath); err != nil {
 		return fmt.Errorf("failed to download update: %w", err)
 	}
 
 	// Extract the zip file
 	extractDir := filepath.Join(tempDir, "extracted")
-	if err := um.extractZip(zipPath, extractDir); err != nil {
+	if err = um.extractZip(zipPath, extractDir); err != nil {
 		return fmt.Errorf("failed to extract update: %w", err)
 	}
 
 	// Apply the update
-	if err := um.applyUpdate(extractDir); err != nil {
+	if err = um.applyUpdate(extractDir); err != nil {
 		return fmt.Errorf("failed to apply update: %w", err)
 	}
 
@@ -183,9 +183,11 @@ func (um *UpdateManager) extractZip(src, dest string) error {
 	if err != nil {
 		return err
 	}
-	if err = r.Close(); err != nil {
-		return err
-	}
+	defer func() {
+		if err = r.Close(); err != nil {
+			runtime.LogErrorf(um.ctx, "r.Close error: %v", err)
+		}
+	}()
 
 	if err = os.MkdirAll(dest, 0755); err != nil {
 		return err
