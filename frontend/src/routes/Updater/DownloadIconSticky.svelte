@@ -101,12 +101,11 @@
       console.log(info);
       if (info.available) {
         updateInfo = info;
-
-        // Get changelog for the modal
         modalChangeLog = await getModalChangeLog(version, info.version);
-
-        // Show modal immediately when update is available
         showModal = true;
+      } else {
+        $pollRunningGame = true;
+        $pollRunningProcess = true;
       }
     } catch (error) {
       console.error(error);
@@ -178,7 +177,7 @@
   </button>
 {/if}
 
-<DownloadModal bind:showModal>
+<DownloadModal bind:showModal onClose={closeModal}>
   {#snippet modalContent()}
     <div class="flex h-full flex-col">
       <h2 class="mb-4 text-center h2 text-2xl">
