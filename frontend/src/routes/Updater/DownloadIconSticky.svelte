@@ -16,6 +16,7 @@
   let downloadProgress: number = $state(0);
   let isDownloading: boolean = $state(false);
   let updateComplete: boolean = $state(false);
+  let autoUpdate: boolean = $state(false);
 
   // Update info
   let updateInfo: any = $state(null);
@@ -104,7 +105,8 @@
       if (info.available) {
         updateInfo = info;
         modalChangeLog = await getModalChangeLog(version, info.version);
-        openModal();
+        autoUpdate = info.autoUpdate;
+        await openModal();
       } else {
         $pollRunningGame = true;
         $pollRunningProcess = true;
@@ -161,6 +163,9 @@
     $pollRunningProcess = false;
     await TerminateGameProcess();
     showModal = true;
+    if (autoUpdate) {
+      await startUpdate();
+    }
   }
 
   // Initialize version check
