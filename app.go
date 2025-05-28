@@ -13,7 +13,9 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
+	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	stdruntime "runtime"
 	"strings"
@@ -27,15 +29,206 @@ type App struct {
 	lastOpenGameConfigPath *string
 	mainConfigPath         *string
 	version                string
+	isDev                  bool
+	mainConfig             config.MainConfig
 }
 
-func NewApp(version string) *App {
+func NewApp(version string, isDev bool, mainConfig config.MainConfig) *App {
 	newApp := &App{
 		version:          version,
 		pythonBinaryPath: nil,
 		games:            []ipc.GameGUI{},
 	}
 	return newApp
+}
+
+func (a *App) CheckForUpdates() updater.UpdateInfo {
+	if a.isDev {
+		return updater.UpdateInfo{Available: false}
+	}
+	resp, err := http.Get("https://api.github.com/repos/AdbAutoPlayer/AdbAutoPlayer/releases/latest")
+	if err != nil {
+		return updater.UpdateInfo{Error: err.Error()}
+	}
+	defer func() {
+		if err = resp.Body.Close(); err != nil {
+			runtime.LogErrorf(a.ctx, "resp.Body.Close error: %v", err)
+		}
+	}()
+
+	var release updater.GitHubRelease
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		return updater.UpdateInfo{Error: err.Error()}
+	}
+
+	if release.TagName != a.version {
+		// Find the Windows asset
+		var windowsAsset *struct {
+			BrowserDownloadURL string `json:"browser_download_url"`
+			Size               int64  `json:"size"`
+			Name               string `json:"name"`
+		}
+
+		for _, asset := range release.Assets {
+			if strings.Contains(strings.ToLower(asset.Name), "windows") ||
+				strings.Contains(strings.ToLower(asset.Name), "win") {
+				windowsAsset = &asset
+				break
+			}
+		}
+
+		if windowsAsset == nil && len(release.Assets) > 0 {
+			// Fallback to first asset if no Windows-specific asset found
+			windowsAsset = &release.Assets[0]
+		}
+
+		if windowsAsset != nil {
+			return updater.UpdateInfo{
+				Available:   true,
+				Version:     release.TagName,
+				DownloadURL: windowsAsset.BrowserDownloadURL,
+				Size:        windowsAsset.Size,
+			}
+		}
+	}
+
+	return updater.UpdateInfo{Available: false}
+}
+
+func (a *App) DownloadUpdate(downloadURL string) error {
+	resp, err := http.Get(downloadURL)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err = resp.Body.Close(); err != nil {
+			runtime.LogErrorf(a.ctx, "resp.Body.Close error: %v", err)
+		}
+	}()
+
+	// Create temp directory
+	tempDir := filepath.Join(os.TempDir(), "adbautoplayer-update")
+	if err = os.RemoveAll(tempDir); err != nil {
+		return err
+	}
+	if err = os.MkdirAll(tempDir, 0755); err != nil {
+		return err
+	}
+
+	tempFile := filepath.Join(tempDir, "update.zip")
+
+	out, err := os.Create(tempFile)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err = out.Close(); err != nil {
+			runtime.LogErrorf(a.ctx, "out.Close error: %v", err)
+		}
+	}()
+
+	// Download with progress reporting
+	totalSize := resp.ContentLength
+	var downloaded int64
+
+	buffer := make([]byte, 32*1024) // 32KB buffer
+	for {
+		n, err := resp.Body.Read(buffer)
+		if n > 0 {
+			if _, writeErr := out.Write(buffer[:n]); writeErr != nil {
+				return writeErr
+			}
+			downloaded += int64(n)
+
+			// Emit progress to frontend
+			if totalSize > 0 {
+				progress := float64(downloaded) / float64(totalSize) * 100
+				runtime.EventsEmit(a.ctx, "download-progress", progress)
+			}
+		}
+
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	// Extract and apply update
+	return a.extractAndApplyUpdate(tempFile)
+}
+
+func (a *App) extractAndApplyUpdate(zipPath string) error {
+	// Get current executable path
+	exePath, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	appDir := filepath.Dir(exePath)
+
+	// Extract zip to temp location first
+	tempExtractDir := filepath.Join(filepath.Dir(zipPath), "extracted")
+	if err := os.MkdirAll(tempExtractDir, 0755); err != nil {
+		return err
+	}
+
+	if err := updater.Unzip(a.ctx, zipPath, tempExtractDir); err != nil {
+		return err
+	}
+
+	// Create update script (batch file for Windows)
+	scriptPath := filepath.Join(filepath.Dir(zipPath), "update.bat")
+	exeName := filepath.Base(exePath)
+
+	// Script that waits, kills process, copies files, and restarts
+	script := fmt.Sprintf(`@echo off
+echo Preparing to update...
+timeout /t 3 /nobreak >nul
+
+echo Stopping application...
+taskkill /f /im "%s" >nul 2>&1
+timeout /t 2 /nobreak >nul
+
+echo Updating files...
+xcopy /s /y /q "%s\*" "%s\"
+if errorlevel 1 (
+    echo Update failed!
+    pause
+    exit /b 1
+)
+
+echo Starting application...
+cd /d "%s"
+start "" "%s"
+
+echo Cleaning up...
+timeout /t 2 /nobreak >nul
+rd /s /q "%s" >nul 2>&1
+del "%%~f0" >nul 2>&1
+`, exeName, tempExtractDir, appDir, appDir, exePath, filepath.Dir(zipPath))
+
+	if err := os.WriteFile(scriptPath, []byte(script), 0755); err != nil {
+		return err
+	}
+
+	// Execute update script and exit current application
+	cmd := exec.Command("cmd", "/c", scriptPath)
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+
+	// Give the script a moment to start, then exit
+	runtime.EventsEmit(a.ctx, "download-progress", 100)
+
+	// Exit current app - the script will restart it
+	go func() {
+		// Small delay to ensure the script starts
+		time.Sleep(1 * time.Second)
+		os.Exit(0)
+	}()
+
+	return nil
 }
 
 func (a *App) setGamesFromPython() error {
@@ -90,6 +283,7 @@ func (a *App) SaveMainConfig(mainConfig config.MainConfig) error {
 	if err := config.SaveConfig[config.MainConfig](a.getMainConfigPath(), &mainConfig); err != nil {
 		return err
 	}
+	a.mainConfig = mainConfig
 	runtime.EventsEmit(a.ctx, "log-clear")
 	internal.GetProcessManager().Logger.SetLogLevelFromString(mainConfig.Logging.Level)
 	runtime.LogSetLogLevel(a.ctx, logger.LogLevel(ipc.GetLogLevelFromString(mainConfig.Logging.Level)))
@@ -394,35 +588,6 @@ func (a *App) TerminateGameProcess() error {
 
 func (a *App) IsGameProcessRunning() bool {
 	return internal.GetProcessManager().IsProcessRunning()
-}
-
-func (a *App) UpdatePatch(assetUrl string) error {
-	runtime.LogInfo(a.ctx, "Downloading update")
-	internal.GetProcessManager().Blocked = true
-	defer func() { internal.GetProcessManager().Blocked = false }()
-
-	maxRetries := 3
-	for i := 0; i < maxRetries; i++ {
-		_, err := internal.GetProcessManager().KillProcess()
-		if err == nil {
-			break
-		}
-		if i < maxRetries-1 {
-			time.Sleep(1 * time.Second)
-		} else {
-			runtime.LogDebugf(a.ctx, "Failed to kill process after retries: %v", err)
-		}
-	}
-	time.Sleep(3 * time.Second)
-
-	err := updater.UpdatePatch(assetUrl)
-	if err != nil {
-		runtime.LogErrorf(a.ctx, "Failed to update: %v", err)
-		return err
-	}
-
-	runtime.LogInfo(a.ctx, "Update successful")
-	return nil
 }
 
 func (a *App) GetAppVersion() string {

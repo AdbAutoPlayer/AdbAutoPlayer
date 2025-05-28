@@ -27,15 +27,27 @@ var Version = "dev" // default fallback for local dev runs
 func main() {
 	println()
 	println("Version:", Version)
-	isDev := Version == "dev"
 
+	isDev := Version == "dev"
+	println("isDev:", isDev)
 	if !isDev {
 		changeWorkingDirForProd()
-		// TODO updater
 	}
 
-	logLevel := logger.INFO
+	mainConfig := loadConfiguration()
+	logLevel := determineLogLevel(mainConfig)
+	frontendLogger := setupLogging(logLevel, mainConfig)
+	app := NewApp(Version, isDev, mainConfig)
 
+	appOptions := createAppOptions(app, frontendLogger, logLevel)
+
+	if err := wails.Run(appOptions); err != nil {
+		panic(err)
+	}
+}
+
+// loadConfiguration loads the main configuration from various possible paths
+func loadConfiguration() config.MainConfig {
 	paths := []string{
 		"config.toml",              // distributed
 		"config/config.toml",       // dev
@@ -44,7 +56,8 @@ func main() {
 
 	configPath := internal.GetFirstPathThatExists(paths)
 	mainConfig := config.NewMainConfig()
-	if nil != configPath {
+
+	if configPath != nil {
 		loadedConfig, err := config.LoadMainConfig(*configPath)
 		if err != nil {
 			println(err.Error())
@@ -52,7 +65,15 @@ func main() {
 			mainConfig = *loadedConfig
 		}
 	}
+
 	println("MainConfig.Logging.Level:", mainConfig.Logging.Level)
+	return mainConfig
+}
+
+// determineLogLevel converts the config logging level to wails logger level
+func determineLogLevel(mainConfig config.MainConfig) logger.LogLevel {
+	var logLevel logger.LogLevel
+
 	switch mainConfig.Logging.Level {
 	case string(ipc.LogLevelTrace):
 		logLevel = logger.TRACE
@@ -67,12 +88,19 @@ func main() {
 	}
 
 	println("LogLevel:", logLevel)
+	return logLevel
+}
+
+// setupLogging initializes the frontend logger and configures process manager
+func setupLogging(logLevel logger.LogLevel, mainConfig config.MainConfig) *ipc.FrontendLogger {
 	frontendLogger := ipc.NewFrontendLogger(uint8(logLevel))
 	internal.GetProcessManager().ActionLogLimit = mainConfig.Logging.ActionLogLimit
+	return frontendLogger
+}
 
-	app := NewApp(Version)
-
-	appErr := wails.Run(&options.App{
+// createAppOptions creates the wails application options
+func createAppOptions(app *App, frontendLogger *ipc.FrontendLogger, logLevel logger.LogLevel) *options.App {
+	return &options.App{
 		Title:  "AdbAutoPlayer",
 		Width:  1168,
 		Height: 776,
@@ -103,13 +131,10 @@ func main() {
 		Logger:             frontendLogger,
 		LogLevel:           logLevel,
 		LogLevelProduction: logLevel,
-	})
-
-	if appErr != nil {
-		panic(appErr)
 	}
 }
 
+// changeWorkingDirForProd changes the working directory for production builds
 func changeWorkingDirForProd() {
 	execPath, err := os.Executable()
 	if err != nil {
