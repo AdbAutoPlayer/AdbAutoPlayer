@@ -46,7 +46,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
         self.store: dict[str, Any] = {}
 
     # Timeout constants (in seconds)
-    BATTLE_TIMEOUT: int = 180
+    BATTLE_TIMEOUT: int = 240
     MIN_TIMEOUT: int = 10
     FAST_TIMEOUT: int = 3
 
