@@ -86,12 +86,15 @@ class JsonLogHandler(BaseLogHandler):
             logging.CRITICAL: LogLevel.FATAL,
         }
 
+        # log_type: LogType | None = getattr(record, "type", None)
+
         log_message: LogMessage = LogMessage.create_log_message(
             level=level_mapping.get(record.levelno, LogLevel.DEBUG),
             message=self.get_sanitized_message(record),
             source_file=record.module + ".py",
             function_name=record.funcName,
             line_number=record.lineno,
+            # color=log_type.get_gui_color() if log_type else None
         )
         log_dict = log_message.to_dict()
         log_json: str = json.dumps(log_dict)
@@ -111,10 +114,6 @@ class TerminalLogHandler(BaseLogHandler):
         "RESET": "\033[0m",  # Reset to default
     }
 
-    LOG_TYPE_COLORS: ClassVar[dict[LogType, str]] = {
-        LogType.DEFEAT: "\033[94m",  # change this
-    }
-
     def emit(self, record: logging.LogRecord) -> None:
         """Emit a log message in colored text format.
 
@@ -125,8 +124,8 @@ class TerminalLogHandler(BaseLogHandler):
 
         log_type: LogType | None = getattr(record, "type", None)
 
-        if log_type is not None and log_type in self.LOG_TYPE_COLORS:
-            color: str = self.LOG_TYPE_COLORS[log_type]
+        if log_type is not None:
+            color: str = log_type.get_terminal_color()
         else:
             color = self.COLORS.get(log_level, self.COLORS["RESET"])
 
