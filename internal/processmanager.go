@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"adb-auto-player/internal/ipc"
@@ -22,10 +22,10 @@ import (
 type Manager struct {
 	mutex          sync.Mutex
 	running        *process.Process
-	logger         *ipc.FrontendLogger
-	blocked        bool
-	isDev          bool
-	actionLogLimit int
+	Logger         *ipc.FrontendLogger
+	Blocked        bool
+	IsDev          bool
+	ActionLogLimit int
 }
 
 var (
@@ -56,7 +56,7 @@ func (pm *Manager) StartProcess(binaryPath string, args []string, logLevel ...ui
 		return err
 	}
 
-	if !pm.isDev {
+	if !pm.IsDev {
 		workingDir, err := os.Getwd()
 		if err != nil {
 			return err
@@ -72,11 +72,11 @@ func (pm *Manager) StartProcess(binaryPath string, args []string, logLevel ...ui
 	if err = cmd.Start(); err != nil {
 		return fmt.Errorf("failed to start command: %w", err)
 	}
-	pm.logger.Debugf("Started process with PID: %d", cmd.Process.Pid)
+	pm.Logger.Debugf("Started process with PID: %d", cmd.Process.Pid)
 
-	originalLogLevel := pm.logger.LogLevel
+	originalLogLevel := pm.Logger.LogLevel
 	if len(logLevel) > 0 {
-		pm.logger.LogLevel = logLevel[0]
+		pm.Logger.LogLevel = logLevel[0]
 	}
 
 	proc, err := process.NewProcess(int32(cmd.Process.Pid))
@@ -87,7 +87,7 @@ func (pm *Manager) StartProcess(binaryPath string, args []string, logLevel ...ui
 
 	debugDir := "debug"
 	if err = os.MkdirAll(debugDir, 0755); err != nil {
-		pm.logger.Errorf("Failed to create debug directory: %v", err)
+		pm.Logger.Errorf("Failed to create debug directory: %v", err)
 	}
 
 	timestamp := time.Now().Format("20060102_150405")
@@ -98,21 +98,21 @@ func (pm *Manager) StartProcess(binaryPath string, args []string, logLevel ...ui
 
 	logFile, err := os.Create(logFilePath)
 	if err != nil {
-		pm.logger.Errorf("Failed to create log file: %v", err)
+		pm.Logger.Errorf("Failed to create log file: %v", err)
 	}
-	if pm.actionLogLimit > 0 {
+	if pm.ActionLogLimit > 0 {
 		files, err := filepath.Glob(filepath.Join(debugDir, "*.log"))
-		if err == nil && len(files) > pm.actionLogLimit {
+		if err == nil && len(files) > pm.ActionLogLimit {
 			sort.Slice(files, func(i, j int) bool {
 				infoI, _ := os.Stat(files[i])
 				infoJ, _ := os.Stat(files[j])
 				return infoI.ModTime().Before(infoJ.ModTime())
 			})
 
-			filesToDelete := len(files) - pm.actionLogLimit
+			filesToDelete := len(files) - pm.ActionLogLimit
 			for i := 0; i < filesToDelete; i++ {
 				if err := os.Remove(files[i]); err != nil {
-					pm.logger.Errorf("Failed to delete old log file %s: %v", files[i], err)
+					pm.Logger.Errorf("Failed to delete old log file %s: %v", files[i], err)
 				}
 			}
 		}
@@ -126,21 +126,21 @@ func (pm *Manager) StartProcess(binaryPath string, args []string, logLevel ...ui
 			line := scanner.Text()
 			if logFile != nil {
 				if _, err = fmt.Fprintln(logFile, line); err != nil {
-					pm.logger.Errorf("Failed to write to log file: %v", err)
+					pm.Logger.Errorf("Failed to write to log file: %v", err)
 				}
 			}
 
 			var logMessage ipc.LogMessage
 			if err = json.Unmarshal([]byte(line), &logMessage); err != nil {
-				pm.logger.Errorf("Failed to parse JSON log message: %v", err)
+				pm.Logger.Errorf("Failed to parse JSON log message: %v", err)
 				continue
 			}
-			pm.logger.LogMessage(logMessage)
+			pm.Logger.LogMessage(logMessage)
 		}
 
 		if err = scanner.Err(); err != nil {
 			if !strings.Contains(err.Error(), "file already closed") {
-				pm.logger.Errorf("Error while reading stdout: %v", err)
+				pm.Logger.Errorf("Error while reading stdout: %v", err)
 			}
 		}
 	}()
@@ -148,11 +148,11 @@ func (pm *Manager) StartProcess(binaryPath string, args []string, logLevel ...ui
 	go func() {
 		_, err = cmd.Process.Wait()
 		if err != nil {
-			pm.logger.Errorf("Process ended with error: %v", err)
+			pm.Logger.Errorf("Process ended with error: %v", err)
 		}
 
 		pm.mutex.Lock()
-		pm.logger.LogLevel = originalLogLevel
+		pm.Logger.LogLevel = originalLogLevel
 		pm.running = nil
 		pm.mutex.Unlock()
 	}()
@@ -171,21 +171,21 @@ func (pm *Manager) KillProcess() (bool, error) {
 	children, err := pm.running.Children()
 	if err != nil && !errors.Is(err, process.ErrorNoChildren) {
 		if stdruntime.GOOS == "darwin" && err.Error() == "exit status 1" {
-			pm.logger.Debug("Ignoring exit status 1 for GOOS != darwin")
+			pm.Logger.Debug("Ignoring exit status 1 for GOOS != darwin")
 		} else {
-			pm.logger.Errorf("Error getting child processes: %v", err)
+			pm.Logger.Errorf("Error getting child processes: %v", err)
 		}
 	}
 
 	processName, nameErr := pm.running.Name()
 
 	if err := pm.running.Kill(); err != nil {
-		pm.logger.Errorf("Failed to kill process: %v", err)
+		pm.Logger.Errorf("Failed to kill process: %v", err)
 	}
 
 	for _, child := range children {
 		if err := child.Kill(); err != nil {
-			pm.logger.Errorf("Error killing child process %d: %v", child.Pid, err)
+			pm.Logger.Errorf("Error killing child process %d: %v", child.Pid, err)
 		}
 	}
 
@@ -200,7 +200,7 @@ func (pm *Manager) KillProcess() (bool, error) {
 func (pm *Manager) killAllProcessesByName(processName string) {
 	processes, err := process.Processes()
 	if err != nil {
-		pm.logger.Errorf("Failed to list processes: %v", err)
+		pm.Logger.Errorf("Failed to list processes: %v", err)
 		return
 	}
 
@@ -212,16 +212,16 @@ func (pm *Manager) killAllProcessesByName(processName string) {
 
 		if name == processName {
 			if err := proc.Kill(); err != nil {
-				pm.logger.Errorf("Failed to kill process %d (%s): %v", proc.Pid, processName, err)
+				pm.Logger.Errorf("Failed to kill process %d (%s): %v", proc.Pid, processName, err)
 			} else {
-				pm.logger.Debug(fmt.Sprintf("Killed process %d (%s)", proc.Pid, processName))
+				pm.Logger.Debug(fmt.Sprintf("Killed process %d (%s)", proc.Pid, processName))
 			}
 		}
 	}
 }
 
 func (pm *Manager) IsProcessRunning() bool {
-	if pm.blocked {
+	if pm.Blocked {
 		return true
 	}
 	pm.mutex.Lock()
@@ -244,7 +244,7 @@ func (pm *Manager) isProcessRunning() bool {
 }
 
 func (pm *Manager) getCommand(name string, args ...string) (*exec.Cmd, error) {
-	if pm.isDev {
+	if pm.IsDev {
 		if _, err := os.Stat(name); os.IsNotExist(err) {
 			return nil, fmt.Errorf("dev Python dir does not exist: %s", name)
 		}
@@ -285,7 +285,7 @@ func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
 		output := stdout.String()
 		errorOutput := stderr.String()
 
-		if pm.isDev {
+		if pm.IsDev {
 			return "", fmt.Errorf("failed to execute '%s': %w\nStdout: %s\nStderr: %s", binaryPath, err, output, errorOutput)
 		}
 		if strings.Contains(errorOutput, "contains a virus") || strings.Contains(err.Error(), "contains a virus") {

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"adb-auto-player/internal"
 	"adb-auto-player/internal/config"
 	"adb-auto-player/internal/ipc"
 	"context"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/logger"
@@ -20,18 +22,51 @@ import (
 //go:embed all:frontend/build
 var assets embed.FS
 
+//go:embed wails.json
+var wailsJSON []byte
+
+type WailsInfo struct {
+	ProductVersion string `json:"productVersion"`
+}
+
+type WailsConfig struct {
+	Info WailsInfo `json:"info"`
+}
+
+func getWailsConfig() (*WailsConfig, error) {
+	var wailsConfig WailsConfig
+	if err := json.Unmarshal(wailsJSON, &wailsConfig); err != nil {
+		return nil, err
+	}
+	return &wailsConfig, nil
+}
+
 func main() {
-	changeWorkingDirForProd()
+	println()
+	wailsConfig, err := getWailsConfig()
+	isDev := false
+
+	if err != nil || wailsConfig == nil {
+		println("Error retrieving config:", err)
+		isDev = true
+	} else {
+		println("ProductVersion:", wailsConfig.Info.ProductVersion)
+		isDev = wailsConfig.Info.ProductVersion == "0.0.0"
+	}
+
+	if !isDev {
+		changeWorkingDirForProd()
+	}
 
 	logLevel := logger.INFO
 
 	paths := []string{
-		"config.toml",                    // distributed
-		"../../config/config.toml",       // dev
-		"../../../../config/config.toml", // macOS dev no not a joke
+		"config.toml",              // distributed
+		"config/config.toml",       // dev
+		"../../config/config.toml", // macOS dev no not a joke
 	}
 
-	configPath := GetFirstPathThatExists(paths)
+	configPath := internal.GetFirstPathThatExists(paths)
 	mainConfig := config.NewMainConfig()
 	if nil != configPath {
 		loadedConfig, err := config.LoadMainConfig(*configPath)
@@ -41,7 +76,7 @@ func main() {
 			mainConfig = *loadedConfig
 		}
 	}
-	println(mainConfig.Logging.Level)
+	println("MainConfig.Logging.Level:", mainConfig.Logging.Level)
 	switch mainConfig.Logging.Level {
 	case string(ipc.LogLevelTrace):
 		logLevel = logger.TRACE
@@ -55,16 +90,13 @@ func main() {
 		logLevel = logger.INFO
 	}
 
-	println(logLevel)
+	println("LogLevel:", logLevel)
 	frontendLogger := ipc.NewFrontendLogger(uint8(logLevel))
-	GetProcessManager().actionLogLimit = mainConfig.Logging.ActionLogLimit
+	internal.GetProcessManager().ActionLogLimit = mainConfig.Logging.ActionLogLimit
 
 	app := NewApp()
 
-	// TODO I want to pass  the theme to the frontend so it can use it directly
-	// mainConfig.UI.Theme
-
-	err := wails.Run(&options.App{
+	err = wails.Run(&options.App{
 		Title:  "AdbAutoPlayer",
 		Width:  1168,
 		Height: 776,
@@ -80,14 +112,14 @@ func main() {
 			WebviewGpuIsDisabled: false,
 		},
 		OnStartup: func(ctx context.Context) {
-			app.startup(ctx)
+			app.Startup(ctx)
 		},
 		OnDomReady: func(ctx context.Context) {
 			frontendLogger.Startup(ctx)
-			GetProcessManager().logger = frontendLogger
+			internal.GetProcessManager().Logger = frontendLogger
 		},
 		OnShutdown: func(ctx context.Context) {
-			app.shutdown(ctx)
+			app.Shutdown(ctx)
 		},
 		Bind: []interface{}{
 			app,
@@ -103,29 +135,17 @@ func main() {
 }
 
 func changeWorkingDirForProd() {
-	for _, arg := range os.Args {
-		if strings.Contains(arg, "wailsbindings") {
-			_, err := os.Getwd()
-			if err != nil {
-				panic(err)
-			}
-			return
-		}
-	}
-
 	execPath, err := os.Executable()
 	if err != nil {
 		panic(fmt.Sprintf("Unable to get executable path: %v", err))
 	}
 
-	if !strings.HasSuffix(execPath, "-dev.exe") {
-		execDir := filepath.Dir(execPath)
-		if stdruntime.GOOS != "windows" && strings.Contains(execDir, "AdbAutoPlayer.app") {
-			execDir = filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(execPath)))) // Go outside the .app bundle
-		}
-		if err := os.Chdir(execDir); err != nil {
-			panic(fmt.Sprintf("Failed to change working directory to %s: %v", execDir, err))
-		}
+	execDir := filepath.Dir(execPath)
+	if stdruntime.GOOS != "windows" && strings.Contains(execDir, "internal.app") {
+		execDir = filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(execPath)))) // Go outside the .app bundle
+	}
+	if err := os.Chdir(execDir); err != nil {
+		panic(fmt.Sprintf("Failed to change working directory to %s: %v", execDir, err))
 	}
 
 	_, err = os.Getwd()

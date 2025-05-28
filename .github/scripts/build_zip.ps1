@@ -17,9 +17,7 @@ if (-not $Workspace) {
 }
 
 Write-Output "Running Wails build..."
-Push-Location (Join-Path $Workspace "cmd/wails")
 wails build -devtools
-Pop-Location
 
 
 Write-Output "Running Nuitka build..."

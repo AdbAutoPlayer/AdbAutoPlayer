@@ -1,6 +1,7 @@
 package main
 
 import (
+	"adb-auto-player/internal"
 	"adb-auto-player/internal/config"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/updater"
@@ -40,7 +41,7 @@ func (a *App) setGamesFromPython() error {
 		return errors.New("missing files: https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/troubleshoot.html#missing-files")
 	}
 
-	gamesString, err := GetProcessManager().Exec(*a.pythonBinaryPath, "GUIGamesMenu", "--log-level=DISABLE")
+	gamesString, err := internal.GetProcessManager().Exec(*a.pythonBinaryPath, "GUIGamesMenu", "--log-level=DISABLE")
 	if err != nil {
 		return err
 	}
@@ -56,13 +57,13 @@ func (a *App) setGamesFromPython() error {
 	return nil
 }
 
-func (a *App) startup(ctx context.Context) {
+func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 }
 
-func (a *App) shutdown(ctx context.Context) {
+func (a *App) Shutdown(ctx context.Context) {
 	a.ctx = ctx
-	_, err := GetProcessManager().KillProcess()
+	_, err := internal.GetProcessManager().KillProcess()
 	if err != nil {
 		panic(err)
 	}
@@ -88,7 +89,7 @@ func (a *App) SaveMainConfig(mainConfig config.MainConfig) error {
 		return err
 	}
 	runtime.EventsEmit(a.ctx, "log-clear")
-	GetProcessManager().logger.SetLogLevelFromString(mainConfig.Logging.Level)
+	internal.GetProcessManager().Logger.SetLogLevelFromString(mainConfig.Logging.Level)
 	runtime.LogSetLogLevel(a.ctx, logger.LogLevel(ipc.GetLogLevelFromString(mainConfig.Logging.Level)))
 	runtime.LogInfo(a.ctx, "Saved Main config")
 	return nil
@@ -106,12 +107,12 @@ func (a *App) GetEditableGameConfig(game ipc.GameGUI) (map[string]interface{}, e
 
 	paths := []string{
 		filepath.Join(workingDir, "games", game.ConfigPath),
-		filepath.Join(workingDir, "../../python/adb_auto_player/games", game.ConfigPath),
+		filepath.Join(workingDir, "python/adb_auto_player/games", game.ConfigPath),
 	}
 	if stdruntime.GOOS != "windows" {
-		paths = append(paths, filepath.Join(workingDir, "../../../../python/adb_auto_player/games", game.ConfigPath))
+		paths = append(paths, filepath.Join(workingDir, "../../python/adb_auto_player/games", game.ConfigPath))
 	}
-	configPath := GetFirstPathThatExists(paths)
+	configPath := internal.GetFirstPathThatExists(paths)
 
 	if configPath == nil {
 		a.lastOpenGameConfigPath = &paths[0]
@@ -182,7 +183,7 @@ func (a *App) GetRunningSupportedGame(disableLogging bool) (*ipc.GameGUI, error)
 	if disableLogging {
 		args = append(args, "--log-level=DISABLE")
 	}
-	output, err := GetProcessManager().Exec(*a.pythonBinaryPath, args...)
+	output, err := internal.GetProcessManager().Exec(*a.pythonBinaryPath, args...)
 
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "%v", err)
@@ -205,7 +206,7 @@ func (a *App) GetRunningSupportedGame(disableLogging bool) (*ipc.GameGUI, error)
 			runningGame = strings.TrimSpace(strings.TrimPrefix(logMessage.Message, "Running game: "))
 			break
 		}
-		GetProcessManager().logger.LogMessage(logMessage)
+		internal.GetProcessManager().Logger.LogMessage(logMessage)
 	}
 
 	if runningGame == "" {
@@ -235,13 +236,13 @@ func (a *App) setPythonBinaryPath() error {
 
 	if runtime.Environment(a.ctx).BuildType == "dev" {
 		fmt.Printf("Working dir: %s", workingDir)
-		path := filepath.Join(workingDir, "../../python")
+		path := filepath.Join(workingDir, "python")
 		if stdruntime.GOOS != "windows" {
-			path = filepath.Join(workingDir, "../../../../python")
+			path = filepath.Join(workingDir, "../../python")
 		}
 		a.pythonBinaryPath = &path
 		fmt.Print("Process Manager is dev = true\n")
-		GetProcessManager().isDev = true
+		internal.GetProcessManager().IsDev = true
 		return nil
 	}
 
@@ -255,22 +256,22 @@ func (a *App) setPythonBinaryPath() error {
 	}
 
 	if stdruntime.GOOS != "windows" {
-		paths = append(paths, filepath.Join(workingDir, "../../../../../python/main.dist/", executable))
-		paths = append(paths, filepath.Join(workingDir, "../../../../python/main.dist/", executable))
+		paths = append(paths, filepath.Join(workingDir, "../../../python/main.dist/", executable))
+		paths = append(paths, filepath.Join(workingDir, "../../python/main.dist/", executable))
 
 	} else {
-		paths = append(paths, filepath.Join(workingDir, "../../python/main.dist/", executable))
+		paths = append(paths, filepath.Join(workingDir, "python/main.dist/", executable))
 	}
 
 	runtime.LogDebugf(a.ctx, "Paths: %s", strings.Join(paths, ", "))
-	a.pythonBinaryPath = GetFirstPathThatExists(paths)
+	a.pythonBinaryPath = internal.GetFirstPathThatExists(paths)
 	return nil
 }
 
 func (a *App) Debug() error {
 	args := []string{"Debug"}
 
-	if err := GetProcessManager().StartProcess(*a.pythonBinaryPath, args, 2); err != nil {
+	if err := internal.GetProcessManager().StartProcess(*a.pythonBinaryPath, args, 2); err != nil {
 		runtime.LogErrorf(a.ctx, "Starting process: %v", err)
 
 		return err
@@ -370,7 +371,7 @@ func (a *App) SaveDebugZip() {
 }
 
 func (a *App) StartGameProcess(args []string) error {
-	if err := GetProcessManager().StartProcess(*a.pythonBinaryPath, args); err != nil {
+	if err := internal.GetProcessManager().StartProcess(*a.pythonBinaryPath, args); err != nil {
 		runtime.LogErrorf(a.ctx, "Starting process: %v", err)
 		return err
 	}
@@ -378,7 +379,7 @@ func (a *App) StartGameProcess(args []string) error {
 }
 
 func (a *App) TerminateGameProcess() error {
-	terminated, err := GetProcessManager().KillProcess()
+	terminated, err := internal.GetProcessManager().KillProcess()
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "Terminating process: %v", err)
 		return err
@@ -390,17 +391,17 @@ func (a *App) TerminateGameProcess() error {
 }
 
 func (a *App) IsGameProcessRunning() bool {
-	return GetProcessManager().isProcessRunning()
+	return internal.GetProcessManager().IsProcessRunning()
 }
 
 func (a *App) UpdatePatch(assetUrl string) error {
 	runtime.LogInfo(a.ctx, "Downloading update")
-	GetProcessManager().blocked = true
-	defer func() { GetProcessManager().blocked = false }()
+	internal.GetProcessManager().Blocked = true
+	defer func() { internal.GetProcessManager().Blocked = false }()
 
 	maxRetries := 3
 	for i := 0; i < maxRetries; i++ {
-		_, err := GetProcessManager().KillProcess()
+		_, err := internal.GetProcessManager().KillProcess()
 		if err == nil {
 			break
 		}
@@ -428,12 +429,12 @@ func (a *App) getMainConfigPath() string {
 	}
 
 	paths := []string{
-		"config.toml",                    // distributed
-		"../../config/config.toml",       // dev
-		"../../../../config/config.toml", // macOS dev no not a joke
+		"config.toml",              // distributed
+		"config/config.toml",       // dev
+		"../../config/config.toml", // macOS dev no not a joke
 	}
 
-	configPath := GetFirstPathThatExists(paths)
+	configPath := internal.GetFirstPathThatExists(paths)
 
 	a.mainConfigPath = configPath
 
