@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -429,20 +430,55 @@ func (um *UpdateManager) copyOtherFiles(extractDir, currentDir, skipFileName str
 }
 
 func (um *UpdateManager) createCleanupBatch(oldExePath, currentExe string) (string, error) {
-	// Simple cleanup batch that waits for current process to exit, then cleans up
+	// Get the current process name for the batch script to wait for it to exit
+	currentExeName := filepath.Base(currentExe)
+
+	// Enhanced cleanup batch that properly waits for process to exit
 	batchContent := fmt.Sprintf(`@echo off
 echo Waiting for application to close...
-timeout /t 2 /nobreak >nul
 
-echo Cleaning up old files...
-del "%s" >nul 2>&1
+REM Wait for the process to actually exit (up to 30 seconds)
+set /a counter=0
+:waitloop
+tasklist /FI "IMAGENAME eq %s" 2>NUL | find /I "%s" >NUL
+if not errorlevel 1 (
+    set /a counter+=1
+    if %%counter%% lss 30 (
+        timeout /t 1 /nobreak >nul
+        goto waitloop
+    ) else (
+        echo Warning: Process still running after 30 seconds
+    )
+)
+
+echo Process has exited, cleaning up old files...
+REM Try multiple times to delete the old file in case of file locks
+set /a delete_counter=0
+:deleteloop
+if exist "%s" (
+    del "%s" >nul 2>&1
+    if exist "%s" (
+        set /a delete_counter+=1
+        if %%delete_counter%% lss 5 (
+            timeout /t 1 /nobreak >nul
+            goto deleteloop
+        ) else (
+            echo Warning: Could not delete old executable after 5 attempts
+        )
+    ) else (
+        echo Old executable cleaned up successfully
+    )
+) else (
+    echo Old executable already removed
+)
 
 echo Starting updated application...
 start "" "%s"
 
 echo Update complete.
-del "%%~f0" >nul 2>&1
-`, oldExePath, currentExe)
+REM Clean up this batch file
+(goto) 2>nul & del "%%~f0"
+`, currentExeName, currentExeName, oldExePath, oldExePath, oldExePath, currentExe)
 
 	// Write batch script to temp file
 	batchPath := filepath.Join(os.TempDir(), "cleanup_"+fmt.Sprintf("%d", time.Now().Unix())+".bat")
@@ -458,13 +494,17 @@ func (um *UpdateManager) executeRestartBatch(batchPath string) error {
 	// Wait a moment to ensure the batch file is written
 	time.Sleep(500 * time.Millisecond)
 
-	// Execute the batch script
+	// Execute the batch script in a detached process
 	cmd := exec.Command("cmd", "/C", batchPath)
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP,
+	}
+
 	if err := cmd.Start(); err != nil {
 		return err
 	}
 
-	// Wait a moment then exit the current application
+	// Give the batch script a moment to start, then exit
 	time.Sleep(1 * time.Second)
 	runtime.Quit(um.ctx)
 	return nil
