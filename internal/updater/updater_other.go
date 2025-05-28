@@ -2,6 +2,8 @@
 
 package updater
 
+import "fmt"
+
 func (um *UpdateManager) CheckForUpdates(autoUpdate bool, enableAlphaUpdates bool) UpdateInfo {
 	if um.isDev {
 		return UpdateInfo{Available: false}
