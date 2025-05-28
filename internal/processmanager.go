@@ -40,7 +40,10 @@ func GetProcessManager() *Manager {
 	return instance
 }
 
-func (pm *Manager) StartProcess(binaryPath string, args []string, logLevel ...uint8) error {
+func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...uint8) error {
+	if nil == binaryPath {
+		return errors.New("python binary not found")
+	}
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
 
@@ -51,7 +54,7 @@ func (pm *Manager) StartProcess(binaryPath string, args []string, logLevel ...ui
 		pm.running = nil
 	}
 
-	cmd, err := pm.getCommand(binaryPath, args...)
+	cmd, err := pm.getCommand(*binaryPath, args...)
 	if err != nil {
 		return err
 	}
