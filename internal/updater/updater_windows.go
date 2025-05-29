@@ -20,6 +20,7 @@ import (
 
 func (um *UpdateManager) CheckForUpdates(autoUpdate bool, enableAlphaUpdates bool) UpdateInfo {
 	if um.isDev {
+		runtime.LogInfo(um.ctx, "Updater disabled for dev.")
 		return UpdateInfo{Available: false}
 	}
 

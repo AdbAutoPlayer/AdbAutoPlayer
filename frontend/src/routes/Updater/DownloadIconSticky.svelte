@@ -3,6 +3,7 @@
   import marked from "$lib/markdownRenderer";
   import { version } from "$app/environment";
   import { CheckForUpdates, DownloadUpdate } from "$lib/wailsjs/go/main/App";
+  import { updater } from "\$lib/wailsjs/go/models";
   import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
   import { EventsOn } from "\$lib/wailsjs/runtime/runtime";
   import { LogError, LogInfo } from "$lib/wailsjs/runtime";
@@ -19,7 +20,7 @@
   let autoUpdate: boolean = $state(false);
 
   // Update info
-  let updateInfo: any = $state(null);
+  let updateInfo: updater.UpdateInfo | null = $state(null);
   let modalChangeLog: string = $state("");
 
   interface Release {
@@ -104,8 +105,8 @@
       console.log(info);
       if (info.available) {
         updateInfo = info;
-        modalChangeLog = await getModalChangeLog(version, info.version);
-        autoUpdate = info.autoUpdate;
+        modalChangeLog = await getModalChangeLog(version, updateInfo.version);
+        autoUpdate = updateInfo.autoUpdate;
         await openModal();
       } else {
         $pollRunningGame = true;
@@ -170,6 +171,25 @@
 
   // Initialize version check
   runVersionUpdate();
+
+  async function checkForUpdates() {
+    autoUpdate = false; // At this point we do not want to auto update it would interrupt whatever action is running without the user knowing about it.
+
+    try {
+      const info = await CheckForUpdates();
+      if (info.available) {
+        updateInfo = info;
+        modalChangeLog = await getModalChangeLog(version, updateInfo.version);
+        showDownloadIcon = true;
+      }
+    } catch (error) {
+      console.error(error);
+      LogError(`Update check failed: ${error}`);
+    }
+  }
+
+  const UPDATE_CHECK_INTERVAL = 15 * 60 * 1000; // Check every 15 minutes (in milliseconds)
+  setTimeout(checkForUpdates, UPDATE_CHECK_INTERVAL);
 </script>
 
 <!-- Download Icon - shown when update is available but modal is closed -->
