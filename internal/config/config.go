@@ -55,7 +55,7 @@ func NewMainConfig() MainConfig {
 			Streaming:   true,
 		},
 		Update: UpdateConfig{
-			AutoUpdate:         true,
+			AutoUpdate:         false,
 			EnableAlphaUpdates: false,
 		},
 		Logging: LoggingConfig{
