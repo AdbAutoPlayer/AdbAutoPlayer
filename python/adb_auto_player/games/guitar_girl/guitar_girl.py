@@ -30,7 +30,7 @@ class GuitarGirl(Game):
         counter = 0
         y = 200
         y_max = 960
-        mod = 10000
+        mod = 50000
         while True:
             if counter == (mod - 1):
                 self._start_game_if_not_running()
