@@ -45,7 +45,7 @@ $GamesDir = Join-Path $ReleaseZipDir "games"
 New-Item -ItemType Directory -Force -Path $BinariesDir
 New-Item -ItemType Directory -Force -Path $GamesDir
 
-Copy-Item -Path "$Workspace/cmd/wails/build/bin/AdbAutoPlayer.exe" -Destination $ReleaseZipDir -Force
+Copy-Item -Path "$Workspace/build/bin/AdbAutoPlayer.exe" -Destination $ReleaseZipDir -Force
 
 Copy-Item -Path "$Workspace/python/main.dist/*" -Destination $BinariesDir -Recurse -Force
 
