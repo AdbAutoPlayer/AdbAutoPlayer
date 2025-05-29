@@ -67,8 +67,13 @@ class DeviceStream:
         """Stop the screen streaming thread."""
         self._running = False
         if self._process:
-            self._process.close()
-            self._process = None
+            try:
+                self._process.close()
+                self._process = None
+            except AttributeError as e:
+                if "'NoneType' object has no attribute 'close'" in str(e):
+                    return
+                raise
         if self._stream_thread:
             self._stream_thread.join()
             self._stream_thread = None
@@ -93,7 +98,7 @@ class DeviceStream:
     def _handle_stream(self) -> None:
         """Generic stream handler."""
         self._process = self.device.shell(
-            cmdargs="screenrecord --output-format=h264 --time-limit=1 -",
+            cmdargs="screenrecord --output-format=h264 --time-limit=30 -",
             stream=True,
         )
 
@@ -141,8 +146,13 @@ class DeviceStream:
                 time.sleep(1)
             finally:
                 if self._process:
-                    self._process.close()
-                    self._process = None
+                    try:
+                        self._process.close()
+                        self._process = None
+                    except AttributeError as e:
+                        if "'NoneType' object has no attribute 'close'" in str(e):
+                            return
+                        raise
 
 
 def _device_is_emulator(device: AdbDevice) -> bool:
