@@ -45,7 +45,6 @@ jobs:
           sudo apt-get -yq install libgtk-3-0 libwebkit2gtk-4.1-dev gcc-aarch64-linux-gnu
 
       - name: Wails build
-        run: |
-          wails build -tags webkit2_41
+        run: wails build -tags webkit2_41
 
       - run: uvx pre-commit run --all-files
