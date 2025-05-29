@@ -123,6 +123,8 @@
   async function startUpdate() {
     if (!updateInfo) return;
 
+    await TerminateGameProcess();
+
     isDownloading = true;
     downloadProgress = 0;
 
@@ -162,7 +164,6 @@
   async function openModal() {
     $pollRunningGame = false;
     $pollRunningProcess = false;
-    await TerminateGameProcess();
     showModal = true;
     if (autoUpdate) {
       await startUpdate();
