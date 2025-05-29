@@ -14,14 +14,13 @@ from adb_auto_player.adb import (
     log_devices,
     wm_size_reset,
 )
-from adb_auto_player.commands.gui_categories import CommandCategory
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 
 
+# This is handled separately in the GUI, do not add a category
 @register_command(
     gui=GuiMetadata(
         label="Log Debug Info",
-        category=CommandCategory.SETTINGS_PHONE_DEBUG,
     ),
     name="Debug",
 )

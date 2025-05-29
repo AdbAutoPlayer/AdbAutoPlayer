@@ -64,45 +64,21 @@
           category: "Settings, Phone & Debug",
         }),
       },
-      {
-        callback: () =>
-          startGameProcess({
-            label: "Set Display Size 1080x1920",
-            args: ["WMSize1080x1920"],
-          }),
-        isProcessRunning: "Set Display Size 1080x1920" === activeButtonLabel,
-        option: ipc.MenuOption.createFrom({
-          label: "Set Display Size 1080x1920",
-          category: "Settings, Phone & Debug",
-          tooltip: "This is for real Phones not Emulators!",
-        }),
-      },
-      {
-        callback: () =>
-          startGameProcess({
-            label: "Reset Display Size",
-            args: ["WMSizeReset"],
-          }),
-        isProcessRunning: "Reset Display Size" === activeButtonLabel,
-        option: ipc.MenuOption.createFrom({
-          label: "Reset Display Size",
-          category: "Settings, Phone & Debug",
-          tooltip: "This is for real Phones not Emulators!",
-        }),
-      },
     ];
   });
 
   let activeGameMenuButtons: MenuButton[] = $derived.by(() => {
+    const menuButtons: MenuButton[] = [...defaultButtons];
+
     if (activeGame?.menu_options) {
-      const menuButtons: MenuButton[] = activeGame.menu_options.map(
-        (menuOption) => ({
+      menuButtons.push(
+        ...activeGame.menu_options.map((menuOption) => ({
           callback: () => startGameProcess(menuOption),
           isProcessRunning: menuOption.label === activeButtonLabel,
           option: menuOption,
-        }),
+        })),
       );
-      menuButtons.push(...defaultButtons);
+
       if (activeGame.config_path) {
         menuButtons.push({
           callback: () => openGameConfigForm(activeGame),
@@ -113,6 +89,7 @@
           }),
         });
       }
+
       menuButtons.push({
         callback: () => stopGameProcess(),
         isProcessRunning: false,
@@ -122,10 +99,9 @@
           tooltip: `Stops the currently running process`,
         }),
       });
-
-      return menuButtons;
     }
-    return defaultButtons;
+
+    return menuButtons;
   });
 
   let categories: string[] = $derived.by(() => {

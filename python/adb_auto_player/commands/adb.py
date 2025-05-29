@@ -5,6 +5,8 @@ from adb_auto_player.commands.gui_categories import CommandCategory
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 
 
+# This command should probably be game specific in the future if there are any games
+# that use a different resolution.
 @register_command(
     gui=GuiMetadata(
         label="Set Display Size 1080x1920",

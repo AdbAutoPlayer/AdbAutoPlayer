@@ -39,9 +39,13 @@ def get_gui_games_menu() -> str:
                     categories.add(value)
 
         menu_options: list[MenuOption] = []
-        commands = command_registry.get(module, {})
-        for name, command in commands.items():
+        for name, command in command_registry.get(module, {}).items():
             menu_options.append(command.menu_option)
+
+        # add common commands
+        for name, command in command_registry.get("Commands", {}).items():
+            if command.menu_option and command.menu_option.category:
+                menu_options.append(command.menu_option)
 
         for menu_option in menu_options:
             if menu_option.category:
