@@ -255,7 +255,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                 template="battle/copy.png",
                 crop=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
             )
-
+            sleep(1)
             cancel = self.game_find_template_match(
                 template="cancel.png",
                 crop=CropRegions(left=0.1, right=0.5, top=0.6, bottom=0.3),
