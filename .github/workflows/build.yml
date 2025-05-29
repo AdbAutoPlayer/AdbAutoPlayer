@@ -59,12 +59,12 @@ jobs:
       - name: Build with version (release)
         if: github.event_name == 'release' && github.event.action == 'published'
         shell: pwsh
-        run: .\build.ps1 -Version "${{ github.event.release.tag_name }}"
+        run: .\build_zip.ps1 -Version "${{ github.event.release.tag_name }}"
 
       - name: Build without version (manual)
         if: github.event_name == 'workflow_dispatch'
         shell: pwsh
-        run: .\build.ps1
+        run: .\build_zip.ps1
 
       - uses: softprops/action-gh-release@v2
         if: github.event_name == 'release' && github.event.action == 'published'
