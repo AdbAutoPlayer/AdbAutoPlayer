@@ -138,7 +138,12 @@ def _connect_client(client: AdbClient, device_id: str) -> None:
         AdbException: Other AdbTimeout errors.
     """
     try:
-        client.connect(device_id)
+        output = client.connect(device_id)
+        if "cannot connect" in output:
+            raise GenericAdbUnrecoverableError(output)
+    except GenericAdbUnrecoverableError as e:
+        logging.error(f"{e}")
+        sys.exit(1)
     except AdbError as e:
         err_msg = str(e)
         if "Install adb" in err_msg:
@@ -149,9 +154,9 @@ def _connect_client(client: AdbClient, device_id: str) -> None:
                 "(in most cases it should be 5037)"
             )
         else:
-            logging.debug(f"client.connect exception: {e}")
+            logging.error(f"client.connect AdbError: {e}")
     except Exception as e:
-        logging.debug(f"client.connect exception: {e}")
+        logging.error(f"client.connect exception: {e}")
 
 
 def _get_devices(client: AdbClient) -> list[AdbDeviceInfo]:
