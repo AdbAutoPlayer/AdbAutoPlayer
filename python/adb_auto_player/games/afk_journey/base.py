@@ -232,18 +232,25 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
         while True:
             if not self._copy_suggested_formation(formations, start_count):
                 return False
+            sleep(2)
             if skip_manual:
-                sleep(2)
-                manual_clear: tuple[int, int] | None = self.game_find_template_match(
-                    "battle/manual_battle.png",
-                    crop=CropRegions(top=0.5),
+                manual_clear = self.find_any_template(
+                    templates=[
+                        "battle/manual_battle.png",
+                        # decided to keep old one just in case
+                        "battle/manual_battle_old1.png",
+                    ],
+                    crop=CropRegions(
+                        top=0.5,
+                        right=0.5,
+                    ),
+                    threshold=0.8,
                 )
                 if manual_clear:
                     logging.info("Manual formation found, skipping.")
                     start_count = self.store.get(self.STORE_FORMATION_NUM, 1)
                     self.store[self.STORE_FORMATION_NUM] += 1
                     continue
-            sleep(1)
             self._tap_till_template_disappears(
                 template="battle/copy.png",
                 crop=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),

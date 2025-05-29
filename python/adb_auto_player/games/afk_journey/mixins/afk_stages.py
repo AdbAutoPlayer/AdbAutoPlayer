@@ -59,7 +59,7 @@ class AFKStagesMixin(AFKJourneyBase):
         except AutoPlayerWarningError as e:
             logging.warning(f"{e}")
         except AutoPlayerError as e:
-            logging.error(f"{e} {self.LANG_ERROR}")
+            logging.error(f"{e}")
 
     def _start_afk_stage(self) -> None:
         """Start push."""

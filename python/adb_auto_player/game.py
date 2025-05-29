@@ -16,6 +16,7 @@ from typing import Literal, NamedTuple, TypeVar
 import cv2
 import numpy as np
 from adb_auto_player import (
+    AutoPlayerError,
     AutoPlayerUnrecoverableError,
     AutoPlayerWarningError,
     ConfigLoader,
@@ -1082,6 +1083,10 @@ class Game:
         return self._template_dir_path
 
     def _my_custom_routine(self) -> None:
+        # This is used to check whether it is AFKJ Global or VN
+        # Also needed to restart game between Tasks if necessary.
+        self.open_eyes(device_streaming=False)
+
         config = self.get_config().my_custom_routine
         if not config.daily_tasks and not config.repeating_tasks:
             logging.error(
@@ -1125,7 +1130,7 @@ class Game:
                     f"Time until next Daily Task execution: {hours}h {minutes}m"
                 )
 
-    def _execute_tasks(self, tasks: list[str]) -> None:
+    def _get_game_commands(self) -> dict[str, CustomRoutineEntry] | None:
         commands = custom_routine_choice_registry
 
         game_commands: dict[str, CustomRoutineEntry] | None = None
@@ -1133,17 +1138,26 @@ class Game:
             if module in self.__module__:
                 game_commands = cmds
                 break
+        return game_commands
 
+    def _get_custom_routine_for_task(
+        self, task: str, game_commands: dict[str, CustomRoutineEntry]
+    ) -> CustomRoutineEntry | None:
+        custom_routine: CustomRoutineEntry | None = None
+        for label, custom_routine_entry in game_commands.items():
+            if task == label:
+                custom_routine = custom_routine_entry
+                break
+        return custom_routine
+
+    def _execute_tasks(self, tasks: list[str]) -> None:
+        game_commands = self._get_game_commands()
         if not game_commands:
             logging.error("Failed to load Custom Routines.")
             return
 
         for task in tasks:
-            custom_routine: CustomRoutineEntry | None = None
-            for label, custom_routine_entry in game_commands.items():
-                if task == label:
-                    custom_routine = custom_routine_entry
-                    break
+            custom_routine = self._get_custom_routine_for_task(task, game_commands)
             if not custom_routine:
                 logging.error(f"Task '{task}' not found")
                 continue
@@ -1151,26 +1165,44 @@ class Game:
                 function=custom_routine.func,
                 kwargs=custom_routine.kwargs,
             )
-            if isinstance(error, AutoPlayerUnrecoverableError):
-                logging.error(
-                    f"Task '{task}' failed with critical error: {error}, exiting..."
+            self._handle_task_error(task, error)
+        return
+
+    def _handle_task_error(self, task: str, error: Exception | None) -> None:
+        if not error:
+            return
+
+        if isinstance(error, AutoPlayerUnrecoverableError):
+            logging.error(
+                f"Task '{task}' failed with critical error: {error}, exiting..."
+            )
+            sys.exit(1)
+
+        if isinstance(error, GameNotRunningOrFrozenError):
+            logging.warning(
+                f"Task '{task}' failed because the game crashed or is frozen, "
+                "attempting to restart it."
+            )
+            self.force_stop_game()
+            self.start_game()
+            return
+
+        if isinstance(error, AutoPlayerError):
+            if not self.is_game_running():
+                logging.warning(
+                    f"Task '{task}' failed because the game crashed, "
+                    "attempting to restart it."
                 )
-                sys.exit(1)
-            if isinstance(error, GameNotRunningOrFrozenError):
-                if self.package_name:
-                    logging.warning(
-                        f"Task '{task}' failed because the game is not running or "
-                        "frozen, attempting to restart it."
-                    )
-                    self.force_stop_game()
-                    self.start_game()
-                else:
-                    logging.error(
-                        f"Task '{task}' failed because the game is not running, "
-                        "exiting..."
-                    )
-                    sys.exit(1)
-                continue
+                self.start_game()
+                return
+            else:
+                logging.warning(f"Task '{task}' failed moving to next Task.")
+                return
+
+        logging.error(
+            f"Task '{task}' failed with unexpected Error: {error} moving to next Task."
+        )
+        return
 
     def _tap_till_template_disappears(
         self,
