@@ -12,6 +12,7 @@ import (
 type MainConfig struct {
 	ADB     ADBConfig     `toml:"adb"`
 	Device  DeviceConfig  `toml:"device"`
+	Update  UpdateConfig  `toml:"update"`
 	Logging LoggingConfig `toml:"logging"`
 	UI      UIConfig      `toml:"ui" json:"User Interface"`
 }
@@ -25,6 +26,11 @@ type DeviceConfig struct {
 type ADBConfig struct {
 	Host string `toml:"host"`
 	Port int    `toml:"port"`
+}
+
+type UpdateConfig struct {
+	AutoUpdate         bool `toml:"auto_updates" json:"Automatically download updates"`
+	EnableAlphaUpdates bool `toml:"enable_alpha_updates" json:"Download Alpha updates"`
 }
 
 type LoggingConfig struct {
@@ -47,6 +53,10 @@ func NewMainConfig() MainConfig {
 			ID:          "127.0.0.1:5555",
 			UseWMResize: false,
 			Streaming:   true,
+		},
+		Update: UpdateConfig{
+			AutoUpdate:         true,
+			EnableAlphaUpdates: false,
 		},
 		Logging: LoggingConfig{
 			Level:                string(ipc.LogLevelInfo),

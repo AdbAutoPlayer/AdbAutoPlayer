@@ -1,126 +1,108 @@
 package updater
 
 import (
-	"archive/zip"
+	"context"
 	"fmt"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
-	"strings"
-	"time"
 )
 
-func UpdatePatch(assetUrl string) error {
-	response, err := http.Get(assetUrl)
-	if err != nil {
-		return fmt.Errorf("failed to download file: %v", err)
-	}
-	defer response.Body.Close()
-
-	tempFile, err := os.CreateTemp("", "patch-*.zip")
-	if err != nil {
-		return fmt.Errorf("failed to create temp file: %v", err)
-	}
-	defer tempFile.Close()
-
-	_, err = io.Copy(tempFile, response.Body)
-	if err != nil {
-		return fmt.Errorf("failed to save downloaded file: %v", err)
-	}
-
-	zipReader, err := zip.OpenReader(tempFile.Name())
-	if err != nil {
-		return fmt.Errorf("failed to open zip file: %v", err)
-	}
-	defer zipReader.Close()
-
-	// Get the absolute path of the target directory
-	targetDir, err := filepath.Abs(".")
-	if err != nil {
-		return fmt.Errorf("failed to get absolute path of target directory: %v", err)
-	}
-
-	if err = os.MkdirAll(".", 0755); err != nil {
-		return fmt.Errorf("failed to create target directory: %v", err)
-	}
-
-	for _, file := range zipReader.File {
-		if err = extractFile(file, targetDir); err != nil {
-			return err
-		}
-	}
-
-	return nil
+type UpdateInfo struct {
+	Available   bool   `json:"available"`
+	Version     string `json:"version"`
+	DownloadURL string `json:"downloadURL"`
+	Size        int64  `json:"size"`
+	Error       string `json:"error,omitempty"`
+	AutoUpdate  bool   `json:"autoUpdate"`
 }
 
-func extractFile(file *zip.File, targetDir string) (err error) {
-	absOutputPath, err := filepath.Abs(filepath.Join(".", file.Name))
+type GitHubRelease struct {
+	TagName string `json:"tag_name"`
+	Assets  []struct {
+		BrowserDownloadURL string `json:"browser_download_url"`
+		Size               int64  `json:"size"`
+		Name               string `json:"name"`
+	} `json:"assets"`
+}
+
+type UpdateManager struct {
+	ctx              context.Context
+	currentVersion   string
+	isDev            bool
+	progressCallback func(float64)
+	processesToKill  []string // List of process names to terminate before update
+}
+
+func NewUpdateManager(ctx context.Context, currentVersion string, isDev bool) *UpdateManager {
+	return &UpdateManager{
+		ctx:             ctx,
+		currentVersion:  currentVersion,
+		isDev:           isDev,
+		processesToKill: []string{"adb_auto_player.exe", "adb.exe"},
+	}
+}
+
+func (um *UpdateManager) SetProgressCallback(callback func(float64)) {
+	um.progressCallback = callback
+}
+
+func (um *UpdateManager) downloadFile(url, filepath string) error {
+	resp, err := http.Get(url)
 	if err != nil {
-		return fmt.Errorf("failed to resolve absolute path: %v", err)
-	}
-
-	// Validate the output path to prevent directory traversal (zip slip)
-	if strings.Contains(file.Name, "..") || strings.HasPrefix(file.Name, "/") {
-		return fmt.Errorf("invalid file path (potential zip slip): %s", file.Name)
-	}
-
-	// Check if the resolved path is within the target directory
-	if !strings.HasPrefix(absOutputPath, targetDir+string(filepath.Separator)) && absOutputPath != targetDir {
-		return fmt.Errorf("invalid file path (potential zip slip): %s", file.Name)
-	}
-
-	if file.FileInfo().IsDir() {
-		if err = os.MkdirAll(absOutputPath, 0755); err != nil {
-			return fmt.Errorf("failed to create directory: %v", err)
-		}
-		return nil
-	}
-
-	if err = os.MkdirAll(filepath.Dir(absOutputPath), 0755); err != nil {
-		return fmt.Errorf("failed to create directories: %v", err)
-	}
-
-	fileInZip, err := file.Open()
-	if err != nil {
-		return fmt.Errorf("failed to open file in zip archive: %v", err)
+		return err
 	}
 	defer func() {
-		if cerr := fileInZip.Close(); cerr != nil && err == nil {
-			err = fmt.Errorf("failed to close file in zip: %w", cerr)
+		if err = resp.Body.Close(); err != nil {
+			runtime.LogErrorf(um.ctx, "resp.Body.Close error: %v", err)
 		}
 	}()
 
-	var outputFile *os.File
-	const maxRetries = 3
-	const timeout = 2 * time.Second
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad status: %s", resp.Status)
+	}
 
-	for attempt := 1; attempt <= maxRetries; attempt++ {
-		outputFile, err = os.OpenFile(absOutputPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, file.Mode())
-		if err == nil {
-			break
-		}
-		if attempt == maxRetries {
-			return fmt.Errorf("failed to create file (attempt %d/%d): %v", attempt, maxRetries, err)
-		}
-		time.Sleep(timeout)
+	out, err := os.Create(filepath)
+	if err != nil {
+		return err
 	}
 	defer func() {
-		if cerr := outputFile.Close(); cerr != nil && err == nil {
-			err = fmt.Errorf("failed to close output file: %w", cerr)
+		if err = out.Close(); err != nil {
+			runtime.LogErrorf(um.ctx, "out.Close error: %v", err)
 		}
 	}()
 
-	for attempt := 1; attempt <= maxRetries; attempt++ {
-		_, err = io.Copy(outputFile, fileInZip)
-		if err == nil {
-			break
+	// Create a progress reader if callback is set
+	var reader io.Reader = resp.Body
+	if um.progressCallback != nil && resp.ContentLength > 0 {
+		reader = &progressReader{
+			reader:   resp.Body,
+			total:    resp.ContentLength,
+			callback: um.progressCallback,
 		}
-		if attempt == maxRetries {
-			return fmt.Errorf("failed to copy file data after %d attempts: %v", maxRetries, err)
-		}
-		time.Sleep(timeout)
 	}
 
-	return nil
+	_, err = io.Copy(out, reader)
+	return err
+}
+
+// progressReader wraps an io.Reader to report download progress
+type progressReader struct {
+	reader   io.Reader
+	total    int64
+	current  int64
+	callback func(float64)
+}
+
+func (pr *progressReader) Read(p []byte) (int, error) {
+	n, err := pr.reader.Read(p)
+	pr.current += int64(n)
+
+	if pr.callback != nil {
+		progress := float64(pr.current) / float64(pr.total) * 100
+		pr.callback(progress)
+	}
+
+	return n, err
 }

@@ -44,7 +44,6 @@ More examples in [UV Docs](https://docs.astral.sh/uv/pip/environments/#creating-
    You can ignore the Optional Dependencies section.
 3. Run the dev command from the root directory
    ```shell
-   cd .\cmd\wails\
    wails dev
    ```
 
