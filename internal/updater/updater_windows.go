@@ -352,18 +352,17 @@ func (um *UpdateManager) killProcessByName(name string) error {
 	var targetProcesses []*process.Process
 	var lastErr error
 
-	// Find target processes
+	expectedPath := filepath.Join(updaterDir, "binaries", name)
+
 	for _, p := range procs {
 		exe, err := p.Exe()
 		if err != nil {
 			continue
 		}
 
-		if strings.EqualFold(filepath.Base(exe), name) {
-			rel, err := filepath.Rel(updaterDir, exe)
-			if err == nil && !strings.HasPrefix(rel, "..") {
-				targetProcesses = append(targetProcesses, p)
-			}
+		// Case-insensitive match
+		if strings.EqualFold(exe, expectedPath) {
+			targetProcesses = append(targetProcesses, p)
 		}
 	}
 
