@@ -22,6 +22,7 @@ type LogMessage struct {
 	SourceFile   *string   `json:"source_file"`
 	FunctionName *string   `json:"function_name"`
 	LineNumber   *int32    `json:"line_number"`
+	HTMLClass    *string   `json:"html_class"`
 }
 
 func NewLogMessage(
@@ -37,5 +38,6 @@ func NewLogMessage(
 		SourceFile:   nil,
 		FunctionName: nil,
 		LineNumber:   nil,
+		HTMLClass:    nil,
 	}
 }

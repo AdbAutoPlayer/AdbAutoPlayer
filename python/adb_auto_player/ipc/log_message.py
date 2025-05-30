@@ -1,5 +1,6 @@
 """ADB Auto Player Logging Module."""
 
+import logging
 from datetime import datetime, timezone
 
 
@@ -25,6 +26,7 @@ class LogMessage:
         source_file: str | None = None,
         function_name: str | None = None,
         line_number: int | None = None,
+        html_class: str | None = None,
     ) -> None:
         """Initialize LogMessage."""
         self.level = level
@@ -33,6 +35,7 @@ class LogMessage:
         self.source_file = source_file
         self.function_name = function_name
         self.line_number = line_number
+        self.html_class = html_class
 
     def to_dict(self):
         """Convert LogMessage to dictionary for JSON serialization."""
@@ -43,23 +46,31 @@ class LogMessage:
             "source_file": self.source_file,
             "function_name": self.function_name,
             "line_number": self.line_number,
+            "html_class": self.html_class,
         }
 
     @classmethod
     def create_log_message(
         cls,
-        level: str,
-        message: str,
-        source_file: str | None = None,
-        function_name: str | None = None,
-        line_number: int | None = None,
+        record: logging.LogRecord,
+        message: str | None = None,
+        html_class: str | None = None,
     ) -> "LogMessage":
         """Create a new LogMessage."""
+        level_mapping: dict[int, str] = {
+            logging.DEBUG: LogLevel.DEBUG,
+            logging.INFO: LogLevel.INFO,
+            logging.WARNING: LogLevel.WARNING,
+            logging.ERROR: LogLevel.ERROR,
+            logging.CRITICAL: LogLevel.FATAL,
+        }
+
         return cls(
-            level=level,
-            message=message,
+            level=level_mapping.get(record.levelno, LogLevel.DEBUG),
+            message=message if message else record.getMessage(),
             timestamp=datetime.now(),
-            source_file=source_file,
-            function_name=function_name,
-            line_number=line_number,
+            source_file=record.module + ".py",
+            function_name=record.funcName,
+            line_number=record.lineno,
+            html_class=html_class,
         )

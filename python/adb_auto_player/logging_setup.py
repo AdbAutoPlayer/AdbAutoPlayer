@@ -8,8 +8,8 @@ import sys
 from datetime import datetime
 from typing import ClassVar, Literal
 
-from adb_auto_player.ipc import LogLevel, LogMessage
-from adb_auto_player.log_types import LogType
+from adb_auto_player.ipc import LogMessage
+from adb_auto_player.log_presets import LogPreset
 
 
 def sanitize_path(log_message: str) -> str:
@@ -78,23 +78,12 @@ class JsonLogHandler(BaseLogHandler):
         Args:
             record (logging.LogRecord): The log record to emit.
         """
-        level_mapping: dict[int, str] = {
-            logging.DEBUG: LogLevel.DEBUG,
-            logging.INFO: LogLevel.INFO,
-            logging.WARNING: LogLevel.WARNING,
-            logging.ERROR: LogLevel.ERROR,
-            logging.CRITICAL: LogLevel.FATAL,
-        }
-
-        # log_type: LogType | None = getattr(record, "type", None)
+        preset: LogPreset | None = getattr(record, "preset", None)
 
         log_message: LogMessage = LogMessage.create_log_message(
-            level=level_mapping.get(record.levelno, LogLevel.DEBUG),
+            record=record,
             message=self.get_sanitized_message(record),
-            source_file=record.module + ".py",
-            function_name=record.funcName,
-            line_number=record.lineno,
-            # color=log_type.get_gui_color() if log_type else None
+            html_class=preset.get_html_class() if preset else None,
         )
         log_dict = log_message.to_dict()
         log_json: str = json.dumps(log_dict)
@@ -122,10 +111,10 @@ class TerminalLogHandler(BaseLogHandler):
         """
         log_level: str = record.levelname
 
-        log_type: LogType | None = getattr(record, "type", None)
+        log_preset: LogPreset | None = getattr(record, "preset", None)
 
-        if log_type is not None:
-            color: str = log_type.get_terminal_color()
+        if log_preset is not None:
+            color: str = log_preset.get_terminal_color()
         else:
             color = self.COLORS.get(log_level, self.COLORS["RESET"])
 

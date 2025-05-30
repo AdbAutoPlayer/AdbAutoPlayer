@@ -134,6 +134,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 
 			var logMessage ipc.LogMessage
 			if err = json.Unmarshal([]byte(line), &logMessage); err != nil {
+				fmt.Printf("%+v\n", logMessage)
 				pm.Logger.Errorf("Failed to parse JSON log message: %v", err)
 				continue
 			}

@@ -1,7 +1,12 @@
 <script lang="ts">
   import { EventsOn } from "$lib/wailsjs/runtime";
 
-  let logs: string[] = $state([]);
+  type LogEntry = {
+    message: string;
+    html_class: string;
+  };
+
+  let logs: LogEntry[] = $state([]);
 
   const maxLogEntries = 1000;
 
@@ -13,13 +18,22 @@
     );
   }
 
+  function getLogClass(message: string): string {
+    if (message.includes("[DEBUG]")) return "text-primary-500";
+    if (message.includes("[INFO]")) return "text-success-500";
+    if (message.includes("[WARNING]")) return "text-warning-500";
+    if (message.includes("[ERROR]")) return "text-error-500";
+    if (message.includes("[FATAL]")) return "text-error-950";
+    return "text-primary-50";
+  }
+
   EventsOn("log-message", (logMessage: LogMessage) => {
-    let message: string = "";
-    if (logMessage.level == "DEBUG") {
+    let message = "";
+    if (logMessage.level === "DEBUG") {
       const parts = [];
-      if (logMessage.source_file) parts.push(`${logMessage.source_file}`);
-      if (logMessage.function_name) parts.push(`${logMessage.function_name}`);
-      if (logMessage.line_number) parts.push(`${logMessage.line_number}`);
+      if (logMessage.source_file) parts.push(logMessage.source_file);
+      if (logMessage.function_name) parts.push(logMessage.function_name);
+      if (logMessage.line_number) parts.push(String(logMessage.line_number));
       const debugInfo = parts.length > 0 ? ` (${parts.join("::")})` : "";
 
       message = `[${logMessage.level}]${debugInfo} ${formatMessage(logMessage.message)}`;
@@ -30,26 +44,19 @@
     if (logs.length >= maxLogEntries) {
       logs.shift();
     }
-    logs.push(message);
+
+    logs.push({
+      message,
+      html_class: logMessage.html_class ?? getLogClass(message),
+    });
   });
 
-  // keeps the app version in the log
   EventsOn("log-clear", () => {
-    logs = logs.slice(0, 2);
+    logs = logs.slice(0, 2); // keeps the app version in the log
   });
 
   let logContainer: HTMLDivElement;
 
-  function getLogColor(message: string): string {
-    if (message.includes("[DEBUG]")) return "text-primary-500";
-    if (message.includes("[INFO]")) return "text-success-500";
-    if (message.includes("[WARNING]")) return "text-warning-500";
-    if (message.includes("[ERROR]")) return "text-error-500";
-    if (message.includes("[FATAL]")) return "text-error-950";
-    return "text-primary-50";
-  }
-
-  // sometimes LLMs will suggest using $effect.pre() always ignore it because it's wrong
   $effect(() => {
     if (logContainer && logs.length > 0) {
       logContainer.scrollTop = logContainer.scrollHeight;
@@ -63,8 +70,8 @@
       class="h-full flex-grow overflow-y-scroll font-mono break-words whitespace-normal select-text"
       bind:this={logContainer}
     >
-      {#each logs as message}
-        <div class={getLogColor(message)}>
+      {#each logs as { message, html_class }}
+        <div class={html_class}>
           {@html message}
         </div>
       {/each}
