@@ -1083,8 +1083,8 @@ class Game:
         return self._template_dir_path
 
     def _my_custom_routine(self) -> None:
-        # This is used to check whether it is AFKJ Global or VN
-        # Also needed to restart game between Tasks if necessary.
+        # This is used to check whether it is AFKJ Global or VN,
+        # needed to restart game between Tasks if necessary.
         self.open_eyes(device_streaming=False)
 
         config = self.get_config().my_custom_routine
@@ -1112,23 +1112,25 @@ class Game:
                 logging.warning("No Repeating Tasks, waiting for next day")
                 sleep(180)
 
+            if not config.daily_tasks:
+                continue
+
             now = datetime.datetime.now(datetime.UTC)
-            if config.daily_tasks and now.date() != daily_tasks_executed_at.date():
+            if now.date() != daily_tasks_executed_at.date():
                 logging.info("Executing Daily Tasks")
                 self._execute_tasks(config.daily_tasks)
                 daily_tasks_executed_at = now
-            else:
-                next_day = datetime.datetime.combine(
-                    now.date() + datetime.timedelta(days=1),
-                    datetime.time.min,
-                    tzinfo=datetime.UTC,
-                )
-                remaining = next_day - now
-                hours, remainder = divmod(remaining.seconds, 3600)
-                minutes = remainder // 60
-                logging.info(
-                    f"Time until next Daily Task execution: {hours}h {minutes}m"
-                )
+                continue
+
+            next_day = datetime.datetime.combine(
+                now.date() + datetime.timedelta(days=1),
+                datetime.time.min,
+                tzinfo=datetime.UTC,
+            )
+            remaining = next_day - now
+            hours, remainder = divmod(remaining.seconds, 3600)
+            minutes = remainder // 60
+            logging.info(f"Time until next Daily Task execution: {hours}h {minutes}m")
 
     def _get_game_commands(self) -> dict[str, CustomRoutineEntry] | None:
         commands = custom_routine_choice_registry
