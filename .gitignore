@@ -6,3 +6,4 @@ PATCH_*
 .vscode
 node_modules
 release_zip
+debug
