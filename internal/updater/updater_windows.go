@@ -327,8 +327,8 @@ func (um *UpdateManager) killProcesses() error {
 			lastErr = err
 			runtime.LogWarningf(um.ctx, "Failed to kill process %s: %v", processName, err)
 		}
-		time.Sleep(3 * time.Second)
 	}
+	time.Sleep(3 * time.Second)
 
 	return lastErr
 }
@@ -345,7 +345,10 @@ func (um *UpdateManager) killProcessByName(name string) error {
 		return err
 	}
 
+	var targetProcesses []*process.Process
 	var lastErr error
+
+	// Find target processes
 	for _, p := range procs {
 		exe, err := p.Exe()
 		if err != nil {
@@ -355,12 +358,54 @@ func (um *UpdateManager) killProcessByName(name string) error {
 		if strings.EqualFold(filepath.Base(exe), name) {
 			rel, err := filepath.Rel(updaterDir, exe)
 			if err == nil && !strings.HasPrefix(rel, "..") {
-				if err = p.Kill(); err != nil {
-					lastErr = err
-					runtime.LogErrorf(um.ctx, "Failed to kill process %s at %s: %v", name, exe, err)
-				}
+				targetProcesses = append(targetProcesses, p)
 			}
 		}
+	}
+
+	// Kill each target process and its children
+	for _, proc := range targetProcesses {
+		if err = um.killProcessTree(proc); err != nil {
+			lastErr = err
+		}
+	}
+
+	return lastErr
+}
+
+// killProcessTree kills a process and all its descendants using gopsutil's Children method
+func (um *UpdateManager) killProcessTree(proc *process.Process) error {
+	var lastErr error
+
+	children, err := proc.Children()
+	if err != nil {
+		runtime.LogWarningf(um.ctx, "Could not get children for process PID %d: %v", proc.Pid, err)
+	}
+
+	for _, child := range children {
+		exe, err := child.Exe()
+		if err != nil {
+			exe = "unknown"
+		}
+
+		if err = child.Kill(); err != nil {
+			lastErr = err
+			runtime.LogErrorf(um.ctx, "Failed to kill child process PID %d at %s: %v", child.Pid, exe, err)
+		} else {
+			runtime.LogInfof(um.ctx, "Killed child process PID %d at %s", child.Pid, exe)
+		}
+	}
+
+	exe, err := proc.Exe()
+	if err != nil {
+		exe = "unknown"
+	}
+
+	if err = proc.Kill(); err != nil {
+		lastErr = err
+		runtime.LogErrorf(um.ctx, "Failed to kill process PID %d at %s: %v", proc.Pid, exe, err)
+	} else {
+		runtime.LogInfof(um.ctx, "Killed process PID %d at %s", proc.Pid, exe)
 	}
 
 	return lastErr

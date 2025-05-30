@@ -40,7 +40,7 @@ func NewUpdateManager(ctx context.Context, currentVersion string, isDev bool) *U
 		ctx:             ctx,
 		currentVersion:  currentVersion,
 		isDev:           isDev,
-		processesToKill: []string{"adb_auto_player.exe", "adb.exe"},
+		processesToKill: []string{"adb.exe", "adb_auto_player.exe"},
 	}
 }
 
