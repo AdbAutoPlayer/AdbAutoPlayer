@@ -7,4 +7,5 @@ interface LogMessage {
   source_file?: string;
   function_name?: string;
   line_number?: number;
+  html_class?: string;
 }
