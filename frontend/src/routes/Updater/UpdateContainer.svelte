@@ -5,7 +5,7 @@
     DownloadUpdate,
   } from "$lib/wailsjs/go/main/App";
   import { updater } from "$lib/wailsjs/go/models";
-  import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
+  import { enablePolling, disablePolling } from "$lib/stores/polling";
   import { EventsOn } from "$lib/wailsjs/runtime/runtime";
   import { LogError, LogInfo } from "$lib/wailsjs/runtime";
   import { version } from "$app/environment";
@@ -126,21 +126,18 @@
     } catch (error) {
       console.error(error);
       LogError(`Update check failed: ${error}`);
-      $pollRunningGame = true;
-      $pollRunningProcess = true;
+      enablePolling();
     }
 
     if (!updateState.isRunVersionUpdate) {
-      $pollRunningGame = true;
-      $pollRunningProcess = true;
+      enablePolling();
     }
   }
 
   async function startUpdate() {
     if (!updateInfo) return;
 
-    $pollRunningGame = false;
-    $pollRunningProcess = false;
+    disablePolling();
     await TerminateGameProcess();
 
     updateState.isDownloading = true;
@@ -168,8 +165,7 @@
     }
 
     if (updateState.isRunVersionUpdate) {
-      $pollRunningGame = true;
-      $pollRunningProcess = true;
+      enablePolling();
       updateState.isRunVersionUpdate = false;
     }
     updateState.showModal = false;
