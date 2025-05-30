@@ -7,7 +7,7 @@
   import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
   import { EventsOn } from "\$lib/wailsjs/runtime/runtime";
   import { LogError, LogInfo } from "$lib/wailsjs/runtime";
-  import DownloadModal from "./DownloadModal.svelte";
+  import GenericModal from "./GenericModal.svelte";
   import { getItem, setItem } from "$lib/indexedDB";
   import { ProgressRing } from "@skeletonlabs/skeleton-svelte";
 
@@ -217,7 +217,7 @@
   </button>
 {/if}
 
-<DownloadModal bind:showModal onClose={closeModal}>
+<GenericModal bind:showModal onClose={closeModal}>
   {#snippet modalContent()}
     <div class="flex h-full flex-col">
       <h2 class="mb-4 text-center h2 text-2xl">
@@ -282,4 +282,4 @@
       {/if}
     </div>
   {/snippet}
-</DownloadModal>
+</GenericModal>

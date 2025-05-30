@@ -1,17 +1,26 @@
 <script lang="ts">
   import { Modal } from "@skeletonlabs/skeleton-svelte";
 
-  let { showModal = $bindable(), modalContent, onClose } = $props();
+  interface ModalProps {
+    showModal: boolean;
+    modalContent?: () => any;
+    onClose?: () => void;
+  }
+
+  let { showModal = $bindable(), modalContent, onClose }: ModalProps = $props();
 
   function handleOpenChange(e: { open: boolean }) {
-    if (!e.open && showModal) {
-      // Modal is being closed, call the parent's close handler
-      if (onClose) {
-        onClose();
-      }
-    } else {
-      showModal = e.open;
+    if (e.open) {
+      showModal = true;
+      return;
     }
+
+    if (onClose) {
+      onClose();
+      return;
+    }
+
+    showModal = false;
   }
 </script>
 
