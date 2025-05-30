@@ -38,12 +38,14 @@
   };
 
   // State management
-  let showDownloadIcon: boolean = $state(false);
-  let showModal = $state(false);
-  let downloadProgress: number = $state(0);
-  let isDownloading: boolean = $state(false);
-  let autoUpdate: boolean = $state(false);
-  let isRunVersionUpdate: boolean = $state(false);
+  let updateState = $state({
+    showDownloadIcon: false,
+    showModal: false,
+    downloadProgress: 0,
+    isDownloading: false,
+    autoUpdate: false,
+    isRunVersionUpdate: false,
+  });
 
   // Update info
   let updateInfo: updater.UpdateInfo | null = $state(null);
@@ -114,9 +116,9 @@
         LogError(info.error);
       }
       if (info.available) {
-        isRunVersionUpdate = true;
+        updateState.isRunVersionUpdate = true;
         await setAvailableUpdateInfo(info);
-        autoUpdate = info.autoUpdate;
+        updateState.autoUpdate = info.autoUpdate;
         await openModal();
       }
     } catch (error) {
@@ -126,7 +128,7 @@
       $pollRunningProcess = true;
     }
 
-    if (!isRunVersionUpdate) {
+    if (!updateState.isRunVersionUpdate) {
       $pollRunningGame = true;
       $pollRunningProcess = true;
     }
@@ -139,42 +141,42 @@
     $pollRunningProcess = false;
     await TerminateGameProcess();
 
-    isDownloading = true;
-    downloadProgress = 0;
+    updateState.isDownloading = true;
+    updateState.downloadProgress = 0;
 
     try {
       // Listen for download progress events
       const unsubscribe = EventsOn("download-progress", (progress: number) => {
-        downloadProgress = progress;
+        updateState.downloadProgress = progress;
       });
 
       await DownloadUpdate(updateInfo.downloadURL);
       unsubscribe();
     } catch (error) {
       LogError(`Update failed: ${error}`);
-      isDownloading = false;
+      updateState.isDownloading = false;
       alert(`Update failed: ${error}`);
       closeModal();
     }
   }
 
   function closeModal() {
-    if (isDownloading) {
-      showModal = true;
+    if (updateState.isDownloading) {
+      updateState.showModal = true;
       return;
     }
 
-    if (isRunVersionUpdate) {
+    if (updateState.isRunVersionUpdate) {
       $pollRunningGame = true;
       $pollRunningProcess = true;
-      isRunVersionUpdate = false;
+      updateState.isRunVersionUpdate = false;
     }
-    showModal = false;
+    updateState.showModal = false;
   }
 
   async function openModal() {
-    showModal = true;
-    if (autoUpdate) {
+    updateState.showModal = true;
+    if (updateState.autoUpdate) {
       await startUpdate();
     }
   }
@@ -185,11 +187,11 @@
   async function setAvailableUpdateInfo(info: updater.UpdateInfo) {
     updateInfo = info;
     modalChangeLog = await getModalChangeLog(version, updateInfo.version);
-    showDownloadIcon = true;
+    updateState.showDownloadIcon = true;
   }
 
   async function checkForUpdates() {
-    autoUpdate = false; // At this point we do not want to auto update it would interrupt whatever action is running without the user knowing about it.
+    updateState.autoUpdate = false; // At this point we do not want to auto update it would interrupt whatever action is running without the user knowing about it.
 
     try {
       const info = await CheckForUpdates();
@@ -207,7 +209,7 @@
 </script>
 
 <!-- Download Icon - shown when update is available but modal is closed -->
-{#if showDownloadIcon}
+{#if updateState.showDownloadIcon}
   <button
     onclick={openModal}
     class="fixed top-0 right-0 z-50 m-2 cursor-pointer rounded-full bg-primary-500 p-2 shadow-lg transition-colors select-none hover:bg-primary-600"
@@ -224,30 +226,30 @@
   </button>
 {/if}
 
-<GenericModal bind:showModal onClose={closeModal}>
+<GenericModal bind:showModal={updateState.showModal} onClose={closeModal}>
   {#snippet modalContent()}
     <div class="flex h-full flex-col">
       <h2 class="mb-4 text-center h2 text-2xl">
-        {#if isDownloading}
-          Downloading Update... {Math.round(downloadProgress)}%
+        {#if updateState.isDownloading}
+          Downloading Update... {Math.round(updateState.downloadProgress)}%
         {:else}
           Update Available: {updateInfo?.version || ""}
         {/if}
       </h2>
 
-      {#if isDownloading}
+      {#if updateState.isDownloading}
         <!-- Progress Ring -->
         <div class="mb-4">
           <div class="mb-4 flex justify-center">
             <ProgressRing
-              value={Math.round(downloadProgress)}
+              value={Math.round(updateState.downloadProgress)}
               max={100}
               showLabel
             />
           </div>
         </div>
 
-        {#if downloadProgress >= 100}
+        {#if updateState.downloadProgress >= 100}
           <!-- Update Complete Message -->
           <div class="py-8 text-center">
             <p class="text-lg text-success-500">
@@ -265,7 +267,7 @@
         </div>
       {/if}
 
-      {#if !isDownloading}
+      {#if !updateState.isDownloading}
         <!-- Action Buttons -->
         <div
           class="border-surface-200-700 mt-4 flex justify-end gap-2 border-t pt-4"
