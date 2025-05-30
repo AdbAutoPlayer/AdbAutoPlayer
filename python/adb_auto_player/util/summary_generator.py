@@ -81,5 +81,5 @@ class SummaryGenerator:
             return "Summary - No progress recorded."
 
         lines = [f"{phrase}: {count}" for phrase, count in self.counters.items()]
-        summary = "=== Summary ===\n" + "\n".join(lines)
+        summary = "=== SUMMARY ===\n" + "\n".join(lines)
         return summary
