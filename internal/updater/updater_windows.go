@@ -112,6 +112,22 @@ func (um *UpdateManager) findNewestRelease(releases []GitHubRelease) GitHubRelea
 		return GitHubRelease{}
 	}
 
+	for _, release := range releases {
+		if len(release.Assets) > 0 {
+			hasUsableAsset := false
+			for _, asset := range release.Assets {
+				if strings.HasSuffix(strings.ToLower(asset.Name), "_windows.zip") {
+					hasUsableAsset = true
+					break
+				}
+			}
+
+			if hasUsableAsset {
+				return release
+			}
+		}
+	}
+
 	return releases[0]
 }
 
