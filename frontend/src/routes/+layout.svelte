@@ -5,13 +5,14 @@
   import { GetTheme } from "$lib/wailsjs/go/main/App";
   import LogoSticky from "./LogoSticky.svelte";
   import DocumentationIconSticky from "./DocumentationIconSticky.svelte";
-  import DownloadIconSticky from "./Updater/DownloadIconSticky.svelte";
+  import UpdateIconSticky from "./Updater/UpdateIconSticky.svelte";
   import LogDisplayCard from "./LogDisplayCard.svelte";
   import { LogError } from "$lib/wailsjs/runtime";
   import { onMount } from "svelte";
   import posthog from "posthog-js";
   import { browser } from "$app/environment";
   import { version } from "$app/environment";
+  import UpdateContainer from "./Updater/UpdateContainer.svelte";
 
   let { children } = $props();
 
@@ -103,7 +104,7 @@
 <div class="flex h-screen min-h-0 flex-col overflow-hidden">
   <div class="flex-none">
     <DocumentationIconSticky></DocumentationIconSticky>
-    <DownloadIconSticky></DownloadIconSticky>
+    <UpdateContainer></UpdateContainer>
     <LogoSticky></LogoSticky>
   </div>
   <main class="min-h-0 w-full p-4">
