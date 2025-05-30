@@ -408,16 +408,16 @@ func (a *App) StartGameProcess(args []string) error {
 	return nil
 }
 
-func (a *App) TerminateGameProcess() error {
+func (a *App) TerminateGameProcess() (bool, error) {
 	terminated, err := internal.GetProcessManager().KillProcess()
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "Terminating process: %v", err)
-		return err
+		return false, err
 	}
 	if terminated {
 		runtime.LogWarning(a.ctx, "Stopping")
 	}
-	return nil
+	return true, nil
 }
 
 func (a *App) IsGameProcessRunning() bool {
