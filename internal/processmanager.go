@@ -189,6 +189,7 @@ func (pm *Manager) KillProcess() {
 	killProcessTree(pm.running)
 
 	runtime.LogWarning(pm.ctx, "Stopping")
+	time.Sleep(2 * time.Second)
 	pm.processEnded()
 }
 
