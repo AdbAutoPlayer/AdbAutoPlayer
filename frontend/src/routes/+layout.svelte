@@ -100,13 +100,13 @@
   });
 </script>
 
-<div class="flex h-screen min-h-0 flex-col overflow-hidden">
+<div class="flex h-screen flex-col overflow-hidden">
   <div class="flex-none">
     <DocumentationIconSticky></DocumentationIconSticky>
     <UpdateContainer></UpdateContainer>
     <LogoSticky></LogoSticky>
   </div>
-  <main class="min-h-0 w-full p-4">
+  <main class="w-full p-4">
     {@render children()}
   </main>
   <LogDisplayCard />
