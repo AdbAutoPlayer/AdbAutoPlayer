@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { EventsEmit } from "$lib/wailsjs/runtime";
   import {
     GetEditableMainConfig,
     SaveMainConfig,
@@ -128,7 +129,10 @@
   async function stopGameProcess() {
     clearTimeout(updateStateTimeout);
     try {
-      await TerminateGameProcess();
+      const result = await TerminateGameProcess();
+      if (result) {
+        EventsEmit("add-summary-to-log");
+      }
       activeButtonLabel = null;
     } catch (error) {
       console.error(error);

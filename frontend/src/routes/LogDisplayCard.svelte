@@ -7,15 +7,15 @@
   };
 
   let logs: LogEntry[] = $state([]);
+  let summaryMessage: string = $state("");
 
   const maxLogEntries = 1000;
 
   function formatMessage(message: string): string {
     const urlRegex = /(https?:\/\/[^\s'"]+)/g;
-    return message.replace(
-      urlRegex,
-      '<a class="anchor" href="$1" target="_blank">$1</a>',
-    );
+    return message
+      .replace(urlRegex, '<a class="anchor" href="$1" target="_blank">$1</a>')
+      .replace(/\r?\n/g, "<br>");
   }
 
   function getLogClass(message: string): string {
@@ -25,6 +25,25 @@
     if (message.includes("[ERROR]")) return "text-error-500";
     if (message.includes("[FATAL]")) return "text-error-950";
     return "text-primary-50";
+  }
+
+  EventsOn("summary-message", (summary: { summary_message: string }) => {
+    summaryMessage = formatMessage(summary.summary_message);
+  });
+
+  EventsOn("add-summary-to-log", () => {
+    addSummaryMessageToLog();
+    summaryMessage = "";
+  });
+
+  function addSummaryMessageToLog() {
+    if ("" === summaryMessage) {
+      return;
+    }
+    logs.push({
+      message: summaryMessage,
+      html_class: "text-success-950",
+    });
   }
 
   EventsOn("log-message", (logMessage: LogMessage) => {
