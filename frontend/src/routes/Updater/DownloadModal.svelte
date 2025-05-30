@@ -9,8 +9,9 @@
       if (onClose) {
         onClose();
       }
+    } else {
+      showModal = e.open;
     }
-    showModal = e.open;
   }
 </script>
 

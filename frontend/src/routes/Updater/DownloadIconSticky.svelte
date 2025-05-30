@@ -144,10 +144,10 @@
       await DownloadUpdate(updateInfo.downloadURL);
       unsubscribe();
     } catch (error) {
-      console.error("Update failed:", error);
       LogError(`Update failed: ${error}`);
       isDownloading = false;
       alert(`Update failed: ${error}`);
+      closeModal();
     }
   }
 
