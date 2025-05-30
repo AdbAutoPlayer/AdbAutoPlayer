@@ -4,10 +4,12 @@ import (
 	"adb-auto-player/internal/ipc"
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/shirou/gopsutil/process"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,10 +23,10 @@ import (
 type Manager struct {
 	mutex          sync.Mutex
 	running        *process.Process
-	Logger         *ipc.FrontendLogger
 	Blocked        bool
 	IsDev          bool
 	ActionLogLimit int
+	ctx            context.Context
 }
 
 var (
@@ -39,6 +41,10 @@ func GetProcessManager() *Manager {
 	return instance
 }
 
+func (pm *Manager) SetContext(ctx context.Context) {
+	pm.ctx = ctx
+}
+
 func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...uint8) error {
 	if nil == binaryPath {
 		return errors.New("python binary not found")
@@ -50,7 +56,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 		if pm.isProcessRunning() {
 			return errors.New("a process is already running")
 		}
-		pm.running = nil
+		pm.processEnded()
 	}
 
 	cmd, err := pm.getCommand(*binaryPath, args...)
@@ -74,11 +80,11 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 	if err = cmd.Start(); err != nil {
 		return fmt.Errorf("failed to start command: %w", err)
 	}
-	pm.Logger.Debugf("Started process with PID: %d", cmd.Process.Pid)
+	ipc.GetFrontendLogger().Debugf("Started process with PID: %d", cmd.Process.Pid)
 
-	originalLogLevel := pm.Logger.LogLevel
+	originalLogLevel := ipc.GetFrontendLogger().LogLevel
 	if len(logLevel) > 0 {
-		pm.Logger.LogLevel = logLevel[0]
+		ipc.GetFrontendLogger().LogLevel = logLevel[0]
 	}
 
 	proc, err := process.NewProcess(int32(cmd.Process.Pid))
@@ -89,7 +95,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 
 	debugDir := "debug"
 	if err = os.MkdirAll(debugDir, 0755); err != nil {
-		pm.Logger.Errorf("Failed to create debug directory: %v", err)
+		ipc.GetFrontendLogger().Errorf("Failed to create debug directory: %v", err)
 	}
 
 	timestamp := time.Now().Format("20060102_150405")
@@ -100,7 +106,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 
 	logFile, err := os.Create(logFilePath)
 	if err != nil {
-		pm.Logger.Errorf("Failed to create log file: %v", err)
+		ipc.GetFrontendLogger().Errorf("Failed to create log file: %v", err)
 	}
 	if pm.ActionLogLimit > 0 {
 		files, err := filepath.Glob(filepath.Join(debugDir, "*.log"))
@@ -114,7 +120,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 			filesToDelete := len(files) - pm.ActionLogLimit
 			for i := 0; i < filesToDelete; i++ {
 				if err := os.Remove(files[i]); err != nil {
-					pm.Logger.Errorf("Failed to delete old log file %s: %v", files[i], err)
+					ipc.GetFrontendLogger().Errorf("Failed to delete old log file %s: %v", files[i], err)
 				}
 			}
 		}
@@ -128,22 +134,31 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 			line := scanner.Text()
 			if logFile != nil {
 				if _, err = fmt.Fprintln(logFile, line); err != nil {
-					pm.Logger.Errorf("Failed to write to log file: %v", err)
+					ipc.GetFrontendLogger().Errorf("Failed to write to log file: %v", err)
+				}
+			}
+
+			var summaryMessage ipc.Summary
+			if err = json.Unmarshal([]byte(line), &summaryMessage); err == nil {
+				if summaryMessage.SummaryMessage != "" {
+					runtime.EventsEmit(pm.ctx, "summary-message", summaryMessage)
+					continue
 				}
 			}
 
 			var logMessage ipc.LogMessage
-			if err = json.Unmarshal([]byte(line), &logMessage); err != nil {
-				fmt.Printf("%+v\n", logMessage)
-				pm.Logger.Errorf("Failed to parse JSON log message: %v", err)
+			if err = json.Unmarshal([]byte(line), &logMessage); err == nil {
+				// fmt.Printf("%+v\n", logMessage)
+				ipc.GetFrontendLogger().LogMessage(logMessage)
 				continue
 			}
-			pm.Logger.LogMessage(logMessage)
+
+			ipc.GetFrontendLogger().Errorf("Failed to parse JSON message: %v", err)
 		}
 
 		if err = scanner.Err(); err != nil {
 			if !strings.Contains(err.Error(), "file already closed") {
-				pm.Logger.Errorf("Error while reading stdout: %v", err)
+				ipc.GetFrontendLogger().Errorf("Error while reading stdout: %v", err)
 			}
 		}
 	}()
@@ -151,47 +166,47 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 	go func() {
 		_, err = cmd.Process.Wait()
 		if err != nil {
-			pm.Logger.Errorf("Process ended with error: %v", err)
+			ipc.GetFrontendLogger().Errorf("Process ended with error: %v", err)
 		}
 
 		pm.mutex.Lock()
-		pm.Logger.LogLevel = originalLogLevel
-		pm.running = nil
+		ipc.GetFrontendLogger().LogLevel = originalLogLevel
+		pm.processEnded()
 		pm.mutex.Unlock()
 	}()
 
 	return nil
 }
 
-func (pm *Manager) KillProcess() (bool, error) {
+func (pm *Manager) KillProcess() {
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
 
 	if pm.running == nil || !pm.isProcessRunning() {
-		return false, nil
+		return
 	}
 
-	killProcessTree(pm.running, pm.Logger)
+	killProcessTree(pm.running)
 
-	pm.running = nil
-	return true, nil
+	runtime.LogWarning(pm.ctx, "Stopping")
+	pm.processEnded()
 }
 
-func killProcessTree(p *process.Process, logger *ipc.FrontendLogger) {
+func killProcessTree(p *process.Process) {
 	children, err := p.Children()
 	if err != nil && !errors.Is(err, process.ErrorNoChildren) {
-		logger.Errorf("Failed to get children of process %d: %v", p.Pid, err)
+		ipc.GetFrontendLogger().Errorf("Failed to get children of process %d: %v", p.Pid, err)
 	}
 
 	for _, child := range children {
-		killProcessTree(child, logger) // recurse
+		killProcessTree(child) // recurse
 	}
 
 	if err = p.Kill(); err != nil {
 		if strings.Contains(err.Error(), "no such process") {
-			logger.Debugf("Process %d already exited", p.Pid)
+			ipc.GetFrontendLogger().Debugf("Process %d already exited", p.Pid)
 		} else {
-			logger.Errorf("Failed to kill process %d: %v", p.Pid, err)
+			ipc.GetFrontendLogger().Errorf("Failed to kill process %d: %v", p.Pid, err)
 		}
 	}
 }
@@ -214,6 +229,10 @@ func (pm *Manager) isProcessRunning() bool {
 	running, err := pm.running.IsRunning()
 	if err != nil {
 		return false
+	}
+
+	if !running {
+		pm.processEnded()
 	}
 
 	return running
@@ -271,4 +290,9 @@ func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
 	}
 
 	return stdout.String(), nil
+}
+
+func (pm *Manager) processEnded() {
+	pm.running = nil
+	runtime.EventsEmit(pm.ctx, "add-summary-to-log")
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"sync"
 )
 
 type FrontendLogger struct {
@@ -12,24 +13,35 @@ type FrontendLogger struct {
 	sanitizer *PathSanitizer
 }
 
-var logLevelPriority = map[LogLevel]uint8{
-	LogLevelTrace:   1,
-	LogLevelDebug:   2,
-	LogLevelInfo:    3,
-	LogLevelWarning: 4,
-	LogLevelError:   5,
-	LogLevelFatal:   6,
-}
+var (
+	logLevelPriority = map[LogLevel]uint8{
+		LogLevelTrace:   1,
+		LogLevelDebug:   2,
+		LogLevelInfo:    3,
+		LogLevelWarning: 4,
+		LogLevelError:   5,
+		LogLevelFatal:   6,
+	}
 
-func (l *FrontendLogger) Startup(ctx context.Context) {
-	l.ctx = ctx
-}
+	instance *FrontendLogger
+	once     sync.Once
+)
 
-func NewFrontendLogger(logLevel uint8) *FrontendLogger {
+func newFrontendLogger() *FrontendLogger {
 	return &FrontendLogger{
-		LogLevel:  logLevel,
 		sanitizer: NewPathSanitizer(),
 	}
+}
+
+func GetFrontendLogger() *FrontendLogger {
+	once.Do(func() {
+		instance = newFrontendLogger()
+	})
+	return instance
+}
+
+func (l *FrontendLogger) SetContext(ctx context.Context) {
+	l.ctx = ctx
 }
 
 func (l *FrontendLogger) SetLogLevelFromInt(logLevel uint8) {

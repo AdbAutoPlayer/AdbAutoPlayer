@@ -15,6 +15,7 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
 )
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.util.summary_generator import SummaryGenerator
 
 
 class AFKStagesMixin(AFKJourneyBase):
@@ -74,7 +75,8 @@ class AFKStagesMixin(AFKJourneyBase):
             self.get_config().afk_stages.skip_manual_formations,
         ):
             stages_pushed += 1
-            logging.info(f"{stages_name} pushed: {stages_pushed}")
+            logging.info(f"{stages_name}: {stages_pushed}")
+            SummaryGenerator().add_count(f"{stages_name}")
 
     def _get_current_afk_stages_name(self) -> str:
         """Get stage name."""

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { EventsEmit } from "$lib/wailsjs/runtime";
   import {
     GetEditableMainConfig,
     SaveMainConfig,

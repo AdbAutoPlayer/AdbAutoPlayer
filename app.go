@@ -83,10 +83,7 @@ func (a *App) Startup(ctx context.Context) {
 
 func (a *App) Shutdown(ctx context.Context) {
 	a.ctx = ctx
-	_, err := internal.GetProcessManager().KillProcess()
-	if err != nil {
-		panic(err)
-	}
+	internal.GetProcessManager().KillProcess()
 }
 
 func (a *App) GetEditableMainConfig() map[string]interface{} {
@@ -110,7 +107,7 @@ func (a *App) SaveMainConfig(mainConfig config.MainConfig) error {
 	}
 	a.mainConfig = mainConfig
 	runtime.EventsEmit(a.ctx, "log-clear")
-	internal.GetProcessManager().Logger.SetLogLevelFromString(mainConfig.Logging.Level)
+	ipc.GetFrontendLogger().SetLogLevelFromString(mainConfig.Logging.Level)
 	runtime.LogSetLogLevel(a.ctx, logger.LogLevel(ipc.GetLogLevelFromString(mainConfig.Logging.Level)))
 	runtime.LogInfo(a.ctx, "Saved Main config")
 	return nil
@@ -228,7 +225,7 @@ func (a *App) GetRunningSupportedGame(disableLogging bool) (*ipc.GameGUI, error)
 			runningGame = strings.TrimSpace(strings.TrimPrefix(logMessage.Message, "Running game: "))
 			break
 		}
-		internal.GetProcessManager().Logger.LogMessage(logMessage)
+		ipc.GetFrontendLogger().LogMessage(logMessage)
 	}
 
 	if runningGame == "" {
@@ -408,16 +405,8 @@ func (a *App) StartGameProcess(args []string) error {
 	return nil
 }
 
-func (a *App) TerminateGameProcess() error {
-	terminated, err := internal.GetProcessManager().KillProcess()
-	if err != nil {
-		runtime.LogErrorf(a.ctx, "Terminating process: %v", err)
-		return err
-	}
-	if terminated {
-		runtime.LogWarning(a.ctx, "Stopping")
-	}
-	return nil
+func (a *App) TerminateGameProcess() {
+	internal.GetProcessManager().KillProcess()
 }
 
 func (a *App) IsGameProcessRunning() bool {
