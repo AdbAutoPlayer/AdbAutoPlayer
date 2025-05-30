@@ -14,6 +14,7 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
 )
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.util.summary_generator import SummaryGenerator
 
 
 # Tested S4 2025.05.23
@@ -111,6 +112,8 @@ class SeasonLegendTrial(AFKJourneyBase):
                 )
                 count += 1
                 logging.info(f"{faction.capitalize()} Trials pushed: {count}")
+                SummaryGenerator().add_count(f"{faction.capitalize()} Trials")
+
                 match template:
                     case "next.png":
                         self.tap(Coordinates(x, y))

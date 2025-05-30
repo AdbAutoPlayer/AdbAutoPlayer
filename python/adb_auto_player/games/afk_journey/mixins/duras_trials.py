@@ -16,6 +16,7 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
 )
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.util.summary_generator import SummaryGenerator
 
 
 class DurasTrialsMixin(AFKJourneyBase, ABC):
@@ -181,7 +182,9 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             if next_button is not None:
                 nonlocal count
                 count += 1
-                logging.info(f"Trials pushed: {count}")
+                logging.info(f"Dura's Trials pushed: {count}")
+                SummaryGenerator().add_count("Dura's Trials")
+
                 self.tap(Coordinates(*next_button))
                 self.tap(Coordinates(*next_button))
                 sleep(3)
@@ -198,7 +201,9 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             """
             nonlocal count
             count += 1
-            logging.info(f"Nightmare Trials pushed: {count}")
+            logging.info(f"Dura's Nightmare Trials pushed: {count}")
+            SummaryGenerator().add_count("Dura's Nightmare Trials")
+
             if self.game_find_template_match(
                 template="duras_trials/continue_gray.png", crop=CropRegions(top=0.8)
             ):
