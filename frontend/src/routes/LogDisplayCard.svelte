@@ -44,6 +44,7 @@
       message: summaryMessage,
       html_class: "text-success-950",
     });
+    summaryMessage = "";
   }
 
   EventsOn("log-message", (logMessage: LogMessage) => {

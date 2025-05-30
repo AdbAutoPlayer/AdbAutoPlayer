@@ -178,18 +178,18 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 	return nil
 }
 
-func (pm *Manager) KillProcess() (bool, error) {
+func (pm *Manager) KillProcess() {
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
 
 	if pm.running == nil || !pm.isProcessRunning() {
-		return false, nil
+		return
 	}
 
 	killProcessTree(pm.running)
 
+	runtime.LogWarning(pm.ctx, "Stopping")
 	pm.processEnded()
-	return true, nil
 }
 
 func killProcessTree(p *process.Process) {

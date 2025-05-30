@@ -129,10 +129,7 @@
   async function stopGameProcess() {
     clearTimeout(updateStateTimeout);
     try {
-      const result = await TerminateGameProcess();
-      if (result) {
-        EventsEmit("add-summary-to-log");
-      }
+      await TerminateGameProcess();
       activeButtonLabel = null;
     } catch (error) {
       console.error(error);

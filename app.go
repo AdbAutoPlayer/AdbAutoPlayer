@@ -83,10 +83,7 @@ func (a *App) Startup(ctx context.Context) {
 
 func (a *App) Shutdown(ctx context.Context) {
 	a.ctx = ctx
-	_, err := internal.GetProcessManager().KillProcess()
-	if err != nil {
-		panic(err)
-	}
+	internal.GetProcessManager().KillProcess()
 }
 
 func (a *App) GetEditableMainConfig() map[string]interface{} {
@@ -408,16 +405,8 @@ func (a *App) StartGameProcess(args []string) error {
 	return nil
 }
 
-func (a *App) TerminateGameProcess() (bool, error) {
-	terminated, err := internal.GetProcessManager().KillProcess()
-	if err != nil {
-		runtime.LogErrorf(a.ctx, "Terminating process: %v", err)
-		return false, err
-	}
-	if terminated {
-		runtime.LogWarning(a.ctx, "Stopping")
-	}
-	return true, nil
+func (a *App) TerminateGameProcess() {
+	internal.GetProcessManager().KillProcess()
 }
 
 func (a *App) IsGameProcessRunning() bool {
