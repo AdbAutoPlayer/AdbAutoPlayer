@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Masterminds/semver"
+	"github.com/shirou/gopsutil/process"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
 	"net/http"
@@ -333,8 +334,36 @@ func (um *UpdateManager) killProcesses() error {
 }
 
 func (um *UpdateManager) killProcessByName(name string) error {
-	cmd := exec.Command("taskkill", "/F", "/IM", name)
-	return cmd.Run()
+	currentExe, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	updaterDir := filepath.Dir(currentExe)
+
+	procs, err := process.Processes()
+	if err != nil {
+		return err
+	}
+
+	var lastErr error
+	for _, p := range procs {
+		exe, err := p.Exe()
+		if err != nil {
+			continue
+		}
+
+		if strings.EqualFold(filepath.Base(exe), name) {
+			rel, err := filepath.Rel(updaterDir, exe)
+			if err == nil && !strings.HasPrefix(rel, "..") {
+				if err = p.Kill(); err != nil {
+					lastErr = err
+					runtime.LogErrorf(um.ctx, "Failed to kill process %s at %s: %v", name, exe, err)
+				}
+			}
+		}
+	}
+
+	return lastErr
 }
 
 func (um *UpdateManager) findNewExecutable(extractDir string) (string, error) {

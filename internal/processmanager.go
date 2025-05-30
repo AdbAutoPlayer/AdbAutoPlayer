@@ -12,7 +12,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	stdruntime "runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -171,54 +170,27 @@ func (pm *Manager) KillProcess() (bool, error) {
 		return false, nil
 	}
 
-	children, err := pm.running.Children()
-	if err != nil && !errors.Is(err, process.ErrorNoChildren) {
-		if stdruntime.GOOS == "darwin" && err.Error() == "exit status 1" {
-			pm.Logger.Debug("Ignoring exit status 1 for GOOS != darwin")
-		} else {
-			pm.Logger.Errorf("Error getting child processes: %v", err)
-		}
-	}
-
-	processName, nameErr := pm.running.Name()
-
-	if err := pm.running.Kill(); err != nil {
-		pm.Logger.Errorf("Failed to kill process: %v", err)
-	}
-
-	for _, child := range children {
-		if err := child.Kill(); err != nil {
-			pm.Logger.Errorf("Error killing child process %d: %v", child.Pid, err)
-		}
-	}
-
-	if nameErr == nil {
-		pm.killAllProcessesByName(processName)
-	}
+	killProcessTree(pm.running, pm.Logger)
 
 	pm.running = nil
 	return true, nil
 }
 
-func (pm *Manager) killAllProcessesByName(processName string) {
-	processes, err := process.Processes()
-	if err != nil {
-		pm.Logger.Errorf("Failed to list processes: %v", err)
-		return
+func killProcessTree(p *process.Process, logger *ipc.FrontendLogger) {
+	children, err := p.Children()
+	if err != nil && !errors.Is(err, process.ErrorNoChildren) {
+		logger.Errorf("Failed to get children of process %d: %v", p.Pid, err)
 	}
 
-	for _, proc := range processes {
-		name, err := proc.Name()
-		if err != nil {
-			continue
-		}
+	for _, child := range children {
+		killProcessTree(child, logger) // recurse
+	}
 
-		if name == processName {
-			if err := proc.Kill(); err != nil {
-				pm.Logger.Errorf("Failed to kill process %d (%s): %v", proc.Pid, processName, err)
-			} else {
-				pm.Logger.Debug(fmt.Sprintf("Killed process %d (%s)", proc.Pid, processName))
-			}
+	if err = p.Kill(); err != nil {
+		if strings.Contains(err.Error(), "no such process") {
+			logger.Debugf("Process %d already exited", p.Pid)
+		} else {
+			logger.Errorf("Failed to kill process %d: %v", p.Pid, err)
 		}
 	}
 }
