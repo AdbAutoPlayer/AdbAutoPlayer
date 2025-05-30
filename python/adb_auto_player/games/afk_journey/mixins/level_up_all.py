@@ -6,6 +6,7 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
     register_custom_routine_choice,
 )
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
+from adb_auto_player.log_presets import LogPreset
 
 
 class LevelUpAllHeroes(AFKJourneyBase):
@@ -16,7 +17,10 @@ class LevelUpAllHeroes(AFKJourneyBase):
         self.navigate_to_resonating_hall()
 
         if self._find_level_up_all_button() is None:
-            logging.info("Level Up All Heroes not available.")
+            logging.info(
+                "Level Up All Heroes not available.",
+                extra={"preset": LogPreset.NOT_AVAILABLE},
+            )
             return
 
         logging.info("Clicking Level Up All Heroes.")
