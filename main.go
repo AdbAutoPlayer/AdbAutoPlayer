@@ -36,10 +36,10 @@ func main() {
 
 	mainConfig := loadConfiguration()
 	logLevel := determineLogLevel(mainConfig)
-	frontendLogger := setupLogging(logLevel, mainConfig)
+	internal.GetProcessManager().ActionLogLimit = mainConfig.Logging.ActionLogLimit
 	app := NewApp(Version, isDev, mainConfig)
 
-	appOptions := createAppOptions(app, frontendLogger, logLevel)
+	appOptions := createAppOptions(app, logLevel)
 
 	if err := wails.Run(appOptions); err != nil {
 		panic(err)
@@ -91,15 +91,8 @@ func determineLogLevel(mainConfig config.MainConfig) logger.LogLevel {
 	return logLevel
 }
 
-// setupLogging initializes the frontend logger and configures process manager
-func setupLogging(logLevel logger.LogLevel, mainConfig config.MainConfig) *ipc.FrontendLogger {
-	frontendLogger := ipc.NewFrontendLogger(uint8(logLevel))
-	internal.GetProcessManager().ActionLogLimit = mainConfig.Logging.ActionLogLimit
-	return frontendLogger
-}
-
 // createAppOptions creates the wails application options
-func createAppOptions(app *App, frontendLogger *ipc.FrontendLogger, logLevel logger.LogLevel) *options.App {
+func createAppOptions(app *App, logLevel logger.LogLevel) *options.App {
 	return &options.App{
 		Title:  "AdbAutoPlayer",
 		Width:  1168,
@@ -116,11 +109,13 @@ func createAppOptions(app *App, frontendLogger *ipc.FrontendLogger, logLevel log
 			WebviewGpuIsDisabled: false,
 		},
 		OnStartup: func(ctx context.Context) {
+			ipc.GetFrontendLogger().LogLevel = uint8(logLevel)
+			ipc.GetFrontendLogger().SetContext(ctx)
 			app.Startup(ctx)
 		},
 		OnDomReady: func(ctx context.Context) {
-			frontendLogger.Startup(ctx)
-			internal.GetProcessManager().Logger = frontendLogger
+			ipc.GetFrontendLogger().SetContext(ctx)
+			internal.GetProcessManager().SetContext(ctx)
 		},
 		OnShutdown: func(ctx context.Context) {
 			app.Shutdown(ctx)
@@ -128,7 +123,7 @@ func createAppOptions(app *App, frontendLogger *ipc.FrontendLogger, logLevel log
 		Bind: []interface{}{
 			app,
 		},
-		Logger:             frontendLogger,
+		Logger:             ipc.GetFrontendLogger(),
 		LogLevel:           logLevel,
 		LogLevelProduction: logLevel,
 	}

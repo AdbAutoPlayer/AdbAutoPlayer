@@ -110,7 +110,7 @@ func (a *App) SaveMainConfig(mainConfig config.MainConfig) error {
 	}
 	a.mainConfig = mainConfig
 	runtime.EventsEmit(a.ctx, "log-clear")
-	internal.GetProcessManager().Logger.SetLogLevelFromString(mainConfig.Logging.Level)
+	ipc.GetFrontendLogger().SetLogLevelFromString(mainConfig.Logging.Level)
 	runtime.LogSetLogLevel(a.ctx, logger.LogLevel(ipc.GetLogLevelFromString(mainConfig.Logging.Level)))
 	runtime.LogInfo(a.ctx, "Saved Main config")
 	return nil
@@ -227,7 +227,7 @@ func (a *App) GetRunningSupportedGame(disableLogging bool) (*ipc.GameGUI, error)
 			runningGame = strings.TrimSpace(strings.TrimPrefix(logMessage.Message, "Running game: "))
 			break
 		}
-		internal.GetProcessManager().Logger.LogMessage(logMessage)
+		ipc.GetFrontendLogger().LogMessage(logMessage)
 	}
 
 	if runningGame == "" {
