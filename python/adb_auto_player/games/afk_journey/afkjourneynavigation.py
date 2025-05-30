@@ -40,13 +40,16 @@ class AFKJourneyNavigation(Game, ABC):
         restart_attempts = 20
         attempts = 0
 
+        restart_attempted = False
+
         while True:
             if not self.is_game_running():
                 logging.error("Game not running.")
                 self._handle_restart(templates)
-            elif attempts >= restart_attempts:
+            elif attempts >= restart_attempts and not restart_attempted:
                 logging.warning("Failed to navigate to default state.")
                 self._handle_restart(templates)
+                restart_attempted = True
             elif attempts >= max_attempts:
                 raise GameNotRunningOrFrozenError(
                     "Failed to navigate to default state."
