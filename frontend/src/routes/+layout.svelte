@@ -102,9 +102,9 @@
 
 <div class="flex h-screen flex-col overflow-hidden">
   <div class="flex-none">
-    <DocumentationIconSticky></DocumentationIconSticky>
-    <UpdateContainer></UpdateContainer>
-    <LogoSticky></LogoSticky>
+    <DocumentationIconSticky />
+    <UpdateContainer />
+    <LogoSticky />
   </div>
   <main class="w-full p-4">
     {@render children()}
