@@ -1113,7 +1113,7 @@ class Game:
                 sleep(180)
 
             now = datetime.datetime.now(datetime.UTC)
-            if now.date() != daily_tasks_executed_at.date():
+            if config.daily_tasks and now.date() != daily_tasks_executed_at.date():
                 logging.info("Executing Daily Tasks")
                 self._execute_tasks(config.daily_tasks)
                 daily_tasks_executed_at = now
