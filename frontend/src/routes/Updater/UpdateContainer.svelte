@@ -59,7 +59,7 @@
     downloadProgress: 0,
     isDownloading: false,
     autoUpdate: false,
-    isRunVersionUpdate: false,
+    isInitialUpdateCheck: false,
   });
 
   let updateInfo: updater.UpdateInfo | null = $state(null);
@@ -103,7 +103,7 @@
     return changeLog;
   }
 
-  async function runVersionUpdate() {
+  async function initialUpdateCheck() {
     LogInfo(`App Version: ${version}`);
     let lastAppVersion = await getItem<string>("lastAppVersion");
     if (!lastAppVersion) {
@@ -118,7 +118,7 @@
         LogError(info.error);
       }
       if (info.available) {
-        updateState.isRunVersionUpdate = true;
+        updateState.isInitialUpdateCheck = true;
         await setAvailableUpdateInfo(info);
         updateState.autoUpdate = info.autoUpdate;
         await openModal();
@@ -129,7 +129,7 @@
       enablePolling();
     }
 
-    if (!updateState.isRunVersionUpdate) {
+    if (!updateState.isInitialUpdateCheck) {
       enablePolling();
     }
   }
@@ -164,9 +164,9 @@
       return;
     }
 
-    if (updateState.isRunVersionUpdate) {
+    if (updateState.isInitialUpdateCheck) {
       enablePolling();
-      updateState.isRunVersionUpdate = false;
+      updateState.isInitialUpdateCheck = false;
     }
     updateState.showModal = false;
   }
@@ -199,7 +199,7 @@
   }
 
   // Initialize version check
-  runVersionUpdate();
+  initialUpdateCheck();
 
   // Periodic update check
   const UPDATE_CHECK_INTERVAL = 15 * 60 * 1000; // Check every 15 minutes (in milliseconds)
