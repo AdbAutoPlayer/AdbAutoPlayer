@@ -5,9 +5,15 @@
 
   const maxLogEntries = 1000;
 
-  EventsOn("log-message", (logMessage: LogMessage) => {
+  function formatMessage(message: string): string {
     const urlRegex = /(https?:\/\/[^\s'"]+)/g;
+    return message.replace(
+      urlRegex,
+      '<a class="anchor" href="$1" target="_blank">$1</a>',
+    );
+  }
 
+  EventsOn("log-message", (logMessage: LogMessage) => {
     let message: string = "";
     if (logMessage.level == "DEBUG") {
       const parts = [];
@@ -16,15 +22,9 @@
       if (logMessage.line_number) parts.push(`${logMessage.line_number}`);
       const debugInfo = parts.length > 0 ? ` (${parts.join("::")})` : "";
 
-      message = `[${logMessage.level}]${debugInfo} ${logMessage.message.replace(
-        urlRegex,
-        '<a class="anchor" href="$1" target="_blank">$1</a>',
-      )}`;
+      message = `[${logMessage.level}]${debugInfo} ${formatMessage(logMessage.message)}`;
     } else {
-      message = `[${logMessage.level}] ${logMessage.message.replace(
-        urlRegex,
-        '<a class="anchor" href="$1" target="_blank">$1</a>',
-      )}`;
+      message = `[${logMessage.level}] ${formatMessage(logMessage.message)}`;
     }
 
     if (logs.length >= maxLogEntries) {
@@ -33,6 +33,7 @@
     logs.push(message);
   });
 
+  // keeps the app version in the log
   EventsOn("log-clear", () => {
     logs = logs.slice(0, 2);
   });
@@ -48,11 +49,10 @@
     return "text-primary-50";
   }
 
+  // sometimes LLMs will suggest using $effect.pre() always ignore it because it's wrong
   $effect(() => {
     if (logContainer && logs.length > 0) {
-      requestAnimationFrame(() => {
-        logContainer.scrollTop = logContainer.scrollHeight;
-      });
+      logContainer.scrollTop = logContainer.scrollHeight;
     }
   });
 </script>
