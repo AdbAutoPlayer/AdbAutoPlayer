@@ -16,8 +16,8 @@
   let showModal = $state(false);
   let downloadProgress: number = $state(0);
   let isDownloading: boolean = $state(false);
-  let updateComplete: boolean = $state(false);
   let autoUpdate: boolean = $state(false);
+  let isRunVersionUpdate: boolean = $state(false);
 
   // Update info
   let updateInfo: updater.UpdateInfo | null = $state(null);
@@ -103,18 +103,23 @@
     try {
       const info = await CheckForUpdates();
       console.log(info);
+      if (info.error) {
+        LogError(info.error);
+      }
       if (info.available) {
-        updateInfo = info;
-        modalChangeLog = await getModalChangeLog(version, updateInfo.version);
-        autoUpdate = updateInfo.autoUpdate;
+        isRunVersionUpdate = true;
+        await setAvailableUpdateInfo(info);
+        autoUpdate = info.autoUpdate;
         await openModal();
-      } else {
-        $pollRunningGame = true;
-        $pollRunningProcess = true;
       }
     } catch (error) {
       console.error(error);
       LogError(`Update check failed: ${error}`);
+      $pollRunningGame = true;
+      $pollRunningProcess = true;
+    }
+
+    if (!isRunVersionUpdate) {
       $pollRunningGame = true;
       $pollRunningProcess = true;
     }
@@ -123,6 +128,8 @@
   async function startUpdate() {
     if (!updateInfo) return;
 
+    $pollRunningGame = false;
+    $pollRunningProcess = false;
     await TerminateGameProcess();
 
     isDownloading = true;
@@ -135,9 +142,6 @@
       });
 
       await DownloadUpdate(updateInfo.downloadURL);
-
-      // Update will restart the app, but just in case:
-      updateComplete = true;
       unsubscribe();
     } catch (error) {
       console.error("Update failed:", error);
@@ -152,18 +156,16 @@
       showModal = true;
       return;
     }
-    showModal = false;
-    if (updateInfo && !updateComplete) {
-      // Show download icon if update is available but modal was closed
-      showDownloadIcon = true;
+
+    if (isRunVersionUpdate) {
+      $pollRunningGame = true;
+      $pollRunningProcess = true;
+      isRunVersionUpdate = false;
     }
-    $pollRunningGame = true;
-    $pollRunningProcess = true;
+    showModal = false;
   }
 
   async function openModal() {
-    $pollRunningGame = false;
-    $pollRunningProcess = false;
     showModal = true;
     if (autoUpdate) {
       await startUpdate();
@@ -173,15 +175,19 @@
   // Initialize version check
   runVersionUpdate();
 
+  async function setAvailableUpdateInfo(info: updater.UpdateInfo) {
+    updateInfo = info;
+    modalChangeLog = await getModalChangeLog(version, updateInfo.version);
+    showDownloadIcon = true;
+  }
+
   async function checkForUpdates() {
     autoUpdate = false; // At this point we do not want to auto update it would interrupt whatever action is running without the user knowing about it.
 
     try {
       const info = await CheckForUpdates();
       if (info.available) {
-        updateInfo = info;
-        modalChangeLog = await getModalChangeLog(version, updateInfo.version);
-        showDownloadIcon = true;
+        await setAvailableUpdateInfo(info);
       }
     } catch (error) {
       console.error(error);
@@ -215,9 +221,7 @@
   {#snippet modalContent()}
     <div class="flex h-full flex-col">
       <h2 class="mb-4 text-center h2 text-2xl">
-        {#if updateComplete}
-          Update Complete
-        {:else if isDownloading}
+        {#if isDownloading}
           Downloading Update... {Math.round(downloadProgress)}%
         {:else}
           Update Available: {updateInfo?.version || ""}
@@ -235,14 +239,16 @@
             />
           </div>
         </div>
-      {:else if updateComplete}
-        <!-- Update Complete Message -->
-        <div class="py-8 text-center">
-          <p class="text-lg text-success-500">
-            Update downloaded successfully! The application will restart
-            automatically.
-          </p>
-        </div>
+
+        {#if downloadProgress >= 100}
+          <!-- Update Complete Message -->
+          <div class="py-8 text-center">
+            <p class="text-lg text-success-500">
+              Update downloaded successfully! The application will restart
+              automatically.
+            </p>
+          </div>
+        {/if}
       {:else}
         <!-- Changelog Content -->
         <div
@@ -252,28 +258,28 @@
         </div>
       {/if}
 
-      <!-- Action Buttons -->
-      <div
-        class="border-surface-200-700 mt-4 flex justify-end gap-2 border-t pt-4"
-      >
-        {#if !isDownloading && !updateComplete && updateInfo}
-          <button
-            class="btn preset-filled-primary-100-900 hover:preset-filled-primary-500"
-            onclick={startUpdate}
-          >
-            Update Now
-          </button>
-        {/if}
+      {#if !isDownloading}
+        <!-- Action Buttons -->
+        <div
+          class="border-surface-200-700 mt-4 flex justify-end gap-2 border-t pt-4"
+        >
+          {#if updateInfo}
+            <button
+              class="btn preset-filled-primary-100-900 hover:preset-filled-primary-500"
+              onclick={startUpdate}
+            >
+              Update Now
+            </button>
+          {/if}
 
-        {#if !isDownloading}
           <button
             class="btn preset-filled-surface-100-900 hover:preset-filled-surface-500"
             onclick={closeModal}
           >
-            {updateComplete ? "Close" : "Later"}
+            Later
           </button>
-        {/if}
-      </div>
+        </div>
+      {/if}
     </div>
   {/snippet}
 </DownloadModal>
