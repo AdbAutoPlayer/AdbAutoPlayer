@@ -11,6 +11,32 @@
   import { getItem, setItem } from "$lib/indexedDB";
   import { ProgressRing } from "@skeletonlabs/skeleton-svelte";
 
+  // Version utilities
+  const versionUtils = {
+    compare: (v1: string, v2: string): number => {
+      const parts1 = v1.split(".").map(Number);
+      const parts2 = v2.split(".").map(Number);
+      for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+        const part1 = parts1[i] || 0;
+        const part2 = parts2[i] || 0;
+        if (part1 < part2) return -1;
+        if (part1 > part2) return 1;
+      }
+      return 0;
+    },
+
+    isInRange: (
+      version: string,
+      startVersion: string,
+      endVersion: string,
+    ): boolean => {
+      return (
+        versionUtils.compare(version, startVersion) > 0 &&
+        versionUtils.compare(version, endVersion) <= 0
+      );
+    },
+  };
+
   // State management
   let showDownloadIcon: boolean = $state(false);
   let showModal = $state(false);
@@ -35,29 +61,6 @@
     browser_download_url: string;
   }
 
-  function isVersionInRange(
-    version: string,
-    startVersion: string,
-    endVersion: string,
-  ): boolean {
-    const compareVersions = (v1: string, v2: string) => {
-      const parts1 = v1.split(".").map(Number);
-      const parts2 = v2.split(".").map(Number);
-      for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
-        const part1 = parts1[i] || 0;
-        const part2 = parts2[i] || 0;
-        if (part1 < part2) return -1;
-        if (part1 > part2) return 1;
-      }
-      return 0;
-    };
-
-    return (
-      compareVersions(version, startVersion) > 0 &&
-      compareVersions(version, endVersion) <= 0
-    );
-  }
-
   async function getModalChangeLog(
     currentVersion: string,
     latestVersion: string,
@@ -69,7 +72,11 @@
 
     const filteredReleases = allReleases.filter((release) => {
       const releaseVersion = release.tag_name;
-      return isVersionInRange(releaseVersion, currentVersion, latestVersion);
+      return versionUtils.isInRange(
+        releaseVersion,
+        currentVersion,
+        latestVersion,
+      );
     });
 
     let changeLog: string = "";
