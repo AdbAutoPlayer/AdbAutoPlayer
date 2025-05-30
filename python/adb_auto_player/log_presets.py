@@ -22,9 +22,12 @@ class LogPreset(Enum):
 
     def get_html_class(self) -> str | None:
         """Get the HTML class name for GUI."""
+        # check https://www.skeleton.dev/docs/design/colors#color-palette
+        # format is always text-{color}-{shade}
         html_classes = {
             LogPreset.NOT_AVAILABLE: "text-tertiary-200",
         }
+
         if self not in html_classes:
             return None
         return html_classes[self]
