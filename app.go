@@ -218,7 +218,8 @@ func (a *App) GetRunningSupportedGame(disableLogging bool) (*ipc.GameGUI, error)
 		}
 
 		var logMessage ipc.LogMessage
-		if err := json.Unmarshal([]byte(line), &logMessage); err != nil {
+		if err = json.Unmarshal([]byte(line), &logMessage); err != nil {
+			fmt.Printf("%+v\n", logMessage)
 			runtime.LogErrorf(a.ctx, "Failed to parse JSON log message: %v", err)
 			continue
 		}

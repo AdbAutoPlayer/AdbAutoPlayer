@@ -35,7 +35,7 @@ class LogMessage:
         self.source_file = source_file
         self.function_name = function_name
         self.line_number = line_number
-        self.html_class = (html_class,)
+        self.html_class = html_class
 
     def to_dict(self):
         """Convert LogMessage to dictionary for JSON serialization."""
