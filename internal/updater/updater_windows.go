@@ -3,6 +3,7 @@
 package updater
 
 import (
+	"adb-auto-player/internal"
 	"archive/zip"
 	"encoding/json"
 	"fmt"
@@ -230,6 +231,8 @@ func (um *UpdateManager) extractZip(src, dest string) error {
 }
 
 func (um *UpdateManager) applyUpdate(extractDir string) error {
+	internal.GetProcessManager().KillProcess()
+
 	// Get current executable path
 	currentExe, err := os.Executable()
 	if err != nil {
@@ -328,7 +331,8 @@ func (um *UpdateManager) killProcesses() error {
 			runtime.LogWarningf(um.ctx, "Failed to kill process %s: %v", processName, err)
 		}
 	}
-	time.Sleep(3 * time.Second)
+	// Wait for processes to be killed
+	time.Sleep(5 * time.Second)
 
 	return lastErr
 }
@@ -550,7 +554,7 @@ REM Clean up this batch file
 
 func (um *UpdateManager) executeRestartBatch(batchPath string) error {
 	// Wait a moment to ensure the batch file is written
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 
 	// Execute the batch script in a detached process
 	cmd := exec.Command("cmd", "/C", batchPath)
