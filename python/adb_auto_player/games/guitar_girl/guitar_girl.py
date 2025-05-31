@@ -96,7 +96,7 @@ class GuitarGirl(Game):
         self._open_guitar_girl_tab()
 
         guitar_girl_level_up = Coordinates(900, 1450)
-        for _ in range(10):
+        for _ in range(30):
             self.tap(guitar_girl_level_up, log=False)
 
         sleep(1)
