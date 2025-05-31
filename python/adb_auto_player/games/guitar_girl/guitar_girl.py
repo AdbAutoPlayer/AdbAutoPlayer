@@ -2,9 +2,16 @@ import logging
 from time import sleep
 from typing import NoReturn
 
-from adb_auto_player import Coordinates, Game, TapParams, TemplateMatchParams
+from adb_auto_player import (
+    Coordinates,
+    CropRegions,
+    Game,
+    TapParams,
+    TemplateMatchParams,
+)
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.decorators.register_game import register_game
+from adb_auto_player.util.summary_generator import SummaryGenerator
 from pydantic import BaseModel
 
 
@@ -24,9 +31,43 @@ class GuitarGirl(Game):
     def _load_config(self):
         raise NotImplementedError()
 
+    @register_command(gui=GuiMetadata(label="Busk"))
+    def busk(self) -> NoReturn:
+        self.open_eyes(device_streaming=False)
+        counter = 0
+        mod = 10000
+        while True:
+            if counter == (mod - 1):
+                self._start_game_if_not_running()
+
+            if counter == 0:
+                self._check_for_popups()
+                self._level_up_guitar_girl()
+                self._activate_skills()
+                logging.info("Tapping Music Notes.")
+
+            if result := self.find_any_template(
+                templates=[
+                    "big_note.png",
+                    "big_note2.png",
+                    "note.png",
+                ],
+                threshold=0.7,
+                crop=CropRegions(bottom=0.5, right=0.1, top=0.05),
+            ):
+                note, x, y = result
+                self.tap(Coordinates(x, y), log=False)
+                if "big_note" in note:
+                    SummaryGenerator().add_count("Big Note")
+                else:
+                    SummaryGenerator().add_count("Small Note")
+
+            counter += 1
+            counter = counter % mod
+
     @register_command(gui=GuiMetadata(label="Play"))
     def play(self) -> NoReturn:
-        self.open_eyes(device_streaming=False)
+        self.open_eyes(device_streaming=True)
         counter = 0
         y = 200
         y_max = 960
@@ -37,7 +78,7 @@ class GuitarGirl(Game):
 
             if counter == 0:
                 self._check_for_popups()
-                self._level_up()
+                self._level_up_guitar_girl()
                 self._activate_skills()
                 logging.info("Tapping.")
 
@@ -49,8 +90,8 @@ class GuitarGirl(Game):
             counter += 1
             counter = counter % mod
 
-    def _level_up(self) -> None:
-        logging.info("Leveling up and activating Skills.")
+    def _level_up_guitar_girl(self) -> None:
+        logging.info("Leveling up Guitar Girl.")
         sleep(3)
         self._open_guitar_girl_tab()
 
@@ -64,6 +105,8 @@ class GuitarGirl(Game):
             self.tap(guitar_girl_icon, log=False)
 
     def _activate_skills(self) -> None:
+        logging.info("Activating Skills.")
+        sleep(1)
         self._open_guitar_girl_tab()
 
         base_x = 200
