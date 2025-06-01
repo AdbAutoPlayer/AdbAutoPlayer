@@ -1,11 +1,5 @@
 <script lang="ts">
-  let {
-    size,
-    className,
-  }: {
-    size: number;
-    className?: string;
-  } = $props();
+  let { size, className, strokeWidth = 3 }: IconProps = $props();
 </script>
 
 <svg
@@ -15,11 +9,11 @@
   viewBox="0 0 24 24"
   fill="none"
   stroke="currentColor"
-  stroke-width="3"
+  stroke-width={strokeWidth}
   stroke-linecap="round"
   stroke-linejoin="round"
   class={className}
 >
-  <line x1="18" y1="6" x2="6" y2="18"></line>
-  <line x1="6" y1="6" x2="18" y2="18"></line>
+  <line x1="12" y1="5" x2="12" y2="19"></line>
+  <polyline points="19 12 12 19 5 12"></polyline>
 </svg>

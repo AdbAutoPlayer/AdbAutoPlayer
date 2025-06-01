@@ -1,4 +1,6 @@
 <script lang="ts">
+  import IconDownloadCloud from "../Icons/Feather/IconDownloadCloud.svelte";
+
   interface Props {
     show: boolean;
     onClick: () => void;
@@ -14,12 +16,6 @@
     draggable="false"
     title="Update Available"
   >
-    <img
-      src="/icons/download-cloud.svg"
-      alt="Download"
-      width="24"
-      height="24"
-      draggable="false"
-    />
+    <IconDownloadCloud size={24} strokeWidth={2} />
   </button>
 {/if}

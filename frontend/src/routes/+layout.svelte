@@ -5,7 +5,7 @@
   import { GetTheme } from "$lib/wailsjs/go/main/App";
   import LogoSticky from "./LogoSticky.svelte";
   import DocumentationIconSticky from "./DocumentationIconSticky.svelte";
-  import LogDisplayCard from "./LogDisplayCard.svelte";
+  import LogDisplayCard from "./Log/LogDisplayCard.svelte";
   import { LogError } from "$lib/wailsjs/runtime";
   import { onMount } from "svelte";
   import posthog from "posthog-js";
