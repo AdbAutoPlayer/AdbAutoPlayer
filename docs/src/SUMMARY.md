@@ -10,6 +10,7 @@
 
 # Games
 - [AFK Journey](games/afk-journey.md)
+- [Guitar Girl](games/guitar-girl.md)
 
 # App Development
 - [Dev & Build](development/dev-and-build.md)

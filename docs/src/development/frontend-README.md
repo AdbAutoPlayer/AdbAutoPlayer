@@ -11,6 +11,9 @@ We also use [**Skeleton**](https://www.skeleton.dev/docs/get-started/introductio
 Follow [Dev & Build](dev-and-build.md)
 
 ## Contributing
-Nothing here yet—I would appreciate PRs since I am not very good at this.  
-I do insist on using **Svelte**, as this is the only frontend framework that I have even the tiniest amount of success with and feel comfortable maintaining.  
+
+Nothing here yet—PRs are welcome.
+I do insist on using **Svelte**, as this is the only frontend framework that I have even the tiniest amount of success with and feel comfortable maintaining.
+
+At the moment, I (Yules) am the only person maintaining the frontend, so contributions—big or small—are very welcome.
 Other than that, if you are interested in helping out, you can do whatever you want, and you have my full support.

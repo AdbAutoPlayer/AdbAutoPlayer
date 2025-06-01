@@ -3,9 +3,6 @@
 ## [Click Here to Access the Full Documentation and Usage Details](https://AdbAutoPlayer.github.io/AdbAutoPlayer/)
 ![gui.png](docs/src/images/app/app.png)
 
-## Supported Games
-- AFK Journey
-
 _____
 
 # Development

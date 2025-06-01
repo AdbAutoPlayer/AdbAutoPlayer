@@ -2,6 +2,22 @@
 > [!IMPORTANT]
 > Cloud Emulators like BlueStacks X cannot be used
 
+---
+
+## MuMuPlayer (Windows)
+
+> [!NOTE]
+> MuMuPlayer does not require enabling ADB in settings.
+
+### Emulator Settings
+- **Display**:
+  - **Resolution Setting**: Select **Mobile Mode (1080 × 1920)**.
+
+### AdbAutoPlayer Main Config
+Device ID: `127.0.0.1:7555`
+
+---
+
 ## BlueStacks 5 (Windows) & BlueStacks Air (MacOS)
 
 ### Emulator Settings
@@ -15,20 +31,6 @@
 > If you have never changed the config you don't have to do anything this is the default value!
 
 Device ID: `127.0.0.1:5555`
-
----
-
-## MuMuPlayer (Windows)
-
-> [!NOTE]
-> MuMuPlayer does not require enabling ADB in settings.
-
-### Emulator Settings
-- **Display**:
-    - **Resolution Setting**: Select **Mobile Mode (1080 × 1920)**.
-
-### AdbAutoPlayer Main Config
-Device ID: `127.0.0.1:7555`
 
 ---
 
