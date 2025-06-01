@@ -1,6 +1,6 @@
 <script lang="ts">
   import { EventsOn } from "$lib/wailsjs/runtime";
-  import IconX from "./Icons/IconX.svelte";
+  import IconX from "../Icons/IconX.svelte";
 
   type LogEntry = {
     message: string;
