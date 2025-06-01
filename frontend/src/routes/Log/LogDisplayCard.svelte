@@ -18,14 +18,6 @@
 
   const maxLogEntries = 1000;
 
-  const filteredLogs = $derived.by(() => {
-    return searchTerm
-      ? logs.filter((log) =>
-          log.message.toLowerCase().includes(searchTerm.toLowerCase()),
-        )
-      : logs;
-  });
-
   function formatMessage(message: string): string {
     const urlRegex = /(https?:\/\/[^\s'"]+)/g;
     return message
@@ -59,7 +51,7 @@
 
     // Calculate the starting match index for this log entry
     for (let i = 0; i < logIndex; i++) {
-      const matches = filteredLogs[i].message.match(regex);
+      const matches = logs[i].message.match(regex);
       if (matches) {
         cumulativeMatchIndex += matches.length;
       }
@@ -78,7 +70,7 @@
     });
   }
 
-  // Recalculate total match count across all filtered logs
+  // Recalculate total match count across all logs
   const totalMatchCount = $derived.by(() => {
     if (!searchTerm) return 0;
 
@@ -88,7 +80,7 @@
       "gi",
     );
 
-    filteredLogs.forEach((log) => {
+    logs.forEach((log) => {
       const matches = log.message.match(regex);
       if (matches) {
         total += matches.length;
@@ -296,19 +288,13 @@
       class="h-full flex-grow overflow-y-scroll font-mono break-words whitespace-normal select-text"
       bind:this={logContainer}
     >
-      {#each searchTerm ? filteredLogs : logs as { message, html_class }, index}
+      {#each logs as { message, html_class }, index}
         <div class={html_class}>
           {@html searchTerm
             ? highlightText(message, searchTerm, index)
             : message}
         </div>
       {/each}
-
-      {#if searchTerm && filteredLogs.length === 0}
-        <div class="py-4 text-center text-warning-500">
-          No logs found matching "{searchTerm}"
-        </div>
-      {/if}
     </div>
   </div>
 </div>
