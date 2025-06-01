@@ -1,5 +1,5 @@
 <script lang="ts">
-  import IconX from "../Icons/IconX.svelte";
+  import IconX from "../Icons/Feather/IconX.svelte";
 
   let {
     constraint,

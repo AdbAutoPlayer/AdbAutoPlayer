@@ -1,6 +1,8 @@
 <script lang="ts">
   import { EventsOn } from "$lib/wailsjs/runtime";
-  import IconX from "../Icons/IconX.svelte";
+  import IconX from "../Icons/Feather/IconX.svelte";
+  import IconArrowDown from "../Icons/Feather/IconArrowDown.svelte";
+  import IconArrowUp from "../Icons/Feather/IconArrowUp.svelte";
 
   type LogEntry = {
     message: string;
@@ -239,7 +241,7 @@
         />
 
         {#if searchTerm}
-          <div class="text-xs whitespace-nowrap text-surface-600-400">
+          <div class="no-select text-xs whitespace-nowrap text-surface-600-400">
             {totalMatchCount > 0
               ? `${currentMatchIndex + 1}/${totalMatchCount}`
               : "0/0"}
@@ -247,7 +249,7 @@
 
           <!-- Navigation buttons -->
           <button
-            class="hover:bg-surface-300-600 rounded px-2 py-1 text-xs"
+            class="hover:bg-surface-300-600 no-select rounded px-2 py-1 text-xs"
             disabled={totalMatchCount === 0}
             onclick={() => {
               currentMatchIndex =
@@ -257,10 +259,10 @@
               scrollToMatch();
             }}
           >
-            ↑ <!-- TODO: replace with SVG -->
+            <IconArrowUp size={14} strokeWidth={2} />
           </button>
           <button
-            class="hover:bg-surface-300-600 rounded px-2 py-1 text-xs"
+            class="hover:bg-surface-300-600 no-select rounded px-2 py-1 text-xs"
             disabled={totalMatchCount === 0}
             onclick={() => {
               currentMatchIndex =
@@ -270,19 +272,19 @@
               scrollToMatch();
             }}
           >
-            ↓ <!-- TODO: replace with SVG -->
+            <IconArrowDown size={14} strokeWidth={2} />
           </button>
 
           <button
-            class="hover:bg-surface-300-600 rounded px-2 py-1"
+            class="hover:bg-surface-300-600 no-select rounded px-2 py-1"
             onclick={clearSearch}
           >
-            <IconX size={12} />
+            <IconX size={14} strokeWidth={2} />
           </button>
         {/if}
 
         <button
-          class="hover:bg-surface-300-600 rounded px-2 py-1 text-xs"
+          class="hover:bg-surface-300-600 no-select rounded px-2 py-1 text-xs"
           onclick={toggleSearch}
         >
           Close
