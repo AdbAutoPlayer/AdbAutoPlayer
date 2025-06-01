@@ -24,10 +24,6 @@
       : logs;
   });
 
-  const matchCount = $derived.by(() => {
-    return filteredLogs.length;
-  });
-
   function formatMessage(message: string): string {
     const urlRegex = /(https?:\/\/[^\s'"]+)/g;
     return message
@@ -44,18 +40,61 @@
     return "text-primary-50";
   }
 
-  function highlightText(text: string, searchTerm: string): string {
+  function highlightText(
+    text: string,
+    searchTerm: string,
+    logIndex: number,
+  ): string {
     if (!searchTerm) return text;
 
     const regex = new RegExp(
       `(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
       "gi",
     );
-    return text.replace(
-      regex,
-      '<mark class="bg-warning-200 text-warning-900">$1</mark>',
-    );
+
+    let matchCounter = 0;
+    let cumulativeMatchIndex = 0;
+
+    // Calculate the starting match index for this log entry
+    for (let i = 0; i < logIndex; i++) {
+      const matches = filteredLogs[i].message.match(regex);
+      if (matches) {
+        cumulativeMatchIndex += matches.length;
+      }
+    }
+
+    return text.replace(regex, (match) => {
+      const isCurrentMatch =
+        cumulativeMatchIndex + matchCounter === currentMatchIndex;
+      matchCounter++;
+
+      if (isCurrentMatch) {
+        return `<mark class="bg-primary-400 text-primary-900 ring-2 ring-primary-600">${match}</mark>`;
+      } else {
+        return `<mark class="bg-warning-200 text-warning-900">${match}</mark>`;
+      }
+    });
   }
+
+  // Recalculate total match count across all filtered logs
+  const totalMatchCount = $derived.by(() => {
+    if (!searchTerm) return 0;
+
+    let total = 0;
+    const regex = new RegExp(
+      `(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+      "gi",
+    );
+
+    filteredLogs.forEach((log) => {
+      const matches = log.message.match(regex);
+      if (matches) {
+        total += matches.length;
+      }
+    });
+
+    return total;
+  });
 
   function toggleSearch() {
     searchVisible = !searchVisible;
@@ -78,21 +117,21 @@
       toggleSearch();
     }
 
-    if (event.key === "Enter" && searchVisible && matchCount > 0) {
+    if (event.key === "Enter" && searchVisible && totalMatchCount > 0) {
       event.preventDefault();
       if (event.shiftKey) {
         currentMatchIndex =
-          currentMatchIndex <= 0 ? matchCount - 1 : currentMatchIndex - 1;
+          currentMatchIndex <= 0 ? totalMatchCount - 1 : currentMatchIndex - 1;
       } else {
         currentMatchIndex =
-          currentMatchIndex >= matchCount - 1 ? 0 : currentMatchIndex + 1;
+          currentMatchIndex >= totalMatchCount - 1 ? 0 : currentMatchIndex + 1;
       }
       scrollToMatch();
     }
   }
 
   function scrollToMatch() {
-    if (currentMatchIndex >= 0 && currentMatchIndex < matchCount) {
+    if (currentMatchIndex >= 0 && currentMatchIndex < totalMatchCount) {
       const matchElements = logContainer.querySelectorAll("mark");
       if (matchElements[currentMatchIndex]) {
         matchElements[currentMatchIndex].scrollIntoView({
@@ -166,8 +205,16 @@
 
   // Reset search when logs change significantly
   $effect(() => {
-    if (searchTerm && currentMatchIndex >= matchCount) {
-      currentMatchIndex = matchCount > 0 ? 0 : -1;
+    if (searchTerm && currentMatchIndex >= totalMatchCount) {
+      currentMatchIndex = totalMatchCount > 0 ? 0 : -1;
+    }
+  });
+
+  // Auto-scroll to current match when currentMatchIndex changes
+  $effect(() => {
+    if (searchTerm && currentMatchIndex >= 0 && totalMatchCount > 0) {
+      // Small delay to ensure DOM is updated with new highlights
+      setTimeout(() => scrollToMatch(), 50);
     }
   });
 </script>
@@ -193,16 +240,20 @@
 
         {#if searchTerm}
           <div class="text-xs whitespace-nowrap text-surface-600-400">
-            {matchCount > 0 ? `${currentMatchIndex + 1}/${matchCount}` : "0/0"}
+            {totalMatchCount > 0
+              ? `${currentMatchIndex + 1}/${totalMatchCount}`
+              : "0/0"}
           </div>
 
           <!-- Navigation buttons -->
           <button
             class="hover:bg-surface-300-600 rounded px-2 py-1 text-xs"
-            disabled={matchCount === 0}
+            disabled={totalMatchCount === 0}
             onclick={() => {
               currentMatchIndex =
-                currentMatchIndex <= 0 ? matchCount - 1 : currentMatchIndex - 1;
+                currentMatchIndex <= 0
+                  ? totalMatchCount - 1
+                  : currentMatchIndex - 1;
               scrollToMatch();
             }}
           >
@@ -210,10 +261,12 @@
           </button>
           <button
             class="hover:bg-surface-300-600 rounded px-2 py-1 text-xs"
-            disabled={matchCount === 0}
+            disabled={totalMatchCount === 0}
             onclick={() => {
               currentMatchIndex =
-                currentMatchIndex >= matchCount - 1 ? 0 : currentMatchIndex + 1;
+                currentMatchIndex >= totalMatchCount - 1
+                  ? 0
+                  : currentMatchIndex + 1;
               scrollToMatch();
             }}
           >
@@ -241,9 +294,11 @@
       class="h-full flex-grow overflow-y-scroll font-mono break-words whitespace-normal select-text"
       bind:this={logContainer}
     >
-      {#each searchTerm ? filteredLogs : logs as { message, html_class }}
+      {#each searchTerm ? filteredLogs : logs as { message, html_class }, index}
         <div class={html_class}>
-          {@html searchTerm ? highlightText(message, searchTerm) : message}
+          {@html searchTerm
+            ? highlightText(message, searchTerm, index)
+            : message}
         </div>
       {/each}
 
