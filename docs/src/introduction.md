@@ -4,7 +4,7 @@
 
 It works by using [**ADB (Android Debug Bridge)**](https://developer.android.com/tools/adb), which lets your computer control an **Android phone, tablet, or emulator**.
 
-> \[!IMPORTANT]
+> [!IMPORTANT]
 > This tool only works with **Android apps**.
 > You must use:
 >
