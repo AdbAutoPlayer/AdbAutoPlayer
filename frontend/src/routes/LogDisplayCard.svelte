@@ -219,7 +219,7 @@
   });
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} />
 
 <div class="flex min-h-6 flex-grow flex-col p-4">
   <div
