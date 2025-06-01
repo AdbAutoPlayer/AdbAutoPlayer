@@ -109,7 +109,7 @@ func (a *App) SaveMainConfig(mainConfig config.MainConfig) error {
 	runtime.EventsEmit(a.ctx, "log-clear")
 	ipc.GetFrontendLogger().SetLogLevelFromString(mainConfig.Logging.Level)
 	runtime.LogSetLogLevel(a.ctx, logger.LogLevel(ipc.GetLogLevelFromString(mainConfig.Logging.Level)))
-	runtime.LogInfo(a.ctx, "Saved Main config")
+	runtime.LogInfo(a.ctx, "Saved General Settings")
 	return nil
 }
 
@@ -176,7 +176,7 @@ func (a *App) SaveGameConfig(gameConfig map[string]interface{}) error {
 	if err := config.SaveConfig[map[string]interface{}](*a.lastOpenGameConfigPath, &gameConfig); err != nil {
 		return err
 	}
-	runtime.LogInfo(a.ctx, "Saved config")
+	runtime.LogInfo(a.ctx, "Saved Game Settings")
 	return nil
 }
 

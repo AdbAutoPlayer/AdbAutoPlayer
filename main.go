@@ -46,7 +46,7 @@ func main() {
 	}
 }
 
-// loadConfiguration loads the main configuration from various possible paths
+// loadConfiguration loads the General Setting from various possible paths
 func loadConfiguration() config.MainConfig {
 	paths := []string{
 		"config.toml",              // distributed

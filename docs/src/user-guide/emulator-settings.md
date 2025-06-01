@@ -4,6 +4,16 @@
 
 ---
 
+## BlueStacks 5 (Windows) & BlueStacks Air (MacOS)
+
+### Emulator Settings
+- **Display**:
+  - **Display Resolution**: Select **Portrait (1080 × 1920)**.
+- **Advanced**:
+  - **Android Debug Bridge (ADB)**: Enable this.
+
+---
+
 ## MuMuPlayer (Windows)
 
 > [!NOTE]
@@ -13,24 +23,10 @@
 - **Display**:
   - **Resolution Setting**: Select **Mobile Mode (1080 × 1920)**.
 
-### AdbAutoPlayer Main Config
+### AdbAutoPlayer General Settings
+
 Device ID: `127.0.0.1:7555`
 
----
-
-## BlueStacks 5 (Windows) & BlueStacks Air (MacOS)
-
-### Emulator Settings
-- **Display**:
-  - **Display Resolution**: Select **Portrait (1080 × 1920)**.
-- **Advanced**:
-  - **Android Debug Bridge (ADB)**: Enable this.
-
-### AdbAutoPlayer Main Config
-> [!NOTE]
-> If you have never changed the config you don't have to do anything this is the default value!
-
-Device ID: `127.0.0.1:5555`
 
 ---
 
@@ -42,7 +38,7 @@ Device ID: `127.0.0.1:5555`
 - **Others**:
     - **ADB Debugging**: Enable **Local Connection**.
 
-### AdbAutoPlayer Main Config
+### AdbAutoPlayer General Settings
 Device ID: `emulator-5554`
 
 ---
@@ -50,7 +46,7 @@ Device ID: `emulator-5554`
 ## MuMuPlayer Pro (MacOS)
 
 > [!WARNING]
-> I suggest using **BlueStacks Air** instead.
+> I suggest using **BlueStacks Air** instead because it's free.
 
 ### Emulator Settings
 - **Display** → **Display Size Phone**:
