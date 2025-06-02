@@ -6,7 +6,8 @@ If your problem does NOT go away activate it again.
 ![device-stream.png](../images/app/device-stream.png)
 
 ## Emulator
-If you are not using BlueStacks try using BlueStacks.
+> [!NOTE]
+> Test both [MumuPlayer](https://www.mumuplayer.com/) and [BlueStacks 5](https://www.bluestacks.com/)
 
 ## [ERROR] Device: 127.0.0.1:5555 not found
 If you have multiple BlueStacks instances only the first one uses Port 5555.  

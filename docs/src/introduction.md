@@ -39,7 +39,7 @@ It works by using [**ADB (Android Debug Bridge)**](https://developer.android.com
 
 ## [Download](https://github.com/AdbAutoPlayer/AdbAutoPlayer/releases/latest)
 
-> \[!IMPORTANT]
+> [!IMPORTANT]
 > Please check the user guides on the left before using the tool.
 
 ---
