@@ -6,12 +6,61 @@ import queue
 import threading
 import time
 
+import av
 import cv2
 import numpy as np
 from adbutils import AdbConnection, AdbDevice
+from av.codec.codec import UnknownCodecError
 from av.codec.context import CodecContext
 
+from . import ConfigLoader
 from .exceptions import AutoPlayerWarningError
+
+selected_decoder: str | None = None
+
+
+def _get_codec_context() -> CodecContext:
+    global selected_decoder
+
+    hardware_decoding = (
+        ConfigLoader().main_config.get("device", {}).get("hardware_decoding", False)
+    )
+
+    context: CodecContext | None = None
+    if hardware_decoding:
+        if selected_decoder:
+            return CodecContext.create(selected_decoder, "r")
+
+        h264_decoders = _get_available_h264_decoders()
+
+        for decoder in h264_decoders:
+            try:
+                context = CodecContext.create(decoder, "r")
+                selected_decoder = decoder
+                break
+            except UnknownCodecError:
+                continue
+
+    # explicitly try software h264 decoder
+    if not context:
+        try:
+            context = CodecContext.create("h264", "r")
+            selected_decoder = "h264"
+        except UnknownCodecError:
+            pass
+
+    if hardware_decoding and selected_decoder == "h264":
+        logging.warning(
+            "Failed to initialise h264 hardware decoder, using software decoding"
+        )
+
+    if context:
+        logging.debug(f"Using decoder: {selected_decoder}")
+        return context
+
+    raise StreamingNotSupportedError(
+        "No h264 decoders available cannot handle Device Streaming."
+    )
 
 
 class StreamingNotSupportedError(AutoPlayerWarningError):
@@ -34,6 +83,16 @@ class DeviceStream:
         Raises:
             StreamingNotSupportedError
         """
+        is_arm_mac = platform.system() == "Darwin" and platform.machine().startswith(
+            ("arm", "aarch")
+        )
+        if is_arm_mac and _device_is_emulator(device):
+            raise StreamingNotSupportedError(
+                "Emulators running on macOS do not support Device Streaming "
+                "you can try using your Phone."
+            )
+
+        self.codec = _get_codec_context()
         self.device = device
         self.fps = fps
         self.buffer_size = buffer_size
@@ -42,16 +101,6 @@ class DeviceStream:
         self._running = False
         self._stream_thread: threading.Thread | None = None
         self._process: AdbConnection | None = None
-        self.codec: CodecContext = CodecContext.create("h264", "r")
-        is_arm_mac = platform.system() == "Darwin" and platform.machine().startswith(
-            ("arm", "aarch")
-        )
-
-        if is_arm_mac and _device_is_emulator(device):
-            raise StreamingNotSupportedError(
-                "Emulators running on macOS do not support Device Streaming "
-                "you can try using your Phone."
-            )
 
     def start(self) -> None:
         """Start the screen streaming thread."""
@@ -163,3 +212,17 @@ def _device_is_emulator(device: AdbDevice) -> bool:
         return True
     logging.debug('getprop does not contain "Build" assuming Phone')
     return False
+
+
+def _get_available_h264_decoders():
+    """Returns a list of available H264 decoders."""
+    known_decoders = [
+        "h264_cuvid",  # NVIDIA GPU (high priority hardware decoder)
+        "h264_qsv",  # Intel Quick Sync (hardware)
+        "h264_vaapi",  # Intel/AMD VAAPI (hardware)
+        "h264_v4l2m2m",  # ARM/Linux hardware decoder
+        "h264_mf",  # Windows Media Foundation hardware decoder
+        "h264",  # Software fallback decoder
+    ]
+    available = av.codecs_available
+    return [decoder for decoder in known_decoders if decoder in available]
