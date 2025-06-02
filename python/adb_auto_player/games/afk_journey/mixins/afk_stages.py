@@ -13,7 +13,10 @@ from adb_auto_player.decorators.register_command import GuiMetadata, register_co
 from adb_auto_player.decorators.register_custom_routine_choice import (
     register_custom_routine_choice,
 )
-from adb_auto_player.games.afk_journey.base import AFKJourneyBase
+from adb_auto_player.games.afk_journey.base import (
+    AFKJourneyBase,
+    FinalStageReachedError,
+)
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.util.summary_generator import SummaryGenerator
 
@@ -57,10 +60,16 @@ class AFKStagesMixin(AFKJourneyBase):
         self.store[self.STORE_SEASON] = season
         try:
             self._start_afk_stage()
+        except FinalStageReachedError as e:
+            logging.info(f"{e}")
+            return
         except AutoPlayerWarningError as e:
             logging.warning(f"{e}")
+            return
         except AutoPlayerError as e:
             logging.error(f"{e}")
+            return
+        return
 
     def _start_afk_stage(self) -> None:
         """Start push."""
