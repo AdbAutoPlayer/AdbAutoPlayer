@@ -42,6 +42,7 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
 from adb_auto_player.template_matching import (
     CropRegions,
     MatchMode,
+    convert_to_grayscale,
     crop_image,
     find_all_template_matches,
     find_template_match,
@@ -788,6 +789,9 @@ class Game:
             tuple[str, int, int] | None: Coordinates of the match, or None if not found.
         """
         screenshot = self.get_screenshot()
+        if grayscale:
+            screenshot = convert_to_grayscale(screenshot)
+
         for template in templates:
             result: tuple[int, int] | None = self.game_find_template_match(
                 template,

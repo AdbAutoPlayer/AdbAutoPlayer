@@ -344,9 +344,6 @@ def _validate_template_size(base_image: np.ndarray, template_image: np.ndarray) 
         )
 
 
-NUM_COLORS_IN_RGB = 3
-
-
 def _prepare_images_for_processing(
     base_image, template_image, threshold=None, grayscale=True
 ):
@@ -366,12 +363,17 @@ def _prepare_images_for_processing(
 
     _validate_template_size(base_image=base_image, template_image=template_image)
 
-    base_cv = base_image
-    template_cv = template_image
     if grayscale:
-        if len(base_image.shape) == NUM_COLORS_IN_RGB:
-            base_cv = cv2.cvtColor(base_image, cv2.COLOR_BGR2GRAY)
-        if len(template_image.shape) == NUM_COLORS_IN_RGB:
-            template_cv = cv2.cvtColor(template_image, cv2.COLOR_BGR2GRAY)
+        return convert_to_grayscale(base_image), convert_to_grayscale(template_image)
 
-    return base_cv, template_cv
+    return base_image, template_image
+
+
+_NUM_COLORS_IN_RGB = 3
+
+
+def convert_to_grayscale(image: np.ndarray) -> np.ndarray:
+    """Convert np.ndarray to grayscale."""
+    if len(image.shape) == _NUM_COLORS_IN_RGB:
+        return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    return image
