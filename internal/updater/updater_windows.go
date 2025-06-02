@@ -103,7 +103,7 @@ func (um *UpdateManager) CheckForUpdates(autoUpdate bool, enableAlphaUpdates boo
 			}
 		}
 	}
-	runtime.LogInfo(um.ctx, "No updates available.")
+	runtime.LogDebug(um.ctx, "No updates available.")
 	return UpdateInfo{Available: false}
 }
 
