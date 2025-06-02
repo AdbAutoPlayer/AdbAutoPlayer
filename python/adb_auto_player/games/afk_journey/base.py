@@ -6,6 +6,7 @@ from time import sleep
 from typing import Any
 
 from adb_auto_player import (
+    AutoPlayerUnrecoverableError,
     AutoPlayerWarningError,
     Coordinates,
     CropRegions,
@@ -21,6 +22,10 @@ from adb_auto_player.decorators.register_game import GameGUIMetadata, register_g
 from .afkjourneynavigation import AFKJourneyNavigation
 from .config import Config
 from .gui_category import AFKJCategory
+
+
+class FinalStageReachedError(AutoPlayerUnrecoverableError):
+    pass
 
 
 @register_game(
@@ -428,9 +433,9 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                     "battle/victory_rewards.png",
                     "retry.png",
                     "navigation/confirm.png",
-                    "battle/victory_rewards.png",  # TODO: Duplicate? Check if needed.
                     "battle/power_up.png",
                     "battle/result.png",
+                    "afk_stages/tap_to_close.png",
                 ],
                 timeout=self.BATTLE_TIMEOUT,
             )
@@ -447,45 +452,56 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                     "battle/victory_rewards.png",  # TODO: Duplicate? Check if needed.
                     "battle/power_up.png",
                     "battle/result.png",
+                    "afk_stages/tap_to_close.png",
                 ],
                 timeout=self.BATTLE_TIMEOUT,
             )
 
-            if template == "duras_trials/no_next.png":
-                self.press_back_button()
-                result = True
-                break
-            elif template == "battle/victory_rewards.png":
-                self.tap(Coordinates(x=550, y=1800), scale=True)
-                result = True
-                break
-            elif template == "battle/power_up.png":
-                self.tap(Coordinates(x=550, y=1800), scale=True)
-                result = False
-                break
-            elif template == "navigation/confirm.png":
-                logging.error(
-                    "Network Error or Battle data differs between client and server"
-                )
-                self.tap(Coordinates(x=x, y=y))
-                sleep(3)
-                result = False
-                break
-            elif template in (
-                "next.png",
-                "duras_trials/first_clear.png",
-                "duras_trials/end_sunrise.png",
-            ):
-                result = True
-                break
-            elif template == "retry.png":
-                logging.info(f"Lost Battle #{count}")
-                self.tap(Coordinates(x=x, y=y))
-                # Do not break so the loop continues
-            elif template == "battle/result.png":
-                self.tap(Coordinates(x=950, y=1800), scale=True)
-                result = True
-                break
+            match template:
+                case "duras_trials/no_next.png":
+                    self.press_back_button()
+                    result = True
+                    break
+
+                case "battle/victory_rewards.png":
+                    self.tap(Coordinates(x=550, y=1800), scale=True)
+                    result = True
+                    break
+
+                case "battle/power_up.png":
+                    self.tap(Coordinates(x=550, y=1800), scale=True)
+                    result = False
+                    break
+
+                case "navigation/confirm.png":
+                    logging.error(
+                        "Network Error or Battle data differs between client and server"
+                    )
+                    self.tap(Coordinates(x=x, y=y))
+                    sleep(3)
+                    result = False
+                    break
+
+                case (
+                    "next.png"
+                    | "duras_trials/first_clear.png"
+                    | "duras_trials/end_sunrise.png"
+                ):
+                    result = True
+                    break
+
+                case "retry.png":
+                    logging.info(f"Lost Battle #{count}")
+                    self.tap(Coordinates(x=x, y=y))
+                    # Do not break so the loop continues
+
+                case "battle/result.png":
+                    self.tap(Coordinates(x=950, y=1800), scale=True)
+                    result = True
+                    break
+
+                case "afk_stages/tap_to_close.png":
+                    raise FinalStageReachedError("Final Stage reached, exiting...")
 
         # If no branch set result, default to False.
         if result is None:
