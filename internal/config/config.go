@@ -18,9 +18,10 @@ type MainConfig struct {
 }
 
 type DeviceConfig struct {
-	ID          string `toml:"ID"`
-	UseWMResize bool   `toml:"wm_size" json:"Resize Display (Phone/Tablet only)"`
-	Streaming   bool   `toml:"streaming" json:"Device Streaming (turn off for low-performance PCs)"`
+	ID               string `toml:"ID"`
+	UseWMResize      bool   `toml:"wm_size" json:"Resize Display (Phone/Tablet only)"`
+	Streaming        bool   `toml:"streaming" json:"Device Streaming (disable for slow PCs)"`
+	HardwareDecoding bool   `toml:"hardware_decoding" json:"Enable Hardware Decoding"`
 }
 
 type ADBConfig struct {
@@ -50,9 +51,10 @@ func NewMainConfig() MainConfig {
 			Port: 5037,
 		},
 		Device: DeviceConfig{
-			ID:          "127.0.0.1:5555",
-			UseWMResize: false,
-			Streaming:   true,
+			ID:               "127.0.0.1:5555",
+			UseWMResize:      false,
+			Streaming:        true,
+			HardwareDecoding: false,
 		},
 		Update: UpdateConfig{
 			AutoUpdate:         false,
