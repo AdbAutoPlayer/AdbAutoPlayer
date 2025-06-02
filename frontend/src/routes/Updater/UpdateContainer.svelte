@@ -212,6 +212,20 @@
   onDestroy(() => {
     clearInterval(updateCheckInterval);
   });
+
+  /* Changelog style testing
+    modalChangeLog =
+      "## What's New\n" +
+      "* **AFK Journey: Handle scenarios where final AFK Stage is cleared before Infinity Stages**\n" +
+      "  *Contributed by @yulesxoxo in https://github.com/AdbAutoPlayer/AdbAutoPlayer/pull/137*\n" +
+      "* **Updated some log messages**\n" +
+      "  *Contributed by @yulesxoxo*\n" +
+      "* **Improved Update Changelog display**\n" +
+      "  *Contributed by @yulesxoxo*\n" +
+      "\n" +
+      "**Full Changelog**: https://github.com/AdbAutoPlayer/AdbAutoPlayer/compare/7.0.0...7.0.1";
+    updateState.showModal = true;
+   */
 </script>
 
 <UpdateIconSticky show={updateState.showDownloadIcon} onClick={openModal} />
