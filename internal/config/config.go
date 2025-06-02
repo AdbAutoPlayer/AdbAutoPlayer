@@ -19,8 +19,8 @@ type MainConfig struct {
 
 type DeviceConfig struct {
 	ID          string `toml:"ID"`
-	UseWMResize bool   `toml:"wm_size" json:"Resize Display"`
-	Streaming   bool   `toml:"streaming" json:"Device Streaming"`
+	UseWMResize bool   `toml:"wm_size" json:"Resize Display (Phone/Tablet only)"`
+	Streaming   bool   `toml:"streaming" json:"Device Streaming (turn off for low-performance PCs)"`
 }
 
 type ADBConfig struct {
@@ -96,7 +96,7 @@ func LoadConfig[T any](filePath string) (*T, error) {
 	}
 
 	var config T
-	if err := toml.Unmarshal(data, &config); err != nil {
+	if err = toml.Unmarshal(data, &config); err != nil {
 		return nil, err
 	}
 	return &config, nil
@@ -116,10 +116,10 @@ func SaveConfig[T any](filePath string, config *T) error {
 	modifiedConfigStr := regexp.MustCompile(`=(\s\d+)\.0(\s|$)`).ReplaceAllString(configStr, `=$1$2`)
 	newConfigData = []byte(modifiedConfigStr)
 
-	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
+	if err = os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filePath, newConfigData, 0644); err != nil {
+	if err = os.WriteFile(filePath, newConfigData, 0644); err != nil {
 		return err
 	}
 
