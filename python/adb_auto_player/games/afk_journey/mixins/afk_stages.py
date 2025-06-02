@@ -13,7 +13,9 @@ from adb_auto_player.decorators.register_command import GuiMetadata, register_co
 from adb_auto_player.decorators.register_custom_routine_choice import (
     register_custom_routine_choice,
 )
-from adb_auto_player.games.afk_journey.base import AFKJourneyBase
+from adb_auto_player.games.afk_journey.base import (
+    AFKJourneyBase,
+)
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.util.summary_generator import SummaryGenerator
 
@@ -59,8 +61,11 @@ class AFKStagesMixin(AFKJourneyBase):
             self._start_afk_stage()
         except AutoPlayerWarningError as e:
             logging.warning(f"{e}")
+            return
         except AutoPlayerError as e:
             logging.error(f"{e}")
+            return
+        return
 
     def _start_afk_stage(self) -> None:
         """Start push."""
@@ -69,6 +74,7 @@ class AFKStagesMixin(AFKJourneyBase):
 
         logging.info(f"Pushing: {stages_name}")
         self.navigate_to_afk_stages_screen()
+        self.check_stages_are_available()
         self._select_afk_stage()
         while self._handle_battle_screen(
             self.get_config().afk_stages.use_suggested_formations,
@@ -87,8 +93,6 @@ class AFKStagesMixin(AFKJourneyBase):
 
     def _select_afk_stage(self) -> None:
         """Selects an AFK stage template."""
-        self.tap(Coordinates(x=550, y=1080), scale=True)  # click rewards popup
-        sleep(1)
         if self.store.get(self.STORE_SEASON, False):
             logging.debug("Clicking Talent Trials button")
             self.tap(Coordinates(x=300, y=1610), scale=True)
@@ -101,3 +105,12 @@ class AFKStagesMixin(AFKJourneyBase):
         )
         if confirm:
             self.tap(Coordinates(*confirm))
+
+    def check_stages_are_available(self) -> None:
+        if not self.store[self.STORE_SEASON] and self.game_find_template_match(
+            "afk_stages/talent_trials_large.png",
+            crop=CropRegions(left=0.2, right=0.2, top=0.5),
+        ):
+            raise AutoPlayerWarningError(
+                "AFK Stages not available are they already cleared? Exiting..."
+            )

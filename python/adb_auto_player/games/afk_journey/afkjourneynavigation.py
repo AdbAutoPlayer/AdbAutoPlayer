@@ -161,6 +161,8 @@ class AFKJourneyNavigation(Game, ABC):
             crop=CropRegions(left=0.3, right=0.3, top=0.9),
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
+        self.tap(Coordinates(x=550, y=1080), scale=True)  # click rewards popup
+        sleep(1)
 
     def navigate_to_battle_modes_screen(self) -> None:
         self.navigate_to_default_state()
