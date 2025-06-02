@@ -34,6 +34,7 @@ class AFKJourneyNavigation(Game, ABC):
             "guide/next.png",
             "login/claim.png",
             "arcane_labyrinth/back_arrow.png",
+            "battle/exit_door.png",
         ]
 
         max_attempts = 40
