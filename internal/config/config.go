@@ -60,8 +60,8 @@ func NewMainConfig() MainConfig {
 		},
 		Logging: LoggingConfig{
 			Level:                string(ipc.LogLevelInfo),
-			DebugSaveScreenshots: 30,
-			ActionLogLimit:       10,
+			DebugSaveScreenshots: 60,
+			ActionLogLimit:       5,
 		},
 		UI: UIConfig{
 			Theme: "catppuccin",

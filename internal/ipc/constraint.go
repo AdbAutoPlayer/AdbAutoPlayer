@@ -84,11 +84,11 @@ func GetMainConfigConstraints() map[string]interface{} {
 
 	return map[string]interface{}{
 		"Device": map[string]interface{}{
-			"ID":               NewTextConstraint("127.0.0.1:5555"),
-			"Resize Display":   NewCheckboxConstraint(false),
-			"Device Streaming": NewCheckboxConstraint(true),
+			"ID":                                 NewTextConstraint("127.0.0.1:5555"),
+			"Resize Display (Phone/Tablet only)": NewCheckboxConstraint(false),
+			"Device Streaming (turn off for low-performance PCs)": NewCheckboxConstraint(true),
 			"Order": []string{
-				"ID", "Device Streaming", "Resize Display",
+				"ID", "Device Streaming (turn off for low-performance PCs)", "Resize Display (Phone/Tablet only)",
 			},
 		},
 		"ADB": map[string]interface{}{
@@ -107,8 +107,8 @@ func GetMainConfigConstraints() map[string]interface{} {
 				string(LogLevelError),
 				string(LogLevelFatal),
 			}, string(LogLevelInfo)),
-			"Debug Screenshot Limit": NewNumberConstraint(nil, nil, nil, 30),
-			"Action Log Limit":       NewNumberConstraint(&actionLogLimitMin, nil, nil, 10),
+			"Debug Screenshot Limit": NewNumberConstraint(nil, nil, nil, 60),
+			"Action Log Limit":       NewNumberConstraint(&actionLogLimitMin, nil, nil, 5),
 		},
 		"User Interface": map[string]interface{}{
 			"Theme": NewSelectConstraint([]string{

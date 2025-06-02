@@ -194,7 +194,7 @@
         {#each Object.entries(sectionConfig) as [key, value]}
           <div class="mb-4">
             <div class="flex items-center justify-between">
-              <label for="{sectionKey}-{key}" class="mr-3 w-30 text-right">
+              <label for="{sectionKey}-{key}" class="mr-3 w-40 text-right">
                 {key}
               </label>
 
