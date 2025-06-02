@@ -123,7 +123,6 @@ class Game:
         self._config_file_path: Path | None = None
         self._debug_screenshot_counter: int = 0
         self._device: AdbDevice | None = None
-        self._previous_screenshot: np.ndarray | None = None
         self._resolution: tuple[int, int] | None = None
         self._scale_factor: float | None = None
         self._stream: DeviceStream | None = None
@@ -382,11 +381,7 @@ class Game:
         if self._stream:
             image = self._stream.get_latest_frame()
             if image is not None:
-                if self._previous_screenshot is None or not np.array_equal(
-                    image, self._previous_screenshot
-                ):
-                    self._previous_screenshot = image
-                    self._debug_save_screenshot()
+                self._debug_save_screenshot(image)
                 return image
             logging.error(
                 "Could not retrieve latest Frame from Device Stream using screencap..."
@@ -427,22 +422,8 @@ class Game:
         img = cv2.imdecode(np_data, cv2.IMREAD_COLOR)
         if img is None:
             raise ValueError("Failed to decode screenshot image data")
-        self._previous_screenshot = img
-        self._debug_save_screenshot()
-        return self._previous_screenshot
-
-    def get_previous_screenshot(self) -> np.ndarray:
-        """Get the previous screenshot."""
-        if self._previous_screenshot is not None:
-            return self._previous_screenshot
-        return self.get_screenshot()
-
-    def _get_screenshot(self, previous_screenshot: bool) -> np.ndarray:
-        """Get screenshot depending on stream or not."""
-        if previous_screenshot:
-            return self.get_previous_screenshot()
-        else:
-            return self.get_screenshot()
+        self._debug_save_screenshot(img)
+        return img
 
     def force_stop_game(self):
         """Force stops the Game."""
@@ -515,7 +496,6 @@ class Game:
             bool: True if the region of interest has changed, False otherwise.
 
         Raises:
-            NoPreviousScreenshotException: No previous screenshot
             TimeoutException: If no change is detected within the timeout period.
             ValueError: Invalid crop values.
         """
@@ -544,7 +524,7 @@ class Game:
             roi_changed, delay=delay, timeout=timeout, timeout_message=timeout_message
         )
 
-    # TODO: Change this functio name.
+    # TODO: Change this function name.
     # It is the same as template_matching.find_template_match
     def game_find_template_match(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
@@ -553,7 +533,7 @@ class Game:
         threshold: float | None = None,
         grayscale: bool = False,
         crop: CropRegions = CropRegions(),
-        use_previous_screenshot: bool = False,
+        screenshot: np.ndarray | None = None,
     ) -> tuple[int, int] | None:
         """Find a template on the screen.
 
@@ -563,7 +543,8 @@ class Game:
             threshold (float, optional): Image similarity threshold. Defaults to 0.9.
             grayscale (bool, optional): Convert to grayscale boolean. Defaults to False.
             crop (Crop, optional): Crop percentages. Defaults to Crop().
-            use_previous_screenshot (bool, optional): Defaults to False.
+            screenshot (np.ndarray, optional): Screenshot image. Will fetch screenshot
+                if None
 
         Returns:
             tuple[int, int] | None: Coordinates of the match, or None if not found.
@@ -571,7 +552,7 @@ class Game:
         template_path = self.get_template_dir_path() / template
 
         base_image, left_offset, top_offset = crop_image(
-            image=self._get_screenshot(previous_screenshot=use_previous_screenshot),
+            image=screenshot if screenshot is not None else self.get_screenshot(),
             crop=crop,
         )
 
@@ -610,7 +591,7 @@ class Game:
         """
         template_path: Path = self.get_template_dir_path() / template
         base_image, left_offset, top_offset = crop_image(
-            image=self._get_screenshot(previous_screenshot=False), crop=crop
+            image=self.get_screenshot(), crop=crop
         )
 
         result = find_worst_template_match(
@@ -627,14 +608,13 @@ class Game:
         x, y = result
         return x + left_offset, y + top_offset
 
-    def find_all_template_matches(  # noqa: PLR0913 - TODO: Consolidate more.
+    def find_all_template_matches(
         self,
         template: str | Path,
         threshold: float | None = None,
         grayscale: bool = False,
         crop: CropRegions = CropRegions(),
         min_distance: int = 10,
-        use_previous_screenshot: bool = False,
     ) -> list[tuple[int, int]]:
         """Find all matches.
 
@@ -645,7 +625,6 @@ class Game:
             crop (CropRegions, optional): Crop percentages. Defaults to CropRegions().
             min_distance (int, optional): Minimum distance between matches.
                 Defaults to 10.
-            use_previous_screenshot (bool, optional): Defaults to False.
 
         Returns:
             list[tuple[int, int]]: List of found coordinates.
@@ -653,7 +632,7 @@ class Game:
         template_path: Path = self.get_template_dir_path() / template
 
         base_image, left_offset, top_offset = crop_image(
-            image=self._get_screenshot(previous_screenshot=use_previous_screenshot),
+            image=self.get_screenshot(),
             crop=crop,
         )
 
@@ -785,14 +764,13 @@ class Game:
             find_template, delay=delay, timeout=timeout, timeout_message=timeout_message
         )
 
-    def find_any_template(  # noqa: PLR0913 - TODO: Consolidate more.
+    def find_any_template(
         self,
         templates: list[str],
         match_mode: MatchMode = MatchMode.BEST,
         threshold: float | None = None,
         grayscale: bool = False,
         crop: CropRegions = CropRegions(),
-        use_previous_screenshot: bool = False,
     ) -> tuple[str, int, int] | None:
         """Find any first template on the screen.
 
@@ -802,13 +780,11 @@ class Game:
             threshold (float, optional): Image similarity threshold. Defaults to 0.9.
             grayscale (bool, optional): Convert to grayscale boolean. Defaults to False.
             crop (CropRegions, optional): Crop percentages. Defaults to CropRegions().
-            use_previous_screenshot (bool, optional): Defaults to False.
 
         Returns:
             tuple[str, int, int] | None: Coordinates of the match, or None if not found.
         """
-        if not use_previous_screenshot:
-            self.get_screenshot()
+        screenshot = self.get_screenshot()
         for template in templates:
             result: tuple[int, int] | None = self.game_find_template_match(
                 template,
@@ -816,7 +792,7 @@ class Game:
                 threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
                 crop=crop,
-                use_previous_screenshot=True,
+                screenshot=screenshot,
             )
             if result is not None:
                 x, y = result
@@ -1021,11 +997,10 @@ class Game:
 
         return coordinates
 
-    def _debug_save_screenshot(self) -> None:
+    def _debug_save_screenshot(self, screenshot: np.ndarray) -> None:
         logging_config = ConfigLoader().main_config.get("logging", {})
         debug_screenshot_save_num = logging_config.get("debug_save_screenshots", 60)
 
-        screenshot = self._previous_screenshot
         if debug_screenshot_save_num <= 0 or screenshot is None:
             return
 

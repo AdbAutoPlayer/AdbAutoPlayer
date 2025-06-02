@@ -135,15 +135,10 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
     )
     def handle_arcane_labyrinth(self) -> None:
         """Handle Arcane Labyrinth."""
-        logging.warning("This is made for farming Lucky Flip Keys")
-        logging.warning(
+        logging.info("This is made for farming Lucky Flip Keys")
+        logging.info(
             "Your current team and artifact will be used "
             "make sure to set it up once and do a single battle before"
-        )
-        logging.warning("Report issues: https://discord.gg/yaphalla")
-        logging.warning(
-            "Channel: "
-            "https://discord.com/channels/1332082220013322240/1338732933057347655"
         )
         self.start_up()
         key_quota: int = self.get_config().arcane_labyrinth.key_quota
