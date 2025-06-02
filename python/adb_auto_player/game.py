@@ -561,6 +561,7 @@ class Game:
             template_image=load_image(
                 image_path=template_path,
                 image_scale_factor=self.get_scale_factor(),
+                grayscale=grayscale,
             ),
             match_mode=match_mode,
             threshold=threshold or self.default_threshold,
@@ -599,6 +600,7 @@ class Game:
             template_image=load_image(
                 image_path=template_path,
                 image_scale_factor=self.get_scale_factor(),
+                grayscale=grayscale,
             ),
             grayscale=grayscale,
         )
@@ -641,6 +643,7 @@ class Game:
             template_image=load_image(
                 image_path=template_path,
                 image_scale_factor=self.get_scale_factor(),
+                grayscale=grayscale,
             ),
             threshold=threshold or self.default_threshold,
             grayscale=grayscale,

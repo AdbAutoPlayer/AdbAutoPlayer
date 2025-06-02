@@ -34,7 +34,11 @@ class CropRegions(NamedTuple):
 template_cache: dict[str, np.ndarray] = {}
 
 
-def load_image(image_path: Path, image_scale_factor: float = 1.0) -> np.ndarray:
+def load_image(
+    image_path: Path,
+    image_scale_factor: float = 1.0,
+    grayscale: bool = False,
+) -> np.ndarray:
     """Loads an image from disk or returns the cached version if available.
 
     Resizes the image if needed and stores it in the global template_cache.
@@ -42,6 +46,7 @@ def load_image(image_path: Path, image_scale_factor: float = 1.0) -> np.ndarray:
     Args:
         image_path: Path to the template image.
         image_scale_factor: Scale factor for resizing the image.
+        grayscale: Whether to convert the image to grayscale.
 
     Returns:
         np.ndarray
@@ -49,7 +54,7 @@ def load_image(image_path: Path, image_scale_factor: float = 1.0) -> np.ndarray:
     if image_path.suffix == "":
         image_path = image_path.with_suffix(".png")
 
-    cache_key = f"{image_path}_{image_scale_factor}"
+    cache_key = f"{image_path}_{image_scale_factor}_grayscale={grayscale}"
     if cache_key in template_cache:
         return template_cache[cache_key]
 
@@ -63,6 +68,9 @@ def load_image(image_path: Path, image_scale_factor: float = 1.0) -> np.ndarray:
         image = cv2.resize(
             image, (new_width, new_height), interpolation=cv2.INTER_LANCZOS4
         )
+
+    if grayscale:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     template_cache[cache_key] = image
     return image
@@ -123,17 +131,12 @@ def similar_image(
     Returns:
         True if the base_image matches the template_image based on the given threshold.
     """
-    _validate_threshold(threshold)
-    _validate_template_size(
+    base_cv, template_cv = _prepare_images_for_processing(
         base_image=base_image,
         template_image=template_image,
+        threshold=threshold,
+        grayscale=grayscale,
     )
-
-    base_cv = np.array(base_image)
-    template_cv = np.array(template_image)
-    if grayscale:
-        base_cv = cv2.cvtColor(base_cv, cv2.COLOR_BGR2GRAY)
-        template_cv = cv2.cvtColor(template_cv, cv2.COLOR_BGR2GRAY)
 
     result = cv2.matchTemplate(base_cv, template_cv, method=cv2.TM_CCOEFF_NORMED)
     return np.max(result) >= threshold
@@ -158,18 +161,12 @@ def find_template_match(
     Returns:
         tuple of (center_x, center_y) coordinates or None if no match found
     """
-    _validate_threshold(threshold)
-    _validate_template_size(
+    base_cv, template_cv = _prepare_images_for_processing(
         base_image=base_image,
         template_image=template_image,
+        threshold=threshold,
+        grayscale=grayscale,
     )
-
-    base_cv = np.array(base_image)
-    template_cv = np.array(template_image)
-
-    if grayscale:
-        base_cv = cv2.cvtColor(base_cv, cv2.COLOR_BGR2GRAY)
-        template_cv = cv2.cvtColor(template_cv, cv2.COLOR_BGR2GRAY)
 
     result = cv2.matchTemplate(base_cv, template_cv, cv2.TM_CCOEFF_NORMED)
     if match_mode == MatchMode.BEST:
@@ -200,7 +197,6 @@ def find_template_match(
     }
 
     selected_match = min(matches, key=key_functions[match_mode])
-
     center_x = selected_match[0] + template_width // 2
     center_y = selected_match[1] + template_height // 2
 
@@ -226,18 +222,12 @@ def find_all_template_matches(
     Returns:
         list[tuple[int, int]]: List of found coordinates.
     """
-    _validate_threshold(threshold)
-    _validate_template_size(
+    base_cv, template_cv = _prepare_images_for_processing(
         base_image=base_image,
         template_image=template_image,
+        threshold=threshold,
+        grayscale=grayscale,
     )
-
-    base_cv = np.array(base_image)
-    template_cv = np.array(template_image)
-
-    if grayscale:
-        base_cv = cv2.cvtColor(base_cv, cv2.COLOR_BGR2GRAY)
-        template_cv = cv2.cvtColor(template_cv, cv2.COLOR_BGR2GRAY)
 
     result = cv2.matchTemplate(base_cv, template_cv, cv2.TM_CCOEFF_NORMED)
     match_locations = np.where(result >= threshold)
@@ -274,17 +264,9 @@ def find_worst_template_match(
     Returns:
         tuple of (center_x, center_y) coordinates for the most different region
     """
-    _validate_template_size(
-        base_image=base_image,
-        template_image=template_image,
+    base_cv, template_cv = _prepare_images_for_processing(
+        base_image=base_image, template_image=template_image, grayscale=grayscale
     )
-
-    base_cv = np.array(base_image)
-    template_cv = np.array(template_image)
-
-    if grayscale:
-        base_cv = cv2.cvtColor(base_cv, cv2.COLOR_BGR2GRAY)
-        template_cv = cv2.cvtColor(template_cv, cv2.COLOR_BGR2GRAY)
 
     # Create a difference map using OpenCV's matchTemplate with TM_SQDIFF
     # TM_SQDIFF gives higher values for worse matches (sum of squared differences)
@@ -360,3 +342,36 @@ def _validate_template_size(base_image: np.ndarray, template_image: np.ndarray) 
             f"Base size: ({base_width}, {base_height}), "
             f"Template size: ({template_width}, {template_height})"
         )
+
+
+NUM_COLORS_IN_RGB = 3
+
+
+def _prepare_images_for_processing(
+    base_image, template_image, threshold=None, grayscale=True
+):
+    """Validates inputs and prepares images for template matching.
+
+    Args:
+        base_image (np.ndarray): The base image.
+        template_image (np.ndarray): The template image.
+        threshold (float, optional): Matching threshold to validate.
+        grayscale (bool): Whether to convert images to grayscale.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: Prepared base and template images.
+    """
+    if threshold is not None:
+        _validate_threshold(threshold)
+
+    _validate_template_size(base_image=base_image, template_image=template_image)
+
+    base_cv = base_image
+    template_cv = template_image
+    if grayscale:
+        if len(base_image.shape) == NUM_COLORS_IN_RGB:
+            base_cv = cv2.cvtColor(base_image, cv2.COLOR_BGR2GRAY)
+        if len(template_image.shape) == NUM_COLORS_IN_RGB:
+            template_cv = cv2.cvtColor(template_image, cv2.COLOR_BGR2GRAY)
+
+    return base_cv, template_cv
