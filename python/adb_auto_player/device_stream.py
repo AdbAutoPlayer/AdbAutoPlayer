@@ -5,6 +5,7 @@ import platform
 import queue
 import threading
 import time
+from functools import lru_cache
 
 import av
 import cv2
@@ -16,35 +17,27 @@ from av.codec.context import CodecContext
 from . import ConfigLoader
 from .exceptions import AutoPlayerWarningError
 
-selected_decoder: str | None = None
 
+@lru_cache(maxsize=1)
+def _get_best_decoder(hardware_decoding: bool) -> str:
+    """Find and cache the best available H264 decoder."""
+    selected_decoder = None
 
-def _get_codec_context() -> CodecContext:
-    global selected_decoder
-
-    hardware_decoding = (
-        ConfigLoader().main_config.get("device", {}).get("hardware_decoding", False)
-    )
-
-    context: CodecContext | None = None
     if hardware_decoding:
-        if selected_decoder:
-            return CodecContext.create(selected_decoder, "r")
-
         h264_decoders = _get_available_h264_decoders()
 
         for decoder in h264_decoders:
             try:
-                context = CodecContext.create(decoder, "r")
+                _ = CodecContext.create(decoder, "r")
                 selected_decoder = decoder
                 break
             except UnknownCodecError:
                 continue
 
     # explicitly try software h264 decoder
-    if not context:
+    if not selected_decoder:
         try:
-            context = CodecContext.create("h264", "r")
+            _ = CodecContext.create("h264", "r")
             selected_decoder = "h264"
         except UnknownCodecError:
             pass
@@ -54,13 +47,23 @@ def _get_codec_context() -> CodecContext:
             "Failed to initialise h264 hardware decoder, using software decoding"
         )
 
-    if context:
-        logging.debug(f"Using decoder: {selected_decoder}")
-        return context
+    if selected_decoder:
+        logging.debug(f"Selected H264 decoder: {selected_decoder}")
+        return selected_decoder
 
     raise StreamingNotSupportedError(
         "No h264 decoders available cannot handle Device Streaming."
     )
+
+
+def _get_codec_context() -> CodecContext:
+    """Get codec context using cached decoder selection."""
+    hardware_decoding = (
+        ConfigLoader().main_config.get("device", {}).get("hardware_decoding", False)
+    )
+
+    decoder_name = _get_best_decoder(hardware_decoding)
+    return CodecContext.create(decoder_name, "r")
 
 
 class StreamingNotSupportedError(AutoPlayerWarningError):
