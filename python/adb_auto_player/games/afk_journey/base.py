@@ -392,6 +392,33 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
             return True
         return False
 
+    def _get_battle_over_templates(self) -> list[str]:
+        mode = self.store.get(self.STORE_MODE, None)
+        battle_over_templates = [
+            "next.png",
+            "battle/victory_rewards.png",
+            "retry.png",
+            "navigation/confirm.png",
+            "battle/power_up.png",
+            "battle/result.png",
+        ]
+
+        if mode == self.MODE_AFK_STAGES:
+            battle_over_templates.extend(
+                [
+                    "afk_stages/tap_to_close.png",
+                ]
+            )
+        elif mode == self.MODE_DURAS_TRIALS:
+            battle_over_templates.extend(
+                [
+                    "duras_trials/no_next.png",
+                    "duras_trials/first_clear.png",
+                    "duras_trials/end_sunrise.png",
+                ]
+            )
+        return battle_over_templates
+
     def _handle_single_stage(self) -> bool:
         """Handles a single stage of a battle.
 
@@ -402,6 +429,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
         attempts = self._get_config_attribute_from_mode("attempts")
         count = 0
         result: bool | None = None
+        battle_over_templates = self._get_battle_over_templates()
 
         while count < attempts:
             count += 1
@@ -411,44 +439,19 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                 result = False
                 break
 
-            # TODO: would have to be refactored completely to check if
-            #       a battle is still going on afk stages and season talent stages
-            #       have a label at the top, not sure about other game modes
-            #       would also have to check every couple seconds if the frame
-            #       changed to see if the game froze.
-
             # TODO: Because we iteratively look for templates, it can match something
             # later in the list first causing non-deterministic behavior.
             _, x, y = self.wait_for_any_template(
-                [
-                    "duras_trials/no_next.png",
-                    "duras_trials/first_clear.png",
-                    "duras_trials/end_sunrise.png",
-                    "next.png",
-                    "battle/victory_rewards.png",
-                    "retry.png",
-                    "navigation/confirm.png",
-                    "battle/power_up.png",
-                    "battle/result.png",
-                    "afk_stages/tap_to_close.png",
-                ],
+                templates=battle_over_templates,
                 timeout=self.BATTLE_TIMEOUT,
+                crop=CropRegions(top=0.4),
+                delay=1.0,
             )
             # TODO: Temporary fix of restarting search once battle end is determined.
             template, x, y = self.wait_for_any_template(
-                [
-                    "duras_trials/no_next.png",
-                    "duras_trials/first_clear.png",
-                    "duras_trials/end_sunrise.png",
-                    "next.png",
-                    "battle/victory_rewards.png",
-                    "retry.png",
-                    "navigation/confirm.png",
-                    "battle/power_up.png",
-                    "battle/result.png",
-                    "afk_stages/tap_to_close.png",
-                ],
+                templates=battle_over_templates,
                 timeout=self.BATTLE_TIMEOUT,
+                crop=CropRegions(top=0.4),
             )
 
             match template:
