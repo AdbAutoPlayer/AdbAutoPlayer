@@ -35,7 +35,7 @@ class GuitarGirl(Game):
     def busk(self) -> NoReturn:
         self.open_eyes(device_streaming=False)
         counter = 0
-        mod = 10000
+        mod = 3000
         while True:
             if counter == (mod - 1):
                 self._start_game_if_not_running()
@@ -74,7 +74,7 @@ class GuitarGirl(Game):
         counter = 0
         y = 200
         y_max = 960
-        mod = 50000
+        mod = 10000
         while True:
             if counter == (mod - 1):
                 self._start_game_if_not_running()
