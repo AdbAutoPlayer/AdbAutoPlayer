@@ -449,7 +449,6 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                     "battle/victory_rewards.png",
                     "retry.png",
                     "navigation/confirm.png",
-                    "battle/victory_rewards.png",  # TODO: Duplicate? Check if needed.
                     "battle/power_up.png",
                     "battle/result.png",
                     "afk_stages/tap_to_close.png",
