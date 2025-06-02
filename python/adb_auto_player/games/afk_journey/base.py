@@ -6,7 +6,6 @@ from time import sleep
 from typing import Any
 
 from adb_auto_player import (
-    AutoPlayerUnrecoverableError,
     AutoPlayerWarningError,
     Coordinates,
     CropRegions,
@@ -22,10 +21,6 @@ from adb_auto_player.decorators.register_game import GameGUIMetadata, register_g
 from .afkjourneynavigation import AFKJourneyNavigation
 from .config import Config
 from .gui_category import AFKJCategory
-
-
-class FinalStageReachedError(AutoPlayerUnrecoverableError):
-    pass
 
 
 @register_game(
@@ -500,7 +495,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                     break
 
                 case "afk_stages/tap_to_close.png":
-                    raise FinalStageReachedError("Final Stage reached, exiting...")
+                    raise AutoPlayerWarningError("Final Stage reached, exiting...")
 
         # If no branch set result, default to False.
         if result is None:
