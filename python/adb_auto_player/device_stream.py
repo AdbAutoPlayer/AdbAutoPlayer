@@ -224,7 +224,6 @@ def _get_available_h264_decoders():
         "h264_qsv",  # Intel Quick Sync (hardware)
         "h264_vaapi",  # Intel/AMD VAAPI (hardware)
         "h264_v4l2m2m",  # ARM/Linux hardware decoder
-        "h264_mf",  # Windows Media Foundation hardware decoder
         "h264",  # Software fallback decoder
     ]
     available = av.codecs_available
