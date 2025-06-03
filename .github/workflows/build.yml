@@ -46,7 +46,7 @@ jobs:
 
       - if: github.event_name == 'release' && github.event.action == 'published'
         working-directory: python
-        run: uv version ${{ github.event.release.tag_name }}"
+        run: uv version ${{ github.event.release.tag_name }}
 
       - uses: actions/setup-go@v5
         with:
