@@ -281,11 +281,32 @@ func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
 		output := stdout.String()
 		errorOutput := stderr.String()
 
-		if pm.IsDev {
-			return "", fmt.Errorf("failed to execute '%s': %w\nStdout: %s\nStderr: %s", binaryPath, err, output, errorOutput)
-		}
 		if strings.Contains(errorOutput, "contains a virus") || strings.Contains(err.Error(), "contains a virus") {
 			return "", fmt.Errorf("%w\nRead: https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/troubleshoot.html#file-contains-a-virus-or-potentially-unwanted-software", err)
+		}
+
+		lines := strings.Split(output, "\n")
+		fmt.Println("lines:", lines)
+
+		if len(lines) > 0 {
+			var lastLine string
+			for i := len(lines) - 1; i >= 0; i-- {
+				lastLine = strings.TrimSpace(lines[i])
+				if lastLine != "" {
+					break
+				}
+			}
+			fmt.Println("lastLine:", lastLine)
+
+			var logMessage ipc.LogMessage
+			if err = json.Unmarshal([]byte(lastLine), &logMessage); err == nil {
+				fmt.Println("logMessage.Message:", logMessage.Message)
+				return "", fmt.Errorf(logMessage.Message)
+			}
+		}
+
+		if pm.IsDev {
+			return "", fmt.Errorf("failed to execute '%s': %w\nStdout: %s\nStderr: %s", binaryPath, err, output, errorOutput)
 		}
 		return "", fmt.Errorf("failed to execute command: %w\nStderr: %s", err, errorOutput)
 	}
