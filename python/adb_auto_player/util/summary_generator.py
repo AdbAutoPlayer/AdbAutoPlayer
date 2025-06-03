@@ -5,6 +5,7 @@ prints JSON summaries if a JSON log handler is present, and logs updates.
 """
 
 import logging
+import sys
 
 from adb_auto_player.ipc.summary import Summary
 from adb_auto_player.logging_setup import JsonLogHandler
@@ -60,6 +61,7 @@ class SummaryGenerator:
         if self._json_handler_present:
             summary = Summary(self.get_summary_message())
             print(summary.to_json())
+            sys.stdout.flush()
 
     def add_count_and_log(self, phrase: str, count: int = 1) -> None:
         """Increment the count for the specified phrase and log the updated count.
