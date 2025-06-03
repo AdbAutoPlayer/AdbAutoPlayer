@@ -56,6 +56,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 		if pm.isProcessRunning() {
 			return errors.New("a process is already running")
 		}
+		println("StartProcess - processEnded")
 		pm.processEnded()
 	}
 
@@ -132,6 +133,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 
 		for scanner.Scan() {
 			line := scanner.Text()
+			println(line)
 			var summaryMessage ipc.Summary
 			if err = json.Unmarshal([]byte(line), &summaryMessage); err == nil {
 				if summaryMessage.SummaryMessage != "" {
@@ -171,6 +173,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 
 		pm.mutex.Lock()
 		ipc.GetFrontendLogger().LogLevel = originalLogLevel
+		println("StartProcess go func - processEnded")
 		pm.processEnded()
 		pm.mutex.Unlock()
 	}()
@@ -190,7 +193,6 @@ func (pm *Manager) KillProcess() {
 
 	runtime.LogWarning(pm.ctx, "Stopping")
 	time.Sleep(2 * time.Second)
-	pm.processEnded()
 }
 
 func killProcessTree(p *process.Process) {
@@ -233,6 +235,7 @@ func (pm *Manager) isProcessRunning() bool {
 	}
 
 	if !running {
+		println("isProcessRunning not running")
 		pm.processEnded()
 	}
 
@@ -316,5 +319,6 @@ func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
 
 func (pm *Manager) processEnded() {
 	pm.running = nil
+	println("add-summary-to-log")
 	runtime.EventsEmit(pm.ctx, "add-summary-to-log")
 }

@@ -143,9 +143,11 @@
 
   EventsOn("summary-message", (summary: { summary_message: string }) => {
     summaryMessage = formatMessage(summary.summary_message);
+    console.log("summary-message", summaryMessage);
   });
 
   EventsOn("add-summary-to-log", () => {
+    console.log("add-summary-to-log");
     addSummaryMessageToLog();
     summaryMessage = "";
   });
