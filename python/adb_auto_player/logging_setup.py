@@ -5,12 +5,12 @@ import logging
 import os
 import re
 import sys
-import traceback
 from datetime import datetime
 from typing import ClassVar, Literal
 
 from adb_auto_player.ipc import LogMessage
 from adb_auto_player.log_presets import LogPreset
+from adb_auto_player.util.traceback_helper import format_debug_info
 
 
 def sanitize_path(log_message: str) -> str:
@@ -57,26 +57,6 @@ class BaseLogHandler(logging.Handler):
             str: Sanitized log message
         """
         return sanitize_path(record.getMessage())
-
-    def get_debug_info(self, record: logging.LogRecord) -> str:
-        """Get debug information string.
-
-        Args:
-            record (logging.LogRecord): The log record
-
-        Returns:
-            str: Formatted debug information
-        """
-        if record.exc_info:
-            # Get traceback object from exc_info
-            tb = record.exc_info[2]
-            # Get the last frame of the traceback (where the exception occurred)
-            frame = traceback.extract_tb(tb)[-1]
-            filename = os.path.basename(frame.filename)
-            return f"({filename}::{frame.name}::{frame.lineno})"
-        else:
-            # Fallback to where the log call was made
-            return f"({record.module}.py::{record.funcName}::{record.lineno})"
 
 
 class JsonLogHandler(BaseLogHandler):
@@ -131,7 +111,7 @@ class TerminalLogHandler(BaseLogHandler):
         formatted_message: str = (
             f"{color}"
             f"[{log_level}] "
-            f"{self.get_debug_info(record)} {self.get_sanitized_message(record)}"
+            f"{format_debug_info(record)} {self.get_sanitized_message(record)}"
             f"{self.COLORS['RESET']}"
         )
         print(formatted_message)
@@ -154,7 +134,7 @@ class TextLogHandler(BaseLogHandler):
         timestamp_with_ms: str = f"{timestamp}.{int(record.msecs):03d}"
 
         formatted_message: str = (
-            f"{timestamp_with_ms} [{log_level}] {self.get_debug_info(record)} "
+            f"{timestamp_with_ms} [{log_level}] {format_debug_info(record)} "
             f"{self.get_sanitized_message(record)}"
         )
         print(formatted_message)
