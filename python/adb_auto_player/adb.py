@@ -209,28 +209,34 @@ def _resolve_device(
     client: AdbClient,
     device_id: str,
 ) -> AdbDevice:
-    """Attempts to connect to a device.
+    """Attempts to connect to a specific ADB device.
 
     Args:
         client (AdbClient): ADB client.
-        device_id (str): ADB device ID.
+        device_id (str): Expected ADB device ID to connect to.
 
     Raises:
-        AdbException: Device not found.
+        GenericAdbUnrecoverableError: If the device cannot be resolved.
 
     Returns:
-        AdbDevice: Connected device.
+        AdbDevice: Connected device instance.
     """
     device: AdbDevice | None = _connect_to_device(client, device_id)
     devices: list[AdbDeviceInfo] = _get_devices(client)
+
     if device is None and len(devices) == 1:
         only_device: str = devices[0].serial
         logging.debug(
-            f"{device_id} not found, connecting to only available device: {only_device}"
+            f"Device '{device_id}' not found. "
+            f"Only one device connected: '{only_device}'. Trying to use it."
         )
         device = _connect_to_device(client, only_device)
 
     if device is None:
+        logging.debug(
+            f"Device '{device_id}' not found. "
+            "Attempting to resolve using common device IDs..."
+        )
         device = _try_common_ports_and_device_ids(client, checked_device_id=device_id)
 
     if device is None:
@@ -239,8 +245,10 @@ def _resolve_device(
         else:
             log_devices(devices, WARNING)
         raise GenericAdbUnrecoverableError(
-            f"Cannot resolve device, Device: {device_id} not found"
+            f"Unable to resolve ADB device. Device ID '{device_id}' not found. "
+            f"Make sure the device is connected and ADB is enabled."
         )
+
     return device
 
 
