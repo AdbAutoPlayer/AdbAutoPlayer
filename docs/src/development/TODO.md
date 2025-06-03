@@ -9,6 +9,7 @@
 ## 🐍 Python
 - GFL2 Daily automation
 - Refactor backend second pass
+- https://github.com/openatx/uiautomator2 implement for hand gestures? Pinch...
 
 ## General
 - Nothing :)
