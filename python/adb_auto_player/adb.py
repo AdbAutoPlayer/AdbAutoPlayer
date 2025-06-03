@@ -238,7 +238,9 @@ def _resolve_device(
             logging.warning("No devices found")
         else:
             log_devices(devices, WARNING)
-        raise GenericAdbUnrecoverableError(f"Device: {device_id} not found")
+        raise GenericAdbUnrecoverableError(
+            f"Cannot resolve device, Device: {device_id} not found"
+        )
     return device
 
 
