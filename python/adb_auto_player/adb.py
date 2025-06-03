@@ -123,7 +123,11 @@ def get_adb_device(
 
     main_config: dict[str, Any] = ConfigLoader().main_config
     device_id: Any = main_config.get("device", {}).get("ID", "127.0.0.1:5555")
-    return _get_adb_device(adb_client, device_id, override_size)
+    try:
+        return _get_adb_device(adb_client, device_id, override_size)
+    except GenericAdbUnrecoverableError as e:
+        logging.error(f"{e}")
+    sys.exit(1)
 
 
 def _connect_client(client: AdbClient, device_id: str) -> None:
@@ -140,10 +144,13 @@ def _connect_client(client: AdbClient, device_id: str) -> None:
     try:
         output = client.connect(device_id)
         if "cannot connect" in output:
-            raise GenericAdbUnrecoverableError(output)
+            raise GenericAdbError(output)
     except GenericAdbUnrecoverableError as e:
         logging.error(f"{e}")
         sys.exit(1)
+    except GenericAdbError as e:
+        logging.debug(f"{e}")
+        raise e
     except AdbError as e:
         err_msg = str(e)
         if "Install adb" in err_msg:
@@ -199,14 +206,14 @@ def log_devices(devices: list[AdbDeviceInfo], log_level: int = DEBUG) -> None:
 
 
 def _resolve_device(
-    client: AdbClient, device_id: str, devices: list[AdbDeviceInfo]
+    client: AdbClient,
+    device_id: str,
 ) -> AdbDevice:
-    """Attepts to connect to a device.
+    """Attempts to connect to a device.
 
     Args:
         client (AdbClient): ADB client.
         device_id (str): ADB device ID.
-        devices (list[AdbDeviceInfo]): List of ADB devices.
 
     Raises:
         AdbException: Device not found.
@@ -215,6 +222,7 @@ def _resolve_device(
         AdbDevice: Connected device.
     """
     device: AdbDevice | None = _connect_to_device(client, device_id)
+    devices: list[AdbDeviceInfo] = _get_devices(client)
     if device is None and len(devices) == 1:
         only_device: str = devices[0].serial
         logging.debug(
@@ -223,7 +231,7 @@ def _resolve_device(
         device = _connect_to_device(client, only_device)
 
     if device is None:
-        device = _try_common_ports_and_device_ids(client)
+        device = _try_common_ports_and_device_ids(client, checked_device_id=device_id)
 
     if device is None:
         if not devices:
@@ -234,7 +242,9 @@ def _resolve_device(
     return device
 
 
-def _try_common_ports_and_device_ids(client: AdbClient) -> AdbDevice | None:
+def _try_common_ports_and_device_ids(
+    client: AdbClient, checked_device_id: str
+) -> AdbDevice | None:
     """Attempts to connect to a device by using common ports and device IDs.
 
     This is specifically for people who did not read the user guide.
@@ -242,27 +252,22 @@ def _try_common_ports_and_device_ids(client: AdbClient) -> AdbDevice | None:
     new instance with a different Android version. Even after closing the first
     instance, it may remain in the device list but not be connectable.
     """
-    logging.debug("Trying common ports and device ids")
-    common_ports: list[int] = [
-        # MuMu
-        7555,
-        7565,
-        7556,
-        # BlueStacks
-        5555,
-        5565,
-        5556,
-    ]
-    for port in common_ports:
-        new_device_id = f"127.0.0.1:{port}"
-        device = _connect_to_device(client, new_device_id)
-        if device is not None:
-            return device
-
+    logging.debug("Trying common device ids")
     common_device_ids: list[str] = [
+        "127.0.0.1:7555",
+        "127.0.0.1:7565",
+        "127.0.0.1:7556",
+        "127.0.0.1:5555",
+        "127.0.0.1:5565",
+        "127.0.0.1:5556",
         "emulator-5554",
         "emulator-5555",
     ]
+
+    # Remove already checked device ID
+    if checked_device_id in common_device_ids:
+        common_device_ids.remove(checked_device_id)
+
     for potential_device_id in common_device_ids:
         device = _connect_to_device(client, potential_device_id)
         if device is not None:
@@ -307,12 +312,8 @@ def _get_adb_device(
     main_config: dict[str, Any] = ConfigLoader().main_config
     wm_size: Any = main_config.get("device", {}).get("wm_size", False)
 
-    # Connect the client and list devices
-    _connect_client(client, device_id)
-    devices: list[AdbDeviceInfo] = _get_devices(client)
-
     # Try to resolve the correct device
-    device = _resolve_device(client, device_id, devices)
+    device = _resolve_device(client, device_id)
     logging.debug(f"Connected to Device: {device.serial}")
 
     # Optionally override the size
