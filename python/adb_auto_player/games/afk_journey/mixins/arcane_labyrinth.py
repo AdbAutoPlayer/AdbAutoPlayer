@@ -174,17 +174,6 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
     def _select_a_crest(self) -> None:
         """Crest selection."""
-        _ = self.wait_for_any_template(
-            templates=[
-                "arcane_labyrinth/rarity/epic.png",
-                "arcane_labyrinth/rarity/elite.png",
-                "arcane_labyrinth/rarity/rare.png",
-            ],
-            delay=0.2,
-            crop=CropRegions(right=0.8, top=0.3, bottom=0.1),
-        )
-        # prevents epic being skipped if elite or rate was matched first
-        sleep(0.5)
         template, x, y = self.wait_for_any_template(
             templates=[
                 "arcane_labyrinth/rarity/epic.png",
@@ -223,23 +212,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         ]
         template, x, y = self.wait_for_any_template(
             templates=templates,
-            delay=0.2,
+            delay=0.5,
         )
-
-        match template:
-            case (
-                "arcane_labyrinth/swords_button.png"
-                | "arcane_labyrinth/shop_button.png"
-                | "arcane_labyrinth/crest_crystal_ball.png"
-            ):
-                # Sleep and wait for animations to finish
-                sleep(0.5)
-                template, x, y = self.wait_for_any_template(
-                    templates=templates,
-                    delay=0.2,
-                )
-            case _:
-                pass
 
         match template:
             case (
@@ -387,7 +361,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 self.tap(Coordinates(*checkbox))
         self._click_confirm_on_popup()
         self._click_confirm_on_popup()
-        self.wait_for_any_template(
+        _ = self.wait_for_any_template(
             templates=[
                 "arcane_labyrinth/heroes_icon.png",
                 "arcane_labyrinth/pure_crystal_icon.png",

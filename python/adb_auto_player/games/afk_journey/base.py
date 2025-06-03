@@ -136,7 +136,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
             ):
                 continue
             else:
-                self.wait_for_any_template(
+                _ = self.wait_for_any_template(
                     templates=[
                         "battle/records.png",
                         "battle/formations_icon.png",
@@ -394,7 +394,31 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
 
     def _get_battle_over_templates(self) -> list[str]:
         mode = self.store.get(self.STORE_MODE, None)
-        battle_over_templates = [
+        if mode == self.MODE_AFK_STAGES:
+            return [
+                "next.png",
+                "battle/victory_rewards.png",
+                "retry.png",
+                "navigation/confirm.png",
+                "battle/power_up.png",
+                "battle/result.png",
+                "afk_stages/tap_to_close.png",
+            ]
+
+        if mode == self.MODE_DURAS_TRIALS:
+            return [
+                "duras_trials/no_next.png",
+                "duras_trials/first_clear.png",
+                "duras_trials/end_sunrise.png",
+                "next.png",
+                "battle/victory_rewards.png",
+                "retry.png",
+                "navigation/confirm.png",
+                "battle/power_up.png",
+                "battle/result.png",
+            ]
+
+        return [
             "next.png",
             "battle/victory_rewards.png",
             "retry.png",
@@ -402,22 +426,6 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
             "battle/power_up.png",
             "battle/result.png",
         ]
-
-        if mode == self.MODE_AFK_STAGES:
-            battle_over_templates.extend(
-                [
-                    "afk_stages/tap_to_close.png",
-                ]
-            )
-        elif mode == self.MODE_DURAS_TRIALS:
-            battle_over_templates.extend(
-                [
-                    "duras_trials/no_next.png",
-                    "duras_trials/first_clear.png",
-                    "duras_trials/end_sunrise.png",
-                ]
-            )
-        return battle_over_templates
 
     def _handle_single_stage(self) -> bool:
         """Handles a single stage of a battle.
@@ -439,19 +447,15 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                 result = False
                 break
 
-            # TODO: Because we iteratively look for templates, it can match something
-            # later in the list first causing non-deterministic behavior.
-            _, x, y = self.wait_for_any_template(
-                templates=battle_over_templates,
-                timeout=self.BATTLE_TIMEOUT,
-                crop=CropRegions(top=0.4),
-                delay=1.0,
-            )
-            # TODO: Temporary fix of restarting search once battle end is determined.
             template, x, y = self.wait_for_any_template(
                 templates=battle_over_templates,
                 timeout=self.BATTLE_TIMEOUT,
                 crop=CropRegions(top=0.4),
+                delay=1.0,
+                timeout_message=(
+                    "Battle over screen not found after 4 minutes. "
+                    "The game may be slow or stuck."
+                ),
             )
 
             match template:

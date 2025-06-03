@@ -764,8 +764,14 @@ class Game:
                 f"None of the templates {templates} were found after {timeout} seconds"
             )
 
-        return self._execute_or_timeout(
+        _ = self._execute_or_timeout(
             find_template, delay=delay, timeout=timeout, timeout_message=timeout_message
+        )
+        # this ensures correct order
+        # using lower delay and timeout as this function should return without a retry.
+        sleep(delay)
+        return self._execute_or_timeout(
+            find_template, delay=0.5, timeout=3, timeout_message=timeout_message
         )
 
     def find_any_template(

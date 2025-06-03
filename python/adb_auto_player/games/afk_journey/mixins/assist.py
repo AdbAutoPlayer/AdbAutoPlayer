@@ -83,17 +83,6 @@ class AssistMixin(AFKJourneyBase, ABC):
 
         self.tap(Coordinates(*profile_icon))
         try:
-            self.wait_for_any_template(
-                templates=[
-                    "assist/join_now.png",
-                    "assist/synergy.png",
-                    "assist/chat_button.png",
-                ],
-                crop=CropRegions(left=0.1, top=0.4, bottom=0.1),
-                delay=0.1,
-                timeout=self.FAST_TIMEOUT,
-            )
-            sleep(0.5)
             template, x, y = self.wait_for_any_template(
                 templates=[
                     "assist/join_now.png",
