@@ -28,6 +28,7 @@ dev = [
 
 [tool.uv]
 package = true
+required-version = ">=0.7.0"
 
 [build-system]
 requires = ["hatchling"]
