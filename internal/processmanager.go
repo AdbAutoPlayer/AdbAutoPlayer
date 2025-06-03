@@ -119,7 +119,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 
 			filesToDelete := len(files) - pm.ActionLogLimit
 			for i := 0; i < filesToDelete; i++ {
-				if err := os.Remove(files[i]); err != nil {
+				if err = os.Remove(files[i]); err != nil {
 					ipc.GetFrontendLogger().Errorf("Failed to delete old log file %s: %v", files[i], err)
 				}
 			}
@@ -132,17 +132,17 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 
 		for scanner.Scan() {
 			line := scanner.Text()
-			if logFile != nil {
-				if _, err = fmt.Fprintln(logFile, line); err != nil {
-					ipc.GetFrontendLogger().Errorf("Failed to write to log file: %v", err)
-				}
-			}
-
 			var summaryMessage ipc.Summary
 			if err = json.Unmarshal([]byte(line), &summaryMessage); err == nil {
 				if summaryMessage.SummaryMessage != "" {
 					runtime.EventsEmit(pm.ctx, "summary-message", summaryMessage)
 					continue
+				}
+			}
+			// Write to file after Summary because the Summary data does not help with debugging.
+			if logFile != nil {
+				if _, err = fmt.Fprintln(logFile, line); err != nil {
+					ipc.GetFrontendLogger().Errorf("Failed to write to log file: %v", err)
 				}
 			}
 
