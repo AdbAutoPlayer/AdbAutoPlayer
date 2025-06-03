@@ -75,6 +75,6 @@ def execute(
             )
         return e
     except Exception as e:
-        logging.error(f"{e}")
+        logging.error(f"{e}", exc_info=True)
         return e
     return None

@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import sys
+import traceback
 from datetime import datetime
 from typing import ClassVar, Literal
 
@@ -66,7 +67,16 @@ class BaseLogHandler(logging.Handler):
         Returns:
             str: Formatted debug information
         """
-        return f"({record.module}.py::{record.funcName}::{record.lineno})"
+        if record.exc_info:
+            # Get traceback object from exc_info
+            tb = record.exc_info[2]
+            # Get the last frame of the traceback (where the exception occurred)
+            frame = traceback.extract_tb(tb)[-1]
+            filename = os.path.basename(frame.filename)
+            return f"({filename}::{frame.name}::{frame.lineno})"
+        else:
+            # Fallback to where the log call was made
+            return f"({record.module}.py::{record.funcName}::{record.lineno})"
 
 
 class JsonLogHandler(BaseLogHandler):

@@ -1,6 +1,8 @@
 """ADB Auto Player Logging Module."""
 
 import logging
+import os
+import traceback
 from datetime import datetime, timezone
 
 
@@ -65,12 +67,25 @@ class LogMessage:
             logging.CRITICAL: LogLevel.FATAL,
         }
 
+        # Default to log call location
+        source_file = record.module + ".py"
+        function_name = record.funcName
+        line_number: int | None = record.lineno
+
+        # Override with exception location if present
+        if record.exc_info:
+            tb = record.exc_info[2]
+            frame = traceback.extract_tb(tb)[-1]
+            source_file = os.path.basename(frame.filename)
+            function_name = frame.name
+            line_number = frame.lineno
+
         return cls(
             level=level_mapping.get(record.levelno, LogLevel.DEBUG),
             message=message if message else record.getMessage(),
             timestamp=datetime.now(),
-            source_file=record.module + ".py",
-            function_name=record.funcName,
-            line_number=record.lineno,
+            source_file=source_file,
+            function_name=function_name,
+            line_number=line_number,
             html_class=html_class,
         )
