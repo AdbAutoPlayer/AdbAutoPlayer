@@ -3,6 +3,8 @@
 import logging
 from datetime import datetime, timezone
 
+from adb_auto_player.util.traceback_helper import extract_source_info
+
 
 class LogLevel:
     """Logging levels."""
@@ -65,12 +67,13 @@ class LogMessage:
             logging.CRITICAL: LogLevel.FATAL,
         }
 
+        source_info = extract_source_info(record)
         return cls(
             level=level_mapping.get(record.levelno, LogLevel.DEBUG),
             message=message if message else record.getMessage(),
             timestamp=datetime.now(),
-            source_file=record.module + ".py",
-            function_name=record.funcName,
-            line_number=record.lineno,
+            source_file=source_info.source_file,
+            function_name=source_info.function_name,
+            line_number=source_info.line_number,
             html_class=html_class,
         )
