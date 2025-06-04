@@ -63,6 +63,7 @@ If you wish to contribute take a look at following tasks. Unless stated otherwis
 6. Arcane Lab crest information  
    ![img_8.png](img_8.png)
 
+---
 
 ## 🎨 Frontend Development
 
@@ -75,6 +76,8 @@ If you wish to contribute take a look at following tasks. Unless stated otherwis
 - Redesign current component for better UX
 - Support for multiple routine management
 - Intuitive drag-and-drop functionality
+
+---
 
 ## 📚 Documentation
 
