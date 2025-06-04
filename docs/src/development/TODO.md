@@ -53,14 +53,14 @@ If you wish to contribute take a look at following tasks. Unless stated otherwis
    ![img_2.png](img_2.png)
 2. UI label detection  
    ![img_3.png](img_3.png)
-3. Popup text extraction
+3. Popup text extraction  
    ![img_4.png](img_4.png) 
-4. Arcane Lab gate titles and descriptions
-   ![img_5.png](img_5.png)
-   ![img_6.png](img_6.png)
-5. Battle icon text
+4. Arcane Lab gate titles and descriptions  
+   ![img_5.png](img_5.png)  
+   ![img_6.png](img_6.png)  
+5. Battle icon text  
    ![img_7.png](img_7.png)
-6. Arcane Lab crest information
+6. Arcane Lab crest information  
    ![img_8.png](img_8.png)
 
 
