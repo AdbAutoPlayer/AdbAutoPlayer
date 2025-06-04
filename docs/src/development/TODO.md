@@ -120,6 +120,21 @@ If you wish to contribute take a look at following tasks. Unless stated otherwis
 
 ## 🎮 AFK Journey Specific
 
+### Fishing
+**Status:** Open for contribution
+**Priority:** Lowest
+
+Often requested but never picked up because it is not very useful.  
+Template Matching is probably not suitable for this.
+Rough from @yulesxoxo: Can be attempted using a heatmap approach.
+
+Also check the Show Debug Info command in the App to get your tap input delay.  
+```txt
+[INFO] --- Testing Input Delay ---
+[INFO] Average time taken to tap screen 10 times: 10.89 ms
+```  
+At high input delay values you would have to implement Optical Flow (estimate motion direction and velocity).  
+
 ### Feature Documentation Overhaul
 **Status:** Open for contribution
 **Scope:** Complete features section in AFK Journey documentation
