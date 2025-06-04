@@ -121,6 +121,8 @@ If you wish to contribute take a look at following tasks. Unless stated otherwis
 - Feature explanation and workflow
 - Practical examples (AFK Journey as reference)
 
+---
+
 ## 🎮 AFK Journey Specific
 
 ### Fishing
