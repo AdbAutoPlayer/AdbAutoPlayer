@@ -7,17 +7,17 @@ If you wish to contribute take a look at following tasks. Unless stated otherwis
 ## 🐍 Backend Development
 
 ### GFL2 Daily Automation
-**Status:** In Progress
+**Status:** In Progress  
 **Assignee:** @valextr  
 
 
 ### Backend Refactor (Second Pass)
-**Status:** In Progress
+**Status:** In Progress  
 **Assignee:** @valextr  
 
 
 ### Multi-Touch Gesture Implementation (PoC)
-**Status:** Open for contribution
+**Status:** Open for contribution  
 **Priority:** High  
 **Library:** [uiautomator2](https://github.com/openatx/uiautomator2)
 
@@ -36,7 +36,7 @@ If you wish to contribute take a look at following tasks. Unless stated otherwis
 3. Benchmark testing for shared features (tap, screenshot, swipe)
 
 ### OCR Implementation (PoC)
-**Status:** Open for contribution
+**Status:** Open for contribution  
 **Priority:** High
 **Focus:** Performance and compatibility testing
 
@@ -79,7 +79,7 @@ If you wish to contribute take a look at following tasks. Unless stated otherwis
 ## 📚 Documentation
 
 ### Emulator Setup Guides
-**Status:** Open for contribution
+**Status:** Open for contribution  
 **Scope:** Create comprehensive setup guides for popular Android emulators
 
 **Format:** Individual `.md` files per emulator
@@ -111,7 +111,7 @@ If you wish to contribute take a look at following tasks. Unless stated otherwis
 - Security considerations
 
 ### Custom Routine Documentation
-**Status:** Open for contribution
+**Status:** Open for contribution  
 **Scope:** User guide and examples for custom routine feature
 
 **Requirements:**
@@ -121,7 +121,7 @@ If you wish to contribute take a look at following tasks. Unless stated otherwis
 ## 🎮 AFK Journey Specific
 
 ### Fishing
-**Status:** Open for contribution
+**Status:** Open for contribution  
 **Priority:** Lowest
 
 Often requested but never picked up because it is not very useful.  
@@ -136,7 +136,7 @@ Also check the Show Debug Info command in the App to get your tap input delay.
 At high input delay values you would have to implement Optical Flow (estimate motion direction and velocity).  
 
 ### Feature Documentation Overhaul
-**Status:** Open for contribution
+**Status:** Open for contribution  
 **Scope:** Complete features section in AFK Journey documentation
 
 **Requirements:**
