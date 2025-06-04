@@ -1,80 +1,138 @@
 # 📝 TODO List
 
-Unless stated otherwise feel free to reach out to @yulesxoxo  
-[![Discord Presence](https://lanyard.cnrad.dev/api/518169167048998913)](https://discord.com/users/518169167048998913)  
+If you wish to contribute take a look at following tasks. Unless stated otherwise, feel free to reach out to @yulesxoxo for questions or guidance.
 
-## 🐍 Python
-### GFL2 Daily automation 
-@valextr
-### Refactor backend second pass 
-@valextr
+[![Discord Presence](https://lanyard.cnrad.dev/api/518169167048998913)](https://discord.com/users/518169167048998913)
 
-### PoC multi-touch hand gestures: https://github.com/openatx/uiautomator2
-Need to check what the uiautomator2 library is capable of at cursory glance:
-- Tap by coordinate (d.click(x, y))
-- Screenshots (d.screenshot())
-- Hand gestures such as: swipe, pinch, general multi-touch gestures
+## 🐍 Backend Development
 
-ADB is not capable of doing multi-touch gestures directly. This is where uiautomator2 comes in play.  
-Pinching specifically comes to mind because that is used in many games to zoom in or out.
-
-Goal: Create a Proof of Concept for multi-touch hand gesture implementation.
-
-Nice to have:
-1. Check if uiautomator2 has any other features that work with games that could be relevant to us.
-2. Check uiautomator2 source code to see if tap, screenshot and swipe (other shared features?) differs from normal adb implementation if yes benchmark to see which is faster.
-
-### PoC OCR
-Choosing a library (or testing multiple libraries) and write some initial tests and standalone functions (keep it in a separate module and do not integrate into the rest of the app) to evaluate CPU, GPU and/or Memory usage.  
-The big question here is if this is a feature that can reliably work on lower power PCs.  
-In some places OCR can be used instead of template matching to speed up development time and/or get more predictable behavior which would enable making more advanced features in a reasonable time.
-
-Sme tests using AFK Journey as example:
-1. Header/Title Text  
-![img_2.png](img_2.png)
-2. "Labels"  
-![img_3.png](img_3.png)
-3. Popup Text  
-![img_4.png](img_4.png)
-4. Arcane Lab Gate Title Text  
-![img_5.png](img_5.png)
-5. Arcane Lab Gate Body Text  
-![img_6.png](img_6.png)
-6. Battle Icon Text  
-![img_7.png](img_7.png)
-7. Arcane Lab Crest Title/Body Text  
-![img_8.png](img_8.png)
+### GFL2 Daily Automation
+**Status:** In Progress
+**Assignee:** @valextr  
 
 
+### Backend Refactor (Second Pass)
+**Status:** In Progress
+**Assignee:** @valextr  
 
 
-## 🎨 Frontend
-### Improve the Custom Routine component  
-![img_1.png](img_1.png)  
-Initial thoughts are having it work drag and drop instead. But also need ideas on designs for multiple Routines and so on...
+### Multi-Touch Gesture Implementation (PoC)
+**Status:** Open for contribution
+**Priority:** High  
+**Library:** [uiautomator2](https://github.com/openatx/uiautomator2)
 
-## Docs
-### Guides for Emulators
-If you want to pick this up don't feel stressed into doing all of them it is completely sufficient to only do one for the Emulator you are actually using.
+**Background:** ADB cannot handle multi-touch gestures directly. The uiautomator2 library provides capabilities for:
+- Coordinate-based tapping (`d.click(x, y)`)
+- Screenshots (`d.screenshot()`)
+- Multi-touch gestures (swipe, pinch, etc.)
 
-I think it would be easiest to have an .md file per Emulator.
-Rough Idea:  
-#### BlueStacks
-  1. Default Device ID (`127.0.0.1:5555`)
-  2. Recommended Settings (and how to enable ADB)
-  3. How to find the device ID in BlueStacks Multi Instance Scenario
-  4. other ideas?
+**Goals:**
+- Create a proof of concept for multi-touch gesture implementation
+- Focus on pinch gestures for zoom functionality in games
 
-Same for MuMu, LDPlayer, MuMu Pro (Mac), BlueStacks Air (Mac). 
+**Nice to Have:**
+1. Explore additional uiautomator2 features relevant to game automation
+2. Performance comparison between uiautomator2 and standard ADB implementation for shared features
+3. Benchmark testing for shared features (tap, screenshot, swipe)
 
-### Guide for using with Phone/Tablet
-Contact to discuss or make a PR and we will discuss after. This will be mostly left up to you.
-Should include: enabling usb debugging, (enabling wireless debugging), how to get the device id,  resizing display, ...
+### OCR Implementation (PoC)
+**Status:** Open for contribution
+**Priority:** High
+**Focus:** Performance and compatibility testing
 
-### Custom Routine examples/explanation
-Contact to discuss or make a PR and we will discuss after. This will be mostly left up to you.
-AFKJ can be used as example but a general explanation of how the feature works in the docs would be nice.
+> [!NOTE]
+> Note: Keep implementation separate from main codebase during evaluation phase.
 
-## AFK Journey
-### Docs: Features section needs to be redone
-Contact to discuss or make a PR and we will discuss after. This will be mostly left up to you.
+**Objective:** Evaluate OCR libraries for potential integration as an addition to template matching. Key considerations:
+- CPU, GPU, and memory usage optimization
+- Compatibility with lower-power PCs
+- Reliability
+
+**Test Cases (using AFK Journey):**
+1. Header/Title text recognition  
+   ![img_2.png](img_2.png)
+2. UI label detection  
+   ![img_3.png](img_3.png)
+3. Popup text extraction
+   ![img_4.png](img_4.png) 
+4. Arcane Lab gate titles and descriptions
+   ![img_5.png](img_5.png)
+   ![img_6.png](img_6.png)
+5. Battle icon text
+   ![img_7.png](img_7.png)
+6. Arcane Lab crest information
+   ![img_8.png](img_8.png)
+
+
+## 🎨 Frontend Development
+
+### Custom Routine Component Enhancement
+**Status:** Design phase - seeking UI/UX input and/or developer
+**Current State:** Basic functionality implemented  
+**Proposed Improvement:** Drag-and-drop interface
+
+**Ideas:**
+- Redesign current component for better UX
+- Support for multiple routine management
+- Intuitive drag-and-drop functionality
+
+## 📚 Documentation
+
+### Emulator Setup Guides
+**Status:** Open for contribution
+**Scope:** Create comprehensive setup guides for popular Android emulators
+
+**Format:** Individual `.md` files per emulator
+
+> [!NOTE]
+> Note: Contributors can focus on their preferred emulator - complete coverage by single contributor not required.
+
+**Missing Emulators:**
+- BlueStacks
+- MuMu Player
+- LDPlayer
+- MuMu Pro (Mac)
+- BlueStacks Air (Mac)
+
+**Content Requirements:**
+- Default device ID configuration
+- ADB enabling instructions
+- Recommended settings
+- Multi-instance device ID identification
+
+### Physical Device Setup Guide
+**Scope:** Android phone/tablet configuration for automation
+
+**Required Topics:**
+- USB debugging activation
+- Wireless debugging setup (optional)
+- Device ID identification
+- Display resolution configuration
+- Security considerations
+
+### Custom Routine Documentation
+**Status:** Open for contribution
+**Scope:** User guide and examples for custom routine feature
+
+**Requirements:**
+- Feature explanation and workflow
+- Practical examples (AFK Journey as reference)
+
+## 🎮 AFK Journey Specific
+
+### Feature Documentation Overhaul
+**Status:** Open for contribution
+**Scope:** Complete features section in AFK Journey documentation
+
+**Requirements:**
+- Comprehensive feature list
+- Usage instructions
+- Configuration options
+- Examples and screenshots
+
+---
+
+## Getting Help
+
+- **Discord:** Use the badge above to reach out directly
+- **Issues:** Create a GitHub issue for bugs or feature requests
