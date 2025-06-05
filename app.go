@@ -254,11 +254,8 @@ func (a *App) setPythonBinaryPath() error {
 	}
 
 	if runtime.Environment(a.ctx).BuildType == "dev" {
-		fmt.Printf("Working dir: %s", workingDir)
+		fmt.Printf("Working dir: %s\n", workingDir)
 		path := filepath.Join(workingDir, "python")
-		if stdruntime.GOOS != "windows" {
-			path = filepath.Join(workingDir, "../../python")
-		}
 		a.pythonBinaryPath = &path
 		fmt.Print("Process Manager is dev = true\n")
 		internal.GetProcessManager().IsDev = true
