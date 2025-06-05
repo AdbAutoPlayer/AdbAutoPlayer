@@ -3,6 +3,7 @@
 import logging
 
 from adb_auto_player import (
+    AutoPlayerError,
     AutoPlayerWarningError,
     Coordinates,
     CropRegions,
@@ -77,10 +78,13 @@ class SeasonLegendTrial(AFKJourneyBase):
             self.tap(Coordinates(*result))
             try:
                 self._select_legend_trials_floor(faction)
-            except GameTimeoutError as e:
+                self._handle_legend_trials_battle(faction)
+            except AutoPlayerWarningError as e:
+                logging.warning(f"{e}")
+                continue
+            except AutoPlayerError as e:
                 logging.error(f"{e}")
                 continue
-            self._handle_legend_trials_battle(faction)
         logging.info("Legend Trial finished")
         return None
 

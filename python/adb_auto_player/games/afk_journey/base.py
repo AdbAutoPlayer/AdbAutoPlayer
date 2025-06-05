@@ -418,6 +418,17 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                 "battle/result.png",
             ]
 
+        if mode == self.MODE_LEGEND_TRIALS:
+            return [
+                "legend_trials/available_after.png",
+                "next.png",
+                "battle/victory_rewards.png",
+                "retry.png",
+                "navigation/confirm.png",
+                "battle/power_up.png",
+                "battle/result.png",
+            ]
+
         return [
             "next.png",
             "battle/victory_rewards.png",
@@ -501,7 +512,9 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                     result = True
                     break
 
-                case "afk_stages/tap_to_close.png":
+                case (
+                    "afk_stages/tap_to_close.png" | "legend_trials/available_after.png"
+                ):
                     raise AutoPlayerWarningError("Final Stage reached, exiting...")
 
         # If no branch set result, default to False.
