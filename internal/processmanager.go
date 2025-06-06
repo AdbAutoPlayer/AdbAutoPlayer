@@ -311,6 +311,9 @@ func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
 		if pm.IsDev {
 			return "", fmt.Errorf("failed to execute '%s': %w\nStdout: %s\nStderr: %s", binaryPath, err, output, errorOutput)
 		}
+
+		ipc.GetFrontendLogger().Debugf("failed to execute '%s': %v\nStdout: %s\nStderr: %s", binaryPath, err, output, errorOutput)
+
 		return "", fmt.Errorf("failed to execute command: %w\nStderr: %s", err, errorOutput)
 	}
 
