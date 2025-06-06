@@ -24,8 +24,8 @@ class AFKJourneyNavigation(Game, ABC):
         """Navigate to main default screen."""
         templates = [
             "popup/quick_purchase.png",
-            "navigation/notice.png",
             "navigation/confirm.png",
+            "navigation/notice.png",
             "navigation/confirm_text.png",
             "navigation/time_of_day.png",
             "navigation/dotdotdot.png",
@@ -291,14 +291,17 @@ class AFKJourneyNavigation(Game, ABC):
         )
 
         self.tap(coords)
+        sleep(3)
         _ = self.wait_for_any_template(
             templates=[
+                "arcane_labyrinth/select_a_crest.png",
+                "arcane_labyrinth/confirm.png",
+                "arcane_labyrinth/quit.png",
                 "arcane_labyrinth/enter.png",
                 "arcane_labyrinth/heroes_icon.png",
             ],
             threshold=0.7,
-            crop=CropRegions(left=0.3, top=0.8),
-            timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
+            timeout=27,  # I imagine this animation can take really long for some people
+            delay=1,
         )
-        sleep(1)
         return

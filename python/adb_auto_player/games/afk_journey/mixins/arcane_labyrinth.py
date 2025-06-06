@@ -394,11 +394,13 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
         template, x, y = self.wait_for_any_template(
             templates=[
+                "arcane_labyrinth/select_a_crest.png",
+                "arcane_labyrinth/confirm.png",
+                "arcane_labyrinth/quit.png",
                 "arcane_labyrinth/enter.png",
                 "arcane_labyrinth/heroes_icon.png",
             ],
             threshold=0.7,
-            crop=CropRegions(left=0.3, top=0.8),
             timeout=self.MIN_TIMEOUT,
         )
         match template:
@@ -406,6 +408,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 self._handle_enter_button()
             case "arcane_labyrinth/heroes_icon.png":
                 logging.info("Arcane Labyrinth already started")
+            case _:
+                pass
         return
 
     def _battle_is_not_completed(self) -> bool:
