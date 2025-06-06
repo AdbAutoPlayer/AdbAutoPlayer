@@ -101,8 +101,6 @@ class SeasonLegendTrial(AFKJourneyBase):
                     self.get_config().legend_trials.use_suggested_formations,
                     self.get_config().legend_trials.skip_manual_formations,
                 )
-            except AutoPlayerWarningError as e:
-                logging.warning(f"{e}")
             except GameTimeoutError as e:
                 logging.error(f"{e}")
                 return None
