@@ -123,11 +123,7 @@ def get_adb_device(
 
     main_config: dict[str, Any] = ConfigLoader().main_config
     device_id: Any = main_config.get("device", {}).get("ID", "127.0.0.1:5555")
-    try:
-        return _get_adb_device(adb_client, device_id, override_size)
-    except GenericAdbUnrecoverableError as e:
-        logging.error(f"{e}")
-    sys.exit(1)
+    return _get_adb_device(adb_client, device_id, override_size)
 
 
 def _connect_client(client: AdbClient, device_id: str) -> None:
@@ -290,11 +286,13 @@ def _override_size(device: AdbDevice, override_size: str) -> None:
     logging.debug(f"Overriding size: {override_size}")
     try:
         output = device.shell(f"wm size {override_size}")
-        if "java.lang.SecurityException" in output:
-            raise GenericAdbUnrecoverableError("java.lang.SecurityException")
     except Exception as e:
         logging.debug(f"wm size {override_size} Error: {e}")
         raise GenericAdbError(f"Error overriding size: {e}")
+
+    if "java.lang.SecurityException" in output:
+        logging.debug(f"wm size {override_size} Error: {output}")
+        raise GenericAdbUnrecoverableError("java.lang.SecurityException")
 
 
 def _get_adb_device(

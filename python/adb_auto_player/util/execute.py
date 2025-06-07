@@ -70,9 +70,11 @@ def execute(
     except (GenericAdbError, GenericAdbUnrecoverableError) as e:
         if "java.lang.SecurityException" in str(e):
             logging.error(
-                "Missing permissions, check if your device has the setting: "
-                '"USB debugging (Security settings)" and enable it.'
+                "Missing permissions, check if your device has settings, such as: "
+                '"USB debugging (Security settings)" and enable them.'
             )
+        else:
+            logging.error(f"{e}", exc_info=True)
         return e
     except Exception as e:
         logging.error(f"{e}", exc_info=True)
