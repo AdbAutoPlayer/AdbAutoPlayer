@@ -1,26 +1,12 @@
-"""Box and Point classes for geometric operations."""
+"""Box class for geometric operations."""
 
 import random
 from dataclasses import dataclass
 
+from .point import Point
+
 # Constants
 MAX_MARGIN_RATIO = 0.5
-
-
-@dataclass(frozen=True)
-class Point:
-    """A point in 2D space with non-negative integer coordinates."""
-
-    x: int
-    y: int
-
-    def __post_init__(self):
-        """Validate that coordinates are non-negative."""
-        if self.x < 0 or self.y < 0:
-            raise ValueError(
-                f"Invalid Point coordinates: x={self.x}, y={self.y}. "
-                "Both must be non-negative."
-            )
 
 
 @dataclass(frozen=True)
