@@ -19,7 +19,7 @@ from adbutils import AdbClient, AdbDevice
 
 
 @register_command(
-    gui=None,  # This is handled separately in the GUI
+    gui=None,  # This is hard coded in the GUI so we do not need it.
     name="Debug",
 )
 def _log_debug() -> None:
