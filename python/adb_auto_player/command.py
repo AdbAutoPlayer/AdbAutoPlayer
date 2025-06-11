@@ -37,6 +37,7 @@ class Command:
         if menu_option is None:
             menu_option = MenuOption(
                 label=name,
+                display_in_gui=False,
             )
 
         if menu_option.args is None:
