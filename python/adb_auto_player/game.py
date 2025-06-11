@@ -277,8 +277,15 @@ class Game:
 
         self._check_screenshot_matches_display_resolution()
 
-        if not self.is_game_running():
-            raise GameNotRunningOrFrozenError("Game is not running")
+        if self.is_game_running():
+            return
+
+        if not self.package_name:
+            raise GameNotRunningOrFrozenError("Game is not running, exiting...")
+
+        logging.warning("Game is not running, starting the game.")
+        self.start_game()
+        return
 
     def _check_screenshot_matches_display_resolution(self) -> None:
         height, width = self.get_screenshot().shape[:2]
