@@ -283,8 +283,10 @@ class Game:
         if not self.package_name:
             raise GameNotRunningOrFrozenError("Game is not running, exiting...")
 
-        logging.warning("Game is not running, starting the game.")
+        logging.warning("Game is not running, trying to start the game.")
         self.start_game()
+        if not self.is_game_running():
+            raise GameNotRunningOrFrozenError("Game could not be started, exiting...")
         return
 
     def _check_screenshot_matches_display_resolution(self) -> None:
