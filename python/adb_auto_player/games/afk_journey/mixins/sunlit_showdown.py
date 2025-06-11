@@ -1,4 +1,4 @@
-"""AFK Journey Quest Mixin."""
+"""AFK Journey Sunlit Showdown Mixin."""
 
 import logging
 from abc import ABC
@@ -10,8 +10,8 @@ from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 
 
-class QuestMixin(AFKJourneyBase, ABC):
-    """Assist Mixin."""
+class SunlitShowdownMixin(AFKJourneyBase, ABC):
+    """Sunlit Showdown Mixin."""
 
     @register_command(
         name="SunlitShowdown",
