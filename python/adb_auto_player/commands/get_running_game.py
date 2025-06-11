@@ -10,8 +10,8 @@ from adbutils import AdbDevice, AdbError
 
 
 @register_command(
-    gui=None,
-    name="GetRunningGame",  # We do not want a GUI Button for this
+    gui=None,  # We do not want a GUI Button for this
+    name="GetRunningGame",
 )
 def _print_running_game() -> None:
     """Log the title of the currently running game.
