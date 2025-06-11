@@ -11,7 +11,10 @@ from adb_auto_player.decorators.register_game import game_registry
 from adb_auto_player.ipc import GameGUIOptions, MenuOption
 
 
-@register_command(gui=None, name="GUIGamesMenu")  # We do not want a GUI Button for this
+@register_command(
+    gui=None,  # We do not want a GUI Button for this
+    name="GUIGamesMenu",
+)
 def _print_gui_games_menu() -> None:
     print(get_gui_games_menu())
 
