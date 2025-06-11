@@ -95,24 +95,9 @@ func GetMainConfigConstraints() map[string]interface{} {
 				"Resize Display (Phone/Tablet only)",
 			},
 		},
-		"ADB": map[string]interface{}{
-			"Host": NewTextConstraint("127.0.0.1"),
-			"Port": NewNumberConstraint(&portMin, &portMax, nil, 5037),
-		},
 		"Update": map[string]interface{}{
 			"Automatically download updates": NewCheckboxConstraint(false),
 			"Download Alpha updates":         NewCheckboxConstraint(false),
-		},
-		"Logging": map[string]interface{}{
-			"Level": NewSelectConstraint([]string{
-				string(LogLevelDebug),
-				string(LogLevelInfo),
-				string(LogLevelWarning),
-				string(LogLevelError),
-				string(LogLevelFatal),
-			}, string(LogLevelInfo)),
-			"Debug Screenshot Limit": NewNumberConstraint(&minZero, nil, nil, 60),
-			"Action Log Limit":       NewNumberConstraint(&minZero, nil, nil, 5),
 		},
 		"User Interface": map[string]interface{}{
 			"Theme": NewSelectConstraint([]string{
@@ -139,8 +124,23 @@ func GetMainConfigConstraints() map[string]interface{} {
 				"wintry",
 			}, "catppuccin"),
 		},
+		"Logging": map[string]interface{}{
+			"Level": NewSelectConstraint([]string{
+				string(LogLevelDebug),
+				string(LogLevelInfo),
+				string(LogLevelWarning),
+				string(LogLevelError),
+				string(LogLevelFatal),
+			}, string(LogLevelInfo)),
+			"Debug Screenshot Limit": NewNumberConstraint(&minZero, nil, nil, 60),
+			"Action Log Limit":       NewNumberConstraint(&minZero, nil, nil, 5),
+		},
+		"ADB (Advanced)": map[string]interface{}{
+			"Host": NewTextConstraint("127.0.0.1"),
+			"Port": NewNumberConstraint(&portMin, &portMax, nil, 5037),
+		},
 		"Order": []string{
-			"ADB", "Device", "Update", "Logging", "User Interface",
+			"Device", "Update", "User Interface", "Logging", "ADB (Advanced)",
 		},
 	}
 }
