@@ -14,15 +14,12 @@ from adb_auto_player.adb import (
     log_devices,
     wm_size_reset,
 )
-from adb_auto_player.decorators.register_command import GuiMetadata, register_command
+from adb_auto_player.decorators.register_command import register_command
 from adbutils import AdbClient, AdbDevice
 
 
-# This is handled separately in the GUI, do not add a category
 @register_command(
-    gui=GuiMetadata(
-        label="Log Debug Info",
-    ),
+    gui=None,  # This is hard coded in the GUI so we do not need it.
     name="Debug",
 )
 def _log_debug() -> None:
