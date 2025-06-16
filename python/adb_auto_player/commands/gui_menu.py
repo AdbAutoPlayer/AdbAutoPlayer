@@ -11,7 +11,10 @@ from adb_auto_player.decorators.register_game import game_registry
 from adb_auto_player.ipc import GameGUIOptions, MenuOption
 
 
-@register_command(name="GUIGamesMenu")
+@register_command(
+    gui=None,  # We do not want a GUI Button for this
+    name="GUIGamesMenu",
+)
 def _print_gui_games_menu() -> None:
     print(get_gui_games_menu())
 
@@ -40,11 +43,12 @@ def get_gui_games_menu() -> str:
 
         menu_options: list[MenuOption] = []
         for name, command in command_registry.get(module, {}).items():
-            menu_options.append(command.menu_option)
+            if command.menu_option.display_in_gui:
+                menu_options.append(command.menu_option)
 
         # add common commands
         for name, command in command_registry.get("Commands", {}).items():
-            if command.menu_option and command.menu_option.category:
+            if command.menu_option.display_in_gui:
                 menu_options.append(command.menu_option)
 
         for menu_option in menu_options:
