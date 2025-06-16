@@ -1,6 +1,7 @@
 """Arcane Labyrinth Mixin."""
 
 import logging
+import time
 from abc import ABC
 from math import floor
 from time import sleep
@@ -228,8 +229,11 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             case "arcane_labyrinth/swords_button.png":
                 self._click_best_gate(x, y)
                 self._arcane_lab_start_battle()
+
+                start_time = time.time()
                 while self._battle_is_not_completed():
-                    pass
+                    if time.time() - start_time > self.BATTLE_TIMEOUT:
+                        raise GameTimeoutError(self.BATTLE_TIMEOUT_ERROR_MESSAGE)
 
             case "arcane_labyrinth/select_a_crest.png" | "arcane_labyrinth/confirm.png":
                 self._select_a_crest()
@@ -423,8 +427,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
         if result is None:
             if self.arcane_skip_coordinates is not None:
-                self.tap(Coordinates(*self.arcane_skip_coordinates))
-                logging.debug("clicking skip")
+                self.tap(Coordinates(*self.arcane_skip_coordinates), log=False)
+                logging.debug(f"clicking skip at {self.arcane_skip_coordinates}")
             difficulty: tuple[int, int] | None = self.game_find_template_match(
                 template="arcane_labyrinth/difficulty.png",
                 threshold=0.7,

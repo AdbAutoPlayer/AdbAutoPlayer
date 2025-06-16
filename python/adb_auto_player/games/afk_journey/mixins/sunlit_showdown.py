@@ -171,10 +171,7 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
             templates=["event/sunlit_showdown/victory", "event/sunlit_showdown/defeat"],
             timeout=self.BATTLE_TIMEOUT,
             delay=1.0,
-            timeout_message=(
-                "Battle over screen not found after 4 minutes. "
-                "The game may be slow or stuck."
-            ),
+            timeout_message=self.BATTLE_TIMEOUT_ERROR_MESSAGE,
         )
 
         match template:

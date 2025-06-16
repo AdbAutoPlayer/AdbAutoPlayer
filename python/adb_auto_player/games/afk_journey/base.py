@@ -61,8 +61,11 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
     MODE_AFK_STAGES: str = "AFK_STAGES"
     MODE_LEGEND_TRIALS: str = "LEGEND_TRIALS"
 
-    # Language Requirements
+    # Error strings
     LANG_ERROR: str = "Is the game language set to English?"
+    BATTLE_TIMEOUT_ERROR_MESSAGE: str = (
+        "Battle over screen not found after 4 minutes, the game may be slow or stuck."
+    )
 
     def start_up(self, device_streaming: bool = True) -> None:
         """Give the bot eyes."""
@@ -463,10 +466,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                 timeout=self.BATTLE_TIMEOUT,
                 crop=CropRegions(top=0.4),
                 delay=1.0,
-                timeout_message=(
-                    "Battle over screen not found after 4 minutes. "
-                    "The game may be slow or stuck."
-                ),
+                timeout_message=self.BATTLE_TIMEOUT_ERROR_MESSAGE,
             )
 
             match template:
