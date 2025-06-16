@@ -290,10 +290,13 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     battle_click_limit = 8
                     if battle_click_count > battle_click_limit:
                         raise BattleCannotBeStartedError("Failed to start Battle")
-                    logging.debug(
-                        f"clicking arcane_labyrinth/battle.png #{battle_click_count}"
+                    self.tap(
+                        Coordinates(x, y),
+                        log_message=(
+                            "Tapped arcane_labyrinth/battle.png "
+                            f"attempt #{battle_click_count}"
+                        ),
                     )
-                    self.tap(Coordinates(x, y), log=False)
             sleep(0.5)
         self.arcane_difficulty_was_visible = False
         sleep(1)
@@ -427,8 +430,10 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
         if result is None:
             if self.arcane_skip_coordinates is not None:
-                self.tap(Coordinates(*self.arcane_skip_coordinates), log=False)
-                logging.debug(f"clicking skip at {self.arcane_skip_coordinates}")
+                self.tap(
+                    Coordinates(*self.arcane_skip_coordinates),
+                    log_message="Tapped skip",
+                )
             difficulty: tuple[int, int] | None = self.game_find_template_match(
                 template="arcane_labyrinth/difficulty.png",
                 threshold=0.7,

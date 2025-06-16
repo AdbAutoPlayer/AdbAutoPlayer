@@ -59,8 +59,12 @@ from pydantic import BaseModel
 class Coordinates(NamedTuple):
     """Coordinate named tuple."""
 
-    x: int
-    y: int
+    x: int | np.int64
+    y: int | np.int64
+
+    def __str__(self):
+        """Converts np.int64 to int for concise logging."""
+        return f"Coordinates(x={int(self.x)}, y={int(self.y)})"
 
 
 class _SwipeDirection(StrEnum):
@@ -333,7 +337,7 @@ class Game:
         scale: bool = False,
         blocking: bool = True,
         non_blocking_sleep_duration: float = 1 / 30,  # Assuming 30 FPS, 1 Tap per Frame
-        log: bool = True,
+        log_message: str | None = "",
     ) -> None:
         """Tap the screen on the given coordinates.
 
@@ -344,43 +348,69 @@ class Game:
                 wait for ADBServer to confirm the tap has happened.
             non_blocking_sleep_duration (float, optional): Sleep time in seconds for
                 non-blocking taps, needed to not DoS the ADBServer.
-            log (bool, optional): Whether to log the tap.
+            log_message (str | None, optional): Controls logging behavior:
+                - None: No logging
+                - "": Default coordinate logging
+                - str: Custom message, appends coordinates automatically
         """
-        if scale:
-            scaled_coords = Coordinates(*self._scale_coordinates(*coordinates))
-            if coordinates != scaled_coords:
-                logging.debug(f"Scaled coordinates: {coordinates} => {scaled_coords}")
-                coordinates = scaled_coords
+        original_coords = coordinates
+        final_coords = coordinates
 
+        # Handle coordinate scaling
+        if scale:
+            final_coords = Coordinates(*self._scale_coordinates(*coordinates))
+
+        log_message = self._build_tap_log_message(
+            original_coords,
+            final_coords,
+            log_message,
+        )
+
+        # Perform the tap
         if blocking:
-            self._click(coordinates, log)
+            self._click(final_coords, log_message)
         else:
             thread = threading.Thread(
                 target=self._click,
                 args=(
-                    coordinates,
-                    log,
+                    final_coords,
+                    log_message,
                 ),
                 daemon=True,
             )
             thread.start()
             sleep(non_blocking_sleep_duration)
 
+    def _build_tap_log_message(
+        self,
+        original_coords: Coordinates,
+        final_coords: Coordinates,
+        message: str | None = None,
+    ) -> str:
+        """Log the tap with all relevant information in a single entry."""
+        coords_info = (
+            f"{original_coords} (scaled to {final_coords})"
+            if original_coords != final_coords
+            else str(final_coords)
+        )
+        if message:
+            return f"{message}: {coords_info}"
+        return f"Tapped: {coords_info}"
+
     def _click(
         self,
         coordinates: Coordinates,
-        log: bool = True,
+        log_message: str | None = None,
     ) -> None:
+        """Internal click method - logging should typically be handled by the caller."""
         with self.device.shell(
             f"input tap {coordinates.x} {coordinates.y}",
             timeout=3,  # if the click didn't happen in 3 seconds it's never happening
             stream=True,
         ) as connection:
-            if log:
-                logging.debug(f"Clicked Coordinates: {coordinates}")
-            # without this it breaks for people with slower CPUs
-            # need to think of a better solution
             connection.read_until_close()
+        if log_message:
+            logging.debug(log_message)
 
     def get_screenshot(self) -> np.ndarray:
         """Gets screenshot from device using stream or screencap.
