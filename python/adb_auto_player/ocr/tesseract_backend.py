@@ -21,6 +21,9 @@ _NUM_COLORS_IN_RGB = 3
 class TesseractBackend(OCRBackend):
     """Tesseract OCR backend implementation."""
 
+    # TODO psm 3 generally seems to work like shit.
+    # psm 6 should be ideal for text blocks like popup messages
+    # psm 11 only detects individual words
     def __init__(self, config: str = "--oem 3 --psm 6", lang: str = "eng"):
         """Initialize Tesseract backend.
 
