@@ -5,6 +5,7 @@
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
       <excludeFolder url="file://$MODULE_DIR$/main.build" />
       <excludeFolder url="file://$MODULE_DIR$/main.dist" />
+      <excludeFolder url="file://$MODULE_DIR$/adb_auto_player/binaries" />
     </content>
     <orderEntry type="jdk" jdkName="uv (python)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
