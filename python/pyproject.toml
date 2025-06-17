@@ -14,6 +14,7 @@ dependencies = [
     "pydantic>=2.10.5,<3",
     "av>=14.1.0,<15",
     "pillow>=11.1.0",
+    "pytesseract>=0.3.13",
 ]
 
 [project.scripts]
@@ -65,6 +66,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # Ignore D100 (Missing docstring in public module) only in games subdirs
 "**/games/**/*.py" = ["D100", "D101", "D102"]
+"**/tests/**/*.py" = ["D100", "D101", "D102"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

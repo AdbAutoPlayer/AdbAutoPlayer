@@ -133,4 +133,7 @@ class Box:
 
     def __str__(self):
         """Return a string representation of the box."""
-        return f"Box(x={self.x}, y={self.y}, w={self.width}, h={self.height})"
+        return (
+            f"Box(x={int(self.x)}, y={int(self.y)}, "
+            f"w={int(self.width)}, h={int(self.height)})"
+        )
