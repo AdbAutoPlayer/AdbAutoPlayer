@@ -74,8 +74,8 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && matrix.os == 'windows-latest'
         with:
           if-no-files-found: 'error'
-          path: ${{ matrix.zip_file }}
-          compression-level: 0
+          name: ${{ matrix.zip_file }}
+          path: ${{ github.workspace }}/AdbAutoPlayer/[!.]*
 
   publish:
     needs: build
