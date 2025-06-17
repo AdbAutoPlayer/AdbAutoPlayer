@@ -1,0 +1,3 @@
+name: codeql-config
+paths-ignore:
+  - '**/binaries/**'
