@@ -32,7 +32,7 @@
 		"@tailwindcss/vite": "^4.1.8",
 		"idb": "^8.0.3",
 		"marked": "^15.0.12",
-		"posthog-js": "^1.249.5",
+		"posthog-js": "^1.253.3",
 		"tailwindcss": "^4.1.7"
 	}
 }
