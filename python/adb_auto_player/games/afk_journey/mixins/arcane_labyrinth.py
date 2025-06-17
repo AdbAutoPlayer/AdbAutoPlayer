@@ -1,6 +1,7 @@
 """Arcane Labyrinth Mixin."""
 
 import logging
+import time
 from abc import ABC
 from math import floor
 from time import sleep
@@ -62,8 +63,10 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
     def _quit(self) -> None:
         logging.info("Restarting Arcane Labyrinth")
-        x, y = 0, 0  # PyCharm complains for no reason...
-        while True:
+        max_count = 30
+        count = 0
+        while count < max_count:
+            count += 1
             result: tuple[str, int, int] | None = self.find_any_template(
                 templates=[
                     "arcane_labyrinth/quit_door.png",
@@ -85,31 +88,20 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     continue
             break
 
-        _: tuple[int, int] = self.wait_for_template(
+        _ = self.wait_for_template(
             "arcane_labyrinth/hold_to_exit.png",
             crop=CropRegions(right=0.5, top=0.5, bottom=0.3),
+            timeout_message="Failed to exit Arcane Labyrinth run",
+            timeout=self.MIN_TIMEOUT,
         )
         sleep(1)
-        hold_to_exit: tuple[int, int] = self.wait_for_template(
+        hold_to_exit = self.wait_for_template(
             "arcane_labyrinth/hold_to_exit.png",
             crop=CropRegions(right=0.5, top=0.5, bottom=0.3),
+            timeout_message="Failed to exit Arcane Labyrinth run",
+            timeout=self.FAST_TIMEOUT,
         )
         self.hold(*hold_to_exit, duration=5.0)
-
-        while True:
-            result = self.find_any_template(
-                templates=[
-                    "arcane_labyrinth/enter.png",
-                    "arcane_labyrinth/heroes_icon.png",
-                ],
-                threshold=0.7,
-                crop=CropRegions(left=0.3, top=0.8),
-            )
-            if result is None:
-                self.tap(Coordinates(x, y))
-                sleep(0.2)
-            else:
-                break
 
     def _add_keys_farmed(self, keys: int) -> None:
         """Logs the number of keys farmed.
@@ -157,7 +149,10 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 continue
             except AutoPlayerError as e:
                 logging.error(f"{e}")
-                self._quit()
+                try:
+                    self._quit()
+                except GameTimeoutError:
+                    logging.error(f"{e}")
                 continue
             clear_count += 1
             logging.info(f"Arcane Labyrinth clear #{clear_count}")
@@ -234,8 +229,11 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             case "arcane_labyrinth/swords_button.png":
                 self._click_best_gate(x, y)
                 self._arcane_lab_start_battle()
+
+                start_time = time.time()
                 while self._battle_is_not_completed():
-                    pass
+                    if time.time() - start_time > self.BATTLE_TIMEOUT:
+                        raise GameTimeoutError(self.BATTLE_TIMEOUT_ERROR_MESSAGE)
 
             case "arcane_labyrinth/select_a_crest.png" | "arcane_labyrinth/confirm.png":
                 self._select_a_crest()
@@ -267,9 +265,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         battle_click_count = 0
         no_result_count = 0
         no_result_threshold = 3
-        while True:
-            if no_result_count >= no_result_threshold:
-                break
+        while no_result_count < no_result_threshold:
             result = self.find_any_template(
                 templates=[
                     "arcane_labyrinth/battle.png",
@@ -293,13 +289,14 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     battle_click_count += 1
                     battle_click_limit = 8
                     if battle_click_count > battle_click_limit:
-                        raise BattleCannotBeStartedError(
-                            "arcane_labyrinth/battle.png still visible after 8 clicks"
-                        )
-                    logging.debug(
-                        f"clicking arcane_labyrinth/battle.png #{battle_click_count}"
+                        raise BattleCannotBeStartedError("Failed to start Battle")
+                    self.tap(
+                        Coordinates(x, y),
+                        log_message=(
+                            "Tapped arcane_labyrinth/battle.png "
+                            f"attempt #{battle_click_count}"
+                        ),
                     )
-                    self.tap(Coordinates(x, y))
             sleep(0.5)
         self.arcane_difficulty_was_visible = False
         sleep(1)
@@ -433,8 +430,10 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
         if result is None:
             if self.arcane_skip_coordinates is not None:
-                self.tap(Coordinates(*self.arcane_skip_coordinates))
-                logging.debug("clicking skip")
+                self.tap(
+                    Coordinates(*self.arcane_skip_coordinates),
+                    log_message="Tapped skip",
+                )
             difficulty: tuple[int, int] | None = self.game_find_template_match(
                 template="arcane_labyrinth/difficulty.png",
                 threshold=0.7,
