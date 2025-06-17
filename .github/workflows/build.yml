@@ -19,7 +19,7 @@ jobs:
         os: [windows-latest]
         include:
           - os: windows-latest
-            zip_files: "AdbAutoPlayer_Windows.zip"
+            zip_file: "AdbAutoPlayer_Windows.zip"
 
     steps:
       - uses: actions/checkout@v4
@@ -68,14 +68,14 @@ jobs:
       - uses: softprops/action-gh-release@v2
         if: github.event_name == 'release' && github.event.action == 'published'
         with:
-          files: ${{ matrix.zip_files }}
+          files: ${{ matrix.zip_file }}
 
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'workflow_dispatch' && matrix.os == 'windows-latest'
         with:
           if-no-files-found: 'error'
-          name: ${{ matrix.os }}-build
-          path: "*_Windows.zip"
+          path: ${{ matrix.zip_file }}
+          compression-level: 0
 
   publish:
     needs: build
