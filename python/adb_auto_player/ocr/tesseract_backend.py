@@ -47,24 +47,21 @@ def _patch_subprocess_popen():
     """
     _original_popen = subprocess.Popen
 
-    def silent_popen(*args, **kwargs):
-        if platform.system() == "Windows":
-            cmd = args[0]
-            # If it's a list (command + args), check the first element
-            if isinstance(cmd, list):
-                first = cmd[0]
-            else:
-                first = cmd
+    class SilentPopen(_original_popen):
+        def __init__(self, args, *popenargs, **kwargs):
+            if platform.system() == "Windows":
+                # Check if the command is tesseract
+                cmd = args
+                if isinstance(cmd, list):
+                    first = cmd[0]
+                else:
+                    first = cmd
+                first_str = str(first)
+                if "tesseract" in first_str.lower():
+                    kwargs.setdefault("creationflags", subprocess.CREATE_NO_WINDOW)
+            super().__init__(args, *popenargs, **kwargs)
 
-            # Convert to string if it's a Path
-            first_str = str(first)
-
-            if "tesseract" in first_str.lower():
-                kwargs.setdefault("creationflags", subprocess.CREATE_NO_WINDOW)
-
-        return _original_popen(*args, **kwargs)
-
-    subprocess.Popen = silent_popen
+    subprocess.Popen = SilentPopen
 
 
 class TesseractBackend:
