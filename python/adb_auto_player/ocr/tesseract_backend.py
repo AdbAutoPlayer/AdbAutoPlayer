@@ -2,6 +2,7 @@
 
 import os
 import platform
+from enum import IntEnum
 from typing import Any
 
 import numpy as np
@@ -16,6 +17,14 @@ from .tesseract_config import TesseractConfig
 from .tesseract_lang import Lang
 
 _NUM_COLORS_IN_RGB = 3
+
+
+class GroupingLevel(IntEnum):
+    """Text grouping levels for OCR detection."""
+
+    BLOCK = 2
+    PARAGRAPH = 3
+    LINE = 4
 
 
 class TesseractBackend:
@@ -138,7 +147,7 @@ class TesseractBackend:
         image: np.ndarray,
         config: TesseractConfig | None = None,
         min_confidence: Threshold | None = None,
-        level: int = 2,
+        level: int = GroupingLevel.BLOCK,
     ) -> list[OCRResult]:
         """Detect text blocks and return results with bounding boxes.
 
@@ -146,7 +155,7 @@ class TesseractBackend:
             image: Input RGB image as numpy array
             config: Optional TesseractConfig override
             min_confidence: Minimum confidence threshold, default no Threshold
-            level: Grouping level (2=blocks, 3=paragraphs, 4=lines)
+            level: GroupingLevel
 
         Returns:
             List of OCR results with text block bounding boxes
@@ -176,15 +185,15 @@ class TesseractBackend:
                 continue
 
             # Create grouping key based on level
-            if level == 2:  # Block level
+            if level == GroupingLevel.BLOCK:
                 group_key = (data["page_num"][i], data["block_num"][i])
-            elif level == 3:  # Paragraph level
+            elif level == GroupingLevel.PARAGRAPH:
                 group_key = (
                     data["page_num"][i],
                     data["block_num"][i],
                     data["par_num"][i],
                 )
-            elif level == 4:  # Line level
+            elif level == GroupingLevel.LINE:
                 group_key = (
                     data["page_num"][i],
                     data["block_num"][i],
@@ -271,7 +280,10 @@ class TesseractBackend:
             List of OCR results with paragraph bounding boxes
         """
         return self.detect_text_blocks(
-            image, config=config, min_confidence=min_confidence, level=3
+            image,
+            config=config,
+            min_confidence=min_confidence,
+            level=GroupingLevel.PARAGRAPH,
         )
 
     def detect_text_lines(
@@ -291,7 +303,10 @@ class TesseractBackend:
             List of OCR results with line bounding boxes
         """
         return self.detect_text_blocks(
-            image, config=config, min_confidence=min_confidence, level=4
+            image,
+            config=config,
+            min_confidence=min_confidence,
+            level=GroupingLevel.LINE,
         )
 
     def get_backend_info(self) -> dict[str, Any]:
