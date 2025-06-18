@@ -174,7 +174,7 @@ class TesseractBackend:
         )
 
         # Group by the specified level (block_num, par_num, etc.)
-        blocks = {}
+        blocks: dict[tuple[Any, ...], dict[str, list[Any]]] = {}
         n_boxes = len(data["text"])
 
         for i in range(n_boxes):
@@ -185,6 +185,7 @@ class TesseractBackend:
                 continue
 
             # Create grouping key based on level
+            group_key: tuple[Any, ...]
             if level == GroupingLevel.BLOCK:
                 group_key = (data["page_num"][i], data["block_num"][i])
             elif level == GroupingLevel.PARAGRAPH:
