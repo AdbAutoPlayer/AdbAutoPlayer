@@ -4,124 +4,94 @@ import os
 import platform
 from typing import Any
 
-import cv2
 import numpy as np
 import pytesseract
 from adb_auto_player.models.geometry.box import Box
 from adb_auto_player.models.ocr.ocr_result import OCRResult
-from PIL import Image
 from pytesseract import TesseractNotFoundError
 
 from .. import ConfigLoader
-from .ocr_backend import OCRBackend
+from .tesseract_config import TesseractConfig
+from .tesseract_lang import Lang
 
 _NUM_COLORS_IN_RGB = 3
 
 
-class TesseractBackend(OCRBackend):
+class TesseractBackend:
     """Tesseract OCR backend implementation."""
 
-    # TODO psm 3 generally seems to work like shit.
-    # psm 6 should be ideal for text blocks like popup messages
-    # psm 11 only detects individual words
-    def __init__(self, config: str = "--oem 3 --psm 6", lang: str = "eng"):
+    def __init__(self, config: TesseractConfig = TesseractConfig()):
         """Initialize Tesseract backend.
 
         Args:
-            config: Tesseract configuration string
-            lang: Language code for OCR (e.g., 'eng', 'chi_sim', 'jpn')
+            config: TesseractConfig instance
         """
         self.config = config
-        self.lang = lang
 
         try:
             pytesseract.get_tesseract_version()
         except TesseractNotFoundError as e:
             if platform.system() != "Windows":
-                raise RuntimeError(
-                    f"Tesseract not found or not properly configured: {e}"
-                )
+                raise RuntimeError(f"Tesseract not found in PATH: {e}")
 
             fallback_path = (
                 ConfigLoader().binaries_dir / "windows" / "tesseract" / "tesseract.exe"
             )
 
             if not os.path.isfile(fallback_path):
-                raise RuntimeError(
-                    "Tesseract not found in system PATH "
-                    f"and fallback binary not found at {fallback_path}"
-                )
+                raise RuntimeError(f"Tesseract binaries not found in: {fallback_path}")
 
-            # Use the fallback tesseract executable
             pytesseract.pytesseract.tesseract_cmd = fallback_path
-
             try:
                 pytesseract.get_tesseract_version()
-            except Exception as e2:
-                raise RuntimeError(f"Tesseract fallback also failed: {e2}")
+            except Exception as e:
+                raise RuntimeError(f"Tesseract fallback failed: {e}")
 
         except Exception as e:
             raise e
 
-    def extract_text(self, image: np.ndarray, **kwargs) -> str:
+    def extract_text(
+        self,
+        image: np.ndarray,
+        config_override: TesseractConfig | None = None,
+    ) -> str:
         """Extract all text from an image as a single string.
 
         Args:
-            image: Input image as numpy array
-            **kwargs: Additional arguments (config, lang can override defaults)
+            image: Input RGB image as numpy array
+            config_override: Optional TesseractConfig override
 
         Returns:
             str: Extracted text
         """
-        config = kwargs.get("config", self.config)
-        lang = kwargs.get("lang", self.lang)
+        if not config_override:
+            config_override = self.config
 
-        # Convert numpy array to PIL Image
-        if len(image.shape) == _NUM_COLORS_IN_RGB:
-            # Convert BGR to RGB if needed
-            if image.shape[2] == _NUM_COLORS_IN_RGB:
-                image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            else:
-                image_rgb = image
-            pil_image = Image.fromarray(image_rgb)
-        else:
-            # Grayscale image
-            pil_image = Image.fromarray(image)
-
-        # Extract text
-        text = pytesseract.image_to_string(pil_image, config=config, lang=lang).strip()
+        text = pytesseract.image_to_string(
+            image=image,
+            config=config_override.config_string,
+            lang=config_override.lang_string,
+        ).strip()
 
         return text
 
-    def detect_text_with_boxes(self, image: np.ndarray, **kwargs) -> list[OCRResult]:
+    def detect_text(self, image: np.ndarray, **kwargs) -> list[OCRResult]:
         """Detect text and return results with bounding boxes.
 
         Args:
-            image: Input image as numpy array
+            image: Input RGB image as numpy array
             **kwargs: Additional arguments (config, lang, min_confidence)
 
         Returns:
             list[OCRResult]: List of OCR results with bounding boxes
         """
-        config = kwargs.get("config", self.config)
-        lang = kwargs.get("lang", self.lang)
         min_confidence = kwargs.get("min_confidence", 0.0)
 
-        # Convert numpy array to PIL Image
-        if len(image.shape) == _NUM_COLORS_IN_RGB:
-            # Convert BGR to RGB if needed
-            if image.shape[2] == _NUM_COLORS_IN_RGB:
-                image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            else:
-                image_rgb = image
-            pil_image = Image.fromarray(image_rgb)
-        else:
-            # Grayscale image
-            pil_image = Image.fromarray(image)
-
-        # Get detailed data including bounding boxes
         data = pytesseract.image_to_data(
-            pil_image, config=config, lang=lang, output_type=pytesseract.Output.DICT
+            image,
+            config=self.config.config_string,
+            lang=self.config.lang_string,
+            output_type=pytesseract.Output.DICT,
         )
 
         results = []
@@ -155,6 +125,149 @@ class TesseractBackend(OCRBackend):
 
         return results
 
+    def detect_text_blocks(self, image: np.ndarray, **kwargs) -> list[OCRResult]:
+        """Detect text blocks and return results with bounding boxes.
+
+        Text blocks are larger groupings of text, typically paragraphs or
+        coherent sections of text, rather than individual words.
+
+        Args:
+            image: Input RGB image as numpy array
+            **kwargs: Additional arguments (config, lang, min_confidence, level)
+
+        Returns:
+            list[OCRResult]: List of OCR results with text block bounding boxes
+        """
+        min_confidence = kwargs.get("min_confidence", 0.0)
+        # Level 2 = blocks, Level 3 = paragraphs, Level 4 = lines
+        level = kwargs.get("level", 2)  # Default to block level
+
+        data = pytesseract.image_to_data(
+            image,
+            config=self.config.config_string,
+            lang=self.config.lang_string,
+            output_type=pytesseract.Output.DICT,
+        )
+
+        # Group by the specified level (block_num, par_num, etc.)
+        blocks = {}
+        n_boxes = len(data["text"])
+
+        for i in range(n_boxes):
+            text = data["text"][i].strip()
+            confidence = float(data["conf"][i])
+            confidence_normalized = confidence / 100.0
+
+            if not text or confidence_normalized < min_confidence:
+                continue
+
+            # Create grouping key based on level
+            if level == 2:  # Block level
+                group_key = (data["page_num"][i], data["block_num"][i])
+            elif level == 3:  # Paragraph level
+                group_key = (
+                    data["page_num"][i],
+                    data["block_num"][i],
+                    data["par_num"][i],
+                )
+            elif level == 4:  # Line level
+                group_key = (
+                    data["page_num"][i],
+                    data["block_num"][i],
+                    data["par_num"][i],
+                    data["line_num"][i],
+                )
+            else:
+                # Default to block level
+                group_key = (data["page_num"][i], data["block_num"][i])
+
+            if group_key not in blocks:
+                blocks[group_key] = {
+                    "texts": [],
+                    "confidences": [],
+                    "left": [],
+                    "top": [],
+                    "right": [],
+                    "bottom": [],
+                }
+
+            # Collect text and bounding box info
+            blocks[group_key]["texts"].append(text)
+            blocks[group_key]["confidences"].append(confidence_normalized)
+
+            left = int(data["left"][i])
+            top = int(data["top"][i])
+            width = int(data["width"][i])
+            height = int(data["height"][i])
+
+            blocks[group_key]["left"].append(left)
+            blocks[group_key]["top"].append(top)
+            blocks[group_key]["right"].append(left + width)
+            blocks[group_key]["bottom"].append(top + height)
+
+        # Convert blocks to OCRResult objects
+        results = []
+        for block_data in blocks.values():
+            if not block_data["texts"]:
+                continue
+
+            # Combine all text in the block
+            combined_text = " ".join(block_data["texts"])
+
+            # Calculate average confidence
+            avg_confidence = sum(block_data["confidences"]) / len(
+                block_data["confidences"]
+            )
+
+            # Calculate bounding box that encompasses all words in the block
+            min_x = min(block_data["left"])
+            min_y = min(block_data["top"])
+            max_x = max(block_data["right"])
+            max_y = max(block_data["bottom"])
+
+            width = max_x - min_x
+            height = max_y - min_y
+
+            try:
+                box = Box(x=min_x, y=min_y, width=width, height=height)
+                result = OCRResult(
+                    text=combined_text, confidence=avg_confidence, box=box
+                )
+                results.append(result)
+            except ValueError:
+                # Skip invalid boxes
+                continue
+
+        return results
+
+    def detect_text_paragraphs(self, image: np.ndarray, **kwargs) -> list[OCRResult]:
+        """Detect text paragraphs and return results with bounding boxes.
+
+        Convenience method for paragraph-level text detection.
+
+        Args:
+            image: Input RGB image as numpy array
+            **kwargs: Additional arguments (config, lang, min_confidence)
+
+        Returns:
+            list[OCRResult]: List of OCR results with paragraph bounding boxes
+        """
+        return self.detect_text_blocks(image, level=3, **kwargs)
+
+    def detect_text_lines(self, image: np.ndarray, **kwargs) -> list[OCRResult]:
+        """Detect text lines and return results with bounding boxes.
+
+        Convenience method for line-level text detection.
+
+        Args:
+            image: Input RGB image as numpy array
+            **kwargs: Additional arguments (config, lang, min_confidence)
+
+        Returns:
+            list[OCRResult]: List of OCR results with line bounding boxes
+        """
+        return self.detect_text_blocks(image, level=4, **kwargs)
+
     def get_backend_info(self) -> dict[str, Any]:
         """Get information about the backend.
 
@@ -162,16 +275,14 @@ class TesseractBackend(OCRBackend):
             dict: Backend information
         """
         try:
-            version = pytesseract.get_tesseract_version()
-            version_str = ".".join(map(str, version))
+            version = str(pytesseract.get_tesseract_version())
         except Exception:
-            version_str = "Unknown"
+            version = "Unknown"
 
         return {
             "name": "Tesseract",
-            "version": version_str,
+            "version": version,
             "config": self.config,
-            "language": self.lang,
             "supported_languages": self._get_supported_languages(),
         }
 
@@ -182,41 +293,7 @@ class TesseractBackend(OCRBackend):
             list[str]: List of supported language codes
         """
         try:
-            langs = pytesseract.get_languages(config="")
+            langs = pytesseract.get_languages(config=self.config.config_string)
             return sorted(langs)
         except Exception:
-            return ["eng"]  # Default fallback
-
-    def preprocess_image(self, image: np.ndarray, **kwargs) -> np.ndarray:
-        """Preprocess image for better OCR results.
-
-        Args:
-            image: Input image as numpy array
-            **kwargs: Preprocessing options
-
-        Returns:
-            np.ndarray: Preprocessed image
-        """
-        # Convert to grayscale if needed
-        if len(image.shape) == _NUM_COLORS_IN_RGB:
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        else:
-            gray = image.copy()
-
-        # Apply preprocessing based on kwargs
-        if kwargs.get("denoise", False):
-            gray = cv2.fastNlMeansDenoising(gray)
-
-        if kwargs.get("threshold", False):
-            _, gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-
-        if kwargs.get("scale_factor", 1.0) != 1.0:
-            scale = kwargs["scale_factor"]
-            height, width = gray.shape[:2]
-            new_width = int(width * scale)
-            new_height = int(height * scale)
-            gray = cv2.resize(
-                gray, (new_width, new_height), interpolation=cv2.INTER_CUBIC
-            )
-
-        return gray
+            return Lang.get_supported_languages()
