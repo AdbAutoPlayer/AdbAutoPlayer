@@ -32,92 +32,10 @@ class Threshold:
         Raises:
             ValueError: If threshold format is invalid or out of range
         """
-        self.value = self._parse_threshold(threshold)
+        self.value = _parse_threshold(threshold)
 
-    def _parse_threshold(self, threshold: str | int | float) -> float:
-        """Parse threshold from various input formats to normalized float (0.0-1.0).
-
-        Args:
-            threshold: Input threshold value
-
-        Returns:
-            Normalized threshold value (0.0-1.0)
-
-        Raises:
-            ValueError: If threshold format is invalid or out of range
-        """
-        if isinstance(threshold, str):
-            threshold = threshold.strip()
-
-            # Handle percentage strings
-            if threshold.endswith("%"):
-                try:
-                    value = threshold[:-1]
-                    value = value.strip()
-                    percent_value = float(value)
-                    if not _MIN_PERCENTAGE_INT <= percent_value <= _MAX_PERCENTAGE_INT:
-                        raise ValueError(
-                            f"Percentage must be between 0% and 100%, got {threshold}"
-                        )
-                    return percent_value / 100.0
-                except ValueError as e:
-                    if "could not convert string to float" in str(e):
-                        raise ValueError(f"Invalid percentage format: {threshold}")
-                    raise
-
-            # Handle string numbers
-            try:
-                if "." in threshold:
-                    num_value = float(threshold)
-                else:
-                    num_value = int(threshold)
-                return self._normalize_numeric_value(num_value)
-            except ValueError:
-                raise ValueError(f"Invalid threshold format: {threshold}")
-
-        elif isinstance(threshold, int | float):
-            return self._normalize_numeric_value(threshold)
-
-        else:
-            raise ValueError(f"Unsupported threshold type: {type(threshold)}")
-
-    def _normalize_numeric_value(self, value: int | float) -> float:
-        """Normalize numeric value to 0.0-1.0 range.
-
-        Args:
-            value: Numeric threshold value
-
-        Returns:
-            Normalized threshold value (0.0-1.0)
-
-        Raises:
-            ValueError: If value is out of valid range
-        """
-        if isinstance(value, float):
-            if not 0.0 <= value <= 1.0:
-                raise ValueError(f"Float needs to be between 0.0 and 1.0, got {value}")
-            return value
-
-        if isinstance(value, bool):
-            if value:
-                return 1.0
-            return 0.0
-
-        if _MIN_PERCENTAGE_INT <= value <= _MAX_PERCENTAGE_INT:
-            # Treat as percentage
-            return float(value) / 100.0
-        else:
-            raise ValueError(f"Threshold must be between 0-1 or 0-100, got {value}")
-
-    def to_normalized(self) -> float:
-        """Get threshold as normalized float (0.0-1.0).
-
-        Returns:
-            Normalized threshold value
-        """
-        return self.value
-
-    def to_percentage(self) -> float:
+    @property
+    def percentage(self) -> float:
         """Get threshold as percentage (0.0-100.0).
 
         Returns:
@@ -125,17 +43,27 @@ class Threshold:
         """
         return self.value * 100.0
 
-    def to_tesseract_format(self) -> float:
+    @property
+    def tesseract_format(self) -> float:
         """Get threshold in Tesseract's expected format (0.0-100.0).
 
         Returns:
             Threshold in Tesseract format
         """
-        return self.to_percentage()
+        return self.percentage
+
+    @property
+    def cv2_format(self) -> float:
+        """Get threshold as normalized float (0.0-1.0).
+
+        Returns:
+            Normalized threshold value
+        """
+        return self.value
 
     def __str__(self) -> str:
         """String representation as percentage."""
-        return f"{self.to_percentage():.1f}%"
+        return f"{self.percentage:.1f}%"
 
     def __repr__(self) -> str:
         """Developer-friendly representation."""
@@ -192,3 +120,80 @@ class Threshold:
     def __ge__(self, other) -> bool:
         """Greater than or equal comparison."""
         return self == other or self > other
+
+
+def _normalize_numeric_value(value: int | float) -> float:
+    """Normalize numeric value to 0.0-1.0 range.
+
+    Args:
+        value: Numeric threshold value
+
+    Returns:
+        Normalized threshold value (0.0-1.0)
+
+    Raises:
+        ValueError: If value is out of valid range
+    """
+    if isinstance(value, float):
+        if not 0.0 <= value <= 1.0:
+            raise ValueError(f"Float needs to be between 0.0 and 1.0, got {value}")
+        return value
+
+    if isinstance(value, bool):
+        if value:
+            return 1.0
+        return 0.0
+
+    if _MIN_PERCENTAGE_INT <= value <= _MAX_PERCENTAGE_INT:
+        # Treat as percentage
+        return float(value) / 100.0
+    else:
+        raise ValueError(f"Threshold must be between 0-1 or 0-100, got {value}")
+
+
+def _parse_threshold(threshold: str | int | float) -> float:
+    """Parse threshold from various input formats to normalized float (0.0-1.0).
+
+    Args:
+        threshold: Input threshold value
+
+    Returns:
+        Normalized threshold value (0.0-1.0)
+
+    Raises:
+        ValueError: If threshold format is invalid or out of range
+    """
+    if isinstance(threshold, str):
+        threshold = threshold.strip()
+
+        # Handle percentage strings
+        if threshold.endswith("%"):
+            try:
+                value = threshold[:-1]
+                value = value.strip()
+                percent_value = float(value)
+                if not _MIN_PERCENTAGE_INT <= percent_value <= _MAX_PERCENTAGE_INT:
+                    raise ValueError(
+                        f"Percentage must be between 0% and 100%, got {threshold}"
+                    )
+                return percent_value / 100.0
+            except ValueError as e:
+                if "could not convert string to float" in str(e):
+                    raise ValueError(f"Invalid percentage format: {threshold}")
+                raise
+
+        # Handle string numbers
+        try:
+            if "." in threshold:
+                num_value = float(threshold)
+            else:
+                num_value = int(threshold)
+            return _normalize_numeric_value(num_value)
+        except ValueError:
+            raise ValueError(f"Invalid threshold format: {threshold}")
+
+    elif isinstance(threshold, int | float):
+        return _normalize_numeric_value(threshold)
+
+    else:
+        raise ValueError(f"Unsupported threshold type: {type(threshold)}")

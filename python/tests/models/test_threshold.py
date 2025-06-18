@@ -63,9 +63,10 @@ class TestThreshold(unittest.TestCase):
         """Test conversion methods."""
         threshold = Threshold("80%")
 
-        self.assertAlmostEqual(threshold.to_normalized(), 0.8)
-        self.assertAlmostEqual(threshold.to_percentage(), 80.0)
-        self.assertAlmostEqual(threshold.to_tesseract_format(), 80.0)
+        self.assertAlmostEqual(threshold.value, 0.8)
+        self.assertAlmostEqual(threshold.cv2_format, 0.8)
+        self.assertAlmostEqual(threshold.percentage, 80.0)
+        self.assertAlmostEqual(threshold.tesseract_format, 80.0)
         self.assertAlmostEqual(float(threshold), 0.8)
 
     def test_string_representations(self):
