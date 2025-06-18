@@ -96,19 +96,35 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
         ]
 
         logging.info(f"Found {len(ocr_results)} text blocks:")
+
+        matching_popup: PopupMessage | None = None
         for i, result in enumerate(ocr_results):
             logging.info(f"  [{i}] {result!s}")
-
-        if preprocess_result.dont_remind_me_checkbox:
-            logging.info(
-                f"Don't remind me checkbox: {preprocess_result.dont_remind_me_checkbox}"
+            matching_popup = next(
+                (popup for popup in popup_messages if popup.text in result.text), None
             )
-            # TODO need to update tap to accept Point and Box
-            # self.tap(preprocess_result.dont_remind_me_checkbox)
-            center = preprocess_result.dont_remind_me_checkbox.center
-            self.tap(Coordinates(center.x, center.y))
-        else:
-            logging.warning("Don't remind me checkbox not found.")
+            if matching_popup:
+                logging.info(f"    Match found in popup: {matching_popup.text}")
+                break
+            else:
+                logging.info(f"    No match for: {result.text}")
+
+        if not matching_popup:
+            logging.error(f"Unknown popup detected: {ocr_results}")
+            return False
+
+        if matching_popup.click_dont_remind_me:
+            if preprocess_result.dont_remind_me_checkbox:
+                logging.info(
+                    "Don't remind me checkbox: "
+                    f"{preprocess_result.dont_remind_me_checkbox}"
+                )
+                # TODO need to update tap to accept Point and Box
+                # self.tap(preprocess_result.dont_remind_me_checkbox)
+                center = preprocess_result.dont_remind_me_checkbox.center
+                self.tap(Coordinates(center.x, center.y))
+            else:
+                logging.warning("Don't remind me checkbox expected but not found.")
 
         logging.info(f"Button: {preprocess_result.button}")
         logging.info("Not actually clicking the button for testing.")
