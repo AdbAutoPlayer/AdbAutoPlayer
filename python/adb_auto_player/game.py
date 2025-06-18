@@ -412,7 +412,7 @@ class Game:
         if log_message:
             logging.debug(log_message)
 
-    def get_screenshot(self) -> np.ndarray:
+    def get_screenshot(self, image_in_bgr: bool = True) -> np.ndarray:
         """Gets screenshot from device using stream or screencap.
 
         Raises:
@@ -420,6 +420,8 @@ class Game:
         """
         if self._stream:
             image = self._stream.get_latest_frame()
+            if image_in_bgr:
+                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
             if image is not None:
                 self._debug_save_screenshot(image)
                 return image
@@ -433,7 +435,9 @@ class Game:
                 with self.device.shell("screencap -p", stream=True) as c:
                     screenshot_data = c.read_until_close(encoding=None)
                 if isinstance(screenshot_data, bytes):
-                    return self._get_numpy_array_from_bytes(screenshot_data)
+                    image = self._get_bgr_numpy_array_from_bytes(screenshot_data)
+                    if not image_in_bgr:
+                        return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             except (OSError, ValueError) as e:
                 logging.debug(
                     f"Attempt {attempt + 1}/{max_retries}: "
@@ -445,7 +449,7 @@ class Game:
             f"Screenshots cannot be recorded from device: {self.device.serial}"
         )
 
-    def _get_numpy_array_from_bytes(self, screenshot_data: bytes) -> np.ndarray:
+    def _get_bgr_numpy_array_from_bytes(self, screenshot_data: bytes) -> np.ndarray:
         """Converts bytes to numpy array.
 
         Raises:
