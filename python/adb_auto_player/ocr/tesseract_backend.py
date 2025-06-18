@@ -4,6 +4,7 @@ import os
 import platform
 import subprocess
 from enum import IntEnum
+from functools import lru_cache
 from typing import Any
 
 import numpy as np
@@ -64,6 +65,50 @@ def _patch_subprocess_popen():
     subprocess.Popen = SilentPopen
 
 
+@lru_cache(maxsize=1)
+def _initialize_tesseract() -> None:
+    """Initialize Tesseract once and cache the result.
+
+    Raises:
+        RuntimeError: If Tesseract cannot be found or initialized
+    """
+    _patch_subprocess_popen()
+
+    try:
+        pytesseract.get_tesseract_version()
+    except TesseractNotFoundError as e:
+        if platform.system() == "Darwin":
+            raise RuntimeError(
+                "Tesseract not found, try installing: "
+                "https://formulae.brew.sh/formula/tesseract"
+            )
+        if platform.system() != "Windows":
+            raise RuntimeError(f"Tesseract not found in PATH: {e}")
+
+        fallback_paths = [
+            ConfigLoader().binaries_dir / "tesseract" / "tesseract.exe",
+            ConfigLoader().binaries_dir / "windows" / "tesseract" / "tesseract.exe",
+        ]
+
+        for fallback_path in fallback_paths:
+            if not os.path.isfile(fallback_path):
+                continue
+
+            pytesseract.pytesseract.tesseract_cmd = fallback_path
+            break
+        try:
+            pytesseract.get_tesseract_version()
+            return None
+        except Exception as e:
+            raise RuntimeError(
+                "Tesseract fallback at "
+                f"{pytesseract.pytesseract.tesseract_cmd} failed: {e}"
+            )
+    except Exception as e:
+        raise e
+    return None
+
+
 class TesseractBackend:
     """Tesseract OCR backend implementation."""
 
@@ -73,42 +118,9 @@ class TesseractBackend:
         Args:
             config: TesseractConfig instance
         """
-        _patch_subprocess_popen()
+        _initialize_tesseract()
 
         self.config = config
-
-        try:
-            pytesseract.get_tesseract_version()
-        except TesseractNotFoundError as e:
-            if platform.system() == "Darwin":
-                raise RuntimeError(
-                    "Tesseract not found, try installing: "
-                    "https://formulae.brew.sh/formula/tesseract"
-                )
-            if platform.system() != "Windows":
-                raise RuntimeError(f"Tesseract not found in PATH: {e}")
-
-            fallback_paths = [
-                ConfigLoader().binaries_dir / "tesseract" / "tesseract.exe",
-                ConfigLoader().binaries_dir / "windows" / "tesseract" / "tesseract.exe",
-            ]
-
-            for fallback_path in fallback_paths:
-                if not os.path.isfile(fallback_path):
-                    continue
-
-                pytesseract.pytesseract.tesseract_cmd = fallback_path
-                break
-            try:
-                pytesseract.get_tesseract_version()
-            except Exception as e:
-                raise RuntimeError(
-                    "Tesseract fallback at "
-                    f"{pytesseract.pytesseract.tesseract_cmd} failed: {e}"
-                )
-
-        except Exception as e:
-            raise e
 
     def extract_text(
         self,
