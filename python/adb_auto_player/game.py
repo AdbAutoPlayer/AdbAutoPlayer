@@ -420,15 +420,12 @@ class Game:
         """
         if self._stream:
             image = self._stream.get_latest_frame()
-            if image_in_bgr:
-                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
             if image is not None:
                 self._debug_save_screenshot(image)
+                if image_in_bgr:
+                    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
                 return image
-            logging.error(
-                "Could not retrieve latest Frame from Device Stream using screencap..."
-            )
-        # using shell with encoding directly does not close the file descriptor
+
         max_retries = 3
         for attempt in range(max_retries):
             try:
@@ -436,8 +433,11 @@ class Game:
                     screenshot_data = c.read_until_close(encoding=None)
                 if isinstance(screenshot_data, bytes):
                     image = self._get_bgr_numpy_array_from_bytes(screenshot_data)
+                    rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                    self._debug_save_screenshot(rgb_image)
                     if not image_in_bgr:
-                        return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                        return rgb_image
+                    return image
             except (OSError, ValueError) as e:
                 logging.debug(
                     f"Attempt {attempt + 1}/{max_retries}: "
@@ -466,7 +466,6 @@ class Game:
         img = cv2.imdecode(np_data, cv2.IMREAD_COLOR)
         if img is None:
             raise ValueError("Failed to decode screenshot image data")
-        self._debug_save_screenshot(img)
         return img
 
     def force_stop_game(self):
@@ -1066,10 +1065,7 @@ class Game:
         file_name = f"debug/{file_index}.png"
         try:
             os.makedirs(os.path.dirname(file_name), exist_ok=True)
-
-            # Convert BGR (OpenCV) to RGB (PIL)
-            screenshot_rgb = cv2.cvtColor(screenshot, cv2.COLOR_BGR2RGB)
-            image = Image.fromarray(screenshot_rgb)
+            image = Image.fromarray(screenshot)
             image.save(file_name)
             if file_index == 0:
                 logging.debug(f"Saved screenshot {file_name}")
