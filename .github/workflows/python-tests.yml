@@ -32,4 +32,4 @@ jobs:
 
       - name: Run Pytests with uv
         working-directory: python
-        run: uv run pytest --maxfail=1 --disable-warnings -q
+        run: uv run pytest --maxfail=1 --disable-warnings
