@@ -421,7 +421,7 @@ class Game:
         if self._stream:
             image = self._stream.get_latest_frame()
             if image is not None:
-                self._debug_save_screenshot(image)
+                self._debug_save_screenshot(image, is_bgr=False)
                 return cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
         max_retries = 3
@@ -431,8 +431,7 @@ class Game:
                     screenshot_data = c.read_until_close(encoding=None)
                 if isinstance(screenshot_data, bytes):
                     image = self._get_bgr_numpy_array_from_bytes(screenshot_data)
-                    rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                    self._debug_save_screenshot(rgb_image)
+                    self._debug_save_screenshot(image, is_bgr=True)
                     return image
             except (OSError, ValueError) as e:
                 logging.debug(
@@ -1054,7 +1053,9 @@ class Game:
 
         return coordinates
 
-    def _debug_save_screenshot(self, screenshot: np.ndarray) -> None:
+    def _debug_save_screenshot(
+        self, screenshot: np.ndarray, is_bgr: bool = False
+    ) -> None:
         logging_config = ConfigLoader().main_config.get("logging", {})
         debug_screenshot_save_num = logging_config.get("debug_save_screenshots", 60)
 
@@ -1067,7 +1068,10 @@ class Game:
         file_name = f"debug/{file_index}.png"
         try:
             os.makedirs(os.path.dirname(file_name), exist_ok=True)
-            image = Image.fromarray(screenshot)
+            if is_bgr:
+                image = Image.fromarray(cv2.cvtColor(screenshot, cv2.COLOR_BGR2RGB))
+            else:
+                image = Image.fromarray(screenshot)
             image.save(file_name)
             if file_index == 0:
                 logging.debug(f"Saved screenshot {file_name}")
