@@ -103,7 +103,8 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
             logging.info(
                 f"Don't remind me checkbox: {preprocess_result.dont_remind_me_checkbox}"
             )
-            # TODO need to update tap to accept Point
+            # TODO need to update tap to accept Point and Box
+            # self.tap(preprocess_result.dont_remind_me_checkbox)
             center = preprocess_result.dont_remind_me_checkbox.center
             self.tap(Coordinates(center.x, center.y))
         else:
