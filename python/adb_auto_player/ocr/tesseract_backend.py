@@ -2,6 +2,7 @@
 
 import os
 import platform
+import subprocess
 from enum import IntEnum
 from typing import Any
 
@@ -28,6 +29,44 @@ class GroupingLevel(IntEnum):
     LINE = 4
 
 
+def _patch_subprocess_popen():
+    """This is completely insane.
+
+    We need to add subprocess.CREATE_NO_WINDOW to prevent tesseract from flashing
+        a terminal every time it is used.
+
+    pytesseract has subprocess_args function, this is called in run_tesseract.
+    Here we could monkey patch the subprocess_args func but...
+
+    get_tesseract_version calls subprocess.check_output and does not expose a way to
+    add kwargs,
+
+    and finally get_languages uses subprocess.run without exposing a way to add kwargs.
+
+    TL;DR The person who made pytesseract is fucking retarded.
+    """
+    _original_popen = subprocess.Popen
+
+    def silent_popen(*args, **kwargs):
+        if platform.system() == "Windows":
+            cmd = args[0]
+            # If it's a list (command + args), check the first element
+            if isinstance(cmd, list):
+                first = cmd[0]
+            else:
+                first = cmd
+
+            # Convert to string if it's a Path
+            first_str = str(first)
+
+            if "tesseract" in first_str.lower():
+                kwargs.setdefault("creationflags", subprocess.CREATE_NO_WINDOW)
+
+        return _original_popen(*args, **kwargs)
+
+    subprocess.Popen = silent_popen
+
+
 class TesseractBackend:
     """Tesseract OCR backend implementation."""
 
@@ -37,6 +76,8 @@ class TesseractBackend:
         Args:
             config: TesseractConfig instance
         """
+        _patch_subprocess_popen()
+
         self.config = config
 
         try:
