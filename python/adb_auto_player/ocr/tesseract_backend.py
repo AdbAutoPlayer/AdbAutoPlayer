@@ -42,6 +42,11 @@ class TesseractBackend:
         try:
             pytesseract.get_tesseract_version()
         except TesseractNotFoundError as e:
+            if platform.system() == "Darwin":
+                raise RuntimeError(
+                    "Tesseract not found, try installing: "
+                    "https://formulae.brew.sh/formula/tesseract"
+                )
             if platform.system() != "Windows":
                 raise RuntimeError(f"Tesseract not found in PATH: {e}")
 

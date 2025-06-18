@@ -25,7 +25,8 @@ The `python/.idea` contains run configurations and other things that make settin
     uv python install
     ```
 3. Install [ADB](https://formulae.brew.sh/cask/android-platform-tools)
-4. Verify the player runs on CLI by showing the help.
+4. Install [Tesseract](https://formulae.brew.sh/formula/tesseract)
+5. Verify the player runs on CLI by showing the help.
     ```shell
     uv run adb-auto-player -h
     ```
