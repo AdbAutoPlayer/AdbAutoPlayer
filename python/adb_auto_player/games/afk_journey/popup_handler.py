@@ -56,7 +56,7 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
     def _populate_cache(self):
         templates = [
             "navigation/confirm.png",
-            "navigation/continue.png",
+            "navigation/continue_top_right_corner.png",
             "popup/checkbox_unchecked.png",
         ]
         for template in templates:
@@ -94,7 +94,7 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
         confirm = self.find_any_template(
             templates=[
                 "navigation/confirm.png",
-                "navigation/continue.png",
+                "navigation/continue_top_right_corner.png",
             ],
             threshold=0.8,
             crop=CropRegions(left=0.5, top=0.4),
