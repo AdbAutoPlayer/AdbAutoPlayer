@@ -29,8 +29,9 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
         logging.info("Starting Tesseract...")
         ocr = TesseractBackend(config=TesseractConfig(psm=PSM.SINGLE_BLOCK))
 
+        screenshot = self.get_screenshot()
         start_time = time.time()
-        screenshot, offset = self._preprocess_popup(self.get_screenshot())
+        screenshot, offset = self._preprocess_popup(screenshot)
         logging.info(f"Offset: {offset}")
         preprocess_time = time.time()
         preprocess_duration = preprocess_time - start_time
