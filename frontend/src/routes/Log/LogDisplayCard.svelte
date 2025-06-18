@@ -188,7 +188,7 @@
   });
 
   EventsOn("log-clear", () => {
-    logs = logs.slice(0, 2);
+    logs = logs.slice(0, 1);
   });
 
   let logContainer: HTMLDivElement;
