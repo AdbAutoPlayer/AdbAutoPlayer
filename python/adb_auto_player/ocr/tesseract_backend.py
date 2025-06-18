@@ -12,6 +12,7 @@ from adb_auto_player.models.ocr.ocr_result import OCRResult
 from pytesseract import TesseractNotFoundError
 
 from .. import ConfigLoader
+from ..models.geometry.point import Point
 from ..models.threshold import Threshold
 from .tesseract_config import TesseractConfig
 from .tesseract_lang import Lang
@@ -132,7 +133,7 @@ class TesseractBackend:
             height = int(data["height"][i])
 
             try:
-                box = Box(x=x, y=y, width=width, height=height)
+                box = Box(Point(x=x, y=y), width=width, height=height)
                 result = OCRResult(text=text, confidence=confidence / 100.0, box=box)
                 results.append(result)
 
@@ -253,7 +254,7 @@ class TesseractBackend:
             height = max_y - min_y
 
             try:
-                box = Box(x=min_x, y=min_y, width=width, height=height)
+                box = Box(Point(x=min_x, y=min_y), width=width, height=height)
                 result = OCRResult(
                     text=combined_text, confidence=avg_confidence, box=box
                 )

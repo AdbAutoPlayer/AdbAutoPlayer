@@ -349,7 +349,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             "confirm_text.png",
         ):
             checkbox = self.game_find_template_match(
-                "battle/checkbox_unchecked.png",
+                "popup/checkbox_unchecked.png",
                 match_mode=MatchMode.TOP_LEFT,
                 crop=CropRegions(right=0.8, top=0.2, bottom=0.6),
                 threshold=0.8,

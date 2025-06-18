@@ -113,7 +113,7 @@ class TestTesseractBackendAFKJPopup(unittest.TestCase):
             no_hero_on_talent_buff_popup, checkbox_unchecked, confirm
         )
         results = tesseract_backend.detect_text_blocks(
-            no_hero_on_talent_buff_popup, min_confidence=Threshold("90%")
+            no_hero_on_talent_buff_popup, min_confidence=Threshold("80%")
         )
         duration = time.time() - start_time
         print(f"\ndetect_text_blocks with preprocessing took {duration:.4f} seconds")

@@ -13,18 +13,17 @@ MAX_MARGIN_RATIO = 0.5
 class Box:
     """Box with top-left corner and dimensions."""
 
-    x: int
-    y: int
+    top_left: Point
     width: int
     height: int
 
     def __post_init__(self):
         """Validate box coordinates and dimensions."""
-        if self.x < 0 or self.y < 0:
-            if self.x < 0 or self.y < 0:
+        if self.left < 0 or self.top < 0:
+            if self.left < 0 or self.top < 0:
                 raise ValueError(
-                    f"Invalid Box coordinates: x={self.x}, y={self.y}. "
-                    "Both must be non-negative."
+                    f"Invalid Box coordinates: x={self.left}, y={self.top}"
+                    ". Both must be non-negative."
                 )
         if self.width <= 0:
             raise ValueError(f"Box width must be positive, got: {self.width}")
@@ -34,12 +33,12 @@ class Box:
     @property
     def left(self) -> int:
         """Get the left edge x-coordinate of the box."""
-        return self.x
+        return self.top_left.x
 
     @property
     def top(self) -> int:
         """Get the top edge y-coordinate of the box."""
-        return self.y
+        return self.top_left.y
 
     @property
     def right(self) -> int:
@@ -50,11 +49,6 @@ class Box:
     def bottom(self) -> int:
         """Get the bottom edge y-coordinate of the box."""
         return self.top + self.height
-
-    @property
-    def top_left(self) -> Point:
-        """Get the top-left corner point of the box."""
-        return Point(self.left, self.top)
 
     @property
     def top_right(self) -> Point:
@@ -74,7 +68,10 @@ class Box:
     @property
     def center(self) -> Point:
         """Get the center point of the box."""
-        return Point(self.x + self.width // 2, self.y + self.height // 2)
+        return Point(
+            self.left + self.width // 2,
+            self.top + self.height // 2,
+        )
 
     @property
     def area(self) -> int:
@@ -105,9 +102,9 @@ class Box:
                 f"Margin must be between 0.0 and less than {MAX_MARGIN_RATIO}"
             )
 
-        x_min = self.x + int(self.width * margin)
+        x_min = self.left + int(self.width * margin)
         x_max = self.right - int(self.width * margin)
-        y_min = self.y + int(self.height * margin)
+        y_min = self.top + int(self.height * margin)
         y_max = self.bottom - int(self.height * margin)
 
         x = self.center.x
@@ -134,6 +131,5 @@ class Box:
     def __str__(self):
         """Return a string representation of the box."""
         return (
-            f"Box(x={int(self.x)}, y={int(self.y)}, "
-            f"w={int(self.width)}, h={int(self.height)})"
+            f"Box(top_left={self.top_left}, width={self.width}, height={self.height})"
         )

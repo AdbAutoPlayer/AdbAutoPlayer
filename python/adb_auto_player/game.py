@@ -588,8 +588,6 @@ class Game:
         Returns:
             tuple[int, int] | None: Coordinates of the match, or None if not found.
         """
-        template_path = self.get_template_dir_path() / template
-
         base_image, left_offset, top_offset = crop_image(
             image=screenshot if screenshot is not None else self.get_screenshot(),
             crop=crop,
@@ -597,9 +595,8 @@ class Game:
 
         result = find_template_match(
             base_image=base_image,
-            template_image=load_image(
-                image_path=template_path,
-                image_scale_factor=self.get_scale_factor(),
+            template_image=self._load_image(
+                template=template,
                 grayscale=grayscale,
             ),
             match_mode=match_mode,
@@ -612,6 +609,17 @@ class Game:
 
         x, y = result
         return x + left_offset, y + top_offset
+
+    def _load_image(
+        self,
+        template: str | Path,
+        grayscale: bool = False,
+    ) -> np.ndarray:
+        return load_image(
+            image_path=self.get_template_dir_path() / template,
+            image_scale_factor=self.get_scale_factor(),
+            grayscale=grayscale,
+        )
 
     def find_worst_match(
         self,
@@ -629,16 +637,14 @@ class Game:
         Returns:
             None | tuple[int, int]: Coordinates of worst match.
         """
-        template_path: Path = self.get_template_dir_path() / template
         base_image, left_offset, top_offset = crop_image(
             image=self.get_screenshot(), crop=crop
         )
 
         result = find_worst_template_match(
             base_image=base_image,
-            template_image=load_image(
-                image_path=template_path,
-                image_scale_factor=self.get_scale_factor(),
+            template_image=self._load_image(
+                template=template,
                 grayscale=grayscale,
             ),
             grayscale=grayscale,
@@ -670,8 +676,6 @@ class Game:
         Returns:
             list[tuple[int, int]]: List of found coordinates.
         """
-        template_path: Path = self.get_template_dir_path() / template
-
         base_image, left_offset, top_offset = crop_image(
             image=self.get_screenshot(),
             crop=crop,
@@ -679,9 +683,8 @@ class Game:
 
         result: list[tuple[int, int]] = find_all_template_matches(
             base_image=base_image,
-            template_image=load_image(
-                image_path=template_path,
-                image_scale_factor=self.get_scale_factor(),
+            template_image=self._load_image(
+                template=template,
                 grayscale=grayscale,
             ),
             threshold=threshold or self.default_threshold,
@@ -812,13 +815,14 @@ class Game:
             find_template, delay=0.5, timeout=3, timeout_message=timeout_message
         )
 
-    def find_any_template(
+    def find_any_template(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
         templates: list[str],
         match_mode: MatchMode = MatchMode.BEST,
         threshold: float | None = None,
         grayscale: bool = False,
         crop: CropRegions = CropRegions(),
+        screenshot: np.ndarray | None = None,
     ) -> tuple[str, int, int] | None:
         """Find any first template on the screen.
 
@@ -828,11 +832,11 @@ class Game:
             threshold (float, optional): Image similarity threshold. Defaults to 0.9.
             grayscale (bool, optional): Convert to grayscale boolean. Defaults to False.
             crop (CropRegions, optional): Crop percentages. Defaults to CropRegions().
-
+            screenshot (np.ndarray, optional): Screenshot image. Will fetch screenshot
+                if None
         Returns:
             tuple[str, int, int] | None: Coordinates of the match, or None if not found.
         """
-        screenshot = self.get_screenshot()
         if grayscale:
             screenshot = convert_to_grayscale(screenshot)
 
@@ -843,7 +847,9 @@ class Game:
                 threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
                 crop=crop,
-                screenshot=screenshot,
+                screenshot=(
+                    screenshot if screenshot is not None else self.get_screenshot()
+                ),
             )
             if result is not None:
                 x, y = result
