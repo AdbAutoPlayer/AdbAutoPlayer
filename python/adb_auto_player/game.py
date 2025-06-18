@@ -412,7 +412,7 @@ class Game:
         if log_message:
             logging.debug(log_message)
 
-    def get_screenshot(self, image_in_bgr: bool = True) -> np.ndarray:
+    def get_screenshot(self) -> np.ndarray:
         """Gets screenshot from device using stream or screencap.
 
         Raises:
@@ -422,9 +422,7 @@ class Game:
             image = self._stream.get_latest_frame()
             if image is not None:
                 self._debug_save_screenshot(image)
-                if image_in_bgr:
-                    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-                return image
+                return cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
         max_retries = 3
         for attempt in range(max_retries):
@@ -435,8 +433,6 @@ class Game:
                     image = self._get_bgr_numpy_array_from_bytes(screenshot_data)
                     rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                     self._debug_save_screenshot(rgb_image)
-                    if not image_in_bgr:
-                        return rgb_image
                     return image
             except (OSError, ValueError) as e:
                 logging.debug(
