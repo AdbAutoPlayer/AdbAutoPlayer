@@ -11,6 +11,7 @@ from adb_auto_player.models.ocr.ocr_result import OCRResult
 from pytesseract import TesseractNotFoundError
 
 from .. import ConfigLoader
+from ..models.threshold import Threshold
 from .tesseract_config import TesseractConfig
 from .tesseract_lang import Lang
 
@@ -79,20 +80,23 @@ class TesseractBackend:
         self,
         image: np.ndarray,
         config: TesseractConfig | None = None,
-        min_confidence: float = 0.0,
+        min_confidence: Threshold | None = None,
     ) -> list[OCRResult]:
         """Detect text and return results with bounding boxes.
 
         Args:
             image: Input RGB image as numpy array
             config: Optional TesseractConfig override
-            min_confidence: Minimum confidence threshold (0.0-1.0)
+            min_confidence: Minimum confidence threshold, default no Threshold
 
         Returns:
             List of OCR results with bounding boxes
         """
         if not config:
             config = self.config
+
+        if not min_confidence:
+            min_confidence = Threshold(0.0)
 
         data = pytesseract.image_to_data(
             image,
@@ -108,10 +112,8 @@ class TesseractBackend:
             # Skip empty text and low confidence results
             text = data["text"][i].strip()
             confidence = float(data["conf"][i])
-            # Convert confidence from 0-100 to 0-1 scale
-            confidence_normalized = confidence / 100.0
 
-            if not text or confidence_normalized < min_confidence:
+            if not text or confidence < min_confidence.tesseract_format:
                 continue
 
             # Extract bounding box coordinates
@@ -122,8 +124,7 @@ class TesseractBackend:
 
             try:
                 box = Box(x=x, y=y, width=width, height=height)
-
-                result = OCRResult(text=text, confidence=confidence_normalized, box=box)
+                result = OCRResult(text=text, confidence=confidence / 100.0, box=box)
                 results.append(result)
 
             except ValueError:
@@ -136,7 +137,7 @@ class TesseractBackend:
         self,
         image: np.ndarray,
         config: TesseractConfig | None = None,
-        min_confidence: float = 0.0,
+        min_confidence: Threshold | None = None,
         level: int = 2,
     ) -> list[OCRResult]:
         """Detect text blocks and return results with bounding boxes.
@@ -144,7 +145,7 @@ class TesseractBackend:
         Args:
             image: Input RGB image as numpy array
             config: Optional TesseractConfig override
-            min_confidence: Minimum confidence threshold (0.0-1.0)
+            min_confidence: Minimum confidence threshold, default no Threshold
             level: Grouping level (2=blocks, 3=paragraphs, 4=lines)
 
         Returns:
@@ -152,6 +153,9 @@ class TesseractBackend:
         """
         if not config:
             config = self.config
+
+        if not min_confidence:
+            min_confidence = Threshold(0.0)
 
         data = pytesseract.image_to_data(
             image,
@@ -167,9 +171,8 @@ class TesseractBackend:
         for i in range(n_boxes):
             text = data["text"][i].strip()
             confidence = float(data["conf"][i])
-            confidence_normalized = confidence / 100.0
 
-            if not text or confidence_normalized < min_confidence:
+            if not text or confidence < min_confidence.tesseract_format:
                 continue
 
             # Create grouping key based on level
@@ -204,7 +207,7 @@ class TesseractBackend:
 
             # Collect text and bounding box info
             blocks[group_key]["texts"].append(text)
-            blocks[group_key]["confidences"].append(confidence_normalized)
+            blocks[group_key]["confidences"].append(confidence / 100.0)
 
             left = int(data["left"][i])
             top = int(data["top"][i])
@@ -255,14 +258,14 @@ class TesseractBackend:
         self,
         image: np.ndarray,
         config: TesseractConfig | None = None,
-        min_confidence: float = 0.0,
+        min_confidence: Threshold | None = None,
     ) -> list[OCRResult]:
         """Detect text paragraphs and return results with bounding boxes.
 
         Args:
             image: Input RGB image as numpy array
             config: Optional TesseractConfig override
-            min_confidence: Minimum confidence threshold (0.0-1.0)
+            min_confidence: Minimum confidence threshold, default no Threshold
 
         Returns:
             List of OCR results with paragraph bounding boxes
@@ -275,14 +278,14 @@ class TesseractBackend:
         self,
         image: np.ndarray,
         config: TesseractConfig | None = None,
-        min_confidence: float = 0.0,
+        min_confidence: Threshold | None = None,
     ) -> list[OCRResult]:
         """Detect text lines and return results with bounding boxes.
 
         Args:
             image: Input RGB image as numpy array
             config: Optional TesseractConfig override
-            min_confidence: Minimum confidence threshold (0.0-1.0)
+            min_confidence: Minimum confidence threshold, default no Threshold
 
         Returns:
             List of OCR results with line bounding boxes
