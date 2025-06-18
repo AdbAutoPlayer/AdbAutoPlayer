@@ -53,44 +53,51 @@ class TesseractBackend:
     def extract_text(
         self,
         image: np.ndarray,
-        config_override: TesseractConfig | None = None,
+        config: TesseractConfig | None = None,
     ) -> str:
         """Extract all text from an image as a single string.
 
         Args:
             image: Input RGB image as numpy array
-            config_override: Optional TesseractConfig override
+            config: Optional TesseractConfig override
 
         Returns:
-            str: Extracted text
+            Extracted text
         """
-        if not config_override:
-            config_override = self.config
+        if not config:
+            config = self.config
 
         text = pytesseract.image_to_string(
             image=image,
-            config=config_override.config_string,
-            lang=config_override.lang_string,
+            config=config.config_string,
+            lang=config.lang_string,
         ).strip()
 
         return text
 
-    def detect_text(self, image: np.ndarray, **kwargs) -> list[OCRResult]:
+    def detect_text(
+        self,
+        image: np.ndarray,
+        config: TesseractConfig | None = None,
+        min_confidence: float = 0.0,
+    ) -> list[OCRResult]:
         """Detect text and return results with bounding boxes.
 
         Args:
             image: Input RGB image as numpy array
-            **kwargs: Additional arguments (config, lang, min_confidence)
+            config: Optional TesseractConfig override
+            min_confidence: Minimum confidence threshold (0.0-1.0)
 
         Returns:
-            list[OCRResult]: List of OCR results with bounding boxes
+            List of OCR results with bounding boxes
         """
-        min_confidence = kwargs.get("min_confidence", 0.0)
+        if not config:
+            config = self.config
 
         data = pytesseract.image_to_data(
             image,
-            config=self.config.config_string,
-            lang=self.config.lang_string,
+            config=config.config_string,
+            lang=config.lang_string,
             output_type=pytesseract.Output.DICT,
         )
 
@@ -125,27 +132,31 @@ class TesseractBackend:
 
         return results
 
-    def detect_text_blocks(self, image: np.ndarray, **kwargs) -> list[OCRResult]:
+    def detect_text_blocks(
+        self,
+        image: np.ndarray,
+        config: TesseractConfig | None = None,
+        min_confidence: float = 0.0,
+        level: int = 2,
+    ) -> list[OCRResult]:
         """Detect text blocks and return results with bounding boxes.
-
-        Text blocks are larger groupings of text, typically paragraphs or
-        coherent sections of text, rather than individual words.
 
         Args:
             image: Input RGB image as numpy array
-            **kwargs: Additional arguments (config, lang, min_confidence, level)
+            config: Optional TesseractConfig override
+            min_confidence: Minimum confidence threshold (0.0-1.0)
+            level: Grouping level (2=blocks, 3=paragraphs, 4=lines)
 
         Returns:
-            list[OCRResult]: List of OCR results with text block bounding boxes
+            List of OCR results with text block bounding boxes
         """
-        min_confidence = kwargs.get("min_confidence", 0.0)
-        # Level 2 = blocks, Level 3 = paragraphs, Level 4 = lines
-        level = kwargs.get("level", 2)  # Default to block level
+        if not config:
+            config = self.config
 
         data = pytesseract.image_to_data(
             image,
-            config=self.config.config_string,
-            lang=self.config.lang_string,
+            config=config.config_string,
+            lang=config.lang_string,
             output_type=pytesseract.Output.DICT,
         )
 
@@ -240,39 +251,51 @@ class TesseractBackend:
 
         return results
 
-    def detect_text_paragraphs(self, image: np.ndarray, **kwargs) -> list[OCRResult]:
+    def detect_text_paragraphs(
+        self,
+        image: np.ndarray,
+        config: TesseractConfig | None = None,
+        min_confidence: float = 0.0,
+    ) -> list[OCRResult]:
         """Detect text paragraphs and return results with bounding boxes.
 
-        Convenience method for paragraph-level text detection.
-
         Args:
             image: Input RGB image as numpy array
-            **kwargs: Additional arguments (config, lang, min_confidence)
+            config: Optional TesseractConfig override
+            min_confidence: Minimum confidence threshold (0.0-1.0)
 
         Returns:
-            list[OCRResult]: List of OCR results with paragraph bounding boxes
+            List of OCR results with paragraph bounding boxes
         """
-        return self.detect_text_blocks(image, level=3, **kwargs)
+        return self.detect_text_blocks(
+            image, config=config, min_confidence=min_confidence, level=3
+        )
 
-    def detect_text_lines(self, image: np.ndarray, **kwargs) -> list[OCRResult]:
+    def detect_text_lines(
+        self,
+        image: np.ndarray,
+        config: TesseractConfig | None = None,
+        min_confidence: float = 0.0,
+    ) -> list[OCRResult]:
         """Detect text lines and return results with bounding boxes.
 
-        Convenience method for line-level text detection.
-
         Args:
             image: Input RGB image as numpy array
-            **kwargs: Additional arguments (config, lang, min_confidence)
+            config: Optional TesseractConfig override
+            min_confidence: Minimum confidence threshold (0.0-1.0)
 
         Returns:
-            list[OCRResult]: List of OCR results with line bounding boxes
+            List of OCR results with line bounding boxes
         """
-        return self.detect_text_blocks(image, level=4, **kwargs)
+        return self.detect_text_blocks(
+            image, config=config, min_confidence=min_confidence, level=4
+        )
 
     def get_backend_info(self) -> dict[str, Any]:
         """Get information about the backend.
 
         Returns:
-            dict: Backend information
+            Backend information dictionary
         """
         try:
             version = str(pytesseract.get_tesseract_version())
@@ -290,7 +313,7 @@ class TesseractBackend:
         """Get list of supported languages.
 
         Returns:
-            list[str]: List of supported language codes
+            List of supported language codes
         """
         try:
             langs = pytesseract.get_languages(config=self.config.config_string)
