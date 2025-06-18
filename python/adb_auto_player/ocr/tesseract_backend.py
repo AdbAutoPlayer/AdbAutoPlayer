@@ -50,18 +50,24 @@ class TesseractBackend:
             if platform.system() != "Windows":
                 raise RuntimeError(f"Tesseract not found in PATH: {e}")
 
-            fallback_path = (
-                ConfigLoader().binaries_dir / "windows" / "tesseract" / "tesseract.exe"
-            )
+            fallback_paths = [
+                ConfigLoader().binaries_dir / "tesseract" / "tesseract.exe",
+                ConfigLoader().binaries_dir / "windows" / "tesseract" / "tesseract.exe",
+            ]
 
-            if not os.path.isfile(fallback_path):
-                raise RuntimeError(f"Tesseract binaries not found in: {fallback_path}")
+            for fallback_path in fallback_paths:
+                if not os.path.isfile(fallback_path):
+                    continue
 
-            pytesseract.pytesseract.tesseract_cmd = fallback_path
+                pytesseract.pytesseract.tesseract_cmd = fallback_path
+                break
             try:
                 pytesseract.get_tesseract_version()
             except Exception as e:
-                raise RuntimeError(f"Tesseract fallback failed: {e}")
+                raise RuntimeError(
+                    "Tesseract fallback at "
+                    f"{pytesseract.pytesseract.tesseract_cmd} failed: {e}"
+                )
 
         except Exception as e:
             raise e
