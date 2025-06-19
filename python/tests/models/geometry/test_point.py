@@ -1,7 +1,7 @@
 import unittest
 
 import numpy as np
-from adb_auto_player.models.geometry.point import Point
+from adb_auto_player.models.geometry import Point
 
 
 class TestPoint(unittest.TestCase):

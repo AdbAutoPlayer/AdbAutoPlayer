@@ -7,12 +7,9 @@ import numpy as np
 from adb_auto_player import Coordinates
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
-from adb_auto_player.models.geometry.box import Box
-from adb_auto_player.models.geometry.point import Point
-from adb_auto_player.models.template_matching.TemplateMatchResult import (
-    TemplateMatchResult,
-)
-from adb_auto_player.models.threshold import Threshold
+from adb_auto_player.models import ConfidenceValue
+from adb_auto_player.models.geometry import Box, Point
+from adb_auto_player.models.template_matching import TemplateMatchResult
 from adb_auto_player.ocr.tesseract_backend import TesseractBackend
 from adb_auto_player.ocr.tesseract_config import TesseractConfig
 from adb_auto_player.ocr.tesseract_psm import PSM
@@ -32,9 +29,12 @@ class PopupMessage:
     hold_duration_seconds: float = 3.0
 
 
+# You do not actually need to add the whole text of the Popup Message
+# A snippet works.
 popup_messages: list[PopupMessage] = [
     PopupMessage(
         text="Are you sure you want to exit the game",
+        # Does not have "remind me" checkbox
     ),
     PopupMessage(
         text=(
@@ -46,6 +46,11 @@ popup_messages: list[PopupMessage] = [
     PopupMessage(
         text="Your formation is incomplete. Begin battle anyway?",
         click_dont_remind_me=True,
+    ),
+    PopupMessage(
+        text="You are currently fishing.",
+        # If you quit this fishing attempt will fail. Quit anyway?
+        # Does not have "remind me" checkbox
     ),
 ]
 
@@ -85,9 +90,9 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
             return False
 
         ocr_results = ocr.detect_text_blocks(
-            image=preprocess_result.cropped_image, min_confidence=Threshold("80%")
+            image=preprocess_result.cropped_image, min_confidence=ConfidenceValue("80%")
         )
-
+        cv2.imwrite("test.png", preprocess_result.cropped_image)
         # This is actually not needed in this scenario because we do not need
         # The coordinates or boundaries of the text
         # Leaving this for demo though.
@@ -133,8 +138,8 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
     def _preprocess_for_popup(self, image: np.ndarray) -> PopupPreprocessResult | None:
         height, width = image.shape[:2]
 
-        # remove 5% of top and bottom
         height_5_percent = int(0.05 * height)
+        height_35_percent = int(0.35 * height)
 
         # Should return Box or TemplateMatchResult objects in the future
         if confirm := self.find_any_template(
@@ -168,10 +173,13 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
             dont_remind_me_checkbox = self._convert_to_template_match_result(
                 ("popup/checkbox_unchecked.png", x, y)
             ).box
+            # we can confidently cut off another 5 percent below the checkbox.
             crop_top = dont_remind_me_checkbox.bottom + height_5_percent
         else:
             dont_remind_me_checkbox = None
-            crop_top = height_5_percent
+            # based on my estimations this should work unless there is a popup
+            # that is more than 6-7 lines of text which I do not think there is.
+            crop_top = height_35_percent
 
         image = image[crop_top:crop_bottom, 0:width]
         image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)

@@ -8,8 +8,10 @@ _MAX_PERCENTAGE_INT = 100
 
 
 @dataclass
-class Threshold:
-    """Represents a confidence threshold with flexible input formats.
+class ConfidenceValue:
+    """Represents a confidence value with flexible input formats.
+
+    Used for confidence threshold and results.
 
     Supports:
     - Percentage strings: "80%", "95%"
@@ -75,12 +77,12 @@ class Threshold:
 
     def __eq__(self, other) -> bool:
         """Equality comparison."""
-        if isinstance(other, Threshold):
+        if isinstance(other, ConfidenceValue):
             return abs(self.value - other.value) < _FLOAT_COMPARISON_TOLERANCE
         elif isinstance(other, int | float):
             # Compare with normalized value
             try:
-                other_threshold = Threshold(other)
+                other_threshold = ConfidenceValue(other)
                 return (
                     abs(self.value - other_threshold.value)
                     < _FLOAT_COMPARISON_TOLERANCE
@@ -91,11 +93,11 @@ class Threshold:
 
     def __lt__(self, other) -> bool:
         """Less than comparison."""
-        if isinstance(other, Threshold):
+        if isinstance(other, ConfidenceValue):
             return self.value < other.value
         elif isinstance(other, int | float):
             try:
-                other_threshold = Threshold(other)
+                other_threshold = ConfidenceValue(other)
                 return self.value < other_threshold.value
             except ValueError:
                 return NotImplemented
@@ -107,11 +109,11 @@ class Threshold:
 
     def __gt__(self, other) -> bool:
         """Greater than comparison."""
-        if isinstance(other, Threshold):
+        if isinstance(other, ConfidenceValue):
             return self.value > other.value
         elif isinstance(other, int | float):
             try:
-                other_threshold = Threshold(other)
+                other_threshold = ConfidenceValue(other)
                 return self.value > other_threshold.value
             except ValueError:
                 return NotImplemented

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from adb_auto_player.models.threshold import Threshold
+from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.ocr.tesseract_backend import TesseractBackend, TesseractConfig
 from adb_auto_player.ocr.tesseract_psm import PSM
 from adb_auto_player.template_matching import (
@@ -47,7 +47,7 @@ class TestTesseractBackendAFKJPopup(unittest.TestCase):
 
         start_time = time.time()
         results = tesseract_backend.detect_text_blocks(
-            no_hero_on_talent_buff_popup, min_confidence=Threshold("90%")
+            no_hero_on_talent_buff_popup, min_confidence=ConfidenceValue("90%")
         )
         duration = time.time() - start_time
         print(f"\ndetect_text_blocks without preprocessing took {duration:.4f} seconds")
@@ -78,7 +78,7 @@ class TestTesseractBackendAFKJPopup(unittest.TestCase):
         )
 
         results = tesseract_backend.detect_text_blocks(
-            no_hero_on_talent_buff_popup, min_confidence=Threshold("90%")
+            no_hero_on_talent_buff_popup, min_confidence=ConfidenceValue("90%")
         )
         duration = time.time() - start_time
         print(f"\ndetect_text_blocks grayscale {duration:.4f} seconds")
@@ -113,7 +113,7 @@ class TestTesseractBackendAFKJPopup(unittest.TestCase):
             no_hero_on_talent_buff_popup, checkbox_unchecked, confirm
         )
         results = tesseract_backend.detect_text_blocks(
-            no_hero_on_talent_buff_popup, min_confidence=Threshold("80%")
+            no_hero_on_talent_buff_popup, min_confidence=ConfidenceValue("80%")
         )
         duration = time.time() - start_time
         print(f"\ndetect_text_blocks with preprocessing took {duration:.4f} seconds")

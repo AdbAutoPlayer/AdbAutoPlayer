@@ -9,13 +9,12 @@ from typing import Any
 
 import numpy as np
 import pytesseract
-from adb_auto_player.models.geometry.box import Box
-from adb_auto_player.models.ocr.ocr_result import OCRResult
+from adb_auto_player.models import ConfidenceValue
+from adb_auto_player.models.geometry import Box, Point
+from adb_auto_player.models.ocr import OCRResult
 from pytesseract import TesseractNotFoundError
 
 from .. import ConfigLoader
-from ..models.geometry.point import Point
-from ..models.threshold import Threshold
 from .tesseract_config import TesseractConfig
 from .tesseract_lang import Lang
 
@@ -151,7 +150,7 @@ class TesseractBackend:
         self,
         image: np.ndarray,
         config: TesseractConfig | None = None,
-        min_confidence: Threshold | None = None,
+        min_confidence: ConfidenceValue | None = None,
     ) -> list[OCRResult]:
         """Detect text and return results with bounding boxes.
 
@@ -167,7 +166,7 @@ class TesseractBackend:
             config = self.config
 
         if not min_confidence:
-            min_confidence = Threshold(0.0)
+            min_confidence = ConfidenceValue(0.0)
 
         data = pytesseract.image_to_data(
             image,
@@ -208,7 +207,7 @@ class TesseractBackend:
         self,
         image: np.ndarray,
         config: TesseractConfig | None = None,
-        min_confidence: Threshold | None = None,
+        min_confidence: ConfidenceValue | None = None,
         level: int = GroupingLevel.BLOCK,
     ) -> list[OCRResult]:
         """Detect text blocks and return results with bounding boxes.
@@ -226,7 +225,7 @@ class TesseractBackend:
             config = self.config
 
         if not min_confidence:
-            min_confidence = Threshold(0.0)
+            min_confidence = ConfidenceValue(0.0)
 
         data = pytesseract.image_to_data(
             image,
@@ -330,7 +329,7 @@ class TesseractBackend:
         self,
         image: np.ndarray,
         config: TesseractConfig | None = None,
-        min_confidence: Threshold | None = None,
+        min_confidence: ConfidenceValue | None = None,
     ) -> list[OCRResult]:
         """Detect text paragraphs and return results with bounding boxes.
 
@@ -353,7 +352,7 @@ class TesseractBackend:
         self,
         image: np.ndarray,
         config: TesseractConfig | None = None,
-        min_confidence: Threshold | None = None,
+        min_confidence: ConfidenceValue | None = None,
     ) -> list[OCRResult]:
         """Detect text lines and return results with bounding boxes.
 
