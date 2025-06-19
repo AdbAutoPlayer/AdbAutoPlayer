@@ -2,9 +2,7 @@
 
 from dataclasses import dataclass
 
-from .tesseract_lang import Lang
-from .tesseract_oem import OEM
-from .tesseract_psm import PSM
+from . import OEM, PSM, Lang
 
 
 @dataclass(frozen=True)

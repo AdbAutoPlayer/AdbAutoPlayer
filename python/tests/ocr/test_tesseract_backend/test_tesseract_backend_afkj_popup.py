@@ -7,8 +7,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 from adb_auto_player.models import ConfidenceValue
-from adb_auto_player.ocr.tesseract_backend import TesseractBackend, TesseractConfig
-from adb_auto_player.ocr.tesseract_psm import PSM
+from adb_auto_player.ocr import PSM, TesseractBackend, TesseractConfig
 from adb_auto_player.template_matching import (
     CropRegions,
     MatchMode,

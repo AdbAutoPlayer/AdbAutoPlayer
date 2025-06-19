@@ -2,8 +2,7 @@
 
 from dataclasses import dataclass
 
-from ..geometry.box import Box
-from ..geometry.point import Point
+from ..geometry import Box, Point
 
 
 @dataclass(frozen=True)

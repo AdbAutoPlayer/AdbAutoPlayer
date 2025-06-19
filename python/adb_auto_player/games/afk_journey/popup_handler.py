@@ -10,9 +10,7 @@ from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box, Point
 from adb_auto_player.models.template_matching import TemplateMatchResult
-from adb_auto_player.ocr.tesseract_backend import TesseractBackend
-from adb_auto_player.ocr.tesseract_config import TesseractConfig
-from adb_auto_player.ocr.tesseract_psm import PSM
+from adb_auto_player.ocr import PSM, TesseractBackend, TesseractConfig
 from adb_auto_player.template_matching import (
     CropRegions,
     MatchMode,

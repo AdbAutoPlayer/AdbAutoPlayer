@@ -15,8 +15,7 @@ from adb_auto_player.models.ocr import OCRResult
 from pytesseract import TesseractNotFoundError
 
 from .. import ConfigLoader
-from .tesseract_config import TesseractConfig
-from .tesseract_lang import Lang
+from . import Lang, TesseractConfig
 
 _NUM_COLORS_IN_RGB = 3
 

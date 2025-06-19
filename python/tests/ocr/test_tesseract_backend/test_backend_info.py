@@ -2,10 +2,7 @@
 
 import unittest
 
-from adb_auto_player.ocr.tesseract_backend import TesseractBackend
-from adb_auto_player.ocr.tesseract_config import TesseractConfig
-from adb_auto_player.ocr.tesseract_oem import OEM
-from adb_auto_player.ocr.tesseract_psm import PSM
+from adb_auto_player.ocr import OEM, PSM, TesseractBackend, TesseractConfig
 
 
 class TestTesseractBackendInfo(unittest.TestCase):
