@@ -1,5 +1,7 @@
 """ADB Auto Player Package."""
 
+from adb_auto_player.template_matching.template_matching import CropRegions, MatchMode
+
 from .command import Command
 from .config.game_config_base import ConfigBase
 from .config_loader import ConfigLoader
@@ -18,7 +20,6 @@ from .exceptions import (
     UnsupportedResolutionError,
 )
 from .game import Coordinates, Game, TapParams, TemplateMatchParams
-from .template_matching import CropRegions, MatchMode
 
 __all__: list[str] = [
     "AutoPlayerError",

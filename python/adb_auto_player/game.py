@@ -39,7 +39,7 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
     CustomRoutineEntry,
     custom_routine_choice_registry,
 )
-from adb_auto_player.template_matching import (
+from adb_auto_player.template_matching.template_matching import (
     CropRegions,
     MatchMode,
     convert_to_grayscale,

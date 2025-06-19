@@ -11,7 +11,7 @@ from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box, Point
 from adb_auto_player.models.template_matching import TemplateMatchResult
 from adb_auto_player.ocr import PSM, TesseractBackend, TesseractConfig
-from adb_auto_player.template_matching import (
+from adb_auto_player.template_matching.template_matching import (
     CropRegions,
     MatchMode,
 )

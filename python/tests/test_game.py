@@ -10,7 +10,7 @@ from adb_auto_player import (
     Game,
     GameTimeoutError,
 )
-from adb_auto_player.template_matching import load_image
+from adb_auto_player.template_matching.template_matching import load_image
 from pydantic import BaseModel
 
 TEST_DATA_DIR: Path = Path(__file__).parent / "data"

@@ -3,7 +3,10 @@
 import unittest
 from pathlib import Path
 
-from adb_auto_player.template_matching import load_image, similar_image
+from adb_auto_player.template_matching.template_matching import (
+    load_image,
+    similar_image,
+)
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
 
