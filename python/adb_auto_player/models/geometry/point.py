@@ -43,6 +43,26 @@ class Point:
         """Convert Point to numpy array of shape (2,) with dtype int."""
         return np.array([self.x, self.y])
 
+    def scale(self, scale_factor: float | None) -> "Point":
+        """Return a new Point with coordinates scaled by the given scale factor.
+
+        Raises:
+            ValueError: If the scale factor is negative.
+        """
+        if scale_factor is None:
+            return self
+
+        if scale_factor < 0:
+            raise ValueError(f"Scale factor must be non-negative, got {scale_factor}")
+
+        if scale_factor == 1.0:
+            return self  # no change needed
+
+        new_x = max(0, round(self.x * scale_factor))
+        new_y = max(0, round(self.y * scale_factor))
+
+        return Point(new_x, new_y)
+
     def __str__(self):
         """Return a string representation of the point."""
         return f"Point(x={int(self.x)}, y={int(self.y)})"

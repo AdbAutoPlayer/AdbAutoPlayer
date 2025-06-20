@@ -9,7 +9,6 @@ from time import sleep
 from adb_auto_player import (
     AutoPlayerError,
     AutoPlayerWarningError,
-    Coordinates,
     GameTimeoutError,
 )
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
@@ -18,6 +17,7 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
 )
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import MatchMode
 
@@ -31,9 +31,9 @@ class BattleCannotBeStartedError(AutoPlayerError):
 class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
     """Arcane Labyrinth Mixin."""
 
-    arcane_skip_coordinates: tuple[int, int] | None = None
+    arcane_skip_point: Point | None = None
     arcane_lucky_flip_keys: int = 0
-    arcane_tap_to_close_coordinates: tuple[int, int] | None = None
+    arcane_tap_to_close_point: Point | None = None
     arcane_difficulty_was_visible: bool = False
     arcane_difficulty_not_visible_count: int = 0
 
@@ -81,10 +81,10 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             template, x, y = result
             match template:
                 case "arcane_labyrinth/quit_door.png":
-                    self.tap(Coordinates(x, y))
+                    self.tap(Point(x, y))
                     sleep(0.2)
                 case _:
-                    self.tap(Coordinates(x, y))
+                    self.tap(Point(x, y))
                     continue
             break
 
@@ -101,7 +101,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             timeout_message="Failed to exit Arcane Labyrinth run",
             timeout=self.FAST_TIMEOUT,
         )
-        self.hold(*hold_to_exit, duration=5.0)
+        self.hold(Point(*hold_to_exit), duration=5.0)
 
     def _add_keys_farmed(self, keys: int) -> None:
         """Logs the number of keys farmed.
@@ -182,14 +182,14 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         if template == "arcane_labyrinth/rarity/epic.png":
             self._add_keys_farmed(9)
 
-        self.tap(Coordinates(x, y))
+        self.tap(Point(x, y))
         sleep(1)
         confirm: tuple[int, int] | None = self.game_find_template_match(
             "arcane_labyrinth/confirm.png",
             crop_regions=CropRegions(left=0.2, right=0.2, top=0.8),
         )
         if confirm:
-            self.tap(Coordinates(*confirm))
+            self.tap(Point(*confirm))
 
     def _handle_arcane_labyrinth(self) -> bool:
         """Handle Arcane Labyrinth."""
@@ -216,14 +216,14 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 | "arcane_labyrinth/blessing/soul_blessing.png"
                 | "arcane_labyrinth/blessing/epic_crest.png"
             ):
-                if self.arcane_tap_to_close_coordinates is not None:
-                    self.tap(Coordinates(*self.arcane_tap_to_close_coordinates))
-                self.tap(Coordinates(x, y + 500))
+                if self.arcane_tap_to_close_point is not None:
+                    self.tap(self.arcane_tap_to_close_point)
+                self.tap(Point(x, y + 500))
             case (
                 "arcane_labyrinth/shop_button.png"
                 | "arcane_labyrinth/crest_crystal_ball.png"
             ):
-                self.tap(Coordinates(x, y))
+                self.tap(Point(x, y))
                 self._handle_shop()
 
             case "arcane_labyrinth/swords_button.png":
@@ -238,16 +238,16 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             case "arcane_labyrinth/select_a_crest.png" | "arcane_labyrinth/confirm.png":
                 self._select_a_crest()
             case "arcane_labyrinth/quit.png":
-                self.tap(Coordinates(x, y))
+                self.tap(Point(x, y))
                 return False
             case "arcane_labyrinth/tap_to_close.png":
-                self.arcane_tap_to_close_coordinates = (x, y)
-                self.tap(Coordinates(x, y))
+                self.arcane_tap_to_close_point = Point(x, y)
+                self.tap(Point(x, y))
                 while self.game_find_template_match(
                     template="arcane_labyrinth/tap_to_close.png",
                     crop_regions=CropRegions(top=0.8),
                 ):
-                    self.tap(Coordinates(x, y))
+                    self.tap(Point(x, y))
         return True
 
     def _arcane_lab_start_battle(self) -> None:
@@ -284,14 +284,14 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     logging.debug(
                         "_arcane_lab_start_battle: additional challenge popup"
                     )
-                    self.tap(Coordinates(x, y))
+                    self.tap(Point(x, y))
                 case "arcane_labyrinth/battle.png":
                     battle_click_count += 1
                     battle_click_limit = 8
                     if battle_click_count > battle_click_limit:
                         raise BattleCannotBeStartedError("Failed to start Battle")
                     self.tap(
-                        Coordinates(x, y),
+                        Point(x, y),
                         log_message=(
                             "Tapped arcane_labyrinth/battle.png "
                             f"attempt #{battle_click_count}"
@@ -317,7 +317,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             if not self.game_find_template_match("arcane_labyrinth/arrow_right.png"):
                 logging.debug("Lowering difficulty")
                 while (max_difficulty - difficulty) > 0:
-                    self.tap(Coordinates(*left_arrow))
+                    self.tap(Point(*left_arrow))
                     sleep(1)
                     difficulty += 1
             else:
@@ -329,7 +329,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             template="arcane_labyrinth/enter.png",
             crop_regions=CropRegions(top=0.8, left=0.3),
         ):
-            self.tap(Coordinates(*enter))
+            self.tap(Point(*enter))
             sleep(2)
 
         template, _, _ = self.wait_for_any_template(
@@ -355,7 +355,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 threshold=0.8,
             )
             if checkbox is not None:
-                self.tap(Coordinates(*checkbox))
+                self.tap(Point(*checkbox))
         self._click_confirm_on_popup()
         self._click_confirm_on_popup()
         _ = self.wait_for_any_template(
@@ -419,7 +419,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             "navigation/confirm.png",
         ]
 
-        if self.arcane_skip_coordinates is None:
+        if self.arcane_skip_point is None:
             logging.debug("searching skip button")
             templates.insert(0, "arcane_labyrinth/skip.png")
 
@@ -429,9 +429,9 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         )
 
         if result is None:
-            if self.arcane_skip_coordinates is not None:
+            if self.arcane_skip_point is not None:
                 self.tap(
-                    Coordinates(*self.arcane_skip_coordinates),
+                    self.arcane_skip_point,
                     log_message="Tapped skip",
                 )
             difficulty: tuple[int, int] | None = self.game_find_template_match(
@@ -458,11 +458,11 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         template, x, y = result
         match template:
             case "arcane_labyrinth/tap_to_close.png":
-                self.arcane_tap_to_close_coordinates = (x, y)
-                self.tap(Coordinates(*self.arcane_tap_to_close_coordinates))
+                self.arcane_tap_to_close_point = Point(x, y)
+                self.tap(self.arcane_tap_to_close_point)
             case "arcane_labyrinth/skip.png":
-                self.arcane_skip_coordinates = (x, y)
-                self.tap(Coordinates(*self.arcane_skip_coordinates))
+                self.arcane_skip_point = Point(x, y)
+                self.tap(self.arcane_skip_point)
                 return True
             case "arcane_labyrinth/battle.png":
                 self._arcane_lab_start_battle()
@@ -483,7 +483,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             crop_regions=CropRegions(top=0.6, bottom=0.2),
         )
         if len(results) <= 1:
-            self.tap(Coordinates(swords_x, swords_y))
+            self.tap(Point(swords_x, swords_y))
             return
 
         sleep(1)
@@ -500,7 +500,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
         if result is None:
             logging.warning("Could not resolve best gate")
-            self.tap(Coordinates(swords_x, swords_y))
+            self.tap(Point(swords_x, swords_y))
             return
 
         template, x, y = result
@@ -508,7 +508,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
         closest_match = min(results, key=lambda coord: abs(coord[0] - x))
         best_x, best_y = closest_match
-        self.tap(Coordinates(best_x, best_y))
+        self.tap(Point(best_x, best_y))
         return
 
     def _handle_shop(self) -> None:
@@ -550,7 +550,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     if item_price is None:
                         break
 
-                    self.tap(Coordinates(*item_price))
+                    self.tap(Point(*item_price))
                     sleep(0.5)
                     purchase: tuple[int, int] | None = self.game_find_template_match(
                         template="arcane_labyrinth/purchase.png",
@@ -560,7 +560,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                         break
                     purchase_count += 1
                     logging.info(f"Purchase #{purchase_count}")
-                    self.tap(Coordinates(*purchase))
+                    self.tap(Point(*purchase))
                     sleep(0.5)
                     continue
                 case "arcane_labyrinth/select_a_crest.png":
@@ -580,5 +580,5 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 case "arcane_labyrinth/select_a_crest.png":
                     self._select_a_crest()
                 case _:
-                    self.tap(Coordinates(x, y))
+                    self.tap(Point(x, y))
                     break

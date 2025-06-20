@@ -55,3 +55,23 @@ def load_image(
 
     template_cache[cache_key] = image
     return image
+
+
+def get_bgr_np_array_from_png_bytes(image_data: bytes) -> np.ndarray:
+    """Converts bytes to numpy array.
+
+    Raises:
+        OSError
+        ValueError
+    """
+    png_start_index = image_data.find(b"\x89PNG\r\n\x1a\n")
+    # Slice the screenshot data to remove the warning
+    # and keep only the PNG image data
+    if png_start_index != -1:
+        image_data = image_data[png_start_index:]
+
+    np_data = np.frombuffer(image_data, dtype=np.uint8)
+    img = cv2.imdecode(np_data, cv2.IMREAD_COLOR)
+    if img is None:
+        raise ValueError("Failed to decode screenshot image data")
+    return img

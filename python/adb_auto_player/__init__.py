@@ -17,7 +17,7 @@ from .exceptions import (
     NotInitializedError,
     UnsupportedResolutionError,
 )
-from .game import Coordinates, Game, TapParams, TemplateMatchParams
+from .game import Game, TapParams, TemplateMatchParams
 
 __all__: list[str] = [
     "AutoPlayerError",
@@ -26,7 +26,6 @@ __all__: list[str] = [
     "Command",
     "ConfigBase",
     "ConfigLoader",
-    "Coordinates",
     "DeviceStream",
     "Game",
     "GameActionFailedError",

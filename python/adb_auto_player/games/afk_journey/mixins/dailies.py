@@ -4,13 +4,14 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player import Coordinates, GameTimeoutError
+from adb_auto_player import GameTimeoutError
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.games.afk_journey.mixins.afk_stages import AFKStagesMixin
 from adb_auto_player.games.afk_journey.mixins.arena import ArenaMixin
 from adb_auto_player.games.afk_journey.mixins.dream_realm import DreamRealmMixin
+from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 
 from .legend_trial import SeasonLegendTrial
@@ -58,12 +59,12 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def claim_daily_rewards(self) -> None:
         """Claim daily AFK rewards."""
         logging.debug("Open AFK Progress.")
-        self.tap(Coordinates(90, 1830), scale=True)
+        self.tap(Point(90, 1830), scale=True)
         sleep(4)
 
         logging.info("Claim AFK rewards twice for battle pass.")
         for _ in range(4):
-            self.tap(Coordinates(520, 1420), scale=True)
+            self.tap(Point(520, 1420), scale=True)
             sleep(2)
 
         logging.info("Looking for free hourglasses.")
@@ -88,7 +89,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="No more free hourglasses.",
             )
-            self.tap(Coordinates(*free_hourglass))
+            self.tap(Point(*free_hourglass))
             sleep(2)
         except GameTimeoutError as fail:
             logging.info(fail)
@@ -97,7 +98,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         # TODO: Create a confirm do not show popup method.
         self._click_confirm_on_popup()
 
-        self.tap(Coordinates(520, 1750), scale=True)
+        self.tap(Point(520, 1750), scale=True)
         return True
 
     ############################# Mystical House ##############################
@@ -106,7 +107,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         """Purchase single pull and optionally affinity items."""
         logging.info("Entering Mystical House...")
         self.navigate_to_default_state()
-        self.tap(Coordinates(310, 1840), scale=True)
+        self.tap(Point(310, 1840), scale=True)
 
         try:
             logging.debug("Opening Emporium.")
@@ -116,7 +117,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Emporium.",
             )
-            self.tap(Coordinates(*emporium))
+            self.tap(Point(*emporium))
         except GameTimeoutError as fail:
             logging.error(fail)
             return
@@ -138,7 +139,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Guild Store.",
             )
-            self.tap(Coordinates(*guild_store))
+            self.tap(Point(*guild_store))
         except GameTimeoutError as fail:
             logging.error(f"{fail} {self.LANG_ERROR}")
             return
@@ -150,7 +151,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Discount Invite Letter already purchased.",
             )
-            self.tap(Coordinates(*invite_letter))
+            self.tap(Point(*invite_letter))
 
             logging.debug("Confirm purchase.")
             buy_letter: tuple[int, int] = self.wait_for_template(
@@ -158,14 +159,14 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to purchase Invite Letter.",
             )
-            self.tap(Coordinates(*buy_letter))
+            self.tap(Point(*buy_letter))
             sleep(2)  # pop up takes time to appear in slow devices
         except GameTimeoutError as fail:
             logging.info(fail)
 
         self._click_confirm_on_popup()
         sleep(1)
-        self.tap(Coordinates(550, 100), scale=True)  # Close purchased window
+        self.tap(Point(550, 100), scale=True)  # Close purchased window
 
     def _buy_affinity_items(self) -> None:
         """Buy affinity items."""
@@ -184,7 +185,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Friendship Store.",
             )
-            self.tap(Coordinates(*friendship_store))
+            self.tap(Point(*friendship_store))
             sleep(1)
         except GameTimeoutError as fail:
             logging.error(f"{fail} {self.LANG_ERROR}")
@@ -197,11 +198,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         if discount_affinity:
             logging.info("Attempting to buy the discount affinity item.")
-            self.tap(Coordinates(*discount_affinity))
+            self.tap(Point(*discount_affinity))
             sleep(1)
-            self.tap(Coordinates(600, 1780), scale=True)  # Purchase
+            self.tap(Point(600, 1780), scale=True)  # Purchase
             sleep(1)
-            self.tap(Coordinates(550, 100), scale=True)  # Close purchased window
+            self.tap(Point(550, 100), scale=True)  # Close purchased window
             sleep(1)
         else:
             # TODO: Unreachable. Template matches even when it's grayed out (sold out).
@@ -218,11 +219,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
         )
 
         for affinity_item in other_affinity_items:
-            self.tap(Coordinates(*affinity_item))
+            self.tap(Point(*affinity_item))
             sleep(1)
-            self.tap(Coordinates(600, 1780), scale=True)  # Purchase
+            self.tap(Point(600, 1780), scale=True)  # Purchase
             sleep(1)
-            self.tap(Coordinates(550, 100), scale=True)  # Close purchased window
+            self.tap(Point(550, 100), scale=True)  # Close purchased window
             sleep(1)
 
     def single_pull(self) -> None:
@@ -242,7 +243,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find the Noble Tavern.",
             )
-            self.tap(Coordinates(*tavern))
+            self.tap(Point(*tavern))
             sleep(2)
 
             logging.debug("Select All-Hero Recruitment.")
@@ -251,7 +252,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find All-Hero Recruitment.",
             )
-            self.tap(Coordinates(*all_hero_recruit))
+            self.tap(Point(*all_hero_recruit))
             sleep(2)
 
             logging.debug("Click Recruit 1.")
@@ -260,7 +261,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="No Invite Letters.",
             )
-            self.tap(Coordinates(*recruit))
+            self.tap(Point(*recruit))
             sleep(2)
 
             max_hero_continue: tuple[int, int] | None = self.game_find_template_match(
@@ -268,7 +269,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             )
             if max_hero_continue:
                 logging.debug("Dismiss max hero warning.")
-                self.tap(Coordinates(*max_hero_continue))
+                self.tap(Point(*max_hero_continue))
 
             logging.debug("Wait for back button.")
             confirm_summon: tuple[int, int] = self.wait_for_template(
@@ -276,7 +277,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to recruit.",
             )
-            self.tap(Coordinates(*confirm_summon))
+            self.tap(Point(*confirm_summon))
             sleep(2)
         except GameTimeoutError as fail:
             logging.error(f"{fail} {self.LANG_ERROR}")
@@ -291,7 +292,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         self.navigate_to_default_state()
 
         logging.info("Navigating to Hamburger.")
-        self.tap(Coordinates(990, 1840), scale=True)
+        self.tap(Point(990, 1840), scale=True)
         sleep(1)
 
         self._claim_friend_rewards()
@@ -312,7 +313,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Friends. Sadge.",
             )
-            self.tap(Coordinates(*friends))
+            self.tap(Point(*friends))
             sleep(1)
 
             logging.debug("Click Send & Receive.")
@@ -321,16 +322,16 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Friend rewards already claimed.",
             )
-            self.tap(Coordinates(*send_receive))
+            self.tap(Point(*send_receive))
             sleep(2)
-            self.tap(Coordinates(540, 1620))  # Close confirmation
+            self.tap(Point(540, 1620))  # Close confirmation
             sleep(1)
         except GameTimeoutError as fail:
             logging.info(f"{fail} {self.LANG_ERROR}")
 
         logging.debug("Back.")  # TODO: Create generic back method.
         back: tuple[int, int] | None = self.game_find_template_match("back.png")
-        self.tap(Coordinates(*back)) if back else self.press_back_button()
+        self.tap(Point(*back)) if back else self.press_back_button()
 
     def _claim_mail(self) -> None:
         """Claim mail."""
@@ -342,7 +343,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Mail.",
             )
-            self.tap(Coordinates(*mail))
+            self.tap(Point(*mail))
             sleep(1)
         except GameTimeoutError as fail:
             logging.error(fail)
@@ -355,16 +356,16 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="No mail.",
             )
-            self.tap(Coordinates(*read_all))
+            self.tap(Point(*read_all))
             sleep(1)
-            self.tap(Coordinates(540, 1620))  # Close confirmation
+            self.tap(Point(540, 1620))  # Close confirmation
             sleep(1)
         except GameTimeoutError as fail:
             logging.info(fail)
 
         logging.debug("Back.")
         back: tuple[int, int] | None = self.game_find_template_match("back.png")
-        self.tap(Coordinates(*back)) if back else self.press_back_button()
+        self.tap(Point(*back)) if back else self.press_back_button()
 
     def _claim_battle_pass(self) -> None:
         """Claim Battle Pass rewards."""
@@ -376,7 +377,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Battle Pass.",
             )
-            self.tap(Coordinates(*battle_pass))
+            self.tap(Point(*battle_pass))
             sleep(2)
         except GameTimeoutError as fail:
             logging.error(fail)
@@ -387,14 +388,14 @@ class DailiesMixin(AFKJourneyBase, ABC):
             "dailies/hamburger/rewards_available.png", crop_regions=CropRegions(top=0.8)
         )
         for bp_reward in available_rewards:
-            self.tap(Coordinates(*bp_reward))
+            self.tap(Point(*bp_reward))
             sleep(2)
             self._quick_claim()
             sleep(1)
 
         logging.debug("Back.")
         back: tuple[int, int] | None = self.game_find_template_match("back.png")
-        self.tap(Coordinates(*back)) if back else self.press_back_button()
+        self.tap(Point(*back)) if back else self.press_back_button()
 
     def _claim_quests(self) -> None:
         """Claim Quest rewards."""
@@ -406,23 +407,23 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find daily Quests.",
             )
-            self.tap(Coordinates(*quests))
+            self.tap(Point(*quests))
             sleep(2)
         except GameTimeoutError as fail:
             logging.error(fail)
             return
 
         logging.info("Claim Daily Quest rewards.")
-        self.tap(Coordinates(300, 1820))  # Focus on Dailies
+        self.tap(Point(300, 1820))  # Focus on Dailies
         sleep(2)
         self._quick_claim()
-        self.tap(Coordinates(370, 180))  # Claim top row
+        self.tap(Point(370, 180))  # Claim top row
         sleep(2)
-        self.tap(Coordinates(530, 1740))  # Close confirmation
+        self.tap(Point(530, 1740))  # Close confirmation
         sleep(2)
 
         logging.info("Claim Guild Quest rewards.")
-        self.tap(Coordinates(830, 1670))  # Guild Quests
+        self.tap(Point(830, 1670))  # Guild Quests
         sleep(2)
         self._quick_claim()
 
@@ -434,9 +435,9 @@ class DailiesMixin(AFKJourneyBase, ABC):
         if not claim:
             return
 
-        self.tap(Coordinates(*claim))
+        self.tap(Point(*claim))
         sleep(2)
-        self.tap(Coordinates(540, 1620))  # Close confirmation
+        self.tap(Point(540, 1620))  # Close confirmation
         sleep(2)
 
     ############################# Hero Affinity ##############################
@@ -447,11 +448,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
         sleep(5)
 
         logging.debug("Open Resonating Hall.")
-        self.tap(Coordinates(620, 1830), scale=True)
+        self.tap(Point(620, 1830), scale=True)
         sleep(5)
 
         logging.info("Begin raising hero affinity.")
-        self.tap(Coordinates(130, 1040), scale=True)
+        self.tap(Point(130, 1040), scale=True)
         sleep(5)
 
         while not self.game_find_template_match("dailies/resonating_hall/chippy.png"):
@@ -464,16 +465,14 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def _click_hero(self) -> None:
         """Click a hero for affinity and go next."""
         back: tuple[int, int] | None = self.game_find_template_match("back.png")
-        back_button: Coordinates = (
-            Coordinates(*back) if back else Coordinates(100, 1800)
-        )
+        back_button: Point = Point(*back) if back else Point(100, 1800)
 
         for _ in range(3):
             # NOTE: Sometimes spam click works and other times not.
             # So we go with the safe route of click then back.
-            self.tap(Coordinates(540, 840), scale=True)
+            self.tap(Point(540, 840), scale=True)
             sleep(0.5)
             self.tap(back_button, scale=True)
             sleep(0.5)
 
-        self.tap(Coordinates(995, 1090), scale=True)  # Next hero
+        self.tap(Point(995, 1090), scale=True)  # Next hero

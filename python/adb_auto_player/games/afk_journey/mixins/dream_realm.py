@@ -3,10 +3,11 @@
 import logging
 from time import sleep
 
-from adb_auto_player import Coordinates, GameTimeoutError
+from adb_auto_player import GameTimeoutError
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models.geometry import Point
 
 
 class DreamRealmMixin(AFKJourneyBase):
@@ -16,7 +17,7 @@ class DreamRealmMixin(AFKJourneyBase):
         """Initialize DreamRealmMixin."""
         super().__init__()
         # Battle and Skip buttons are in the same coordinates.
-        self.battle_skip_coord = Coordinates(550, 1790)
+        self.battle_skip_coord = Point(550, 1790)
 
     @register_command(
         name="DreamRealm",
@@ -96,7 +97,7 @@ class DreamRealmMixin(AFKJourneyBase):
 
         if buy:
             logging.debug("Purchasing DR attempt.")
-            self.tap(Coordinates(*buy))
+            self.tap(Point(*buy))
             return True
 
         logging.debug("Looking for more DR attempts...")
@@ -107,7 +108,7 @@ class DreamRealmMixin(AFKJourneyBase):
                 template="dream_realm/buy.png", timeout=self.FAST_TIMEOUT
             )
             logging.debug("Purchasing DR attempt.")
-            self.tap(Coordinates(*buy))
+            self.tap(Point(*buy))
             return True
         except GameTimeoutError:
             logging.info("No more DR attempts to purchase.")
@@ -117,14 +118,14 @@ class DreamRealmMixin(AFKJourneyBase):
         """Enter Dream Realm."""
         logging.info("Entering Dream Realm...")
         self.navigate_to_default_state()
-        self.tap(Coordinates(460, 1830))  # Battle Modes
+        self.tap(Point(460, 1830))  # Battle Modes
         try:
             dr_mode: tuple[int, int] = self.wait_for_template(
                 "dream_realm/label.png",
                 timeout_message="Could not find Dream Realm.",
                 timeout=self.MIN_TIMEOUT,
             )
-            self.tap(Coordinates(*dr_mode))
+            self.tap(Point(*dr_mode))
             sleep(2)
         except GameTimeoutError as fail:
             logging.error(f"{fail} {self.LANG_ERROR}")
@@ -141,7 +142,7 @@ class DreamRealmMixin(AFKJourneyBase):
             logging.debug("Failed to find rankings.")
             return
 
-        self.tap(Coordinates(*reward))
+        self.tap(Point(*reward))
         sleep(2)
 
         try:
@@ -151,7 +152,7 @@ class DreamRealmMixin(AFKJourneyBase):
                 timeout=self.FAST_TIMEOUT,
                 timeout_message="Dream Realm rewards already claimed.",
             )
-            self.tap(Coordinates(*tap_to_close))
+            self.tap(Point(*tap_to_close))
             sleep(1)
         except GameTimeoutError as fail:
             logging.info(fail)

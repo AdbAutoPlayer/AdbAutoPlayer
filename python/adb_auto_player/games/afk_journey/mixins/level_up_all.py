@@ -1,12 +1,12 @@
 import logging
 from time import sleep
 
-from adb_auto_player import Coordinates
 from adb_auto_player.decorators.register_custom_routine_choice import (
     register_custom_routine_choice,
 )
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.log_presets import LogPreset
+from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 
 
@@ -34,11 +34,11 @@ class LevelUpAllHeroes(AFKJourneyBase):
         logging.info("Level Up All Heroes completed.")
         return
 
-    def _find_level_up_all_button(self) -> Coordinates | None:
+    def _find_level_up_all_button(self) -> Point | None:
         if level_up_all_button := self.game_find_template_match(
             "resonating_hall/level_up_all.png",
             crop_regions=CropRegions(left=0.3, right=0.3, top=0.7),
             threshold=0.95,
         ):
-            return Coordinates(*level_up_all_button)
+            return Point(*level_up_all_button)
         return None

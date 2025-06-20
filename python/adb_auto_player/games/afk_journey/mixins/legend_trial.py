@@ -5,7 +5,6 @@ import logging
 from adb_auto_player import (
     AutoPlayerError,
     AutoPlayerWarningError,
-    Coordinates,
     GameTimeoutError,
 )
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
@@ -14,6 +13,7 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
 )
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util.summary_generator import SummaryGenerator
 
@@ -75,7 +75,7 @@ class SeasonLegendTrial(AFKJourneyBase):
                 continue
 
             logging.info(f"Starting {faction.capitalize()} Tower")
-            self.tap(Coordinates(*result))
+            self.tap(Point(*result))
             try:
                 self._select_legend_trials_floor(faction)
                 self._handle_legend_trials_battle(faction)
@@ -118,7 +118,7 @@ class SeasonLegendTrial(AFKJourneyBase):
 
                 match template:
                     case "next.png":
-                        self.tap(Coordinates(x, y))
+                        self.tap(Point(x, y))
                         continue
                     case _:
                         logging.info(f"{faction.capitalize()} Top Floor Reached")
@@ -151,7 +151,7 @@ class SeasonLegendTrial(AFKJourneyBase):
             "assuming Trial is already cleared",
         )
         _, x, y = challenge_btn
-        self.tap(Coordinates(x, y))
+        self.tap(Point(x, y))
 
     def _is_on_season_legend_trial_select(self) -> bool:
         return (

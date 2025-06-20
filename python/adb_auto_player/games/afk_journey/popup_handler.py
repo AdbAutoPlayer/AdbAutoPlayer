@@ -4,7 +4,6 @@ from dataclasses import dataclass
 
 import cv2
 import numpy as np
-from adb_auto_player import Coordinates
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.models import ConfidenceValue
@@ -122,7 +121,7 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
                 # TODO need to update tap to accept Point and Box
                 # self.tap(preprocess_result.dont_remind_me_checkbox)
                 center = preprocess_result.dont_remind_me_checkbox.center
-                self.tap(Coordinates(center.x, center.y))
+                self.tap(Point(center.x, center.y))
             else:
                 logging.warning("Don't remind me checkbox expected but not found.")
 

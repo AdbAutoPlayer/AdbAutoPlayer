@@ -7,7 +7,6 @@ from time import sleep
 from adb_auto_player import (
     AutoPlayerError,
     AutoPlayerWarningError,
-    Coordinates,
 )
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.decorators.register_custom_routine_choice import (
@@ -15,6 +14,7 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
 )
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util.summary_generator import SummaryGenerator
 
@@ -94,7 +94,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
     ) -> None:
         # y+100 clicks closer to center of the button instead of rate up text
         offset = int(self.get_scale_factor() * 100)
-        self.tap(Coordinates(x, y + offset))
+        self.tap(Point(x, y + offset))
         count = 0
 
         def handle_nightmare_pre_battle() -> bool:
@@ -118,7 +118,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             if nightmare is None:
                 logging.warning("Nightmare Button not found")
                 return False
-            self.tap(Coordinates(*nightmare))
+            self.tap(Point(*nightmare))
 
             template, new_x, new_y = self.wait_for_any_template(
                 templates=[
@@ -130,19 +130,19 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             )
             match template:
                 case "duras_trials/nightmare_skip.png":
-                    self.tap(Coordinates(new_x, new_y))
+                    self.tap(Point(new_x, new_y))
                     self.wait_until_template_disappears(
                         "duras_trials/nightmare_skip.png",
                         crop_regions=CropRegions(top=0.7, bottom=0.1),
                     )
-                    self.tap(Coordinates(new_x, new_y))
+                    self.tap(Point(new_x, new_y))
                     self.wait_for_template(
                         "duras_trials/nightmare_swords.png",
                         crop_regions=CropRegions(top=0.7, bottom=0.1),
                     )
-                    self.tap(Coordinates(new_x, new_y))
+                    self.tap(Point(new_x, new_y))
                 case "duras_trials/nightmare_swords.png":
-                    self.tap(Coordinates(new_x, new_y))
+                    self.tap(Point(new_x, new_y))
                 case "duras_trials/cleared.png":
                     logging.info("Nightmare Trial already cleared")
                     return False
@@ -160,7 +160,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
                     logging.info("Dura's Trial already cleared")
                     return False
                 case "duras_trials/battle.png":
-                    self.tap(Coordinates(new_x, new_y))
+                    self.tap(Point(new_x, new_y))
                 case "battle/records.png":
                     # No action needed.
                     pass
@@ -185,8 +185,8 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
                 logging.info(f"Dura's Trials pushed: {count}")
                 SummaryGenerator().add_count("Dura's Trials")
 
-                self.tap(Coordinates(*next_button))
-                self.tap(Coordinates(*next_button))
+                self.tap(Point(*next_button))
+                self.tap(Point(*next_button))
                 sleep(3)
                 return False  # Continue battle loop
             else:

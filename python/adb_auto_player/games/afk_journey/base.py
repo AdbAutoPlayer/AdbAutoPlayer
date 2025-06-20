@@ -7,7 +7,6 @@ from typing import Any
 
 from adb_auto_player import (
     AutoPlayerWarningError,
-    Coordinates,
     Game,
     GameActionFailedError,
     GameTimeoutError,
@@ -18,6 +17,7 @@ from adb_auto_player.decorators.register_game import GameGUIMetadata, register_g
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import MatchMode
 
+from ...models.geometry import Point
 from .afkjourneynavigation import AFKJourneyNavigation
 from .config import Config
 from .gui_category import AFKJCategory
@@ -185,7 +185,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                 timeout_message=f"Formation #{formation_num} not found",
             )
             start_image = self.get_screenshot()
-            self.tap(Coordinates(*formation_next))
+            self.tap(Point(*formation_next))
             self.wait_for_roi_change(
                 start_image=start_image,
                 crop_regions=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
@@ -267,7 +267,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                 logging.warning(
                     "Formation contains locked Artifacts or Heroes skipping"
                 )
-                self.tap(Coordinates(*cancel))
+                self.tap(Point(*cancel))
                 start_count = self.store.get(self.STORE_FORMATION_NUM, 1)
                 self.store[self.STORE_FORMATION_NUM] += 1
             else:
@@ -335,7 +335,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
         try:
             self._tap_coordinates_till_template_disappears(
                 TapParams(
-                    Coordinates(x=850, y=1780),
+                    Point(x=850, y=1780),
                     scale=True,
                 ),
                 TemplateMatchParams(
@@ -372,7 +372,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
             if checkbox is None:
                 logging.error('Could not find "Don\'t remind for x days" checkbox')
             else:
-                self.tap(Coordinates(*checkbox))
+                self.tap(Point(*checkbox))
             self._click_confirm_on_popup()
 
         self._click_confirm_on_popup()
@@ -390,7 +390,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
         )
         if result:
             _, x, y = result
-            self.tap(Coordinates(x=x, y=y))
+            self.tap(Point(x=x, y=y))
             sleep(1)
             return True
         return False
@@ -476,12 +476,12 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                     break
 
                 case "battle/victory_rewards.png":
-                    self.tap(Coordinates(x=550, y=1800), scale=True)
+                    self.tap(Point(x=550, y=1800), scale=True)
                     result = True
                     break
 
                 case "battle/power_up.png":
-                    self.tap(Coordinates(x=550, y=1800), scale=True)
+                    self.tap(Point(x=550, y=1800), scale=True)
                     result = False
                     break
 
@@ -489,7 +489,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                     logging.error(
                         "Network Error or Battle data differs between client and server"
                     )
-                    self.tap(Coordinates(x=x, y=y))
+                    self.tap(Point(x=x, y=y))
                     sleep(3)
                     result = False
                     break
@@ -504,11 +504,11 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
 
                 case "retry.png":
                     logging.info(f"Lost Battle #{count}")
-                    self.tap(Coordinates(x=x, y=y))
+                    self.tap(Point(x=x, y=y))
                     # Do not break so the loop continues
 
                 case "battle/result.png":
-                    self.tap(Coordinates(x=950, y=1800), scale=True)
+                    self.tap(Point(x=950, y=1800), scale=True)
                     result = True
                     break
 
@@ -535,5 +535,5 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
             if result is None:
                 break
             _, x, y = result
-            self.tap(Coordinates(x=x, y=y))
+            self.tap(Point(x=x, y=y))
             sleep(1)

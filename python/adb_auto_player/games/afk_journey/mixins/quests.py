@@ -4,10 +4,10 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player import Coordinates
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models.geometry import Point
 
 
 class QuestMixin(AFKJourneyBase, ABC):
@@ -53,7 +53,7 @@ class QuestMixin(AFKJourneyBase, ABC):
                 sleep(2)
                 if count > hard_stuck_cap:
                     logging.info("Possibly really stuck, trying something different")
-                    self.tap(Coordinates(550, 1800))
+                    self.tap(Point(550, 1800))
 
         logging.info("Finished Quest running")
 
@@ -85,7 +85,7 @@ class QuestMixin(AFKJourneyBase, ABC):
         )
         if result is not None:
             logging.info("Holding button: " + result[0])
-            self.hold(550, 1200)
+            self.hold(Point(550, 1200))
             return True
 
         # Then we check for buttons we need to press, higher threshold as
@@ -95,7 +95,7 @@ class QuestMixin(AFKJourneyBase, ABC):
         )
         if result2 is not None:
             logging.info("Clicking button: " + result2[0])
-            self.tap(Coordinates(result2[1], result2[2]), scale=True)
+            self.tap(Point(result2[1], result2[2]), scale=True)
             sleep(
                 1
             )  # allows time for update before checking again if a popup is triggered
@@ -103,7 +103,7 @@ class QuestMixin(AFKJourneyBase, ABC):
 
         if self.find_any_template(["quests/time_change"]):
             logging.info("Changing time")
-            self.tap(Coordinates(550, 1500))
+            self.tap(Point(550, 1500))
             return True
 
         # Finally we click the 'Echoes of Dissent' text to auto-path. We return False
@@ -111,7 +111,7 @@ class QuestMixin(AFKJourneyBase, ABC):
         if path:
             if self.find_any_template(["quests/eod"]):
                 logging.info("Auto-pathing")
-                self.tap(Coordinates(820, 375))
+                self.tap(Point(820, 375))
                 sleep(3)
                 return False
 

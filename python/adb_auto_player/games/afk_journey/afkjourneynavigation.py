@@ -2,11 +2,12 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player import Coordinates, Game
+from adb_auto_player import Game
 from adb_auto_player.exceptions import (
     GameActionFailedError,
     GameNotRunningOrFrozenError,
 )
+from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 
 
@@ -14,10 +15,10 @@ class AFKJourneyNavigation(Game, ABC):
     # Timeouts
     NAVIGATION_TIMEOUT = 10.0
 
-    # Coords
-    CENTER_COORDS = Coordinates(x=1080 // 2, y=1920 // 2)
-    RESONATING_HALL_COORDS = Coordinates(x=620, y=1830)
-    BATTLE_MODES_COORDS = Coordinates(x=460, y=1830)
+    # Points
+    CENTER_POINT = Point(x=1080 // 2, y=1920 // 2)
+    RESONATING_HALL_POINT = Point(x=620, y=1830)
+    BATTLE_MODES_POINT = Point(x=460, y=1830)
 
     def navigate_to_default_state(
         self,
@@ -71,15 +72,15 @@ class AFKJourneyNavigation(Game, ABC):
                     break
                 case "navigation/notice.png":
                     # This is the Game Entry Screen
-                    self.tap(AFKJourneyNavigation.CENTER_COORDS, scale=True)
+                    self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
                     sleep(3)
                 case "navigation/confirm.png":
-                    self._handle_confirm_button(Coordinates(x=x, y=y))
+                    self._handle_confirm_button(Point(x=x, y=y))
                 case "navigation/dotdotdot.png" | "popup/quick_purchase.png":
                     self.press_back_button()
                     sleep(1)
                 case _:
-                    self.tap(Coordinates(x=x, y=y))
+                    self.tap(Point(x=x, y=y))
                     sleep(1)
         sleep(1)
 
@@ -96,11 +97,11 @@ class AFKJourneyNavigation(Game, ABC):
                     "Failed to navigate to default state."
                 )
             attempts += 1
-            self.tap(AFKJourneyNavigation.CENTER_COORDS, scale=True)
+            self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
             sleep(3)
         sleep(1)
 
-    def _handle_confirm_button(self, coords: Coordinates) -> None:
+    def _handle_confirm_button(self, coords: Point) -> None:
         if self.find_any_template(
             templates=[
                 "navigation/exit_the_game.png",
@@ -112,7 +113,7 @@ class AFKJourneyNavigation(Game, ABC):
                 "navigation/x.png",
             )
             if x_btn:
-                self.tap(Coordinates(*x_btn))
+                self.tap(Point(*x_btn))
                 sleep(1)
                 return
             self.press_back_button()
@@ -127,7 +128,7 @@ class AFKJourneyNavigation(Game, ABC):
         max_click_count = 3
         click_count = 0
         while self._can_see_time_of_day_button():
-            self.tap(AFKJourneyNavigation.RESONATING_HALL_COORDS, scale=True)
+            self.tap(AFKJourneyNavigation.RESONATING_HALL_POINT, scale=True)
             sleep(3)
             click_count += 1
             if click_count > max_click_count:
@@ -163,13 +164,13 @@ class AFKJourneyNavigation(Game, ABC):
             crop_regions=CropRegions(left=0.3, right=0.3, top=0.9),
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
-        self.tap(Coordinates(x=550, y=1080), scale=True)  # click rewards popup
+        self.tap(Point(x=550, y=1080), scale=True)  # click rewards popup
         sleep(1)
 
     def navigate_to_battle_modes_screen(self) -> None:
         self.navigate_to_default_state()
 
-        self.tap(AFKJourneyNavigation.BATTLE_MODES_COORDS, scale=True)
+        self.tap(AFKJourneyNavigation.BATTLE_MODES_POINT, scale=True)
         template, _, _ = self.wait_for_any_template(
             templates=[
                 "battle_modes/afk_stage.png",
@@ -219,9 +220,9 @@ class AFKJourneyNavigation(Game, ABC):
         sleep(1)
 
         # popups
-        self.tap(AFKJourneyNavigation.CENTER_COORDS, scale=True)
-        self.tap(AFKJourneyNavigation.CENTER_COORDS, scale=True)
-        self.tap(AFKJourneyNavigation.CENTER_COORDS, scale=True)
+        self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
+        self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
+        self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
 
         self.wait_for_template(
             template="duras_trials/featured_heroes.png",
@@ -231,7 +232,7 @@ class AFKJourneyNavigation(Game, ABC):
         sleep(1)
         return
 
-    def _find_on_battle_modes(self, template: str, timeout_message: str) -> Coordinates:
+    def _find_on_battle_modes(self, template: str, timeout_message: str) -> Point:
         if not self.game_find_template_match(template):
             self.swipe_up(sy=1350, ey=500)
 
@@ -240,7 +241,7 @@ class AFKJourneyNavigation(Game, ABC):
             timeout_message=timeout_message,
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
-        return Coordinates(*label)
+        return Point(*label)
 
     def navigate_to_legend_trials_select_tower(self) -> None:
         """Navigate to Legend Trials select tower screen."""

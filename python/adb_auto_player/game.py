@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from enum import StrEnum, auto
 from pathlib import Path
 from time import sleep, time
-from typing import Literal, NamedTuple, TypeVar
+from typing import Literal, TypeVar
 
 import cv2
 import numpy as np
@@ -39,7 +39,13 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
     CustomRoutineEntry,
     custom_routine_choice_registry,
 )
-from adb_auto_player.image_manipulation import crop, load_image, to_grayscale
+from adb_auto_player.image_manipulation import (
+    crop,
+    get_bgr_np_array_from_png_bytes,
+    load_image,
+    to_grayscale,
+)
+from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import MatchMode
 from adb_auto_player.template_matching import (
@@ -52,17 +58,6 @@ from adb_auto_player.util.execute import execute
 from adbutils._device import AdbDevice
 from PIL import Image
 from pydantic import BaseModel
-
-
-class Coordinates(NamedTuple):
-    """Coordinate named tuple."""
-
-    x: int | np.int64
-    y: int | np.int64
-
-    def __str__(self):
-        """Converts np.int64 to int for concise logging."""
-        return f"Coordinates(x={int(self.x)}, y={int(self.y)})"
 
 
 class _SwipeDirection(StrEnum):
@@ -96,7 +91,7 @@ class _SwipeParams:
 class TapParams:
     """Params for Tap functions."""
 
-    coordinates: Coordinates
+    point: Point
     scale: bool = False
 
 
@@ -331,16 +326,16 @@ class Game:
 
     def tap(
         self,
-        coordinates: Coordinates,
+        p: Point,
         scale: bool = False,
         blocking: bool = True,
         non_blocking_sleep_duration: float = 1 / 30,  # Assuming 30 FPS, 1 Tap per Frame
         log_message: str | None = "",
     ) -> None:
-        """Tap the screen on the given coordinates.
+        """Tap the screen on the given point.
 
         Args:
-            coordinates (Coordinates): Coordinates to click on.
+            p (Point): Point to click on.
             scale (bool, optional): Whether to scale the coordinates.
             blocking (bool, optional): Whether to block the process and
                 wait for ADBServer to confirm the tap has happened.
@@ -351,27 +346,26 @@ class Game:
                 - "": Default coordinate logging
                 - str: Custom message, appends coordinates automatically
         """
-        original_coords = coordinates
-        final_coords = coordinates
+        original_point = p
+        final_point = p
 
-        # Handle coordinate scaling
         if scale:
-            final_coords = Coordinates(*self._scale_coordinates(*coordinates))
+            final_point = p.scale(self._scale_factor)
 
         log_message = self._build_tap_log_message(
-            original_coords,
-            final_coords,
+            original_point,
+            final_point,
             log_message,
         )
 
         # Perform the tap
         if blocking:
-            self._click(final_coords, log_message)
+            self._click(final_point, log_message)
         else:
             thread = threading.Thread(
                 target=self._click,
                 args=(
-                    final_coords,
+                    final_point,
                     log_message,
                 ),
                 daemon=True,
@@ -381,15 +375,15 @@ class Game:
 
     def _build_tap_log_message(
         self,
-        original_coords: Coordinates,
-        final_coords: Coordinates,
+        original_point: Point,
+        final_point: Point,
         message: str | None = None,
     ) -> str:
         """Log the tap with all relevant information in a single entry."""
         coords_info = (
-            f"{original_coords} (scaled to {final_coords})"
-            if original_coords != final_coords
-            else str(final_coords)
+            f"{original_point} (scaled to {final_point})"
+            if original_point != final_point
+            else str(final_point)
         )
         if message:
             return f"{message}: {coords_info}"
@@ -397,12 +391,12 @@ class Game:
 
     def _click(
         self,
-        coordinates: Coordinates,
+        p: Point,
         log_message: str | None = None,
     ) -> None:
         """Internal click method - logging should typically be handled by the caller."""
         with self.device.shell(
-            f"input tap {coordinates.x} {coordinates.y}",
+            f"input tap {p.x} {p.y}",
             timeout=3,  # if the click didn't happen in 3 seconds it's never happening
             stream=True,
         ) as connection:
@@ -428,7 +422,7 @@ class Game:
                 with self.device.shell("screencap -p", stream=True) as c:
                     screenshot_data = c.read_until_close(encoding=None)
                 if isinstance(screenshot_data, bytes):
-                    image = self._get_bgr_numpy_array_from_bytes(screenshot_data)
+                    image = get_bgr_np_array_from_png_bytes(screenshot_data)
                     self._debug_save_screenshot(image, is_bgr=True)
                     return image
             except (OSError, ValueError) as e:
@@ -441,25 +435,6 @@ class Game:
         raise GenericAdbUnrecoverableError(
             f"Screenshots cannot be recorded from device: {self.device.serial}"
         )
-
-    def _get_bgr_numpy_array_from_bytes(self, screenshot_data: bytes) -> np.ndarray:
-        """Converts bytes to numpy array.
-
-        Raises:
-            OSError
-            ValueError
-        """
-        png_start_index = screenshot_data.find(b"\x89PNG\r\n\x1a\n")
-        # Slice the screenshot data to remove the warning
-        # and keep only the PNG image data
-        if png_start_index != -1:
-            screenshot_data = screenshot_data[png_start_index:]
-
-        np_data = np.frombuffer(screenshot_data, dtype=np.uint8)
-        img = cv2.imdecode(np_data, cv2.IMREAD_COLOR)
-        if img is None:
-            raise ValueError("Failed to decode screenshot image data")
-        return img
 
     def force_stop_game(self):
         """Force stops the Game."""
@@ -979,31 +954,37 @@ class Game:
         )
 
         logging.debug(f"swipe_{direction} - from ({sx}, {sy}) to ({ex}, {ey})")
-        self._swipe(sx=sx, sy=sy, ex=ex, ey=ey, duration=params.duration)
+        self._swipe(Point(sx, sy), Point(ex, ey), duration=params.duration)
 
-    def hold(self, x: int, y: int, duration: float = 3.0) -> None:
+    def hold(self, p: Point, duration: float = 3.0) -> None:
         """Holds a point on the screen.
 
         Args:
-            x (int): X coordinate.
-            y (int): Y coordinate.
+            p (Point): Point on the screen.
             duration (float, optional): Hold duration. Defaults to 3.0.
         """
-        logging.debug(f"hold: ({x}, {y}) for {duration} seconds")
-        self._swipe(sx=x, sy=y, ex=x, ey=y, duration=duration)
+        logging.debug(f"hold: ({p.x}, {p.y}) for {duration} seconds")
+        self._swipe(start_point=p, end_point=p, duration=duration)
 
-    def _swipe(self, sx: int, sy: int, ex: int, ey: int, duration: float = 1.0) -> None:
+    def _swipe(
+        self, start_point: Point, end_point: Point, duration: float = 1.0
+    ) -> None:
         """Swipes the screen.
 
         Args:
-            sx (int): Start X coordinate.
-            sy (int): Start Y coordinate.
-            ex (int): End X coordinate.
-            ey (int): End Y coordinate.
+            start_point (Point): Start Point on the screen.
+            end_point (Point): End Point on the screen.
             duration (float, optional): Swipe duration. Defaults to 1.0.
         """
-        sx, sy, ex, ey = self._scale_coordinates(sx, sy, ex, ey)
-        self.device.swipe(sx=sx, sy=sy, ex=ex, ey=ey, duration=duration)
+        start_point = start_point.scale(self._scale_factor)
+        end_point = end_point.scale(self._scale_factor)
+        self.device.swipe(
+            sx=start_point.x,
+            sy=start_point.y,
+            ex=end_point.x,
+            ey=end_point.y,
+            duration=duration,
+        )
         sleep(2)
 
     T = TypeVar("T")
@@ -1040,14 +1021,6 @@ class Game:
 
             if end_time <= time():
                 end_time_exceeded = True
-
-    def _scale_coordinates(self, *coordinates: int) -> tuple[int, ...]:
-        """Scale a variable number of coordinates by the given scale factor."""
-        scale_factor: float = self.get_scale_factor()
-        if scale_factor != 1.0:
-            coordinates = tuple(round(c * scale_factor) for c in coordinates)
-
-        return coordinates
 
     def _debug_save_screenshot(
         self, screenshot: np.ndarray, is_bgr: bool = False
@@ -1257,7 +1230,7 @@ class Game:
                 message = f"Failed to tap: {template}, Template still visible."
                 raise GameActionFailedError(message)
             if time_since_last_tap >= delay:
-                self.tap(Coordinates(*result))
+                self.tap(Point(*result))
                 tap_count += 1
                 time_since_last_tap -= delay  # preserve overflow - more accurate timing
 
@@ -1285,12 +1258,12 @@ class Game:
         ):
             if tap_count >= max_tap_count:
                 message = (
-                    f"Failed to tap: {tap_params.coordinates}, "
+                    f"Failed to tap: {tap_params.point}, "
                     f"Template: {template_match_params.template} still visible."
                 )
                 raise GameActionFailedError(message)
             if time_since_last_tap >= delay:
-                self.tap(tap_params.coordinates)
+                self.tap(tap_params.point)
                 tap_count += 1
                 time_since_last_tap -= delay  # preserve overflow - more accurate timing
 
