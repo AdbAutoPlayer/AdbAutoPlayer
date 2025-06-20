@@ -97,7 +97,6 @@ class AFKJourneyPopupHandler(Game, ABC):
         image = self.get_screenshot()
         preprocess_result = self._preprocess_for_popup(image)
         if not preprocess_result:
-            logging.warning("No Confirmation Popup detected.")
             return False
 
         ocr_results = ocr.detect_text_blocks(
