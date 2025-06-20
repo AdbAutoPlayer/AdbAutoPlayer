@@ -5,3 +5,4 @@ adb_auto_player.exe
 __pycache__
 debug/
 nuitka-crash-report.xml
+.venv

@@ -25,6 +25,18 @@ class ConfigLoader:
     def _initialize(self) -> None:
         """Initialize the ConfigLoader singleton."""
         self._working_dir = Path.cwd()
+        # Check if 'python/tests' is part of the path
+        try:
+            parts = self._working_dir.parts
+            if "python" in parts and "tests" in parts:
+                python_index = parts.index("python")
+                tests_index = parts.index("tests")
+                if tests_index == python_index + 1:
+                    # Rebuild the path up to 'python'
+                    self._working_dir = Path(*parts[: python_index + 1])
+        except ValueError:
+            pass  # 'python' or 'tests' not in path, no change needed
+
         self._games_dir = None
         self._main_config = None
         logging.debug(f"Python working dir path: {self._working_dir}")

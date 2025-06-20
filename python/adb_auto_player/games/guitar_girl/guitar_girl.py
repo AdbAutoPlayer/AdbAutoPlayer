@@ -3,14 +3,13 @@ from time import sleep
 from typing import NoReturn
 
 from adb_auto_player import (
-    Coordinates,
-    CropRegions,
     Game,
-    TapParams,
     TemplateMatchParams,
 )
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.decorators.register_game import register_game
+from adb_auto_player.models.geometry import Point
+from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util.summary_generator import SummaryGenerator
 from pydantic import BaseModel
 
@@ -55,11 +54,10 @@ class GuitarGirl(Game):
                     "note.png",
                 ],
                 threshold=0.7,
-                crop=CropRegions(bottom=0.5, right=0.2, top=0.05),
+                crop_regions=CropRegions(bottom=0.5, right=0.2, top=0.05),
             ):
-                note, x, y = result
-                self.tap(Coordinates(x, y), log_message=None)
-                if "big_note" in note:
+                self.tap(result, log_message=None)
+                if "big_note" in result.template:
                     SummaryGenerator().add_count("Big Note")
                 else:
                     SummaryGenerator().add_count("Small Note")
@@ -86,7 +84,7 @@ class GuitarGirl(Game):
                 self._activate_skills()
                 logging.info("Tapping.")
 
-            self.tap(Coordinates(500, y), log_message=None)
+            self.tap(Point(500, y), log_message=None)
             y += 40
             if y > y_max:
                 y = 200
@@ -99,12 +97,12 @@ class GuitarGirl(Game):
         logging.info("Leveling up Guitar Girl.")
         self._open_guitar_girl_tab()
 
-        guitar_girl_level_up = Coordinates(900, 1450)
+        guitar_girl_level_up = Point(900, 1450)
         for _ in range(50):
             self.tap(guitar_girl_level_up, log_message=None)
         sleep(3)
 
-        guitar_girl_icon = Coordinates(100, 1450)
+        guitar_girl_icon = Point(100, 1450)
         for _ in range(3):
             self.tap(guitar_girl_icon, log_message=None)
         sleep(1)
@@ -113,12 +111,12 @@ class GuitarGirl(Game):
         logging.info("Leveling up Classmate Joy.")
         self._open_follower_tab()
 
-        classmate_joy_level_up = Coordinates(900, 1250)
+        classmate_joy_level_up = Point(900, 1250)
         for _ in range(50):
             self.tap(classmate_joy_level_up, log_message=None)
         sleep(3)
 
-        classmate_joy_icon = Coordinates(100, 1250)
+        classmate_joy_icon = Point(100, 1250)
         for _ in range(3):
             self.tap(classmate_joy_icon, log_message=None)
         sleep(1)
@@ -134,7 +132,7 @@ class GuitarGirl(Game):
 
         for i in range(num_skills):
             x = base_x + i * x_offset
-            self.tap(Coordinates(x, y), log_message=None)
+            self.tap(Point(x, y), log_message=None)
             sleep(1)
 
     def _start_game_if_not_running(self) -> None:
@@ -144,11 +142,11 @@ class GuitarGirl(Game):
             sleep(15)
 
     def _open_guitar_girl_tab(self) -> None:
-        self.tap(Coordinates(80, 1850), log_message=None)
+        self.tap(Point(80, 1850), log_message=None)
         sleep(1)
 
     def _open_follower_tab(self):
-        self.tap(Coordinates(210, 1850), log_message=None)
+        self.tap(Point(210, 1850), log_message=None)
         sleep(1)
 
     def _check_for_popups(self) -> None:
@@ -156,9 +154,8 @@ class GuitarGirl(Game):
         while result := self.find_any_template(
             ["close.png", "ok.png"],
         ):
-            template, x, y = result
             self._tap_coordinates_till_template_disappears(
-                tap_params=TapParams(Coordinates(x, y)),
-                template_match_params=TemplateMatchParams(template=template),
+                coordinates=result,
+                template_match_params=TemplateMatchParams(template=result.template),
             )
             sleep(5)

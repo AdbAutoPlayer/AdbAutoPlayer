@@ -2,13 +2,11 @@
 
 import logging
 import platform
-import queue
 import threading
 import time
 from functools import lru_cache
 
 import av
-import cv2
 import numpy as np
 from adbutils import AdbConnection, AdbDevice
 from av.codec.codec import UnknownCodecError
@@ -75,13 +73,12 @@ class StreamingNotSupportedError(AutoPlayerWarningError):
 class DeviceStream:
     """Device screen streaming."""
 
-    def __init__(self, device: AdbDevice, fps: int = 30, buffer_size: int = 2):
+    def __init__(self, device: AdbDevice, fps: int = 30):
         """Initialize the screen stream.
 
         Args:
             device: AdbDevice instance
             fps: Target frames per second (default: 30)
-            buffer_size: Number of frames to keep in buffer (default: 2)
 
         Raises:
             StreamingNotSupportedError
@@ -98,9 +95,8 @@ class DeviceStream:
         self.codec = _get_codec_context()
         self.device = device
         self.fps = fps
-        self.buffer_size = buffer_size
-        self.frame_queue: queue.Queue = queue.Queue(maxsize=buffer_size)
         self.latest_frame: np.ndarray | None = None
+        self._frame_lock = threading.Lock()
         self._running = False
         self._stream_thread: threading.Thread | None = None
         self._process: AdbConnection | None = None
@@ -130,22 +126,14 @@ class DeviceStream:
             self._stream_thread.join()
             self._stream_thread = None
 
-        # Clear the queue
-        while not self.frame_queue.empty():
-            try:
-                self.frame_queue.get_nowait()
-            except queue.Empty:
-                break
+        # Clear the latest frame
+        with self._frame_lock:
+            self.latest_frame = None
 
     def get_latest_frame(self) -> np.ndarray | None:
         """Get the most recent frame from the stream."""
-        try:
-            while not self.frame_queue.empty():
-                self.latest_frame = self.frame_queue.get_nowait()
-        except queue.Empty:
-            pass
-
-        return self.latest_frame
+        with self._frame_lock:
+            return self.latest_frame
 
     def _handle_stream(self) -> None:
         """Generic stream handler."""
@@ -171,13 +159,8 @@ class DeviceStream:
                     frames = self.codec.decode(packet)
                     for frame in frames:
                         ndarray = frame.to_ndarray(format="rgb24")
-                        bgr_frame = cv2.cvtColor(ndarray, cv2.COLOR_RGB2BGR)
-                        if self.frame_queue.full():
-                            try:
-                                self.frame_queue.get_nowait()
-                            except queue.Empty:
-                                pass
-                        self.frame_queue.put(bgr_frame)
+                        with self._frame_lock:
+                            self.latest_frame = ndarray
 
                 buffer = b""
 

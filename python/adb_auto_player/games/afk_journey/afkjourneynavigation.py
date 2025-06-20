@@ -2,21 +2,24 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player import Coordinates, CropRegions, Game
+from adb_auto_player import Game
 from adb_auto_player.exceptions import (
     GameActionFailedError,
     GameNotRunningOrFrozenError,
 )
+from adb_auto_player.models.geometry import Coordinates, Point
+from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.models.template_matching import TemplateMatchResult
 
 
 class AFKJourneyNavigation(Game, ABC):
     # Timeouts
     NAVIGATION_TIMEOUT = 10.0
 
-    # Coords
-    CENTER_COORDS = Coordinates(x=1080 // 2, y=1920 // 2)
-    RESONATING_HALL_COORDS = Coordinates(x=620, y=1830)
-    BATTLE_MODES_COORDS = Coordinates(x=460, y=1830)
+    # Points
+    CENTER_POINT = Point(x=1080 // 2, y=1920 // 2)
+    RESONATING_HALL_POINT = Point(x=620, y=1830)
+    BATTLE_MODES_POINT = Point(x=460, y=1830)
 
     def navigate_to_default_state(
         self,
@@ -35,6 +38,7 @@ class AFKJourneyNavigation(Game, ABC):
             "login/claim.png",
             "arcane_labyrinth/back_arrow.png",
             "battle/exit_door.png",
+            "arcane_labyrinth/select_a_crest.png",
         ]
 
         max_attempts = 40
@@ -64,21 +68,25 @@ class AFKJourneyNavigation(Game, ABC):
                 sleep(3)
                 continue
 
-            template, x, y = result
-            match template:
+            match result.template:
                 case "navigation/time_of_day.png":
                     break
                 case "navigation/notice.png":
                     # This is the Game Entry Screen
-                    self.tap(AFKJourneyNavigation.CENTER_COORDS, scale=True)
+                    self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
                     sleep(3)
                 case "navigation/confirm.png":
-                    self._handle_confirm_button(Coordinates(x=x, y=y))
+                    self._handle_confirm_button(result)
                 case "navigation/dotdotdot.png" | "popup/quick_purchase.png":
                     self.press_back_button()
                     sleep(1)
+                case "arcane_labyrinth/select_a_crest.png":
+                    self.tap(Point(550, 1460))  # bottom crest
+                    sleep(1)
+                    self.tap(result)
+                    sleep(1)
                 case _:
-                    self.tap(Coordinates(x=x, y=y))
+                    self.tap(result)
                     sleep(1)
         sleep(1)
 
@@ -95,7 +103,7 @@ class AFKJourneyNavigation(Game, ABC):
                     "Failed to navigate to default state."
                 )
             attempts += 1
-            self.tap(AFKJourneyNavigation.CENTER_COORDS, scale=True)
+            self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
             sleep(3)
         sleep(1)
 
@@ -107,11 +115,11 @@ class AFKJourneyNavigation(Game, ABC):
             ],
             threshold=0.75,
         ):
-            x_btn: tuple[int, int] | None = self.game_find_template_match(
+            x_btn = self.game_find_template_match(
                 "navigation/x.png",
             )
             if x_btn:
-                self.tap(Coordinates(*x_btn))
+                self.tap(x_btn)
                 sleep(1)
                 return
             self.press_back_button()
@@ -126,7 +134,7 @@ class AFKJourneyNavigation(Game, ABC):
         max_click_count = 3
         click_count = 0
         while self._can_see_time_of_day_button():
-            self.tap(AFKJourneyNavigation.RESONATING_HALL_COORDS, scale=True)
+            self.tap(AFKJourneyNavigation.RESONATING_HALL_POINT, scale=True)
             sleep(3)
             click_count += 1
             if click_count > max_click_count:
@@ -146,7 +154,7 @@ class AFKJourneyNavigation(Game, ABC):
         return (
             self.game_find_template_match(
                 "navigation/time_of_day.png",
-                crop=CropRegions(left=0.6, right=0.1, bottom=0.8),
+                crop_regions=CropRegions(left=0.6, right=0.1, bottom=0.8),
             )
             is not None
         )
@@ -159,17 +167,17 @@ class AFKJourneyNavigation(Game, ABC):
 
         self.wait_for_template(
             template="navigation/resonating_hall_label.png",
-            crop=CropRegions(left=0.3, right=0.3, top=0.9),
+            crop_regions=CropRegions(left=0.3, right=0.3, top=0.9),
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
-        self.tap(Coordinates(x=550, y=1080), scale=True)  # click rewards popup
+        self.tap(Point(x=550, y=1080), scale=True)  # click rewards popup
         sleep(1)
 
     def navigate_to_battle_modes_screen(self) -> None:
         self.navigate_to_default_state()
 
-        self.tap(AFKJourneyNavigation.BATTLE_MODES_COORDS, scale=True)
-        template, _, _ = self.wait_for_any_template(
+        self.tap(AFKJourneyNavigation.BATTLE_MODES_POINT, scale=True)
+        result = self.wait_for_any_template(
             templates=[
                 "battle_modes/afk_stage.png",
                 "battle_modes/duras_trials.png",
@@ -180,11 +188,11 @@ class AFKJourneyNavigation(Game, ABC):
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
 
-        if template == "popup/quick_purchase.png":
+        if result.template == "popup/quick_purchase.png":
             self.press_back_button()
             sleep(1)
 
-        template, _, _ = self.wait_for_any_template(
+        _ = self.wait_for_any_template(
             templates=[
                 "battle_modes/afk_stage.png",
                 "battle_modes/duras_trials.png",
@@ -202,7 +210,7 @@ class AFKJourneyNavigation(Game, ABC):
         def stop_condition() -> bool:
             match = self.game_find_template_match(
                 template="duras_trials/featured_heroes.png",
-                crop=CropRegions(left=0.7, bottom=0.8),
+                crop_regions=CropRegions(left=0.7, bottom=0.8),
             )
             return match is not None
 
@@ -218,28 +226,29 @@ class AFKJourneyNavigation(Game, ABC):
         sleep(1)
 
         # popups
-        self.tap(AFKJourneyNavigation.CENTER_COORDS, scale=True)
-        self.tap(AFKJourneyNavigation.CENTER_COORDS, scale=True)
-        self.tap(AFKJourneyNavigation.CENTER_COORDS, scale=True)
+        self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
+        self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
+        self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
 
         self.wait_for_template(
             template="duras_trials/featured_heroes.png",
-            crop=CropRegions(left=0.7, bottom=0.8),
+            crop_regions=CropRegions(left=0.7, bottom=0.8),
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
         sleep(1)
         return
 
-    def _find_on_battle_modes(self, template: str, timeout_message: str) -> Coordinates:
+    def _find_on_battle_modes(
+        self, template: str, timeout_message: str
+    ) -> TemplateMatchResult:
         if not self.game_find_template_match(template):
             self.swipe_up(sy=1350, ey=500)
 
-        label = self.wait_for_template(
+        return self.wait_for_template(
             template=template,
             timeout_message=timeout_message,
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
-        return Coordinates(*label)
 
     def navigate_to_legend_trials_select_tower(self) -> None:
         """Navigate to Legend Trials select tower screen."""
@@ -254,7 +263,7 @@ class AFKJourneyNavigation(Game, ABC):
         self.tap(coords)
         self.wait_for_template(
             template="legend_trials/s_header.png",
-            crop=CropRegions(right=0.8, bottom=0.8),
+            crop_regions=CropRegions(right=0.8, bottom=0.8),
             timeout_message="Could not find Season Legend Trial Header",
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
@@ -267,13 +276,13 @@ class AFKJourneyNavigation(Game, ABC):
 
         def stop_condition() -> bool:
             """Stop condition."""
-            match: tuple[str, int, int] | None = self.find_any_template(
+            match = self.find_any_template(
                 templates=[
                     "arcane_labyrinth/select_a_crest.png",
                     "arcane_labyrinth/confirm.png",
                     "arcane_labyrinth/quit.png",
                 ],
-                crop=CropRegions(top=0.8),
+                crop_regions=CropRegions(top=0.8),
             )
 
             if match is not None:

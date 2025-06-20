@@ -4,10 +4,10 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player import Coordinates
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models.geometry import Point
 
 
 class SunlitShowdownMixin(AFKJourneyBase, ABC):
@@ -54,10 +54,10 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
         )
         sleep(2)
         self.wait_for_template(template="event/sunlit_showdown/title_s")
-        self.tap(Coordinates(650, 1450))  # Join
+        self.tap(Point(650, 1450))  # Join
         sleep(3)
         self.wait_for_template(template="event/sunlit_showdown/title_s")
-        self.tap(Coordinates(800, 1800))  # Start/Continue
+        self.tap(Point(800, 1800))  # Start/Continue
         sleep(4)
         if self.game_find_template_match(
             template="event/sunlit_showdown/insufficient_resources"
@@ -69,7 +69,7 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
     def _handle_battle(self) -> bool:
         # Enter hero selection screen
         self.wait_for_template(template="event/sunlit_showdown/quick_select")
-        self.tap(Coordinates(800, 1800))  # Continue/Battle
+        self.tap(Point(800, 1800))  # Continue/Battle
         sleep(2)
         self._tap_till_template_disappears(template="navigation/confirm")  # consumables
         sleep(4)
@@ -77,11 +77,11 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
         # Clear all hero spots
         self.wait_for_template(template="start_battle")
         logging.debug("Clearing heroes")
-        self.tap(Coordinates(425, 950))
+        self.tap(Point(425, 950))
         sleep(1)
-        self.tap(Coordinates(325, 870))
+        self.tap(Point(325, 870))
         sleep(1)
-        self.tap(Coordinates(175, 870))
+        self.tap(Point(175, 870))
         sleep(1)
 
         # Select 3 new ones from list of heroes
@@ -137,7 +137,7 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
         # ]
 
         while selected_heroes < hero_slots:
-            hero_checker: tuple[str, int, int] | None = self.find_any_template(
+            hero_checker = self.find_any_template(
                 templates=heroes,
                 threshold=0.93,  # Else Faramor triggers while already selected
             )
@@ -147,7 +147,7 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
                     "Selecting "
                     + hero_checker[0].split("/")[1].split("_")[0].capitalize()
                 )
-                self.tap(Coordinates(hero_checker[1], hero_checker[2]))
+                self.tap(hero_checker)
                 sleep(1)
                 selected_heroes += 1
                 # logging.info(selected_heroes)
@@ -159,34 +159,34 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
                 sleep(2)
                 scrolls += 1
             if scrolls > max_scrolls:
-                self.tap(Coordinates(1000, 1625))
-                self.tap(Coordinates(715, 1600))
-                self.tap(Coordinates(850, 1600))
-                self.tap(Coordinates(1000, 1450))
+                self.tap(Point(1000, 1625))
+                self.tap(Point(715, 1600))
+                self.tap(Point(850, 1600))
+                self.tap(Point(1000, 1450))
                 logging.info("Hero selection reset")
                 return
 
     def _handle_battle_result(self) -> bool:
-        template, x, y = self.wait_for_any_template(
+        result = self.wait_for_any_template(
             templates=["event/sunlit_showdown/victory", "event/sunlit_showdown/defeat"],
             timeout=self.BATTLE_TIMEOUT,
             delay=1.0,
             timeout_message=self.BATTLE_TIMEOUT_ERROR_MESSAGE,
         )
 
-        match template:
+        match result.template:
             case "event/sunlit_showdown/victory":
                 logging.info("Victory!")
-                self.tap(Coordinates(550, 1800))  # Tap to Close
+                self.tap(Point(550, 1800))  # Tap to Close
                 sleep(5)
                 # If we won the final clear Battle Record and use next token
                 if self.game_find_template_match(
                     template="event/sunlit_showdown/battle_record"
                 ):
-                    self.tap(Coordinates(550, 1800))  # Tap Battle Record
+                    self.tap(Point(550, 1800))  # Tap Battle Record
                     sleep(5)
                     self.wait_for_template(template="event/sunlit_showdown/title_s")
-                    self.tap(Coordinates(800, 1800))  # Start/Continue
+                    self.tap(Point(800, 1800))  # Start/Continue
                     if self.game_find_template_match(
                         template="event/sunlit_showdown/insufficient_resources"
                     ):
@@ -196,13 +196,13 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
 
             case "event/sunlit_showdown/defeat":
                 logging.warning("Defeat!")
-                self.tap(Coordinates(550, 1800))  # Tap to Close
+                self.tap(Point(550, 1800))  # Tap to Close
                 sleep(5)
-                self.tap(Coordinates(550, 1800))  # Tap Battle Record
+                self.tap(Point(550, 1800))  # Tap Battle Record
                 sleep(5)
                 # Use another token
                 self.wait_for_template(template="event/sunlit_showdown/title_s")
-                self.tap(Coordinates(800, 1800))  # Start/Continue
+                self.tap(Point(800, 1800))  # Start/Continue
                 sleep(4)
                 if self.game_find_template_match(
                     template="event/sunlit_showdown/insufficient_resources"

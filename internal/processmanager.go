@@ -121,7 +121,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 			filesToDelete := len(files) - pm.ActionLogLimit
 			for i := 0; i < filesToDelete; i++ {
 				if err = os.Remove(files[i]); err != nil {
-					ipc.GetFrontendLogger().Errorf("Failed to delete old log file %s: %v", files[i], err)
+					ipc.GetFrontendLogger().Debugf("Failed to delete old log file %s: %v", files[i], err)
 				}
 			}
 		}

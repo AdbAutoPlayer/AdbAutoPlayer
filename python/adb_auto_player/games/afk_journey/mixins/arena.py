@@ -3,10 +3,12 @@
 import logging
 from time import sleep
 
-from adb_auto_player import Coordinates, CropRegions, GameTimeoutError
+from adb_auto_player import GameTimeoutError
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models.geometry import Point
+from adb_auto_player.models.image_manipulation import CropRegions
 
 
 class ArenaMixin(AFKJourneyBase):
@@ -47,14 +49,14 @@ class ArenaMixin(AFKJourneyBase):
         """Enter Arena."""
         logging.info("Entering Arena...")
         self.navigate_to_default_state()
-        self.tap(Coordinates(460, 1830))  # Battle Modes
+        self.tap(Point(460, 1830))  # Battle Modes
         try:
-            arena_mode: tuple[int, int] = self.wait_for_template(
+            arena_mode = self.wait_for_template(
                 "arena/label.png",
                 timeout_message="Failed to find Arena.",
                 timeout=self.MIN_TIMEOUT,
             )
-            self.tap(Coordinates(*arena_mode))
+            self.tap(arena_mode)
             sleep(2)
         except GameTimeoutError as fail:
             logging.error(f"{fail} {self.LANG_ERROR}")
@@ -70,12 +72,12 @@ class ArenaMixin(AFKJourneyBase):
             bool: True if notices were closed, False otherwise.
         """
         try:
-            _: tuple[str, int, int] = self.wait_for_any_template(
+            _ = self.wait_for_any_template(
                 templates=["arena/weekly_rewards.png", "arena/weekly_notice.png"],
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="No notices found.",
             )
-            self.tap(Coordinates(380, 1890))
+            self.tap(Point(380, 1890))
             sleep(4)
 
             return True
@@ -89,22 +91,22 @@ class ArenaMixin(AFKJourneyBase):
         """Choose Arena opponent."""
         try:
             logging.debug("Start arena challenge.")
-            _, x, y = self.wait_for_any_template(
+            btn = self.wait_for_any_template(
                 templates=["arena/challenge.png", "arena/continue.png"],
                 timeout=self.FAST_TIMEOUT,
                 timeout_message="Failed to start Arena runs.",
             )
             sleep(2)
-            self.tap(Coordinates(x, y))
+            self.tap(btn)
 
             logging.debug("Choosing opponent.")
-            opponent: tuple[int, int] = self.wait_for_template(
+            opponent = self.wait_for_template(
                 template="arena/opponent.png",
-                crop=CropRegions(right=0.6),  # Target weakest opponent.
+                crop_regions=CropRegions(right=0.6),  # Target weakest opponent.
                 timeout=self.FAST_TIMEOUT,
                 timeout_message="Failed to find Arena opponent.",
             )
-            self.tap(Coordinates(*opponent))
+            self.tap(opponent)
         except GameTimeoutError as fail:
             logging.error(fail)
 
@@ -112,30 +114,30 @@ class ArenaMixin(AFKJourneyBase):
         """Battle Arena opponent."""
         try:
             logging.debug("Initiate battle.")
-            start: tuple[int, int] = self.wait_for_template(
+            start = self.wait_for_template(
                 template="arena/battle.png",
                 timeout=self.FAST_TIMEOUT,
                 timeout_message="Failed to start Arena battle.",
             )
             sleep(2)
-            self.tap(Coordinates(*start))
+            self.tap(start)
 
             logging.debug("Skip battle.")
-            skip: tuple[int, int] = self.wait_for_template(
+            skip = self.wait_for_template(
                 template="arena/skip.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to skip Arena battle.",
             )
-            self.tap(Coordinates(*skip))
+            self.tap(skip)
 
             logging.debug("Battle complete.")
-            confirm: tuple[int, int] = self.wait_for_template(
+            confirm = self.wait_for_template(
                 template="arena/done.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to confirm Arena battle completion.",
             )
             sleep(4)
-            self.tap(Coordinates(*confirm))
+            self.tap(confirm)
             sleep(2)
         except GameTimeoutError as fail:
             logging.error(fail)
@@ -148,17 +150,17 @@ class ArenaMixin(AFKJourneyBase):
         """
         try:
             logging.debug("Claiming free attempts.")
-            buy: tuple[int, int] = self.wait_for_template(
+            buy = self.wait_for_template(
                 template="arena/buy.png",
                 timeout=self.FAST_TIMEOUT,
                 timeout_message="Failed looking for free attempts.",
             )
-            self.tap(Coordinates(*buy))
+            self.tap(buy)
         except GameTimeoutError:
             return True  # Not breaking, but would be interested in why it failed.
 
         try:
-            _: tuple[int, int] = self.wait_for_template(
+            _ = self.wait_for_template(
                 template="arena/buy_free.png",
                 timeout=self.FAST_TIMEOUT,
                 timeout_message="No more free attempts.",
@@ -166,13 +168,11 @@ class ArenaMixin(AFKJourneyBase):
             logging.debug("Free attempt found.")
         except GameTimeoutError as fail:
             logging.info(fail)
-            cancel: tuple[int, int] | None = self.game_find_template_match(
-                "arena/cancel_purchase.png"
-            )
+            cancel = self.game_find_template_match("arena/cancel_purchase.png")
             (
-                self.tap(Coordinates(*cancel))
+                self.tap(cancel)
                 if cancel
-                else self.tap(Coordinates(550, 1790))  # Cancel fallback
+                else self.tap(Point(550, 1790))  # Cancel fallback
             )
 
             return False

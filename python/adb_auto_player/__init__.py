@@ -17,8 +17,7 @@ from .exceptions import (
     NotInitializedError,
     UnsupportedResolutionError,
 )
-from .game import Coordinates, Game, TapParams, TemplateMatchParams
-from .template_matching import CropRegions, MatchMode
+from .game import Game, TapParams, TemplateMatchParams
 
 __all__: list[str] = [
     "AutoPlayerError",
@@ -27,8 +26,6 @@ __all__: list[str] = [
     "Command",
     "ConfigBase",
     "ConfigLoader",
-    "Coordinates",
-    "CropRegions",
     "DeviceStream",
     "Game",
     "GameActionFailedError",
@@ -37,7 +34,6 @@ __all__: list[str] = [
     "GameTimeoutError",
     "GenericAdbError",
     "GenericAdbUnrecoverableError",
-    "MatchMode",
     "NotInitializedError",
     "StreamingNotSupportedError",
     "TapParams",
