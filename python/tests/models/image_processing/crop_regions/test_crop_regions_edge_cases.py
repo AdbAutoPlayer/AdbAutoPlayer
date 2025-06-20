@@ -1,4 +1,4 @@
-from adb_auto_player.models.image_processing import CropRegions, CropValue
+from adb_auto_player.models.image_manipulation import CropRegions, CropValue
 
 
 class TestCropRegionsEdgeCases:

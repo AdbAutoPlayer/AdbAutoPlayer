@@ -1,5 +1,5 @@
 import pytest
-from adb_auto_player.models.image_processing import CropValue
+from adb_auto_player.models.image_manipulation import CropValue
 
 
 class TestCropValueValidation:
