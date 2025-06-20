@@ -11,7 +11,7 @@ import numpy as np
 from ..geometry import Point
 
 
-@dataclass
+@dataclass(frozen=True)
 class CropResult:
     """Represents the result of cropping an image.
 
