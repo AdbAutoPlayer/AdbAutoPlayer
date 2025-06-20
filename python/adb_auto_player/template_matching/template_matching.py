@@ -3,6 +3,7 @@
 import cv2
 import numpy as np
 from adb_auto_player.image_manipulation import to_grayscale
+from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box, Point
 from adb_auto_player.models.template_matching import MatchMode, MatchResult
 
@@ -74,7 +75,7 @@ def find_template_match(
                     width=template_width,
                     height=template_height,
                 ),
-                confidence=max_val,
+                confidence=ConfidenceValue(max_val),
             )
         return None
 
@@ -104,7 +105,7 @@ def find_template_match(
             width=template_width,
             height=template_height,
         ),
-        confidence=float(confidence),
+        confidence=ConfidenceValue(float(confidence)),
     )
 
 
@@ -156,7 +157,7 @@ def find_all_template_matches(
                     width=template_width,
                     height=template_height,
                 ),
-                confidence=float(score_lookup[pt]),
+                confidence=ConfidenceValue(float(score_lookup[pt])),
             )
             for pt in filtered_points
         ]
@@ -205,7 +206,7 @@ def find_worst_template_match(
             width=template_width,
             height=template_height,
         ),
-        confidence=max_val,
+        confidence=ConfidenceValue(max_val),
     )
 
 

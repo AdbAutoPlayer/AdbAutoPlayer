@@ -73,8 +73,8 @@ class TestThreshold(unittest.TestCase):
         """Test string representations."""
         threshold = ConfidenceValue("80%")
 
-        self.assertEqual(str(threshold), "80.0%")
-        self.assertEqual(repr(threshold), "Threshold(0.8)")
+        self.assertEqual(str(threshold), "ConfidenceValue(80.0%)")
+        self.assertEqual(repr(threshold), "ConfidenceValue(80.0%)")
 
     def test_equality_comparisons(self):
         """Test equality comparisons."""

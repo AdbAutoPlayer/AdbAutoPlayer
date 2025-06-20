@@ -65,11 +65,11 @@ class ConfidenceValue:
 
     def __str__(self) -> str:
         """String representation as percentage."""
-        return f"{self.percentage:.1f}%"
+        return f"ConfidenceValue({self.percentage:.1f}%)"
 
     def __repr__(self) -> str:
         """Developer-friendly representation."""
-        return f"Threshold({self.value})"
+        return f"ConfidenceValue({self.percentage:.1f}%)"
 
     def __float__(self) -> float:
         """Allow direct float conversion."""

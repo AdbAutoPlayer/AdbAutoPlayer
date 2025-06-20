@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 
+from .. import ConfidenceValue
 from ..geometry import Box, Coordinates, Point
 from .template_match_result import TemplateMatchResult
 
@@ -11,7 +12,7 @@ class MatchResult(Coordinates):
     """Represents the result of a matching operation."""
 
     box: Box
-    confidence: float
+    confidence: ConfidenceValue
 
     def with_offset(self, offset: Point) -> "MatchResult":
         """Return a new MatchResult with box coordinates offset.

@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 
+from .. import ConfidenceValue
 from ..geometry import Box, Coordinates, Point
 
 
@@ -10,14 +11,14 @@ class TemplateMatchResult(Coordinates):
     """Container for Template Match detection results."""
 
     template: str
-    confidence: float
+    confidence: ConfidenceValue
     box: Box
 
     def __str__(self) -> str:
         """Return a string representation of the Template Match result."""
         return (
             f"TemplateMatchResult(template='{self.template}', "
-            f"confidence={self.confidence:.2f}, box={self.box})"
+            f"confidence={self.confidence}, box={self.box})"
         )
 
     def with_offset(self, offset: Point) -> "TemplateMatchResult":

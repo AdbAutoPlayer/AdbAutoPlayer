@@ -194,7 +194,9 @@ class TesseractBackend:
 
             try:
                 box = Box(Point(x=x, y=y), width=width, height=height)
-                result = OCRResult(text=text, confidence=confidence / 100.0, box=box)
+                result = OCRResult(
+                    text=text, confidence=ConfidenceValue(int(100.0)), box=box
+                )
                 results.append(result)
 
             except ValueError:
@@ -316,7 +318,9 @@ class TesseractBackend:
             try:
                 box = Box(Point(x=min_x, y=min_y), width=width, height=height)
                 result = OCRResult(
-                    text=combined_text, confidence=avg_confidence, box=box
+                    text=combined_text,
+                    confidence=ConfidenceValue(avg_confidence),
+                    box=box,
                 )
                 results.append(result)
             except ValueError:

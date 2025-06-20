@@ -1,5 +1,6 @@
 import unittest
 
+from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box, Point
 from adb_auto_player.models.ocr import OCRResult
 
@@ -12,12 +13,14 @@ class TestOCRResult(unittest.TestCase):
         self.width = 100
         self.height = 50
         self.box = Box(self.top_left, self.width, self.height)
-        self.ocr_result = OCRResult(self.text, self.confidence, self.box)
+        self.ocr_result = OCRResult(
+            self.text, ConfidenceValue(self.confidence), self.box
+        )
 
     def test_str(self):
         expected_str = (
-            f"OCRResult(text='{self.text}', confidence={self.confidence:.2f}, "
-            f"box={self.box})"
+            f"OCRResult(text='{self.text}', "
+            f"confidence={ConfidenceValue(self.confidence)}, box={self.box})"
         )
         self.assertEqual(str(self.ocr_result), expected_str)
 

@@ -1,5 +1,6 @@
 import unittest
 
+from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box, Point
 from adb_auto_player.models.template_matching import TemplateMatchResult
 
@@ -10,12 +11,14 @@ class TestTemplateMatchResult(unittest.TestCase):
         self.confidence = 0.85
         self.top_left = Point(10, 20)
         self.box = Box(self.top_left, width=30, height=40)
-        self.result = TemplateMatchResult(self.template, self.confidence, self.box)
+        self.result = TemplateMatchResult(
+            self.template, ConfidenceValue(self.confidence), self.box
+        )
 
     def test_str(self):
         expected_str = (
             f"TemplateMatchResult(template='{self.template}', "
-            f"confidence={self.confidence:.2f}, box={self.box})"
+            f"confidence={ConfidenceValue(self.confidence)}, box={self.box})"
         )
         self.assertEqual(str(self.result), expected_str)
 

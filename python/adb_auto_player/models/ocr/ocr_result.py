@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 
+from .. import ConfidenceValue
 from ..geometry import Box, Coordinates, Point
 
 
@@ -10,13 +11,13 @@ class OCRResult(Coordinates):
     """Container for OCR detection results."""
 
     text: str
-    confidence: float
+    confidence: ConfidenceValue
     box: Box
 
     def __str__(self) -> str:
         """Return a string representation of the OCR result."""
         return (
-            f"OCRResult(text='{self.text}', confidence={self.confidence:.2f}, "
+            f"OCRResult(text='{self.text}', confidence={self.confidence}, "
             f"box={self.box})"
         )
 
