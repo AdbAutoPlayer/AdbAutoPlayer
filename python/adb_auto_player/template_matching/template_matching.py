@@ -1,102 +1,9 @@
 """ADB Auto Player Template Matching Module."""
 
-from pathlib import Path
-from typing import NamedTuple
-
 import cv2
 import numpy as np
+from adb_auto_player.image_manipulation import to_grayscale
 from adb_auto_player.models.template_matching import MatchMode
-
-
-class CropRegions(NamedTuple):
-    """Crop named tuple."""
-
-    left: float = 0  # Percentage to crop from the left side
-    right: float = 0  # Percentage to crop from the right side
-    top: float = 0  # Percentage to crop from the top side
-    bottom: float = 0  # Percentage to crop from the bottom side
-
-
-template_cache: dict[str, np.ndarray] = {}
-
-
-def load_image(
-    image_path: Path,
-    image_scale_factor: float = 1.0,
-    grayscale: bool = False,
-) -> np.ndarray:
-    """Loads an image from disk or returns the cached version if available.
-
-    Resizes the image if needed and stores it in the global template_cache.
-
-    Args:
-        image_path: Path to the template image.
-        image_scale_factor: Scale factor for resizing the image.
-        grayscale: Whether to convert the image to grayscale.
-
-    Returns:
-        np.ndarray
-    """
-    if image_path.suffix == "":
-        image_path = image_path.with_suffix(".png")
-
-    cache_key = f"{image_path}_{image_scale_factor}_grayscale={grayscale}"
-    if cache_key in template_cache:
-        return template_cache[cache_key]
-
-    image = cv2.imdecode(np.fromfile(image_path, dtype=np.uint8), cv2.IMREAD_COLOR)
-    if image is None:
-        raise FileNotFoundError(f"Failed to load image from path: {image_path}")
-
-    if image_scale_factor != 1.0:
-        new_width = int(image.shape[1] * image_scale_factor)
-        new_height = int(image.shape[0] * image_scale_factor)
-        image = cv2.resize(
-            image, (new_width, new_height), interpolation=cv2.INTER_LANCZOS4
-        )
-
-    if grayscale:
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    template_cache[cache_key] = image
-    return image
-
-
-def crop_image(image: np.ndarray, crop: CropRegions) -> tuple[np.ndarray, int, int]:
-    """Crop an image based on percentage values for each side.
-
-    Args:
-        image (np.ndarray): The input image to be cropped.
-        crop (Crop): The crop percentage values for each edge.
-
-    Returns:
-        Cropped image.
-        Number of pixels cropped from the left.
-        Number of pixels cropped from the top.
-
-    Raises:
-        ValueError: If any crop percentage is negative,
-            the sum of left and right crop percentages is 1.0 or greater
-            or the sum of top and bottom crop percentages is 1.0 or greater.
-    """
-    if all(v == 0 for v in (crop.left, crop.right, crop.top, crop.bottom)):
-        return image, 0, 0
-
-    if any(v < 0 for v in (crop.left, crop.right, crop.top, crop.bottom)):
-        raise ValueError("Crop percentages cannot be negative.")
-    if crop.left + crop.right >= 1.0:
-        raise ValueError("left + right must be less than 1.0.")
-    if crop.top + crop.bottom >= 1.0:
-        raise ValueError("top + bottom must be less than 1.0.")
-
-    height, width = image.shape[:2]
-    left_px = int(width * crop.left)
-    right_px = int(width * (1 - crop.right))
-    top_px = int(height * crop.top)
-    bottom_px = int(height * (1 - crop.bottom))
-
-    cropped_image = image[top_px:bottom_px, left_px:right_px]
-    return cropped_image, left_px, top_px
 
 
 def similar_image(
@@ -350,16 +257,6 @@ def _prepare_images_for_processing(
     _validate_template_size(base_image=base_image, template_image=template_image)
 
     if grayscale:
-        return convert_to_grayscale(base_image), convert_to_grayscale(template_image)
+        return to_grayscale(base_image), to_grayscale(template_image)
 
     return base_image, template_image
-
-
-_NUM_COLORS_IN_RGB = 3
-
-
-def convert_to_grayscale(image: np.ndarray) -> np.ndarray:
-    """Convert np.ndarray to grayscale."""
-    if len(image.shape) == _NUM_COLORS_IN_RGB:
-        return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    return image

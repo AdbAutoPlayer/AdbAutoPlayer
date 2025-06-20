@@ -4,13 +4,13 @@ from typing import NoReturn
 
 from adb_auto_player import (
     Coordinates,
-    CropRegions,
     Game,
     TapParams,
     TemplateMatchParams,
 )
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.decorators.register_game import register_game
+from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util.summary_generator import SummaryGenerator
 from pydantic import BaseModel
 
@@ -55,7 +55,7 @@ class GuitarGirl(Game):
                     "note.png",
                 ],
                 threshold=0.7,
-                crop=CropRegions(bottom=0.5, right=0.2, top=0.05),
+                crop_regions=CropRegions(bottom=0.5, right=0.2, top=0.05),
             ):
                 note, x, y = result
                 self.tap(Coordinates(x, y), log_message=None)

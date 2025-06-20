@@ -7,7 +7,6 @@ from adb_auto_player import (
     AutoPlayerError,
     AutoPlayerWarningError,
     Coordinates,
-    CropRegions,
 )
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.decorators.register_custom_routine_choice import (
@@ -17,6 +16,7 @@ from adb_auto_player.games.afk_journey.base import (
     AFKJourneyBase,
 )
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util.summary_generator import SummaryGenerator
 
 
@@ -101,7 +101,8 @@ class AFKStagesMixin(AFKJourneyBase):
             self.tap(Coordinates(x=800, y=1610), scale=True)
         sleep(2)
         confirm = self.game_find_template_match(
-            template="navigation/confirm.png", crop=CropRegions(left=0.5, top=0.5)
+            template="navigation/confirm.png",
+            crop_regions=CropRegions(left=0.5, top=0.5),
         )
         if confirm:
             self.tap(Coordinates(*confirm))
@@ -109,7 +110,7 @@ class AFKStagesMixin(AFKJourneyBase):
     def check_stages_are_available(self) -> None:
         if not self.store[self.STORE_SEASON] and self.game_find_template_match(
             "afk_stages/talent_trials_large.png",
-            crop=CropRegions(left=0.2, right=0.2, top=0.5),
+            crop_regions=CropRegions(left=0.2, right=0.2, top=0.5),
         ):
             raise AutoPlayerWarningError(
                 "AFK Stages not available are they already cleared? Exiting..."

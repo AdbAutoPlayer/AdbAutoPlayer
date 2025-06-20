@@ -8,15 +8,15 @@ from typing import Any
 from adb_auto_player import (
     AutoPlayerWarningError,
     Coordinates,
-    CropRegions,
     Game,
     GameActionFailedError,
     GameTimeoutError,
-    MatchMode,
     TapParams,
     TemplateMatchParams,
 )
 from adb_auto_player.decorators.register_game import GameGUIMetadata, register_game
+from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.models.template_matching import MatchMode
 
 from .afkjourneynavigation import AFKJourneyNavigation
 from .config import Config
@@ -144,7 +144,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                         "battle/records.png",
                         "battle/formations_icon.png",
                     ],
-                    crop=CropRegions(top=0.5),
+                    crop_regions=CropRegions(top=0.5),
                 )
 
             if self._handle_single_stage():
@@ -180,7 +180,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
         while counter > 0:
             formation_next: tuple[int, int] = self.wait_for_template(
                 "battle/formation_next.png",
-                crop=CropRegions(left=0.8, top=0.5, bottom=0.4),
+                crop_regions=CropRegions(left=0.8, top=0.5, bottom=0.4),
                 timeout=self.MIN_TIMEOUT,
                 timeout_message=f"Formation #{formation_num} not found",
             )
@@ -188,7 +188,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
             self.tap(Coordinates(*formation_next))
             self.wait_for_roi_change(
                 start_image=start_image,
-                crop=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
+                crop_regions=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
                 threshold=0.8,
                 timeout=self.MIN_TIMEOUT,
             )
@@ -213,18 +213,18 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
         """
         _ = self.wait_for_template(
             template="battle/records.png",
-            crop=CropRegions(right=0.5, top=0.8),
+            crop_regions=CropRegions(right=0.5, top=0.8),
         )
         self._tap_till_template_disappears(
             template="battle/records.png",
-            crop=CropRegions(right=0.5, top=0.8),
+            crop_regions=CropRegions(right=0.5, top=0.8),
             delay=10.0,
         )
 
         try:
             _ = self.wait_for_template(
                 "battle/copy.png",
-                crop=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
+                crop_regions=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
                 timeout=self.MIN_TIMEOUT,
             )
         except GameTimeoutError:
@@ -243,7 +243,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                         # decided to keep old one just in case
                         "battle/manual_battle_old1.png",
                     ],
-                    crop=CropRegions(
+                    crop_regions=CropRegions(
                         top=0.5,
                         right=0.5,
                     ),
@@ -256,12 +256,12 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                     continue
             self._tap_till_template_disappears(
                 template="battle/copy.png",
-                crop=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
+                crop_regions=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
             )
             sleep(1)
             cancel = self.game_find_template_match(
                 template="cancel.png",
-                crop=CropRegions(left=0.1, right=0.5, top=0.6, bottom=0.3),
+                crop_regions=CropRegions(left=0.1, right=0.5, top=0.6, bottom=0.3),
             )
             if cancel:
                 logging.warning(
@@ -308,7 +308,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
         """
         result: tuple[str, int, int] | None = self.find_any_template(
             templates=list(excluded_heroes.keys()),
-            crop=CropRegions(left=0.1, right=0.2, top=0.3, bottom=0.4),
+            crop_regions=CropRegions(left=0.1, right=0.2, top=0.3, bottom=0.4),
         )
         if result is None:
             return None
@@ -329,7 +329,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
                 "battle/records.png",
                 "battle/formations_icon.png",
             ],
-            crop=CropRegions(top=0.5),
+            crop_regions=CropRegions(top=0.5),
         )
 
         try:
@@ -366,7 +366,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
             checkbox = self.game_find_template_match(
                 "popup/checkbox_unchecked.png",
                 match_mode=MatchMode.TOP_LEFT,
-                crop=CropRegions(right=0.8, top=0.2, bottom=0.6),
+                crop_regions=CropRegions(right=0.8, top=0.2, bottom=0.6),
                 threshold=0.8,
             )
             if checkbox is None:
@@ -386,7 +386,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
         """
         result: tuple[str, int, int] | None = self.find_any_template(
             templates=["navigation/confirm.png", "confirm_text.png"],
-            crop=CropRegions(top=0.4),
+            crop_regions=CropRegions(top=0.4),
         )
         if result:
             _, x, y = result
@@ -464,7 +464,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
             template, x, y = self.wait_for_any_template(
                 templates=battle_over_templates,
                 timeout=self.BATTLE_TIMEOUT,
-                crop=CropRegions(top=0.4),
+                crop_regions=CropRegions(top=0.4),
                 delay=1.0,
                 timeout_message=self.BATTLE_TIMEOUT_ERROR_MESSAGE,
             )
@@ -530,7 +530,7 @@ class AFKJourneyBase(AFKJourneyNavigation, Game):
         while True:
             result: tuple[str, int, int] | None = self.find_any_template(
                 templates=["guide/close.png", "guide/next.png"],
-                crop=CropRegions(top=0.4),
+                crop_regions=CropRegions(top=0.4),
             )
             if result is None:
                 break

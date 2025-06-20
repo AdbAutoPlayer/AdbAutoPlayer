@@ -6,12 +6,12 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+from adb_auto_player.image_manipulation import crop
 from adb_auto_player.models import ConfidenceValue
+from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.models.template_matching import MatchMode
 from adb_auto_player.ocr import PSM, TesseractBackend, TesseractConfig
-from adb_auto_player.template_matching.template_matching import (
-    CropRegions,
-    MatchMode,
-    crop_image,
+from adb_auto_player.template_matching import (
     find_template_match,
 )
 
@@ -132,38 +132,35 @@ class TestTesseractBackendAFKJPopup(unittest.TestCase):
         height, width = image.shape[:2]
 
         # Get the checkbox position
-        cropped_image, left, top = crop_image(
-            image, CropRegions(right=0.8, top=0.2, bottom=0.6)
-        )
+        result = crop(image, CropRegions(right=0.8, top=0.2, bottom=0.6))
         checkbox = find_template_match(
-            base_image=cropped_image,
+            base_image=result.image,
             template_image=checkbox_image,
             match_mode=MatchMode.TOP_LEFT,
             threshold=0.8,
         )
-
         y_checkbox = 0
         if checkbox:
             x_checkbox, y_checkbox = checkbox
-            x_checkbox += left
-            y_checkbox += top
+            x_checkbox += result.offset.x
+            y_checkbox += result.offset.y
 
         # Get the confirm button position
-        cropped_image, left, top = crop_image(
+        result = crop(
             image,
             CropRegions(left=0.5, top=0.4),
         )
 
         confirm_button = find_template_match(
-            base_image=cropped_image,
+            base_image=result.image,
             template_image=confirm_button,
             threshold=0.8,
         )
         y_confirm = height
         if confirm_button:
             x_confirm, y_confirm = confirm_button
-            x_confirm += left
-            y_confirm += top
+            x_confirm += result.offset.x
+            y_confirm += result.offset.y
 
         # 5 % = 96
         image = image[y_checkbox + 96 : y_confirm - 96, 0:width]

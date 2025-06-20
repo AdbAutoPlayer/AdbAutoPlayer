@@ -1,7 +1,5 @@
 """ADB Auto Player Package."""
 
-from adb_auto_player.template_matching.template_matching import CropRegions, MatchMode
-
 from .command import Command
 from .config.game_config_base import ConfigBase
 from .config_loader import ConfigLoader
@@ -29,7 +27,6 @@ __all__: list[str] = [
     "ConfigBase",
     "ConfigLoader",
     "Coordinates",
-    "CropRegions",
     "DeviceStream",
     "Game",
     "GameActionFailedError",
@@ -38,7 +35,6 @@ __all__: list[str] = [
     "GameTimeoutError",
     "GenericAdbError",
     "GenericAdbUnrecoverableError",
-    "MatchMode",
     "NotInitializedError",
     "StreamingNotSupportedError",
     "TapParams",

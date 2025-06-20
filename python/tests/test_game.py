@@ -6,11 +6,11 @@ from pathlib import Path
 from unittest.mock import DEFAULT, patch
 
 from adb_auto_player import (
-    CropRegions,
     Game,
     GameTimeoutError,
 )
-from adb_auto_player.template_matching.template_matching import load_image
+from adb_auto_player.image_manipulation import load_image
+from adb_auto_player.models.image_manipulation import CropRegions
 from pydantic import BaseModel
 
 TEST_DATA_DIR: Path = Path(__file__).parent / "data"
@@ -58,19 +58,19 @@ class TestGame(unittest.TestCase):
         with self.assertRaises(ValueError):
             game.wait_for_roi_change(
                 start_image=start_image,
-                crop=CropRegions(left=-0.5),
+                crop_regions=CropRegions(left=-0.5),
             )
 
         with self.assertRaises(ValueError):
             game.wait_for_roi_change(
                 start_image=start_image,
-                crop=CropRegions(left=1.5),
+                crop_regions=CropRegions(left=1.5),
             )
 
         with self.assertRaises(ValueError):
             game.wait_for_roi_change(
                 start_image=start_image,
-                crop=CropRegions(left=0.8, right=0.5),
+                crop_regions=CropRegions(left=0.8, right=0.5),
             )
 
     @patch.object(Game, "get_screenshot")
@@ -121,7 +121,7 @@ class TestGame(unittest.TestCase):
         with self.assertRaises(GameTimeoutError):
             game.wait_for_roi_change(
                 start_image=start_image,
-                crop=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
+                crop_regions=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
                 timeout=1.0,
             )
 
@@ -129,7 +129,7 @@ class TestGame(unittest.TestCase):
         self.assertTrue(
             game.wait_for_roi_change(
                 start_image=start_image,
-                crop=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
+                crop_regions=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
                 timeout=0,
             )
         )
@@ -186,7 +186,7 @@ class TestGame(unittest.TestCase):
 
             start_time = time.time()
             cropped_result: tuple[int, int] | None = game.game_find_template_match(
-                template_image, crop=crop
+                template_image, crop_regions=crop
             )
             cropped_times.append(time.time() - start_time)
             cropped_results.append(cropped_result)

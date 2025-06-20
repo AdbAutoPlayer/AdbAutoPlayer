@@ -9,12 +9,9 @@ from adb_auto_player.decorators.register_command import GuiMetadata, register_co
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box, Point
-from adb_auto_player.models.template_matching import TemplateMatchResult
+from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.models.template_matching import MatchMode, TemplateMatchResult
 from adb_auto_player.ocr import PSM, TesseractBackend, TesseractConfig
-from adb_auto_player.template_matching.template_matching import (
-    CropRegions,
-    MatchMode,
-)
 
 
 @dataclass(frozen=True)
@@ -146,7 +143,7 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
                 "navigation/continue_top_right_corner.png",
             ],
             threshold=0.8,
-            crop=CropRegions(left=0.5, top=0.4),
+            crop_regions=CropRegions(left=0.5, top=0.4),
             screenshot=image,
         ):
             # template match should return TemplateMatchResult in the future.
@@ -162,7 +159,7 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
             template="popup/checkbox_unchecked.png",
             match_mode=MatchMode.TOP_LEFT,
             threshold=0.8,
-            crop=CropRegions(right=0.8, top=0.2, bottom=0.6),
+            crop_regions=CropRegions(right=0.8, top=0.2, bottom=0.6),
             screenshot=image,
         ):
             # dont_remind_me_checkbox = checkbox.box

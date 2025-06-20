@@ -5,8 +5,9 @@ from abc import ABC
 from time import sleep
 from typing import NoReturn
 
-from adb_auto_player import AutoPlayerWarningError, Coordinates, CropRegions
+from adb_auto_player import AutoPlayerWarningError, Coordinates
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
+from adb_auto_player.models.image_manipulation import CropRegions
 
 
 class EventMixin(AFKJourneyBase, ABC):
@@ -23,7 +24,7 @@ class EventMixin(AFKJourneyBase, ABC):
         while True:
             claim_button = self.game_find_template_match(
                 template="event/guild_chat_claim/claim_button.png",
-                crop=CropRegions(left=0.6, top=0.2, bottom=0.2),
+                crop_regions=CropRegions(left=0.6, top=0.2, bottom=0.2),
             )
             if claim_button:
                 self.tap(Coordinates(*claim_button))
@@ -33,14 +34,14 @@ class EventMixin(AFKJourneyBase, ABC):
             # switch to world chat and back because sometimes chat stops scrolling
             world_chat_icon = self.game_find_template_match(
                 template="event/guild_chat_claim/world_chat_icon.png",
-                crop=CropRegions(right=0.8, top=0.1, bottom=0.3),
+                crop_regions=CropRegions(right=0.8, top=0.1, bottom=0.3),
             )
             if world_chat_icon:
                 self.tap(Coordinates(*world_chat_icon))
                 sleep(1)
             guild_chat_icon = self.game_find_template_match(
                 template="event/guild_chat_claim/guild_chat_icon.png",
-                crop=CropRegions(right=0.8, top=0.1, bottom=0.3),
+                crop_regions=CropRegions(right=0.8, top=0.1, bottom=0.3),
             )
             if guild_chat_icon:
                 self.tap(Coordinates(*guild_chat_icon))
@@ -57,7 +58,7 @@ class EventMixin(AFKJourneyBase, ABC):
             self.wait_for_template(
                 template="event/monopoly_assist/log.png",
                 # TODO cropping next time event shows up
-                crop=CropRegions(bottom=0.5),
+                crop_regions=CropRegions(bottom=0.5),
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Monopoly assists screen not found",
             )

@@ -3,8 +3,8 @@
 import unittest
 from pathlib import Path
 
-from adb_auto_player.template_matching.template_matching import (
-    load_image,
+from adb_auto_player.image_manipulation import load_image
+from adb_auto_player.template_matching import (
     similar_image,
 )
 

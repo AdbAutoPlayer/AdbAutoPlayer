@@ -4,13 +4,14 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player import Coordinates, CropRegions, GameTimeoutError
+from adb_auto_player import Coordinates, GameTimeoutError
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.games.afk_journey.mixins.afk_stages import AFKStagesMixin
 from adb_auto_player.games.afk_journey.mixins.arena import ArenaMixin
 from adb_auto_player.games.afk_journey.mixins.dream_realm import DreamRealmMixin
+from adb_auto_player.models.image_manipulation import CropRegions
 
 from .legend_trial import SeasonLegendTrial
 
@@ -213,7 +214,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         logging.info("Buying other affinity items.")
         other_affinity_items: list[tuple[int, int]] = self.find_all_template_matches(
             "dailies/emporium/other_affinity.png",
-            crop=CropRegions(bottom=0.4),
+            crop_regions=CropRegions(bottom=0.4),
         )
 
         for affinity_item in other_affinity_items:
@@ -383,7 +384,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         logging.debug("Looking for available rewards.")
         available_rewards: list[tuple[int, int]] = self.find_all_template_matches(
-            "dailies/hamburger/rewards_available.png", crop=CropRegions(top=0.8)
+            "dailies/hamburger/rewards_available.png", crop_regions=CropRegions(top=0.8)
         )
         for bp_reward in available_rewards:
             self.tap(Coordinates(*bp_reward))

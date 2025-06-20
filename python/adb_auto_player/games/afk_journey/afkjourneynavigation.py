@@ -2,11 +2,12 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player import Coordinates, CropRegions, Game
+from adb_auto_player import Coordinates, Game
 from adb_auto_player.exceptions import (
     GameActionFailedError,
     GameNotRunningOrFrozenError,
 )
+from adb_auto_player.models.image_manipulation import CropRegions
 
 
 class AFKJourneyNavigation(Game, ABC):
@@ -146,7 +147,7 @@ class AFKJourneyNavigation(Game, ABC):
         return (
             self.game_find_template_match(
                 "navigation/time_of_day.png",
-                crop=CropRegions(left=0.6, right=0.1, bottom=0.8),
+                crop_regions=CropRegions(left=0.6, right=0.1, bottom=0.8),
             )
             is not None
         )
@@ -159,7 +160,7 @@ class AFKJourneyNavigation(Game, ABC):
 
         self.wait_for_template(
             template="navigation/resonating_hall_label.png",
-            crop=CropRegions(left=0.3, right=0.3, top=0.9),
+            crop_regions=CropRegions(left=0.3, right=0.3, top=0.9),
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
         self.tap(Coordinates(x=550, y=1080), scale=True)  # click rewards popup
@@ -202,7 +203,7 @@ class AFKJourneyNavigation(Game, ABC):
         def stop_condition() -> bool:
             match = self.game_find_template_match(
                 template="duras_trials/featured_heroes.png",
-                crop=CropRegions(left=0.7, bottom=0.8),
+                crop_regions=CropRegions(left=0.7, bottom=0.8),
             )
             return match is not None
 
@@ -224,7 +225,7 @@ class AFKJourneyNavigation(Game, ABC):
 
         self.wait_for_template(
             template="duras_trials/featured_heroes.png",
-            crop=CropRegions(left=0.7, bottom=0.8),
+            crop_regions=CropRegions(left=0.7, bottom=0.8),
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
         sleep(1)
@@ -254,7 +255,7 @@ class AFKJourneyNavigation(Game, ABC):
         self.tap(coords)
         self.wait_for_template(
             template="legend_trials/s_header.png",
-            crop=CropRegions(right=0.8, bottom=0.8),
+            crop_regions=CropRegions(right=0.8, bottom=0.8),
             timeout_message="Could not find Season Legend Trial Header",
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
@@ -273,7 +274,7 @@ class AFKJourneyNavigation(Game, ABC):
                     "arcane_labyrinth/confirm.png",
                     "arcane_labyrinth/quit.png",
                 ],
-                crop=CropRegions(top=0.8),
+                crop_regions=CropRegions(top=0.8),
             )
 
             if match is not None:

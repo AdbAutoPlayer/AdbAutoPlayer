@@ -39,15 +39,13 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
     CustomRoutineEntry,
     custom_routine_choice_registry,
 )
-from adb_auto_player.template_matching.template_matching import (
-    CropRegions,
-    MatchMode,
-    convert_to_grayscale,
-    crop_image,
+from adb_auto_player.image_manipulation import crop, load_image, to_grayscale
+from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.models.template_matching import MatchMode
+from adb_auto_player.template_matching import (
     find_all_template_matches,
     find_template_match,
     find_worst_template_match,
-    load_image,
     similar_image,
 )
 from adb_auto_player.util.execute import execute
@@ -109,7 +107,7 @@ class TemplateMatchParams:
     template: str | Path
     threshold: float | None = None
     grayscale: bool = False
-    crop: CropRegions | None = None
+    crop_regions: CropRegions | None = None
 
 
 class Game:
@@ -506,7 +504,7 @@ class Game:
         start_image: np.ndarray,
         threshold: float | None = None,
         grayscale: bool = False,
-        crop: CropRegions = CropRegions(),
+        crop_regions: CropRegions = CropRegions(),
         delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
@@ -525,7 +523,7 @@ class Game:
             threshold (float): Similarity threshold. Defaults to 0.9.
             grayscale (bool): Whether to convert images to grayscale before comparison.
                 Defaults to False.
-            crop (Crop): Crop percentages for trimming the image. Defaults to Crop().
+            crop_regions (CropRegions): Crop percentages for trimming the image.
             delay (float): Delay between checks in seconds. Defaults to 0.5.
             timeout (float): Timeout in seconds. Defaults to 30.
             timeout_message (str | None): Custom timeout message. Defaults to None.
@@ -537,14 +535,17 @@ class Game:
             TimeoutException: If no change is detected within the timeout period.
             ValueError: Invalid crop values.
         """
-        cropped, _, _ = crop_image(image=start_image, crop=crop)
+        crop_result = crop(image=start_image, crop_regions=crop_regions)
 
         def roi_changed() -> Literal[True] | None:
-            screenshot, _, _ = crop_image(image=self.get_screenshot(), crop=crop)
+            inner_crop_result = crop(
+                image=self.get_screenshot(),
+                crop_regions=crop_regions,
+            )
 
             result = not similar_image(
-                base_image=cropped,
-                template_image=screenshot,
+                base_image=crop_result.image,
+                template_image=inner_crop_result.image,
                 threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
             )
@@ -570,7 +571,7 @@ class Game:
         match_mode: MatchMode = MatchMode.BEST,
         threshold: float | None = None,
         grayscale: bool = False,
-        crop: CropRegions = CropRegions(),
+        crop_regions: CropRegions = CropRegions(),
         screenshot: np.ndarray | None = None,
     ) -> tuple[int, int] | None:
         """Find a template on the screen.
@@ -580,20 +581,20 @@ class Game:
             match_mode (MatchMode, optional): Defaults to MatchMode.BEST.
             threshold (float, optional): Image similarity threshold. Defaults to 0.9.
             grayscale (bool, optional): Convert to grayscale boolean. Defaults to False.
-            crop (Crop, optional): Crop percentages. Defaults to Crop().
+            crop_regions (CropRegions, optional): Crop percentages.
             screenshot (np.ndarray, optional): Screenshot image. Will fetch screenshot
                 if None
 
         Returns:
             tuple[int, int] | None: Coordinates of the match, or None if not found.
         """
-        base_image, left_offset, top_offset = crop_image(
+        crop_result = crop(
             image=screenshot if screenshot is not None else self.get_screenshot(),
-            crop=crop,
+            crop_regions=crop_regions,
         )
 
         result = find_template_match(
-            base_image=base_image,
+            base_image=crop_result.image,
             template_image=self._load_image(
                 template=template,
                 grayscale=grayscale,
@@ -607,7 +608,7 @@ class Game:
             return None
 
         x, y = result
-        return x + left_offset, y + top_offset
+        return x + crop_result.offset.x, y + crop_result.offset.y
 
     def _load_image(
         self,
@@ -624,24 +625,22 @@ class Game:
         self,
         template: str | Path,
         grayscale: bool = False,
-        crop: CropRegions = CropRegions(),
+        crop_regions: CropRegions = CropRegions(),
     ) -> None | tuple[int, int]:
         """Find the most different match.
 
         Args:
             template (str | Path): Path to template image.
             grayscale (bool, optional): Convert to grayscale boolean. Defaults to False.
-            crop (CropRegions, optional): Crop percentages. Defaults to CropRegions().
+            crop_regions (CropRegions, optional): Crop percentages.
 
         Returns:
             None | tuple[int, int]: Coordinates of worst match.
         """
-        base_image, left_offset, top_offset = crop_image(
-            image=self.get_screenshot(), crop=crop
-        )
+        crop_result = crop(image=self.get_screenshot(), crop_regions=crop_regions)
 
         result = find_worst_template_match(
-            base_image=base_image,
+            base_image=crop_result.image,
             template_image=self._load_image(
                 template=template,
                 grayscale=grayscale,
@@ -652,14 +651,14 @@ class Game:
         if result is None:
             return None
         x, y = result
-        return x + left_offset, y + top_offset
+        return x + crop_result.offset.x, y + crop_result.offset.y
 
     def find_all_template_matches(
         self,
         template: str | Path,
         threshold: float | None = None,
         grayscale: bool = False,
-        crop: CropRegions = CropRegions(),
+        crop_regions: CropRegions = CropRegions(),
         min_distance: int = 10,
     ) -> list[tuple[int, int]]:
         """Find all matches.
@@ -668,20 +667,17 @@ class Game:
             template (str | Path): Path to template image.
             threshold (float, optional): Image similarity threshold. Defaults to 0.9.
             grayscale (bool, optional): Convert to grayscale boolean. Defaults to False.
-            crop (CropRegions, optional): Crop percentages. Defaults to CropRegions().
+            crop_regions (CropRegions, optional): Crop percentages.
             min_distance (int, optional): Minimum distance between matches.
                 Defaults to 10.
 
         Returns:
             list[tuple[int, int]]: List of found coordinates.
         """
-        base_image, left_offset, top_offset = crop_image(
-            image=self.get_screenshot(),
-            crop=crop,
-        )
+        crop_result = crop(image=self.get_screenshot(), crop_regions=crop_regions)
 
         result: list[tuple[int, int]] = find_all_template_matches(
-            base_image=base_image,
+            base_image=crop_result.image,
             template_image=self._load_image(
                 template=template,
                 grayscale=grayscale,
@@ -692,7 +688,7 @@ class Game:
         )
 
         adjusted_result: list[tuple[int, int]] = [
-            (x + left_offset, y + top_offset) for x, y in result
+            (x + crop_result.offset.x, y + crop_result.offset.y) for x, y in result
         ]
         return adjusted_result
 
@@ -701,7 +697,7 @@ class Game:
         template: str | Path,
         threshold: float | None = None,
         grayscale: bool = False,
-        crop: CropRegions = CropRegions(),
+        crop_regions: CropRegions = CropRegions(),
         delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
@@ -717,7 +713,7 @@ class Game:
                 template,
                 threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
-                crop=crop,
+                crop_regions=crop_regions,
             )
             if result is not None:
                 logging.debug(f"wait_for_template: {template} found")
@@ -737,7 +733,7 @@ class Game:
         template: str | Path,
         threshold: float | None = None,
         grayscale: bool = False,
-        crop: CropRegions = CropRegions(),
+        crop_regions: CropRegions = CropRegions(),
         delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
@@ -753,7 +749,7 @@ class Game:
                 template,
                 threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
-                crop=crop,
+                crop_regions=crop_regions,
             )
             if result is None:
                 logging.debug(
@@ -780,7 +776,7 @@ class Game:
         templates: list[str],
         threshold: float | None = None,
         grayscale: bool = False,
-        crop: CropRegions = CropRegions(),
+        crop_regions: CropRegions = CropRegions(),
         delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
@@ -796,7 +792,7 @@ class Game:
                 templates,
                 threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
-                crop=crop,
+                crop_regions=crop_regions,
             )
 
         if timeout_message is None:
@@ -820,7 +816,7 @@ class Game:
         match_mode: MatchMode = MatchMode.BEST,
         threshold: float | None = None,
         grayscale: bool = False,
-        crop: CropRegions = CropRegions(),
+        crop_regions: CropRegions = CropRegions(),
         screenshot: np.ndarray | None = None,
     ) -> tuple[str, int, int] | None:
         """Find any first template on the screen.
@@ -830,14 +826,14 @@ class Game:
             match_mode (MatchMode, optional): String enum. Defaults to MatchMode.BEST.
             threshold (float, optional): Image similarity threshold. Defaults to 0.9.
             grayscale (bool, optional): Convert to grayscale boolean. Defaults to False.
-            crop (CropRegions, optional): Crop percentages. Defaults to CropRegions().
+            crop_regions (CropRegions, optional): Crop percentages.
             screenshot (np.ndarray, optional): Screenshot image. Will fetch screenshot
                 if None
         Returns:
             tuple[str, int, int] | None: Coordinates of the match, or None if not found.
         """
         if grayscale:
-            screenshot = convert_to_grayscale(screenshot)
+            screenshot = to_grayscale(screenshot)
 
         for template in templates:
             result: tuple[int, int] | None = self.game_find_template_match(
@@ -845,7 +841,7 @@ class Game:
                 match_mode=match_mode,
                 threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
-                crop=crop,
+                crop_regions=crop_regions,
                 screenshot=(
                     screenshot if screenshot is not None else self.get_screenshot()
                 ),
@@ -1244,7 +1240,7 @@ class Game:
         template: str | Path,
         threshold: float | None = None,
         grayscale: bool = False,
-        crop: CropRegions = CropRegions(),
+        crop_regions: CropRegions = CropRegions(),
         delay: float = 10.0,
     ) -> None:
         max_tap_count = 3
@@ -1252,7 +1248,10 @@ class Game:
         time_since_last_tap = delay  # force immediate first tap
 
         while result := self.game_find_template_match(
-            template, threshold=threshold, grayscale=grayscale, crop=crop
+            template,
+            threshold=threshold,
+            grayscale=grayscale,
+            crop_regions=crop_regions,
         ):
             if tap_count >= max_tap_count:
                 message = f"Failed to tap: {template}, Template still visible."
@@ -1278,9 +1277,9 @@ class Game:
             template=template_match_params.template,
             threshold=template_match_params.threshold,
             grayscale=template_match_params.grayscale,
-            crop=(
-                template_match_params.crop
-                if template_match_params.crop
+            crop_regions=(
+                template_match_params.crop_regions
+                if template_match_params.crop_regions
                 else CropRegions()
             ),
         ):

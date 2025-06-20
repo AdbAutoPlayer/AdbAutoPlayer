@@ -6,7 +6,6 @@ from adb_auto_player import (
     AutoPlayerError,
     AutoPlayerWarningError,
     Coordinates,
-    CropRegions,
     GameTimeoutError,
 )
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
@@ -15,6 +14,7 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
 )
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util.summary_generator import SummaryGenerator
 
 
@@ -61,14 +61,14 @@ class SeasonLegendTrial(AFKJourneyBase):
 
             if self.game_find_template_match(
                 template=f"legend_trials/faction_icon_{faction}.png",
-                crop=CropRegions(right=0.7, top=0.3, bottom=0.1),
+                crop_regions=CropRegions(right=0.7, top=0.3, bottom=0.1),
             ):
                 logging.warning(f"{faction.capitalize()} Tower not available today")
                 continue
 
             result = self.game_find_template_match(
                 template=f"legend_trials/banner_{faction}.png",
-                crop=CropRegions(left=0.2, right=0.3, top=0.2, bottom=0.1),
+                crop_regions=CropRegions(left=0.2, right=0.3, top=0.2, bottom=0.1),
             )
             if result is None:
                 logging.error(f"{faction.capitalize()}s Tower not found")
@@ -136,7 +136,7 @@ class SeasonLegendTrial(AFKJourneyBase):
         logging.debug("_select_legend_trials_floor")
         _ = self.wait_for_template(
             template=f"legend_trials/tower_icon_{faction}.png",
-            crop=CropRegions(right=0.8, bottom=0.8),
+            crop_regions=CropRegions(right=0.8, bottom=0.8),
         )
         challenge_btn = self.wait_for_any_template(
             templates=[
@@ -145,7 +145,7 @@ class SeasonLegendTrial(AFKJourneyBase):
             ],
             threshold=0.8,
             grayscale=True,
-            crop=CropRegions(left=0.3, right=0.3, top=0.2, bottom=0.2),
+            crop_regions=CropRegions(left=0.3, right=0.3, top=0.2, bottom=0.2),
             timeout=self.MIN_TIMEOUT,
             timeout_message="Cannot find Challenge button "
             "assuming Trial is already cleared",
@@ -157,7 +157,7 @@ class SeasonLegendTrial(AFKJourneyBase):
         return (
             self.game_find_template_match(
                 template="legend_trials/s_header.png",
-                crop=CropRegions(right=0.8, bottom=0.8),
+                crop_regions=CropRegions(right=0.8, bottom=0.8),
             )
             is not None
         )

@@ -3,10 +3,11 @@
 import logging
 from time import sleep
 
-from adb_auto_player import Coordinates, CropRegions, GameTimeoutError
+from adb_auto_player import Coordinates, GameTimeoutError
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models.image_manipulation import CropRegions
 
 
 class ArenaMixin(AFKJourneyBase):
@@ -100,7 +101,7 @@ class ArenaMixin(AFKJourneyBase):
             logging.debug("Choosing opponent.")
             opponent: tuple[int, int] = self.wait_for_template(
                 template="arena/opponent.png",
-                crop=CropRegions(right=0.6),  # Target weakest opponent.
+                crop_regions=CropRegions(right=0.6),  # Target weakest opponent.
                 timeout=self.FAST_TIMEOUT,
                 timeout_message="Failed to find Arena opponent.",
             )

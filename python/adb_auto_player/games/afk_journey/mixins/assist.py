@@ -4,10 +4,11 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player import Coordinates, CropRegions, GameTimeoutError
+from adb_auto_player import Coordinates, GameTimeoutError
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models.image_manipulation import CropRegions
 
 
 class AssistMixin(AFKJourneyBase, ABC):
@@ -74,7 +75,7 @@ class AssistMixin(AFKJourneyBase, ABC):
 
         profile_icon = self.find_worst_match(
             "assist/empty_chat.png",
-            crop=CropRegions(left=0.2, right=0.7, top=0.7, bottom=0.22),
+            crop_regions=CropRegions(left=0.2, right=0.7, top=0.7, bottom=0.22),
         )
 
         if profile_icon is None:
@@ -89,7 +90,7 @@ class AssistMixin(AFKJourneyBase, ABC):
                     "assist/synergy.png",
                     "assist/chat_button.png",
                 ],
-                crop=CropRegions(left=0.1, top=0.4, bottom=0.1),
+                crop_regions=CropRegions(left=0.1, top=0.4, bottom=0.1),
                 delay=0.1,
                 timeout=self.FAST_TIMEOUT,
             )
@@ -126,12 +127,13 @@ class AssistMixin(AFKJourneyBase, ABC):
         """Handle Corrupt Creature."""
         ready: tuple[int, int] = self.wait_for_template(
             template="assist/ready.png",
-            crop=CropRegions(left=0.2, right=0.1, top=0.8),
+            crop_regions=CropRegions(left=0.2, right=0.1, top=0.8),
             timeout=self.MIN_TIMEOUT,
         )
 
         while self.game_find_template_match(
-            template="assist/ready.png", crop=CropRegions(left=0.2, right=0.1, top=0.8)
+            template="assist/ready.png",
+            crop_regions=CropRegions(left=0.2, right=0.1, top=0.8),
         ):
             self.tap(Coordinates(*ready))
             sleep(0.5)
@@ -176,7 +178,7 @@ class AssistMixin(AFKJourneyBase, ABC):
                 break
         self.wait_for_template(
             template="assist/reward.png",
-            crop=CropRegions(left=0.3, right=0.3, top=0.6, bottom=0.3),
+            crop_regions=CropRegions(left=0.3, right=0.3, top=0.6, bottom=0.3),
         )
         logging.info("Corrupt Creature done")
         self.press_back_button()

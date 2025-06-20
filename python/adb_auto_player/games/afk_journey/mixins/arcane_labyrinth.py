@@ -10,9 +10,7 @@ from adb_auto_player import (
     AutoPlayerError,
     AutoPlayerWarningError,
     Coordinates,
-    CropRegions,
     GameTimeoutError,
-    MatchMode,
 )
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.decorators.register_custom_routine_choice import (
@@ -20,6 +18,8 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
 )
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.models.template_matching import MatchMode
 
 
 class BattleCannotBeStartedError(AutoPlayerError):
@@ -72,7 +72,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     "arcane_labyrinth/quit_door.png",
                     "arcane_labyrinth/exit.png",
                 ],
-                crop=CropRegions(left=0.7, top=0.8),
+                crop_regions=CropRegions(left=0.7, top=0.8),
             )
             if result is None:
                 self.press_back_button()
@@ -90,14 +90,14 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
         _ = self.wait_for_template(
             "arcane_labyrinth/hold_to_exit.png",
-            crop=CropRegions(right=0.5, top=0.5, bottom=0.3),
+            crop_regions=CropRegions(right=0.5, top=0.5, bottom=0.3),
             timeout_message="Failed to exit Arcane Labyrinth run",
             timeout=self.MIN_TIMEOUT,
         )
         sleep(1)
         hold_to_exit = self.wait_for_template(
             "arcane_labyrinth/hold_to_exit.png",
-            crop=CropRegions(right=0.5, top=0.5, bottom=0.3),
+            crop_regions=CropRegions(right=0.5, top=0.5, bottom=0.3),
             timeout_message="Failed to exit Arcane Labyrinth run",
             timeout=self.FAST_TIMEOUT,
         )
@@ -159,7 +159,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             self._add_clear_key_amount()
             self.wait_for_template(
                 "arcane_labyrinth/enter.png",
-                crop=CropRegions(top=0.8, left=0.3),
+                crop_regions=CropRegions(top=0.8, left=0.3),
                 timeout=self.MIN_TIMEOUT,
             )
         logging.info("Arcane Labyrinth done.")
@@ -176,7 +176,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "arcane_labyrinth/rarity/rare.png",
             ],
             delay=0.2,
-            crop=CropRegions(right=0.8, top=0.3, bottom=0.1),
+            crop_regions=CropRegions(right=0.8, top=0.3, bottom=0.1),
         )
 
         if template == "arcane_labyrinth/rarity/epic.png":
@@ -186,7 +186,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         sleep(1)
         confirm: tuple[int, int] | None = self.game_find_template_match(
             "arcane_labyrinth/confirm.png",
-            crop=CropRegions(left=0.2, right=0.2, top=0.8),
+            crop_regions=CropRegions(left=0.2, right=0.2, top=0.8),
         )
         if confirm:
             self.tap(Coordinates(*confirm))
@@ -245,7 +245,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 self.tap(Coordinates(x, y))
                 while self.game_find_template_match(
                     template="arcane_labyrinth/tap_to_close.png",
-                    crop=CropRegions(top=0.8),
+                    crop_regions=CropRegions(top=0.8),
                 ):
                     self.tap(Coordinates(x, y))
         return True
@@ -258,7 +258,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "arcane_labyrinth/additional_challenge.png",
             ],
             threshold=0.8,
-            crop=CropRegions(top=0.2, left=0.3),
+            crop_regions=CropRegions(top=0.2, left=0.3),
         )
 
         sleep(1)
@@ -272,7 +272,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     "arcane_labyrinth/additional_challenge.png",
                 ],
                 threshold=0.8,
-                crop=CropRegions(top=0.2, right=0.3),
+                crop_regions=CropRegions(top=0.2, right=0.3),
             )
             if result is None:
                 no_result_count += 1
@@ -327,7 +327,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
         while enter := self.game_find_template_match(
             template="arcane_labyrinth/enter.png",
-            crop=CropRegions(top=0.8, left=0.3),
+            crop_regions=CropRegions(top=0.8, left=0.3),
         ):
             self.tap(Coordinates(*enter))
             sleep(2)
@@ -351,7 +351,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             checkbox = self.game_find_template_match(
                 "popup/checkbox_unchecked.png",
                 match_mode=MatchMode.TOP_LEFT,
-                crop=CropRegions(right=0.8, top=0.2, bottom=0.6),
+                crop_regions=CropRegions(right=0.8, top=0.2, bottom=0.6),
                 threshold=0.8,
             )
             if checkbox is not None:
@@ -373,7 +373,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         """Start Arcane Labyrinth."""
         result: tuple[int, int] | None = self.game_find_template_match(
             template="arcane_labyrinth/enter.png",
-            crop=CropRegions(top=0.8, left=0.3),
+            crop_regions=CropRegions(top=0.8, left=0.3),
         )
         if result:
             self._handle_enter_button()
@@ -382,7 +382,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         if self.game_find_template_match(
             template="arcane_labyrinth/heroes_icon.png",
             threshold=0.7,
-            crop=CropRegions(left=0.6, right=0.1, top=0.8),
+            crop_regions=CropRegions(left=0.6, right=0.1, top=0.8),
         ):
             logging.info("Arcane Labyrinth already started")
             return
@@ -437,7 +437,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             difficulty: tuple[int, int] | None = self.game_find_template_match(
                 template="arcane_labyrinth/difficulty.png",
                 threshold=0.7,
-                crop=CropRegions(bottom=0.8),
+                crop_regions=CropRegions(bottom=0.8),
             )
 
             if difficulty is None and self.arcane_difficulty_was_visible:
@@ -480,7 +480,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         sleep(0.5)
         results: list[tuple[int, int]] = self.find_all_template_matches(
             "arcane_labyrinth/swords_button.png",
-            crop=CropRegions(top=0.6, bottom=0.2),
+            crop_regions=CropRegions(top=0.6, bottom=0.2),
         )
         if len(results) <= 1:
             self.tap(Coordinates(swords_x, swords_y))
@@ -495,7 +495,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "arcane_labyrinth/gate/blessing.png",
             ],
             threshold=0.8,
-            crop=CropRegions(top=0.2, bottom=0.5),
+            crop_regions=CropRegions(top=0.2, bottom=0.5),
         )
 
         if result is None:
@@ -520,7 +520,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     "arcane_labyrinth/move_forward.png",
                     "arcane_labyrinth/select_a_crest.png",
                 ],
-                crop=CropRegions(top=0.8),
+                crop_regions=CropRegions(top=0.8),
                 timeout=self.MIN_TIMEOUT,
             )
 
@@ -530,7 +530,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     "arcane_labyrinth/move_forward.png",
                     "arcane_labyrinth/select_a_crest.png",
                 ],
-                crop=CropRegions(top=0.8),
+                crop_regions=CropRegions(top=0.8),
             )
             if result is None:
                 break
@@ -545,7 +545,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     # cropped in a way only the top item can be clicked
                     item_price: tuple[int, int] | None = self.game_find_template_match(
                         template="arcane_labyrinth/shop_crystal.png",
-                        crop=CropRegions(left=0.7, top=0.2, bottom=0.6),
+                        crop_regions=CropRegions(left=0.7, top=0.2, bottom=0.6),
                     )
                     if item_price is None:
                         break
@@ -554,7 +554,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     sleep(0.5)
                     purchase: tuple[int, int] | None = self.game_find_template_match(
                         template="arcane_labyrinth/purchase.png",
-                        crop=CropRegions(top=0.8),
+                        crop_regions=CropRegions(top=0.8),
                     )
                     if not purchase:
                         break
@@ -572,7 +572,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     "arcane_labyrinth/move_forward.png",
                     "arcane_labyrinth/select_a_crest.png",
                 ],
-                crop=CropRegions(top=0.8),
+                crop_regions=CropRegions(top=0.8),
                 timeout=self.MIN_TIMEOUT,
             )
 
