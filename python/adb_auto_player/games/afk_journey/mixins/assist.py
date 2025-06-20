@@ -49,7 +49,7 @@ class AssistMixin(AFKJourneyBase, ABC):
 
     def _find_synergy_or_corrupt_creature(self) -> bool:  # noqa: PLR0911 - TODO
         """Find Synergy or Corrupt Creature."""
-        result: tuple[str, int, int] | None = self.find_any_template(
+        result = self.find_any_template(
             templates=[
                 "assist/label_world_chat.png",
                 "assist/tap_to_enter.png",
@@ -64,8 +64,7 @@ class AssistMixin(AFKJourneyBase, ABC):
             self.tap(Point(110, 350), scale=True)
             return False
 
-        template, x, y = result
-        match template:
+        match result.template:
             # Chat Window is open but not on World Chat
             case "assist/tap_to_enter.png", "assist/label_team-up_chat.png":
                 logging.info("Switching to World Chat")
@@ -83,9 +82,9 @@ class AssistMixin(AFKJourneyBase, ABC):
             sleep(1)
             return False
 
-        self.tap(Point(*profile_icon))
+        self.tap(profile_icon)
         try:
-            template, x, y = self.wait_for_any_template(
+            result = self.wait_for_any_template(
                 templates=[
                     "assist/join_now.png",
                     "assist/synergy.png",
@@ -97,7 +96,7 @@ class AssistMixin(AFKJourneyBase, ABC):
             )
         except GameTimeoutError:
             return False
-        if template == "assist/chat_button.png":
+        if result.template == "assist/chat_button.png":
             if (
                 self.game_find_template_match(
                     template="assist/label_world_chat.png",
@@ -108,8 +107,8 @@ class AssistMixin(AFKJourneyBase, ABC):
                 self.tap(Point(550, 100), scale=True)
                 sleep(1)
             return False
-        self.tap(Point(x, y))
-        match template:
+        self.tap(result)
+        match result.template:
             case "assist/join_now.png":
                 logging.info("Clicking Corrupt Creature join now button")
                 try:
@@ -126,7 +125,7 @@ class AssistMixin(AFKJourneyBase, ABC):
 
     def _handle_corrupt_creature(self) -> bool:
         """Handle Corrupt Creature."""
-        ready: tuple[int, int] = self.wait_for_template(
+        ready = self.wait_for_template(
             template="assist/ready.png",
             crop_regions=CropRegions(left=0.2, right=0.1, top=0.8),
             timeout=self.MIN_TIMEOUT,
@@ -136,11 +135,11 @@ class AssistMixin(AFKJourneyBase, ABC):
             template="assist/ready.png",
             crop_regions=CropRegions(left=0.2, right=0.1, top=0.8),
         ):
-            self.tap(Point(*ready))
+            self.tap(ready)
             sleep(0.5)
 
         while True:
-            template, _, _ = self.wait_for_any_template(
+            result = self.wait_for_any_template(
                 templates=[
                     "assist/bell.png",
                     "guide/close.png",
@@ -150,8 +149,8 @@ class AssistMixin(AFKJourneyBase, ABC):
                 ],
                 timeout=self.BATTLE_TIMEOUT,
             )
-            logging.debug(f"template {template}")
-            match template:
+            logging.debug(f"template {result.template}")
+            match result.template:
                 case "assist/bell.png":
                     sleep(2)
                     break
@@ -159,7 +158,7 @@ class AssistMixin(AFKJourneyBase, ABC):
                     self._handle_guide_popup()
                 case _:
                     logging.debug("false")
-                    logging.debug(f"template {template}")
+                    logging.debug(f"template {result.template}")
 
                     return False
 
@@ -169,11 +168,11 @@ class AssistMixin(AFKJourneyBase, ABC):
             self.tap(Point(x, 1300), scale=True)
             sleep(0.5)
         while True:
-            cc_ready: tuple[int, int] | None = self.game_find_template_match(
+            cc_ready = self.game_find_template_match(
                 template="assist/cc_ready.png",
             )
             if cc_ready:
-                self.tap(Point(*cc_ready))
+                self.tap(cc_ready)
                 sleep(1)
             else:
                 break
@@ -187,13 +186,13 @@ class AssistMixin(AFKJourneyBase, ABC):
 
     def _handle_synergy(self) -> bool:
         """Handle Synergy."""
-        go: tuple[int, int] | None = self.game_find_template_match(
+        go = self.game_find_template_match(
             template="assist/go.png",
         )
         if go is None:
             logging.info("Clicked Synergy button too late")
             return False
-        self.tap(Point(*go))
+        self.tap(go)
         sleep(3)
         self.tap(Point(130, 900), scale=True)
         sleep(1)

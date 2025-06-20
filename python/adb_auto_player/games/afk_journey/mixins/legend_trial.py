@@ -13,7 +13,6 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
 )
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
-from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util.summary_generator import SummaryGenerator
 
@@ -75,7 +74,7 @@ class SeasonLegendTrial(AFKJourneyBase):
                 continue
 
             logging.info(f"Starting {faction.capitalize()} Tower")
-            self.tap(Point(*result))
+            self.tap(result)
             try:
                 self._select_legend_trials_floor(faction)
                 self._handle_legend_trials_battle(faction)
@@ -106,7 +105,7 @@ class SeasonLegendTrial(AFKJourneyBase):
                 return None
 
             if result is True:
-                template, x, y = self.wait_for_any_template(
+                match = self.wait_for_any_template(
                     templates=[
                         "next.png",
                         "legend_trials/top_floor_reached.png",
@@ -116,9 +115,9 @@ class SeasonLegendTrial(AFKJourneyBase):
                 logging.info(f"{faction.capitalize()} Trials pushed: {count}")
                 SummaryGenerator().add_count(f"{faction.capitalize()} Trials")
 
-                match template:
+                match match.template:
                     case "next.png":
-                        self.tap(Point(x, y))
+                        self.tap(match)
                         continue
                     case _:
                         logging.info(f"{faction.capitalize()} Top Floor Reached")
@@ -150,8 +149,7 @@ class SeasonLegendTrial(AFKJourneyBase):
             timeout_message="Cannot find Challenge button "
             "assuming Trial is already cleared",
         )
-        _, x, y = challenge_btn
-        self.tap(Point(x, y))
+        self.tap(challenge_btn)
 
     def _is_on_season_legend_trial_select(self) -> bool:
         return (

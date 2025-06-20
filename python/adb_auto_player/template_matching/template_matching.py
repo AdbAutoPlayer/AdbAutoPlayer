@@ -3,7 +3,8 @@
 import cv2
 import numpy as np
 from adb_auto_player.image_manipulation import to_grayscale
-from adb_auto_player.models.template_matching import MatchMode
+from adb_auto_player.models.geometry import Box, Point
+from adb_auto_player.models.template_matching import MatchMode, MatchResult
 
 
 def similar_image(
@@ -41,7 +42,7 @@ def find_template_match(
     match_mode: MatchMode = MatchMode.BEST,
     threshold: float = 0.9,
     grayscale: bool = False,
-) -> tuple[int, int] | None:
+) -> MatchResult | None:
     """Find a template image within a base image with different matching modes.
 
     Args:
@@ -52,7 +53,7 @@ def find_template_match(
         grayscale: Whether to convert images to grayscale before matching
 
     Returns:
-        tuple of (center_x, center_y) coordinates or None if no match found
+        MatchResult or None if no match found
     """
     base_cv, template_cv = _prepare_images_for_processing(
         base_image=base_image,
@@ -61,21 +62,26 @@ def find_template_match(
         grayscale=grayscale,
     )
 
+    template_height, template_width = template_cv.shape[:2]
+
     result = cv2.matchTemplate(base_cv, template_cv, cv2.TM_CCOEFF_NORMED)
     if match_mode == MatchMode.BEST:
         _, max_val, _, max_loc = cv2.minMaxLoc(result)
         if max_val >= threshold:
-            template_height, template_width = template_cv.shape[:2]
-            center_x = max_loc[0] + template_width // 2
-            center_y = max_loc[1] + template_height // 2
-            return center_x, center_y
+            return MatchResult(
+                box=Box(
+                    top_left=Point(x=max_loc[0], y=max_loc[1]),
+                    width=template_width,
+                    height=template_height,
+                ),
+                confidence=max_val,
+            )
         return None
 
     match_locations = np.where(result >= threshold)
     if len(match_locations[0]) == 0:
         return None
 
-    template_height, template_width = template_cv.shape[:2]
     matches = list(zip(match_locations[1], match_locations[0]))  # x, y coordinates
 
     key_functions = {
@@ -90,10 +96,16 @@ def find_template_match(
     }
 
     selected_match = min(matches, key=key_functions[match_mode])
-    center_x = selected_match[0] + template_width // 2
-    center_y = selected_match[1] + template_height // 2
+    confidence = result[selected_match[1], selected_match[0]]
 
-    return center_x, center_y
+    return MatchResult(
+        box=Box(
+            top_left=Point(x=selected_match[0], y=selected_match[1]),
+            width=template_width,
+            height=template_height,
+        ),
+        confidence=float(confidence),
+    )
 
 
 def find_all_template_matches(
@@ -102,7 +114,7 @@ def find_all_template_matches(
     threshold: float = 0.9,
     grayscale: bool = False,
     min_distance: int = 10,
-) -> list[tuple[int, int]]:
+) -> list[MatchResult]:
     """Find all matches.
 
     Args:
@@ -113,7 +125,7 @@ def find_all_template_matches(
         min_distance (int, optional): Minimum distance between matches. Defaults to 10.
 
     Returns:
-        list[tuple[int, int]]: List of found coordinates.
+        list[MatchResult]: List of matched boxes with confidence value.
     """
     base_cv, template_cv = _prepare_images_for_processing(
         base_image=base_image,
@@ -122,28 +134,41 @@ def find_all_template_matches(
         grayscale=grayscale,
     )
 
+    template_height, template_width = template_cv.shape[:2]
+
     result = cv2.matchTemplate(base_cv, template_cv, cv2.TM_CCOEFF_NORMED)
     match_locations = np.where(result >= threshold)
 
-    template_height, template_width = template_cv.shape[:2]
-    centers = []
+    top_left_points_with_scores = [
+        ((x, y), result[y, x]) for x, y in zip(match_locations[1], match_locations[0])
+    ]
 
-    for x, y in zip(match_locations[1], match_locations[0]):
-        center_x = x + template_width // 2
-        center_y = y + template_height // 2
-        centers.append((center_x, center_y))
-
-    if centers:
-        centers = _suppress_close_matches(centers, min_distance)
-
-    return centers
+    if top_left_points_with_scores:
+        filtered_points = _suppress_close_matches(
+            [pt for pt, _ in top_left_points_with_scores], min_distance
+        )
+        # Create a dict for quick confidence lookup
+        score_lookup = {(x, y): score for (x, y), score in top_left_points_with_scores}
+        return [
+            MatchResult(
+                box=Box(
+                    top_left=Point(x=pt[0], y=pt[1]),
+                    width=template_width,
+                    height=template_height,
+                ),
+                confidence=float(score_lookup[pt]),
+            )
+            for pt in filtered_points
+        ]
+    else:
+        return []
 
 
 def find_worst_template_match(
     base_image: np.ndarray,
     template_image: np.ndarray,
     grayscale: bool = False,
-) -> tuple[int, int] | None:
+) -> MatchResult | None:
     """Find the area in the base image that is most different from the template.
 
     This function creates a difference map between the template and all possible
@@ -155,7 +180,7 @@ def find_worst_template_match(
         grayscale: Whether to convert images to grayscale before comparison
 
     Returns:
-        tuple of (center_x, center_y) coordinates for the most different region
+        MatchResult | None if no match was found.
     """
     base_cv, template_cv = _prepare_images_for_processing(
         base_image=base_image, template_image=template_image, grayscale=grayscale
@@ -172,12 +197,16 @@ def find_worst_template_match(
         return None
     max_diff_x, max_diff_y = max_diff_loc
 
-    # Calculate center coordinates
     template_height, template_width = template_cv.shape[:2]
-    center_x = max_diff_x + template_width // 2
-    center_y = max_diff_y + template_height // 2
 
-    return center_x, center_y
+    return MatchResult(
+        box=Box(
+            Point(x=max_diff_x, y=max_diff_y),
+            width=template_width,
+            height=template_height,
+        ),
+        confidence=max_val,
+    )
 
 
 def _suppress_close_matches(
@@ -239,7 +268,7 @@ def _validate_template_size(base_image: np.ndarray, template_image: np.ndarray) 
 
 def _prepare_images_for_processing(
     base_image, template_image, threshold=None, grayscale=True
-):
+) -> tuple[np.ndarray, np.ndarray]:
     """Validates inputs and prepares images for template matching.
 
     Args:

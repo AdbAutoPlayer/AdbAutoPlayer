@@ -45,9 +45,9 @@ from adb_auto_player.image_manipulation import (
     load_image,
     to_grayscale,
 )
-from adb_auto_player.models.geometry import Point
+from adb_auto_player.models.geometry import Coordinates, Point
 from adb_auto_player.models.image_manipulation import CropRegions
-from adb_auto_player.models.template_matching import MatchMode
+from adb_auto_player.models.template_matching import MatchMode, TemplateMatchResult
 from adb_auto_player.template_matching import (
     find_all_template_matches,
     find_template_match,
@@ -326,7 +326,7 @@ class Game:
 
     def tap(
         self,
-        p: Point,
+        coordinates: Coordinates,
         scale: bool = False,
         blocking: bool = True,
         non_blocking_sleep_duration: float = 1 / 30,  # Assuming 30 FPS, 1 Tap per Frame
@@ -335,7 +335,7 @@ class Game:
         """Tap the screen on the given point.
 
         Args:
-            p (Point): Point to click on.
+            coordinates (Coordinates): Point to click on.
             scale (bool, optional): Whether to scale the coordinates.
             blocking (bool, optional): Whether to block the process and
                 wait for ADBServer to confirm the tap has happened.
@@ -346,11 +346,11 @@ class Game:
                 - "": Default coordinate logging
                 - str: Custom message, appends coordinates automatically
         """
-        original_point = p
-        final_point = p
+        original_point = coordinates
+        final_point = coordinates
 
         if scale:
-            final_point = p.scale(self._scale_factor)
+            final_point = Point(coordinates.x, coordinates.y).scale(self._scale_factor)
 
         log_message = self._build_tap_log_message(
             original_point,
@@ -375,8 +375,8 @@ class Game:
 
     def _build_tap_log_message(
         self,
-        original_point: Point,
-        final_point: Point,
+        original_point: Coordinates,
+        final_point: Coordinates,
         message: str | None = None,
     ) -> str:
         """Log the tap with all relevant information in a single entry."""
@@ -391,12 +391,12 @@ class Game:
 
     def _click(
         self,
-        p: Point,
+        coordinates: Coordinates,
         log_message: str | None = None,
     ) -> None:
         """Internal click method - logging should typically be handled by the caller."""
         with self.device.shell(
-            f"input tap {p.x} {p.y}",
+            f"input tap {coordinates.x} {coordinates.y}",
             timeout=3,  # if the click didn't happen in 3 seconds it's never happening
             stream=True,
         ) as connection:
@@ -548,7 +548,7 @@ class Game:
         grayscale: bool = False,
         crop_regions: CropRegions = CropRegions(),
         screenshot: np.ndarray | None = None,
-    ) -> tuple[int, int] | None:
+    ) -> TemplateMatchResult | None:
         """Find a template on the screen.
 
         Args:
@@ -561,14 +561,14 @@ class Game:
                 if None
 
         Returns:
-            tuple[int, int] | None: Coordinates of the match, or None if not found.
+            TemplateMatchResult | None
         """
         crop_result = crop(
             image=screenshot if screenshot is not None else self.get_screenshot(),
             crop_regions=crop_regions,
         )
 
-        result = find_template_match(
+        match = find_template_match(
             base_image=crop_result.image,
             template_image=self._load_image(
                 template=template,
@@ -579,11 +579,12 @@ class Game:
             grayscale=grayscale,
         )
 
-        if result is None:
+        if match is None:
             return None
 
-        x, y = result
-        return x + crop_result.offset.x, y + crop_result.offset.y
+        return match.with_offset(crop_result.offset).to_template_match_result(
+            template=str(template)
+        )
 
     def _load_image(
         self,
@@ -601,7 +602,7 @@ class Game:
         template: str | Path,
         grayscale: bool = False,
         crop_regions: CropRegions = CropRegions(),
-    ) -> None | tuple[int, int]:
+    ) -> None | TemplateMatchResult:
         """Find the most different match.
 
         Args:
@@ -610,7 +611,7 @@ class Game:
             crop_regions (CropRegions, optional): Crop percentages.
 
         Returns:
-            None | tuple[int, int]: Coordinates of worst match.
+            None | TemplateMatchResult: None or Result of worst Match.
         """
         crop_result = crop(image=self.get_screenshot(), crop_regions=crop_regions)
 
@@ -625,8 +626,8 @@ class Game:
 
         if result is None:
             return None
-        x, y = result
-        return x + crop_result.offset.x, y + crop_result.offset.y
+
+        return result.to_template_match_result(template=str(template))
 
     def find_all_template_matches(
         self,
@@ -635,7 +636,7 @@ class Game:
         grayscale: bool = False,
         crop_regions: CropRegions = CropRegions(),
         min_distance: int = 10,
-    ) -> list[tuple[int, int]]:
+    ) -> list[TemplateMatchResult]:
         """Find all matches.
 
         Args:
@@ -651,7 +652,7 @@ class Game:
         """
         crop_result = crop(image=self.get_screenshot(), crop_regions=crop_regions)
 
-        result: list[tuple[int, int]] = find_all_template_matches(
+        result = find_all_template_matches(
             base_image=crop_result.image,
             template_image=self._load_image(
                 template=template,
@@ -662,10 +663,14 @@ class Game:
             min_distance=min_distance,
         )
 
-        adjusted_result: list[tuple[int, int]] = [
-            (x + crop_result.offset.x, y + crop_result.offset.y) for x, y in result
-        ]
-        return adjusted_result
+        results: list[TemplateMatchResult] = []
+        for match in result:
+            results.append(
+                match.with_offset(crop_result.offset).to_template_match_result(
+                    template=str(template)
+                )
+            )
+        return results
 
     def wait_for_template(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
@@ -676,15 +681,15 @@ class Game:
         delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
-    ) -> tuple[int, int]:
+    ) -> TemplateMatchResult:
         """Waits for the template to appear in the screen.
 
         Raises:
             TimeoutError: Template not found.
         """
 
-        def find_template() -> tuple[int, int] | None:
-            result: tuple[int, int] | None = self.game_find_template_match(
+        def find_template() -> TemplateMatchResult | None:
+            result = self.game_find_template_match(
                 template,
                 threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
@@ -719,8 +724,8 @@ class Game:
             TimeoutException: Template still visible.
         """
 
-        def find_best_template() -> tuple[int, int] | None:
-            result: tuple[int, int] | None = self.game_find_template_match(
+        def find_best_template() -> TemplateMatchResult | None:
+            result: TemplateMatchResult | None = self.game_find_template_match(
                 template,
                 threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
@@ -755,14 +760,14 @@ class Game:
         delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
-    ) -> tuple[str, int, int]:
+    ) -> TemplateMatchResult:
         """Waits for any template to appear on the screen.
 
         Raises:
             TimeoutException: No template visible.
         """
 
-        def find_template() -> tuple[str, int, int] | None:
+        def find_template() -> TemplateMatchResult | None:
             return self.find_any_template(
                 templates,
                 threshold=threshold or self.default_threshold,
@@ -793,7 +798,7 @@ class Game:
         grayscale: bool = False,
         crop_regions: CropRegions = CropRegions(),
         screenshot: np.ndarray | None = None,
-    ) -> tuple[str, int, int] | None:
+    ) -> TemplateMatchResult | None:
         """Find any first template on the screen.
 
         Args:
@@ -805,13 +810,13 @@ class Game:
             screenshot (np.ndarray, optional): Screenshot image. Will fetch screenshot
                 if None
         Returns:
-            tuple[str, int, int] | None: Coordinates of the match, or None if not found.
+            TemplateMatchResult | None
         """
         if grayscale:
             screenshot = to_grayscale(screenshot)
 
         for template in templates:
-            result: tuple[int, int] | None = self.game_find_template_match(
+            result = self.game_find_template_match(
                 template,
                 match_mode=match_mode,
                 threshold=threshold or self.default_threshold,
@@ -822,8 +827,7 @@ class Game:
                 ),
             )
             if result is not None:
-                x, y = result
-                return template, x, y
+                return result
         return None
 
     def press_back_button(self) -> None:
@@ -842,10 +846,10 @@ class Game:
         """Perform a vertical swipe from top to bottom.
 
         Args:
-            x (int, optional): X coordinate of the swipe.
+            x (int, optional): X-coordinate of the swipe.
                 Defaults to the horizontal center of the display.
-            sy (int, optional): Start Y coordinate. Defaults to the top edge (0).
-            ey (int, optional): End Y coordinate.
+            sy (int, optional): Start Y-coordinate. Defaults to the top edge (0).
+            ey (int, optional): End Y-coordinate.
                 Defaults to the bottom edge of the display.
             duration (float, optional): Duration of the swipe in seconds.
                 Defaults to 1.0.
@@ -864,11 +868,11 @@ class Game:
         """Perform a vertical swipe from bottom to top.
 
         Args:
-            x (int, optional): X coordinate of the swipe.
+            x (int, optional): X-coordinate of the swipe.
                 Defaults to the horizontal center of the display.
-            sy (int, optional): Start Y coordinate.
+            sy (int, optional): Start Y-coordinate.
                 Defaults to the bottom edge of the display.
-            ey (int, optional): End Y coordinate. Defaults to the top edge (0).
+            ey (int, optional): End Y-coordinate. Defaults to the top edge (0).
             duration (float, optional): Duration of the swipe in seconds.
                 Defaults to 1.0.
         """
@@ -886,11 +890,11 @@ class Game:
         """Perform a horizontal swipe from left to right.
 
         Args:
-            y (int, optional): Y coordinate of the swipe.
+            y (int, optional): Y-coordinate of the swipe.
                 Defaults to the vertical center of the display.
-            sx (int, optional): Start X coordinate.
+            sx (int, optional): Start X-coordinate.
                 Defaults to the left edge (0).
-            ex (int, optional): End X coordinate.
+            ex (int, optional): End X-coordinate.
                 Defaults to the right edge of the display.
             duration (float, optional): Duration of the swipe in seconds.
                 Defaults to 1.0.
@@ -911,11 +915,11 @@ class Game:
         """Perform a horizontal swipe from right to left.
 
         Args:
-            y (int, optional): Y coordinate of the swipe.
+            y (int, optional): Y-coordinate of the swipe.
                 Defaults to the vertical center of the display.
-            sx (int, optional): Start X coordinate.
+            sx (int, optional): Start X-coordinate.
                 Defaults to the right edge of the display.
-            ex (int, optional): End X coordinate. Defaults to the left edge (0).
+            ex (int, optional): End X-coordinate. Defaults to the left edge (0).
             duration (float, optional): Duration of the swipe in seconds.
                 Defaults to 1.0.
         """
@@ -956,18 +960,20 @@ class Game:
         logging.debug(f"swipe_{direction} - from ({sx}, {sy}) to ({ex}, {ey})")
         self._swipe(Point(sx, sy), Point(ex, ey), duration=params.duration)
 
-    def hold(self, p: Point, duration: float = 3.0) -> None:
+    def hold(self, coordinates: Coordinates, duration: float = 3.0) -> None:
         """Holds a point on the screen.
 
         Args:
-            p (Point): Point on the screen.
+            coordinates (Point): Point on the screen.
             duration (float, optional): Hold duration. Defaults to 3.0.
         """
-        logging.debug(f"hold: ({p.x}, {p.y}) for {duration} seconds")
-        self._swipe(start_point=p, end_point=p, duration=duration)
+        logging.debug(
+            f"hold: ({coordinates.x}, {coordinates.y}) for {duration} seconds"
+        )
+        self._swipe(start_point=coordinates, end_point=coordinates, duration=duration)
 
     def _swipe(
-        self, start_point: Point, end_point: Point, duration: float = 1.0
+        self, start_point: Coordinates, end_point: Coordinates, duration: float = 1.0
     ) -> None:
         """Swipes the screen.
 
@@ -976,8 +982,8 @@ class Game:
             end_point (Point): End Point on the screen.
             duration (float, optional): Swipe duration. Defaults to 1.0.
         """
-        start_point = start_point.scale(self._scale_factor)
-        end_point = end_point.scale(self._scale_factor)
+        start_point = Point(start_point.x, start_point.y).scale(self._scale_factor)
+        end_point = Point(end_point.x, end_point.y).scale(self._scale_factor)
         self.device.swipe(
             sx=start_point.x,
             sy=start_point.y,
@@ -1230,7 +1236,7 @@ class Game:
                 message = f"Failed to tap: {template}, Template still visible."
                 raise GameActionFailedError(message)
             if time_since_last_tap >= delay:
-                self.tap(Point(*result))
+                self.tap(result)
                 tap_count += 1
                 time_since_last_tap -= delay  # preserve overflow - more accurate timing
 
@@ -1239,8 +1245,9 @@ class Game:
 
     def _tap_coordinates_till_template_disappears(
         self,
-        tap_params: TapParams,
+        coordinates: Coordinates,
         template_match_params: TemplateMatchParams,
+        scale: bool = False,
         delay: float = 10.0,
     ) -> None:
         max_tap_count = 3
@@ -1257,13 +1264,14 @@ class Game:
             ),
         ):
             if tap_count >= max_tap_count:
+                # converting to point here for the error message.
                 message = (
-                    f"Failed to tap: {tap_params.point}, "
+                    f"Failed to tap: {Point(coordinates.x, coordinates.y)}, "
                     f"Template: {template_match_params.template} still visible."
                 )
                 raise GameActionFailedError(message)
             if time_since_last_tap >= delay:
-                self.tap(tap_params.point)
+                self.tap(coordinates)
                 tap_count += 1
                 time_since_last_tap -= delay  # preserve overflow - more accurate timing
 

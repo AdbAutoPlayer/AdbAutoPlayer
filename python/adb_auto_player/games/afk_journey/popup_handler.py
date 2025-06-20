@@ -1,13 +1,13 @@
 import logging
 import time
+from abc import ABC
 from dataclasses import dataclass
 
 import cv2
 import numpy as np
-from adb_auto_player.decorators.register_command import GuiMetadata, register_command
-from adb_auto_player.games.afk_journey.base import AFKJourneyBase
+from adb_auto_player import Game
 from adb_auto_player.models import ConfidenceValue
-from adb_auto_player.models.geometry import Box, Point
+from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import MatchMode, TemplateMatchResult
 from adb_auto_player.ocr import PSM, TesseractBackend, TesseractConfig
@@ -20,7 +20,7 @@ class PopupMessage:
     confirm_button_template: str = "navigation/confirm.png"
     click_dont_remind_me: bool = False
     hold_to_confirm: bool = False
-    hold_duration_seconds: float = 3.0
+    hold_duration_seconds: float = 5.0
 
 
 # You do not actually need to add the whole text of the Popup Message
@@ -38,12 +38,33 @@ popup_messages: list[PopupMessage] = [
         click_dont_remind_me=True,
     ),
     PopupMessage(
-        text="Your formation is incomplete. Begin battle anyway?",
+        text=(
+            "You haven't actiovated any Season Faction Talent."
+            # Do you want to start the battle anyway?
+        ),
+        click_dont_remind_me=True,
+    ),
+    PopupMessage(
+        text="Your formation is incomplete.",
+        # There are 2 different messages for this
+        # "Your formation is incomplete. Begin battle anyway?"
+        # "Your formation is incomplete. Turn on Auto Battle mode anyway? ..."
         click_dont_remind_me=True,
     ),
     PopupMessage(
         text="You are currently fishing.",
         # If you quit this fishing attempt will fail. Quit anyway?
+        # Does not have "remind me" checkbox
+    ),
+    PopupMessage(
+        text="End the exploration",
+        confirm_button_template="arcane_labyrinth/hold_to_exit.png",
+        hold_to_confirm=True,
+        hold_duration_seconds=5.0,
+        # Does not have "remind me" checkbox
+    ),
+    PopupMessage(
+        text="Skip this battle?",
         # Does not have "remind me" checkbox
     ),
 ]
@@ -53,24 +74,19 @@ popup_messages: list[PopupMessage] = [
 class PopupPreprocessResult:
     cropped_image: np.ndarray
     crop_offset: Point
-    button: Box
-    dont_remind_me_checkbox: Box | None = None
+    button: TemplateMatchResult
+    dont_remind_me_checkbox: TemplateMatchResult | None = None
 
 
-class AFKJourneyPopupHandler(AFKJourneyBase):
-    @register_command(
-        gui=GuiMetadata(label="OCR Popup Test", tooltip="Test this please")
-    )
-    def test_popup(self) -> None:
-        logging.info("=== Start OCR Popup Test ===")
-        self.start_up(device_streaming=True)
-        start_time = time.time()
-        self.handle_confirmation_popup()
-        total_duration = time.time() - start_time
-        logging.info(f"Total duration: {total_duration:.3f}s")
-        logging.info("=== End OCR Popup Test ===")
+class AFKJourneyPopupHandler(Game, ABC):
+    def handle_confirmation_popups(self) -> None:
+        """Handles multiple popups."""
+        max_popups = 5
+        count = 0
+        while count < max_popups and self._handle_confirmation_popup():
+            count += 1
 
-    def handle_confirmation_popup(self) -> bool:
+    def _handle_confirmation_popup(self) -> bool:
         """Confirm popups.
 
         Returns:
@@ -78,7 +94,8 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
         """
         # PSM 6 - Single Block of Text works best here.
         ocr = TesseractBackend(config=TesseractConfig(psm=PSM.SINGLE_BLOCK))
-        preprocess_result = self._preprocess_for_popup(self.get_screenshot())
+        image = self.get_screenshot()
+        preprocess_result = self._preprocess_for_popup(image)
         if not preprocess_result:
             logging.warning("No Confirmation Popup detected.")
             return False
@@ -86,7 +103,6 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
         ocr_results = ocr.detect_text_blocks(
             image=preprocess_result.cropped_image, min_confidence=ConfidenceValue("80%")
         )
-        cv2.imwrite("test.png", preprocess_result.cropped_image)
         # This is actually not needed in this scenario because we do not need
         # The coordinates or boundaries of the text
         # Leaving this for demo though.
@@ -94,19 +110,13 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
             result.with_offset(preprocess_result.crop_offset) for result in ocr_results
         ]
 
-        logging.info(f"Found {len(ocr_results)} text blocks:")
-
         matching_popup: PopupMessage | None = None
         for i, result in enumerate(ocr_results):
-            logging.info(f"  [{i}] {result!s}")
             matching_popup = next(
                 (popup for popup in popup_messages if popup.text in result.text), None
             )
             if matching_popup:
-                logging.info(f"    Match found in popup: {matching_popup.text}")
                 break
-            else:
-                logging.info(f"    No match for: {result.text}")
 
         if not matching_popup:
             logging.error(f"Unknown popup detected: {ocr_results}")
@@ -118,15 +128,39 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
                     "Don't remind me checkbox: "
                     f"{preprocess_result.dont_remind_me_checkbox}"
                 )
-                # TODO need to update tap to accept Point and Box
-                # self.tap(preprocess_result.dont_remind_me_checkbox)
-                center = preprocess_result.dont_remind_me_checkbox.center
-                self.tap(Point(center.x, center.y))
+                self.tap(preprocess_result.dont_remind_me_checkbox)
+                time.sleep(1)
             else:
                 logging.warning("Don't remind me checkbox expected but not found.")
 
-        logging.info(f"Button: {preprocess_result.button}")
-        logging.info("Not actually clicking the button for testing.")
+        return self._handled_popup_button(
+            preprocess_result,
+            matching_popup,
+            image,
+        )
+
+    def _handled_popup_button(
+        self,
+        result: PopupPreprocessResult,
+        popup: PopupMessage,
+        image: np.ndarray,
+    ) -> bool:
+        if result.button.template == popup.confirm_button_template:
+            button: TemplateMatchResult | None = result.button
+        else:
+            button = self.game_find_template_match(
+                template=popup.confirm_button_template,
+                screenshot=image,
+            )
+
+        if not button:
+            return False
+
+        if popup.hold_to_confirm:
+            self.hold(coordinates=button, duration=popup.hold_duration_seconds)
+        else:
+            self.tap(coordinates=button)
+        time.sleep(3)
         return True
 
     def _preprocess_for_popup(self, image: np.ndarray) -> PopupPreprocessResult | None:
@@ -135,8 +169,7 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
         height_5_percent = int(0.05 * height)
         height_35_percent = int(0.35 * height)
 
-        # Should return Box or TemplateMatchResult objects in the future
-        if confirm := self.find_any_template(
+        if button := self.find_any_template(
             templates=[
                 "navigation/confirm.png",
                 "navigation/continue_top_right_corner.png",
@@ -145,11 +178,7 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
             crop_regions=CropRegions(left=0.5, top=0.4),
             screenshot=image,
         ):
-            # template match should return TemplateMatchResult in the future.
-            # then this line can be removed
-            button = self._convert_to_template_match_result(confirm).box
-            # button = confirm.box
-            crop_bottom = button.top - height_5_percent
+            crop_bottom = button.box.top - height_5_percent
         else:
             # No button detected this cannot be a supported popup.
             return None
@@ -161,18 +190,10 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
             crop_regions=CropRegions(right=0.8, top=0.2, bottom=0.6),
             screenshot=image,
         ):
-            # dont_remind_me_checkbox = checkbox.box
-            # could be removed if function returned a TemplateMatchResult
-            x, y = checkbox
-            dont_remind_me_checkbox = self._convert_to_template_match_result(
-                ("popup/checkbox_unchecked.png", x, y)
-            ).box
-            # we can confidently cut off another 5 percent below the checkbox.
-            crop_top = dont_remind_me_checkbox.bottom + height_5_percent
+            crop_top = checkbox.box.bottom + height_5_percent
         else:
-            dont_remind_me_checkbox = None
             # based on my estimations this should work unless there is a popup
-            # that is more than 6-7 lines of text which I do not think there is.
+            # that is more than 8 lines of text which I do not think there is.
             crop_top = height_35_percent
 
         image = image[crop_top:crop_bottom, 0:width]
@@ -182,43 +203,5 @@ class AFKJourneyPopupHandler(AFKJourneyBase):
             cropped_image=image,
             crop_offset=Point(0, crop_top),  # No left crop applied, only top,
             button=button,
-            dont_remind_me_checkbox=dont_remind_me_checkbox,
+            dont_remind_me_checkbox=checkbox,
         )
-
-    def _convert_to_template_match_result(self, result_tuple: tuple[str, int, int]):
-        """Temporary will be removed once properly implemented."""
-        template, x, y = result_tuple
-        return TemplateMatchResult(
-            template=template,
-            box=self._point_to_3x3_box(point=Point(x, y)),
-            confidence=1.0,  # doesn't really matter here.
-        )
-
-    def _point_to_3x3_box(self, point: Point) -> Box:
-        """Convert a point to a 3x3 box with the point at the center.
-
-        Temporary function while TemplateMatching does not return proper Result objects.
-
-        Args:
-            point: The point to be centered in the box
-
-        Returns:
-            Box: A 3x3 box with the given point at its center
-
-        Raises:
-            ValueError: If the resulting box would have negative coordinates
-        """
-        # Calculate the top-left corner (point is at center of 3x3 box)
-        top_left_x = point.x - 1
-        top_left_y = point.y - 1
-
-        # Ensure the box doesn't go into negative coordinates
-        if top_left_x < 0 or top_left_y < 0:
-            raise ValueError(
-                f"Cannot create 3x3 box centered at {point} - "
-                f"would result in negative coordinates: "
-                f"top_left=({top_left_x}, {top_left_y})"
-            )
-
-        top_left = Point(top_left_x, top_left_y)
-        return Box(top_left=top_left, width=3, height=3)

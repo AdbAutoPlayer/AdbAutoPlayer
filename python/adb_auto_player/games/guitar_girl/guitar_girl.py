@@ -4,7 +4,6 @@ from typing import NoReturn
 
 from adb_auto_player import (
     Game,
-    TapParams,
     TemplateMatchParams,
 )
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
@@ -57,9 +56,8 @@ class GuitarGirl(Game):
                 threshold=0.7,
                 crop_regions=CropRegions(bottom=0.5, right=0.2, top=0.05),
             ):
-                note, x, y = result
-                self.tap(Point(x, y), log_message=None)
-                if "big_note" in note:
+                self.tap(result, log_message=None)
+                if "big_note" in result.template:
                     SummaryGenerator().add_count("Big Note")
                 else:
                     SummaryGenerator().add_count("Small Note")
@@ -156,9 +154,8 @@ class GuitarGirl(Game):
         while result := self.find_any_template(
             ["close.png", "ok.png"],
         ):
-            template, x, y = result
             self._tap_coordinates_till_template_disappears(
-                tap_params=TapParams(Point(x, y)),
-                template_match_params=TemplateMatchParams(template=template),
+                coordinates=result,
+                template_match_params=TemplateMatchParams(template=result.template),
             )
             sleep(5)

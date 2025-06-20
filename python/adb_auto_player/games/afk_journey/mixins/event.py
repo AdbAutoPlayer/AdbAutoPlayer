@@ -28,24 +28,24 @@ class EventMixin(AFKJourneyBase, ABC):
                 crop_regions=CropRegions(left=0.6, top=0.2, bottom=0.2),
             )
             if claim_button:
-                self.tap(Point(*claim_button))
+                self.tap(claim_button)
                 # click again to close popup
                 sleep(2)
-                self.tap(Point(*claim_button))
+                self.tap(claim_button)
             # switch to world chat and back because sometimes chat stops scrolling
             world_chat_icon = self.game_find_template_match(
                 template="event/guild_chat_claim/world_chat_icon.png",
                 crop_regions=CropRegions(right=0.8, top=0.1, bottom=0.3),
             )
             if world_chat_icon:
-                self.tap(Point(*world_chat_icon))
+                self.tap(world_chat_icon)
                 sleep(1)
             guild_chat_icon = self.game_find_template_match(
                 template="event/guild_chat_claim/guild_chat_icon.png",
                 crop_regions=CropRegions(right=0.8, top=0.1, bottom=0.3),
             )
             if guild_chat_icon:
-                self.tap(Point(*guild_chat_icon))
+                self.tap(guild_chat_icon)
             sleep(1)
 
     def event_monopoly_assist(self) -> NoReturn:
@@ -64,7 +64,7 @@ class EventMixin(AFKJourneyBase, ABC):
                 timeout_message="Monopoly assists screen not found",
             )
 
-            next_assist: tuple[int, int] | None = None
+            next_assist = None
             count = 0
             while next_assist is None:
                 assists = self.find_all_template_matches(
@@ -79,7 +79,7 @@ class EventMixin(AFKJourneyBase, ABC):
                 if next_assist is None:
                     self.swipe_up(sy=1350, ey=500)
 
-            self.tap(Point(*next_assist))
+            self.tap(next_assist)
             sleep(3)
             try:
                 if self._handle_battle_screen(use_suggested_formations=False):

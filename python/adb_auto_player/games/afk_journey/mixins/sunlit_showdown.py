@@ -137,7 +137,7 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
         # ]
 
         while selected_heroes < hero_slots:
-            hero_checker: tuple[str, int, int] | None = self.find_any_template(
+            hero_checker = self.find_any_template(
                 templates=heroes,
                 threshold=0.93,  # Else Faramor triggers while already selected
             )
@@ -147,7 +147,7 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
                     "Selecting "
                     + hero_checker[0].split("/")[1].split("_")[0].capitalize()
                 )
-                self.tap(Point(hero_checker[1], hero_checker[2]))
+                self.tap(hero_checker)
                 sleep(1)
                 selected_heroes += 1
                 # logging.info(selected_heroes)
@@ -167,14 +167,14 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
                 return
 
     def _handle_battle_result(self) -> bool:
-        template, x, y = self.wait_for_any_template(
+        result = self.wait_for_any_template(
             templates=["event/sunlit_showdown/victory", "event/sunlit_showdown/defeat"],
             timeout=self.BATTLE_TIMEOUT,
             delay=1.0,
             timeout_message=self.BATTLE_TIMEOUT_ERROR_MESSAGE,
         )
 
-        match template:
+        match result.template:
             case "event/sunlit_showdown/victory":
                 logging.info("Victory!")
                 self.tap(Point(550, 1800))  # Tap to Close

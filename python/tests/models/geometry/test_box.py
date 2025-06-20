@@ -62,7 +62,10 @@ class TestBox(unittest.TestCase):
 
     def test_str_repr(self):
         box = Box(Point(1, 2), 3, 4)
-        self.assertEqual(str(box), "Box(top_left=Point(x=1, y=2), width=3, height=4)")
+        self.assertEqual(
+            str(box),
+            "Box(top_left=Point(x=1, y=2), width=3, height=4, center=Point(x=2, y=4))",
+        )
 
     def test_random_point_no_margin(self):
         box = Box(Point(0, 0), 10, 10)
@@ -122,6 +125,12 @@ class TestBox(unittest.TestCase):
 
         p = box.random_point(margin=0.49)
         self.assertTrue(box.contains(p))
+
+    def test_with_offset(self):
+        box = Box(Point(0, 0), 1, 1)
+        p = Point(10, 20)
+        box = box.with_offset(p)
+        self.assertEqual(box.top_left, Point(10, 20))
 
 
 if __name__ == "__main__":

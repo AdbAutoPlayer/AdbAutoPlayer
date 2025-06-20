@@ -1,5 +1,6 @@
 """Pytest Game Module."""
 
+import math
 import time
 import unittest
 from pathlib import Path
@@ -11,6 +12,7 @@ from adb_auto_player import (
 )
 from adb_auto_player.image_manipulation import load_image
 from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.models.template_matching import TemplateMatchResult
 from pydantic import BaseModel
 
 TEST_DATA_DIR: Path = Path(__file__).parent / "data"
@@ -172,22 +174,24 @@ class TestGame(unittest.TestCase):
 
         full_times = []
         cropped_times = []
-        full_results = []
-        cropped_results = []
+        full_results: list[TemplateMatchResult] = []
+        cropped_results: list[TemplateMatchResult] = []
         crop = CropRegions(top=0.9, right=0.6, left=0.1)
 
         for _ in range(10):
             start_time: float = time.time()
-            full_result: tuple[int, int] | None = game.game_find_template_match(
-                template_image
-            )
+            full_result = game.game_find_template_match(template_image)
+            if not full_result:
+                assert False
             full_times.append(time.time() - start_time)
             full_results.append(full_result)
 
             start_time = time.time()
-            cropped_result: tuple[int, int] | None = game.game_find_template_match(
+            cropped_result = game.game_find_template_match(
                 template_image, crop_regions=crop
             )
+            if not cropped_result:
+                assert False
             cropped_times.append(time.time() - start_time)
             cropped_results.append(cropped_result)
 
@@ -196,11 +200,18 @@ class TestGame(unittest.TestCase):
             msg="Cropped matching should be faster than full matching",
         )
 
-        self.assertEqual(
-            cropped_results,
-            full_results,
-            msg="Cropped results should be identical to full results",
-        )
+        for cropped, full in zip(cropped_results, full_results):
+            self.assertEqual(
+                cropped.template, full.template, msg="Template names should match"
+            )
+            self.assertEqual(cropped.box, full.box, msg="Bounding boxes should match")
+            self.assertTrue(
+                math.isclose(cropped.confidence, full.confidence, rel_tol=1e-2),
+                msg=(
+                    "Confidences should be close: "
+                    f"{cropped.confidence} vs {full.confidence}"
+                ),
+            )
 
         print_output: str = (
             "\n"

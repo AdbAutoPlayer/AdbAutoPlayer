@@ -84,18 +84,17 @@ class DailiesMixin(AFKJourneyBase, ABC):
             bool: True if a free hourglass was claimed, False otherwise.
         """
         try:
-            free_hourglass: tuple[int, int] = self.wait_for_template(
+            free_hourglass = self.wait_for_template(
                 "dailies/daily_rewards/free_hourglass.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="No more free hourglasses.",
             )
-            self.tap(Point(*free_hourglass))
+            self.tap(free_hourglass)
             sleep(2)
         except GameTimeoutError as fail:
             logging.info(fail)
             return False
 
-        # TODO: Create a confirm do not show popup method.
         self._click_confirm_on_popup()
 
         self.tap(Point(520, 1750), scale=True)
@@ -111,13 +110,13 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         try:
             logging.debug("Opening Emporium.")
-            emporium: tuple[int, int] = self.wait_for_template(
+            emporium = self.wait_for_template(
                 "dailies/emporium/emporium.png",
                 threshold=0.7,
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Emporium.",
             )
-            self.tap(Point(*emporium))
+            self.tap(emporium)
         except GameTimeoutError as fail:
             logging.error(fail)
             return
@@ -134,32 +133,32 @@ class DailiesMixin(AFKJourneyBase, ABC):
         logging.info("Looking for discount Invite Letter...")
         try:
             logging.debug("Opening Guild Store.")
-            guild_store: tuple[int, int] = self.wait_for_template(
+            guild_store = self.wait_for_template(
                 "dailies/emporium/guild_store.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Guild Store.",
             )
-            self.tap(Point(*guild_store))
+            self.tap(guild_store)
         except GameTimeoutError as fail:
             logging.error(f"{fail} {self.LANG_ERROR}")
             return
 
         try:
             logging.debug("Look for discount Invite Letter.")
-            invite_letter: tuple[int, int] = self.wait_for_template(
+            invite_letter = self.wait_for_template(
                 "dailies/emporium/invite_letter.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Discount Invite Letter already purchased.",
             )
-            self.tap(Point(*invite_letter))
+            self.tap(invite_letter)
 
             logging.debug("Confirm purchase.")
-            buy_letter: tuple[int, int] = self.wait_for_template(
+            buy_letter = self.wait_for_template(
                 "dailies/emporium/buy_letter.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to purchase Invite Letter.",
             )
-            self.tap(Point(*buy_letter))
+            self.tap(buy_letter)
             sleep(2)  # pop up takes time to appear in slow devices
         except GameTimeoutError as fail:
             logging.info(fail)
@@ -180,25 +179,25 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         try:
             logging.debug("Open Friendship Store.")
-            friendship_store: tuple[int, int] = self.wait_for_template(
+            friendship_store = self.wait_for_template(
                 "dailies/emporium/friendship_store.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Friendship Store.",
             )
-            self.tap(Point(*friendship_store))
+            self.tap(friendship_store)
             sleep(1)
         except GameTimeoutError as fail:
             logging.error(f"{fail} {self.LANG_ERROR}")
             return
 
         logging.debug("Looking for discount affinity item.")
-        discount_affinity: tuple[int, int] | None = self.game_find_template_match(
+        discount_affinity = self.game_find_template_match(
             "dailies/emporium/discount_affinity.png",
         )
 
         if discount_affinity:
             logging.info("Attempting to buy the discount affinity item.")
-            self.tap(Point(*discount_affinity))
+            self.tap(discount_affinity)
             sleep(1)
             self.tap(Point(600, 1780), scale=True)  # Purchase
             sleep(1)
@@ -213,13 +212,13 @@ class DailiesMixin(AFKJourneyBase, ABC):
             return
 
         logging.info("Buying other affinity items.")
-        other_affinity_items: list[tuple[int, int]] = self.find_all_template_matches(
+        other_affinity_items = self.find_all_template_matches(
             "dailies/emporium/other_affinity.png",
             crop_regions=CropRegions(bottom=0.4),
         )
 
         for affinity_item in other_affinity_items:
-            self.tap(Point(*affinity_item))
+            self.tap(affinity_item)
             sleep(1)
             self.tap(Point(600, 1780), scale=True)  # Purchase
             sleep(1)
@@ -238,46 +237,46 @@ class DailiesMixin(AFKJourneyBase, ABC):
         logging.info("Doing daily single pull.")
         try:
             logging.debug("Opening Noble Tavern.")
-            tavern: tuple[int, int] = self.wait_for_template(
+            tavern = self.wait_for_template(
                 "dailies/noble_tavern/noble_tavern.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find the Noble Tavern.",
             )
-            self.tap(Point(*tavern))
+            self.tap(tavern)
             sleep(2)
 
             logging.debug("Select All-Hero Recruitment.")
-            all_hero_recruit: tuple[int, int] = self.wait_for_template(
+            all_hero_recruit = self.wait_for_template(
                 "dailies/noble_tavern/all_hero_recruit.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find All-Hero Recruitment.",
             )
-            self.tap(Point(*all_hero_recruit))
+            self.tap(all_hero_recruit)
             sleep(2)
 
             logging.debug("Click Recruit 1.")
-            recruit: tuple[int, int] = self.wait_for_template(
+            recruit = self.wait_for_template(
                 "dailies/noble_tavern/recruit.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="No Invite Letters.",
             )
-            self.tap(Point(*recruit))
+            self.tap(recruit)
             sleep(2)
 
-            max_hero_continue: tuple[int, int] | None = self.game_find_template_match(
+            max_hero_continue = self.game_find_template_match(
                 "dailies/noble_tavern/maxed_hero_continue.png"
             )
             if max_hero_continue:
                 logging.debug("Dismiss max hero warning.")
-                self.tap(Point(*max_hero_continue))
+                self.tap(max_hero_continue)
 
             logging.debug("Wait for back button.")
-            confirm_summon: tuple[int, int] = self.wait_for_template(
+            confirm_summon = self.wait_for_template(
                 "back.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to recruit.",
             )
-            self.tap(Point(*confirm_summon))
+            self.tap(confirm_summon)
             sleep(2)
         except GameTimeoutError as fail:
             logging.error(f"{fail} {self.LANG_ERROR}")
@@ -308,21 +307,21 @@ class DailiesMixin(AFKJourneyBase, ABC):
         logging.info("Claiming friend rewards.")
         try:
             logging.debug("Click Friends.")
-            friends: tuple[int, int] = self.wait_for_template(
+            friends = self.wait_for_template(
                 "dailies/hamburger/friends.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Friends. Sadge.",
             )
-            self.tap(Point(*friends))
+            self.tap(friends)
             sleep(1)
 
             logging.debug("Click Send & Receive.")
-            send_receive: tuple[int, int] = self.wait_for_template(
+            send_receive = self.wait_for_template(
                 "dailies/hamburger/send_receive.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Friend rewards already claimed.",
             )
-            self.tap(Point(*send_receive))
+            self.tap(send_receive)
             sleep(2)
             self.tap(Point(540, 1620))  # Close confirmation
             sleep(1)
@@ -330,20 +329,20 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.info(f"{fail} {self.LANG_ERROR}")
 
         logging.debug("Back.")  # TODO: Create generic back method.
-        back: tuple[int, int] | None = self.game_find_template_match("back.png")
-        self.tap(Point(*back)) if back else self.press_back_button()
+        back = self.game_find_template_match("back.png")
+        self.tap(back) if back else self.press_back_button()
 
     def _claim_mail(self) -> None:
         """Claim mail."""
         logging.info("Claiming Mail.")
         try:
             logging.debug("Click Mail.")
-            mail: tuple[int, int] = self.wait_for_template(
+            mail = self.wait_for_template(
                 "dailies/hamburger/mail.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Mail.",
             )
-            self.tap(Point(*mail))
+            self.tap(mail)
             sleep(1)
         except GameTimeoutError as fail:
             logging.error(fail)
@@ -351,12 +350,12 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         try:
             logging.debug("Click Read All.")
-            read_all: tuple[int, int] = self.wait_for_template(
+            read_all = self.wait_for_template(
                 "dailies/hamburger/read_all.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="No mail.",
             )
-            self.tap(Point(*read_all))
+            self.tap(read_all)
             sleep(1)
             self.tap(Point(540, 1620))  # Close confirmation
             sleep(1)
@@ -364,50 +363,50 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.info(fail)
 
         logging.debug("Back.")
-        back: tuple[int, int] | None = self.game_find_template_match("back.png")
-        self.tap(Point(*back)) if back else self.press_back_button()
+        back = self.game_find_template_match("back.png")
+        self.tap(back) if back else self.press_back_button()
 
     def _claim_battle_pass(self) -> None:
         """Claim Battle Pass rewards."""
         logging.info("Claim Battle Pass rewards.")
         try:
             logging.debug("Click Noble Path.")
-            battle_pass: tuple[int, int] = self.wait_for_template(
+            battle_pass = self.wait_for_template(
                 "dailies/hamburger/battle_pass.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Battle Pass.",
             )
-            self.tap(Point(*battle_pass))
+            self.tap(battle_pass)
             sleep(2)
         except GameTimeoutError as fail:
             logging.error(fail)
             return
 
         logging.debug("Looking for available rewards.")
-        available_rewards: list[tuple[int, int]] = self.find_all_template_matches(
+        available_rewards = self.find_all_template_matches(
             "dailies/hamburger/rewards_available.png", crop_regions=CropRegions(top=0.8)
         )
         for bp_reward in available_rewards:
-            self.tap(Point(*bp_reward))
+            self.tap(bp_reward)
             sleep(2)
             self._quick_claim()
             sleep(1)
 
         logging.debug("Back.")
-        back: tuple[int, int] | None = self.game_find_template_match("back.png")
-        self.tap(Point(*back)) if back else self.press_back_button()
+        back = self.game_find_template_match("back.png")
+        self.tap(back) if back else self.press_back_button()
 
     def _claim_quests(self) -> None:
         """Claim Quest rewards."""
         logging.info("Claim Quest rewards.")
         try:
             logging.debug("Click Quests.")
-            quests: tuple[int, int] = self.wait_for_template(
+            quests = self.wait_for_template(
                 "dailies/hamburger/quests.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find daily Quests.",
             )
-            self.tap(Point(*quests))
+            self.tap(quests)
             sleep(2)
         except GameTimeoutError as fail:
             logging.error(fail)
@@ -429,13 +428,13 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def _quick_claim(self) -> None:
         logging.debug("Click Quick Claim.")
-        claim: tuple[int, int] | None = self.game_find_template_match(
+        claim = self.game_find_template_match(
             "dailies/hamburger/quick_claim.png",
         )
         if not claim:
             return
 
-        self.tap(Point(*claim))
+        self.tap(claim)
         sleep(2)
         self.tap(Point(540, 1620))  # Close confirmation
         sleep(2)
@@ -464,8 +463,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def _click_hero(self) -> None:
         """Click a hero for affinity and go next."""
-        back: tuple[int, int] | None = self.game_find_template_match("back.png")
-        back_button: Point = Point(*back) if back else Point(100, 1800)
+        back = self.game_find_template_match("back.png")
+        back_button: Point = back.box.center if back else Point(100, 1800)
 
         for _ in range(3):
             # NOTE: Sometimes spam click works and other times not.

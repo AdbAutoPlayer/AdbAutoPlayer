@@ -63,9 +63,7 @@ class DreamRealmMixin(AFKJourneyBase):
             bool: True if we have attempts to use, False otherwise.
         """
         logging.debug("Check stop condition.")
-        no_attempts: tuple[int, int] | None = self.game_find_template_match(
-            "dream_realm/done.png"
-        )
+        no_attempts = self.game_find_template_match("dream_realm/done.png")
 
         if (
             daily
@@ -91,13 +89,11 @@ class DreamRealmMixin(AFKJourneyBase):
             bool: True if a purchase was made, False if no attempt could be purchased.
         """
         # TODO: Can use _click_confirm_on_popup instead.
-        buy: tuple[int, int] | None = self.game_find_template_match(
-            "dream_realm/buy.png"
-        )
+        buy = self.game_find_template_match("dream_realm/buy.png")
 
         if buy:
             logging.debug("Purchasing DR attempt.")
-            self.tap(Point(*buy))
+            self.tap(buy)
             return True
 
         logging.debug("Looking for more DR attempts...")
@@ -108,7 +104,7 @@ class DreamRealmMixin(AFKJourneyBase):
                 template="dream_realm/buy.png", timeout=self.FAST_TIMEOUT
             )
             logging.debug("Purchasing DR attempt.")
-            self.tap(Point(*buy))
+            self.tap(buy)
             return True
         except GameTimeoutError:
             logging.info("No more DR attempts to purchase.")
@@ -120,12 +116,12 @@ class DreamRealmMixin(AFKJourneyBase):
         self.navigate_to_default_state()
         self.tap(Point(460, 1830))  # Battle Modes
         try:
-            dr_mode: tuple[int, int] = self.wait_for_template(
+            dr_mode = self.wait_for_template(
                 "dream_realm/label.png",
                 timeout_message="Could not find Dream Realm.",
                 timeout=self.MIN_TIMEOUT,
             )
-            self.tap(Point(*dr_mode))
+            self.tap(dr_mode)
             sleep(2)
         except GameTimeoutError as fail:
             logging.error(f"{fail} {self.LANG_ERROR}")
@@ -134,25 +130,23 @@ class DreamRealmMixin(AFKJourneyBase):
     def _claim_reward(self) -> None:
         """Claim Dream Realm reward."""
         logging.debug("Claim yesterday's rewards.")
-        reward: tuple[int, int] | None = self.game_find_template_match(
-            "dream_realm/dr_ranking.png"
-        )
+        reward = self.game_find_template_match("dream_realm/dr_ranking.png")
 
         if not reward:
             logging.debug("Failed to find rankings.")
             return
 
-        self.tap(Point(*reward))
+        self.tap(reward)
         sleep(2)
 
         try:
             logging.debug("Click Tap to Close, if available.")
-            tap_to_close: tuple[int, int] = self.wait_for_template(
+            tap_to_close = self.wait_for_template(
                 "tap_to_close.png",
                 timeout=self.FAST_TIMEOUT,
                 timeout_message="Dream Realm rewards already claimed.",
             )
-            self.tap(Point(*tap_to_close))
+            self.tap(tap_to_close)
             sleep(1)
         except GameTimeoutError as fail:
             logging.info(fail)

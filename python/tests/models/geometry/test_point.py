@@ -58,3 +58,14 @@ class TestPoint(unittest.TestCase):
         # Test np_int as well
         p = Point(np.int64(10), np.int64(20))
         self.assertEqual(str(p), "Point(x=10, y=20)")
+
+    def test_add(self):
+        p = Point(10, 20)
+        p += Point(10, 20)
+        self.assertEqual(p.x, 20)
+        self.assertEqual(p.y, 40)
+
+        p = Point(10, 20)
+        p = p + p
+        self.assertEqual(p.x, 20)
+        self.assertEqual(p.y, 40)

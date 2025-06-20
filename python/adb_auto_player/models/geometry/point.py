@@ -6,13 +6,21 @@ from dataclasses import dataclass
 import numpy as np
 from adb_auto_player.util.type_helpers import to_int_if_needed
 
+from .coordinates import Coordinates
 
-@dataclass(frozen=True)
-class Point:
+
+@dataclass
+class Point(Coordinates):
     """A point in 2D space with non-negative integer coordinates."""
 
-    x: int
-    y: int
+    def __init__(self, x: int, y: int):
+        """Initialize point with x, y-coordinates."""
+        if x < 0 or y < 0:
+            raise ValueError(
+                f"Invalid Point coordinates: x={x}, y={y}. Both must be non-negative."
+            )
+        self._x = x
+        self._y = y
 
     def __post_init__(self):
         """Validate that coordinates are non-negative."""
@@ -21,6 +29,16 @@ class Point:
                 f"Invalid Point coordinates: x={self.x}, y={self.y}. "
                 "Both must be non-negative."
             )
+
+    @property
+    def x(self) -> int:
+        """X-coordinate."""
+        return self._x
+
+    @property
+    def y(self) -> int:
+        """Y-coordinate."""
+        return self._y
 
     def distance_to(self, other: "Point") -> float:
         """Calculate Euclidean distance to another point."""
@@ -66,3 +84,11 @@ class Point:
     def __str__(self):
         """Return a string representation of the point."""
         return f"Point(x={int(self.x)}, y={int(self.y)})"
+
+    def __add__(self, other: "Point") -> "Point":
+        """Creates a new Point with coordinates added to this point."""
+        if not isinstance(other, Point):
+            return NotImplemented
+        new_x = self.x + other.x
+        new_y = self.y + other.y
+        return Point(new_x, new_y)

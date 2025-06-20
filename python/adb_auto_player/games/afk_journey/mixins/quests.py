@@ -80,22 +80,20 @@ class QuestMixin(AFKJourneyBase, ABC):
         holding_buttons = ["quests/tap_and_hold", "quests/sense"]
 
         # First we check for buttons on screen taht we need to hold down
-        result: tuple[str, int, int] | None = self.find_any_template(
+        result = self.find_any_template(
             templates=holding_buttons,
         )
         if result is not None:
-            logging.info("Holding button: " + result[0])
+            logging.info("Holding button: " + result.template)
             self.hold(Point(550, 1200))
             return True
 
         # Then we check for buttons we need to press, higher threshold as
         # red/blue_dialogue trigger a lot with background noise
-        result2: tuple[str, int, int] | None = self.find_any_template(
-            templates=buttons, threshold=0.92
-        )
+        result2 = self.find_any_template(templates=buttons, threshold=0.92)
         if result2 is not None:
-            logging.info("Clicking button: " + result2[0])
-            self.tap(Point(result2[1], result2[2]), scale=True)
+            logging.info("Clicking button: " + result2.template)
+            self.tap(result2, scale=True)
             sleep(
                 1
             )  # allows time for update before checking again if a popup is triggered

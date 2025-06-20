@@ -3,6 +3,7 @@
 import random
 from dataclasses import dataclass
 
+from .coordinates import Coordinates
 from .point import Point
 
 # Constants
@@ -10,7 +11,7 @@ MAX_MARGIN_RATIO = 0.5
 
 
 @dataclass(frozen=True)
-class Box:
+class Box(Coordinates):
     """Box with top-left corner and dimensions."""
 
     top_left: Point
@@ -74,6 +75,16 @@ class Box:
         )
 
     @property
+    def x(self) -> int:
+        """Center x-coordinate."""
+        return self.center.x
+
+    @property
+    def y(self) -> int:
+        """Center y-coordinate."""
+        return self.center.y
+
+    @property
     def area(self) -> int:
         """Get the area of the box."""
         return self.width * self.height
@@ -131,5 +142,17 @@ class Box:
     def __str__(self):
         """Return a string representation of the box."""
         return (
-            f"Box(top_left={self.top_left}, width={self.width}, height={self.height})"
+            f"Box(top_left={self.top_left}, width={self.width}, height={self.height}, "
+            f"center={self.center})"
         )
+
+    def with_offset(self, offset: Point) -> "Box":
+        """Return a new Box with coordinates offset.
+
+        Args:
+            offset: Point representing the offset to add to the box coordinates
+
+        Returns:
+            TemplateMatchResult: New Template MatchResult with adjusted box coordinates
+        """
+        return Box(self.top_left + offset, self.width, self.height)

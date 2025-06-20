@@ -100,12 +100,11 @@ class AFKStagesMixin(AFKJourneyBase):
             logging.debug("Clicking Battle button")
             self.tap(Point(x=800, y=1610), scale=True)
         sleep(2)
-        confirm = self.game_find_template_match(
+        if confirm := self.game_find_template_match(
             template="navigation/confirm.png",
             crop_regions=CropRegions(left=0.5, top=0.5),
-        )
-        if confirm:
-            self.tap(Point(*confirm))
+        ):
+            self.tap(confirm)
 
     def check_stages_are_available(self) -> None:
         if not self.store[self.STORE_SEASON] and self.game_find_template_match(

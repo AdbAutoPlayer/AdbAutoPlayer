@@ -2,11 +2,11 @@
 
 from dataclasses import dataclass
 
-from ..geometry import Box, Point
+from ..geometry import Box, Coordinates, Point
 
 
 @dataclass(frozen=True)
-class OCRResult:
+class OCRResult(Coordinates):
     """Container for OCR detection results."""
 
     text: str
@@ -37,3 +37,13 @@ class OCRResult:
         )
         new_box = Box(new_top_left, self.box.width, self.box.height)
         return OCRResult(self.text, self.confidence, new_box)
+
+    @property
+    def x(self) -> int:
+        """Center x-coordinate."""
+        return self.box.x
+
+    @property
+    def y(self) -> int:
+        """Center y-coordinate."""
+        return self.box.y

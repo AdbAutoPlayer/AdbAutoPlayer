@@ -14,7 +14,7 @@ class TestTemplateMatchResult(unittest.TestCase):
 
     def test_str(self):
         expected_str = (
-            f"Template MatchResult(template='{self.template}', "
+            f"TemplateMatchResult(template='{self.template}', "
             f"confidence={self.confidence:.2f}, box={self.box})"
         )
         self.assertEqual(str(self.result), expected_str)
