@@ -25,34 +25,34 @@ class TestCropRegionsValidation:
     def test_invalid_horizontal_percentage_combination(self):
         """Test that left + right >= 100% raises ValueError."""
         with pytest.raises(
-            ValueError, match="Left .* Right .* crops >= 100% of image width"
+            ValueError, match="Left.* Right.* crops >= 100% of image width"
         ):
             CropRegions(left=0.5, right=0.5)
 
         with pytest.raises(
-            ValueError, match="Left .* Right .* crops >= 100% of image width"
+            ValueError, match="Left.* Right.* crops >= 100% of image width"
         ):
             CropRegions(left=0.6, right=0.7)
 
         with pytest.raises(
-            ValueError, match="Left .* Right .* crops >= 100% of image width"
+            ValueError, match="Left.* Right.* crops >= 100% of image width"
         ):
             CropRegions(left="50%", right="50%")
 
     def test_invalid_vertical_percentage_combination(self):
         """Test that top + bottom >= 100% raises ValueError."""
         with pytest.raises(
-            ValueError, match="Top .* Bottom .* crops >= 100% of image height"
+            ValueError, match="Top.* Bottom.* crops >= 100% of image height"
         ):
             CropRegions(top=0.5, bottom=0.5)
 
         with pytest.raises(
-            ValueError, match="Top .* Bottom .* crops >= 100% of image height"
+            ValueError, match="Top.* Bottom.* crops >= 100% of image height"
         ):
             CropRegions(top=0.7, bottom=0.4)
 
         with pytest.raises(
-            ValueError, match="Top .* Bottom .* crops >= 100% of image height"
+            ValueError, match="Top.* Bottom.* crops >= 100% of image height"
         ):
             CropRegions(top="60%", bottom="40%")
 
