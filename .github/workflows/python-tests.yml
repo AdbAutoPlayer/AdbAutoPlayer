@@ -26,7 +26,11 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, macos-latest]
-
+        include:
+          - os: windows-latest
+            source_command: ".\\.venv\\Scripts\\Activate.ps1"
+          - os: macos-latest
+            source_command: "source .venv/bin/activate"
     steps:
       - uses: actions/checkout@v4
 
@@ -41,12 +45,18 @@ jobs:
           brew install --cask android-platform-tools
 
 
-      - name: Install uv
-        run: python -m pip install uv
+      - run: python -m pip install uv
+
+      - run: uv sync --dev
+        working-directory: python
 
       - name: Run Pytests for Codecov Test Analytics
-        working-directory: python
-        run: uv run pytest --cov --junitxml=junit.xml -o junit_family=legacy
+        run: |
+          cd python
+          ${{ matrix.source_command }}
+          cd ..
+          uv run pytest --cov --junitxml=junit.xml -o junit_family=legacy
+        continue-on-error: true
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
@@ -57,8 +67,11 @@ jobs:
           flags: ${{ matrix.os }}
 
       - name: Run Pytests for Codecov Coverage
-        working-directory: python
-        run: uv run pytest --maxfail=1 --disable-warnings --cov --cov-branch --cov-report=xml
+        run: |
+          cd python
+          ${{ matrix.source_command }}
+          cd ..
+          uv run pytest --disable-warnings --cov --cov-branch --cov-report=xml
 
       - name: Upload coverage reports to Codecov
         if: ${{ !cancelled() }}

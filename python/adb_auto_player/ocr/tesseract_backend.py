@@ -12,7 +12,6 @@ import pytesseract
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box, Point
 from adb_auto_player.models.ocr import OCRResult
-from pytesseract import TesseractNotFoundError
 
 from .. import ConfigLoader
 from .tesseract_config import TesseractConfig
@@ -21,7 +20,7 @@ from .tesseract_lang import Lang
 _NUM_COLORS_IN_RGB = 3
 
 
-class GroupingLevel(IntEnum):
+class _GroupingLevel(IntEnum):
     """Text grouping levels for OCR detection."""
 
     BLOCK = 2
@@ -75,7 +74,7 @@ def _initialize_tesseract() -> None:
 
     try:
         pytesseract.get_tesseract_version()
-    except TesseractNotFoundError as e:
+    except pytesseract.TesseractNotFoundError as e:
         if platform.system() == "Darwin":
             raise RuntimeError(
                 "Tesseract not found, try installing: "
@@ -207,19 +206,31 @@ class TesseractBackend:
         image: np.ndarray,
         config: TesseractConfig | None = None,
         min_confidence: ConfidenceValue = ConfidenceValue(0.0),
-        level: int = GroupingLevel.BLOCK,
-    ) -> list[OCRResult]:
+    ):
         """Detect text blocks and return results with bounding boxes.
 
         Args:
             image: Input RGB image as numpy array
             config: Optional TesseractConfig override
             min_confidence: Minimum confidence threshold, default no Threshold
-            level: GroupingLevel
 
         Returns:
             List of OCR results with text block bounding boxes
         """
+        return self._detect_text_grouping(
+            image,
+            config=config,
+            min_confidence=min_confidence,
+            level=_GroupingLevel.BLOCK,
+        )
+
+    def _detect_text_grouping(
+        self,
+        image: np.ndarray,
+        config: TesseractConfig | None = None,
+        min_confidence: ConfidenceValue = ConfidenceValue(0.0),
+        level: int = _GroupingLevel.BLOCK,
+    ) -> list[OCRResult]:
         if not config:
             config = self.config
 
@@ -243,15 +254,15 @@ class TesseractBackend:
 
             # Create grouping key based on level
             group_key: tuple[Any, ...]
-            if level == GroupingLevel.BLOCK:
+            if level == _GroupingLevel.BLOCK:
                 group_key = (data["page_num"][i], data["block_num"][i])
-            elif level == GroupingLevel.PARAGRAPH:
+            elif level == _GroupingLevel.PARAGRAPH:
                 group_key = (
                     data["page_num"][i],
                     data["block_num"][i],
                     data["par_num"][i],
                 )
-            elif level == GroupingLevel.LINE:
+            elif level == _GroupingLevel.LINE:
                 group_key = (
                     data["page_num"][i],
                     data["block_num"][i],
@@ -339,11 +350,11 @@ class TesseractBackend:
         Returns:
             List of OCR results with paragraph bounding boxes
         """
-        return self.detect_text_blocks(
+        return self._detect_text_grouping(
             image,
             config=config,
             min_confidence=min_confidence,
-            level=GroupingLevel.PARAGRAPH,
+            level=_GroupingLevel.PARAGRAPH,
         )
 
     def detect_text_lines(
@@ -362,11 +373,11 @@ class TesseractBackend:
         Returns:
             List of OCR results with line bounding boxes
         """
-        return self.detect_text_blocks(
+        return self._detect_text_grouping(
             image,
             config=config,
             min_confidence=min_confidence,
-            level=GroupingLevel.LINE,
+            level=_GroupingLevel.LINE,
         )
 
     def get_backend_info(self) -> dict[str, Any]:

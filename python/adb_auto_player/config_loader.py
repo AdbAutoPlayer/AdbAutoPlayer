@@ -55,6 +55,7 @@ class ConfigLoader:
                 self.working_dir.parent / "games",  # distributed CLI Context
                 self.working_dir / "adb_auto_player" / "games",
                 self.working_dir.parent.parent / "python" / "adb_auto_player" / "games",
+                self.working_dir / "python" / "adb_auto_player" / "games",
             ]
             self._games_dir = next((c for c in candidates if c.exists()), candidates[0])
             logging.debug(f"Python games path: {self._games_dir}")

@@ -33,7 +33,7 @@ def similar_image(
     )
 
     result = cv2.matchTemplate(base_cv, template_cv, method=cv2.TM_CCOEFF_NORMED)
-    return np.max(result) >= threshold.cv2_format
+    return bool(np.max(result) >= threshold.cv2_format)
 
 
 def find_template_match(
@@ -189,7 +189,7 @@ def find_worst_template_match(
     diff_map = cv2.matchTemplate(base_cv, template_cv, cv2.TM_SQDIFF)
 
     # Find the location with the maximum difference (worst match)
-    _, max_val, _, max_diff_loc = cv2.minMaxLoc(diff_map)
+    test1, max_val, test2, max_diff_loc = cv2.minMaxLoc(diff_map)
     min_difference_threshold = 10000
     if max_val < min_difference_threshold:
         return None
@@ -203,7 +203,7 @@ def find_worst_template_match(
             width=template_width,
             height=template_height,
         ),
-        confidence=ConfidenceValue(max_val),
+        confidence=ConfidenceValue(False),  # We don't have a confidence for this
     )
 
 

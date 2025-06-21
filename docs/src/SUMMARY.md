@@ -14,7 +14,6 @@
 
 # App Development
 - [Dev & Build](development/dev-and-build.md)
-- [General Info](development/general.md)
 - [Frontend README](development/frontend-README.md)
 - [Writing Bots](development/writing-bots.md)
 - [TODO](development/TODO.md)

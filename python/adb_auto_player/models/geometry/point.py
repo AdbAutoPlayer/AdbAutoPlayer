@@ -61,6 +61,10 @@ class Point(Coordinates):
         """Convert Point to numpy array of shape (2,) with dtype int."""
         return np.array([self.x, self.y])
 
+    def to_tuple(self) -> tuple[int, int]:
+        """Convert to tuple (x,y) with dtype int."""
+        return self.x, self.y
+
     def scale(self, scale_factor: float | None) -> "Point":
         """Return a new Point with coordinates scaled by the given scale factor.
 
@@ -82,6 +86,10 @@ class Point(Coordinates):
         return Point(new_x, new_y)
 
     def __str__(self):
+        """Return a string representation of the point."""
+        return f"Point(x={int(self.x)}, y={int(self.y)})"
+
+    def __repr__(self):
         """Return a string representation of the point."""
         return f"Point(x={int(self.x)}, y={int(self.y)})"
 
