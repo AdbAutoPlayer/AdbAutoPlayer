@@ -1,6 +1,7 @@
 name: Tests - Go
 
 on:
+  pull_request:
   push:
     branches:
       - "*"

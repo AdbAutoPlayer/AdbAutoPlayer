@@ -1,6 +1,10 @@
 name: Tests - Python
 
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/python-tests.yml'
+      - 'python/**'
   push:
     branches:
       - "*"
