@@ -88,14 +88,6 @@ class _SwipeParams:
 
 
 @dataclass
-class TapParams:
-    """Params for Tap functions."""
-
-    point: Point
-    scale: bool = False
-
-
-@dataclass
 class TemplateMatchParams:
     """Params for Template Matching functions."""
 

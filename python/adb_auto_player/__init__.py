@@ -17,7 +17,7 @@ from .exceptions import (
     NotInitializedError,
     UnsupportedResolutionError,
 )
-from .game import Game, TapParams, TemplateMatchParams
+from .game import Game, TemplateMatchParams
 
 __all__: list[str] = [
     "AutoPlayerError",
@@ -36,7 +36,6 @@ __all__: list[str] = [
     "GenericAdbUnrecoverableError",
     "NotInitializedError",
     "StreamingNotSupportedError",
-    "TapParams",
     "TemplateMatchParams",
     "UnsupportedResolutionError",
 ]
