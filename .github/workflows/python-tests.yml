@@ -67,6 +67,7 @@ jobs:
           slug: AdbAutoPlayer/AdbAutoPlayer
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.os }}
+          files: junit.xml
 
       - name: Upload coverage reports to Codecov
         if: ${{ !cancelled() }}
@@ -75,6 +76,7 @@ jobs:
           slug: AdbAutoPlayer/AdbAutoPlayer
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.os }}
+          files: junit.xml
 
       - name: Fail if Pytest Failed
         if: ${{ steps.run_pytest.outputs.exit_code != '' && steps.run_pytest.outputs.exit_code != '0' }}
