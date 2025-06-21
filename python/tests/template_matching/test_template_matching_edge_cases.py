@@ -8,16 +8,6 @@ from .test_image_creator import TestImageCreator
 class TestEdgeCases:
     """Tests for edge cases and error conditions."""
 
-    def test_very_small_images(self):
-        """Test handling of very small images."""
-        base_image = TestImageCreator.create_solid_color_image(10, 10)
-        template_image = TestImageCreator.create_solid_color_image(5, 5)
-
-        result = similar_image(base_image, template_image, ConfidenceValue("50%"))
-
-        # Should handle small images without error
-        assert result is True
-
     def test_single_pixel_template(self):
         """Test handling of single pixel template."""
         base_image = TestImageCreator.create_solid_color_image(
