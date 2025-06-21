@@ -145,7 +145,7 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
                 scrolls = 1
                 logging.info(
                     "Selecting "
-                    + hero_checker[0].split("/")[1].split("_")[0].capitalize()
+                    + hero_checker.template.split("/")[1].split("_")[0].capitalize()
                 )
                 self.tap(hero_checker)
                 sleep(1)
