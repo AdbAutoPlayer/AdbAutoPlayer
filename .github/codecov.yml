@@ -3,6 +3,7 @@ codecov:
 
 ignore:
   - "python/adb_auto_player/games/**"
+  - "python/tests/**"
 
 flags:
   windows-latest:
