@@ -198,6 +198,8 @@ class DailiesConfig(BaseModel):
 class ClaimAFKRewardsConfig(BaseModel):
     claim_stage_rewards: bool = Field(default=False, alias="Claim Stage Rewards")
 
+class TitanReaverProxyBattlesConfig(BaseModel):
+    proxy_battle_limit: PositiveInt = Field(default=50, alias="Titan Reaver Proxy Battle Limit")
 
 class Config(ConfigBase):
     """Config model."""
@@ -210,4 +212,5 @@ class Config(ConfigBase):
     arcane_labyrinth: ArcaneLabyrinthConfig = Field(alias="Arcane Labyrinth")
     dream_realm: DreamRealmConfig = Field(alias="Dream Realm")
     claim_afk_rewards: ClaimAFKRewardsConfig = Field(alias="Claim AFK Rewards")
+    titan_reaver_proxy_battles: TitanReaverProxyBattlesConfig = Field(alias="Titan Reaver Proxy Battles")
     my_custom_routine: MyCustomRoutineConfig = Field(alias="My Custom Routine")
