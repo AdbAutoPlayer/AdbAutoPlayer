@@ -8,3 +8,4 @@ nuitka-crash-report.xml
 .venv
 coverage.xml
 .coverage
+junit.xml

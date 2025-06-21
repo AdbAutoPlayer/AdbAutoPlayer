@@ -44,10 +44,10 @@ jobs:
 
       - name: Run Pytests with coverage
         working-directory: python
-        run: uv run pytest --maxfail=1 --disable-warnings --cov --cov-branch --cov-report=xml
+        run: uv run pytest --maxfail=1 --disable-warnings --cov --junitxml=junit.xml -o junit_family=legacy
 
       - name: Upload coverage reports to Codecov
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && !cancelled()
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
