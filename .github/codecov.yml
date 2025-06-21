@@ -2,7 +2,6 @@ codecov:
   branch: main
 
 ignore:
-  - "python/*"
   - "python/adb_auto_player/games/**"
   - "python/tests/**"
 
