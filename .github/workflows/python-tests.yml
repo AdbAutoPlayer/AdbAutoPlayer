@@ -53,10 +53,10 @@ jobs:
         working-directory: python
         run: |
           uv run pytest --disable-warnings --cov --junitxml=junit.xml -o junit_family=legacy
-
         continue-on-error: true
 
       - name: Run Pytests for Codecov Coverage
+        id: run_tests
         working-directory: python
         run: |
           uv run pytest --disable-warnings --cov --cov-branch --cov-report=xml
@@ -82,6 +82,6 @@ jobs:
           files: "python/coverage.xml"
           disable_search: 'true'
 
-      - name: Fail if Pytest Failed
-        if: ${{ steps.run_pytest.outputs.exit_code != '' && steps.run_pytest.outputs.exit_code != '0' }}
+      - name: Fail if tests failed
+        if: steps.run_tests.outputs.exit_code != '0'
         run: exit 1
