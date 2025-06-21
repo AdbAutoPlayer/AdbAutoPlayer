@@ -1,7 +1,6 @@
 import logging
 from abc import ABC
 from dataclasses import dataclass
-from enum import IntEnum
 from time import sleep
 from typing import Optional
 
@@ -10,7 +9,7 @@ from adb_auto_player.decorators.register_command import GuiMetadata, register_co
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models.geometry import Point
-from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.util.summary_generator import SummaryGenerator
 
 
 class TitanReaverProxyBattleConstants:
@@ -58,9 +57,9 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
     @register_command(
         name="TitanReaverProxyBattle",
         gui=GuiMetadata(
-            label="Proxy Battle",
+            label="Titan Reaver Proxy Battle",
             category=AFKJCategory.EVENTS_AND_OTHER,
-            tooltip="Automatically participate in proxy battles"
+            tooltip="Automatically find and participate Titan Reaver proxy battles"
         ),
     )
     def proxy_battle(self) -> None:
@@ -84,10 +83,9 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
                 
                 if self._execute_single_proxy_battle():
                     stats.battles_completed += 1
+                    SummaryGenerator.add_count("Titan Reaver Proxy Battle")
                     logging.info(f"Proxy Battle #{stats.battles_completed} completed")
                 else:
-                    # stats.battles_failed += 1
-                    # logging.warning(f"Proxy Battle attempt #{stats.battles_attempted} failed")
                     sleep(5)  # Wait longer after failure
                     
         except KeyboardInterrupt:
@@ -101,7 +99,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
         """Get battle limit"""
         try:
             # Try to fetch from configuration, use default value if not available
-            return getattr(self.get_config().general, 'proxy_battle_limit', 
+            return getattr(self.get_config().titan_reaver_proxy_battles, 'proxy_battle_limit', 
                           TitanReaverProxyBattleConstants.DEFAULT_BATTLE_LIMIT)
         except AttributeError:
             return TitanReaverProxyBattleConstants.DEFAULT_BATTLE_LIMIT
