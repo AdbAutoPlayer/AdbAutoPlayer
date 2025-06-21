@@ -82,7 +82,7 @@ class AFKStagesMixin(AFKJourneyBase):
         ):
             stages_pushed += 1
             logging.info(f"{stages_name}: {stages_pushed}")
-            SummaryGenerator().add_count(f"{stages_name}")
+            SummaryGenerator.add_count(f"{stages_name}")
 
     def _get_current_afk_stages_name(self) -> str:
         """Get stage name."""

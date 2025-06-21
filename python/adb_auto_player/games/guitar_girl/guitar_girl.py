@@ -58,9 +58,9 @@ class GuitarGirl(Game):
             ):
                 self.tap(result, log_message=None)
                 if "big_note" in result.template:
-                    SummaryGenerator().add_count("Big Note")
+                    SummaryGenerator.add_count("Big Note")
                 else:
-                    SummaryGenerator().add_count("Small Note")
+                    SummaryGenerator.add_count("Small Note")
 
             counter += 1
             counter = counter % mod

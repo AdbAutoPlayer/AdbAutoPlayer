@@ -184,7 +184,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
                 nonlocal count
                 count += 1
                 logging.info(f"Dura's Trials pushed: {count}")
-                SummaryGenerator().add_count("Dura's Trials")
+                SummaryGenerator.add_count("Dura's Trials")
 
                 self.tap(next_button)
                 self.tap(next_button)
@@ -203,7 +203,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             nonlocal count
             count += 1
             logging.info(f"Dura's Nightmare Trials pushed: {count}")
-            SummaryGenerator().add_count("Dura's Nightmare Trials")
+            SummaryGenerator.add_count("Dura's Nightmare Trials")
 
             if self.game_find_template_match(
                 template="duras_trials/continue_gray.png",

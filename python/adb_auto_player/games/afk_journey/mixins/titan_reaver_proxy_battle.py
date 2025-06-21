@@ -2,6 +2,7 @@ import logging
 from abc import ABC
 from dataclasses import dataclass
 from time import sleep
+from typing import ClassVar
 
 from adb_auto_player import GameTimeoutError
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
@@ -12,9 +13,10 @@ from adb_auto_player.util.summary_generator import SummaryGenerator
 
 
 class TitanReaverProxyBattleConstants:
-    """Constants related to proxy battles (currently for Titan Reaver only)"""
+    """Constants related to proxy battles (currently for Titan Reaver only)."""
 
-    # Calculation logic: Total number of lucky keys needed divided by keys earned per battle
+    # Calculation logic: Total number of lucky keys needed
+    # divided by keys earned per battle
     TOTAL_LUCKY_KEYS_NEEDED = 100 * 3 * 9  # Total keys needed to unlock all cards
     KEYS_PER_BATTLE = 7  # Keys earned per battle
     DEFAULT_BATTLE_LIMIT = TOTAL_LUCKY_KEYS_NEEDED // KEYS_PER_BATTLE
@@ -36,18 +38,19 @@ class TitanReaverProxyBattleConstants:
 
 @dataclass
 class TitanReaverProxyBattleStats:
-    """Proxy battle statistics with automatic SummaryGenerator updates"""
+    """Proxy battle statistics with automatic SummaryGenerator updates."""
 
     battles_attempted: int = 0
     battles_completed: int = 0
 
     # Mapping from field name to display name
-    _field_display_names = {
+    _field_display_names: ClassVar[dict[str, str]] = {
         "battles_attempted": "Battles Attempted",
         "battles_completed": "Battles Completed",
     }
 
     def __setattr__(self, name: str, value) -> None:
+        """Adds values to Summary too."""
         super().__setattr__(name, value)
 
         # Only call SummaryGenerator.set for tracked fields with display names
@@ -64,14 +67,17 @@ class TitanReaverProxyBattleStats:
 
     @property
     def success_rate(self) -> float:
-        """Calculate success rate"""
+        """Calculate success rate."""
         if self.battles_attempted == 0:
             return 0.0
         return (self.battles_completed / self.battles_attempted) * 100
 
 
 class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
-    """Proxy battle Mixin, provides automation for proxy battles (currently for Titan Reaver only)"""
+    """Proxy battle Mixin, provides automation for proxy battles.
+
+    (currently for Titan Reaver only)
+    """
 
     @register_command(
         name="TitanReaverProxyBattle",
@@ -82,7 +88,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
         ),
     )
     def proxy_battle(self) -> None:
-        """Execute proxy battle automation"""
+        """Execute proxy battle automation."""
         self.start_up()
 
         if self._stream is None:
@@ -113,7 +119,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
             logging.error(f"Unexpected error in proxy battle automation: {e}")
 
     def _get_battle_limit(self) -> int:
-        """Get battle limit"""
+        """Get battle limit."""
         try:
             # Try to fetch from configuration, use default value if not available
             return getattr(
@@ -125,7 +131,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
             return TitanReaverProxyBattleConstants.DEFAULT_BATTLE_LIMIT
 
     def _execute_single_proxy_battle(self) -> bool:
-        """Execute a single proxy battle
+        """Execute a single proxy battle.
 
         Returns:
             bool: Whether the battle was successfully completed
@@ -152,7 +158,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
             return False
 
     def _navigate_to_team_chat(self) -> bool:
-        """Navigate to team chat
+        """Navigate to team chat.
 
         Returns:
             bool: Whether navigation was successful
@@ -176,7 +182,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
         return False  # Requires next loop to check again
 
     def _is_in_team_chat(self) -> bool:
-        """Check if in team chat"""
+        """Check if in team chat."""
         return (
             self.find_any_template(
                 templates=[
@@ -187,7 +193,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
         )
 
     def _is_in_other_chat(self) -> bool:
-        """Check if in other chat channels"""
+        """Check if in other chat channels."""
         return (
             self.find_any_template(
                 ["assist/tap_to_enter.png", "assist/label_world_chat.png"]
@@ -196,12 +202,12 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
         )
 
     def _switch_to_team_chat(self) -> None:
-        """Switch to team chat"""
+        """Switch to team chat."""
         self.tap(TitanReaverProxyBattleConstants.TEAM_UP_CHAT_POINT, scale=True)
         sleep(TitanReaverProxyBattleConstants.NAVIGATION_DELAY)
 
     def _find_proxy_battle_banner(self) -> Point | None:
-        """Find proxy battle banner
+        """Find proxy battle banner.
 
         Returns:
             Optional[Point]: Banner location, or None if not found
@@ -220,12 +226,12 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
         return Point(banner.x, banner.y)
 
     def _swipe_chat_down(self) -> None:
-        """Swipe down the chat window"""
+        """Swipe down the chat window."""
         self.swipe_down(1000, 500, 1500)
         sleep(TitanReaverProxyBattleConstants.NAVIGATION_DELAY)
 
     def _join_proxy_battle(self, banner_location: Point) -> bool:
-        """Join proxy battle
+        """Join proxy battle.
 
         Args:
             banner_location: Banner location
@@ -249,7 +255,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
         return True
 
     def _execute_battle_sequence(self) -> bool:
-        """Execute battle sequence
+        """Execute battle sequence.
 
         Returns:
             bool: Whether the battle was successfully completed
@@ -266,7 +272,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
         ]
 
         for template, description in battle_steps:
-            if description == "confirm button" or description == "final confirm button":
+            if description in ("confirm button", "final confirm button"):
                 # Special handling for confirm button
                 if not self._wait_and_tap_template(template, description):
                     continue
@@ -276,7 +282,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
         return True
 
     def _wait_and_tap_template(self, template: str, description: str) -> bool:
-        """Wait for template to appear and tap
+        """Wait for template to appear and tap.
 
         Args:
             template: Template path

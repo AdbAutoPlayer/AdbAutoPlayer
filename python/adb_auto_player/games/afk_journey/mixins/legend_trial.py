@@ -113,7 +113,7 @@ class SeasonLegendTrial(AFKJourneyBase):
                 )
                 count += 1
                 logging.info(f"{faction.capitalize()} Trials pushed: {count}")
-                SummaryGenerator().add_count(f"{faction.capitalize()} Trials")
+                SummaryGenerator.add_count(f"{faction.capitalize()} Trials")
 
                 match match.template:
                     case "next.png":
