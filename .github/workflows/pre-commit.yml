@@ -3,9 +3,9 @@ permissions:
   contents: read
 on:
   pull_request:
+    branches: [ "main" ]
   push:
-    branches:
-      - "*"
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
