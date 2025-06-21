@@ -30,9 +30,9 @@ jobs:
         run: |
           go mod tidy
 
-      - name: Ensure frontend/build directory exists
+      - name: Ensure frontend/build directory exists and is embeddable
         shell: bash
-        run: mkdir -p frontend/build
+        run: mkdir -p frontend/build && touch frontend/build/.gitignore
 
       - name: Run Go tests
         run: |
