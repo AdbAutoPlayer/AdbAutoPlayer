@@ -10,6 +10,3 @@ flags:
     carryforward: true
   macos-latest:
     carryforward: true
-
-fixes:
-  - "::python/"
