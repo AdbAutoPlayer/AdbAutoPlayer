@@ -6,6 +6,15 @@ repos:
       - id: trailing-whitespace
         exclude: '\.md$'
       - id: end-of-file-fixer
+      - id: check-json
+      - id: check-yaml
+      - id: check-toml
+
+  # Shell scripts
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
 
   # Python
   - repo: https://github.com/pycqa/isort
@@ -36,12 +45,12 @@ repos:
   # UV
   - repo: https://github.com/astral-sh/uv-pre-commit
     # uv version.
-    rev: 0.6.10
+    rev: 0.7.9
     hooks:
       - id: uv-lock
   - repo: https://github.com/astral-sh/uv-pre-commit
     # uv version.
-    rev: 0.6.10
+    rev: 0.7.9
     hooks:
       - id: uv-export
 
