@@ -22,8 +22,9 @@ adb-auto-player = "adb_auto_player.main:main"
 
 [dependency-groups]
 dev = [
-    "nuitka>=2.7,<3",
-    "pytest>=8.3.4,<9",
+    "nuitka>=2.7.10",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
     "commitizen>=4.2.2,<5",
 ]
 

@@ -6,3 +6,5 @@ __pycache__
 debug/
 nuitka-crash-report.xml
 .venv
+coverage.xml
+.coverage
