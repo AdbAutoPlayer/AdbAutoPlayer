@@ -52,6 +52,9 @@ jobs:
 
       - name: Run Pytests for Codecov Test Analytics
         run: |
+          cd python
+          ${{ matrix.source_command }}
+          cd ..
           uv run pytest --cov --junitxml=junit.xml -o junit_family=legacy
         continue-on-error: true
 
@@ -65,6 +68,9 @@ jobs:
 
       - name: Run Pytests for Codecov Coverage
         run: |
+          cd python
+          ${{ matrix.source_command }}
+          cd ..
           uv run pytest --disable-warnings --cov --cov-branch --cov-report=xml
 
       - name: Upload coverage reports to Codecov
