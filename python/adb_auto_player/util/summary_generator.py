@@ -58,29 +58,21 @@ class SummaryGenerator:
         if phrase not in self.counters:
             self.counters[phrase] = 0
         self.counters[phrase] += count
+
         if self._json_handler_present:
-            summary = Summary(self.get_summary_message())
-            print(summary.to_json())
-            sys.stdout.flush()
+            if message := self.get_summary_message():
+                summary = Summary(message)
+                print(summary.to_json())
+                sys.stdout.flush()
 
-    def add_count_and_log(self, phrase: str, count: int = 1) -> None:
-        """Increment the count for the specified phrase and log the updated count.
-
-        Args:
-            phrase (str): The phrase to increment the count for.
-            count (int, optional): The amount to increment. Defaults to 1.
-        """
-        self.add_count(phrase, count)
-        logging.info(f"{phrase}: {self.counters.get(phrase, 0)}")
-
-    def get_summary_message(self) -> str:
+    def get_summary_message(self) -> str | None:
         """Generate a summary message of all phrase counts.
 
         Returns:
             str: The formatted summary message or a no-progress message if empty.
         """
         if not self.counters:
-            return "Summary - No progress recorded."
+            return None
 
         lines = [f"{phrase}: {count}" for phrase, count in self.counters.items()]
         summary = "=== SUMMARY ===\n" + "\n".join(lines)
