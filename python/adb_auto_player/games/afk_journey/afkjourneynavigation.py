@@ -7,6 +7,7 @@ from adb_auto_player.exceptions import (
     GameActionFailedError,
     GameNotRunningOrFrozenError,
 )
+from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Coordinates, Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import TemplateMatchResult
@@ -113,7 +114,7 @@ class AFKJourneyNavigation(Game, ABC):
                 "navigation/exit_the_game.png",
                 "navigation/are_you_sure_you_want_to_exit_the_game.png",
             ],
-            threshold=0.75,
+            threshold=ConfidenceValue("75%"),
         ):
             x_btn = self.game_find_template_match(
                 "navigation/x.png",
@@ -163,7 +164,9 @@ class AFKJourneyNavigation(Game, ABC):
         logging.info("Navigating to AFK stages screen.")
         self.navigate_to_battle_modes_screen()
 
-        self._tap_till_template_disappears("battle_modes/afk_stage.png", threshold=0.75)
+        self._tap_till_template_disappears(
+            "battle_modes/afk_stage.png", ConfidenceValue("75%")
+        )
 
         self.wait_for_template(
             template="navigation/resonating_hall_label.png",
@@ -184,7 +187,7 @@ class AFKJourneyNavigation(Game, ABC):
                 "battle_modes/arcane_labyrinth.png",
                 "popup/quick_purchase.png",
             ],
-            threshold=0.75,
+            threshold=ConfidenceValue("75%"),
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
 
@@ -198,7 +201,7 @@ class AFKJourneyNavigation(Game, ABC):
                 "battle_modes/duras_trials.png",
                 "battle_modes/arcane_labyrinth.png",
             ],
-            threshold=0.75,
+            threshold=ConfidenceValue("75%"),
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
 
@@ -309,7 +312,7 @@ class AFKJourneyNavigation(Game, ABC):
                 "arcane_labyrinth/enter.png",
                 "arcane_labyrinth/heroes_icon.png",
             ],
-            threshold=0.7,
+            threshold=ConfidenceValue("70%"),
             timeout=27,  # I imagine this animation can take really long for some people
             delay=1,
         )

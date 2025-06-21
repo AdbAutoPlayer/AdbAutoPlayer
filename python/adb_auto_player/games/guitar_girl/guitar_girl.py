@@ -8,6 +8,7 @@ from adb_auto_player import (
 )
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.decorators.register_game import register_game
+from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util.summary_generator import SummaryGenerator
@@ -53,7 +54,7 @@ class GuitarGirl(Game):
                     "big_note2.png",
                     "note.png",
                 ],
-                threshold=0.7,
+                threshold=ConfidenceValue("70%"),
                 crop_regions=CropRegions(bottom=0.5, right=0.2, top=0.05),
             ):
                 self.tap(result, log_message=None)

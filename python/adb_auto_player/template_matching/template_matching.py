@@ -11,7 +11,7 @@ from adb_auto_player.models.template_matching import MatchMode, MatchResult
 def similar_image(
     base_image: np.ndarray,
     template_image: np.ndarray,
-    threshold: float = 0.9,
+    threshold: ConfidenceValue = ConfidenceValue("90%"),
     grayscale: bool = False,
 ) -> bool:
     """Compares the similarity between two images.
@@ -41,7 +41,7 @@ def find_template_match(
     base_image: np.ndarray,
     template_image: np.ndarray,
     match_mode: MatchMode = MatchMode.BEST,
-    threshold: float = 0.9,
+    threshold: ConfidenceValue = ConfidenceValue("90%"),
     grayscale: bool = False,
 ) -> MatchResult | None:
     """Find a template image within a base image with different matching modes.
@@ -112,7 +112,7 @@ def find_template_match(
 def find_all_template_matches(
     base_image: np.ndarray,
     template_image: np.ndarray,
-    threshold: float = 0.9,
+    threshold: ConfidenceValue = ConfidenceValue("90%"),
     grayscale: bool = False,
     min_distance: int = 10,
 ) -> list[MatchResult]:

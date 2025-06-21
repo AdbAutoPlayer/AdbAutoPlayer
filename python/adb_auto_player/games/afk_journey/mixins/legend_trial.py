@@ -13,6 +13,7 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
 )
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util.summary_generator import SummaryGenerator
 
@@ -142,7 +143,7 @@ class SeasonLegendTrial(AFKJourneyBase):
                 "legend_trials/challenge_ch.png",
                 "legend_trials/challenge_ge.png",
             ],
-            threshold=0.8,
+            threshold=ConfidenceValue("80%"),
             grayscale=True,
             crop_regions=CropRegions(left=0.3, right=0.3, top=0.2, bottom=0.2),
             timeout=self.MIN_TIMEOUT,

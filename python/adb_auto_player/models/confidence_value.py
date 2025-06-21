@@ -1,4 +1,4 @@
-"""Threshold dataclass for confidence values."""
+"""ConfidenceValue dataclass for confidence values."""
 
 from dataclasses import dataclass
 
@@ -11,7 +11,7 @@ _MAX_PERCENTAGE_INT = 100
 class ConfidenceValue:
     """Represents a confidence value with flexible input formats.
 
-    Used for confidence threshold and results.
+    Used for confidence ConfidenceValue and results.
 
     Supports:
     - Percentage strings: "80%", "95%"
@@ -25,41 +25,41 @@ class ConfidenceValue:
 
     value: float
 
-    def __init__(self, threshold: str | int | float):
-        """Initialize threshold from various input formats.
+    def __init__(self, value: str | int | float):
+        """Initialize ConfidenceValue from various input formats.
 
         Args:
-            threshold: Threshold value in various formats
+            value: ConfidenceValue value in various formats
 
         Raises:
-            ValueError: If threshold format is invalid or out of range
+            ValueError: If ConfidenceValue format is invalid or out of range
         """
-        self.value = _parse_threshold(threshold)
+        self.value = _parse_value(value)
 
     @property
     def percentage(self) -> float:
-        """Get threshold as percentage (0.0-100.0).
+        """Get ConfidenceValue as percentage (0.0-100.0).
 
         Returns:
-            Threshold as percentage
+            ConfidenceValue as percentage
         """
         return self.value * 100.0
 
     @property
     def tesseract_format(self) -> float:
-        """Get threshold in Tesseract's expected format (0.0-100.0).
+        """Get ConfidenceValue in Tesseract's expected format (0.0-100.0).
 
         Returns:
-            Threshold in Tesseract format
+            ConfidenceValue in Tesseract format
         """
         return self.percentage
 
     @property
     def cv2_format(self) -> float:
-        """Get threshold as normalized float (0.0-1.0).
+        """Get ConfidenceValue as normalized float (0.0-1.0).
 
         Returns:
-            Normalized threshold value
+            Normalized ConfidenceValue value
         """
         return self.value
 
@@ -82,11 +82,8 @@ class ConfidenceValue:
         elif isinstance(other, int | float):
             # Compare with normalized value
             try:
-                other_threshold = ConfidenceValue(other)
-                return (
-                    abs(self.value - other_threshold.value)
-                    < _FLOAT_COMPARISON_TOLERANCE
-                )
+                other_value = ConfidenceValue(other)
+                return abs(self.value - other_value.value) < _FLOAT_COMPARISON_TOLERANCE
             except ValueError:
                 return False
         return False
@@ -97,8 +94,8 @@ class ConfidenceValue:
             return self.value < other.value
         elif isinstance(other, int | float):
             try:
-                other_threshold = ConfidenceValue(other)
-                return self.value < other_threshold.value
+                other_value = ConfidenceValue(other)
+                return self.value < other_value.value
             except ValueError:
                 return NotImplemented
         return NotImplemented
@@ -113,8 +110,8 @@ class ConfidenceValue:
             return self.value > other.value
         elif isinstance(other, int | float):
             try:
-                other_threshold = ConfidenceValue(other)
-                return self.value > other_threshold.value
+                other_confidence_value = ConfidenceValue(other)
+                return self.value > other_confidence_value.value
             except ValueError:
                 return NotImplemented
         return NotImplemented
@@ -128,10 +125,10 @@ def _normalize_numeric_value(value: int | float) -> float:
     """Normalize numeric value to 0.0-1.0 range.
 
     Args:
-        value: Numeric threshold value
+        value: Numeric value
 
     Returns:
-        Normalized threshold value (0.0-1.0)
+        Normalized value (0.0-1.0)
 
     Raises:
         ValueError: If value is out of valid range
@@ -150,52 +147,52 @@ def _normalize_numeric_value(value: int | float) -> float:
         # Treat as percentage
         return float(value) / 100.0
     else:
-        raise ValueError(f"Threshold must be between 0-1 or 0-100, got {value}")
+        raise ValueError(f"ConfidenceValue must be between 0-1 or 0-100, got {value}")
 
 
-def _parse_threshold(threshold: str | int | float) -> float:
-    """Parse threshold from various input formats to normalized float (0.0-1.0).
+def _parse_value(value: str | int | float) -> float:
+    """Parse value from various input formats to normalized float (0.0-1.0).
 
     Args:
-        threshold: Input threshold value
+        value: Input value
 
     Returns:
-        Normalized threshold value (0.0-1.0)
+        Normalized value (0.0-1.0)
 
     Raises:
-        ValueError: If threshold format is invalid or out of range
+        ValueError: If confidence value format is invalid or out of range
     """
-    if isinstance(threshold, str):
-        threshold = threshold.strip()
+    if isinstance(value, str):
+        value = value.strip()
 
         # Handle percentage strings
-        if threshold.endswith("%"):
+        if value.endswith("%"):
             try:
-                value = threshold[:-1]
+                value = value[:-1]
                 value = value.strip()
                 percent_value = float(value)
                 if not _MIN_PERCENTAGE_INT <= percent_value <= _MAX_PERCENTAGE_INT:
                     raise ValueError(
-                        f"Percentage must be between 0% and 100%, got {threshold}"
+                        f"Percentage must be between 0% and 100%, got {value}"
                     )
                 return percent_value / 100.0
             except ValueError as e:
                 if "could not convert string to float" in str(e):
-                    raise ValueError(f"Invalid percentage format: {threshold}")
+                    raise ValueError(f"Invalid percentage format: {value}")
                 raise
 
         # Handle string numbers
         try:
-            if "." in threshold:
-                num_value = float(threshold)
+            if "." in value:
+                num_value = float(value)
             else:
-                num_value = int(threshold)
+                num_value = int(value)
             return _normalize_numeric_value(num_value)
         except ValueError:
-            raise ValueError(f"Invalid threshold format: {threshold}")
+            raise ValueError(f"Invalid ConfidenceValue format: {value}")
 
-    elif isinstance(threshold, int | float):
-        return _normalize_numeric_value(threshold)
+    elif isinstance(value, int | float):
+        return _normalize_numeric_value(value)
 
     else:
-        raise ValueError(f"Unsupported threshold type: {type(threshold)}")
+        raise ValueError(f"Unsupported ConfidenceValue type: {type(value)}")
