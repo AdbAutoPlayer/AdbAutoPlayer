@@ -7,3 +7,6 @@ PATCH_*
 node_modules
 release_zip
 debug
+coverage.xml
+junit.xml
+.coverage
