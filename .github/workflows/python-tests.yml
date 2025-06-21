@@ -68,6 +68,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.os }}
           files: junit.xml
+          disable_search: 'true'
 
       - name: Upload coverage reports to Codecov
         if: ${{ !cancelled() }}
@@ -77,6 +78,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.os }}
           files: junit.xml
+          disable_search: 'true'
 
       - name: Fail if Pytest Failed
         if: ${{ steps.run_pytest.outputs.exit_code != '' && steps.run_pytest.outputs.exit_code != '0' }}
