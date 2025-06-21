@@ -77,6 +77,8 @@ popup_messages: list[PopupMessage] = [
         text="Confirm to use Diamonds?",
         ignore=True,
     ),
+    # DR
+    # Use x to purchase a Dream Realm challenge attempt? Daily Attempts: y/10
 ]
 
 
