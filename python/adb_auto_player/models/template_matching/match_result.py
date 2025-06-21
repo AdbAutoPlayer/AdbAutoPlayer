@@ -36,6 +36,10 @@ class MatchResult(Coordinates):
             template=template,
         )
 
+    def __str__(self) -> str:
+        """Return a string representation of the MatchResult."""
+        return f"MatchResult(confidence={self.confidence}, box={self.box})"
+
     @property
     def x(self) -> int:
         """Center x-coordinate."""
