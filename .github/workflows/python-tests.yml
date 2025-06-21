@@ -2,13 +2,13 @@ name: Tests - Python
 
 on:
   pull_request:
+    branches: [ "main" ]
     paths:
       - '.github/workflows/python-tests.yml'
       - '.github/codecov.yml'
       - 'python/**'
   push:
-    branches:
-      - "*"
+    branches: [ "main" ]
     paths:
       - '.github/workflows/python-tests.yml'
       - '.github/codecov.yml'
