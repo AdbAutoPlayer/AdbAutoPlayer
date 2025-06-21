@@ -11,6 +11,7 @@ from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.games.afk_journey.mixins.afk_stages import AFKStagesMixin
 from adb_auto_player.games.afk_journey.mixins.arena import ArenaMixin
 from adb_auto_player.games.afk_journey.mixins.dream_realm import DreamRealmMixin
+from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 
@@ -112,7 +113,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Opening Emporium.")
             emporium = self.wait_for_template(
                 "dailies/emporium/emporium.png",
-                threshold=0.7,
+                threshold=ConfidenceValue("70%"),
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Emporium.",
             )

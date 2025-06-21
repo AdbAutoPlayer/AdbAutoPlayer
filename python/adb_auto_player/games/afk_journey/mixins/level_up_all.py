@@ -6,6 +6,7 @@ from adb_auto_player.decorators.register_custom_routine_choice import (
 )
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.log_presets import LogPreset
+from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import TemplateMatchResult
 
@@ -38,7 +39,7 @@ class LevelUpAllHeroes(AFKJourneyBase):
         if level_up_all_button := self.game_find_template_match(
             "resonating_hall/level_up_all.png",
             crop_regions=CropRegions(left=0.3, right=0.3, top=0.7),
-            threshold=0.95,
+            threshold=ConfidenceValue("95%"),
         ):
             return level_up_all_button
         return None

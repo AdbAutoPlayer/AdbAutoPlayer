@@ -7,6 +7,7 @@ from time import sleep
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Point
 
 
@@ -139,7 +140,9 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
         while selected_heroes < hero_slots:
             hero_checker = self.find_any_template(
                 templates=heroes,
-                threshold=0.93,  # Else Faramor triggers while already selected
+                threshold=ConfidenceValue(
+                    "93%"
+                ),  # Else Faramor triggers while already selected
             )
             if hero_checker is not None:
                 scrolls = 1

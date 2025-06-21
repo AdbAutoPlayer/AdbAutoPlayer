@@ -7,6 +7,7 @@ from time import sleep
 from adb_auto_player.decorators.register_command import GuiMetadata, register_command
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Point
 
 
@@ -90,7 +91,9 @@ class QuestMixin(AFKJourneyBase, ABC):
 
         # Then we check for buttons we need to press, higher threshold as
         # red/blue_dialogue trigger a lot with background noise
-        result2 = self.find_any_template(templates=buttons, threshold=0.92)
+        result2 = self.find_any_template(
+            templates=buttons, threshold=ConfidenceValue("92%")
+        )
         if result2 is not None:
             logging.info("Clicking button: " + result2.template)
             self.tap(result2, scale=True)

@@ -21,6 +21,7 @@ class PopupMessage:
     click_dont_remind_me: bool = False
     hold_to_confirm: bool = False
     hold_duration_seconds: float = 5.0
+    ignore: bool = False
 
 
 # You do not actually need to add the whole text of the Popup Message
@@ -66,6 +67,15 @@ popup_messages: list[PopupMessage] = [
     PopupMessage(
         text="Skip this battle?",
         # Does not have "remind me" checkbox
+    ),
+    PopupMessage(
+        text="Spend to purchase Warrior's Guarantee",
+        # Daily attempts: x/5
+        ignore=True,
+    ),
+    PopupMessage(
+        text="Confirm to use Diamonds?",
+        ignore=True,
     ),
 ]
 
@@ -121,6 +131,9 @@ class AFKJourneyPopupHandler(Game, ABC):
             logging.error(f"Unknown popup detected: {ocr_results}")
             return False
 
+        if matching_popup.ignore:
+            return False
+
         if matching_popup.click_dont_remind_me:
             if preprocess_result.dont_remind_me_checkbox:
                 logging.info(
@@ -173,7 +186,7 @@ class AFKJourneyPopupHandler(Game, ABC):
                 "navigation/confirm.png",
                 "navigation/continue_top_right_corner.png",
             ],
-            threshold=0.8,
+            threshold=ConfidenceValue("80%"),
             crop_regions=CropRegions(left=0.5, top=0.4),
             screenshot=image,
         ):
@@ -185,7 +198,7 @@ class AFKJourneyPopupHandler(Game, ABC):
         if checkbox := self.game_find_template_match(
             template="popup/checkbox_unchecked.png",
             match_mode=MatchMode.TOP_LEFT,
-            threshold=0.8,
+            threshold=ConfidenceValue("80%"),
             crop_regions=CropRegions(right=0.8, top=0.2, bottom=0.6),
             screenshot=image,
         ):

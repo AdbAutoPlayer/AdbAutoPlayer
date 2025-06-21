@@ -11,7 +11,7 @@ from adb_auto_player.models.template_matching import MatchMode, MatchResult
 def similar_image(
     base_image: np.ndarray,
     template_image: np.ndarray,
-    threshold: float = 0.9,
+    threshold: ConfidenceValue = ConfidenceValue("90%"),
     grayscale: bool = False,
 ) -> bool:
     """Compares the similarity between two images.
@@ -29,19 +29,18 @@ def similar_image(
     base_cv, template_cv = _prepare_images_for_processing(
         base_image=base_image,
         template_image=template_image,
-        threshold=threshold,
         grayscale=grayscale,
     )
 
     result = cv2.matchTemplate(base_cv, template_cv, method=cv2.TM_CCOEFF_NORMED)
-    return np.max(result) >= threshold
+    return np.max(result) >= threshold.cv2_format
 
 
 def find_template_match(
     base_image: np.ndarray,
     template_image: np.ndarray,
     match_mode: MatchMode = MatchMode.BEST,
-    threshold: float = 0.9,
+    threshold: ConfidenceValue = ConfidenceValue("90%"),
     grayscale: bool = False,
 ) -> MatchResult | None:
     """Find a template image within a base image with different matching modes.
@@ -59,7 +58,6 @@ def find_template_match(
     base_cv, template_cv = _prepare_images_for_processing(
         base_image=base_image,
         template_image=template_image,
-        threshold=threshold,
         grayscale=grayscale,
     )
 
@@ -68,7 +66,7 @@ def find_template_match(
     result = cv2.matchTemplate(base_cv, template_cv, cv2.TM_CCOEFF_NORMED)
     if match_mode == MatchMode.BEST:
         _, max_val, _, max_loc = cv2.minMaxLoc(result)
-        if max_val >= threshold:
+        if max_val >= threshold.cv2_format:
             return MatchResult(
                 box=Box(
                     top_left=Point(x=max_loc[0], y=max_loc[1]),
@@ -79,7 +77,7 @@ def find_template_match(
             )
         return None
 
-    match_locations = np.where(result >= threshold)
+    match_locations = np.where(result >= threshold.cv2_format)
     if len(match_locations[0]) == 0:
         return None
 
@@ -112,7 +110,7 @@ def find_template_match(
 def find_all_template_matches(
     base_image: np.ndarray,
     template_image: np.ndarray,
-    threshold: float = 0.9,
+    threshold: ConfidenceValue = ConfidenceValue("90%"),
     grayscale: bool = False,
     min_distance: int = 10,
 ) -> list[MatchResult]:
@@ -131,14 +129,13 @@ def find_all_template_matches(
     base_cv, template_cv = _prepare_images_for_processing(
         base_image=base_image,
         template_image=template_image,
-        threshold=threshold,
         grayscale=grayscale,
     )
 
     template_height, template_width = template_cv.shape[:2]
 
     result = cv2.matchTemplate(base_cv, template_cv, cv2.TM_CCOEFF_NORMED)
-    match_locations = np.where(result >= threshold)
+    match_locations = np.where(result >= threshold.cv2_format)
 
     top_left_points_with_scores = [
         ((x, y), result[y, x]) for x, y in zip(match_locations[1], match_locations[0])
@@ -234,16 +231,6 @@ def _suppress_close_matches(
     return suppressed
 
 
-def _validate_threshold(threshold: float) -> None:
-    """Validate the threshold value.
-
-    Raises:
-        ValueError: If the threshold is less than 0 or greater than 1.
-    """
-    if threshold < 0.0 or threshold > 1.0:
-        raise ValueError(f"Threshold must be between 0 and 1, got {threshold}")
-
-
 def _validate_template_size(base_image: np.ndarray, template_image: np.ndarray) -> None:
     """Validate that the template image is smaller than the base image.
 
@@ -268,22 +255,18 @@ def _validate_template_size(base_image: np.ndarray, template_image: np.ndarray) 
 
 
 def _prepare_images_for_processing(
-    base_image, template_image, threshold=None, grayscale=True
+    base_image, template_image, grayscale=True
 ) -> tuple[np.ndarray, np.ndarray]:
     """Validates inputs and prepares images for template matching.
 
     Args:
         base_image (np.ndarray): The base image.
         template_image (np.ndarray): The template image.
-        threshold (float, optional): Matching threshold to validate.
         grayscale (bool): Whether to convert images to grayscale.
 
     Returns:
         Tuple[np.ndarray, np.ndarray]: Prepared base and template images.
     """
-    if threshold is not None:
-        _validate_threshold(threshold)
-
     _validate_template_size(base_image=base_image, template_image=template_image)
 
     if grayscale:

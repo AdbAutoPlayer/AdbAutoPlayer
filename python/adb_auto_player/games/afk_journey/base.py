@@ -16,6 +16,7 @@ from adb_auto_player.decorators.register_game import GameGUIMetadata, register_g
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import MatchMode
 
+from ...models import ConfidenceValue
 from ...models.geometry import Point
 from .afkjourneynavigation import AFKJourneyNavigation
 from .config import Config
@@ -189,7 +190,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             self.wait_for_roi_change(
                 start_image=start_image,
                 crop_regions=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
-                threshold=0.8,
+                threshold=ConfidenceValue("80%"),
                 timeout=self.MIN_TIMEOUT,
             )
             counter -= 1
@@ -247,7 +248,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                         top=0.5,
                         right=0.5,
                     ),
-                    threshold=0.8,
+                    threshold=ConfidenceValue("80%"),
                 )
                 if manual_clear:
                     logging.info("Manual formation found, skipping.")
@@ -364,7 +365,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                 "popup/checkbox_unchecked.png",
                 match_mode=MatchMode.TOP_LEFT,
                 crop_regions=CropRegions(right=0.8, top=0.2, bottom=0.6),
-                threshold=0.8,
+                threshold=ConfidenceValue("80%"),
             )
             if checkbox is None:
                 logging.error('Could not find "Don\'t remind for x days" checkbox')
