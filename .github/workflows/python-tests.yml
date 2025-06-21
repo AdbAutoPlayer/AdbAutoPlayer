@@ -11,6 +11,7 @@ on:
       - "*"
     paths:
       - '.github/workflows/python-tests.yml'
+      - '.github/codecov.yml'
       - 'python/**'
   workflow_dispatch:
 
