@@ -53,3 +53,4 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: AdbAutoPlayer/AdbAutoPlayer
           flags: ${{ matrix.os }}
+          files: "python/junit.xml"
