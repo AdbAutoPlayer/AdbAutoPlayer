@@ -64,6 +64,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
+          slug: AdbAutoPlayer/AdbAutoPlayer
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.os }}
 
@@ -71,6 +72,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: codecov/codecov-action@v5
         with:
+          slug: AdbAutoPlayer/AdbAutoPlayer
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.os }}
 
