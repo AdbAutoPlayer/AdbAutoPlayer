@@ -25,14 +25,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest]
+        os: [windows-latest, macos-latest]
         include:
           - os: windows-latest
             source_command: ".\\.venv\\Scripts\\Activate.ps1"
-            shell: pwsh
           - os: macos-latest
             source_command: "source .venv/bin/activate"
-            shell: bash
     steps:
       - uses: actions/checkout@v4
 
@@ -53,7 +51,6 @@ jobs:
         working-directory: python
 
       - name: Run Pytests for Codecov Test Analytics
-        shell: ${{ matrix.shell }}
         run: |
           uv run pytest --cov --junitxml=junit.xml -o junit_family=legacy
         continue-on-error: true
@@ -67,7 +64,6 @@ jobs:
           flags: ${{ matrix.os }}
 
       - name: Run Pytests for Codecov Coverage
-        shell: ${{ matrix.shell }}
         run: |
           uv run pytest --disable-warnings --cov --cov-branch --cov-report=xml
 
