@@ -1,6 +1,9 @@
 codecov:
   branch: stable
 
+ignore:
+  - "python/adb_auto_player/games/**"
+
 flags:
   windows-latest:
     carryforward: true
