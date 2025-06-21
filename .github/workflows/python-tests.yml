@@ -49,14 +49,9 @@ jobs:
 
       - run: python -m pip install uv
 
-      - run: uv sync --dev
-        working-directory: python
-
       - name: Run Pytests for Codecov Test Analytics
+        working-directory: python
         run: |
-          cd python
-          ${{ matrix.source_command }}
-          cd ..
           uv run pytest --cov --junitxml=junit.xml -o junit_family=legacy
         continue-on-error: true
 
@@ -67,7 +62,7 @@ jobs:
           slug: AdbAutoPlayer/AdbAutoPlayer
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.os }}
-          files: junit.xml
+          files: "python/junit.xml"
           disable_search: 'true'
 
       - name: Upload coverage reports to Codecov
@@ -77,7 +72,7 @@ jobs:
           slug: AdbAutoPlayer/AdbAutoPlayer
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.os }}
-          files: junit.xml
+          files: "python/junit.xml"
           disable_search: 'true'
 
       - name: Fail if Pytest Failed
