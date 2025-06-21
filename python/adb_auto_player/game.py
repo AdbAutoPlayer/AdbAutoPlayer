@@ -55,6 +55,7 @@ from adb_auto_player.template_matching import (
     similar_image,
 )
 from adb_auto_player.util.execute import execute
+from adb_auto_player.util.summary_generator import SummaryGenerator
 from adbutils._device import AdbDevice
 from PIL import Image
 from pydantic import BaseModel
@@ -1087,6 +1088,15 @@ class Game:
         # needed to restart game between Tasks if necessary.
         self.open_eyes(device_streaming=False)
 
+        try:
+            self._run_task_loop()
+        except KeyboardInterrupt:
+            # This only logs in CLI, KeyboardInterrupt is not triggered when the GUI
+            # stops the action
+            logging.info(SummaryGenerator().get_summary_message())
+            sys.exit(0)
+
+    def _run_task_loop(self):
         config = self.get_config().my_custom_routine
         if not config.daily_tasks and not config.repeating_tasks:
             logging.error(
@@ -1131,6 +1141,7 @@ class Game:
             hours, remainder = divmod(remaining.seconds, 3600)
             minutes = remainder // 60
             logging.info(f"Time until next Daily Task execution: {hours}h {minutes}m")
+        return
 
     def _get_game_commands(self) -> dict[str, CustomRoutineEntry] | None:
         commands = custom_routine_choice_registry
@@ -1173,6 +1184,9 @@ class Game:
     def _handle_task_error(self, task: str, error: Exception | None) -> None:
         if not error:
             return
+
+        if isinstance(error, KeyboardInterrupt):
+            raise KeyboardInterrupt
 
         if isinstance(error, AutoPlayerUnrecoverableError):
             logging.error(
@@ -1263,7 +1277,7 @@ class Game:
                 )
                 raise GameActionFailedError(message)
             if time_since_last_tap >= delay:
-                self.tap(coordinates)
+                self.tap(coordinates, scale=scale)
                 tap_count += 1
                 time_since_last_tap -= delay  # preserve overflow - more accurate timing
 
