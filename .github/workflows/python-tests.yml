@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/python-tests.yml'
+      - '.github/codecov.yml'
       - 'python/**'
   push:
     branches:
