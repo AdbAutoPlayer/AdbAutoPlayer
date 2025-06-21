@@ -39,7 +39,7 @@ popup_messages: list[PopupMessage] = [
     ),
     PopupMessage(
         text=(
-            "You haven't actiovated any Season Faction Talent."
+            "You haven't activated any Season Faction Talent."
             # Do you want to start the battle anyway?
         ),
         click_dont_remind_me=True,
