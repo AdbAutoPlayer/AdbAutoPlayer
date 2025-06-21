@@ -1174,6 +1174,9 @@ class Game:
         if not error:
             return
 
+        if isinstance(error, KeyboardInterrupt):
+            raise KeyboardInterrupt
+
         if isinstance(error, AutoPlayerUnrecoverableError):
             logging.error(
                 f"Task '{task}' failed with critical error: {error}, exiting..."
@@ -1263,7 +1266,7 @@ class Game:
                 )
                 raise GameActionFailedError(message)
             if time_since_last_tap >= delay:
-                self.tap(coordinates)
+                self.tap(coordinates, scale=scale)
                 tap_count += 1
                 time_since_last_tap -= delay  # preserve overflow - more accurate timing
 

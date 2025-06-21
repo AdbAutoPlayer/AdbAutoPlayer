@@ -11,11 +11,11 @@ from adb_auto_player.ipc.summary import Summary
 from adb_auto_player.logging_setup import JsonLogHandler
 
 
-def _check_json_handler() -> bool:
+def _is_using_json_handler() -> bool:
     """Check if the root logger has a JsonLogHandler among its handlers.
 
     Returns:
-        bool: True if a JsonLogHandler is present, False otherwise.
+        True if a JsonLogHandler is present, False otherwise.
     """
     logger = logging.getLogger()
     return any(isinstance(handler, JsonLogHandler) for handler in logger.handlers)
@@ -26,6 +26,9 @@ class SummaryGenerator:
 
     Generate summary messages, and optionally print JSON-formatted summaries
     when a JsonLogHandler is present in the logging configuration.
+
+    TODO: Add sections or categories with custom subheader
+    TODO: allow ordering
     """
 
     _instance = None
@@ -34,7 +37,7 @@ class SummaryGenerator:
         """Create or return the singleton instance of SummaryGenerator.
 
         Returns:
-            SummaryGenerator: The singleton instance.
+            The singleton instance.
         """
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -44,43 +47,56 @@ class SummaryGenerator:
     def _init(self):
         """Initialize the instance variables."""
         self.counters = {}
-        self._json_handler_present = _check_json_handler()
+        self._json_handler_present = _is_using_json_handler()
 
-    def add_count(self, phrase: str, count: int = 1) -> None:
+    @staticmethod
+    def add_count(phrase: str, count: int = 1) -> None:
         """Increment the count for the specified phrase by the given count.
 
         If a JsonLogHandler is present, print a JSON summary.
 
         Args:
-            phrase (str): The phrase to increment the count for.
-            count (int, optional): The amount to increment. Defaults to 1.
+            phrase: The phrase to increment the count for.
+            count: The amount to increment. Defaults to 1.
         """
-        if phrase not in self.counters:
-            self.counters[phrase] = 0
-        self.counters[phrase] += count
-        if self._json_handler_present:
-            summary = Summary(self.get_summary_message())
-            print(summary.to_json())
-            sys.stdout.flush()
+        generator = SummaryGenerator()
 
-    def add_count_and_log(self, phrase: str, count: int = 1) -> None:
-        """Increment the count for the specified phrase and log the updated count.
+        if phrase not in generator.counters:
+            generator.counters[phrase] = 0
+        generator.counters[phrase] += count
+
+        generator._json_flush()
+
+    @staticmethod
+    def set(phrase: str, item: int | str | float) -> None:
+        """Set the value for the specified phrase.
+
+        If a JsonLogHandler is present, print a JSON summary.
 
         Args:
-            phrase (str): The phrase to increment the count for.
-            count (int, optional): The amount to increment. Defaults to 1.
+            phrase: The phrase to set the value for.
+            item: The value to set.
         """
-        self.add_count(phrase, count)
-        logging.info(f"{phrase}: {self.counters.get(phrase, 0)}")
+        generator = SummaryGenerator()
+        generator.counters[phrase] = item
+        generator._json_flush()
 
-    def get_summary_message(self) -> str:
+    def _json_flush(self) -> None:
+        """Print JSON summary if JsonLogHandler is present and summary exists."""
+        if self._json_handler_present:
+            if message := self.get_summary_message():
+                summary = Summary(message)
+                print(summary.to_json())
+                sys.stdout.flush()
+
+    def get_summary_message(self) -> str | None:
         """Generate a summary message of all phrase counts.
 
         Returns:
-            str: The formatted summary message or a no-progress message if empty.
+            The formatted summary message or None if no counters exist.
         """
         if not self.counters:
-            return "Summary - No progress recorded."
+            return None
 
         lines = [f"{phrase}: {count}" for phrase, count in self.counters.items()]
         summary = "=== SUMMARY ===\n" + "\n".join(lines)
