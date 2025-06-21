@@ -53,8 +53,6 @@ jobs:
         if: github.ref != 'refs/heads/main' && !cancelled()
         uses: codecov/test-results-action@v1
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: AdbAutoPlayer/AdbAutoPlayer
           flags: ${{ matrix.os }}
 
       - name: Run Pytests with coverage
@@ -66,6 +64,4 @@ jobs:
         if: github.ref == 'refs/heads/main' && !cancelled()
         uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: AdbAutoPlayer/AdbAutoPlayer
           flags: ${{ matrix.os }}
