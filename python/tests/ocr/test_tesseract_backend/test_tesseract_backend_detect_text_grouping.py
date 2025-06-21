@@ -1,7 +1,8 @@
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box
 from adb_auto_player.models.ocr import OCRResult
-from ocr.test_tesseract_backend.conftest import TestImageGenerator
+
+from .conftest import TestImageGenerator
 
 
 class TestTesseractBackendDetectTextBlocks:
