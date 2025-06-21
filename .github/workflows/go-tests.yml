@@ -5,10 +5,15 @@ on:
   push:
     branches:
       - "*"
-    paths-ignore:
-      - 'frontend/**'
-      - 'docs/**'
-      - 'python/**'
+    paths:
+      - '.github/workflows/go-test.yml'
+      - '**.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'build/**'
+      - 'config/**'
+      - 'internal/**'
+      - 'wails.json'
   workflow_dispatch:
 
 jobs:
