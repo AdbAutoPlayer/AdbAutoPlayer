@@ -12,9 +12,8 @@ class TestSimilarImage:
 
     def test_identical_images_returns_true(self):
         """Test that identical images return True."""
-        image = TestImageCreator.create_solid_color_image(100, 100, (128, 128, 128))
-
-        result = similar_image(image, image, ConfidenceValue("80%"))
+        image1 = load_image(Path(__file__).parent / "data" / "guitar_girl_busk")
+        result = similar_image(image1, image1, ConfidenceValue("80%"))
 
         assert result is True
 
