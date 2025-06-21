@@ -52,7 +52,8 @@ jobs:
       - name: Run Pytests for Codecov Test Analytics
         working-directory: python
         run: |
-          uv run pytest --cov --junitxml=junit.xml -o junit_family=legacy
+          uv run pytest --disable-warnings --cov --cov-branch --cov-report=xml
+
         continue-on-error: true
 
       - name: Upload test results to Codecov
@@ -62,7 +63,7 @@ jobs:
           slug: AdbAutoPlayer/AdbAutoPlayer
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.os }}
-          files: "python/junit.xml"
+          files: "python/coverage.xml"
           disable_search: 'true'
 
       - name: Upload coverage reports to Codecov
@@ -72,7 +73,7 @@ jobs:
           slug: AdbAutoPlayer/AdbAutoPlayer
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.os }}
-          files: "python/junit.xml"
+          files: "python/coverage.xml"
           disable_search: 'true'
 
       - name: Fail if Pytest Failed
