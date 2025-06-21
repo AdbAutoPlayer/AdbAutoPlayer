@@ -22,7 +22,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest]
+        os: [windows-latest, macos-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -44,3 +44,4 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: AdbAutoPlayer/AdbAutoPlayer
+          flags: ${{ matrix.os }}

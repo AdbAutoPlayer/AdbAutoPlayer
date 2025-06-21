@@ -1,0 +1,8 @@
+codecov:
+  branch: stable
+
+flags:
+  windows-latest:
+    carryforward: true
+  macos-latest:
+    carryforward: true
