@@ -2,7 +2,8 @@ import pytest
 from adb_auto_player.template_matching.template_matching import (
     _prepare_images_for_processing,
 )
-from template_matching.image_creator import TestImageCreator
+
+from .test_image_creator import TestImageCreator
 
 
 class TestPrepareImagesForProcessing:

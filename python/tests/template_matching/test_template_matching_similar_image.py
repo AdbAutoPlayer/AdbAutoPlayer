@@ -3,7 +3,8 @@ from pathlib import Path
 from adb_auto_player.image_manipulation import load_image
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.template_matching import similar_image
-from template_matching.image_creator import TestImageCreator
+
+from .test_image_creator import TestImageCreator
 
 
 class TestSimilarImage:

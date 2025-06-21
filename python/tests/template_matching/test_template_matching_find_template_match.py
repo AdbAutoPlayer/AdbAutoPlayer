@@ -5,7 +5,8 @@ from adb_auto_player.image_manipulation import load_image
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.template_matching import MatchMode
 from adb_auto_player.template_matching import find_template_match
-from template_matching.image_creator import TestImageCreator
+
+from .test_image_creator import TestImageCreator
 
 
 class TestFindTemplateMatch:

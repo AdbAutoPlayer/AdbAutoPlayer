@@ -3,7 +3,8 @@ from pathlib import Path
 import numpy as np
 from adb_auto_player.image_manipulation import load_image
 from adb_auto_player.template_matching import find_worst_template_match
-from template_matching.image_creator import TestImageCreator
+
+from .test_image_creator import TestImageCreator
 
 
 class TestFindWorstTemplateMatch:
