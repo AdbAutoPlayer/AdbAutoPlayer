@@ -13,8 +13,8 @@ from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 
 
-class ProxyBattleConstants:
-    """Constants related to proxy battles"""
+class TitanReaverProxyBattleConstants:
+    """Constants related to proxy battles (currently for Titan Reaver only)"""
     
     # Calculation logic: Total number of lucky keys needed divided by keys earned per battle
     TOTAL_LUCKY_KEYS_NEEDED = 100 * 3 * 9  # Total keys needed to unlock all cards
@@ -37,7 +37,7 @@ class ProxyBattleConstants:
 
 
 @dataclass
-class ProxyBattleStats:
+class TitanReaverProxyBattleStats:
     """Proxy battle statistics"""
     battles_attempted: int = 0
     battles_completed: int = 0
@@ -52,11 +52,11 @@ class ProxyBattleStats:
         return (self.battles_completed / self.battles_attempted) * 100
 
 
-class ProxyBattleMixin(AFKJourneyBase, ABC):
-    """Proxy battle Mixin, provides automation for proxy battles"""
+class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
+    """Proxy battle Mixin, provides automation for proxy battles (currently for Titan Reaver only)"""
 
     @register_command(
-        name="ProxyBattle",
+        name="TitanReaverProxyBattle",
         gui=GuiMetadata(
             label="Proxy Battle",
             category=AFKJCategory.EVENTS_AND_OTHER,
@@ -74,7 +74,7 @@ class ProxyBattleMixin(AFKJourneyBase, ABC):
             )
 
         battle_limit = self._get_battle_limit()
-        stats = ProxyBattleStats()
+        stats = TitanReaverProxyBattleStats()
         
         logging.info(f"Starting Proxy Battle automation (limit: {battle_limit})")
         
@@ -86,8 +86,8 @@ class ProxyBattleMixin(AFKJourneyBase, ABC):
                     stats.battles_completed += 1
                     logging.info(f"Proxy Battle #{stats.battles_completed} completed")
                 else:
-                    stats.battles_failed += 1
-                    logging.warning(f"Proxy Battle attempt #{stats.battles_attempted} failed")
+                    # stats.battles_failed += 1
+                    # logging.warning(f"Proxy Battle attempt #{stats.battles_attempted} failed")
                     sleep(5)  # Wait longer after failure
                     
         except KeyboardInterrupt:
@@ -102,9 +102,9 @@ class ProxyBattleMixin(AFKJourneyBase, ABC):
         try:
             # Try to fetch from configuration, use default value if not available
             return getattr(self.get_config().general, 'proxy_battle_limit', 
-                          ProxyBattleConstants.DEFAULT_BATTLE_LIMIT)
+                          TitanReaverProxyBattleConstants.DEFAULT_BATTLE_LIMIT)
         except AttributeError:
-            return ProxyBattleConstants.DEFAULT_BATTLE_LIMIT
+            return TitanReaverProxyBattleConstants.DEFAULT_BATTLE_LIMIT
 
     def _execute_single_proxy_battle(self) -> bool:
         """Execute a single proxy battle
@@ -151,9 +151,9 @@ class ProxyBattleMixin(AFKJourneyBase, ABC):
         # Requires re-navigation
         logging.info("Navigating to Team-Up Chat")
         self.navigate_to_default_state()
-        self.tap(ProxyBattleConstants.CHAT_BUTTON_POINT, scale=True)
-        sleep(ProxyBattleConstants.NAVIGATION_DELAY)
-        self.tap(ProxyBattleConstants.TEAM_UP_CHAT_POINT, scale=True)
+        self.tap(TitanReaverProxyBattleConstants.CHAT_BUTTON_POINT, scale=True)
+        sleep(TitanReaverProxyBattleConstants.NAVIGATION_DELAY)
+        self.tap(TitanReaverProxyBattleConstants.TEAM_UP_CHAT_POINT, scale=True)
         
         return False  # Requires next loop to check again
 
@@ -174,8 +174,8 @@ class ProxyBattleMixin(AFKJourneyBase, ABC):
 
     def _switch_to_team_chat(self) -> None:
         """Switch to team chat"""
-        self.tap(ProxyBattleConstants.TEAM_UP_CHAT_POINT, scale=True)
-        sleep(ProxyBattleConstants.NAVIGATION_DELAY)
+        self.tap(TitanReaverProxyBattleConstants.TEAM_UP_CHAT_POINT, scale=True)
+        sleep(TitanReaverProxyBattleConstants.NAVIGATION_DELAY)
 
     def _find_proxy_battle_banner(self) -> Optional[Point]:
         """Find proxy battle banner
@@ -199,7 +199,7 @@ class ProxyBattleMixin(AFKJourneyBase, ABC):
     def _swipe_chat_down(self) -> None:
         """Swipe down the chat window"""
         self.swipe_down(1000, 500, 1500)
-        sleep(ProxyBattleConstants.NAVIGATION_DELAY)
+        sleep(TitanReaverProxyBattleConstants.NAVIGATION_DELAY)
 
     def _join_proxy_battle(self, banner_location: Point) -> bool:
         """Join proxy battle
@@ -214,12 +214,12 @@ class ProxyBattleMixin(AFKJourneyBase, ABC):
         
         # Calculate click position
         click_point = Point(
-            banner_location.x + ProxyBattleConstants.PROXY_BATTLE_BANNER_OFFSET_X,
-            banner_location.y + ProxyBattleConstants.PROXY_BATTLE_BANNER_OFFSET_Y
+            banner_location.x + TitanReaverProxyBattleConstants.PROXY_BATTLE_BANNER_OFFSET_X,
+            banner_location.y + TitanReaverProxyBattleConstants.PROXY_BATTLE_BANNER_OFFSET_Y
         )
         
         self.tap(click_point)
-        sleep(ProxyBattleConstants.NAVIGATION_DELAY)
+        sleep(TitanReaverProxyBattleConstants.NAVIGATION_DELAY)
         
         return True
 
@@ -263,13 +263,13 @@ class ProxyBattleMixin(AFKJourneyBase, ABC):
         try:
             result = self.wait_for_template(
                 template,
-                timeout=ProxyBattleConstants.TEMPLATE_WAIT_TIMEOUT
+                timeout=TitanReaverProxyBattleConstants.TEMPLATE_WAIT_TIMEOUT
             )
             
             self.tap(result)
             
             if template == "battle/skip.png":
-                sleep(ProxyBattleConstants.NAVIGATION_DELAY)
+                sleep(TitanReaverProxyBattleConstants.NAVIGATION_DELAY)
                 
             logging.debug(f"Successfully tapped {description}")
             return True
@@ -278,14 +278,14 @@ class ProxyBattleMixin(AFKJourneyBase, ABC):
             logging.warning(f"No {description} found within timeout")
             return False
 
-    def _log_final_stats(self, stats: ProxyBattleStats) -> None:
+    def _log_final_stats(self, stats: TitanReaverProxyBattleStats) -> None:
         """Log final statistics"""
         logging.info("Proxy Battle Automation Summary:")
         logging.info(f"  Battles Attempted: {stats.battles_attempted}")
         logging.info(f"  Battles Completed: {stats.battles_completed}")
-        logging.info(f"  Battles Failed: {stats.battles_failed}")
+        # logging.info(f"  Battles Failed: {stats.battles_failed}")
         logging.info(f"  Success Rate: {stats.success_rate:.1f}%")
         
         if stats.battles_completed > 0:
-            estimated_keys = stats.battles_completed * ProxyBattleConstants.KEYS_PER_BATTLE
+            estimated_keys = stats.battles_completed * TitanReaverProxyBattleConstants.KEYS_PER_BATTLE
             logging.info(f"  Estimated Lucky Keys Earned: {estimated_keys}")
