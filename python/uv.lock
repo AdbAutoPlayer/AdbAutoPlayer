@@ -23,6 +23,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "commitizen" },
+    { name = "coverage" },
     { name = "nuitka" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -41,6 +42,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "commitizen", specifier = ">=4.2.2,<5" },
+    { name = "coverage", specifier = ">=7.9.1" },
     { name = "nuitka", specifier = ">=2.7.10" },
     { name = "pytest", specifier = ">=8.4.1" },
     { name = "pytest-cov", specifier = ">=6.2.1" },

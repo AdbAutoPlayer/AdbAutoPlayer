@@ -26,6 +26,7 @@ dev = [
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
     "commitizen>=4.2.2,<5",
+    "coverage>=7.9.1",
 ]
 
 [tool.uv]
