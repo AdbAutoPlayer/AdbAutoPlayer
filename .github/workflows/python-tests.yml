@@ -25,6 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [windows-latest]
         include:
           - os: windows-latest
             source_command: ".\\.venv\\Scripts\\Activate.ps1"
