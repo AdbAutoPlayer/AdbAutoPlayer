@@ -7,3 +7,4 @@ PATCH_*
 node_modules
 release_zip
 debug
+*instructions.md
