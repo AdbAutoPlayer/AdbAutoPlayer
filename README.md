@@ -1,4 +1,5 @@
 # AdbAutoPlayer
+[![codecov](https://codecov.io/github/AdbAutoPlayer/AdbAutoPlayer/branch/main/graph/badge.svg?token=0VCZKXZO9P)](https://codecov.io/github/AdbAutoPlayer/AdbAutoPlayer)  
 
 ## [Click Here to Access the Full Documentation and Usage Details](https://AdbAutoPlayer.github.io/AdbAutoPlayer/)
 ![gui.png](docs/src/images/app/app.png)
@@ -7,7 +8,7 @@ _____
 
 # Development
 
-## [Click Here for Documentation](https://AdbAutoPlayer.github.io/AdbAutoPlayer/development/general.html)
+## [Click Here for Documentation](https://adbautoplayer.github.io/AdbAutoPlayer/development/dev-and-build.html)
 
 ___
 

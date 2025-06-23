@@ -1,11 +1,17 @@
 name: Tests - Python
 
 on:
-  push:
-    branches:
-      - "*"
+  pull_request:
+    branches: [ "main" ]
     paths:
       - '.github/workflows/python-tests.yml'
+      - '.github/codecov.yml'
+      - 'python/**'
+  push:
+    branches: [ "main" ]
+    paths:
+      - '.github/workflows/python-tests.yml'
+      - '.github/codecov.yml'
       - 'python/**'
   workflow_dispatch:
 
@@ -17,19 +23,68 @@ jobs:
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [windows-latest]
-
+        os: [windows-latest, macos-latest]
+        include:
+          - os: windows-latest
+            source_command: ".\\.venv\\Scripts\\Activate.ps1"
+          - os: macos-latest
+            source_command: "source .venv/bin/activate"
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
 
-      - name: Install uv
-        run: python -m pip install uv
+      - name: macOS install dependencies
+        if: runner.os == 'macOS'
+        run: |
+          brew install tesseract
+          brew install --cask android-platform-tools
 
-      - name: Run Pytests with uv
+
+      - run: python -m pip install uv
+
+      - name: Run Pytests for Codecov Test Analytics
+        id: run_tests
         working-directory: python
-        run: uv run pytest --maxfail=1 --disable-warnings
+        run: |
+          uv run pytest --disable-warnings --cov --junitxml=junit.xml -o junit_family=legacy
+        continue-on-error: true
+
+      - name: Run Pytests for Codecov Coverage
+        id: run_tests_coverage
+        working-directory: python
+        run: |
+          uv run pytest --disable-warnings --cov --cov-branch --cov-report=xml
+        continue-on-error: true
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          slug: AdbAutoPlayer/AdbAutoPlayer
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.os }}
+          files: "python/junit.xml"
+          disable_search: 'true'
+
+      - name: Upload coverage reports to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@v5
+        with:
+          slug: AdbAutoPlayer/AdbAutoPlayer
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.os }}
+          files: "python/coverage.xml"
+          disable_search: 'true'
+
+      - name: Check if tests failed
+        if: steps.run_tests.outcome == 'failure' || steps.run_tests_coverage.outcome == 'failure'
+        run: |
+          echo "One or more test steps failed"
+          exit 1

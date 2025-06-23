@@ -6,11 +6,12 @@ from adb_auto_player import (
     Game,
     TemplateMatchParams,
 )
-from adb_auto_player.decorators.register_command import GuiMetadata, register_command
-from adb_auto_player.decorators.register_game import register_game
+from adb_auto_player.decorators import register_command, register_game
+from adb_auto_player.models import ConfidenceValue
+from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
-from adb_auto_player.util.summary_generator import SummaryGenerator
+from adb_auto_player.util import SummaryGenerator
 from pydantic import BaseModel
 
 
@@ -30,7 +31,7 @@ class GuitarGirl(Game):
     def _load_config(self):
         raise NotImplementedError()
 
-    @register_command(gui=GuiMetadata(label="Busk"))
+    @register_command(gui=GUIMetadata(label="Busk"))
     def busk(self) -> NoReturn:
         self.open_eyes(device_streaming=False)
         counter = 0
@@ -53,20 +54,20 @@ class GuitarGirl(Game):
                     "big_note2.png",
                     "note.png",
                 ],
-                threshold=0.7,
+                threshold=ConfidenceValue("70%"),
                 crop_regions=CropRegions(bottom=0.5, right=0.2, top=0.05),
             ):
                 self.tap(result, log_message=None)
                 if "big_note" in result.template:
-                    SummaryGenerator().add_count("Big Note")
+                    SummaryGenerator.add_count("Big Note")
                 else:
-                    SummaryGenerator().add_count("Small Note")
+                    SummaryGenerator.add_count("Small Note")
 
             counter += 1
             counter = counter % mod
         # No Return
 
-    @register_command(gui=GuiMetadata(label="Play"))
+    @register_command(gui=GUIMetadata(label="Play"))
     def play(self) -> NoReturn:
         self.open_eyes(device_streaming=True)
         counter = 0

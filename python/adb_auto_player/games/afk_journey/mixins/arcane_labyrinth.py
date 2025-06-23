@@ -6,17 +6,16 @@ from abc import ABC
 from math import floor
 from time import sleep
 
-from adb_auto_player import (
+from adb_auto_player.decorators import register_command, register_custom_routine_choice
+from adb_auto_player.exceptions import (
     AutoPlayerError,
     AutoPlayerWarningError,
     GameTimeoutError,
 )
-from adb_auto_player.decorators.register_command import GuiMetadata, register_command
-from adb_auto_player.decorators.register_custom_routine_choice import (
-    register_custom_routine_choice,
-)
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models import ConfidenceValue
+from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Coordinates, Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import MatchMode
@@ -116,7 +115,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
     @register_command(
         name="ArcaneLabyrinth",
-        gui=GuiMetadata(
+        gui=GUIMetadata(
             label="Arcane Labyrinth",
             category=AFKJCategory.GAME_MODES,
         ),
@@ -256,7 +255,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "arcane_labyrinth/battle.png",
                 "arcane_labyrinth/additional_challenge.png",
             ],
-            threshold=0.8,
+            threshold=ConfidenceValue("80%"),
             crop_regions=CropRegions(top=0.2, left=0.3),
         )
 
@@ -270,7 +269,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     "arcane_labyrinth/battle.png",
                     "arcane_labyrinth/additional_challenge.png",
                 ],
-                threshold=0.8,
+                threshold=ConfidenceValue("80%"),
                 crop_regions=CropRegions(top=0.2, right=0.3),
             )
             if result is None:
@@ -336,7 +335,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "navigation/confirm.png",
                 "confirm_text.png",
             ],
-            threshold=0.8,
+            threshold=ConfidenceValue("80%"),
         )
 
         if result.template in (
@@ -347,7 +346,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "popup/checkbox_unchecked.png",
                 match_mode=MatchMode.TOP_LEFT,
                 crop_regions=CropRegions(right=0.8, top=0.2, bottom=0.6),
-                threshold=0.8,
+                threshold=ConfidenceValue("80%"),
             )
             if checkbox is not None:
                 self.tap(checkbox)
@@ -358,7 +357,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "arcane_labyrinth/pure_crystal_icon.png",
                 "arcane_labyrinth/quit_door.png",
             ],
-            threshold=0.7,
+            threshold=ConfidenceValue("70%"),
             timeout=self.MIN_TIMEOUT,
         )
         logging.info("Arcane Labyrinth entered")
@@ -375,7 +374,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
         if self.game_find_template_match(
             template="arcane_labyrinth/heroes_icon.png",
-            threshold=0.7,
+            threshold=ConfidenceValue("70%"),
             crop_regions=CropRegions(left=0.6, right=0.1, top=0.8),
         ):
             logging.info("Arcane Labyrinth already started")
@@ -391,7 +390,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "arcane_labyrinth/enter.png",
                 "arcane_labyrinth/heroes_icon.png",
             ],
-            threshold=0.7,
+            threshold=ConfidenceValue("70%"),
             timeout=self.MIN_TIMEOUT,
         )
         match result.template:
@@ -419,7 +418,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
         result = self.find_any_template(
             templates=templates,
-            threshold=0.8,
+            threshold=ConfidenceValue("80%"),
         )
 
         if result is None:
@@ -428,7 +427,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             self.handle_confirmation_popups()
             difficulty = self.game_find_template_match(
                 template="arcane_labyrinth/difficulty.png",
-                threshold=0.7,
+                threshold=ConfidenceValue("70%"),
                 crop_regions=CropRegions(bottom=0.8),
             )
 
@@ -491,7 +490,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 "arcane_labyrinth/gate/pure_crystal.png",
                 "arcane_labyrinth/gate/blessing.png",
             ],
-            threshold=0.8,
+            threshold=ConfidenceValue("80%"),
             crop_regions=CropRegions(top=0.2, bottom=0.5),
         )
 

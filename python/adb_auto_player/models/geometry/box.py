@@ -146,6 +146,13 @@ class Box(Coordinates):
             f"center={self.center})"
         )
 
+    def __repr__(self):
+        """Return a string representation of the box."""
+        return (
+            f"Box(top_left={self.top_left}, width={self.width}, height={self.height}, "
+            f"center={self.center})"
+        )
+
     def with_offset(self, offset: Point) -> "Box":
         """Return a new Box with coordinates offset.
 

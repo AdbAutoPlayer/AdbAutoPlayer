@@ -5,7 +5,7 @@ from abc import ABC
 from time import sleep
 from typing import NoReturn
 
-from adb_auto_player import AutoPlayerWarningError
+from adb_auto_player.exceptions import AutoPlayerWarningError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions

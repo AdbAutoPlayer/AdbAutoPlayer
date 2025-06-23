@@ -1,0 +1,12 @@
+codecov:
+  branch: main
+
+ignore:
+  - "python/adb_auto_player/games/**"
+  - "python/tests/**"
+
+flags:
+  windows-latest:
+    carryforward: true
+  macos-latest:
+    carryforward: true

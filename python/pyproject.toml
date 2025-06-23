@@ -22,8 +22,9 @@ adb-auto-player = "adb_auto_player.main:main"
 
 [dependency-groups]
 dev = [
-    "nuitka>=2.7,<3",
-    "pytest>=8.3.4,<9",
+    "nuitka>=2.7.10",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
     "commitizen>=4.2.2,<5",
 ]
 
@@ -65,8 +66,13 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 # Ignore D100 (Missing docstring in public module) only in games subdirs
-"**/games/**/*.py" = ["D100", "D101", "D102"]
-"**/tests/**/*.py" = ["D100", "D101", "D102", "D103", "D104", "PLR2004"]
+"**/games/**/*.py" = [
+    "D100", "D101", "D102"
+]
+"**/tests/**/*.py" = [
+    "D100", "D101", "D102", "D103", "D104", "D107",
+    "PLR0913", "PLR2004",
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

@@ -3,18 +3,9 @@
 from dataclasses import dataclass
 from typing import Any, TypeVar
 
-from adb_auto_player.ipc.constraint import ConstraintType
+from adb_auto_player.models.commands import MenuItem
 
-
-@dataclass
-class MenuOption:
-    """Menu Option."""
-
-    label: str
-    display_in_gui: bool = True
-    args: list[str] | None = None
-    category: str | None = None
-    tooltip: str | None = None
+from .constraint import ConstraintType
 
 
 @dataclass
@@ -22,7 +13,7 @@ class GameGUIOptions:
     """Game GUI Options."""
 
     game_title: str
-    menu_options: list[MenuOption]
+    menu_options: list[MenuItem]
     categories: list[str]
     config_path: str | None = None
     constraints: dict[str, dict[str, ConstraintType]] | None = None

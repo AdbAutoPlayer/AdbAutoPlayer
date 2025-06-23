@@ -3,10 +3,11 @@
 import logging
 from time import sleep
 
-from adb_auto_player import GameTimeoutError
-from adb_auto_player.decorators.register_command import GuiMetadata, register_command
+from adb_auto_player.decorators import register_command
+from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 
 
@@ -21,7 +22,7 @@ class DreamRealmMixin(AFKJourneyBase):
 
     @register_command(
         name="DreamRealm",
-        gui=GuiMetadata(
+        gui=GUIMetadata(
             label="Dream Realm",
             category=AFKJCategory.GAME_MODES,
         ),

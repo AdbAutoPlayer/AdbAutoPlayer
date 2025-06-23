@@ -15,12 +15,17 @@ from typing import Literal, TypeVar
 
 import cv2
 import numpy as np
-from adb_auto_player import (
+from adb_auto_player import DeviceStream
+from adb_auto_player.adb import (
+    Orientation,
+    get_adb_device,
+    get_display_info,
+    get_running_app,
+)
+from adb_auto_player.exceptions import (
     AutoPlayerError,
     AutoPlayerUnrecoverableError,
     AutoPlayerWarningError,
-    ConfigLoader,
-    DeviceStream,
     GameActionFailedError,
     GameNotRunningOrFrozenError,
     GameStartError,
@@ -29,32 +34,25 @@ from adb_auto_player import (
     NotInitializedError,
     UnsupportedResolutionError,
 )
-from adb_auto_player.adb import (
-    Orientation,
-    get_adb_device,
-    get_display_info,
-    get_running_app,
-)
-from adb_auto_player.decorators.register_custom_routine_choice import (
-    CustomRoutineEntry,
-    custom_routine_choice_registry,
-)
 from adb_auto_player.image_manipulation import (
     crop,
     get_bgr_np_array_from_png_bytes,
     load_image,
     to_grayscale,
 )
+from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Coordinates, Point
 from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.models.registries import CustomRoutineEntry
 from adb_auto_player.models.template_matching import MatchMode, TemplateMatchResult
+from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY
 from adb_auto_player.template_matching import (
     find_all_template_matches,
     find_template_match,
     find_worst_template_match,
     similar_image,
 )
-from adb_auto_player.util.execute import execute
+from adb_auto_player.util import ConfigLoader, execute
 from adbutils._device import AdbDevice
 from PIL import Image
 from pydantic import BaseModel
@@ -88,19 +86,11 @@ class _SwipeParams:
 
 
 @dataclass
-class TapParams:
-    """Params for Tap functions."""
-
-    point: Point
-    scale: bool = False
-
-
-@dataclass
 class TemplateMatchParams:
     """Params for Template Matching functions."""
 
     template: str | Path
-    threshold: float | None = None
+    threshold: ConfidenceValue | None = None
     grayscale: bool = False
     crop_regions: CropRegions | None = None
 
@@ -111,6 +101,7 @@ class Game:
     def __init__(self) -> None:
         """Initialize a game."""
         self.config: BaseModel | None = None
+        self.default_threshold: ConfidenceValue = ConfidenceValue("90%")
 
         self.package_name_substrings: list[str] = []
         self.package_name: str | None = None
@@ -125,7 +116,6 @@ class Game:
         self._scale_factor: float | None = None
         self._stream: DeviceStream | None = None
         self._template_dir_path: Path | None = None
-        self.default_threshold: float = 0.9
 
     @abstractmethod
     def _load_config(self):
@@ -477,7 +467,7 @@ class Game:
     def wait_for_roi_change(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
         start_image: np.ndarray,
-        threshold: float | None = None,
+        threshold: ConfidenceValue | None = None,
         grayscale: bool = False,
         crop_regions: CropRegions = CropRegions(),
         delay: float = 0.5,
@@ -544,7 +534,7 @@ class Game:
         self,
         template: str | Path,
         match_mode: MatchMode = MatchMode.BEST,
-        threshold: float | None = None,
+        threshold: ConfidenceValue | None = None,
         grayscale: bool = False,
         crop_regions: CropRegions = CropRegions(),
         screenshot: np.ndarray | None = None,
@@ -554,7 +544,7 @@ class Game:
         Args:
             template (str | Path): Path to the template image.
             match_mode (MatchMode, optional): Defaults to MatchMode.BEST.
-            threshold (float, optional): Image similarity threshold. Defaults to 0.9.
+            threshold (ConfidenceValue, optional): Image similarity threshold.
             grayscale (bool, optional): Convert to grayscale boolean. Defaults to False.
             crop_regions (CropRegions, optional): Crop percentages.
             screenshot (np.ndarray, optional): Screenshot image. Will fetch screenshot
@@ -632,7 +622,7 @@ class Game:
     def find_all_template_matches(
         self,
         template: str | Path,
-        threshold: float | None = None,
+        threshold: ConfidenceValue | None = None,
         grayscale: bool = False,
         crop_regions: CropRegions = CropRegions(),
         min_distance: int = 10,
@@ -675,7 +665,7 @@ class Game:
     def wait_for_template(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
         template: str | Path,
-        threshold: float | None = None,
+        threshold: ConfidenceValue | None = None,
         grayscale: bool = False,
         crop_regions: CropRegions = CropRegions(),
         delay: float = 0.5,
@@ -711,7 +701,7 @@ class Game:
     def wait_until_template_disappears(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
         template: str | Path,
-        threshold: float | None = None,
+        threshold: ConfidenceValue | None = None,
         grayscale: bool = False,
         crop_regions: CropRegions = CropRegions(),
         delay: float = 0.5,
@@ -754,7 +744,7 @@ class Game:
     def wait_for_any_template(  # noqa: PLR0913 - TODO: Consolidate more.
         self,
         templates: list[str],
-        threshold: float | None = None,
+        threshold: ConfidenceValue | None = None,
         grayscale: bool = False,
         crop_regions: CropRegions = CropRegions(),
         delay: float = 0.5,
@@ -794,7 +784,7 @@ class Game:
         self,
         templates: list[str],
         match_mode: MatchMode = MatchMode.BEST,
-        threshold: float | None = None,
+        threshold: ConfidenceValue | None = None,
         grayscale: bool = False,
         crop_regions: CropRegions = CropRegions(),
         screenshot: np.ndarray | None = None,
@@ -1141,7 +1131,7 @@ class Game:
             logging.info(f"Time until next Daily Task execution: {hours}h {minutes}m")
 
     def _get_game_commands(self) -> dict[str, CustomRoutineEntry] | None:
-        commands = custom_routine_choice_registry
+        commands = CUSTOM_ROUTINE_REGISTRY
 
         game_commands: dict[str, CustomRoutineEntry] | None = None
         for module, cmds in commands.items():
@@ -1182,6 +1172,9 @@ class Game:
         if not error:
             return
 
+        if isinstance(error, KeyboardInterrupt):
+            raise KeyboardInterrupt
+
         if isinstance(error, AutoPlayerUnrecoverableError):
             logging.error(
                 f"Task '{task}' failed with critical error: {error}, exiting..."
@@ -1217,7 +1210,7 @@ class Game:
     def _tap_till_template_disappears(
         self,
         template: str | Path,
-        threshold: float | None = None,
+        threshold: ConfidenceValue | None = None,
         grayscale: bool = False,
         crop_regions: CropRegions = CropRegions(),
         delay: float = 10.0,
@@ -1271,7 +1264,7 @@ class Game:
                 )
                 raise GameActionFailedError(message)
             if time_since_last_tap >= delay:
-                self.tap(coordinates)
+                self.tap(coordinates, scale=scale)
                 tap_count += 1
                 time_since_last_tap -= delay  # preserve overflow - more accurate timing
 

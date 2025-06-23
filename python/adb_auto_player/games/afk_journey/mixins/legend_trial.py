@@ -2,19 +2,18 @@
 
 import logging
 
-from adb_auto_player import (
+from adb_auto_player.decorators import register_command, register_custom_routine_choice
+from adb_auto_player.exceptions import (
     AutoPlayerError,
     AutoPlayerWarningError,
     GameTimeoutError,
 )
-from adb_auto_player.decorators.register_command import GuiMetadata, register_command
-from adb_auto_player.decorators.register_custom_routine_choice import (
-    register_custom_routine_choice,
-)
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models import ConfidenceValue
+from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.image_manipulation import CropRegions
-from adb_auto_player.util.summary_generator import SummaryGenerator
+from adb_auto_player.util import SummaryGenerator
 
 
 # Tested S4 2025.05.23
@@ -23,7 +22,7 @@ class SeasonLegendTrial(AFKJourneyBase):
 
     @register_command(
         name="LegendTrial",
-        gui=GuiMetadata(
+        gui=GUIMetadata(
             label="Season Legend Trial",
             category=AFKJCategory.GAME_MODES,
         ),
@@ -113,7 +112,7 @@ class SeasonLegendTrial(AFKJourneyBase):
                 )
                 count += 1
                 logging.info(f"{faction.capitalize()} Trials pushed: {count}")
-                SummaryGenerator().add_count(f"{faction.capitalize()} Trials")
+                SummaryGenerator.add_count(f"{faction.capitalize()} Trials")
 
                 match match.template:
                     case "next.png":
@@ -142,7 +141,7 @@ class SeasonLegendTrial(AFKJourneyBase):
                 "legend_trials/challenge_ch.png",
                 "legend_trials/challenge_ge.png",
             ],
-            threshold=0.8,
+            threshold=ConfidenceValue("80%"),
             grayscale=True,
             crop_regions=CropRegions(left=0.3, right=0.3, top=0.2, bottom=0.2),
             timeout=self.MIN_TIMEOUT,

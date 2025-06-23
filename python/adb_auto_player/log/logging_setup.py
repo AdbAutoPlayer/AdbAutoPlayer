@@ -9,8 +9,9 @@ from datetime import datetime
 from typing import ClassVar, Literal
 
 from adb_auto_player.ipc import LogMessage
-from adb_auto_player.log_presets import LogPreset
-from adb_auto_player.util.traceback_helper import format_debug_info
+from adb_auto_player.util import SummaryGenerator, create_log_message, format_debug_info
+
+from .log_presets import LogPreset
 
 
 def sanitize_path(log_message: str) -> str:
@@ -60,7 +61,15 @@ class BaseLogHandler(logging.Handler):
 
 
 class JsonLogHandler(BaseLogHandler):
-    """JSON log handler."""
+    """JSON log handler this is used for IPC between CLI and GUI."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize JsonLogHandler.
+
+        Lets the SummaryGenerator know that it needs to start sending data to the GUI.
+        """
+        super().__init__(*args, **kwargs)
+        SummaryGenerator.set_json_handler_present()
 
     def emit(self, record: logging.LogRecord) -> None:
         """Emit a log message in JSON format.
@@ -70,7 +79,7 @@ class JsonLogHandler(BaseLogHandler):
         """
         preset: LogPreset | None = getattr(record, "preset", None)
 
-        log_message: LogMessage = LogMessage.create_log_message(
+        log_message: LogMessage = create_log_message(
             record=record,
             message=self.get_sanitized_message(record),
             html_class=preset.get_html_class() if preset else None,

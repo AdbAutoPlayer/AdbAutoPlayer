@@ -13,7 +13,15 @@ The `python/.idea` contains run configurations and other things that make settin
     ```shell
     uv python install
     ```
-3. Verify the player runs on CLI by showing the help.
+3. Install dev dependencies.
+   ```shell
+   uv sync --dev
+   ```
+4. Install pre-commit.
+   ```shell
+   uvx pre-commit install
+   ```
+5. Verify the player runs on CLI by showing the help.
     ```shell
     uv run adb-auto-player -h
     ```

@@ -7,32 +7,15 @@ Usage:
     Use the `@register_custom_routine_choice(label)` decorator to register a function
     under a specific label, grouped by the game module it belongs to.
 
-The registry is stored in `custom_routine_choice_registry`.
+The registry is stored in `CUSTOM_ROUTINE_REGISTRY`.
 """
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
 from typing import Any
 
-from adb_auto_player.util.module_helper import get_game_module
-
-
-@dataclass
-class CustomRoutineEntry:
-    """Represents a registered custom routine choice entry.
-
-    Attributes:
-        func (Callable): The function implementing the custom routine.
-        kwargs (dict[str, Any]): Optional default keyword arguments to pass
-            when invoking the function.
-    """
-
-    func: Callable
-    kwargs: dict[str, Any] = field(default_factory=dict)
-
-
-# { module_name (e.g., 'AFKJourney'): { label: CustomRoutineEntry} } }
-custom_routine_choice_registry: dict[str, dict[str, CustomRoutineEntry]] = {}
+from adb_auto_player.models.registries import CustomRoutineEntry
+from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY
+from adb_auto_player.util import get_game_module
 
 
 def register_custom_routine_choice(
@@ -41,7 +24,7 @@ def register_custom_routine_choice(
 ):
     """Registers a function as a custom routine choice under a given label.
 
-    The function will be grouped within the `custom_routine_choice_registry` according
+    The function will be grouped within the `CUSTOM_ROUTINE_REGISTRY` according
     to the game module it originates from (as determined by `get_game_module`).
 
     Args:
@@ -61,17 +44,17 @@ def register_custom_routine_choice(
 
     def decorator(func: Callable) -> Callable:
         module_key = get_game_module(func.__module__)
-        if module_key not in custom_routine_choice_registry:
-            custom_routine_choice_registry[module_key] = {}
+        if module_key not in CUSTOM_ROUTINE_REGISTRY:
+            CUSTOM_ROUTINE_REGISTRY[module_key] = {}
 
-        if label in custom_routine_choice_registry[module_key]:
+        if label in CUSTOM_ROUTINE_REGISTRY[module_key]:
             raise ValueError(
                 f"A custom routine choice with the label '{label}' "
                 f"is already registered in module '{module_key}'."
             )
 
         entry = CustomRoutineEntry(func=func, kwargs=kwargs or {})
-        custom_routine_choice_registry[module_key][label] = entry
+        CUSTOM_ROUTINE_REGISTRY[module_key][label] = entry
         return func
 
     return decorator

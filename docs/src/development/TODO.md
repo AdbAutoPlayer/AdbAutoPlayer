@@ -35,34 +35,6 @@ If you wish to contribute take a look at following tasks. Unless stated otherwis
 2. Performance comparison between uiautomator2 and standard ADB implementation for shared features
 3. Benchmark testing for shared features (tap, screenshot, swipe)
 
-### OCR Implementation (PoC)
-**Status:** Open for contribution  
-**Priority:** High
-**Focus:** Performance and compatibility testing
-
-> [!NOTE]
-> Note: Keep implementation separate from main codebase during evaluation phase.
-
-**Objective:** Evaluate OCR libraries for potential integration as an addition to template matching. Key considerations:
-- CPU, GPU, and memory usage optimization
-- Compatibility with lower-power PCs
-- Reliability
-
-**Test Cases (using AFK Journey):**
-1. Header/Title text recognition  
-   ![img_2.png](img_2.png)
-2. UI label detection  
-   ![img_3.png](img_3.png)
-3. Popup text extraction  
-   ![img_4.png](img_4.png) 
-4. Arcane Lab gate titles and descriptions  
-   ![img_5.png](img_5.png)  
-   ![img_6.png](img_6.png)  
-5. Battle icon text  
-   ![img_7.png](img_7.png)
-6. Arcane Lab crest information  
-   ![img_8.png](img_8.png)
-
 ---
 
 ## 🎨 Frontend Development
@@ -124,6 +96,14 @@ If you wish to contribute take a look at following tasks. Unless stated otherwis
 ---
 
 ## 🎮 AFK Journey Specific
+
+### Arcane Labyrinth optimized for Rankings (Difficulty 15 Floor 15+)
+**Status:** Open for contribution  
+**Priority:** High
+
+Completely up to you, anything that can clear Floor 16 consistently would already be considered a success.  
+Maybe align with the people at the Arcane Lab channel to get a good standard team comp and a priority list for runes/crests?
+
 
 ### Fishing
 **Status:** Open for contribution  

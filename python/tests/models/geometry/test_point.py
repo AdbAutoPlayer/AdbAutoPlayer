@@ -59,6 +59,10 @@ class TestPoint(unittest.TestCase):
         p = Point(np.int64(10), np.int64(20))
         self.assertEqual(str(p), "Point(x=10, y=20)")
 
+    def test_repr(self):
+        p = Point(np.int64(10), np.int64(20))
+        self.assertEqual(p.__repr__(), "Point(x=10, y=20)")
+
     def test_add(self):
         p = Point(10, 20)
         p += Point(10, 20)
@@ -69,3 +73,5 @@ class TestPoint(unittest.TestCase):
         p = p + p
         self.assertEqual(p.x, 20)
         self.assertEqual(p.y, 40)
+        with self.assertRaises(TypeError):
+            p + 1

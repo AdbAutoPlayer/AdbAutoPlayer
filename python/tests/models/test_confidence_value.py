@@ -5,8 +5,8 @@ import unittest
 from adb_auto_player.models import ConfidenceValue
 
 
-class TestThreshold(unittest.TestCase):
-    """Test cases for Threshold class."""
+class TestConfidenceValue(unittest.TestCase):
+    """Test cases for ConfidenceValue class."""
 
     def test_percentage_strings(self):
         """Test percentage string inputs."""
@@ -210,18 +210,18 @@ class TestThreshold(unittest.TestCase):
         ):
             ConfidenceValue("abc%")
 
-        # Test invalid threshold format
-        with self.assertRaisesRegex(ValueError, "Invalid threshold format"):
+        # Test invalid ConfidenceValue format
+        with self.assertRaisesRegex(ValueError, "Invalid ConfidenceValue"):
             ConfidenceValue("xyz")
 
         # Test out of range numeric
         with self.assertRaisesRegex(
-            ValueError, "Threshold must be between 0-1 or 0-100"
+            ValueError, "ConfidenceValue must be between 0-1 or 0-100"
         ):
             ConfidenceValue(150)
 
         # Test unsupported type
-        with self.assertRaisesRegex(ValueError, "Unsupported threshold type"):
+        with self.assertRaisesRegex(ValueError, "Unsupported ConfidenceValue type"):
             ConfidenceValue(None)
 
     def test_whitespace_handling(self):
@@ -289,8 +289,8 @@ class TestThreshold(unittest.TestCase):
                     t1,
                     t2,
                     msg=(
-                        f"Threshold({equivalent_values[i]}) "
-                        f"!= Threshold({equivalent_values[j]})"
+                        f"ConfidenceValue({equivalent_values[i]}) "
+                        f"!= ConfidenceValue({equivalent_values[j]})"
                     ),
                 )
 
