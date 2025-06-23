@@ -77,6 +77,15 @@ popup_messages: list[PopupMessage] = [
         text="Confirm to use Diamonds?",
         ignore=True,
     ),
+    # Arcane Lab
+    PopupMessage(
+        text="Do you still want to start your exploration?",
+        # partial text because full text did not get detected, but does not matter.
+        # claimed the Clear Rewards of current difficulty.
+        # You won't receive any rewards for attempting this difficulty outside of
+        # the event period. Do you still want to start your exploration?
+        click_dont_remind_me=False,  # I think it does not have one
+    ),
 ]
 
 
