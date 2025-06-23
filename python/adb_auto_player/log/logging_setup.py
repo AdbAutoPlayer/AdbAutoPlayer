@@ -9,8 +9,9 @@ from datetime import datetime
 from typing import ClassVar, Literal
 
 from adb_auto_player.ipc import LogMessage
-from adb_auto_player.logging import LogPreset
 from adb_auto_player.util import SummaryGenerator, create_log_message, format_debug_info
+
+from .log_presets import LogPreset
 
 
 def sanitize_path(log_message: str) -> str:

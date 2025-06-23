@@ -5,7 +5,7 @@ import sys
 
 from adb_auto_player import commands, games
 from adb_auto_player.cli import build_argparse_formatter
-from adb_auto_player.logging import setup_logging
+from adb_auto_player.log import setup_logging
 from adb_auto_player.models.commands import Command
 from adb_auto_player.registries import COMMAND_REGISTRY, GAME_REGISTRY
 from adb_auto_player.util import execute_command

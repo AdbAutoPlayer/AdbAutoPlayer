@@ -16,8 +16,9 @@ from adb_auto_player.ipc import (
 )
 from adb_auto_player.models.commands import Command
 from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY
-from adb_auto_player.util import get_game_module
 from pydantic import BaseModel
+
+from .module_helper import get_game_module
 
 
 class IPCConstraintExtractor:
