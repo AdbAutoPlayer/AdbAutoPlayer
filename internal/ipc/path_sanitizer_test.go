@@ -2,6 +2,7 @@ package ipc
 
 import (
 	"testing"
+	"unicode/utf8"
 )
 
 func TestSanitizePath(t *testing.T) {
@@ -72,4 +73,32 @@ func TestSanitizePath(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewPathSanitizer(t *testing.T) {
+	t.Run("should create sanitizer with non-empty username", func(t *testing.T) {
+		sanitizer := NewPathSanitizer()
+		if sanitizer.username == "" {
+			t.Error("Expected username to be non-empty, got empty string")
+		}
+		if !utf8.ValidString(sanitizer.username) {
+			t.Errorf("Expected username to be valid UTF-8, got invalid string: %q", sanitizer.username)
+		}
+	})
+
+	t.Run("should create unique usernames on each call", func(t *testing.T) {
+		sanitizer1 := NewPathSanitizer()
+		sanitizer2 := NewPathSanitizer()
+		if sanitizer1.username == sanitizer2.username {
+			t.Errorf("Expected unique usernames, got duplicates: %q", sanitizer1.username)
+		}
+	})
+
+	t.Run("should create valid sanitizer instance", func(t *testing.T) {
+		sanitizer := NewPathSanitizer()
+		if sanitizer == nil {
+			t.Error("Expected non-nil sanitizer instance, got nil")
+		}
+	})
+
 }
