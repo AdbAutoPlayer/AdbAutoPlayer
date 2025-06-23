@@ -31,7 +31,11 @@ class ArenaMixin(AFKJourneyBase):
         except GameTimeoutError:
             return
 
-        while not self.game_find_template_match("arena/no_attempts.png"):
+        for _ in range(5):
+            if self.game_find_template_match("arena/no_attempts.png"):
+                logging.debug("Free attempts exhausted before 5 attempts.")
+                break
+
             self._choose_opponent()
             self._battle()
 
@@ -94,7 +98,7 @@ class ArenaMixin(AFKJourneyBase):
             logging.debug("Start arena challenge.")
             btn = self.wait_for_any_template(
                 templates=["arena/challenge.png", "arena/continue.png"],
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to start Arena runs.",
             )
             sleep(2)
@@ -104,7 +108,7 @@ class ArenaMixin(AFKJourneyBase):
             opponent = self.wait_for_template(
                 template="arena/opponent.png",
                 crop_regions=CropRegions(right=0.6),  # Target weakest opponent.
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Arena opponent.",
             )
             self.tap(opponent)
