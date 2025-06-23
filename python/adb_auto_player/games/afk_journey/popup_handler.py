@@ -137,7 +137,10 @@ class AFKJourneyPopupHandler(Game, ABC):
                 break
 
         if not matching_popup:
-            logging.error(f"Unknown popup detected: {ocr_results}")
+            logging.warning(
+                "Unknown popup detected, "
+                f"please post on Discord so it can be added: {ocr_results}"
+            )
             return False
 
         if matching_popup.ignore:
