@@ -86,6 +86,14 @@ popup_messages: list[PopupMessage] = [
         # the event period. Do you still want to start your exploration?
         click_dont_remind_me=False,  # I think it does not have one
     ),
+    # Duras Trials
+    PopupMessage(
+        text="Keep challenging this stage?",
+        # You have made multiple attempts.
+        # Keep challenging this stage?
+        # Challenge Attempts: x
+        click_dont_remind_me=False,  # I think it does not have one
+    ),
 ]
 
 
