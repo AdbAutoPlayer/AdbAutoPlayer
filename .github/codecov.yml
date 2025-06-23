@@ -4,6 +4,8 @@ codecov:
 ignore:
   - "python/adb_auto_player/games/**"
   - "python/tests/**"
+  - "app.go"
+  - "main.go"
 
 flags:
   windows-latest:
