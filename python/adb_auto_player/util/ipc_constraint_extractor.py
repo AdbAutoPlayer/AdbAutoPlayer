@@ -1,161 +1,107 @@
-"""Base configuration functionality for all game configs."""
+"""Constraint extraction functionality for Pydantic models."""
 
-import logging
-import tomllib
-from pathlib import Path
 from typing import cast
 
-from adb_auto_player import Command
-from adb_auto_player.decorators.register_custom_routine_choice import (
-    custom_routine_choice_registry,
+from adb_auto_player.exceptions import (
+    InvalidBoundaryError,
+    InvalidDefaultValueError,
+    MissingBoundaryValueError,
+    MissingDefaultValueError,
+    RegexMissingTitleError,
 )
 from adb_auto_player.ipc import (
     ConstraintFactory,
     ConstraintType,
     NumberConstraintDict,
 )
+from adb_auto_player.models.commands import Command
+from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY
 from adb_auto_player.util import get_game_module
 from pydantic import BaseModel
-from pydantic.fields import FieldInfo
 
 
-class InvalidBoundaryError(ValueError):
-    """Raise when default value is outside min-max bounds.
+class IPCConstraintExtractor:
+    """Utility class for extracting constraints from Pydantic model schemas."""
 
-    This means you have to set ge and/or le in the Pydantic Field schema.
-    """
-
-    pass
-
-
-class MissingBoundaryValueError(ValueError):
-    """Raised when a number config is missing its min or max boundary.
-
-    This means you have to set ge or gt and le or lt in the Pydantic Field schema.
-    """
-
-    pass
-
-
-class MissingDefaultValueError(ValueError):
-    """Raised when a config field is missing a default value."""
-
-    pass
-
-
-class InvalidDefaultValueError(ValueError):
-    """Raised when a config field default value is invalid."""
-
-    pass
-
-
-class RegexMissingTitleError(ValueError):
-    """Raised when a config field defines regex without title."""
-
-    pass
-
-
-class ConfigBase(BaseModel):
-    """Base configuration class with shared functionality."""
-
-    @classmethod
-    def from_toml(cls, file_path: Path):
-        """Create a Config instance from a TOML file.
-
-        Args:
-            file_path (Path): Path to the TOML file.
-
-        Returns:
-            An instance of the Config class initialized with data from the TOML file.
-        """
-        toml_data = {}
-        if file_path.exists():
-            try:
-                with open(file_path, "rb") as f:
-                    toml_data = tomllib.load(f)
-            except Exception as e:
-                logging.error(
-                    f"Error reading config file: {e} - using default config values"
-                )
-        else:
-            logging.debug("Using default config values")
-        default_data = {}
-        for field in cls.model_fields.values():
-            field = cast(FieldInfo, field)
-            if field.alias not in toml_data:
-                field_type = field.annotation
-                if hasattr(field_type, "model_fields"):
-                    default_data[field.alias] = field_type().model_dump()
-
-        merged_data = {**default_data, **toml_data}
-        return cls(**merged_data)
-
-    @classmethod
-    def get_constraints(
-        cls,
+    @staticmethod
+    def get_constraints_from_model(
+        model_class: type["BaseModel"],
         commands: list[Command] | None = None,
     ) -> dict[str, dict[str, ConstraintType]]:
-        """Get constraints from ADB Auto Player IPC, derived from model schema."""
-        schema = cls.model_json_schema()
+        """Get constraints from a Pydantic model schema."""
+        schema = model_class.model_json_schema()
         constraints: dict[str, dict[str, ConstraintType]] = {}
 
         for section_name, section_ref in schema.get("properties", {}).items():
-            section_def = cls._resolve_section_definition(schema, section_ref)
+            section_def = IPCConstraintExtractor._resolve_section_definition(
+                schema, section_ref
+            )
             if section_def:
-                constraints[section_name] = cls._extract_constraints_from_section(
-                    schema,
-                    section_def,
-                    commands=commands,
+                constraints[section_name] = (
+                    IPCConstraintExtractor._extract_constraints_from_section(
+                        schema,
+                        section_def,
+                        model_class.__module__,
+                        commands=commands,
+                    )
                 )
 
         return constraints
 
-    @classmethod
-    def _resolve_section_definition(cls, schema: dict, section_ref: dict) -> dict:
+    @staticmethod
+    def _resolve_section_definition(schema: dict, section_ref: dict) -> dict:
         """Resolve the definition of a section if it contains a reference."""
         if "$ref" in section_ref:
             def_name = section_ref["$ref"].split("/")[-1]
             return schema.get("$defs", {}).get(def_name, {})
         return {}
 
-    @classmethod
+    @staticmethod
     def _extract_constraints_from_section(
-        cls, schema: dict, section_def: dict, commands: list[Command] | None = None
+        schema: dict,
+        section_def: dict,
+        model_module: str,
+        commands: list[Command] | None = None,
     ) -> dict[str, ConstraintType]:
         """Extract constraints from a section definition."""
         section_constraints: dict[str, ConstraintType] = {}
         for field_name, field_schema in section_def.get("properties", {}).items():
-            constraint = cls._determine_constraint(
+            constraint = IPCConstraintExtractor._determine_constraint(
                 schema,
                 field_schema,
+                model_module,
                 commands=commands,
             )
             if constraint:
                 section_constraints[field_name] = constraint
         return section_constraints
 
-    @classmethod
+    @staticmethod
     def _determine_constraint(
-        cls, schema: dict, field_schema: dict, commands: list[Command] | None = None
+        schema: dict,
+        field_schema: dict,
+        model_module: str,
+        commands: list[Command] | None = None,
     ) -> ConstraintType | None:
         """Determine the appropriate constraint for a field based on its schema."""
         constraint_type = field_schema.get("constraint_type")
         if constraint_type:
-            return cls._handle_constraint_type(
+            return IPCConstraintExtractor._handle_constraint_type(
                 schema,
                 field_schema,
                 constraint_type,
+                model_module,
                 commands=commands,
             )
 
-        return cls._handle_standard_field_types(field_schema)
+        return IPCConstraintExtractor._handle_standard_field_types(field_schema)
 
-    @classmethod
+    @staticmethod
     def _handle_constraint_type(
-        cls,
         schema: dict,
         field_schema: dict,
         constraint_type: str,
+        model_module: str,
         commands: list[Command] | None = None,
     ) -> ConstraintType:
         """Handle fields with specific constraint types."""
@@ -163,6 +109,7 @@ class ConfigBase(BaseModel):
         enum_name = items_ref.split("/")[-1]
         enum_values = schema.get("$defs", {}).get(enum_name, {}).get("enum", [])
         default_value = field_schema.get("default_value", list())
+
         match constraint_type:
             case "multicheckbox":
                 return ConstraintFactory.create_multicheckbox_constraint(
@@ -179,8 +126,8 @@ class ConfigBase(BaseModel):
                     image_dir_path=field_schema.get("image_dir_path", ""),
                 )
             case "MyCustomRoutine":
-                module = get_game_module(cls.__module__)
-                choices = list(custom_routine_choice_registry.get(module, {}).keys())
+                module = get_game_module(model_module)
+                choices = list(CUSTOM_ROUTINE_REGISTRY.get(module, {}).keys())
                 if not choices:
                     raise ValueError("MyCustomRoutine constraint requires menu options")
                 return ConstraintFactory.create_my_custom_routine_constraint(
@@ -189,21 +136,22 @@ class ConfigBase(BaseModel):
             case _:
                 raise ValueError(f"Unknown constraint_type {constraint_type}")
 
-    @classmethod
-    def _handle_standard_field_types(cls, field_schema: dict) -> ConstraintType:
+    @staticmethod
+    def _handle_standard_field_types(field_schema: dict) -> ConstraintType:
         """Handle standard field types like integer, boolean, and default to text."""
         default_value = field_schema.get("default")
         field_name = field_schema.get("title") or field_schema.get("name")
+
         if default_value is None:
             raise MissingDefaultValueError(
                 f"Field '{field_name}' is missing a default value."
             )
+
         field_type = field_schema.get("type")
         match field_type:
             case "integer" | "number":
                 if field_type == "integer":
                     return _get_integer_constraint(field_schema)
-
                 return _get_number_constraint(field_schema)
             case "boolean":
                 return ConstraintFactory.create_checkbox_constraint(
@@ -240,7 +188,7 @@ def _get_number_constraint(field_schema: dict) -> NumberConstraintDict:
     field_name = field_schema.get("title") or field_schema.get("name")
     default_value = field_schema.get("default")
 
-    if not isinstance(default_value, int) and not isinstance(default_value, float):
+    if not isinstance(default_value, int | float):
         raise InvalidDefaultValueError(
             f"Field '{field_name}' default_value should be an int or float."
         )
@@ -255,13 +203,13 @@ def _get_number_constraint(field_schema: dict) -> NumberConstraintDict:
             f"Pydantic Field schema explicitly."
         )
 
-    if not isinstance(minimum, int) and not isinstance(minimum, float):
+    if not isinstance(minimum, int | float):
         raise TypeError(
             f"Expected 'minimum' to be an int or float, but got "
             f"{type(minimum).__name__}"
         )
 
-    if not isinstance(maximum, int) and not isinstance(maximum, float):
+    if not isinstance(maximum, int | float):
         raise TypeError(
             f"Expected 'maximum' to be an int or float, "
             f"but got {type(maximum).__name__}"

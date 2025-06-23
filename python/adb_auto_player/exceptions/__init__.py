@@ -1,4 +1,7 @@
-"""Exceptions module."""
+"""Exceptions package.
+
+Exceptions should not have dependencies on other internal packages.
+"""
 
 from .adb import (
     GenericAdbError,
@@ -18,6 +21,13 @@ from .game import (
     NotInitializedError,
     UnsupportedResolutionError,
 )
+from .pydantic import (
+    InvalidBoundaryError,
+    InvalidDefaultValueError,
+    MissingBoundaryValueError,
+    MissingDefaultValueError,
+    RegexMissingTitleError,
+)
 
 __all__ = [
     "AutoPlayerError",
@@ -30,6 +40,11 @@ __all__ = [
     "GameTimeoutError",
     "GenericAdbError",
     "GenericAdbUnrecoverableError",
+    "InvalidBoundaryError",
+    "InvalidDefaultValueError",
+    "MissingBoundaryValueError",
+    "MissingDefaultValueError",
     "NotInitializedError",
+    "RegexMissingTitleError",
     "UnsupportedResolutionError",
 ]

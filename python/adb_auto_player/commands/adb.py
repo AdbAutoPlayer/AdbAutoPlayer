@@ -1,16 +1,17 @@
 """Simple ADB Commands."""
 
 from adb_auto_player.adb import exec_wm_size, wm_size_reset
-from adb_auto_player.commands.gui_categories import CommandCategory
-from adb_auto_player.decorators.register_command import GuiMetadata, register_command
+from adb_auto_player.decorators import register_command
+from adb_auto_player.ipc import CommandGUICategory
+from adb_auto_player.models.decorators import GUIMetadata
 
 
 # This command should probably be game specific in the future if there are any games
 # that use a different resolution.
 @register_command(
-    gui=GuiMetadata(
+    gui=GUIMetadata(
         label="Set Display Size 1080x1920",
-        category=CommandCategory.SETTINGS_PHONE_DEBUG,
+        category=CommandGUICategory.SETTINGS_PHONE_DEBUG,
     ),
     name="WMSize1080x1920",
 )
@@ -19,9 +20,9 @@ def _exec_wm_size_1080_1920():
 
 
 @register_command(
-    gui=GuiMetadata(
+    gui=GUIMetadata(
         label="Reset Display Size",
-        category=CommandCategory.SETTINGS_PHONE_DEBUG,
+        category=CommandGUICategory.SETTINGS_PHONE_DEBUG,
     ),
     name="WMSizeReset",
 )

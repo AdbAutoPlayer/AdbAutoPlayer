@@ -1,11 +1,8 @@
-"""Argparse Formatter Factory.
-
-TODO move to commands package?
-"""
+"""Argparse Formatter Factory."""
 
 import argparse
 
-from adb_auto_player import Command
+from adb_auto_player.models.commands import Command
 
 
 def build_argparse_formatter(commands_by_category: dict[str, list[Command]]):

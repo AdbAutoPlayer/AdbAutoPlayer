@@ -14,7 +14,8 @@ from pathlib import Path
 from typing import Any
 
 import adbutils._utils
-from adb_auto_player import ConfigLoader, GenericAdbError, GenericAdbUnrecoverableError
+from adb_auto_player.exceptions import GenericAdbError, GenericAdbUnrecoverableError
+from adb_auto_player.util import ConfigLoader
 from adbutils import AdbClient, AdbDevice, AdbError
 from adbutils._proto import AdbDeviceInfo
 

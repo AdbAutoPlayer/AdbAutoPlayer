@@ -4,7 +4,6 @@ import logging
 import pprint
 import time
 
-from adb_auto_player import ConfigLoader
 from adb_auto_player.adb import (
     exec_wm_size,
     get_adb_client,
@@ -14,7 +13,8 @@ from adb_auto_player.adb import (
     log_devices,
     wm_size_reset,
 )
-from adb_auto_player.decorators.register_command import register_command
+from adb_auto_player.decorators import register_command
+from adb_auto_player.util import ConfigLoader
 from adbutils import AdbClient, AdbDevice
 
 
