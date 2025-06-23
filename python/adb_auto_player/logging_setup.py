@@ -10,6 +10,8 @@ from typing import ClassVar, Literal
 
 from adb_auto_player.ipc import LogMessage
 from adb_auto_player.log_presets import LogPreset
+from adb_auto_player.util.log_message_factory import create_log_message
+from adb_auto_player.util.summary_generator import SummaryGenerator
 from adb_auto_player.util.traceback_helper import format_debug_info
 
 
@@ -60,7 +62,15 @@ class BaseLogHandler(logging.Handler):
 
 
 class JsonLogHandler(BaseLogHandler):
-    """JSON log handler."""
+    """JSON log handler this is used for IPC between CLI and GUI."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize JsonLogHandler.
+
+        Lets the SummaryGenerator know that it needs to start sending data to the GUI.
+        """
+        super().__init__(*args, **kwargs)
+        SummaryGenerator.set_json_handler_present()
 
     def emit(self, record: logging.LogRecord) -> None:
         """Emit a log message in JSON format.
@@ -70,7 +80,7 @@ class JsonLogHandler(BaseLogHandler):
         """
         preset: LogPreset | None = getattr(record, "preset", None)
 
-        log_message: LogMessage = LogMessage.create_log_message(
+        log_message: LogMessage = create_log_message(
             record=record,
             message=self.get_sanitized_message(record),
             html_class=preset.get_html_class() if preset else None,

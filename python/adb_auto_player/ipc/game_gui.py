@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any, TypeVar
 
-from adb_auto_player.ipc.constraint import ConstraintType
+from .constraint import ConstraintType
 
 
 @dataclass
