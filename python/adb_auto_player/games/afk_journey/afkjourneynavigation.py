@@ -6,6 +6,7 @@ from adb_auto_player import Game
 from adb_auto_player.exceptions import (
     GameActionFailedError,
     GameNotRunningOrFrozenError,
+    GameTimeoutError,
 )
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Coordinates, Point
@@ -89,7 +90,7 @@ class AFKJourneyNavigation(Game, ABC):
                 case _:
                     self.tap(result)
                     sleep(1)
-        sleep(1)
+        sleep(2)
 
     def _handle_restart(self, templates: list[str]) -> None:
         logging.warning("Trying to restart AFK Journey.")
@@ -176,9 +177,7 @@ class AFKJourneyNavigation(Game, ABC):
         self.tap(Point(x=550, y=1080), scale=True)  # click rewards popup
         sleep(1)
 
-    def navigate_to_battle_modes_screen(self) -> None:
-        self.navigate_to_default_state()
-
+    def _navigate_to_battle_modes_screen(self) -> None:
         self.tap(AFKJourneyNavigation.BATTLE_MODES_POINT, scale=True)
         result = self.wait_for_any_template(
             templates=[
@@ -205,6 +204,21 @@ class AFKJourneyNavigation(Game, ABC):
             timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
         )
 
+    def navigate_to_battle_modes_screen(self) -> None:
+        attempt = 0
+        max_attempts = 3
+        while True:
+            self.navigate_to_default_state()
+            sleep(attempt)
+            try:
+                self._navigate_to_battle_modes_screen()
+            except GameTimeoutError as e:
+                attempt += 1
+                if attempt >= max_attempts:
+                    raise e
+                else:
+                    continue
+            break
         sleep(1)
 
     def navigate_to_duras_trials_screen(self) -> None:
