@@ -27,17 +27,12 @@ class PopupMessage:
 # You do not actually need to add the whole text of the Popup Message
 # A snippet works.
 popup_messages: list[PopupMessage] = [
+    # Exit Game
     PopupMessage(
         text="Are you sure you want to exit the game",
         # Does not have "remind me" checkbox
     ),
-    PopupMessage(
-        text=(
-            "No hero is placed on the Talent Buff Tile. "
-            "Do you want to start the battle anyways?"
-        ),
-        click_dont_remind_me=True,
-    ),
+    # Season Talent Stages
     PopupMessage(
         text=(
             "You haven't activated any Season Faction Talent."
@@ -46,38 +41,31 @@ popup_messages: list[PopupMessage] = [
         click_dont_remind_me=True,
     ),
     PopupMessage(
+        text=(
+            "No hero is placed on the Talent Buff Tile. "
+            "Do you want to start the battle anyways?"
+        ),
+        click_dont_remind_me=True,
+    ),
+    # General Battle
+    PopupMessage(
+        text="Skip this battle?",
+        # Does not have "remind me" checkbox
+    ),
+    PopupMessage(
         text="Your formation is incomplete.",
         # There are 2 different messages for this
         # "Your formation is incomplete. Begin battle anyway?"
         # "Your formation is incomplete. Turn on Auto Battle mode anyway? ..."
         click_dont_remind_me=True,
     ),
-    PopupMessage(
-        text="You are currently fishing.",
-        # If you quit this fishing attempt will fail. Quit anyway?
-        # Does not have "remind me" checkbox
-    ),
-    PopupMessage(
-        text="End the exploration",
-        confirm_button_template="arcane_labyrinth/hold_to_exit.png",
-        hold_to_confirm=True,
-        hold_duration_seconds=5.0,
-        # Does not have "remind me" checkbox
-    ),
-    PopupMessage(
-        text="Skip this battle?",
-        # Does not have "remind me" checkbox
-    ),
+    # Arena
     PopupMessage(
         text="Spend to purchase Warrior's Guarantee",
         # Daily attempts: x/5
         ignore=True,
     ),
-    PopupMessage(
-        text="Confirm to use Diamonds?",
-        ignore=True,
-    ),
-    # Arcane Lab
+    # Arcane Labyrinth
     PopupMessage(
         text="Do you still want to start your exploration?",
         # partial text because full text did not get detected, but does not matter.
@@ -86,6 +74,13 @@ popup_messages: list[PopupMessage] = [
         # the event period. Do you still want to start your exploration?
         click_dont_remind_me=False,  # I think it does not have one
     ),
+    PopupMessage(
+        text="End the exploration",
+        confirm_button_template="arcane_labyrinth/hold_to_exit.png",
+        hold_to_confirm=True,
+        hold_duration_seconds=5.0,
+        # Does not have "remind me" checkbox
+    ),
     # Duras Trials
     PopupMessage(
         text="Keep challenging this stage?",
@@ -93,6 +88,17 @@ popup_messages: list[PopupMessage] = [
         # Keep challenging this stage?
         # Challenge Attempts: x
         click_dont_remind_me=False,  # I think it does not have one
+    ),
+    # Emporium, other places?
+    PopupMessage(
+        text="Confirm to use Diamonds?",
+        ignore=True,
+    ),
+    # Fishing
+    PopupMessage(
+        text="You are currently fishing.",
+        # If you quit this fishing attempt will fail. Quit anyway?
+        # Does not have "remind me" checkbox
     ),
 ]
 
