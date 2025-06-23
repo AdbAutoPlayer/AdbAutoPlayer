@@ -79,7 +79,7 @@ func TestGetChangelog_LatestReleaseOnly(t *testing.T) {
 	ctx := context.Background()
 	um := NewUpdateManager(ctx, "1.0.0", false)
 
-	// Set up test data
+	releaseTag := "1.1.0"
 	releaseBody := `## What's Changed
 * **AFK Journey: Fix missing offset in Synergy & CC**
   *Contributed by @yulesxoxo in https://github.com/AdbAutoPlayer/AdbAutoPlayer/pull/184*
@@ -90,12 +90,13 @@ func TestGetChangelog_LatestReleaseOnly(t *testing.T) {
 
 **Full Changelog**: https://github.com/AdbAutoPlayer/AdbAutoPlayer/compare/8.0.0...8.0.1`
 
-	um.latestRelease = createRelease("1.1.0", releaseBody, []string{"app_1.1.0_windows.zip"})
+	um.latestRelease = createRelease(releaseTag, releaseBody, []string{"app_1.1.0_windows.zip"})
 	um.releasesBetween = []*github.RepositoryRelease{} // Empty
 
 	changelog := um.GetChangelogs()
 
-	assert.Equal(t, releaseBody, changelog[0])
+	assert.Equal(t, releaseBody, changelog[0].Body)
+	assert.Equal(t, releaseTag, changelog[0].Version)
 }
 
 func TestGetChangelog_WithReleasesBetween(t *testing.T) {
@@ -128,9 +129,12 @@ func TestGetChangelog_WithReleasesBetween(t *testing.T) {
 	}
 
 	changelog := um.GetChangelogs()
-	assert.Equal(t, latestReleaseBody, changelog[0])
-	assert.Equal(t, betweenRelease1Body, changelog[1])
-	assert.Equal(t, betweenRelease2Body, changelog[2])
+	assert.Equal(t, latestReleaseBody, changelog[0].Body)
+	assert.Equal(t, "1.3.0", changelog[0].Version)
+	assert.Equal(t, betweenRelease1Body, changelog[1].Body)
+	assert.Equal(t, "1.2.0", changelog[1].Version)
+	assert.Equal(t, betweenRelease2Body, changelog[2].Body)
+	assert.Equal(t, "1.1.0", changelog[2].Version)
 }
 
 func TestGetLatestReleaseIncludingPrerelease(t *testing.T) {
