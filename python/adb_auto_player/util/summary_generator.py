@@ -31,7 +31,7 @@ class SummaryGenerator:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize SummaryGenerator.
 
         _json_handler_present will be set when the JsonLogHandler is initialized.
