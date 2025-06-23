@@ -15,12 +15,17 @@ from typing import Literal, TypeVar
 
 import cv2
 import numpy as np
-from adb_auto_player import (
+from adb_auto_player import DeviceStream
+from adb_auto_player.adb import (
+    Orientation,
+    get_adb_device,
+    get_display_info,
+    get_running_app,
+)
+from adb_auto_player.exceptions import (
     AutoPlayerError,
     AutoPlayerUnrecoverableError,
     AutoPlayerWarningError,
-    ConfigLoader,
-    DeviceStream,
     GameActionFailedError,
     GameNotRunningOrFrozenError,
     GameStartError,
@@ -28,16 +33,6 @@ from adb_auto_player import (
     GenericAdbUnrecoverableError,
     NotInitializedError,
     UnsupportedResolutionError,
-)
-from adb_auto_player.adb import (
-    Orientation,
-    get_adb_device,
-    get_display_info,
-    get_running_app,
-)
-from adb_auto_player.decorators.register_custom_routine_choice import (
-    CustomRoutineEntry,
-    custom_routine_choice_registry,
 )
 from adb_auto_player.image_manipulation import (
     crop,
@@ -48,14 +43,16 @@ from adb_auto_player.image_manipulation import (
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Coordinates, Point
 from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.models.registries import CustomRoutineEntry
 from adb_auto_player.models.template_matching import MatchMode, TemplateMatchResult
+from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY
 from adb_auto_player.template_matching import (
     find_all_template_matches,
     find_template_match,
     find_worst_template_match,
     similar_image,
 )
-from adb_auto_player.util.execute import execute
+from adb_auto_player.util import ConfigLoader, execute
 from adbutils._device import AdbDevice
 from PIL import Image
 from pydantic import BaseModel
@@ -1134,7 +1131,7 @@ class Game:
             logging.info(f"Time until next Daily Task execution: {hours}h {minutes}m")
 
     def _get_game_commands(self) -> dict[str, CustomRoutineEntry] | None:
-        commands = custom_routine_choice_registry
+        commands = CUSTOM_ROUTINE_REGISTRY
 
         game_commands: dict[str, CustomRoutineEntry] | None = None
         for module, cmds in commands.items():

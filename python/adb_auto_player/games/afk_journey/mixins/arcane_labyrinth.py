@@ -6,18 +6,16 @@ from abc import ABC
 from math import floor
 from time import sleep
 
-from adb_auto_player import (
+from adb_auto_player.decorators import register_command, register_custom_routine_choice
+from adb_auto_player.exceptions import (
     AutoPlayerError,
     AutoPlayerWarningError,
     GameTimeoutError,
 )
-from adb_auto_player.decorators.register_command import GuiMetadata, register_command
-from adb_auto_player.decorators.register_custom_routine_choice import (
-    register_custom_routine_choice,
-)
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models import ConfidenceValue
+from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Coordinates, Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import MatchMode
@@ -117,7 +115,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
     @register_command(
         name="ArcaneLabyrinth",
-        gui=GuiMetadata(
+        gui=GUIMetadata(
             label="Arcane Labyrinth",
             category=AFKJCategory.GAME_MODES,
         ),

@@ -10,57 +10,21 @@ Classes:
     GameMetadata: Holds overall metadata for a game.
 
 Globals:
-    game_registry (dict): A mapping of module keys to `GameMetadata` entries for
+    GAME_REGISTRY (dict): A mapping of module keys to `GameMetadata` entries for
         all registered games.
 
 Functions:
     register_game: A decorator used to register game classes and
-        populate the `game_registry`.
+        populate the `GAME_REGISTRY`.
 
 """
 
-from dataclasses import dataclass
-from enum import StrEnum
 from pathlib import Path
 from types import FunctionType
 
-from adb_auto_player import ConfigBase
-from adb_auto_player.util.module_helper import get_game_module
-
-
-@dataclass
-class GameGUIMetadata:
-    """Metadata to pass to the GUI for display.
-
-    Attributes:
-        config_class (Type[ConfigBase]): A class that implements the ConfigBase
-            interface; used by the GUI to understand how to configure the game.
-        categories (list[str | StrEnum] | None): Categories to be displayed in the GUI,
-            shown in the specified order.
-
-    """
-
-    config_class: type[ConfigBase] | None = None
-    categories: list[str | StrEnum] | None = None
-
-
-@dataclass
-class GameMetadata:
-    """Metadata used to describe a Game.
-
-    Attributes:
-        name (str): The name of the Game.
-        config_file_path (Path): Path to the configuration file.
-            None if no config file is used.
-        gui_metadata (GameGUIMetadata): Metadata to pass to the GUI.
-    """
-
-    name: str
-    config_file_path: Path | None = None
-    gui_metadata: GameGUIMetadata | None = None
-
-
-game_registry: dict[str, GameMetadata] = {}
+from adb_auto_player.models.registries import GameGUIMetadata, GameMetadata
+from adb_auto_player.registries import GAME_REGISTRY
+from adb_auto_player.util import get_game_module
 
 
 def register_game(
@@ -68,7 +32,7 @@ def register_game(
     config_file_path: Path | str | None = None,
     gui_metadata: GameGUIMetadata | None = None,
 ):
-    """Decorator to register a game class in the game_registry.
+    """Decorator to register a game class in the GAME_REGISTRY.
 
     Args:
         name (str): Name of the game.
@@ -93,7 +57,7 @@ def register_game(
         metadata = GameMetadata(
             name=name, config_file_path=path_obj, gui_metadata=gui_metadata
         )
-        game_registry[module_key] = metadata
+        GAME_REGISTRY[module_key] = metadata
         return cls
 
     return decorator

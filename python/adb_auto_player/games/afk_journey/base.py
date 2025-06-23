@@ -6,18 +6,21 @@ from time import sleep
 from typing import Any
 
 from adb_auto_player import (
-    AutoPlayerWarningError,
     Game,
-    GameActionFailedError,
-    GameTimeoutError,
     TemplateMatchParams,
 )
-from adb_auto_player.decorators.register_game import GameGUIMetadata, register_game
+from adb_auto_player.decorators import register_game
+from adb_auto_player.exceptions import (
+    AutoPlayerWarningError,
+    GameActionFailedError,
+    GameTimeoutError,
+)
+from adb_auto_player.models import ConfidenceValue
+from adb_auto_player.models.decorators import GameGUIMetadata
+from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import MatchMode
 
-from ...models import ConfidenceValue
-from ...models.geometry import Point
 from .afkjourneynavigation import AFKJourneyNavigation
 from .config import Config
 from .gui_category import AFKJCategory

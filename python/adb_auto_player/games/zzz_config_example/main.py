@@ -3,12 +3,13 @@
 import logging
 
 from adb_auto_player import Game
-from adb_auto_player.decorators.register_command import GuiMetadata, register_command
-from adb_auto_player.decorators.register_custom_routine_choice import (
+from adb_auto_player.decorators import (
+    register_command,
     register_custom_routine_choice,
+    register_game,
 )
-from adb_auto_player.decorators.register_game import GameGUIMetadata, register_game
 from adb_auto_player.games.zzz_config_example.config import Config
+from adb_auto_player.models.decorators import GameGUIMetadata, GUIMetadata
 from pydantic import BaseModel
 
 
@@ -28,7 +29,7 @@ class PlayStore(Game):
         ]
 
     @register_command(
-        gui=GuiMetadata(label="Label", category="Category", tooltip="Tooltip")
+        gui=GUIMetadata(label="Label", category="Category", tooltip="Tooltip")
     )
     def _test_gui(self) -> None:
         logging.info("GUI")

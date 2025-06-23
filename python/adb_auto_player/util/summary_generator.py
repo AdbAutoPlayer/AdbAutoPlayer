@@ -4,21 +4,9 @@ Provides a singleton SummaryGenerator class that keeps track of counts,
 prints JSON summaries if a JSON log handler is present, and logs updates.
 """
 
-import logging
 import sys
 
-from adb_auto_player.ipc.summary import Summary
-from adb_auto_player.logging_setup import JsonLogHandler
-
-
-def _is_using_json_handler() -> bool:
-    """Check if the root logger has a JsonLogHandler among its handlers.
-
-    Returns:
-        True if a JsonLogHandler is present, False otherwise.
-    """
-    logger = logging.getLogger()
-    return any(isinstance(handler, JsonLogHandler) for handler in logger.handlers)
+from adb_auto_player.ipc import Summary
 
 
 class SummaryGenerator:
@@ -41,16 +29,24 @@ class SummaryGenerator:
         """
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._init()
         return cls._instance
 
-    def _init(self):
-        """Initialize the instance variables."""
-        self.counters = {}
-        self._json_handler_present = _is_using_json_handler()
+    def __init__(self) -> None:
+        """Initialize SummaryGenerator.
 
-    @staticmethod
-    def add_count(phrase: str, count: int = 1) -> None:
+        _json_handler_present will be set when the JsonLogHandler is initialized.
+        """
+        self.counters: dict[str, int | str | float] = {}
+        self._json_handler_present = False
+
+    @classmethod
+    def set_json_handler_present(cls):
+        """Called by JsonLogHandler to notify of its presence."""
+        instance = cls()  # Get singleton instance
+        instance._json_handler_present = True
+
+    @classmethod
+    def add_count(cls, phrase: str, count: int = 1) -> None:
         """Increment the count for the specified phrase by the given count.
 
         If a JsonLogHandler is present, print a JSON summary.
@@ -59,16 +55,17 @@ class SummaryGenerator:
             phrase: The phrase to increment the count for.
             count: The amount to increment. Defaults to 1.
         """
-        generator = SummaryGenerator()
+        instance = cls()
 
-        if phrase not in generator.counters:
-            generator.counters[phrase] = 0
-        generator.counters[phrase] += count
+        value = instance.counters.get(phrase, 0)
+        if not isinstance(value, int):
+            raise TypeError(f"SummaryGenerator: Value for '{phrase}' is not an int")
 
-        generator._json_flush()
+        instance.counters[phrase] = value + count
+        instance._json_flush()
 
-    @staticmethod
-    def set(phrase: str, item: int | str | float) -> None:
+    @classmethod
+    def set(cls, phrase: str, item: int | str | float) -> None:
         """Set the value for the specified phrase.
 
         If a JsonLogHandler is present, print a JSON summary.
@@ -77,9 +74,9 @@ class SummaryGenerator:
             phrase: The phrase to set the value for.
             item: The value to set.
         """
-        generator = SummaryGenerator()
-        generator.counters[phrase] = item
-        generator._json_flush()
+        instance = cls()
+        instance.counters[phrase] = item
+        instance._json_flush()
 
     def _json_flush(self) -> None:
         """Print JSON summary if JsonLogHandler is present and summary exists."""

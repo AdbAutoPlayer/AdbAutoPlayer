@@ -4,12 +4,13 @@ from dataclasses import dataclass
 from time import sleep
 from typing import ClassVar
 
-from adb_auto_player import GameTimeoutError
-from adb_auto_player.decorators.register_command import GuiMetadata, register_command
+from adb_auto_player.decorators import register_command
+from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
-from adb_auto_player.util.summary_generator import SummaryGenerator
+from adb_auto_player.util import SummaryGenerator
 
 
 class TitanReaverProxyBattleConstants:
@@ -81,7 +82,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
 
     @register_command(
         name="TitanReaverProxyBattle",
-        gui=GuiMetadata(
+        gui=GUIMetadata(
             label="Titan Reaver Proxy Battle",
             category=AFKJCategory.EVENTS_AND_OTHER,
             tooltip="Automatically find and participate Titan Reaver proxy battles",

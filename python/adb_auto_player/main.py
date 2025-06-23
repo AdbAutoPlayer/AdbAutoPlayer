@@ -1,13 +1,14 @@
-"""Proof of concept for Decorator refactor."""
+"""Main module."""
 
 import argparse
 import sys
 
-from adb_auto_player import Command, commands, games
-from adb_auto_player.argparse_formatter_factory import build_argparse_formatter
-from adb_auto_player.decorators.register_command import command_registry
-from adb_auto_player.decorators.register_game import game_registry
-from adb_auto_player.logging_setup import setup_logging
+from adb_auto_player import commands, games
+from adb_auto_player.cli import build_argparse_formatter
+from adb_auto_player.log import setup_logging
+from adb_auto_player.models.commands import Command
+from adb_auto_player.registries import COMMAND_REGISTRY, GAME_REGISTRY
+from adb_auto_player.util import execute_command
 
 
 def _load_modules() -> None:
@@ -19,10 +20,10 @@ def _load_modules() -> None:
 def _get_commands() -> dict[str, list[Command]]:
     cmds: dict[str, list[Command]] = {}
 
-    for module, registered_commands in command_registry.items():
+    for module, registered_commands in COMMAND_REGISTRY.items():
         # Check if module has a game registered
-        if module in game_registry:
-            game_name = game_registry[module].name
+        if module in GAME_REGISTRY:
+            game_name = GAME_REGISTRY[module].name
         else:
             # do not change this it's a special keyword the GUI uses.
             game_name = "Commands"
@@ -78,7 +79,7 @@ def main() -> None:
     for category_commands in cmds.values():
         for cmd in category_commands:
             if str.lower(cmd.name) == str.lower(args.command):
-                if cmd.run() is None:
+                if execute_command(cmd) is None:
                     sys.exit(0)
                 else:
                     sys.exit(1)

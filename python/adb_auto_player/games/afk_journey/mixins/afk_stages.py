@@ -3,21 +3,19 @@
 import logging
 from time import sleep
 
-from adb_auto_player import (
+from adb_auto_player.decorators import register_command, register_custom_routine_choice
+from adb_auto_player.exceptions import (
     AutoPlayerError,
     AutoPlayerWarningError,
-)
-from adb_auto_player.decorators.register_command import GuiMetadata, register_command
-from adb_auto_player.decorators.register_custom_routine_choice import (
-    register_custom_routine_choice,
 )
 from adb_auto_player.games.afk_journey.base import (
     AFKJourneyBase,
 )
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
-from adb_auto_player.util.summary_generator import SummaryGenerator
+from adb_auto_player.util import SummaryGenerator
 
 
 class AFKStagesMixin(AFKJourneyBase):
@@ -25,7 +23,7 @@ class AFKStagesMixin(AFKJourneyBase):
 
     @register_command(
         name="AFKStages",
-        gui=GuiMetadata(
+        gui=GUIMetadata(
             label="AFK Stages",
             category=AFKJCategory.GAME_MODES,
         ),
@@ -33,7 +31,7 @@ class AFKStagesMixin(AFKJourneyBase):
     )
     @register_command(
         name="SeasonTalentStages",
-        gui=GuiMetadata(
+        gui=GUIMetadata(
             label="Season Talent Stages",
             category=AFKJCategory.GAME_MODES,
         ),

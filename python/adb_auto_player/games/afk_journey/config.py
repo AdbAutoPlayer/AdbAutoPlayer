@@ -3,8 +3,7 @@
 from enum import StrEnum, auto
 from typing import Annotated
 
-from adb_auto_player import ConfigBase
-from adb_auto_player.config.my_custom_routine import MyCustomRoutineConfig
+from adb_auto_player.models.pydantic import GameConfig, MyCustomRoutineConfig
 from pydantic import BaseModel, Field
 
 # Type constraints
@@ -205,7 +204,7 @@ class TitanReaverProxyBattlesConfig(BaseModel):
     )
 
 
-class Config(ConfigBase):
+class Config(GameConfig):
     """Config model."""
 
     general: GeneralConfig = Field(alias="General")

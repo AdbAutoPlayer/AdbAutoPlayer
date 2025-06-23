@@ -17,8 +17,21 @@ import logging
 import sys
 from collections.abc import Callable
 
-from ..exceptions import GenericAdbError, GenericAdbUnrecoverableError
+from adb_auto_player.exceptions import GenericAdbError, GenericAdbUnrecoverableError
+from adb_auto_player.models.commands import Command
+
 from .summary_generator import SummaryGenerator
+
+
+def execute_command(command: Command) -> Exception | None:
+    """Executes the command.
+
+    Returns:
+        Exception: The exception encountered during execution, if any. Specific
+            errors such as missing tADB permissions are logged with helpful messages.
+        None: If the action completes successfully without raising any exceptions.
+    """
+    return execute(function=command.action, kwargs=command.kwargs)
 
 
 def execute(

@@ -2,10 +2,11 @@
 
 import logging
 
-from adb_auto_player import Game, GenericAdbError, GenericAdbUnrecoverableError, games
+from adb_auto_player import Game, games
 from adb_auto_player.adb import get_adb_device, get_running_app
-from adb_auto_player.decorators.register_command import register_command
-from adb_auto_player.decorators.register_game import game_registry
+from adb_auto_player.decorators import register_command
+from adb_auto_player.exceptions import GenericAdbError, GenericAdbUnrecoverableError
+from adb_auto_player.registries import GAME_REGISTRY
 from adbutils import AdbDevice, AdbError
 
 
@@ -61,7 +62,7 @@ def _get_running_game() -> str | None:
                 any(pn in package_name for pn in game_object.package_name_substrings)
                 or game_object.package_name == package_name
             ):
-                for module, game in game_registry.items():
+                for module, game in GAME_REGISTRY.items():
                     if module in game_object.__module__:
                         return game.name
     except (AdbError, GenericAdbError, GenericAdbUnrecoverableError) as e:

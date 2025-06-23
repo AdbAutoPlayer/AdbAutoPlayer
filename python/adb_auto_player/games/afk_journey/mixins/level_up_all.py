@@ -1,11 +1,11 @@
 import logging
 from time import sleep
 
-from adb_auto_player.decorators.register_custom_routine_choice import (
+from adb_auto_player.decorators import (
     register_custom_routine_choice,
 )
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
-from adb_auto_player.log_presets import LogPreset
+from adb_auto_player.log import LogPreset
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import TemplateMatchResult

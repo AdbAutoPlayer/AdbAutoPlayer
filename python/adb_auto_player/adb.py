@@ -1,4 +1,7 @@
-"""ADB Auto Player ADB Module."""
+"""ADB Auto Player ADB Module.
+
+TODO adb in its own module?
+"""
 
 import logging
 import os
@@ -11,7 +14,8 @@ from pathlib import Path
 from typing import Any
 
 import adbutils._utils
-from adb_auto_player import ConfigLoader, GenericAdbError, GenericAdbUnrecoverableError
+from adb_auto_player.exceptions import GenericAdbError, GenericAdbUnrecoverableError
+from adb_auto_player.util import ConfigLoader
 from adbutils import AdbClient, AdbDevice, AdbError
 from adbutils._proto import AdbDeviceInfo
 
