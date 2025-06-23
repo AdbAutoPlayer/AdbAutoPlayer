@@ -17,7 +17,8 @@ import logging
 import sys
 from collections.abc import Callable
 
-from ..exceptions import GenericAdbError, GenericAdbUnrecoverableError
+from adb_auto_player.exceptions import GenericAdbError, GenericAdbUnrecoverableError
+
 from .summary_generator import SummaryGenerator
 
 

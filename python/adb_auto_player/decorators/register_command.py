@@ -15,7 +15,7 @@ from typing import Any
 
 from adb_auto_player import Command
 from adb_auto_player.ipc import MenuOption
-from adb_auto_player.util.module_helper import get_game_module
+from adb_auto_player.util import get_game_module
 
 # Nested dictionary: { module_name (e.g., 'AFKJourney'): { name: Command } }
 command_registry: dict[str, dict[str, Command]] = {}

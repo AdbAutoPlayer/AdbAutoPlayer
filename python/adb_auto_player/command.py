@@ -4,7 +4,7 @@ from collections.abc import Callable
 from typing import Any
 
 from adb_auto_player.ipc import MenuOption
-from adb_auto_player.util.execute import execute
+from adb_auto_player.util import execute
 
 
 class Command:

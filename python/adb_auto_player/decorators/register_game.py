@@ -25,7 +25,7 @@ from pathlib import Path
 from types import FunctionType
 
 from adb_auto_player import ConfigBase
-from adb_auto_player.util.module_helper import get_game_module
+from adb_auto_player.util import get_game_module
 
 
 @dataclass

@@ -11,7 +11,7 @@ from adb_auto_player.decorators.register_game import register_game
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
-from adb_auto_player.util.summary_generator import SummaryGenerator
+from adb_auto_player.util import SummaryGenerator
 from pydantic import BaseModel
 
 

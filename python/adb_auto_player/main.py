@@ -1,4 +1,4 @@
-"""Proof of concept for Decorator refactor."""
+"""Main module."""
 
 import argparse
 import sys
@@ -7,7 +7,7 @@ from adb_auto_player import Command, commands, games
 from adb_auto_player.argparse_formatter_factory import build_argparse_formatter
 from adb_auto_player.decorators.register_command import command_registry
 from adb_auto_player.decorators.register_game import game_registry
-from adb_auto_player.logging_setup import setup_logging
+from adb_auto_player.logging import setup_logging
 
 
 def _load_modules() -> None:

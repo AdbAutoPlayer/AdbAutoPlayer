@@ -1,4 +1,7 @@
-"""ADB Auto Player ADB Module."""
+"""ADB Auto Player ADB Module.
+
+TODO adb in its own module?
+"""
 
 import logging
 import os

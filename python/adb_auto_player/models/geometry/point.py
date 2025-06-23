@@ -4,7 +4,7 @@ import math
 from dataclasses import dataclass
 
 import numpy as np
-from adb_auto_player.util.type_helpers import to_int_if_needed
+from adb_auto_player.util import to_int_if_needed
 
 from .coordinates import Coordinates
 

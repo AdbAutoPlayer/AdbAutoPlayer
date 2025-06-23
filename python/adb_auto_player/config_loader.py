@@ -1,4 +1,7 @@
-"""ADB Auto Player Config Loader Module."""
+"""ADB Auto Player Config Loader Module.
+
+TODO config package?
+"""
 
 import logging
 import tomllib

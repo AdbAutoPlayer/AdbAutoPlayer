@@ -1,4 +1,7 @@
-"""Pytest Template Matching Module."""
+"""Pytest Template Matching Module.
+
+Some older tests I decided to leave in.
+"""
 
 import unittest
 from pathlib import Path

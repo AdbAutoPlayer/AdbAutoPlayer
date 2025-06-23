@@ -6,7 +6,7 @@ prints JSON summaries if a JSON log handler is present, and logs updates.
 
 import sys
 
-from adb_auto_player.ipc.summary import Summary
+from adb_auto_player.ipc import Summary
 
 
 class SummaryGenerator:

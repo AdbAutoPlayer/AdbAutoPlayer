@@ -1,4 +1,7 @@
-"""Argparse Formatter Factory."""
+"""Argparse Formatter Factory.
+
+TODO move to commands package?
+"""
 
 import argparse
 

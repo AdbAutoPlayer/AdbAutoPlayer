@@ -9,17 +9,12 @@ from adb_auto_player import Command
 from adb_auto_player.decorators.register_custom_routine_choice import (
     custom_routine_choice_registry,
 )
-from adb_auto_player.ipc import NumberConstraintDict
-from adb_auto_player.ipc.constraint import (
+from adb_auto_player.ipc import (
+    ConstraintFactory,
     ConstraintType,
-    create_checkbox_constraint,
-    create_image_checkbox_constraint,
-    create_multicheckbox_constraint,
-    create_my_custom_routine_constraint,
-    create_number_constraint,
-    create_text_constraint,
+    NumberConstraintDict,
 )
-from adb_auto_player.util.module_helper import get_game_module
+from adb_auto_player.util import get_game_module
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
@@ -170,7 +165,7 @@ class ConfigBase(BaseModel):
         default_value = field_schema.get("default_value", list())
         match constraint_type:
             case "multicheckbox":
-                return create_multicheckbox_constraint(
+                return ConstraintFactory.create_multicheckbox_constraint(
                     choices=enum_values,
                     default_value=default_value,
                     group_alphabetically=field_schema.get(
@@ -178,7 +173,7 @@ class ConfigBase(BaseModel):
                     ),
                 )
             case "imagecheckbox":
-                return create_image_checkbox_constraint(
+                return ConstraintFactory.create_image_checkbox_constraint(
                     choices=enum_values,
                     default_value=default_value,
                     image_dir_path=field_schema.get("image_dir_path", ""),
@@ -188,7 +183,9 @@ class ConfigBase(BaseModel):
                 choices = list(custom_routine_choice_registry.get(module, {}).keys())
                 if not choices:
                     raise ValueError("MyCustomRoutine constraint requires menu options")
-                return create_my_custom_routine_constraint(choices=choices)
+                return ConstraintFactory.create_my_custom_routine_constraint(
+                    choices=choices
+                )
             case _:
                 raise ValueError(f"Unknown constraint_type {constraint_type}")
 
@@ -209,7 +206,9 @@ class ConfigBase(BaseModel):
 
                 return _get_number_constraint(field_schema)
             case "boolean":
-                return create_checkbox_constraint(cast(bool, default_value))
+                return ConstraintFactory.create_checkbox_constraint(
+                    cast(bool, default_value)
+                )
             case "array":
                 raise ValueError(
                     "array config properties need to define "
@@ -225,7 +224,7 @@ class ConfigBase(BaseModel):
                         "https://www.w3schools.com/tags/att_title.asp"
                     )
 
-                return create_text_constraint(
+                return ConstraintFactory.create_text_constraint(
                     default_value=cast(str, default_value),
                     regex=regex,
                     title=title,
@@ -276,7 +275,7 @@ def _get_number_constraint(field_schema: dict) -> NumberConstraintDict:
             f"Pydantic Field schema explicitly."
         )
 
-    return create_number_constraint(
+    return ConstraintFactory.create_number_constraint(
         minimum=minimum,
         maximum=maximum,
         default_value=cast(float, default_value),
@@ -322,7 +321,7 @@ def _get_integer_constraint(field_schema: dict) -> NumberConstraintDict:
             f"Pydantic Field schema explicitly."
         )
 
-    return create_number_constraint(
+    return ConstraintFactory.create_number_constraint(
         minimum=minimum,
         maximum=maximum,
         default_value=cast(int, default_value),

@@ -55,7 +55,7 @@ from adb_auto_player.template_matching import (
     find_worst_template_match,
     similar_image,
 )
-from adb_auto_player.util.execute import execute
+from adb_auto_player.util import execute
 from adbutils._device import AdbDevice
 from PIL import Image
 from pydantic import BaseModel

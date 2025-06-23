@@ -13,11 +13,11 @@ from adb_auto_player import (
     TemplateMatchParams,
 )
 from adb_auto_player.decorators.register_game import GameGUIMetadata, register_game
+from adb_auto_player.models import ConfidenceValue
+from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import MatchMode
 
-from ...models import ConfidenceValue
-from ...models.geometry import Point
 from .afkjourneynavigation import AFKJourneyNavigation
 from .config import Config
 from .gui_category import AFKJCategory

@@ -14,7 +14,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from adb_auto_player.util.module_helper import get_game_module
+from adb_auto_player.util import get_game_module
 
 
 @dataclass

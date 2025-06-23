@@ -17,7 +17,7 @@ from adb_auto_player.games.afk_journey.base import (
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
-from adb_auto_player.util.summary_generator import SummaryGenerator
+from adb_auto_player.util import SummaryGenerator
 
 
 class AFKStagesMixin(AFKJourneyBase):
