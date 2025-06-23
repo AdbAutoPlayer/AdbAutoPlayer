@@ -189,7 +189,7 @@ def find_worst_template_match(
     diff_map = cv2.matchTemplate(base_cv, template_cv, cv2.TM_SQDIFF)
 
     # Find the location with the maximum difference (worst match)
-    test1, max_val, test2, max_diff_loc = cv2.minMaxLoc(diff_map)
+    _, max_val, _, max_diff_loc = cv2.minMaxLoc(diff_map)
     min_difference_threshold = 10000
     if max_val < min_difference_threshold:
         return None

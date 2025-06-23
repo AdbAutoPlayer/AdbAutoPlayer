@@ -617,7 +617,9 @@ class Game:
         if result is None:
             return None
 
-        return result.to_template_match_result(template=str(template))
+        return result.with_offset(crop_result.offset).to_template_match_result(
+            template=str(template)
+        )
 
     def find_all_template_matches(
         self,
@@ -805,6 +807,7 @@ class Game:
         if grayscale:
             screenshot = to_grayscale(screenshot)
 
+        screenshot = screenshot if screenshot is not None else self.get_screenshot()
         for template in templates:
             result = self.game_find_template_match(
                 template,
@@ -812,9 +815,7 @@ class Game:
                 threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
                 crop_regions=crop_regions,
-                screenshot=(
-                    screenshot if screenshot is not None else self.get_screenshot()
-                ),
+                screenshot=screenshot,
             )
             if result is not None:
                 return result
