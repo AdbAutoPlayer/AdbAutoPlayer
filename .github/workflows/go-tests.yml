@@ -49,5 +49,16 @@ jobs:
         run: mkdir -p frontend/build && touch frontend/build/.gitignore
 
       - name: Run Go tests
+        shell: bash
         run: |
-          go test -v ./...
+          go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+      - name: Upload coverage reports to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@v5
+        with:
+          slug: AdbAutoPlayer/AdbAutoPlayer
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.os }}
+          files: "coverage.txt"
+          disable_search: 'true'
