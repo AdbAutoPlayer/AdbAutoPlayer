@@ -3,10 +3,13 @@ package updater
 import (
 	"context"
 	"fmt"
+	"github.com/Masterminds/semver"
+	"github.com/google/go-github/v72/github"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type UpdateInfo struct {
@@ -18,13 +21,9 @@ type UpdateInfo struct {
 	AutoUpdate  bool   `json:"autoUpdate"`
 }
 
-type GitHubRelease struct {
-	TagName string `json:"tag_name"`
-	Assets  []struct {
-		BrowserDownloadURL string `json:"browser_download_url"`
-		Size               int64  `json:"size"`
-		Name               string `json:"name"`
-	} `json:"assets"`
+type Changelog struct {
+	Body    string `json:"body"`
+	Version string `json:"version"`
 }
 
 type UpdateManager struct {
@@ -33,6 +32,11 @@ type UpdateManager struct {
 	isDev            bool
 	progressCallback func(float64)
 	processesToKill  []string // List of process names to terminate before update
+	githubClient     *github.Client
+	owner            string
+	repo             string
+	latestRelease    *github.RepositoryRelease
+	releasesBetween  []*github.RepositoryRelease // Releases between current and latest
 }
 
 func NewUpdateManager(ctx context.Context, currentVersion string, isDev bool) *UpdateManager {
@@ -41,11 +45,118 @@ func NewUpdateManager(ctx context.Context, currentVersion string, isDev bool) *U
 		currentVersion:  currentVersion,
 		isDev:           isDev,
 		processesToKill: []string{"adb.exe", "adb_auto_player.exe", "tesseract.exe"},
+		githubClient:    github.NewClient(nil), // nil http.Client means no authentication
+		owner:           "AdbAutoPlayer",
+		repo:            "AdbAutoPlayer",
 	}
 }
 
 func (um *UpdateManager) SetProgressCallback(callback func(float64)) {
 	um.progressCallback = callback
+}
+
+// GetReleasesBetween returns the cached releases between current and latest
+func (um *UpdateManager) GetReleasesBetween() []*github.RepositoryRelease {
+	return um.releasesBetween
+}
+
+// GetChangelog combines changelog from latest release and releases in between
+func (um *UpdateManager) GetChangelogs() []Changelog {
+	var changelogs []Changelog
+
+	if um.latestRelease != nil && um.latestRelease.Body != nil {
+		changelogs = append(changelogs, Changelog{
+			Body:    *um.latestRelease.Body,
+			Version: *um.latestRelease.TagName,
+		})
+	}
+
+	for _, release := range um.releasesBetween {
+		if release != nil && release.Body != nil {
+			changelogs = append(changelogs, Changelog{
+				Body:    *release.Body,
+				Version: *release.TagName,
+			})
+		}
+	}
+
+	return changelogs
+}
+
+// getLatestReleaseIncludingPrerelease gets the latest release including pre-releases
+func (um *UpdateManager) getLatestReleaseIncludingPrerelease() (*github.RepositoryRelease, error) {
+	releases, _, err := um.githubClient.Repositories.ListReleases(um.ctx, um.owner, um.repo, &github.ListOptions{
+		PerPage: 30, // Get first 30 releases to find the latest
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list releases: %w", err)
+	}
+	if len(releases) == 0 {
+		return nil, fmt.Errorf("no releases found")
+	}
+
+	// Find the first release with usable assets
+	for _, release := range releases {
+		if release.TagName != nil && len(release.Assets) > 0 {
+			hasUsableAsset := false
+			for _, asset := range release.Assets {
+				if asset.Name != nil && strings.HasSuffix(strings.ToLower(*asset.Name), "_windows.zip") {
+					hasUsableAsset = true
+					break
+				}
+			}
+
+			if hasUsableAsset {
+				return release, nil
+			}
+		}
+	}
+
+	// Fallback to first release if no specific Windows asset found
+	return releases[0], nil
+}
+
+// getReleasesBetweenTags returns all releases between two semver tags
+func (um *UpdateManager) getReleasesBetweenTags(startTag, endTag string) ([]*github.RepositoryRelease, error) {
+	// Parse the version constraints
+	startVer, err := semver.NewVersion(startTag)
+	if err != nil {
+		return nil, fmt.Errorf("invalid start tag: %w", err)
+	}
+
+	endVer, err := semver.NewVersion(endTag)
+	if err != nil {
+		return nil, fmt.Errorf("invalid end tag: %w", err)
+	}
+
+	// Get all releases
+	releases, _, err := um.githubClient.Repositories.ListReleases(um.ctx, um.owner, um.repo, &github.ListOptions{
+		PerPage: 100, // Maximum allowed by GitHub API
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list releases: %w", err)
+	}
+
+	var filteredReleases []*github.RepositoryRelease
+
+	for _, release := range releases {
+		if release.TagName == nil {
+			continue
+		}
+
+		// Parse the release version
+		releaseVer, err := semver.NewVersion(*release.TagName)
+		if err != nil {
+			continue // skip non-semver tags
+		}
+
+		// Check if the release is within our range (exclusive of start and end)
+		if releaseVer.GreaterThan(startVer) && releaseVer.LessThan(endVer) {
+			filteredReleases = append(filteredReleases, release)
+		}
+	}
+
+	return filteredReleases, nil
 }
 
 func (um *UpdateManager) downloadFile(url, filepath string) error {
