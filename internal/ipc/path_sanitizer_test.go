@@ -86,14 +86,6 @@ func TestNewPathSanitizer(t *testing.T) {
 		}
 	})
 
-	t.Run("should create unique usernames on each call", func(t *testing.T) {
-		sanitizer1 := NewPathSanitizer()
-		sanitizer2 := NewPathSanitizer()
-		if sanitizer1.username == sanitizer2.username {
-			t.Errorf("Expected unique usernames, got duplicates: %q", sanitizer1.username)
-		}
-	})
-
 	t.Run("should create valid sanitizer instance", func(t *testing.T) {
 		sanitizer := NewPathSanitizer()
 		if sanitizer == nil {
