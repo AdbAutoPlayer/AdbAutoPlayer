@@ -5,13 +5,12 @@ package updater
 import (
 	"adb-auto-player/internal"
 	"archive/zip"
-	"encoding/json"
 	"fmt"
 	"github.com/Masterminds/semver"
+	"github.com/google/go-github/v72/github"
 	"github.com/shirou/gopsutil/process"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -27,110 +26,85 @@ func (um *UpdateManager) CheckForUpdates(autoUpdate bool, enableAlphaUpdates boo
 	}
 
 	currentVer, err1 := semver.NewVersion(um.currentVersion)
-	isCurrentPrerelease := err1 == nil && currentVer.Prerelease() != ""
-
-	var apiURL string
-	if enableAlphaUpdates || isCurrentPrerelease {
-		// Get all releases to include pre-releases/alphas
-		apiURL = "https://api.github.com/repos/AdbAutoPlayer/AdbAutoPlayer/releases"
-	} else {
-		// Get only the latest stable release
-		apiURL = "https://api.github.com/repos/AdbAutoPlayer/AdbAutoPlayer/releases/latest"
+	if err1 != nil {
+		return UpdateInfo{Error: fmt.Sprintf("current version parse error: %v", err1)}
 	}
 
-	resp, err := http.Get(apiURL)
+	isCurrentPrerelease := currentVer.Prerelease() != ""
+
+	var latestRelease *github.RepositoryRelease
+	var err error
+
+	if enableAlphaUpdates || isCurrentPrerelease {
+		// Get all releases to include pre-releases/alphas
+		latestRelease, err = um.getLatestReleaseIncludingPrerelease()
+	} else {
+		// Get only the latest stable release
+		latestRelease, _, err = um.githubClient.Repositories.GetLatestRelease(um.ctx, um.owner, um.repo)
+		if err != nil {
+			return UpdateInfo{Error: fmt.Sprintf("failed to get latest release: %v", err)}
+		}
+	}
+
 	if err != nil {
 		return UpdateInfo{Error: err.Error()}
 	}
-	defer func() {
-		if err = resp.Body.Close(); err != nil {
-			runtime.LogErrorf(um.ctx, "resp.Body.Close error: %v", err)
-		}
-	}()
 
-	var latestRelease GitHubRelease
-
-	if enableAlphaUpdates || isCurrentPrerelease {
-		var releases []GitHubRelease
-		if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
-			return UpdateInfo{Error: err.Error()}
-		}
-
-		if len(releases) == 0 {
-			return UpdateInfo{Available: false}
-		}
-
-		latestRelease = um.findNewestRelease(releases)
-	} else {
-		if err = json.NewDecoder(resp.Body).Decode(&latestRelease); err != nil {
-			return UpdateInfo{Error: err.Error()}
-		}
+	if latestRelease == nil || latestRelease.TagName == nil {
+		return UpdateInfo{Available: false}
 	}
 
-	latestVer, err2 := semver.NewVersion(latestRelease.TagName)
+	um.latestRelease = latestRelease
 
-	if err1 != nil || err2 != nil {
-		return UpdateInfo{Error: fmt.Sprintf("version parse error: %v, %v", err1, err2)}
+	latestVer, err2 := semver.NewVersion(*latestRelease.TagName)
+	if err2 != nil {
+		return UpdateInfo{Error: fmt.Sprintf("latest version parse error: %v", err2)}
 	}
 
 	if latestVer.GreaterThan(currentVer) {
-		var windowsAsset *struct {
-			BrowserDownloadURL string `json:"browser_download_url"`
-			Size               int64  `json:"size"`
-			Name               string `json:"name"`
+		// Get releases between current and latest for changelog
+		releasesBetween, err := um.getReleasesBetweenTags(um.currentVersion, *latestRelease.TagName)
+		fmt.Printf("Number of releases between tags: %d\n", len(releasesBetween))
+		if err != nil {
+			runtime.LogWarningf(um.ctx, "Failed to get releases between versions: %v", err)
+		} else {
+			um.releasesBetween = releasesBetween
 		}
 
+		// Find Windows asset
+		var windowsAsset *github.ReleaseAsset
 		for _, asset := range latestRelease.Assets {
-			if strings.Contains(strings.ToLower(asset.Name), "windows") ||
-				strings.Contains(strings.ToLower(asset.Name), "win") {
-				windowsAsset = &asset
+			if asset.Name != nil &&
+				(strings.Contains(strings.ToLower(*asset.Name), "windows") ||
+					strings.Contains(strings.ToLower(*asset.Name), "win")) {
+				windowsAsset = asset
 				break
 			}
 		}
 
 		if windowsAsset == nil && len(latestRelease.Assets) > 0 {
 			// Fallback to first asset if no Windows-specific asset found
-			windowsAsset = &latestRelease.Assets[0]
+			windowsAsset = latestRelease.Assets[0]
 		}
 
-		if windowsAsset != nil {
+		if windowsAsset != nil && windowsAsset.BrowserDownloadURL != nil {
+			size := int64(0)
+			if windowsAsset.Size != nil {
+				size = int64(*windowsAsset.Size)
+			}
+
 			return UpdateInfo{
 				Available:   true,
-				Version:     latestRelease.TagName,
-				DownloadURL: windowsAsset.BrowserDownloadURL,
-				Size:        windowsAsset.Size,
+				Version:     *latestRelease.TagName,
+				DownloadURL: *windowsAsset.BrowserDownloadURL,
+				Size:        size,
 				AutoUpdate:  autoUpdate,
 			}
 		}
 	}
+
 	runtime.LogDebug(um.ctx, "No updates available.")
 	return UpdateInfo{Available: false}
-}
-
-// findNewestRelease finds the newest release from a list of releases
-// This includes alpha, beta, and other pre-release versions
-func (um *UpdateManager) findNewestRelease(releases []GitHubRelease) GitHubRelease {
-	if len(releases) == 0 {
-		return GitHubRelease{}
-	}
-
-	for _, release := range releases {
-		if len(release.Assets) > 0 {
-			hasUsableAsset := false
-			for _, asset := range release.Assets {
-				if strings.HasSuffix(strings.ToLower(asset.Name), "_windows.zip") {
-					hasUsableAsset = true
-					break
-				}
-			}
-
-			if hasUsableAsset {
-				return release
-			}
-		}
-	}
-
-	return releases[0]
 }
 
 func (um *UpdateManager) DownloadAndApplyUpdate(downloadURL string) error {

@@ -3,6 +3,7 @@
     TerminateGameProcess,
     CheckForUpdates,
     DownloadUpdate,
+    GetChangelogs,
   } from "$lib/wailsjs/go/main/App";
   import { updater } from "$lib/wailsjs/go/models";
   import { enablePolling, disablePolling } from "$lib/stores/polling";
@@ -13,44 +14,6 @@
   import UpdateIconSticky from "./UpdateIconSticky.svelte";
   import UpdateModal from "./UpdateModal.svelte";
   import { onDestroy } from "svelte";
-
-  // Version utilities
-  const versionUtils = {
-    compare: (v1: string, v2: string): number => {
-      const parts1 = v1.split(".").map(Number);
-      const parts2 = v2.split(".").map(Number);
-      for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
-        const part1 = parts1[i] || 0;
-        const part2 = parts2[i] || 0;
-        if (part1 < part2) return -1;
-        if (part1 > part2) return 1;
-      }
-      return 0;
-    },
-
-    isInRange: (
-      version: string,
-      startVersion: string,
-      endVersion: string,
-    ): boolean => {
-      return (
-        versionUtils.compare(version, startVersion) > 0 &&
-        versionUtils.compare(version, endVersion) <= 0
-      );
-    },
-  };
-
-  interface Release {
-    html_url: string;
-    tag_name: string;
-    assets: Asset[];
-    body: string;
-  }
-
-  interface Asset {
-    name: string;
-    browser_download_url: string;
-  }
 
   // State management
   let updateState = $state({
@@ -63,45 +26,7 @@
   });
 
   let updateInfo: updater.UpdateInfo | null = $state(null);
-  let modalChangeLog: string = $state("");
-
-  async function getModalChangeLog(
-    currentVersion: string,
-    latestVersion: string,
-  ): Promise<string> {
-    const releasesResponse = await fetch(
-      "https://api.github.com/repos/AdbAutoPlayer/AdbAutoPlayer/releases",
-    );
-    const allReleases: Release[] = await releasesResponse.json();
-
-    const filteredReleases = allReleases.filter((release) => {
-      const releaseVersion = release.tag_name;
-      return versionUtils.isInRange(
-        releaseVersion,
-        currentVersion,
-        latestVersion,
-      );
-    });
-
-    let changeLog: string = "";
-    let changeLogs: Array<string> = [];
-    filteredReleases.forEach((release: Release) => {
-      let body = release.body.replace(/\*\*Full Changelog\*\*:.*/, "");
-      body = body.trim();
-      if (body !== "") {
-        changeLogs.push(`# ${release.tag_name}\n${body}\n\n`);
-      }
-    });
-
-    if (changeLogs.length > 0) {
-      changeLog = changeLogs.join("\n___\n");
-      changeLog +=
-        "\n___\n**Full Changelog**: https://github.com/AdbAutoPlayer/AdbAutoPlayer/compare/" +
-        `${currentVersion}...${latestVersion}`;
-    }
-
-    return changeLog;
-  }
+  let modalChangelogs: updater.Changelog[] = $state([]);
 
   async function initialUpdateCheck() {
     LogInfo(`App Version: ${version}`);
@@ -180,7 +105,7 @@
 
   async function setAvailableUpdateInfo(info: updater.UpdateInfo) {
     updateInfo = info;
-    modalChangeLog = await getModalChangeLog(version, updateInfo.version);
+    modalChangelogs = await GetChangelogs();
     updateState.showDownloadIcon = true;
   }
 
@@ -212,20 +137,6 @@
   onDestroy(() => {
     clearInterval(updateCheckInterval);
   });
-
-  /* Changelog style testing
-    modalChangeLog =
-      "## What's New\n" +
-      "* **AFK Journey: Handle scenarios where final AFK Stage is cleared before Infinity Stages**\n" +
-      "  *Contributed by @yulesxoxo in https://github.com/AdbAutoPlayer/AdbAutoPlayer/pull/137*\n" +
-      "* **Updated some log messages**\n" +
-      "  *Contributed by @yulesxoxo*\n" +
-      "* **Improved Update Changelog display**\n" +
-      "  *Contributed by @yulesxoxo*\n" +
-      "\n" +
-      "**Full Changelog**: https://github.com/AdbAutoPlayer/AdbAutoPlayer/compare/7.0.0...7.0.1";
-    updateState.showModal = true;
-   */
 </script>
 
 <UpdateIconSticky show={updateState.showDownloadIcon} onClick={openModal} />
@@ -233,7 +144,7 @@
 <UpdateModal
   bind:showModal={updateState.showModal}
   {updateInfo}
-  {modalChangeLog}
+  {modalChangelogs}
   downloadProgress={updateState.downloadProgress}
   isDownloading={updateState.isDownloading}
   onClose={closeModal}

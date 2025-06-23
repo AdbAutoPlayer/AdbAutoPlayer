@@ -28,6 +28,7 @@ type App struct {
 	version                string
 	isDev                  bool
 	mainConfig             config.MainConfig
+	updateManager          *updater.UpdateManager
 }
 
 func NewApp(version string, isDev bool, mainConfig config.MainConfig) *App {
@@ -42,18 +43,20 @@ func NewApp(version string, isDev bool, mainConfig config.MainConfig) *App {
 }
 
 func (a *App) CheckForUpdates() updater.UpdateInfo {
-	updateManager := updater.NewUpdateManager(a.ctx, a.version, a.isDev)
-	return updateManager.CheckForUpdates(a.mainConfig.Update.AutoUpdate, a.mainConfig.Update.EnableAlphaUpdates)
+	a.updateManager = updater.NewUpdateManager(a.ctx, a.version, a.isDev)
+	return a.updateManager.CheckForUpdates(a.mainConfig.Update.AutoUpdate, a.mainConfig.Update.EnableAlphaUpdates)
+}
+
+func (a *App) GetChangelogs() []updater.Changelog {
+	return a.updateManager.GetChangelogs()
 }
 
 func (a *App) DownloadUpdate(downloadURL string) error {
-	updateManager := updater.NewUpdateManager(a.ctx, a.version, a.isDev)
-
-	updateManager.SetProgressCallback(func(progress float64) {
+	a.updateManager.SetProgressCallback(func(progress float64) {
 		runtime.EventsEmit(a.ctx, "download-progress", progress)
 	})
 
-	return updateManager.DownloadAndApplyUpdate(downloadURL)
+	return a.updateManager.DownloadAndApplyUpdate(downloadURL)
 }
 
 func (a *App) setGamesFromPython() error {

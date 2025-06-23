@@ -7,7 +7,7 @@
   interface Props {
     showModal: boolean;
     updateInfo: updater.UpdateInfo | null;
-    modalChangeLog: string;
+    modalChangelogs: updater.Changelog[];
     downloadProgress: number;
     isDownloading: boolean;
     onClose: () => void;
@@ -17,7 +17,7 @@
   let {
     showModal = $bindable(),
     updateInfo,
-    modalChangeLog,
+    modalChangelogs,
     downloadProgress,
     isDownloading,
     onClose,
@@ -62,7 +62,15 @@
         <div
           class="min-h-0 flex-grow overflow-y-auto pr-2 break-words whitespace-normal"
         >
-          {@html marked(modalChangeLog || "")}
+          {#each modalChangelogs as changelog}
+            <div>
+              <div class="my-2 text-lg font-bold">
+                Changelog: {changelog.version}
+              </div>
+              {@html marked(changelog.body || "")}
+            </div>
+            <hr class="hr border-t-4" />
+          {/each}
         </div>
       {/if}
 
