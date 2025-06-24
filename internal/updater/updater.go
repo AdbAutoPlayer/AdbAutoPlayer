@@ -54,9 +54,12 @@ func (um *UpdateManager) SetProgressCallback(callback func(float64)) {
 	um.progressCallback = callback
 }
 
-// GetChangelogs GetChangelog combines changelog from latest release and releases in between
+// GetChangelogs combines changelog from latest release and releases in between
+// When latestRelease is not a prerelease, prereleases are filtered out
 func (um *UpdateManager) GetChangelogs() []Changelog {
 	var changelogs []Changelog
+
+	filterPrereleases := um.latestRelease != nil && !um.latestRelease.GetPrerelease()
 
 	if um.latestRelease != nil && um.latestRelease.Body != nil {
 		changelogs = append(changelogs, Changelog{
@@ -66,12 +69,19 @@ func (um *UpdateManager) GetChangelogs() []Changelog {
 	}
 
 	for _, release := range um.releasesBetween {
-		if release != nil && release.Body != nil {
-			changelogs = append(changelogs, Changelog{
-				Body:    *release.Body,
-				Version: *release.TagName,
-			})
+		if release == nil || release.Body == nil {
+			continue
 		}
+
+		// Skip prereleases if filtering is enabled
+		if filterPrereleases && release.GetPrerelease() {
+			continue
+		}
+
+		changelogs = append(changelogs, Changelog{
+			Body:    *release.Body,
+			Version: *release.TagName,
+		})
 	}
 
 	return changelogs
