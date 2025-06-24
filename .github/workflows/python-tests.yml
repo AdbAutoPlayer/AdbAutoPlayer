@@ -34,13 +34,14 @@ jobs:
 
       - name: macOS install dependencies
         if: runner.os == 'macOS'
+        id: brew_install
         run: |
           brew install tesseract
           brew install --cask android-platform-tools
         continue-on-error: true
 
       - name: macOS install platform-tools fallback
-        if: runner.os == 'macOS' && failure()
+        if: runner.os == 'macOS' && steps.brew_install.outcome == 'failure'
         run: |
           echo "Homebrew installation failed, using direct download"
 
