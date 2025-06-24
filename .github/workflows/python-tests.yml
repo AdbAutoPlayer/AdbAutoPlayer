@@ -35,6 +35,7 @@ jobs:
       - name: macOS install dependencies
         if: runner.os == 'macOS'
         run: |
+          rm -rf /Users/runner/Library/Caches/Homebrew/downloads/*-platform-tools_*-darwin.zip
           brew update
           brew install tesseract
           brew install --cask android-platform-tools
