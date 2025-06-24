@@ -42,7 +42,7 @@ func NewApp(version string, isDev bool, mainConfig config.MainConfig) *App {
 	return newApp
 }
 
-func (a *App) CheckForUpdates() updater.UpdateInfo {
+func (a *App) CheckForUpdates() (updater.UpdateInfo, error) {
 	a.updateManager = updater.NewUpdateManager(a.ctx, a.version, a.isDev)
 	return a.updateManager.CheckForUpdates(a.mainConfig.Update.AutoUpdate, a.mainConfig.Update.EnableAlphaUpdates)
 }
@@ -411,10 +411,6 @@ func (a *App) TerminateGameProcess() {
 
 func (a *App) IsGameProcessRunning() bool {
 	return internal.GetProcessManager().IsProcessRunning()
-}
-
-func (a *App) GetAppVersion() string {
-	return a.version
 }
 
 func (a *App) getMainConfigPath() string {

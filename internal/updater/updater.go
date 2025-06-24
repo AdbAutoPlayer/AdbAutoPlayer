@@ -17,7 +17,6 @@ type UpdateInfo struct {
 	Version     string `json:"version"`
 	DownloadURL string `json:"downloadURL"`
 	Size        int64  `json:"size"`
-	Error       string `json:"error,omitempty"`
 	AutoUpdate  bool   `json:"autoUpdate"`
 }
 
@@ -55,12 +54,7 @@ func (um *UpdateManager) SetProgressCallback(callback func(float64)) {
 	um.progressCallback = callback
 }
 
-// GetReleasesBetween returns the cached releases between current and latest
-func (um *UpdateManager) GetReleasesBetween() []*github.RepositoryRelease {
-	return um.releasesBetween
-}
-
-// GetChangelog combines changelog from latest release and releases in between
+// GetChangelogs GetChangelog combines changelog from latest release and releases in between
 func (um *UpdateManager) GetChangelogs() []Changelog {
 	var changelogs []Changelog
 
@@ -81,6 +75,25 @@ func (um *UpdateManager) GetChangelogs() []Changelog {
 	}
 
 	return changelogs
+}
+
+func (um *UpdateManager) GetLatestRelease(checkPrerelease bool) (*github.RepositoryRelease, error) {
+	var latestRelease *github.RepositoryRelease
+	var err error
+
+	if checkPrerelease {
+		// Get all releases to include pre-releases/alphas
+		latestRelease, err = um.getLatestReleaseIncludingPrerelease()
+	} else {
+		// Get only the latest stable release
+		latestRelease, _, err = um.githubClient.Repositories.GetLatestRelease(um.ctx, um.owner, um.repo)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest Release from GitHub: %w", err)
+	}
+
+	return latestRelease, nil
 }
 
 // getLatestReleaseIncludingPrerelease gets the latest release including pre-releases
