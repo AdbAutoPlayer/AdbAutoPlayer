@@ -35,7 +35,9 @@ jobs:
       - name: macOS install dependencies
         if: runner.os == 'macOS'
         run: |
+          curl -I https://dl.google.com/android/repository/platform-tools_r36.0.0-darwin.zip
           brew install tesseract
+
           brew install --cask android-platform-tools --no-quarantine
 
 
