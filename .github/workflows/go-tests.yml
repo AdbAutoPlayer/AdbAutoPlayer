@@ -7,6 +7,10 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  secrets: read
+
 jobs:
   go-tests:
     name: ${{ matrix.os }}
