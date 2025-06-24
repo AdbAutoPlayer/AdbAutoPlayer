@@ -19,92 +19,80 @@ import (
 	"time"
 )
 
-func (um *UpdateManager) CheckForUpdates(autoUpdate bool, enableAlphaUpdates bool) UpdateInfo {
+func (um *UpdateManager) CheckForUpdates(autoUpdate bool, checkPrerelease bool) (UpdateInfo, error) {
 	if um.isDev {
-		runtime.LogDebug(um.ctx, "Updater disabled for dev.")
-		return UpdateInfo{Available: false}
+		runtime.LogDebug(um.ctx, "Updater disabled in dev.")
+		return UpdateInfo{Available: false}, nil
 	}
 
-	currentVer, err1 := semver.NewVersion(um.currentVersion)
-	if err1 != nil {
-		return UpdateInfo{Error: fmt.Sprintf("current version parse error: %v", err1)}
-	}
-
-	isCurrentPrerelease := currentVer.Prerelease() != ""
-
-	var latestRelease *github.RepositoryRelease
-	var err error
-
-	if enableAlphaUpdates || isCurrentPrerelease {
-		// Get all releases to include pre-releases/alphas
-		latestRelease, err = um.getLatestReleaseIncludingPrerelease()
-	} else {
-		// Get only the latest stable release
-		latestRelease, _, err = um.githubClient.Repositories.GetLatestRelease(um.ctx, um.owner, um.repo)
-		if err != nil {
-			return UpdateInfo{Error: fmt.Sprintf("failed to get latest release: %v", err)}
-		}
-	}
-
+	currentVer, err := semver.NewVersion(um.currentVersion)
 	if err != nil {
-		return UpdateInfo{Error: err.Error()}
+		return UpdateInfo{}, fmt.Errorf("failed to parse current version: %w", err)
+	}
+
+	latestRelease, err := um.GetLatestRelease(currentVer.Prerelease() != "" || checkPrerelease)
+	if err != nil {
+		return UpdateInfo{}, err
 	}
 
 	if latestRelease == nil || latestRelease.TagName == nil {
-		return UpdateInfo{Available: false}
+		return UpdateInfo{Available: false}, nil
 	}
 
 	um.latestRelease = latestRelease
-
-	latestVer, err2 := semver.NewVersion(*latestRelease.TagName)
-	if err2 != nil {
-		return UpdateInfo{Error: fmt.Sprintf("latest version parse error: %v", err2)}
+	latestVer, err := semver.NewVersion(*latestRelease.TagName)
+	if err != nil {
+		return UpdateInfo{}, fmt.Errorf("error parsing latest Version: %w", err)
 	}
 
-	if latestVer.GreaterThan(currentVer) {
-		// Get releases between current and latest for changelog
-		releasesBetween, err := um.getReleasesBetweenTags(um.currentVersion, *latestRelease.TagName)
-		fmt.Printf("Number of releases between tags: %d\n", len(releasesBetween))
-		if err != nil {
-			runtime.LogWarningf(um.ctx, "Failed to get releases between versions: %v", err)
-		} else {
-			um.releasesBetween = releasesBetween
+	if !latestVer.GreaterThan(currentVer) {
+		return UpdateInfo{Available: false}, nil
+	}
+
+	// Get releases between current and latest for changelog
+	releasesBetween, err := um.getReleasesBetweenTags(um.currentVersion, *latestRelease.TagName)
+	if err != nil {
+		return UpdateInfo{}, fmt.Errorf("failed to get releases between versions: %w", err)
+	}
+	um.releasesBetween = releasesBetween
+
+	windowsAsset := findWindowsAsset(latestRelease.Assets)
+	if windowsAsset != nil && windowsAsset.BrowserDownloadURL != nil {
+		size := int64(0)
+		if windowsAsset.Size != nil {
+			size = int64(*windowsAsset.Size)
 		}
 
-		// Find Windows asset
-		var windowsAsset *github.ReleaseAsset
-		for _, asset := range latestRelease.Assets {
-			if asset.Name != nil &&
-				(strings.Contains(strings.ToLower(*asset.Name), "windows") ||
-					strings.Contains(strings.ToLower(*asset.Name), "win")) {
-				windowsAsset = asset
-				break
-			}
+		return UpdateInfo{
+			Available:   true,
+			Version:     *latestRelease.TagName,
+			DownloadURL: *windowsAsset.BrowserDownloadURL,
+			Size:        size,
+			AutoUpdate:  autoUpdate,
+		}, nil
+	}
+
+	return UpdateInfo{Available: false}, nil
+}
+
+func findWindowsAsset(assets []*github.ReleaseAsset) *github.ReleaseAsset {
+	for _, asset := range assets {
+		if asset.Name == nil {
+			continue
 		}
 
-		if windowsAsset == nil && len(latestRelease.Assets) > 0 {
-			// Fallback to first asset if no Windows-specific asset found
-			windowsAsset = latestRelease.Assets[0]
-		}
-
-		if windowsAsset != nil && windowsAsset.BrowserDownloadURL != nil {
-			size := int64(0)
-			if windowsAsset.Size != nil {
-				size = int64(*windowsAsset.Size)
-			}
-
-			return UpdateInfo{
-				Available:   true,
-				Version:     *latestRelease.TagName,
-				DownloadURL: *windowsAsset.BrowserDownloadURL,
-				Size:        size,
-				AutoUpdate:  autoUpdate,
-			}
+		name := strings.ToLower(*asset.Name)
+		if strings.Contains(name, "windows") {
+			return asset
 		}
 	}
 
-	runtime.LogDebug(um.ctx, "No updates available.")
-	return UpdateInfo{Available: false}
+	// Fallback to first asset if available
+	if len(assets) > 0 {
+		return assets[0]
+	}
+
+	return nil
 }
 
 func (um *UpdateManager) DownloadAndApplyUpdate(downloadURL string) error {

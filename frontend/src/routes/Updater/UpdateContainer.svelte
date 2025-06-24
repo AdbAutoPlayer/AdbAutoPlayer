@@ -8,12 +8,12 @@
   import { updater } from "$lib/wailsjs/go/models";
   import { enablePolling, disablePolling } from "$lib/stores/polling";
   import { EventsOn } from "$lib/wailsjs/runtime/runtime";
-  import { LogError, LogInfo } from "$lib/wailsjs/runtime";
+  import { LogInfo } from "$lib/wailsjs/runtime";
   import { version } from "$app/environment";
-  import { getItem, setItem } from "$lib/indexedDB";
   import UpdateIconSticky from "./UpdateIconSticky.svelte";
   import UpdateModal from "./UpdateModal.svelte";
   import { onDestroy } from "svelte";
+  import { showErrorToast } from "$lib/utils/error";
 
   // State management
   let updateState = $state({
@@ -30,18 +30,10 @@
 
   async function initialUpdateCheck() {
     LogInfo(`App Version: ${version}`);
-    let lastAppVersion = await getItem<string>("lastAppVersion");
-    if (!lastAppVersion) {
-      lastAppVersion = version;
-      await setItem("lastAppVersion", version);
-    }
 
     try {
       const info = await CheckForUpdates();
       console.log(info);
-      if (info.error) {
-        LogError(info.error);
-      }
       if (info.available) {
         updateState.isInitialUpdateCheck = true;
         await setAvailableUpdateInfo(info);
@@ -49,9 +41,7 @@
         await openModal();
       }
     } catch (error) {
-      console.error(error);
-      LogError(`Update check failed: ${error}`);
-      enablePolling();
+      showErrorToast(error, { title: "Failed to Check for Updates" });
     }
 
     if (!updateState.isInitialUpdateCheck) {
@@ -76,10 +66,7 @@
       await DownloadUpdate(updateInfo.downloadURL);
       unsubscribe();
     } catch (error) {
-      LogError(`Update failed: ${error}`);
-      updateState.isDownloading = false;
-      alert(`Update failed: ${error}`);
-      closeModal();
+      showErrorToast(error, { title: "Failed to Update" });
     }
   }
 
@@ -118,8 +105,7 @@
         await setAvailableUpdateInfo(info);
       }
     } catch (error) {
-      console.error(error);
-      LogError(`Update check failed: ${error}`);
+      showErrorToast(error, { title: "Failed to Check for Updates" });
     }
   }
 
