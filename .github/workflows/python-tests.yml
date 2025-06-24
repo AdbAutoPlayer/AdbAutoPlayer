@@ -35,6 +35,9 @@ jobs:
       - name: macOS install dependencies
         if: runner.os == 'macOS'
         run: |
+          brew cleanup
+          rm -f $(brew --cache)/*platform-tools*
+          brew update
           brew install tesseract
           brew install --cask android-platform-tools
 
