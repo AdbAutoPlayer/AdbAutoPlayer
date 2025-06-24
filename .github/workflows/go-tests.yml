@@ -36,7 +36,6 @@ jobs:
           go test -race -coverprofile=coverage.txt -covermode=atomic ./...
 
       - name: Upload coverage reports to Codecov
-        if: ${{ !cancelled() }}
         uses: codecov/codecov-action@v5
         with:
           slug: AdbAutoPlayer/AdbAutoPlayer

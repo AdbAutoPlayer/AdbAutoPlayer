@@ -35,11 +35,21 @@ jobs:
       - name: macOS install dependencies
         if: runner.os == 'macOS'
         run: |
-          rm -rf /Users/runner/Library/Caches/Homebrew/downloads/*-platform-tools_*-darwin.zip
-          brew update
           brew install tesseract
           brew install --cask android-platform-tools
+        continue-on-error: true
 
+      - name: macOS install platform-tools fallback
+        if: runner.os == 'macOS' && failure()
+        run: |
+          echo "Homebrew installation failed, using direct download"
+
+          # Download and extract platform-tools to /usr/local/bin
+          curl -L https://dl.google.com/android/repository/platform-tools-latest-darwin.zip -o /tmp/platform-tools.zip
+          unzip -j /tmp/platform-tools.zip 'platform-tools/adb' 'platform-tools/fastboot' -d /usr/local/bin/
+
+          # Verify installation
+          adb --version || (echo "Fallback installation failed" && exit 1)
 
       - run: python -m pip install uv
 
@@ -58,7 +68,6 @@ jobs:
         continue-on-error: true
 
       - name: Upload test results to Codecov
-        if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
           slug: AdbAutoPlayer/AdbAutoPlayer
@@ -68,7 +77,6 @@ jobs:
           disable_search: 'true'
 
       - name: Upload coverage reports to Codecov
-        if: ${{ !cancelled() }}
         uses: codecov/codecov-action@v5
         with:
           slug: AdbAutoPlayer/AdbAutoPlayer
