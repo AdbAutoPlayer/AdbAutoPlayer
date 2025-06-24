@@ -12,6 +12,8 @@
   import { browser } from "$app/environment";
   import { version } from "$app/environment";
   import UpdateContainer from "./Updater/UpdateContainer.svelte";
+  import { Toaster } from "@skeletonlabs/skeleton-svelte";
+  import { toaster } from "$lib/utils/toaster-svelte";
 
   let { children } = $props();
 
@@ -99,6 +101,8 @@
     };
   });
 </script>
+
+<Toaster {toaster} stateError="preset-filled-error-100-900"></Toaster>
 
 <div class="flex h-screen flex-col overflow-hidden">
   <div class="flex-none">

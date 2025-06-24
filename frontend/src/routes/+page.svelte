@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { EventsEmit } from "$lib/wailsjs/runtime";
   import {
     GetEditableMainConfig,
     SaveMainConfig,
@@ -19,6 +18,7 @@
   import { config, ipc } from "$lib/wailsjs/go/models";
   import { sortObjectByOrder } from "$lib/orderHelper";
   import type { MenuButton } from "$lib/model";
+  import { showErrorToast } from "$lib/utils/error";
 
   let showConfigForm: boolean = $state(false);
   let configFormProps: Record<string, any> = $state({});
@@ -128,12 +128,10 @@
 
   async function stopGameProcess() {
     clearTimeout(updateStateTimeout);
-    try {
-      await TerminateGameProcess();
-      activeButtonLabel = null;
-    } catch (error) {
-      console.error(error);
-    }
+
+    await TerminateGameProcess();
+    activeButtonLabel = null;
+
     setTimeout(updateStateHandler, 1000);
   }
 
@@ -147,9 +145,7 @@
       activeButtonLabel = "Show Debug info";
       await Debug();
     } catch (error) {
-      console.error(error);
-
-      alert(error);
+      showErrorToast(error, { title: "Failed to generate Debug Info" });
     }
     setTimeout(updateStateHandler, 1000);
   }
@@ -164,9 +160,7 @@
       activeButtonLabel = menuOption.label;
       await StartGameProcess(menuOption.args);
     } catch (error) {
-      console.error(error);
-
-      alert(error);
+      showErrorToast(error, { title: `Failed to Start: ${menuOption.label}` });
     }
     setTimeout(updateStateHandler, 1000);
   }
@@ -183,8 +177,7 @@
     try {
       await SaveMainConfig(configForm);
     } catch (error) {
-      console.error(error);
-      alert(error);
+      showErrorToast(error, { title: "Failed to Save General Settings" });
     }
 
     showConfigForm = false;
@@ -194,7 +187,8 @@
   }
 
   async function onGameConfigSave(configObject: object) {
-    if (!activeGame) {
+    const game = activeGame;
+    if (!game) {
       return;
     }
 
@@ -202,8 +196,9 @@
       console.log("onGameConfigSave", configObject);
       await SaveGameConfig(configObject);
     } catch (error) {
-      console.error(error);
-      alert(error);
+      showErrorToast(error, {
+        title: `Failed to Save ${game.game_title} Settings`,
+      });
     }
 
     showConfigForm = false;
@@ -228,8 +223,9 @@
       configFormProps = result;
       showConfigForm = true;
     } catch (error) {
-      console.error(error);
-      alert(error);
+      showErrorToast(error, {
+        title: `Failed to create ${game.game_title} Settings Form`,
+      });
       $pollRunningGame = true;
       $pollRunningProcess = true;
     }
@@ -245,8 +241,9 @@
       configFormProps = result;
       showConfigForm = true;
     } catch (error) {
-      console.error(error);
-      alert(error);
+      showErrorToast(error, {
+        title: "Failed to create General Settings Form",
+      });
       $pollRunningGame = true;
       $pollRunningProcess = true;
     }
