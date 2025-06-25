@@ -89,6 +89,12 @@ popup_messages: list[PopupMessage] = [
         # Challenge Attempts: x
         click_dont_remind_me=False,  # I think it does not have one
     ),
+    PopupMessage(
+        # possibly appears in other places too
+        text="to challenge this stage again?",
+        # Spend 2000 to challenge this stage again?
+        ignore=True,  # handled elsewhere
+    ),
     # Emporium, other places?
     PopupMessage(
         text="Confirm to use Diamonds?",
