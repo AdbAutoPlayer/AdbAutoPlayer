@@ -178,7 +178,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 	return nil
 }
 
-func (pm *Manager) KillProcess() {
+func (pm *Manager) KillProcess(msg ...string) {
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
 
@@ -188,7 +188,11 @@ func (pm *Manager) KillProcess() {
 
 	killProcessTree(pm.running)
 
-	runtime.LogWarning(pm.ctx, "Stopping")
+	message := "Stopping"
+	if len(msg) > 0 {
+		message = msg[0]
+	}
+	runtime.LogWarning(pm.ctx, message)
 	time.Sleep(2 * time.Second)
 }
 
