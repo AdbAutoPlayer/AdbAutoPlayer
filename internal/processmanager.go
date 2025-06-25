@@ -199,7 +199,7 @@ func (pm *Manager) KillProcess(msg ...string) {
 func killProcessTree(p *process.Process) {
 	children, err := p.Children()
 	if err != nil && !errors.Is(err, process.ErrorNoChildren) {
-		ipc.GetFrontendLogger().Errorf("Failed to get children of process %d: %v", p.Pid, err)
+		ipc.GetFrontendLogger().Debugf("Failed to get children of process %d: %v", p.Pid, err)
 	}
 
 	for _, child := range children {

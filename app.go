@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"golang.design/x/hotkey"
 	"io"
 	"os"
 	"path/filepath"
@@ -436,23 +435,5 @@ func (a *App) getMainConfigPath() string {
 }
 
 func (a *App) RegisterGlobalHotKeys() {
-	registerGlobalHotKeys(a)
-}
-
-func registerGlobalHotKeys(a *App) {
-	// Register CTRL+ALT+C
-	hk := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModAlt}, hotkey.KeyC)
-	if err := hk.Register(); err != nil {
-		runtime.EventsEmit(a.ctx, "failed-to-register-global-stop-hotkey", err.Error())
-		return
-	}
-
-	<-hk.Keydown()
-	internal.GetProcessManager().KillProcess("Stopping (CTRL+ALT+C pressed)")
-
-	if err := hk.Unregister(); err != nil {
-		registerGlobalHotKeys(a)
-		return
-	}
 	registerGlobalHotKeys(a)
 }
