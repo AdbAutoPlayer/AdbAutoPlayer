@@ -8,7 +8,7 @@ import (
 	"golang.design/x/hotkey"
 )
 
-func registerGlobalHotKeys(a *App) {
+func registerGlobalHotkeys(a *App) {
 	// Register CTRL+CMD+C
 	hk := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModCmd}, hotkey.KeyC)
 	if err := hk.Register(); err != nil {
@@ -20,8 +20,8 @@ func registerGlobalHotKeys(a *App) {
 	internal.GetProcessManager().KillProcess("Stopping (CTRL+CMD+C pressed)")
 
 	if err := hk.Unregister(); err != nil {
-		registerGlobalHotKeys(a)
+		registerGlobalHotkeys(a)
 		return
 	}
-	registerGlobalHotKeys(a)
+	registerGlobalHotkeys(a)
 }

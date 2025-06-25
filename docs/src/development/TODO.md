@@ -1,138 +1,148 @@
-# 📝 TODO List
+# 📝 Contribution Opportunities
 
-If you wish to contribute take a look at following tasks. Unless stated otherwise, feel free to reach out to @yulesxoxo for questions or guidance.
+Interested in contributing? Below are available tasks across different areas of the project. Feel free to reach out to @yulesxoxo for questions or guidance.
 
 [![Discord Presence](https://lanyard.cnrad.dev/api/518169167048998913)](https://discord.com/users/518169167048998913)
 
-## 🐍 Backend Development
+---
 
-### GFL2 Daily Automation
-**Status:** In Progress  
-**Assignee:** @valextr  
+## 🔧 Backend Development
 
-
-### Backend Refactor (Second Pass)
-**Status:** In Progress  
-**Assignee:** @valextr  
-
-
-### Multi-Touch Gesture Implementation (PoC)
-**Status:** Open for contribution  
-**Priority:** High  
+### Android Multi-Touch Gesture Implementation (PoC)
 **Library:** [uiautomator2](https://github.com/openatx/uiautomator2)
 
-**Background:** ADB cannot handle multi-touch gestures directly. The uiautomator2 library provides capabilities for:
+**Challenge:**  
+ADB lacks native multi-touch gesture support. uiautomator2 offers:
 - Coordinate-based tapping (`d.click(x, y)`)
-- Screenshots (`d.screenshot()`)
-- Multi-touch gestures (swipe, pinch, etc.)
+- Screenshot capture (`d.screenshot()`)
+- Advanced gestures (swipe, pinch, etc.)
 
 **Goals:**
-- Create a proof of concept for multi-touch gesture implementation
-- Focus on pinch gestures for zoom functionality in games
+- Develop PoC for multi-touch gestures
+- Prioritize pinch-to-zoom for game automation
 
-**Nice to Have:**
-1. Explore additional uiautomator2 features relevant to game automation
-2. Performance comparison between uiautomator2 and standard ADB implementation for shared features
-3. Benchmark testing for shared features (tap, screenshot, swipe)
+**Extended Opportunities:**
+1. Explore additional uiautomator2 game automation features
+2. Performance comparison: uiautomator2 vs standard ADB
+3. Benchmark tests for shared functionality (tap, screenshot, swipe)
+
+___
+
+### Desktop Client Support Investigation
+
+**Current Understanding:**
+1. Mouse click simulation limitations (requires actual cursor movement)
+2. Screenshot challenges with display scaling/multi-monitor setups
+3. Higher detection risk compared to ADB (if Lilith starts to care about botting)
+
+**Implementation Needs:**
+1. Device abstraction layer (Android vs Desktop)
+2. Unified input mapping system
+   ```python
+   # The actual bot code should not end up looking like this.
+   if device.platform == "Android":
+   device.press_back_button()
+   elif device.platform == "DesktopApp":
+   device.keyboard.press("ESC")
+   ```
+3. Complete desktop interaction logic
 
 ---
 
-## 🎨 Frontend Development
+## 🖥️ Frontend Development
 
-### Custom Routine Component Enhancement
-**Status:** Design phase - seeking UI/UX input and/or developer
-**Current State:** Basic functionality implemented  
-**Proposed Improvement:** Drag-and-drop interface
+### Global Hotkey Config Component
+Create a Svelte Component to edit a single Global Hotkey in the config.  
+You can decide what format it should be stored in, in the config too. 
 
-**Ideas:**
-- Redesign current component for better UX
-- Support for multiple routine management
-- Intuitive drag-and-drop functionality
+___
+
+### Custom Routine Component Upgrade
+**Current:** Basic functionality implemented  
+**Goal:** Enhanced drag-and-drop interface, or you might have better ideas?
+
+**Design Opportunities:**
+- UX/UI improvements
+- Multi-routine management
+- Intuitive drag-and-drop implementation
 
 ---
 
-## 📚 Documentation
+## 📖 Documentation
 
 ### Emulator Setup Guides
-**Status:** Open for contribution  
-**Scope:** Create comprehensive setup guides for popular Android emulators
-
 **Format:** Individual `.md` files per emulator
 
-> [!NOTE]
-> Note: Contributors can focus on their preferred emulator - complete coverage by single contributor not required.
-
-**Missing Emulators:**
+**Needed Guides:**
 - BlueStacks
 - MuMu Player
 - LDPlayer
 - MuMu Pro (Mac)
 - BlueStacks Air (Mac)
 
-**Content Requirements:**
-- Default device ID configuration
-- ADB enabling instructions
-- Recommended settings
-- Multi-instance device ID identification
+**Guide Requirements:**
+- Default device ID setup
+- ADB enabling steps
+- Recommended configuration
+- Multi-instance device identification
 
-### Physical Device Setup Guide
-**Scope:** Android phone/tablet configuration for automation
+___
 
-**Required Topics:**
+### Physical Device Setup
+**Topics Needed:**
 - USB debugging activation
-- Wireless debugging setup (optional)
+- Wireless debugging setup
 - Device ID identification
-- Display resolution configuration
-- Security considerations
+- Display configuration
+- Security best practices
+
+___
 
 ### Custom Routine Documentation
-**Status:** Open for contribution  
-**Scope:** User guide and examples for custom routine feature
-
-**Requirements:**
+**Content Needed:**
 - Feature explanation and workflow
-- Practical examples (AFK Journey as reference)
+- Practical examples (AFK Journey reference)
 
 ---
 
 ## 🎮 AFK Journey Specific
 
-### Arcane Labyrinth optimized for Rankings (Difficulty 15 Floor 15+)
-**Status:** Open for contribution  
-**Priority:** High
-
-Completely up to you, anything that can clear Floor 16 consistently would already be considered a success.  
-Maybe align with the people at the Arcane Lab channel to get a good standard team comp and a priority list for runes/crests?
 
 
-### Fishing
-**Status:** Open for contribution  
-**Priority:** Lowest
+### Arcane Labyrinth Optimization (Difficulty 15+)
+**Goal:** Consistent Floor 16 clears
 
-Often requested but never picked up because it is not very useful.  
-Template Matching is probably not suitable for this.
-Rough from @yulesxoxo: Can be attempted using a heatmap approach.
+**Suggestions:**
+- Coordinate with Arcane Lab channel for team comps
+- Develop rune/crest priority system
 
-Also check the Show Debug Info command in the App to get your tap input delay.  
-```txt
-[INFO] --- Testing Input Delay ---
-[INFO] Average time taken to tap screen 10 times: 10.89 ms
-```  
-At high input delay values you would have to implement Optical Flow (estimate motion direction and velocity).  
+___
 
-### Feature Documentation Overhaul
-**Status:** Open for contribution  
-**Scope:** Complete features section in AFK Journey documentation
+### Fishing Mechanic
+**Technical Notes:**
+- Template matching likely insufficient
+- Potential heatmap approach
+- Input delay considerations (see debug info)
 
-**Requirements:**
-- Comprehensive feature list
+___
+
+### Feature Documentation
+**Scope:**
+- Complete feature catalog
 - Usage instructions
 - Configuration options
-- Examples and screenshots
+- Visual examples
 
 ---
 
-## Getting Help
+## 🚧 In Progress
 
-- **Discord:** Use the badge above to reach out directly
-- **Issues:** Create a GitHub issue for bugs or feature requests
+- **GFL2 Daily Automation** - @valextr
+- **Backend Refactor (Second Pass)** - @valextr
+
+---
+
+## 💬 Getting Help
+
+- **Discord:** Use the badge above
+- **GitHub:** Create issues for bugs/feature requests
