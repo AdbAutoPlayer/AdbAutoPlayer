@@ -433,3 +433,7 @@ func (a *App) getMainConfigPath() string {
 	}
 	return *configPath
 }
+
+func (a *App) RegisterGlobalHotkeys() {
+	registerGlobalHotkeys(a)
+}

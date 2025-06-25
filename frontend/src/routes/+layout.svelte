@@ -1,8 +1,8 @@
 <script lang="ts">
   import "../app.css";
 
-  import { BrowserOpenURL } from "$lib/wailsjs/runtime";
-  import { GetTheme } from "$lib/wailsjs/go/main/App";
+  import { BrowserOpenURL, EventsOn } from "$lib/wailsjs/runtime";
+  import { GetTheme, RegisterGlobalHotkeys } from "$lib/wailsjs/go/main/App";
   import LogoSticky from "./LogoSticky.svelte";
   import DocumentationIconSticky from "./DocumentationIconSticky.svelte";
   import LogDisplayCard from "./Log/LogDisplayCard.svelte";
@@ -14,6 +14,7 @@
   import UpdateContainer from "./Updater/UpdateContainer.svelte";
   import { Toaster } from "@skeletonlabs/skeleton-svelte";
   import { toaster } from "$lib/utils/toaster-svelte";
+  import { showErrorToast } from "$lib/utils/error";
 
   let { children } = $props();
 
@@ -100,6 +101,13 @@
       document.body.removeEventListener("click", handleClick);
     };
   });
+
+  EventsOn("failed-to-register-global-stop-hotkey", (error: string) => {
+    showErrorToast(error, {
+      title: "Failed to register Global Stop HotKey",
+    });
+  });
+  RegisterGlobalHotkeys();
 </script>
 
 <Toaster {toaster} stateError="preset-filled-error-100-900"></Toaster>
