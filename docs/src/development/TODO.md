@@ -8,6 +8,51 @@ Interested in contributing? Below are available tasks across different areas of 
 
 ## 🔧 Backend Development
 
+### Device Abstraction Layer for ADB retry mechanism
+1. Implement a `AndroidDevice` class and remove all adbutils specific code from game.py
+2. Create some general retry logic or wrapper for anything that uses adbutils
+
+Rough idea with a decorator:
+```python
+def adb_retry(retry_attempts=2, retry_attempts_after_restart=3, sleep_time=5):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            last_exception = None
+            
+            # First phase try again but wait before next try.
+            for attempt in range(1, retry_attempts + 2):
+                try:
+                    return func(self, *args, **kwargs)
+                except Exception as e:
+                    last_exception = e
+                    if attempt <= retry_attempts:
+                        logging.warning(f"Attempt {attempt} failed for {func.__name__}, retrying in {sleep_time} seconds...")
+                        time.sleep(sleep_time)
+            
+            # Second phase: Restart ADB server and rebuild the connection
+            # Kill ADB process
+            # Restart adb server
+            # reinitialize ADBDevice
+
+            for attempt in range(1, retry_attempts_after_restart + 2):
+                ...
+            
+            # If we get here, all attempts failed
+            raise ADBUnrecoverableError(str(last_exception))
+        return wrapper
+    return decorator
+```
+Usage:
+```python
+@adb_retry
+def press_back_button(self) -> None:
+    """Presses the back button."""
+    with self.device.shell("input keyevent 4", stream=True) as connection:
+        logging.debug("pressed back button")
+        connection.read_until_close()
+```
+
 ### Android Multi-Touch Gesture Implementation (PoC)
 **Library:** [uiautomator2](https://github.com/openatx/uiautomator2)
 
