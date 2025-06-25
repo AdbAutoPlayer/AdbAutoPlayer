@@ -10,7 +10,7 @@ import (
 
 func registerGlobalHotkeys(a *App) {
 	// Register CTRL+ALT+C
-	hk := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModAlt}, hotkey.KeyC)
+	hk := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModAlt, hotkey.ModShift}, hotkey.KeyC)
 	if err := hk.Register(); err != nil {
 		runtime.EventsEmit(a.ctx, "failed-to-register-global-stop-hotkey", err.Error())
 		return
