@@ -2,6 +2,12 @@
 
 package main
 
+import (
+	"adb-auto-player/internal"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"golang.design/x/hotkey"
+)
+
 func registerGlobalHotKeys(a *App) {
 	// Register CTRL+ALT+C
 	hk := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModAlt}, hotkey.KeyC)
