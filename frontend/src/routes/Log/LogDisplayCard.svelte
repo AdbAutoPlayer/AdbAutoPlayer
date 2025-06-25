@@ -157,7 +157,7 @@
     }
     logs.push({
       message: summaryMessage,
-      html_class: "text-success-950",
+      html_class: "whitespace-pre-wrap text-success-950",
     });
     summaryMessage = "";
   }

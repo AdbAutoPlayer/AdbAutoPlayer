@@ -8,12 +8,14 @@ from adb_auto_player.exceptions import (
     AutoPlayerWarningError,
     GameTimeoutError,
 )
-from adb_auto_player.games.afk_journey.base import AFKJourneyBase
-from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util import SummaryGenerator
+
+from ..base import AFKJourneyBase
+from ..battle_state import Mode
+from ..gui_category import AFKJCategory
 
 
 # Tested S4 2025.05.23
@@ -31,7 +33,7 @@ class SeasonLegendTrial(AFKJourneyBase):
     def push_legend_trials(self) -> None:
         """Push Legend Trials."""
         self.start_up()
-        self.store[self.STORE_MODE] = self.MODE_LEGEND_TRIALS
+        self.battle_state.mode = Mode.LEGEND_TRIALS
 
         if not self._is_on_season_legend_trial_select():
             try:
@@ -112,7 +114,7 @@ class SeasonLegendTrial(AFKJourneyBase):
                 )
                 count += 1
                 logging.info(f"{faction.capitalize()} Trials pushed: {count}")
-                SummaryGenerator.add_count(f"{faction.capitalize()} Trials")
+                SummaryGenerator.increment(f"{faction.capitalize()} Trials", "Pushed")
 
                 match match.template:
                     case "next.png":

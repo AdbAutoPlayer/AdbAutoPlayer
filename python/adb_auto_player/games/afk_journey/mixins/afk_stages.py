@@ -8,14 +8,14 @@ from adb_auto_player.exceptions import (
     AutoPlayerError,
     AutoPlayerWarningError,
 )
-from adb_auto_player.games.afk_journey.base import (
-    AFKJourneyBase,
-)
-from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util import SummaryGenerator
+
+from ..base import AFKJourneyBase
+from ..battle_state import Mode
+from ..gui_category import AFKJCategory
 
 
 class AFKStagesMixin(AFKJourneyBase):
@@ -52,9 +52,8 @@ class AFKStagesMixin(AFKJourneyBase):
             season: Push Season Stage if True otherwise push regular AFK Stages
         """
         self.start_up()
-        self.store[self.STORE_MODE] = self.MODE_AFK_STAGES
-
-        self.store[self.STORE_SEASON] = season
+        self.battle_state.mode = Mode.AFK_STAGES
+        self.battle_state.is_season_talent_stages = season
         try:
             self._start_afk_stage()
         except AutoPlayerWarningError as e:
@@ -68,9 +67,7 @@ class AFKStagesMixin(AFKJourneyBase):
     def _start_afk_stage(self) -> None:
         """Start push."""
         stages_pushed: int = 0
-        stages_name = self._get_current_afk_stages_name()
-
-        logging.info(f"Pushing: {stages_name}")
+        logging.info(f"Pushing: {self.battle_state.section_header}")
         self.navigate_to_afk_stages_screen()
         self.check_stages_are_available()
         self._select_afk_stage()
@@ -79,19 +76,13 @@ class AFKStagesMixin(AFKJourneyBase):
             self.get_config().afk_stages.skip_manual_formations,
         ):
             stages_pushed += 1
-            logging.info(f"{stages_name}: {stages_pushed}")
-            SummaryGenerator.add_count(f"{stages_name}")
-
-    def _get_current_afk_stages_name(self) -> str:
-        """Get stage name."""
-        season = self.store.get(self.STORE_SEASON, False)
-        if season:
-            return "Season Talent Stages"
-        return "AFK Stages"
+            logging.info(f"{self.battle_state.section_header} pushed: {stages_pushed}")
+            if self.battle_state.section_header:
+                SummaryGenerator.increment(self.battle_state.section_header, "Pushed")
 
     def _select_afk_stage(self) -> None:
         """Selects an AFK stage template."""
-        if self.store.get(self.STORE_SEASON, False):
+        if self.battle_state.is_season_talent_stages:
             logging.debug("Clicking Talent Trials button")
             self.tap(Point(x=300, y=1610), scale=True)
         else:
@@ -105,9 +96,12 @@ class AFKStagesMixin(AFKJourneyBase):
             self.tap(confirm)
 
     def check_stages_are_available(self) -> None:
-        if not self.store[self.STORE_SEASON] and self.game_find_template_match(
-            "afk_stages/talent_trials_large.png",
-            crop_regions=CropRegions(left=0.2, right=0.2, top=0.5),
+        if (
+            not self.battle_state.is_season_talent_stages
+            and self.game_find_template_match(
+                "afk_stages/talent_trials_large.png",
+                crop_regions=CropRegions(left=0.2, right=0.2, top=0.5),
+            )
         ):
             raise AutoPlayerWarningError(
                 "AFK Stages not available are they already cleared? Exiting..."

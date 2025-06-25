@@ -57,14 +57,21 @@ class TitanReaverProxyBattleStats:
         # Only call SummaryGenerator.set for tracked fields with display names
         if name in self._field_display_names:
             display_name = self._field_display_names[name]
-            SummaryGenerator.set(display_name, value)
+            SummaryGenerator.set("Titan Reaver Proxy Battle", display_name, value)
+            print(SummaryGenerator().get_summary_message())
             if value > 0:
-                SummaryGenerator.set("Success Rate", self.success_rate)
+                SummaryGenerator.set(
+                    "Titan Reaver Proxy Battle", "Success Rate", self.success_rate
+                )
                 if name == "battles_completed":
                     estimated_keys = (
                         value * TitanReaverProxyBattleConstants.KEYS_PER_BATTLE
                     )
-                    SummaryGenerator.set("Estimated Lucky Keys Earned", estimated_keys)
+                    SummaryGenerator.set(
+                        "Titan Reaver Proxy Battle",
+                        "Estimated Lucky Keys Earned",
+                        estimated_keys,
+                    )
 
     @property
     def success_rate(self) -> float:

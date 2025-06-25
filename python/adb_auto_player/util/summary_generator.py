@@ -1,23 +1,14 @@
-"""Module responsible for generating and managing summary counts of phrases.
-
-Provides a singleton SummaryGenerator class that keeps track of counts,
-prints JSON summaries if a JSON log handler is present, and logs updates.
-"""
+"""Module responsible for generating and managing summary counts of phrases."""
 
 import sys
 
 from adb_auto_player.ipc import Summary
 
+_ValueType = int | str | float
+
 
 class SummaryGenerator:
-    """Singleton class to maintain and update counts for given phrases.
-
-    Generate summary messages, and optionally print JSON-formatted summaries
-    when a JsonLogHandler is present in the logging configuration.
-
-    TODO: Add sections or categories with custom subheader
-    TODO: allow ordering
-    """
+    """Singleton class to maintain and update counts for given phrases."""
 
     _instance = None
 
@@ -25,10 +16,11 @@ class SummaryGenerator:
         """Create or return the singleton instance of SummaryGenerator.
 
         Returns:
-            The singleton instance.
+            The singleton instance of SummaryGenerator.
         """
         if cls._instance is None:
             cls._instance = super().__new__(cls)
+            cls._instance.__init__()  # Explicit initialization
         return cls._instance
 
     def __init__(self) -> None:
@@ -36,65 +28,81 @@ class SummaryGenerator:
 
         _json_handler_present will be set when the JsonLogHandler is initialized.
         """
-        self.counters: dict[str, int | str | float] = {}
-        self._json_handler_present = False
+        if not hasattr(self, "entries"):
+            self.entries: dict[str, dict[str, _ValueType]] = {}
+            self._json_handler_present = False
 
     @classmethod
     def set_json_handler_present(cls):
         """Called by JsonLogHandler to notify of its presence."""
-        instance = cls()  # Get singleton instance
+        instance = cls()
         instance._json_handler_present = True
 
     @classmethod
-    def add_count(cls, phrase: str, count: int = 1) -> None:
-        """Increment the count for the specified phrase by the given count.
-
-        If a JsonLogHandler is present, print a JSON summary.
+    def increment(cls, section_header: str, item: str, count: int = 1) -> None:
+        """Increment the count for a specific item within a section.
 
         Args:
-            phrase: The phrase to increment the count for.
-            count: The amount to increment. Defaults to 1.
+            section_header: The header under which the item belongs
+            item: The specific item to increment
+            count: The amount to increment by (default: 1)
+
+        Raises:
+            TypeError: If the existing value is not an integer
         """
         instance = cls()
 
-        value = instance.counters.get(phrase, 0)
-        if not isinstance(value, int):
-            raise TypeError(f"SummaryGenerator: Value for '{phrase}' is not an int")
+        if section_header not in instance.entries:
+            instance.entries[section_header] = {}
 
-        instance.counters[phrase] = value + count
+        value = instance.entries[section_header].get(item, 0)
+        if not isinstance(value, int):
+            raise TypeError(
+                f"Can't increment non-integer value for '{item}' "
+                f"under '{section_header}'. "
+                f"Current value: {value} (type: {type(value).__name__})"
+            )
+        instance.entries[section_header][item] = value + count
         instance._json_flush()
 
     @classmethod
-    def set(cls, phrase: str, item: int | str | float) -> None:
-        """Set the value for the specified phrase.
-
-        If a JsonLogHandler is present, print a JSON summary.
+    def set(cls, section_header: str, item: str, value: _ValueType) -> None:
+        """Set a value for a specific item within a section.
 
         Args:
-            phrase: The phrase to set the value for.
-            item: The value to set.
+            section_header: The header under which the item belongs
+            item: The specific item to set
+            value: The value to set (can be int, str, or float)
         """
         instance = cls()
-        instance.counters[phrase] = item
+
+        if section_header not in instance.entries:
+            instance.entries[section_header] = {}
+
+        instance.entries[section_header][item] = value
         instance._json_flush()
 
     def _json_flush(self) -> None:
-        """Print JSON summary if JsonLogHandler is present and summary exists."""
-        if self._json_handler_present:
-            if message := self.get_summary_message():
-                summary = Summary(message)
-                print(summary.to_json())
-                sys.stdout.flush()
+        if self._json_handler_present and (message := self.get_summary_message()):
+            print(Summary(message).to_json())
+            sys.stdout.flush()
 
     def get_summary_message(self) -> str | None:
-        """Generate a summary message of all phrase counts.
+        """Generate a formatted summary message from the current entries.
 
         Returns:
-            The formatted summary message or None if no counters exist.
+            str: Formatted summary message with sections and items
+            None: If no entries exist
         """
-        if not self.counters:
+        if not self.entries:
             return None
 
-        lines = [f"{phrase}: {count}" for phrase, count in self.counters.items()]
-        summary = "=== SUMMARY ===\n" + "\n".join(lines)
-        return summary
+        lines = ["=== SUMMARY ==="]
+        for i, (header, phrases) in enumerate(self.entries.items()):
+            lines.append(header)
+            for phrase, count in phrases.items():
+                lines.append(f"  {phrase}: {count}")
+            if i < len(self.entries) - 1:
+                lines.append("")
+
+        return "\n".join(lines)

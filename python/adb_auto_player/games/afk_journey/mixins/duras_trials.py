@@ -9,13 +9,15 @@ from adb_auto_player.exceptions import (
     AutoPlayerError,
     AutoPlayerWarningError,
 )
-from adb_auto_player.games.afk_journey.base import AFKJourneyBase
-from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Coordinates, Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import TemplateMatchResult
 from adb_auto_player.util import SummaryGenerator
+
+from ..base import AFKJourneyBase
+from ..battle_state import Mode
+from ..gui_category import AFKJCategory
 
 
 class DurasTrialsMixin(AFKJourneyBase, ABC):
@@ -32,7 +34,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
     def push_duras_trials(self) -> None:
         """Push Dura's Trials."""
         self.start_up()
-        self.store[self.STORE_MODE] = self.MODE_DURAS_TRIALS
+        self.battle_state.mode = Mode.DURAS_TRIALS
         self.navigate_to_duras_trials_screen()
 
         rate_up_banners = self.find_all_template_matches(
@@ -182,7 +184,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
                 nonlocal count
                 count += 1
                 logging.info(f"Dura's Trials pushed: {count}")
-                SummaryGenerator.add_count("Dura's Trials")
+                SummaryGenerator.increment("Dura's Trials", "Pushed")
 
                 self.tap(next_button)
                 self.tap(next_button)
@@ -201,7 +203,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             nonlocal count
             count += 1
             logging.info(f"Dura's Nightmare Trials pushed: {count}")
-            SummaryGenerator.add_count("Dura's Nightmare Trials")
+            SummaryGenerator.increment("Dura's Nightmare Trials", "Pushed")
 
             if self.game_find_template_match(
                 template="duras_trials/continue_gray.png",
