@@ -140,7 +140,7 @@ func changeWorkingDirForProd() {
 	if stdruntime.GOOS != "windows" && strings.Contains(execDir, "internal.app") {
 		execDir = filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(execPath)))) // Go outside the .app bundle
 	}
-	if err := os.Chdir(execDir); err != nil {
+	if err = os.Chdir(execDir); err != nil {
 		panic(fmt.Sprintf("Failed to change working directory to %s: %v", execDir, err))
 	}
 

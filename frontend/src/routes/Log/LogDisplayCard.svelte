@@ -147,7 +147,6 @@
   });
 
   EventsOn("add-summary-to-log", () => {
-    console.log("add-summary-to-log");
     addSummaryMessageToLog();
     summaryMessage = "";
   });

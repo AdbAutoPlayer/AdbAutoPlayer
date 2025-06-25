@@ -56,7 +56,6 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 		if pm.isProcessRunning() {
 			return errors.New("a process is already running")
 		}
-		println("StartProcess - processEnded")
 		pm.processEnded()
 	}
 
@@ -133,7 +132,6 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 
 		for scanner.Scan() {
 			line := scanner.Text()
-			println(line)
 			var summaryMessage ipc.Summary
 			if err = json.Unmarshal([]byte(line), &summaryMessage); err == nil {
 				if summaryMessage.SummaryMessage != "" {
@@ -173,7 +171,6 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 
 		pm.mutex.Lock()
 		ipc.GetFrontendLogger().LogLevel = originalLogLevel
-		println("StartProcess go func - processEnded")
 		pm.processEnded()
 		pm.mutex.Unlock()
 	}()
@@ -248,18 +245,12 @@ func (pm *Manager) getCommand(name string, args ...string) (*exec.Cmd, error) {
 			return nil, fmt.Errorf("dev Python dir does not exist: %s", name)
 		}
 
-		fmt.Printf("dev python dir: %s\n", name)
-
 		uvPath, err := exec.LookPath("uv")
 		if err != nil {
 			return nil, fmt.Errorf("uv not found in PATH: %w", err)
 		}
 
-		fmt.Printf("uv path: %s\n", uvPath)
-
 		cmd := exec.Command(uvPath, append([]string{"run", "adb-auto-player"}, args...)...)
-		fmt.Println("cmd.Args: ", cmd.Args)
-
 		cmd.Dir = name
 
 		return cmd, nil
@@ -322,6 +313,5 @@ func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
 
 func (pm *Manager) processEnded() {
 	pm.running = nil
-	println("add-summary-to-log")
 	runtime.EventsEmit(pm.ctx, "add-summary-to-log")
 }
