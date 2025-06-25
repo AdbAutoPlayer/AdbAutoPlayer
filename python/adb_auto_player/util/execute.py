@@ -84,7 +84,7 @@ def execute(
     except KeyboardInterrupt:
         summary = SummaryGenerator().get_summary_message()
         if summary is not None:
-            logging.info(summary)
+            print(summary)
         sys.exit(0)
     except (GenericAdbError, GenericAdbUnrecoverableError) as e:
         if "java.lang.SecurityException" in str(e):

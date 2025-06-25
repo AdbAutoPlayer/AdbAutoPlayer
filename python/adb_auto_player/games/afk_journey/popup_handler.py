@@ -3,9 +3,9 @@ import time
 from abc import ABC
 from dataclasses import dataclass
 
-import cv2
 import numpy as np
 from adb_auto_player import Game
+from adb_auto_player.image_manipulation import ColorFormat, to_grayscale
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
@@ -241,7 +241,7 @@ class AFKJourneyPopupHandler(Game, ABC):
             crop_top = height_35_percent
 
         image = image[crop_top:crop_bottom, 0:width]
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        image = to_grayscale(image, ColorFormat.BGR)
 
         return PopupPreprocessResult(
             cropped_image=image,

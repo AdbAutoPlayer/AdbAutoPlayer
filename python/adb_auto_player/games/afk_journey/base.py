@@ -21,7 +21,9 @@ from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import MatchMode
 
+from ...util import SummaryGenerator
 from .afkjourneynavigation import AFKJourneyNavigation
+from .battle_state import BattleState, Mode
 from .config import Config
 from .gui_category import AFKJCategory
 from .popup_handler import AFKJourneyPopupHandler
@@ -47,23 +49,12 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         ]
 
         # to allow passing properties over multiple functions
-        self.store: dict[str, Any] = {}
+        self.battle_state: BattleState = BattleState()
 
     # Timeout constants (in seconds)
     BATTLE_TIMEOUT: int = 240
     MIN_TIMEOUT: int = 10
     FAST_TIMEOUT: int = 3
-
-    # Store keys
-    STORE_SEASON: str = "SEASON"
-    STORE_MODE: str = "MODE"
-    STORE_MAX_ATTEMPTS_REACHED: str = "MAX_ATTEMPTS_REACHED"
-    STORE_FORMATION_NUM: str = "FORMATION_NUM"
-
-    # Game modes
-    MODE_DURAS_TRIALS: str = "DURAS_TRIALS"
-    MODE_AFK_STAGES: str = "AFK_STAGES"
-    MODE_LEGEND_TRIALS: str = "LEGEND_TRIALS"
 
     # Error strings
     LANG_ERROR: str = "Is the game language set to English?"
@@ -97,10 +88,10 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             The value of the specified attribute from the configuration corresponding
             to the current game mode.
         """
-        match self.store.get(self.STORE_MODE, None):
-            case self.MODE_DURAS_TRIALS:
+        match self.battle_state.mode:
+            case Mode.DURAS_TRIALS:
                 return getattr(self.get_config().duras_trials, attribute)
-            case self.MODE_LEGEND_TRIALS:
+            case Mode.LEGEND_TRIALS:
                 return getattr(self.get_config().legend_trials, attribute)
             case _:
                 return getattr(self.get_config().afk_stages, attribute)
@@ -119,7 +110,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         """
         formations = self._get_config_attribute_from_mode("formations")
 
-        self.store[self.STORE_FORMATION_NUM] = 0
+        self.battle_state.formation_num = 0
         if not use_suggested_formations:
             formations = 1
 
@@ -132,8 +123,8 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             logging.info("Battle using current Formation.")
             return True
 
-        while self.store.get(self.STORE_FORMATION_NUM, 0) < formations:
-            self.store[self.STORE_FORMATION_NUM] += 1
+        while self.battle_state.formation_num < formations:
+            self.battle_state.formation_num += 1
 
             if (
                 use_suggested_formations
@@ -154,8 +145,8 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             if self._handle_single_stage():
                 return True
 
-            if self.store.get(self.STORE_MAX_ATTEMPTS_REACHED, False):
-                self.store[self.STORE_MAX_ATTEMPTS_REACHED] = False
+            if self.battle_state.max_attempts_reached:
+                self.battle_state.max_attempts_reached = False
                 return False
 
         if formations > 1:
@@ -174,19 +165,19 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         Returns:
             True if successful, False otherwise
         """
-        formation_num = self.store.get(self.STORE_FORMATION_NUM, 0)
-
-        if formations < formation_num:
+        if formations < self.battle_state.formation_num:
             return False
 
-        logging.info(f"Copying Formation #{formation_num}")
-        counter = formation_num - start_count
+        logging.info(f"Copying Formation #{self.battle_state.formation_num}")
+        counter = self.battle_state.formation_num - start_count
         while counter > 0:
             formation_next = self.wait_for_template(
                 "battle/formation_next.png",
                 crop_regions=CropRegions(left=0.8, top=0.5, bottom=0.4),
                 timeout=self.MIN_TIMEOUT,
-                timeout_message=f"Formation #{formation_num} not found",
+                timeout_message=(
+                    f"Formation #{self.battle_state.formation_num} not found"
+                ),
             )
             start_image = self.get_screenshot()
             self.tap(formation_next)
@@ -202,8 +193,8 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             logging.warning(
                 f"Formation contains excluded Hero: '{excluded_hero}' skipping"
             )
-            start_count = self.store[self.STORE_FORMATION_NUM]
-            self.store[self.STORE_FORMATION_NUM] += 1
+            start_count = self.battle_state.formation_num
+            self.battle_state.formation_num += 1
             return self._copy_suggested_formation(formations, start_count)
         return True
 
@@ -255,8 +246,8 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                 )
                 if manual_clear:
                     logging.info("Manual formation found, skipping.")
-                    start_count = self.store.get(self.STORE_FORMATION_NUM, 1)
-                    self.store[self.STORE_FORMATION_NUM] += 1
+                    start_count = self.battle_state.formation_num
+                    self.battle_state.formation_num += 1
                     continue
             self._tap_till_template_disappears(
                 template="battle/copy.png",
@@ -272,8 +263,8 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                     "Formation contains locked Artifacts or Heroes skipping"
                 )
                 self.tap(cancel)
-                start_count = self.store.get(self.STORE_FORMATION_NUM, 1)
-                self.store[self.STORE_FORMATION_NUM] += 1
+                start_count = self.battle_state.formation_num
+                self.battle_state.formation_num += 1
             else:
                 self._click_confirm_on_popup()
                 logging.debug("Formation copied")
@@ -352,7 +343,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         if self.find_any_template(["battle/spend.png", "battle/gold.png"]):
             if not spend_gold:
                 logging.warning("Not spending gold returning")
-                self.store[self.STORE_MAX_ATTEMPTS_REACHED] = True
+                self.battle_state.max_attempts_reached = True
                 self.press_back_button()
                 return False
             else:
@@ -397,50 +388,50 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         return False
 
     def _get_battle_over_templates(self) -> list[str]:
-        mode = self.store.get(self.STORE_MODE, None)
-        if mode == self.MODE_AFK_STAGES:
-            return [
-                "next.png",
-                "battle/victory_rewards.png",
-                "retry.png",
-                "navigation/confirm.png",
-                "battle/power_up.png",
-                "battle/result.png",
-                "afk_stages/tap_to_close.png",
-            ]
+        match self.battle_state.mode:
+            case Mode.AFK_STAGES:
+                return [
+                    "next.png",
+                    "battle/victory_rewards.png",
+                    "retry.png",
+                    "navigation/confirm.png",
+                    "battle/power_up.png",
+                    "battle/result.png",
+                    "afk_stages/tap_to_close.png",
+                ]
 
-        if mode == self.MODE_DURAS_TRIALS:
-            return [
-                "duras_trials/no_next.png",
-                "duras_trials/first_clear.png",
-                "duras_trials/end_sunrise.png",
-                "next.png",
-                "battle/victory_rewards.png",
-                "retry.png",
-                "navigation/confirm.png",
-                "battle/power_up.png",
-                "battle/result.png",
-            ]
+            case Mode.DURAS_TRIALS:
+                return [
+                    "duras_trials/no_next.png",
+                    "duras_trials/first_clear.png",
+                    "duras_trials/end_sunrise.png",
+                    "next.png",
+                    "battle/victory_rewards.png",
+                    "retry.png",
+                    "navigation/confirm.png",
+                    "battle/power_up.png",
+                    "battle/result.png",
+                ]
 
-        if mode == self.MODE_LEGEND_TRIALS:
-            return [
-                "legend_trials/available_after.png",
-                "next.png",
-                "battle/victory_rewards.png",
-                "retry.png",
-                "navigation/confirm.png",
-                "battle/power_up.png",
-                "battle/result.png",
-            ]
-
-        return [
-            "next.png",
-            "battle/victory_rewards.png",
-            "retry.png",
-            "navigation/confirm.png",
-            "battle/power_up.png",
-            "battle/result.png",
-        ]
+            case Mode.LEGEND_TRIALS:
+                return [
+                    "legend_trials/available_after.png",
+                    "next.png",
+                    "battle/victory_rewards.png",
+                    "retry.png",
+                    "navigation/confirm.png",
+                    "battle/power_up.png",
+                    "battle/result.png",
+                ]
+            case _:
+                return [
+                    "next.png",
+                    "battle/victory_rewards.png",
+                    "retry.png",
+                    "navigation/confirm.png",
+                    "battle/power_up.png",
+                    "battle/result.png",
+                ]
 
     def _handle_single_stage(self) -> bool:
         """Handles a single stage of a battle.
@@ -457,6 +448,8 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         while count < attempts:
             count += 1
             logging.info(f"Starting Battle #{count}")
+            if self.battle_state.section_header:
+                SummaryGenerator.increment(self.battle_state.section_header, "Battles")
 
             if not self._start_battle():
                 result = False

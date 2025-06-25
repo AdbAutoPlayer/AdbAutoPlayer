@@ -13,7 +13,6 @@ from pathlib import Path
 from time import sleep, time
 from typing import Literal, TypeVar
 
-import cv2
 import numpy as np
 from adb_auto_player import DeviceStream
 from adb_auto_player.adb import (
@@ -38,7 +37,9 @@ from adb_auto_player.image_manipulation import (
     crop,
     get_bgr_np_array_from_png_bytes,
     load_image,
+    to_bgr,
     to_grayscale,
+    to_rgb,
 )
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Coordinates, Point
@@ -404,7 +405,7 @@ class Game:
             image = self._stream.get_latest_frame()
             if image is not None:
                 self._debug_save_screenshot(image, is_bgr=False)
-                return cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+                return to_bgr(image)
 
         max_retries = 3
         for attempt in range(max_retries):
@@ -1035,7 +1036,7 @@ class Game:
         try:
             os.makedirs(os.path.dirname(file_name), exist_ok=True)
             if is_bgr:
-                image = Image.fromarray(cv2.cvtColor(screenshot, cv2.COLOR_BGR2RGB))
+                image = Image.fromarray(to_rgb(screenshot))
             else:
                 image = Image.fromarray(screenshot)
             image.save(file_name)
