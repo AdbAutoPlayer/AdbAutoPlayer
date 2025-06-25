@@ -6,6 +6,8 @@ ignore:
   - "python/tests/**"
   - "app.go"
   - "main.go"
+  - "app*.go"
+  - "internal/processmanager.go"
 
 flags:
   windows-latest:
