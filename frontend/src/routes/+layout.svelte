@@ -2,7 +2,7 @@
   import "../app.css";
 
   import { BrowserOpenURL, EventsOn } from "$lib/wailsjs/runtime";
-  import { GetTheme, RegisterGlobalHotKeys } from "$lib/wailsjs/go/main/App";
+  import { GetTheme, RegisterGlobalHotkeys } from "$lib/wailsjs/go/main/App";
   import LogoSticky from "./LogoSticky.svelte";
   import DocumentationIconSticky from "./DocumentationIconSticky.svelte";
   import LogDisplayCard from "./Log/LogDisplayCard.svelte";
@@ -107,7 +107,7 @@
       title: "Failed to register Global Stop HotKey",
     });
   });
-  RegisterGlobalHotKeys();
+  RegisterGlobalHotkeys();
 </script>
 
 <Toaster {toaster} stateError="preset-filled-error-100-900"></Toaster>
