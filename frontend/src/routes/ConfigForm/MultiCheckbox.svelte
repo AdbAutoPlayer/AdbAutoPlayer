@@ -34,16 +34,16 @@
     <p>No options available</p>
   {:else if constraint.group_alphabetically}
     {#each [...groupedOptions.entries()] as [letter, options]}
-      <div class="rounded border border-white/20 p-1.25">
+      <div class="flex-1 rounded border border-white/20 p-1.25">
         <div class="mb-1.25 bg-white/10 p-0.5 font-bold">
           {letter}
         </div>
         <div class="flex flex-col">
           {#each options as option}
-            <label class="m-0.5 flex items-center">
+            <label class="m-1 flex items-center text-left">
               <input
                 type="checkbox"
-                class="mr-0.5 ml-0.25 checkbox"
+                class="mr-1.5 ml-0.25 checkbox"
                 {name}
                 value={option}
                 checked={Array.isArray(value) ? value.includes(option) : false}
