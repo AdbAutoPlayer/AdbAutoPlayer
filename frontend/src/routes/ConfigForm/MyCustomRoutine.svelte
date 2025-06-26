@@ -3,7 +3,7 @@
 
   let {
     constraint,
-    value,
+    value = $bindable(),
     name,
   }: {
     constraint: MyCustomRoutineConstraint;

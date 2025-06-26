@@ -10,7 +10,7 @@ import (
 )
 
 type MainConfig struct {
-	ADB     ADBConfig     `toml:"adb"`
+	ADB     ADBConfig     `toml:"adb" json:"ADB (Advanced)"`
 	Device  DeviceConfig  `toml:"device"`
 	Update  UpdateConfig  `toml:"update"`
 	Logging LoggingConfig `toml:"logging"`
