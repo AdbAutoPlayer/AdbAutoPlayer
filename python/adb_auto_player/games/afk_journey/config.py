@@ -94,6 +94,7 @@ class HeroesEnum(StrEnum):
     Vala = auto()
     Valen = auto()
     Valka = auto()
+    Velara = auto()
     Viperian = auto()
     Walker = auto()
 
