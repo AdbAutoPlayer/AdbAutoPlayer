@@ -545,9 +545,9 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         # We will be in Resonating Hall after raising affinity
         logging.info("Begin swapping essences...")
-        swapped = True
+        swapped: bool = True
         while swapped:
-            swapped: bool = self._swap_essence()
+            swapped = self._swap_essence()
         logging.info("Essence swaps completed.")
 
     def _swap_essence(self) -> bool:
