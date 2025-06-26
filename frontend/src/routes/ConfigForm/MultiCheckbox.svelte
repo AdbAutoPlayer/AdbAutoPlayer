@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { updateCheckboxArray } from "$lib/checkboxHelper";
+
   let {
     constraint,
-    value,
+    value = $bindable(),
     name,
   }: {
     constraint: MultiCheckboxConstraint;
@@ -21,6 +23,10 @@
   }
 
   const groupedOptions = groupOptionsByFirstLetter(constraint.choices || []);
+
+  function handleCheckboxChange(choice: string, isChecked: boolean) {
+    value = updateCheckboxArray(value, choice, isChecked);
+  }
 </script>
 
 <div class="flex flex-wrap gap-2.5">
@@ -28,19 +34,21 @@
     <p>No options available</p>
   {:else if constraint.group_alphabetically}
     {#each [...groupedOptions.entries()] as [letter, options]}
-      <div class="rounded border border-white/20 p-1.25">
+      <div class="flex-1 rounded border border-white/20 p-1.25">
         <div class="mb-1.25 bg-white/10 p-0.5 font-bold">
           {letter}
         </div>
         <div class="flex flex-col">
           {#each options as option}
-            <label class="m-0.5 flex items-center">
+            <label class="m-1 flex items-center text-left">
               <input
                 type="checkbox"
-                class="mr-0.5 ml-0.25 checkbox"
+                class="mr-1.5 ml-0.25 checkbox"
                 {name}
                 value={option}
                 checked={Array.isArray(value) ? value.includes(option) : false}
+                onchange={(e) =>
+                  handleCheckboxChange(option, e.currentTarget.checked)}
               />
               <span class="mr-0.25">{option}</span>
             </label>
@@ -57,6 +65,8 @@
           {name}
           value={choice}
           checked={Array.isArray(value) ? value.includes(choice) : false}
+          onchange={(e) =>
+            handleCheckboxChange(choice, e.currentTarget.checked)}
         />
         <span class="mr-0.25">{choice}</span>
       </label>
