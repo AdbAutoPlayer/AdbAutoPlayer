@@ -181,9 +181,9 @@
                 >
                   <div class="flex items-center justify-between gap-2">
                     <div class="flex items-center gap-2">
-                      <span class="text-surface-500-400 text-xs font-medium"
-                        >{index + 1}.</span
-                      >
+                      <span class="text-surface-500-400 text-xs font-medium">
+                        {index + 1}.
+                      </span>
                       <p class="text-sm">{task}</p>
                     </div>
                     <button
@@ -206,17 +206,3 @@
     <p>No options available</p>
   {/if}
 </div>
-
-<style>
-  .cursor-grab {
-    cursor: grab;
-  }
-
-  .cursor-grabbing {
-    cursor: grabbing;
-  }
-
-  .active\:cursor-grabbing:active {
-    cursor: grabbing;
-  }
-</style>
