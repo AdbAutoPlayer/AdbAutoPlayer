@@ -33,6 +33,7 @@ class HeroesEnum(StrEnum):
     Cecia = auto()
     Cryonaia = auto()
     Cyran = auto()
+    Daimon = auto()
     Damian = auto()
     Dionel = auto()
     Dunlingr = auto()
