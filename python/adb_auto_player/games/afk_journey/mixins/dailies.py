@@ -31,6 +31,11 @@ from .legend_trial import SeasonLegendTrial
 class DailiesMixin(AFKJourneyBase, ABC):
     """Dailies Mixin."""
 
+    def __init__(self) -> None:
+        """Initialize Dailies Mixin."""
+        super().__init__()
+        self.perform_essence_swap = False
+
     # TODO should be broken up into components and registered for my custom routine
     @register_command(
         name="Dailies",
@@ -52,6 +57,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         ArenaMixin().run_arena() if do_arena else logging.info("Arena battle disabled.")  # type: ignore[abstract]
         self.claim_hamburger()
         self.raise_hero_affinity()
+        self.swap_essences()
         if self.get_config().legend_trials.towers:
             SeasonLegendTrial().push_legend_trials()  # type: ignore[abstract]
         AFKStagesMixin().push_afk_stages(season=True)  # type: ignore[abstract]
@@ -275,6 +281,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
             self.tap(Point(550, 100), scale=True)  # Close purchased window
             sleep(1)
 
+            self.perform_essence_swap = True
+
     def single_pull(self) -> None:
         """Complete a single pull."""
         do_single: bool = self.get_config().dailies.single_pull
@@ -488,7 +496,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         self.tap(Point(540, 1620))  # Close confirmation
         sleep(2)
 
-    ############################# Hero Affinity ##############################
+    ############################# Resonating Hall ##############################
 
     def raise_hero_affinity(self) -> None:
         """Raise hero affinity with 3 clicks per day."""
@@ -524,3 +532,74 @@ class DailiesMixin(AFKJourneyBase, ABC):
             sleep(0.5)
 
         self.tap(Point(995, 1090), scale=True)  # Next hero
+
+    def swap_essences(self) -> None:
+        """Swap purchased essences."""
+        if not self.get_config().dailies.buy_essences:
+            logging.debug("Essence purchasing disabled. Skipping swap.")
+            return
+
+        if not self.perform_essence_swap:
+            logging.info("No essences purchased. Skipping swap.")
+            return
+
+        # We will be in Resonating Hall after raising affinity
+        logging.info("Begin swapping essences...")
+        swapped = True
+        while swapped:
+            swapped: bool = self._swap_essence()
+        logging.info("Essence swaps completed.")
+
+    def _swap_essence(self) -> bool:
+        """Perform a single essence swap."""
+        try:
+            new_actions = self.wait_for_template(
+                "resonating_hall/new_actions.png",
+                timeout=self.MIN_TIMEOUT,
+                timeout_message="Failed to find New Actions button.",
+            )
+            self.tap(new_actions)
+            sleep(2)
+
+            for i in range(3):
+                # The action template displays on all 3 areas within this flow.
+                logging.debug(f"Looking for action template #{i}.")
+                action = self.find_any_template(
+                    templates=[
+                        "resonating_hall/hero_action.png",
+                        "resonating_hall/action.png",
+                    ],
+                    crop_regions=CropRegions(bottom=0.1),
+                )
+                if not action:
+                    raise GameTimeoutError(f"Failed to find action template #{i}.")
+
+                self.tap(action)
+                sleep(2)
+
+            logging.debug("Confirm essence swap.")
+            confirm = self.wait_for_template(
+                "confirm_text.png",
+                timeout=self.MIN_TIMEOUT,
+                timeout_message="Failed to find Confirm button.",
+            )
+            self.tap(confirm)
+            sleep(2)
+        except GameTimeoutError as fail:
+            logging.debug(fail)
+            return False
+
+        logging.debug("Closing swapped results window.")
+        self.tap(Point(550, 200), scale=True)
+        sleep(2)
+
+        logging.debug("Leave weapon and hero view.")
+        for _ in range(2):
+            back = self.game_find_template_match("back.png")
+            if back:
+                self.tap(back)
+            else:
+                self.press_back_button()
+            sleep(2)
+
+        return True
