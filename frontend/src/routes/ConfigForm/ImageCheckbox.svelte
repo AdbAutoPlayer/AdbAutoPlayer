@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { updateCheckboxArray } from "$lib/checkboxHelper";
+
   let {
     constraint,
-    value,
+    value = $bindable(),
     name,
   }: {
     constraint: ImageCheckboxConstraint;
@@ -16,6 +18,10 @@
   const choicesWithImages: Array<string> = $derived(
     constraint.choices?.map((choice) => sanitizeForImage(choice)),
   );
+
+  function handleCheckboxChange(choice: string, isChecked: boolean) {
+    value = updateCheckboxArray(value, choice, isChecked);
+  }
 </script>
 
 <div class="flex flex-wrap gap-2.5">
@@ -28,6 +34,8 @@
           {name}
           value={choice}
           checked={Array.isArray(value) ? value.includes(choice) : false}
+          onchange={(e) =>
+            handleCheckboxChange(choice, e.currentTarget.checked)}
         />
         <img
           src={`/imagecheckbox/${constraint.image_dir_path.replace(/\/$/, "")}/${choicesWithImages[i]}`}
