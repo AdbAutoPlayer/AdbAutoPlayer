@@ -125,6 +125,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         self._buy_single_pull()
         self._buy_affinity_items()
+        self._buy_bound_essence()
 
         sleep(1)
         logging.debug("Back to Mystical House.")
@@ -171,7 +172,6 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def _buy_affinity_items(self) -> None:
         """Buy affinity items."""
-        logging.info("Looking for affinity items...")
         buy_discount: bool = self.get_config().dailies.buy_discount_affinity
         buy_all: bool = self.get_config().dailies.buy_all_affinity
 
@@ -179,6 +179,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.info("Affinity item purchasing disabled. Skipping.")
             return
 
+        logging.info("Looking for affinity items...")
         try:
             logging.debug("Open Friendship Store.")
             friendship_store = self.wait_for_template(
@@ -227,16 +228,62 @@ class DailiesMixin(AFKJourneyBase, ABC):
             self.tap(Point(550, 100), scale=True)  # Close purchased window
             sleep(1)
 
+    def _buy_bound_essence(self) -> None:
+        """Buy character bound temporal essences."""
+        buy_essences: bool = self.get_config().dailies.buy_essences
+        essence_buy_count: int = self.get_config().dailies.essence_buy_count
+
+        if not buy_essences:
+            logging.info("Bound Essence purchasing disabled. Skipping.")
+            return
+
+        logging.info("Looking for Temporal Essences...")
+        try:
+            logging.debug("Open Dream Store.")
+            dream_store = self.wait_for_template(
+                "dailies/emporium/dream_store.png",
+                timeout=self.MIN_TIMEOUT,
+                timeout_message="Failed to find Dream Store.",
+            )
+            self.tap(dream_store)
+            sleep(1)
+        except GameTimeoutError as fail:
+            logging.error(f"{fail} {self.LANG_ERROR}")
+            return
+
+        logging.debug("Buying bound temporal essences.")
+        bound_essences = self.find_all_template_matches(
+            "dailies/emporium/bound_essence.png",
+            crop_regions=CropRegions(bottom=0.4),
+        )
+
+        if not bound_essences:
+            logging.info("No temporal essences available.")
+            return
+
+        logging.info(f"{len(bound_essences)} essences available.")
+        for i, essence in enumerate(bound_essences):
+            if i >= essence_buy_count:
+                logging.info("Reached daily essence buy limit.")
+                break
+
+            logging.info(f"Buying essence {i + 1}.")
+            self.tap(essence)
+            sleep(1)
+            self.tap(Point(600, 1780), scale=True)  # Purchase
+            sleep(1)
+            self.tap(Point(550, 100), scale=True)  # Close purchased window
+            sleep(1)
+
     def single_pull(self) -> None:
         """Complete a single pull."""
-        logging.info("Navigating to Noble Tavern for daily single pull...")
         do_single: bool = self.get_config().dailies.single_pull
 
         if not do_single:
             logging.info("Single pull disabled. Skipping.")
             return
 
-        logging.info("Doing daily single pull.")
+        logging.info("Navigating to Noble Tavern for daily single pull...")
         try:
             logging.debug("Opening Noble Tavern.")
             tavern = self.wait_for_template(
