@@ -186,6 +186,9 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                 crop_regions=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
                 threshold=ConfidenceValue("80%"),
                 timeout=self.MIN_TIMEOUT,
+                timeout_message=(
+                    f"Formation #{self.battle_state.formation_num} not found"
+                ),
             )
             counter -= 1
         excluded_hero: str | None = self._formation_contains_excluded_hero()
