@@ -4,6 +4,7 @@ import (
 	"adb-auto-player/internal"
 	"adb-auto-player/internal/config"
 	"adb-auto-player/internal/ipc"
+	"adb-auto-player/internal/utils"
 	"context"
 	"embed"
 	"fmt"
@@ -54,7 +55,7 @@ func loadConfiguration() config.MainConfig {
 		"../../config/config.toml", // macOS dev no not a joke
 	}
 
-	configPath := internal.GetFirstPathThatExists(paths)
+	configPath := utils.GetFirstPathThatExists(paths)
 	mainConfig := config.NewMainConfig()
 
 	if configPath != nil {
