@@ -20,7 +20,7 @@ func registerGlobalHotkeys(a *App) {
 	}
 
 	<-hk.Keydown()
-	internal.GetProcessManager().KillProcess("Stopping (CTRL+ALT+C pressed)")
+	internal.GetProcessManager().KillProcess("Stopping (CTRL+ALT+SHIFT+C pressed)")
 
 	if err := hk.Unregister(); err != nil {
 		registerGlobalHotkeys(a)
