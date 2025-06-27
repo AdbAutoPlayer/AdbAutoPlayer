@@ -20,8 +20,8 @@ from adb_auto_player.models.decorators import GameGUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import MatchMode
+from adb_auto_player.util import SummaryGenerator
 
-from ...util import SummaryGenerator
 from .afkjourneynavigation import AFKJourneyNavigation
 from .battle_state import BattleState, Mode
 from .config import Config
