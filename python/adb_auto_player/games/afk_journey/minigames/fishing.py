@@ -42,7 +42,6 @@ class Fishing(AFKJourneyBase):
         self.disable_debug_screenshots = True
 
         self._warmup_cache_for_all_fishing_templates()
-        # self._start_minigame()
         self._fish()
 
     def _warmup_cache_for_all_fishing_templates(self):
@@ -52,7 +51,6 @@ class Fishing(AFKJourneyBase):
             "fishing/hook_fish.png",
             "fishing/hook_held.png",
             "fishing/start_fishing.png",
-            "fishing/start_minigame.png",
         ]
         for template in templates:
             _ = self._load_image(template)
@@ -134,18 +132,6 @@ class Fishing(AFKJourneyBase):
                 else:
                     print("loose")
 
-        return
-
-    def _start_minigame(self) -> None:
-        btn = self.game_find_template_match(
-            "fishing/start_minigame.png", crop_regions=CropRegions(top=0.5, bottom=0.2)
-        )
-        if not btn:
-            return
-        self.tap(btn)
-        sleep(5)
-        # Intentionally fail the first
-        self.wait_for_template("fishing/book.png")
         return
 
 
