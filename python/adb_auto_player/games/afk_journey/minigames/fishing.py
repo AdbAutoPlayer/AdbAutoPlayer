@@ -1,4 +1,5 @@
 import logging
+import threading
 import time
 from time import sleep
 
@@ -15,7 +16,8 @@ from ..base import AFKJourneyBase
 
 STRONG_PULL = Point(780, 1290)
 DISTANCE_FOR_LONG_HOLD = 600
-DISTANCE_FOR_MEDIUM_HOLD = 300
+DISTANCE_FOR_MEDIUM_HOLD = 400
+DISTANCE_FOR_SHORT_HOLD = 200
 MAX_AVG_INPUT_DELAY_IN_MS = 1000  # TODO Change to a reasonable value later
 MAX_SCREENSHOT_DELAY_IN_MS = 1000  # TODO Change to a reasonable value later
 # Maybe 100ms for input 50ms for screenshot?
@@ -72,7 +74,7 @@ class Fishing(AFKJourneyBase):
             "fishing/hook.png",
             "fishing/hook_fish.png",
             "fishing/hook_held.png",
-            "fishing/start_fishing.png",
+            "fishing/fishing_rod.png",
         ]
         for template in templates:
             _ = self._load_image(template)
@@ -80,9 +82,9 @@ class Fishing(AFKJourneyBase):
     def _i_am_in_the_fishing_screen(self) -> bool:
         try:
             _ = self.wait_for_any_template(
-                ["fishing/hook_fish", "fishing/start_fishing"],
-                crop_regions=CropRegions(left=0.3, right=0.3, top=0.5, bottom=0.2),
+                ["fishing/hook_fish", "fishing/fishing_rod"],
                 timeout=self.MIN_TIMEOUT,
+                threshold=ConfidenceValue("70%"),
             )
         except GameTimeoutError:
             return False
@@ -91,6 +93,7 @@ class Fishing(AFKJourneyBase):
         book = self.game_find_template_match(
             "fishing/book.png",
             crop_regions=CropRegions(left=0.9, bottom=0.9),
+            threshold=ConfidenceValue("70%"),
         )
 
         if not book:
@@ -103,10 +106,11 @@ class Fishing(AFKJourneyBase):
             return
 
         btn = self.wait_for_any_template(
-            ["fishing/hook_fish", "fishing/start_fishing"],
+            ["fishing/hook_fish", "fishing/fishing_rod"],
             crop_regions=CropRegions(left=0.3, right=0.3, top=0.5, bottom=0.2),
             timeout=self.MIN_TIMEOUT,
             timeout_message="Cast Fishing Rod Button not found",
+            threshold=ConfidenceValue("70%"),
         )
 
         self.tap(btn)
@@ -116,6 +120,7 @@ class Fishing(AFKJourneyBase):
             crop_regions=CropRegions(left=0.3, right=0.3, top=0.5, bottom=0.2),
             timeout=self.MIN_TIMEOUT,
             delay=0.1,
+            threshold=ConfidenceValue("70%"),
         )
         sleep(0.6)
         self.tap(btn, blocking=False)
@@ -149,6 +154,7 @@ class Fishing(AFKJourneyBase):
                     "fishing/book.png",
                     crop_regions=CropRegions(left=0.9, bottom=0.9),
                     screenshot=screenshot,
+                    threshold=ConfidenceValue("70%"),
                 ):
                     print("its joever")
                     # TODO Not sure how to detect a catch or loss here.
@@ -162,20 +168,33 @@ class Fishing(AFKJourneyBase):
             if not thread or not thread.is_alive():
                 top, middle = _find_fishing_colors_fast(cropped.image)
                 if top and middle and top > middle:
-                    print("hold")
-                    # TODO values need to be adjusted, duration could be adjusted.
-                    # Constants for distance can be adjusted too.
-                    if top - middle > DISTANCE_FOR_LONG_HOLD:
-                        thread = self.hold(btn, duration=1.0, blocking=False)
-                    elif top - middle > DISTANCE_FOR_MEDIUM_HOLD:
-                        thread = self.hold(btn, duration=0.5, blocking=False)
-                    else:
-                        thread = self.hold(btn, duration=0.25, blocking=False)
+                    thread = self._handle_hold_for_distance(
+                        btn=btn,
+                        distance=(top - middle),
+                        thread=thread,
+                    )
                 else:
                     # TODO remove all those print statements when done
                     print("loose")
 
         return
+
+    def _handle_hold_for_distance(
+        self,
+        btn: Coordinates,
+        distance: int,
+        thread: threading.Thread | None,
+    ) -> threading.Thread | None:
+        # TODO distance and duration could be adjusted
+        if distance > DISTANCE_FOR_LONG_HOLD:
+            return self.hold(btn, duration=1.5, blocking=False)
+        if distance > DISTANCE_FOR_MEDIUM_HOLD:
+            return self.hold(btn, duration=1.0, blocking=False)
+        if distance > DISTANCE_FOR_SHORT_HOLD:
+            return self.hold(btn, duration=0.5, blocking=False)
+        if distance > 0:
+            return self.hold(btn, duration=0.25, blocking=False)
+        return thread
 
     def _passed_screenshot_delay_check(self) -> bool:
         start_time = time.time()

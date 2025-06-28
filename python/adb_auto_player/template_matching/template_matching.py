@@ -61,6 +61,9 @@ def find_template_match(
         grayscale=grayscale,
     )
 
+    cv2.imwrite("base.png", base_cv)
+    cv2.imwrite("template.png", template_cv)
+
     template_height, template_width = template_cv.shape[:2]
 
     result = cv2.matchTemplate(base_cv, template_cv, cv2.TM_CCOEFF_NORMED)

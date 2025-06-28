@@ -812,10 +812,11 @@ class Game:
         Returns:
             TemplateMatchResult | None
         """
+        screenshot = screenshot if screenshot is not None else self.get_screenshot()
+
         if grayscale:
             screenshot = to_grayscale(screenshot)
 
-        screenshot = screenshot if screenshot is not None else self.get_screenshot()
         for template in templates:
             result = self.game_find_template_match(
                 template,
