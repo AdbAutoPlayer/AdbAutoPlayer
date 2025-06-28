@@ -180,6 +180,7 @@ def _find_fishing_colors_fast(img: np.ndarray) -> tuple[int | None, int | None]:
     # Define thirds
     top_third = img[0 : h // 3, :]
     middle_third = img[h // 3 : 2 * h // 3, :]
+    # bottom third is not needed, but I will keep it like this
 
     # === TOP THIRD: Find specific color RGB(244, 222, 105) ===
     target_color = np.array([105, 222, 244])  # BGR format
@@ -200,6 +201,10 @@ def _find_fishing_colors_fast(img: np.ndarray) -> tuple[int | None, int | None]:
         # Get largest contour
         largest_contour = max(contours, key=cv2.contourArea)
         x, y, w_box, h_box = cv2.boundingRect(largest_contour)
+        # This is a bit sketchy
+        # The fishing circle box starts at the top middle so at the start you will
+        # Want the left most x-coordinate (x)
+        # When the circle is almost full it should wrap, and you want the middle.
         top_result = (
             x + w_box // 2 if w_box > length_when_the_circle_is_almost_full else x
         )
@@ -218,7 +223,7 @@ def _find_fishing_colors_fast(img: np.ndarray) -> tuple[int | None, int | None]:
 
     # Slide 50px window across width
     window_width = 50
-    for x in range(0, w - window_width + 1, 5):  # Step by 5 for speed
+    for x in range(0, w - window_width + 1, 5):  # Step by 5 for 5x speed
         window_mask = middle_mask[:, x : x + window_width]
         count = np.sum(window_mask > 0)
 
