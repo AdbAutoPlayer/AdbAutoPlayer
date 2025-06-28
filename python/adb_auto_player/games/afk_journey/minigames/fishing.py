@@ -16,7 +16,8 @@ from ..base import AFKJourneyBase
 STRONG_PULL = Point(780, 1290)
 DISTANCE_FOR_LONG_HOLD = 600
 DISTANCE_FOR_MEDIUM_HOLD = 300
-MAX_AVG_INPUT_DELAY_IN_MS = 1000  # TODO Change to 100 later I left this for testing.
+MAX_AVG_INPUT_DELAY_IN_MS = 1000  # TODO Change to a reasonable value later
+# Maybe 100ms?
 
 
 class Fishing(AFKJourneyBase):
