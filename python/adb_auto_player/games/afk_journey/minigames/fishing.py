@@ -196,11 +196,11 @@ class Fishing(AFKJourneyBase):
         average_time = total_time / iterations
         if average_time > MAX_AVG_INPUT_DELAY_IN_MS:
             logging.error(
-                f"Average Input Delay of {average_time} ms is too high, "
+                f"Average Input Delay of {int(average_time)} ms is too high, "
                 "fishing cannot work."
             )
             return False
-        logging.info(f"Average Input Delay of {average_time} ms")
+        logging.info(f"Average Input Delay of {int(average_time)} ms")
         return True
 
 
