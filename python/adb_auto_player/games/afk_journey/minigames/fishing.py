@@ -36,6 +36,13 @@ class Fishing(AFKJourneyBase):
                 "without Device Streaming."
             )
 
+        if self.get_scale_factor() != 1.0:
+            logging.error(
+                "Fishing is optimized for 1080x1920 it will not work with other "
+                "resolutions."
+            )
+            return
+
         # Disable debug screenshots we need to maximise speed
         # TODO maybe debug screenshots should be saved async?
         # But really do we need debug screenshots here?
@@ -55,16 +62,15 @@ class Fishing(AFKJourneyBase):
         for template in templates:
             _ = self._load_image(template)
 
-    def _fish(self) -> None:
-        print("Fishing...")
+    def _i_am_in_the_fishing_screen(self) -> bool:
         try:
-            btn = self.wait_for_any_template(
+            _ = self.wait_for_any_template(
                 ["fishing/hook_fish", "fishing/start_fishing"],
                 crop_regions=CropRegions(left=0.3, right=0.3, top=0.5, bottom=0.2),
                 timeout=self.MIN_TIMEOUT,
             )
         except GameTimeoutError:
-            return
+            return False
 
         # Check we are in the minigame
         book = self.game_find_template_match(
@@ -73,11 +79,22 @@ class Fishing(AFKJourneyBase):
         )
 
         if not book:
+            return False
+        return True
+
+    def _fish(self) -> None:
+        if not self._i_am_in_the_fishing_screen():
+            logging.error("Not in Fishing screen")
             return
 
-        # Start fishing
-        print("Start Fishing...")
-        self.tap(btn, scale=True)
+        btn = self.wait_for_any_template(
+            ["fishing/hook_fish", "fishing/start_fishing"],
+            crop_regions=CropRegions(left=0.3, right=0.3, top=0.5, bottom=0.2),
+            timeout=self.MIN_TIMEOUT,
+            timeout_message="Cast Fishing Rod Button not found",
+        )
+
+        self.tap(btn)
         sleep(1)
         _ = self.wait_for_template(
             "fishing/hook_fish",
@@ -86,18 +103,24 @@ class Fishing(AFKJourneyBase):
             delay=0.1,
         )
         sleep(0.6)
-        self.tap(btn, scale=True, blocking=False)
-        _ = self.wait_for_any_template(
-            [
-                "fishing/hook",
-                "fishing/hook_held",
-            ],
-            crop_regions=CropRegions(left=0.3, right=0.3, top=0.5, bottom=0.2),
-            timeout=self.MIN_TIMEOUT,
-            delay=0.1,
-            threshold=ConfidenceValue("60%"),
-        )
-        print("Fishing Loop...")
+        self.tap(btn, blocking=False)
+
+        # TODO This part is a bit sus. Needs to be double checked.
+        try:
+            _ = self.wait_for_any_template(
+                [
+                    "fishing/hook",
+                    "fishing/hook_held",
+                ],
+                crop_regions=CropRegions(left=0.3, right=0.3, top=0.5, bottom=0.2),
+                timeout=self.MIN_TIMEOUT,
+                delay=0.05,
+                threshold=ConfidenceValue("60%"),
+            )
+        except GameTimeoutError:
+            logging.info("Small fish caught.")
+
+        # Fishing Loop
         check_book_at = 20
         count = 0
         thread = None
@@ -113,6 +136,8 @@ class Fishing(AFKJourneyBase):
                     screenshot=screenshot,
                 ):
                     print("its joever")
+                    # TODO Not sure how to detect a catch or loss here.
+                    # Might have to OCR the remaining attempts?
                     break
             cropped = crop(
                 screenshot,
@@ -123,6 +148,8 @@ class Fishing(AFKJourneyBase):
                 top, middle = _find_fishing_colors_fast(cropped.image)
                 if top and middle and top > middle:
                     print("hold")
+                    # TODO values need to be adjusted, duration could be adjusted.
+                    # Constants for distance can be adjusted too.
                     if top - middle > DISTANCE_FOR_LONG_HOLD:
                         thread = self.hold(btn, duration=1.5, blocking=False)
                     elif top - middle > DISTANCE_FOR_MEDIUM_HOLD:
@@ -130,6 +157,7 @@ class Fishing(AFKJourneyBase):
                     else:
                         thread = self.hold(btn, duration=0.5, blocking=False)
                 else:
+                    # TODO remove all those print statements when done
                     print("loose")
 
         return
