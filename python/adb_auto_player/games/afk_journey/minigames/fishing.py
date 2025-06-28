@@ -8,12 +8,10 @@ from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.image_manipulation import crop
 from adb_auto_player.models import ConfidenceValue
-from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Coordinates, Point
 from adb_auto_player.models.image_manipulation import CropRegions
 
 from ..base import AFKJourneyBase
-from ..gui_category import AFKJCategory
 
 STRONG_PULL = Point(780, 1290)
 DISTANCE_FOR_LONG_HOLD = 600
@@ -25,10 +23,11 @@ class Fishing(AFKJourneyBase):
     """Fishing."""
 
     @register_command(
-        gui=GUIMetadata(
-            label="Fishing",
-            category=AFKJCategory.EVENTS_AND_OTHER,
-        ),
+        # TODO expose in GUI when its done
+        # gui=GUIMetadata(
+        #     label="Fishing",
+        #     category=AFKJCategory.EVENTS_AND_OTHER,
+        # ),
     )
     def fishing(self) -> None:
         self.start_up(device_streaming=True)
