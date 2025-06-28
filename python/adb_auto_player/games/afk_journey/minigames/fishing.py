@@ -35,12 +35,27 @@ class Fishing(AFKJourneyBase):
                 "Quite frankly there is not a very good chance this will work "
                 "without Device Streaming."
             )
+
         # Disable debug screenshots we need to maximise speed
         # TODO maybe debug screenshots should be saved async?
         # But really do we need debug screenshots here?
         self.disable_debug_screenshots = True
+
+        self._warmup_cache_for_all_fishing_templates()
         # self._start_minigame()
         self._fish()
+
+    def _warmup_cache_for_all_fishing_templates(self):
+        templates = [
+            "fishing/book.png",
+            "fishing/hook.png",
+            "fishing/hook_fish.png",
+            "fishing/hook_held.png",
+            "fishing/start_fishing.png",
+            "fishing/start_minigame.png",
+        ]
+        for template in templates:
+            _ = self._load_image(template)
 
     def _fish(self) -> None:
         print("Fishing...")
