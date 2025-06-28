@@ -173,7 +173,7 @@ class Fishing(AFKJourneyBase):
                     screenshot=screenshot,
                     threshold=ConfidenceValue("70%"),
                 ):
-                    print("its joever")
+                    logging.info("Fishing done")
                     # TODO Not sure how to detect a catch or loss here.
                     # Might have to OCR the remaining attempts?
                     break
@@ -190,9 +190,6 @@ class Fishing(AFKJourneyBase):
                         distance=(top - middle),
                         thread=thread,
                     )
-                else:
-                    # TODO remove all those print statements when done
-                    print("loose")
 
         return
 
