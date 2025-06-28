@@ -15,9 +15,10 @@ from adb_auto_player.models.image_manipulation import CropRegions
 from ..base import AFKJourneyBase
 
 STRONG_PULL = Point(780, 1290)
-DISTANCE_FOR_LONG_HOLD = 600
-DISTANCE_FOR_MEDIUM_HOLD = 400
-DISTANCE_FOR_SHORT_HOLD = 200
+DISTANCE_600 = 600
+DISTANCE_400 = 400
+DISTANCE_200 = 200
+DISTANCE_100 = 100
 MAX_AVG_INPUT_DELAY_IN_MS = 1000  # TODO Change to a reasonable value later
 MAX_SCREENSHOT_DELAY_IN_MS = 1000  # TODO Change to a reasonable value later
 # Maybe 100ms for input 50ms for screenshot?
@@ -139,6 +140,7 @@ class Fishing(AFKJourneyBase):
             )
         except GameTimeoutError:
             logging.info("Small fish caught.")
+            return
 
         # Fishing Loop
         check_book_at = 20
@@ -186,11 +188,13 @@ class Fishing(AFKJourneyBase):
         thread: threading.Thread | None,
     ) -> threading.Thread | None:
         # TODO distance and duration could be adjusted
-        if distance > DISTANCE_FOR_LONG_HOLD:
-            return self.hold(btn, duration=1.5, blocking=False)
-        if distance > DISTANCE_FOR_MEDIUM_HOLD:
-            return self.hold(btn, duration=1.0, blocking=False)
-        if distance > DISTANCE_FOR_SHORT_HOLD:
+        if distance > DISTANCE_600:
+            return self.hold(btn, duration=1.75, blocking=False)
+        if distance > DISTANCE_400:
+            return self.hold(btn, duration=1.25, blocking=False)
+        if distance > DISTANCE_200:
+            return self.hold(btn, duration=0.75, blocking=False)
+        if distance > DISTANCE_100:
             return self.hold(btn, duration=0.5, blocking=False)
         if distance > 0:
             return self.hold(btn, duration=0.25, blocking=False)
