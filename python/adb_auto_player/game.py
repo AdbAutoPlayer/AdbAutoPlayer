@@ -372,13 +372,17 @@ class Game:
         original_point: Coordinates,
         final_point: Coordinates,
         message: str | None = None,
-    ) -> str:
+    ) -> str | None:
         """Log the tap with all relevant information in a single entry."""
+        if message is None:
+            return None
+
         coords_info = (
             f"{original_point} (scaled to {final_point})"
             if original_point != final_point
             else str(final_point)
         )
+
         if message:
             return f"{message}: {coords_info}"
         return f"Tapped: {coords_info}"

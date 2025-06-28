@@ -17,7 +17,9 @@ STRONG_PULL = Point(780, 1290)
 DISTANCE_FOR_LONG_HOLD = 600
 DISTANCE_FOR_MEDIUM_HOLD = 300
 MAX_AVG_INPUT_DELAY_IN_MS = 1000  # TODO Change to a reasonable value later
-# Maybe 100ms?
+MAX_SCREENSHOT_DELAY_IN_MS = 1000  # TODO Change to a reasonable value later
+# Maybe 100ms for input 50ms for screenshot?
+# MuMu with Device Streaming should have sub 50ms for input and sub 3 ms for screenshot
 
 
 class Fishing(AFKJourneyBase):
@@ -45,15 +47,16 @@ class Fishing(AFKJourneyBase):
             )
             return
 
-        # Disable debug screenshots we need to maximise speed
-        # TODO maybe debug screenshots should be saved async?
-        # But really do we need debug screenshots here?
+        # Debug Screenshots need to be disabled.
+        # IO will add a delay of anywhere between 50-300ms, generally speaking
         self.disable_debug_screenshots = True
 
         self._warmup_cache_for_all_fishing_templates()
 
-        # TODO there needs to be a input delay check
-        if not self._passed_input_delay_check():
+        if (
+            not self._passed_input_delay_check()
+            or not self._passed_screenshot_delay_check()
+        ):
             return
 
         # TODO needs map navigation logic
@@ -174,6 +177,19 @@ class Fishing(AFKJourneyBase):
 
         return
 
+    def _passed_screenshot_delay_check(self) -> bool:
+        start_time = time.time()
+        _ = self.get_screenshot()
+        total_time = (time.time() - start_time) * 1000
+        if total_time > MAX_SCREENSHOT_DELAY_IN_MS:
+            logging.error(
+                f"Screenshot delay of {int(total_time)} ms is too high, "
+                "fishing cannot work."
+            )
+            return False
+        logging.info(f"Screenshot delay of {int(total_time)} ms")
+        return True
+
     def _passed_input_delay_check(self) -> bool:
         # Create a custom Point that (-1, -1)
         class PointOffScreen(Coordinates):
@@ -196,11 +212,11 @@ class Fishing(AFKJourneyBase):
         average_time = total_time / iterations
         if average_time > MAX_AVG_INPUT_DELAY_IN_MS:
             logging.error(
-                f"Average Input Delay of {int(average_time)} ms is too high, "
+                f"Average Input delay of {int(average_time)} ms is too high, "
                 "fishing cannot work."
             )
             return False
-        logging.info(f"Average Input Delay of {int(average_time)} ms")
+        logging.info(f"Average Input delay of {int(average_time)} ms")
         return True
 
 
