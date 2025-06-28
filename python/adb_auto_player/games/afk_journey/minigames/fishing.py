@@ -166,11 +166,11 @@ class Fishing(AFKJourneyBase):
                     # TODO values need to be adjusted, duration could be adjusted.
                     # Constants for distance can be adjusted too.
                     if top - middle > DISTANCE_FOR_LONG_HOLD:
-                        thread = self.hold(btn, duration=1.5, blocking=False)
-                    elif top - middle > DISTANCE_FOR_MEDIUM_HOLD:
                         thread = self.hold(btn, duration=1.0, blocking=False)
-                    else:
+                    elif top - middle > DISTANCE_FOR_MEDIUM_HOLD:
                         thread = self.hold(btn, duration=0.5, blocking=False)
+                    else:
+                        thread = self.hold(btn, duration=0.25, blocking=False)
                 else:
                     # TODO remove all those print statements when done
                     print("loose")
