@@ -49,6 +49,12 @@ class Fishing(AFKJourneyBase):
         self.disable_debug_screenshots = True
 
         self._warmup_cache_for_all_fishing_templates()
+
+        # TODO needs map navigation logic
+        # the _fish function only works inside of the fishing minigame
+        # after navigation might be easier to intentionally fail the first time to be
+        # inside the fishing screen and not the overworld.
+
         self._fish()
 
     def _warmup_cache_for_all_fishing_templates(self):
