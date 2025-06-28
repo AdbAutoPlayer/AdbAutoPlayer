@@ -1,4 +1,5 @@
 import logging
+import time
 from time import sleep
 
 import cv2
@@ -8,7 +9,7 @@ from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.image_manipulation import crop
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
-from adb_auto_player.models.geometry import Point
+from adb_auto_player.models.geometry import Coordinates, Point
 from adb_auto_player.models.image_manipulation import CropRegions
 
 from ..base import AFKJourneyBase
@@ -17,6 +18,7 @@ from ..gui_category import AFKJCategory
 STRONG_PULL = Point(780, 1290)
 DISTANCE_FOR_LONG_HOLD = 600
 DISTANCE_FOR_MEDIUM_HOLD = 300
+MAX_AVG_INPUT_DELAY_IN_MS = 1000  # TODO Change to 100 later I left this for testing.
 
 
 class Fishing(AFKJourneyBase):
@@ -49,6 +51,10 @@ class Fishing(AFKJourneyBase):
         self.disable_debug_screenshots = True
 
         self._warmup_cache_for_all_fishing_templates()
+
+        # TODO there needs to be a input delay check
+        if not self._passed_input_delay_check():
+            return
 
         # TODO needs map navigation logic
         # the _fish function only works inside of the fishing minigame
@@ -167,6 +173,35 @@ class Fishing(AFKJourneyBase):
                     print("loose")
 
         return
+
+    def _passed_input_delay_check(self) -> bool:
+        # Create a custom Point that (-1, -1)
+        class PointOffScreen(Coordinates):
+            @property
+            def x(self) -> int:
+                return -1
+
+            @property
+            def y(self) -> int:
+                return -1
+
+        point_off_screen = PointOffScreen()
+
+        total_time = 0.0
+        iterations = 10
+        for _ in range(iterations):
+            start_time = time.time()
+            self.tap(point_off_screen, log_message=None)
+            total_time += (time.time() - start_time) * 1000
+        average_time = total_time / iterations
+        if average_time > MAX_AVG_INPUT_DELAY_IN_MS:
+            logging.error(
+                f"Average Input Delay of {average_time} ms is too high, "
+                "fishing cannot work."
+            )
+            return False
+        logging.info(f"Average Input Delay of {average_time} ms")
+        return True
 
 
 def _find_fishing_colors_fast(img: np.ndarray) -> tuple[int | None, int | None]:
