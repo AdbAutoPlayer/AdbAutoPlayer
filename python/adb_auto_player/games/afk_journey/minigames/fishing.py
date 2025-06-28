@@ -74,8 +74,10 @@ class Fishing(AFKJourneyBase):
             "fishing/book.png",
             "fishing/hook.png",
             "fishing/hook_fish.png",
+            "fishing/hook_fish_big.png",
             "fishing/hook_held.png",
             "fishing/fishing_rod.png",
+            "fishing/fishing_rod_big.png",
         ]
         for template in templates:
             _ = self._load_image(template)
@@ -83,7 +85,12 @@ class Fishing(AFKJourneyBase):
     def _i_am_in_the_fishing_screen(self) -> bool:
         try:
             _ = self.wait_for_any_template(
-                ["fishing/hook_fish", "fishing/fishing_rod"],
+                [
+                    "fishing/hook_fish",
+                    "fishing/hook_fish_big",
+                    "fishing/fishing_rod",
+                    "fishing/fishing_rod_big",
+                ],
                 timeout=self.MIN_TIMEOUT,
                 threshold=ConfidenceValue("70%"),
             )
@@ -107,7 +114,12 @@ class Fishing(AFKJourneyBase):
             return
 
         btn = self.wait_for_any_template(
-            ["fishing/hook_fish", "fishing/fishing_rod"],
+            [
+                "fishing/hook_fish",
+                "fishing/hook_fish_big",
+                "fishing/fishing_rod",
+                "fishing/fishing_rod_big",
+            ],
             crop_regions=CropRegions(left=0.3, right=0.3, top=0.5, bottom=0.2),
             timeout=self.MIN_TIMEOUT,
             timeout_message="Cast Fishing Rod Button not found",
@@ -116,8 +128,11 @@ class Fishing(AFKJourneyBase):
 
         self.tap(btn)
         sleep(1)
-        _ = self.wait_for_template(
-            "fishing/hook_fish",
+        _ = self.wait_for_any_template(
+            templates=[
+                "fishing/hook_fish",
+                "fishing/hook_fish_big",
+            ],
             crop_regions=CropRegions(left=0.3, right=0.3, top=0.5, bottom=0.2),
             timeout=self.MIN_TIMEOUT,
             delay=0.1,
