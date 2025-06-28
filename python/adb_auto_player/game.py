@@ -103,6 +103,7 @@ class Game:
         """Initialize a game."""
         self.config: BaseModel | None = None
         self.default_threshold: ConfidenceValue = ConfidenceValue("90%")
+        self.disable_debug_screenshots: bool = False
 
         self.package_name_substrings: list[str] = []
         self.package_name: str | None = None
@@ -320,7 +321,8 @@ class Game:
         coordinates: Coordinates,
         scale: bool = False,
         blocking: bool = True,
-        non_blocking_sleep_duration: float = 1 / 30,  # Assuming 30 FPS, 1 Tap per Frame
+        # Assuming 30 FPS, 1 Tap per Frame
+        non_blocking_sleep_duration: float | None = 1 / 30,
         log_message: str | None = "",
     ) -> None:
         """Tap the screen on the given point.
@@ -362,20 +364,25 @@ class Game:
                 daemon=True,
             )
             thread.start()
-            sleep(non_blocking_sleep_duration)
+            if non_blocking_sleep_duration is not None:
+                sleep(non_blocking_sleep_duration)
 
     def _build_tap_log_message(
         self,
         original_point: Coordinates,
         final_point: Coordinates,
         message: str | None = None,
-    ) -> str:
+    ) -> str | None:
         """Log the tap with all relevant information in a single entry."""
+        if message is None:
+            return None
+
         coords_info = (
             f"{original_point} (scaled to {final_point})"
             if original_point != final_point
             else str(final_point)
         )
+
         if message:
             return f"{message}: {coords_info}"
         return f"Tapped: {coords_info}"
@@ -952,27 +959,51 @@ class Game:
         logging.debug(f"swipe_{direction} - from ({sx}, {sy}) to ({ex}, {ey})")
         self._swipe(Point(sx, sy), Point(ex, ey), duration=params.duration)
 
-    def hold(self, coordinates: Coordinates, duration: float = 3.0) -> None:
+    def hold(
+        self, coordinates: Coordinates, duration: float = 3.0, blocking: bool = True
+    ) -> threading.Thread | None:
         """Holds a point on the screen.
 
         Args:
             coordinates (Point): Point on the screen.
             duration (float, optional): Hold duration. Defaults to 3.0.
+            blocking (bool): Whether the call should happen async.
         """
         logging.debug(
             f"hold: ({coordinates.x}, {coordinates.y}) for {duration} seconds"
         )
-        self._swipe(start_point=coordinates, end_point=coordinates, duration=duration)
+        if blocking:
+            self._swipe(
+                start_point=coordinates, end_point=coordinates, duration=duration
+            )
+            return None
+        thread = threading.Thread(
+            target=self._swipe,
+            kwargs={
+                "start_point": coordinates,
+                "end_point": coordinates,
+                "duration": duration,
+                "sleep_duration": None,
+            },
+            daemon=True,
+        )
+        thread.start()
+        return thread
 
     def _swipe(
-        self, start_point: Coordinates, end_point: Coordinates, duration: float = 1.0
+        self,
+        start_point: Coordinates,
+        end_point: Coordinates,
+        duration: float = 1.0,
+        sleep_duration: float | None = 2.0,
     ) -> None:
         """Swipes the screen.
 
         Args:
-            start_point (Point): Start Point on the screen.
-            end_point (Point): End Point on the screen.
-            duration (float, optional): Swipe duration. Defaults to 1.0.
+            start_point: Start Point on the screen.
+            end_point: End Point on the screen.
+            duration: Swipe duration. Defaults to 1.0.
+            sleep_duration: Sleep duration. Defaults to 2.0. No sleep if None
         """
         start_point = Point(start_point.x, start_point.y).scale(self._scale_factor)
         end_point = Point(end_point.x, end_point.y).scale(self._scale_factor)
@@ -983,7 +1014,8 @@ class Game:
             ey=end_point.y,
             duration=duration,
         )
-        sleep(2)
+        if sleep_duration is not None:
+            sleep(sleep_duration)
 
     T = TypeVar("T")
 
@@ -1023,6 +1055,8 @@ class Game:
     def _debug_save_screenshot(
         self, screenshot: np.ndarray, is_bgr: bool = False
     ) -> None:
+        if self.disable_debug_screenshots:
+            return
         logging_config = ConfigLoader().main_config.get("logging", {})
         debug_screenshot_save_num = logging_config.get("debug_save_screenshots", 60)
 
