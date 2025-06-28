@@ -1,3 +1,4 @@
+import logging
 from time import sleep
 
 import cv2
@@ -29,6 +30,11 @@ class Fishing(AFKJourneyBase):
     )
     def fishing(self) -> None:
         self.start_up(device_streaming=True)
+        if self._stream is None:
+            logging.warning(
+                "Quite frankly there is not a very good chance this will work "
+                "without Device Streaming."
+            )
         # Disable debug screenshots we need to maximise speed
         # TODO maybe debug screenshots should be saved async?
         # But really do we need debug screenshots here?
