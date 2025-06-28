@@ -513,8 +513,15 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         while not self.game_find_template_match("dailies/resonating_hall/chippy.png"):
             self._click_hero()
-            sleep(1)
         self._click_hero()  # Give Chippy some love too.
+
+        # Return to Resonating Hall.
+        back = self.game_find_template_match("back.png")
+        if back:
+            self.tap(back)
+        else:
+            self.press_back_button()
+        sleep(2)
 
         logging.info("Done raising affinity.")
 
@@ -532,6 +539,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             sleep(0.5)
 
         self.tap(Point(995, 1090), scale=True)  # Next hero
+        sleep(1)
 
     def swap_essences(self) -> None:
         """Swap purchased essences."""
@@ -543,7 +551,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.info("No essences purchased. Skipping swap.")
             return
 
-        # We will be in Resonating Hall after raising affinity
+        # Dependency: We will be in Resonating Hall after raising affinity.
         logging.info("Begin swapping essences...")
         swapped: bool = True
         while swapped:
