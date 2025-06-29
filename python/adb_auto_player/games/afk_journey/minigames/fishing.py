@@ -19,10 +19,10 @@ DISTANCE_600 = 600
 DISTANCE_400 = 400
 DISTANCE_200 = 200
 DISTANCE_100 = 100
-MAX_AVG_INPUT_DELAY_IN_MS = 1000  # TODO Change to a reasonable value later
-MAX_SCREENSHOT_DELAY_IN_MS = 1000  # TODO Change to a reasonable value later
-# Maybe 100ms for input 50ms for screenshot?
-# MuMu with Device Streaming should have sub 50ms for input and sub 3 ms for screenshot
+MAX_AVG_INPUT_DELAY_IN_MS = 100  # TODO Change to a reasonable value later
+MAX_AVG_INPUT_DELAY_CANDIDATE = 50
+MAX_SCREENSHOT_DELAY_IN_MS = 100  # TODO Change to a reasonable value later
+MAX_AVG_SCREENSHOT_DELAY_CANDIDATE = 10
 
 
 class Fishing(AFKJourneyBase):
@@ -222,7 +222,14 @@ class Fishing(AFKJourneyBase):
                 "fishing cannot work."
             )
             return False
-        logging.info(f"Screenshot delay of {int(total_time)} ms")
+
+        if total_time > MAX_SCREENSHOT_DELAY_IN_MS:
+            logging.warning(
+                f"Screenshot delay of {int(total_time)} ms might be too high, "
+                "if you experiences issues please report them."
+            )
+        else:
+            logging.info(f"Screenshot delay of {int(total_time)} ms")
         return True
 
     def _passed_input_delay_check(self) -> bool:
@@ -251,7 +258,14 @@ class Fishing(AFKJourneyBase):
                 "fishing cannot work."
             )
             return False
-        logging.info(f"Average Input delay of {int(average_time)} ms")
+
+        if average_time > MAX_AVG_INPUT_DELAY_CANDIDATE:
+            logging.warning(
+                f"Average Input delay of {int(average_time)} ms might be too high, "
+                "if you experiences issues please report them."
+            )
+        else:
+            logging.info(f"Average Input delay of {int(average_time)} ms")
         return True
 
 
