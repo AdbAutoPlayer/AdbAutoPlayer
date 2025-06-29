@@ -220,7 +220,6 @@ func (a *App) GetRunningSupportedGame(disableLogging bool) (*ipc.GameGUI, error)
 
 		var logMessage ipc.LogMessage
 		if err = json.Unmarshal([]byte(line), &logMessage); err != nil {
-			fmt.Printf("%+v\n", logMessage)
 			runtime.LogErrorf(a.ctx, "Failed to parse JSON log message: %v", err)
 			continue
 		}
@@ -258,10 +257,8 @@ func (a *App) setPythonBinaryPath() error {
 	}
 
 	if runtime.Environment(a.ctx).BuildType == "dev" {
-		fmt.Printf("Working dir: %s\n", workingDir)
 		path := filepath.Join(workingDir, "python")
 		a.pythonBinaryPath = &path
-		fmt.Print("Process Manager is dev = true\n")
 		internal.GetProcessManager().IsDev = true
 		return nil
 	}

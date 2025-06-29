@@ -148,7 +148,6 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 
 			var logMessage ipc.LogMessage
 			if err = json.Unmarshal([]byte(line), &logMessage); err == nil {
-				// fmt.Printf("%+v\n", logMessage)
 				ipc.GetFrontendLogger().LogMessage(logMessage)
 				continue
 			}
@@ -236,7 +235,6 @@ func (pm *Manager) isProcessRunning() bool {
 	}
 
 	if !running {
-		println("isProcessRunning not running")
 		pm.processEnded()
 	}
 
@@ -284,7 +282,6 @@ func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
 		}
 
 		lines := strings.Split(output, "\n")
-		fmt.Println("lines:", lines)
 
 		if len(lines) > 0 {
 			var lastLine string
@@ -294,11 +291,9 @@ func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
 					break
 				}
 			}
-			fmt.Println("lastLine:", lastLine)
 
 			var logMessage ipc.LogMessage
 			if err = json.Unmarshal([]byte(lastLine), &logMessage); err == nil {
-				fmt.Println("logMessage.Message:", logMessage.Message)
 				return "", fmt.Errorf(logMessage.Message)
 			}
 		}
