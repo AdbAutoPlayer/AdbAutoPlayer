@@ -100,8 +100,9 @@ class EquipNewEquipment(AFKJourneyBase):
 
         if not candidates:
             logging.debug(
-                f"Should not happen\nExclamationMark: {exclamation_mark}"
-                f"\nEquipmentClasses: {equipment_classes}"
+                f"Should not happen\n"
+                f"ExclamationMark: {exclamation_mark}\n"
+                f"EquipmentClasses: {equipment_classes}"
             )
             return
 
@@ -112,8 +113,9 @@ class EquipNewEquipment(AFKJourneyBase):
 
         if not closest_equipment_class:
             logging.debug(
-                f"Should not happen\nExclamationMark: {exclamation_mark}"
-                f"\nEquipmentClasses: {equipment_classes}"
+                f"Should not happen\n"
+                f"ExclamationMark: {exclamation_mark}\n"
+                f"EquipmentClasses: {equipment_classes}"
             )
             return
 
