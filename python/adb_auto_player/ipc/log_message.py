@@ -17,7 +17,7 @@ class LogLevel:
 class LogMessage:
     """Log message class."""
 
-    def __init__(  # noqa: PLR0913 - TODO
+    def __init__(
         self,
         level: str,
         message: str,

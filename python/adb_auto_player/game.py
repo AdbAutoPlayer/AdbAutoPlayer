@@ -472,7 +472,7 @@ class Game:
             raise GameStartError("Game cannot be started")
         sleep(15)
 
-    def wait_for_roi_change(  # noqa: PLR0913 - TODO: Consolidate more.
+    def wait_for_roi_change(
         self,
         start_image: np.ndarray,
         threshold: ConfidenceValue | None = None,
@@ -538,7 +538,7 @@ class Game:
 
     # TODO: Change this function name.
     # It is the same as template_matching.find_template_match
-    def game_find_template_match(  # noqa: PLR0913 - TODO: Consolidate more.
+    def game_find_template_match(
         self,
         template: str | Path,
         match_mode: MatchMode = MatchMode.BEST,
@@ -672,7 +672,7 @@ class Game:
             )
         return results
 
-    def wait_for_template(  # noqa: PLR0913 - TODO: Consolidate more.
+    def wait_for_template(
         self,
         template: str | Path,
         threshold: ConfidenceValue | None = None,
@@ -708,7 +708,7 @@ class Game:
             find_template, delay=delay, timeout=timeout, timeout_message=timeout_message
         )
 
-    def wait_until_template_disappears(  # noqa: PLR0913 - TODO: Consolidate more.
+    def wait_until_template_disappears(
         self,
         template: str | Path,
         threshold: ConfidenceValue | None = None,
@@ -751,7 +751,7 @@ class Game:
             result_should_be_none=True,
         )
 
-    def wait_for_any_template(  # noqa: PLR0913 - TODO: Consolidate more.
+    def wait_for_any_template(
         self,
         templates: list[str],
         threshold: ConfidenceValue | None = None,
@@ -790,7 +790,7 @@ class Game:
             find_template, delay=0.5, timeout=3, timeout_message=timeout_message
         )
 
-    def find_any_template(  # noqa: PLR0913 - TODO: Consolidate more.
+    def find_any_template(
         self,
         templates: list[str],
         match_mode: MatchMode = MatchMode.BEST,
@@ -1256,6 +1256,7 @@ class Game:
         grayscale: bool = False,
         crop_regions: CropRegions = CropRegions(),
         delay: float = 10.0,
+        error_message: str | None = None,
     ) -> None:
         max_tap_count = 3
         tap_count = 0
@@ -1268,7 +1269,9 @@ class Game:
             crop_regions=crop_regions,
         ):
             if tap_count >= max_tap_count:
-                message = f"Failed to tap: {template}, Template still visible."
+                message = error_message
+                if not message:
+                    message = f"Failed to tap: {template}, Template still visible."
                 raise GameActionFailedError(message)
             if time_since_last_tap >= delay:
                 self.tap(result)
