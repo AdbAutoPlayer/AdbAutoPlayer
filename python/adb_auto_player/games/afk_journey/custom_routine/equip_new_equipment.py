@@ -124,8 +124,6 @@ class EquipNewEquipment(AFKJourneyBase):
             return
 
         self._equip(closest_equipment_class)
-
-        self.tap(closest_equipment_class)
         return
 
     def _equip(self, equipment_class: TemplateMatchResult) -> None:
@@ -137,7 +135,6 @@ class EquipNewEquipment(AFKJourneyBase):
 
         count = 0
         max_count = 3
-        equipped = False
         while count < max_count:
             count += 1
             if class_icon := self.game_find_template_match(
@@ -160,15 +157,17 @@ class EquipNewEquipment(AFKJourneyBase):
                     threshold=self._EQUIPMENT_TEMPLATE_THRESHOLD,
                     timeout=self.FAST_TIMEOUT,
                 )
-                equipped = True
-                break
+                logging.info(f"{class_str} Equipment equipped")
+                self.press_back_button()
+                sleep(5)
+                return
             except GameTimeoutError:
                 continue
 
-        if equipped:
-            logging.info(f"{class_str} Equipment equipped")
-        else:
-            logging.warning(f"Failed to equip{class_str} Equipment")
+        logging.warning(f"Failed to equip {class_str} Equipment")
+        self.press_back_button()
+        sleep(5)
+        return
 
     def _navigate_to_equipment_screen(self) -> None:
         max_count = 3
