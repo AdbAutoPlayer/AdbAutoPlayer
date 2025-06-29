@@ -168,10 +168,6 @@ class AFKJourneyPopupHandler(Game, ABC):
 
         if matching_popup.click_dont_remind_me:
             if preprocess_result.dont_remind_me_checkbox:
-                logging.info(
-                    "Don't remind me checkbox: "
-                    f"{preprocess_result.dont_remind_me_checkbox}"
-                )
                 self.tap(preprocess_result.dont_remind_me_checkbox)
                 time.sleep(1)
             else:
