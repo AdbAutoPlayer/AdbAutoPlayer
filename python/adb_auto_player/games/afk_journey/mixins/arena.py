@@ -157,7 +157,7 @@ class ArenaMixin(AFKJourneyBase):
             logging.debug("Claiming free attempts.")
             buy = self.wait_for_template(
                 template="arena/buy.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed looking for free attempts.",
             )
             self.tap(buy)
@@ -167,7 +167,7 @@ class ArenaMixin(AFKJourneyBase):
         try:
             _ = self.wait_for_template(
                 template="arena/buy_free.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="No more free attempts.",
             )
             logging.debug("Free attempt found.")
