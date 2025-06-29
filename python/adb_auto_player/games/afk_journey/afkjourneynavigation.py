@@ -156,7 +156,7 @@ class AFKJourneyNavigation(Game, ABC):
         return (
             self.game_find_template_match(
                 "navigation/time_of_day.png",
-                crop_regions=CropRegions(left=0.6, bottom=0.7),
+                crop_regions=CropRegions(left=0.6, bottom=0.6),
             )
             is not None
         )
