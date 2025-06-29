@@ -73,7 +73,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         logging.info("Claim AFK rewards twice for battle pass.")
         for _ in range(4):
             self.tap(Point(520, 1420), scale=True)
-            sleep(2)
+            sleep(self.FAST_TIMEOUT)
 
         logging.info("Looking for free hourglasses.")
         claim_limit = 3
@@ -83,7 +83,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         logging.debug("Back.")
         self.press_back_button()
-        sleep(2)
+        sleep(self.FAST_TIMEOUT)
 
     def _claim_hourglasses(self) -> bool:
         """Claim free hourglass.
@@ -98,7 +98,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout_message="No more free hourglasses.",
             )
             self.tap(free_hourglass)
-            sleep(2)
+            sleep(self.FAST_TIMEOUT)
         except GameTimeoutError as fail:
             logging.info(fail)
             return False
@@ -133,7 +133,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         self._buy_affinity_items()
         self._buy_bound_essence()
 
-        sleep(1)
+        sleep(self.FAST_TIMEOUT)
         logging.debug("Back to Mystical House.")
         self.press_back_button()
 
@@ -168,7 +168,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout_message="Failed to purchase Invite Letter.",
             )
             self.tap(buy_letter)
-            sleep(2)  # pop up takes time to appear in slow devices
+            sleep(self.FAST_TIMEOUT)  # pop up takes time to appear in slow devices
         except GameTimeoutError as fail:
             logging.info(fail)
 
@@ -300,7 +300,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout_message="Failed to find the Noble Tavern.",
             )
             self.tap(tavern)
-            sleep(2)
+            sleep(self.FAST_TIMEOUT)
 
             logging.debug("Select All-Hero Recruitment.")
             all_hero_recruit = self.wait_for_template(
@@ -309,7 +309,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout_message="Failed to find All-Hero Recruitment.",
             )
             self.tap(all_hero_recruit)
-            sleep(2)
+            sleep(self.FAST_TIMEOUT)
 
             logging.debug("Click Recruit 1.")
             recruit = self.wait_for_template(
@@ -318,7 +318,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout_message="No Invite Letters.",
             )
             self.tap(recruit)
-            sleep(2)
+            sleep(self.FAST_TIMEOUT)
 
             max_hero_continue = self.game_find_template_match(
                 "dailies/noble_tavern/maxed_hero_continue.png"
@@ -334,7 +334,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout_message="Failed to recruit.",
             )
             self.tap(confirm_summon)
-            sleep(2)
+            sleep(self.FAST_TIMEOUT)
         except GameTimeoutError as fail:
             logging.error(f"{fail} {self.LANG_ERROR}")
 
@@ -379,7 +379,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout_message="Friend rewards already claimed.",
             )
             self.tap(send_receive)
-            sleep(2)
+            sleep(self.FAST_TIMEOUT)
             self.tap(Point(540, 1620))  # Close confirmation
             sleep(1)
         except GameTimeoutError as fail:
@@ -434,7 +434,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout_message="Failed to find Battle Pass.",
             )
             self.tap(battle_pass)
-            sleep(2)
+            sleep(self.FAST_TIMEOUT)
         except GameTimeoutError as fail:
             logging.error(fail)
             return
@@ -445,7 +445,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         )
         for bp_reward in available_rewards:
             self.tap(bp_reward)
-            sleep(2)
+            sleep(self.FAST_TIMEOUT)
             self._quick_claim()
             sleep(1)
 
@@ -464,23 +464,23 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout_message="Failed to find daily Quests.",
             )
             self.tap(quests)
-            sleep(2)
+            sleep(self.FAST_TIMEOUT)
         except GameTimeoutError as fail:
             logging.error(fail)
             return
 
         logging.info("Claim Daily Quest rewards.")
         self.tap(Point(300, 1820))  # Focus on Dailies
-        sleep(2)
+        sleep(self.FAST_TIMEOUT)
         self._quick_claim()
         self.tap(Point(370, 180))  # Claim top row
-        sleep(2)
+        sleep(self.FAST_TIMEOUT)
         self.tap(Point(530, 1740))  # Close confirmation
-        sleep(2)
+        sleep(self.FAST_TIMEOUT)
 
         logging.info("Claim Guild Quest rewards.")
         self.tap(Point(830, 1670))  # Guild Quests
-        sleep(2)
+        sleep(self.FAST_TIMEOUT)
         self._quick_claim()
 
     def _quick_claim(self) -> None:
@@ -492,9 +492,9 @@ class DailiesMixin(AFKJourneyBase, ABC):
             return
 
         self.tap(claim)
-        sleep(2)
+        sleep(self.FAST_TIMEOUT)
         self.tap(Point(540, 1620))  # Close confirmation
-        sleep(2)
+        sleep(self.FAST_TIMEOUT)
 
     ############################# Resonating Hall ##############################
 
@@ -521,7 +521,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             self.tap(back)
         else:
             self.press_back_button()
-        sleep(2)
+        sleep(self.FAST_TIMEOUT)
 
         logging.info("Done raising affinity.")
 
@@ -567,7 +567,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout_message="Failed to find New Actions button.",
             )
             self.tap(new_actions)
-            sleep(2)
+            sleep(self.FAST_TIMEOUT)
 
             for i in range(3):
                 # The action template displays on all 3 areas within this flow.
@@ -583,7 +583,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
                     raise GameTimeoutError(f"Failed to find action template #{i}.")
 
                 self.tap(action)
-                sleep(2)
+                sleep(self.FAST_TIMEOUT)
 
             logging.debug("Confirm essence swap.")
             confirm = self.wait_for_template(
@@ -592,14 +592,14 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 timeout_message="Failed to find Confirm button.",
             )
             self.tap(confirm)
-            sleep(2)
+            sleep(self.FAST_TIMEOUT)
         except GameTimeoutError as fail:
             logging.debug(fail)
             return False
 
         logging.debug("Closing swapped results window.")
         self.tap(Point(550, 200), scale=True)
-        sleep(2)
+        sleep(self.FAST_TIMEOUT)
 
         logging.debug("Leave weapon and hero view.")
         for _ in range(2):
@@ -608,6 +608,6 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 self.tap(back)
             else:
                 self.press_back_button()
-            sleep(2)
+            sleep(self.FAST_TIMEOUT)
 
         return True
