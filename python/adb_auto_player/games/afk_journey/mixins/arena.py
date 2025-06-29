@@ -121,7 +121,7 @@ class ArenaMixin(AFKJourneyBase):
             logging.debug("Initiate battle.")
             start = self.wait_for_template(
                 template="arena/battle.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to start Arena battle.",
             )
             sleep(2)
