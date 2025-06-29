@@ -41,6 +41,7 @@ class AFKJourneyNavigation(Game, ABC):
             "arcane_labyrinth/back_arrow.png",
             "battle/exit_door.png",
             "arcane_labyrinth/select_a_crest.png",
+            "navigation/resonating_hall_back.png",
         ]
 
         max_attempts = 40
@@ -130,9 +131,36 @@ class AFKJourneyNavigation(Game, ABC):
         sleep(1)
 
     def navigate_to_resonating_hall(self) -> None:
-        logging.info("Navigating to the Resonating Hall.")
-        self.navigate_to_default_state()
+        def i_am_in_resonating_hall() -> bool:
+            try:
+                _ = self.wait_for_any_template(
+                    templates=[
+                        "resonating_hall/artifacts.png",
+                        "resonating_hall/collections.png",
+                        "resonating_hall/equipment.png",
+                    ],
+                    timeout=1,
+                )
+                return True
+            except GameTimeoutError:
+                return False
 
+        if i_am_in_resonating_hall():
+            logging.info("Already in Resonating Hall.")
+            return
+
+        logging.info("Navigating to the Resonating Hall.")
+        if shortcut := self.game_find_template_match(
+            template="navigation/resonating_hall_shortcut",
+            crop_regions=CropRegions(top="80%", left="30%", right="30%"),
+            threshold=ConfidenceValue("75%"),
+        ):
+            self.tap(shortcut)
+            sleep(3)
+            if i_am_in_resonating_hall():
+                return
+
+        self.navigate_to_default_state()
         max_click_count = 3
         click_count = 0
         while self._can_see_time_of_day_button():
@@ -149,8 +177,10 @@ class AFKJourneyNavigation(Game, ABC):
                 "resonating_hall/collections.png",
                 "resonating_hall/equipment.png",
             ],
-            timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
+            timeout=self.NAVIGATION_TIMEOUT,
         )
+        sleep(1)
+        return
 
     def _can_see_time_of_day_button(self) -> bool:
         return (
@@ -172,7 +202,7 @@ class AFKJourneyNavigation(Game, ABC):
         self.wait_for_template(
             template="navigation/resonating_hall_label.png",
             crop_regions=CropRegions(left=0.3, right=0.3, top=0.9),
-            timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
+            timeout=self.NAVIGATION_TIMEOUT,
         )
         self.tap(Point(x=550, y=1080), scale=True)  # click rewards popup
         sleep(1)
@@ -187,7 +217,7 @@ class AFKJourneyNavigation(Game, ABC):
                 "popup/quick_purchase.png",
             ],
             threshold=ConfidenceValue("75%"),
-            timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
+            timeout=self.NAVIGATION_TIMEOUT,
         )
 
         if result.template == "popup/quick_purchase.png":
@@ -201,7 +231,7 @@ class AFKJourneyNavigation(Game, ABC):
                 "battle_modes/arcane_labyrinth.png",
             ],
             threshold=ConfidenceValue("75%"),
-            timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
+            timeout=self.NAVIGATION_TIMEOUT,
         )
 
     def navigate_to_battle_modes_screen(self) -> None:
@@ -250,7 +280,7 @@ class AFKJourneyNavigation(Game, ABC):
         self.wait_for_template(
             template="duras_trials/featured_heroes.png",
             crop_regions=CropRegions(left=0.7, bottom=0.8),
-            timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
+            timeout=self.NAVIGATION_TIMEOUT,
         )
         sleep(1)
         return
@@ -264,7 +294,7 @@ class AFKJourneyNavigation(Game, ABC):
         return self.wait_for_template(
             template=template,
             timeout_message=timeout_message,
-            timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
+            timeout=self.NAVIGATION_TIMEOUT,
         )
 
     def navigate_to_legend_trials_select_tower(self) -> None:
@@ -282,7 +312,7 @@ class AFKJourneyNavigation(Game, ABC):
             template="legend_trials/s_header.png",
             crop_regions=CropRegions(right=0.8, bottom=0.8),
             timeout_message="Could not find Season Legend Trial Header",
-            timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
+            timeout=self.NAVIGATION_TIMEOUT,
         )
         sleep(1)
 
