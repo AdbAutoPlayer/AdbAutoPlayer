@@ -12,6 +12,8 @@ from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 
+_WORLD_CHAT_POINT = Point(110, 350)
+
 
 class AssistMixin(AFKJourneyBase, ABC):
     """Assist Mixin."""
@@ -62,14 +64,14 @@ class AssistMixin(AFKJourneyBase, ABC):
             self.navigate_to_default_state()
             self.tap(Point(1010, 1080), scale=True)
             sleep(1)
-            self.tap(Point(110, 350), scale=True)
+            self.tap(_WORLD_CHAT_POINT, scale=True)
             return False
 
         match result.template:
             # Chat Window is open but not on World Chat
-            case "assist/tap_to_enter.png", "assist/label_team-up_chat.png":
+            case "assist/tap_to_enter.png" | "assist/label_team-up_chat.png":
                 logging.info("Switching to World Chat")
-                self.tap(Point(110, 350), scale=True)
+                self.tap(_WORLD_CHAT_POINT, scale=True)
                 return False
             case "assist/label_world_chat.png":
                 pass
