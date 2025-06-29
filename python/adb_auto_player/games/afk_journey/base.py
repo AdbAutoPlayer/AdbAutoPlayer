@@ -217,6 +217,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             template="battle/records.png",
             crop_regions=CropRegions(right=0.5, top=0.8),
             delay=10.0,
+            error_message="No videos available for this battle",
         )
 
         try:

@@ -251,7 +251,7 @@ class Game:
             ConfigLoader().main_config.get("device", {}).get("streaming", True)
         )
         if not config_streaming:
-            logging.warning("Device Streaming is disabled in Main Config")
+            logging.warning("Device Streaming is disabled in General Settings")
 
         if config_streaming and device_streaming:
             self.start_stream()
