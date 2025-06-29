@@ -12,6 +12,7 @@ from .execute import execute, execute_command
 from .ipc_constraint_extractor import IPCConstraintExtractor
 from .log_message_factory import create_log_message
 from .module_helper import get_game_module
+from .string_helper import StringHelper
 from .summary_generator import SummaryGenerator
 from .traceback_helper import extract_source_info, format_debug_info
 from .type_helpers import to_int_if_needed
@@ -19,6 +20,7 @@ from .type_helpers import to_int_if_needed
 __all__ = [
     "ConfigLoader",
     "IPCConstraintExtractor",
+    "StringHelper",
     "SummaryGenerator",
     "create_log_message",
     "execute",

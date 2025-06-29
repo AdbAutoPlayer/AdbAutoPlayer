@@ -30,7 +30,6 @@ func main() {
 	println("Version:", Version)
 
 	isDev := Version == "dev"
-	println("isDev:", isDev)
 	if !isDev {
 		changeWorkingDirForProd()
 	}
@@ -67,7 +66,6 @@ func loadConfiguration() config.MainConfig {
 		}
 	}
 
-	println("MainConfig.Logging.Level:", mainConfig.Logging.Level)
 	return mainConfig
 }
 
@@ -88,7 +86,6 @@ func determineLogLevel(mainConfig config.MainConfig) logger.LogLevel {
 		logLevel = logger.INFO
 	}
 
-	println("LogLevel:", logLevel)
 	return logLevel
 }
 

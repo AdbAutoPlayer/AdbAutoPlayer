@@ -1,6 +1,7 @@
 from adb_auto_player.decorators import register_command
-from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.models.decorators import GUIMetadata
+
+from ..base import AFKJourneyBase
 
 
 class AFKJCustomRoutine(AFKJourneyBase):

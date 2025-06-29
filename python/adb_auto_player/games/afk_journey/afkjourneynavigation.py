@@ -4,6 +4,7 @@ from time import sleep
 
 from adb_auto_player import Game
 from adb_auto_player.exceptions import (
+    AutoPlayerError,
     GameActionFailedError,
     GameNotRunningOrFrozenError,
     GameTimeoutError,
@@ -41,6 +42,7 @@ class AFKJourneyNavigation(Game, ABC):
             "arcane_labyrinth/back_arrow.png",
             "battle/exit_door.png",
             "arcane_labyrinth/select_a_crest.png",
+            "navigation/resonating_hall_back.png",
         ]
 
         max_attempts = 40
@@ -75,7 +77,7 @@ class AFKJourneyNavigation(Game, ABC):
                     break
                 case "navigation/notice.png":
                     # This is the Game Entry Screen
-                    self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
+                    self.tap(self.CENTER_POINT, scale=True)
                     sleep(3)
                 case "navigation/confirm.png":
                     self._handle_confirm_button(result)
@@ -105,7 +107,7 @@ class AFKJourneyNavigation(Game, ABC):
                     "Failed to navigate to default state."
                 )
             attempts += 1
-            self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
+            self.tap(self.CENTER_POINT, scale=True)
             sleep(3)
         sleep(1)
 
@@ -130,27 +132,71 @@ class AFKJourneyNavigation(Game, ABC):
         sleep(1)
 
     def navigate_to_resonating_hall(self) -> None:
-        logging.info("Navigating to the Resonating Hall.")
-        self.navigate_to_default_state()
+        def i_am_in_resonating_hall() -> bool:
+            try:
+                _ = self.wait_for_any_template(
+                    templates=[
+                        "resonating_hall/artifacts.png",
+                        "resonating_hall/collections.png",
+                        "resonating_hall/equipment.png",
+                    ],
+                    timeout=1,
+                )
+                return True
+            except GameTimeoutError:
+                return False
 
+        if i_am_in_resonating_hall():
+            logging.info("Already in Resonating Hall.")
+            return
+
+        logging.info("Navigating to the Resonating Hall.")
+        if shortcut := self.game_find_template_match(
+            template="navigation/resonating_hall_shortcut",
+            crop_regions=CropRegions(top="80%", left="30%", right="30%"),
+            threshold=ConfidenceValue("75%"),
+        ):
+            self.tap(shortcut)
+            sleep(3)
+            if i_am_in_resonating_hall():
+                return
+
+        self.navigate_to_default_state()
         max_click_count = 3
         click_count = 0
-        while self._can_see_time_of_day_button():
-            self.tap(AFKJourneyNavigation.RESONATING_HALL_POINT, scale=True)
-            sleep(3)
-            click_count += 1
-            if click_count > max_click_count:
-                raise GameActionFailedError(
-                    "Failed to navigate to the Resonating Hall."
+
+        count = 0
+        max_count = 3
+        last_error: AutoPlayerError | None = None
+        while True:
+            count += 1
+            if count > max_count:
+                if last_error is not None:
+                    raise last_error
+                raise AutoPlayerError("Failed to navigate to Resonating Hall.")
+            try:
+                while self._can_see_time_of_day_button():
+                    self.tap(self.RESONATING_HALL_POINT, scale=True)
+                    sleep(3)
+                    click_count += 1
+                    if click_count > max_click_count:
+                        raise GameActionFailedError(
+                            "Failed to navigate to the Resonating Hall."
+                        )
+                _ = self.wait_for_any_template(
+                    templates=[
+                        "resonating_hall/artifacts.png",
+                        "resonating_hall/collections.png",
+                        "resonating_hall/equipment.png",
+                    ],
+                    timeout=self.NAVIGATION_TIMEOUT,
                 )
-        _ = self.wait_for_any_template(
-            templates=[
-                "resonating_hall/artifacts.png",
-                "resonating_hall/collections.png",
-                "resonating_hall/equipment.png",
-            ],
-            timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
-        )
+                break
+            except AutoPlayerError as e:
+                logging.warning(e)
+                last_error = e
+        sleep(1)
+        return
 
     def _can_see_time_of_day_button(self) -> bool:
         return (
@@ -172,13 +218,13 @@ class AFKJourneyNavigation(Game, ABC):
         self.wait_for_template(
             template="navigation/resonating_hall_label.png",
             crop_regions=CropRegions(left=0.3, right=0.3, top=0.9),
-            timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
+            timeout=self.NAVIGATION_TIMEOUT,
         )
         self.tap(Point(x=550, y=1080), scale=True)  # click rewards popup
         sleep(1)
 
     def _navigate_to_battle_modes_screen(self) -> None:
-        self.tap(AFKJourneyNavigation.BATTLE_MODES_POINT, scale=True)
+        self.tap(self.BATTLE_MODES_POINT, scale=True)
         result = self.wait_for_any_template(
             templates=[
                 "battle_modes/afk_stage.png",
@@ -187,7 +233,7 @@ class AFKJourneyNavigation(Game, ABC):
                 "popup/quick_purchase.png",
             ],
             threshold=ConfidenceValue("75%"),
-            timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
+            timeout=self.NAVIGATION_TIMEOUT,
         )
 
         if result.template == "popup/quick_purchase.png":
@@ -201,7 +247,7 @@ class AFKJourneyNavigation(Game, ABC):
                 "battle_modes/arcane_labyrinth.png",
             ],
             threshold=ConfidenceValue("75%"),
-            timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
+            timeout=self.NAVIGATION_TIMEOUT,
         )
 
     def navigate_to_battle_modes_screen(self) -> None:
@@ -243,14 +289,14 @@ class AFKJourneyNavigation(Game, ABC):
         sleep(1)
 
         # popups
-        self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
-        self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
-        self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
+        self.tap(self.CENTER_POINT, scale=True)
+        self.tap(self.CENTER_POINT, scale=True)
+        self.tap(self.CENTER_POINT, scale=True)
 
         self.wait_for_template(
             template="duras_trials/featured_heroes.png",
             crop_regions=CropRegions(left=0.7, bottom=0.8),
-            timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
+            timeout=self.NAVIGATION_TIMEOUT,
         )
         sleep(1)
         return
@@ -264,7 +310,7 @@ class AFKJourneyNavigation(Game, ABC):
         return self.wait_for_template(
             template=template,
             timeout_message=timeout_message,
-            timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
+            timeout=self.NAVIGATION_TIMEOUT,
         )
 
     def navigate_to_legend_trials_select_tower(self) -> None:
@@ -282,7 +328,7 @@ class AFKJourneyNavigation(Game, ABC):
             template="legend_trials/s_header.png",
             crop_regions=CropRegions(right=0.8, bottom=0.8),
             timeout_message="Could not find Season Legend Trial Header",
-            timeout=AFKJourneyNavigation.NAVIGATION_TIMEOUT,
+            timeout=self.NAVIGATION_TIMEOUT,
         )
         sleep(1)
 
