@@ -45,7 +45,7 @@ class EquipNewEquipment(AFKJourneyBase):
     )
 
     @register_custom_routine_choice("Equip new Equipment")
-    def _level_up_all_heroes(self) -> None:
+    def _equip_new_equipment(self) -> None:
         self.start_up()
         logging.info("Checking for new Equipment.")
 
@@ -70,6 +70,12 @@ class EquipNewEquipment(AFKJourneyBase):
 
         equipment_found = False
         while not_found_count < max_not_found_count and count < max_count:
+            if btn := self.game_find_template_match(
+                "navigation/resonating_hall_back.png",
+                crop_regions=CropRegions(top="80%", right="80%"),
+            ):
+                self.tap(btn)
+                sleep(3)
             count += 1
             result = self.find_any_template(
                 templates=[
@@ -85,6 +91,12 @@ class EquipNewEquipment(AFKJourneyBase):
                 continue
             self._find_and_equip_new_equipment(result, equipment_classes)
             equipment_found = True
+            if btn := self.game_find_template_match(
+                "navigation/resonating_hall_back.png",
+                crop_regions=CropRegions(top="80%", right="80%"),
+            ):
+                self.tap(btn)
+                sleep(3)
         if not equipment_found:
             logging.info(
                 "No new Equipment found.",
@@ -166,7 +178,7 @@ class EquipNewEquipment(AFKJourneyBase):
 
         logging.warning(f"Failed to equip {class_str} Equipment")
         self.press_back_button()
-        sleep(5)
+        sleep(3)
         return
 
     def _navigate_to_equipment_screen(self) -> None:
