@@ -70,12 +70,6 @@ class EquipNewEquipment(AFKJourneyBase):
 
         equipment_found = False
         while not_found_count < max_not_found_count and count < max_count:
-            if btn := self.game_find_template_match(
-                "navigation/resonating_hall_back.png",
-                crop_regions=CropRegions(top="80%", right="80%"),
-            ):
-                self.tap(btn)
-                sleep(3)
             count += 1
             result = self.find_any_template(
                 templates=[
