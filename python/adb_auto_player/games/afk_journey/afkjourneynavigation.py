@@ -4,6 +4,7 @@ from time import sleep
 
 from adb_auto_player import Game
 from adb_auto_player.exceptions import (
+    AutoPlayerError,
     GameActionFailedError,
     GameNotRunningOrFrozenError,
     GameTimeoutError,
@@ -76,7 +77,7 @@ class AFKJourneyNavigation(Game, ABC):
                     break
                 case "navigation/notice.png":
                     # This is the Game Entry Screen
-                    self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
+                    self.tap(self.CENTER_POINT, scale=True)
                     sleep(3)
                 case "navigation/confirm.png":
                     self._handle_confirm_button(result)
@@ -106,7 +107,7 @@ class AFKJourneyNavigation(Game, ABC):
                     "Failed to navigate to default state."
                 )
             attempts += 1
-            self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
+            self.tap(self.CENTER_POINT, scale=True)
             sleep(3)
         sleep(1)
 
@@ -163,22 +164,37 @@ class AFKJourneyNavigation(Game, ABC):
         self.navigate_to_default_state()
         max_click_count = 3
         click_count = 0
-        while self._can_see_time_of_day_button():
-            self.tap(AFKJourneyNavigation.RESONATING_HALL_POINT, scale=True)
-            sleep(3)
-            click_count += 1
-            if click_count > max_click_count:
-                raise GameActionFailedError(
-                    "Failed to navigate to the Resonating Hall."
+
+        count = 0
+        max_count = 3
+        last_error: AutoPlayerError | None = None
+        while True:
+            count += 1
+            if count > max_count:
+                if last_error is not None:
+                    raise last_error
+                raise AutoPlayerError("Failed to navigate to Resonating Hall.")
+            try:
+                while self._can_see_time_of_day_button():
+                    self.tap(self.RESONATING_HALL_POINT, scale=True)
+                    sleep(3)
+                    click_count += 1
+                    if click_count > max_click_count:
+                        raise GameActionFailedError(
+                            "Failed to navigate to the Resonating Hall."
+                        )
+                _ = self.wait_for_any_template(
+                    templates=[
+                        "resonating_hall/artifacts.png",
+                        "resonating_hall/collections.png",
+                        "resonating_hall/equipment.png",
+                    ],
+                    timeout=self.NAVIGATION_TIMEOUT,
                 )
-        _ = self.wait_for_any_template(
-            templates=[
-                "resonating_hall/artifacts.png",
-                "resonating_hall/collections.png",
-                "resonating_hall/equipment.png",
-            ],
-            timeout=self.NAVIGATION_TIMEOUT,
-        )
+                break
+            except AutoPlayerError as e:
+                logging.warning(e)
+                last_error = e
         sleep(1)
         return
 
@@ -208,7 +224,7 @@ class AFKJourneyNavigation(Game, ABC):
         sleep(1)
 
     def _navigate_to_battle_modes_screen(self) -> None:
-        self.tap(AFKJourneyNavigation.BATTLE_MODES_POINT, scale=True)
+        self.tap(self.BATTLE_MODES_POINT, scale=True)
         result = self.wait_for_any_template(
             templates=[
                 "battle_modes/afk_stage.png",
@@ -273,9 +289,9 @@ class AFKJourneyNavigation(Game, ABC):
         sleep(1)
 
         # popups
-        self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
-        self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
-        self.tap(AFKJourneyNavigation.CENTER_POINT, scale=True)
+        self.tap(self.CENTER_POINT, scale=True)
+        self.tap(self.CENTER_POINT, scale=True)
+        self.tap(self.CENTER_POINT, scale=True)
 
         self.wait_for_template(
             template="duras_trials/featured_heroes.png",

@@ -10,6 +10,7 @@ from adb_auto_player.exceptions import (
     GameActionFailedError,
     GameTimeoutError,
 )
+from adb_auto_player.log import LogPreset
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
@@ -18,31 +19,31 @@ from adb_auto_player.util import StringHelper
 
 from ..base import AFKJourneyBase
 
-_EQUIPMENT_POINT = Point(970, 1660)
-_EQUIPMENT_TEMPLATES = [
-    "equipment/support.png",
-    "equipment/mage.png",
-    "equipment/warrior.png",
-    "equipment/rogue.png",
-    "equipment/marksman.png",
-    "equipment/tank.png",
-]
-_EQUIPMENT_TEMPLATE_THRESHOLD = ConfidenceValue("80%")
-_EQUIPMENT_TEMPLATE_CROP_REGIONS = CropRegions(
-    top="40%",
-    bottom="20%",
-    left="20%",
-    right="20%",
-)
-_EQUIPMENT_QUICK_EQUIP_CROP_REGIONS = CropRegions(
-    top="70%",
-    bottom="10%",
-    left="10%",
-    right="10%",
-)
-
 
 class EquipNewEquipment(AFKJourneyBase):
+    _EQUIPMENT_POINT = Point(970, 1660)
+    _EQUIPMENT_TEMPLATES = (
+        "equipment/support.png",
+        "equipment/mage.png",
+        "equipment/warrior.png",
+        "equipment/rogue.png",
+        "equipment/marksman.png",
+        "equipment/tank.png",
+    )
+    _EQUIPMENT_TEMPLATE_THRESHOLD = ConfidenceValue("80%")
+    _EQUIPMENT_TEMPLATE_CROP_REGIONS = CropRegions(
+        top="40%",
+        bottom="20%",
+        left="20%",
+        right="20%",
+    )
+    _EQUIPMENT_QUICK_EQUIP_CROP_REGIONS = CropRegions(
+        top="70%",
+        bottom="10%",
+        left="10%",
+        right="10%",
+    )
+
     @register_custom_routine_choice("Equip new Equipment")
     def _level_up_all_heroes(self) -> None:
         self.start_up()
@@ -51,11 +52,11 @@ class EquipNewEquipment(AFKJourneyBase):
         self._navigate_to_equipment_screen()
 
         equipment_classes = []
-        for template in _EQUIPMENT_TEMPLATES:
+        for template in self._EQUIPMENT_TEMPLATES:
             if result := self.game_find_template_match(
                 template=template,
-                crop_regions=_EQUIPMENT_TEMPLATE_CROP_REGIONS,
-                threshold=_EQUIPMENT_TEMPLATE_THRESHOLD,
+                crop_regions=self._EQUIPMENT_TEMPLATE_CROP_REGIONS,
+                threshold=self._EQUIPMENT_TEMPLATE_THRESHOLD,
             ):
                 equipment_classes.append(result)
 
@@ -75,8 +76,8 @@ class EquipNewEquipment(AFKJourneyBase):
                     "equipment/exclamation_mark_1.png",
                     "equipment/exclamation_mark_2.png",
                 ],
-                crop_regions=_EQUIPMENT_TEMPLATE_CROP_REGIONS,
-                threshold=_EQUIPMENT_TEMPLATE_THRESHOLD,
+                crop_regions=self._EQUIPMENT_TEMPLATE_CROP_REGIONS,
+                threshold=self._EQUIPMENT_TEMPLATE_THRESHOLD,
             )
             if result is None:
                 not_found_count += 1
@@ -85,7 +86,10 @@ class EquipNewEquipment(AFKJourneyBase):
             self._find_and_equip_new_equipment(result, equipment_classes)
             equipment_found = True
         if not equipment_found:
-            logging.info("No new Equipment found.")
+            logging.info(
+                "No new Equipment found.",
+                extra={"preset": LogPreset.NOT_AVAILABLE},
+            )
 
     def _find_and_equip_new_equipment(
         self,
@@ -138,22 +142,22 @@ class EquipNewEquipment(AFKJourneyBase):
             count += 1
             if class_icon := self.game_find_template_match(
                 equipment_class.template,
-                crop_regions=_EQUIPMENT_TEMPLATE_CROP_REGIONS,
-                threshold=_EQUIPMENT_TEMPLATE_THRESHOLD,
+                crop_regions=self._EQUIPMENT_TEMPLATE_CROP_REGIONS,
+                threshold=self._EQUIPMENT_TEMPLATE_THRESHOLD,
             ):
                 self.tap(class_icon)
             try:
                 quick_equip = self.wait_for_template(
                     template="equipment/quick_equip.png",
-                    crop_regions=_EQUIPMENT_QUICK_EQUIP_CROP_REGIONS,
-                    threshold=_EQUIPMENT_TEMPLATE_THRESHOLD,
+                    crop_regions=self._EQUIPMENT_QUICK_EQUIP_CROP_REGIONS,
+                    threshold=self._EQUIPMENT_TEMPLATE_THRESHOLD,
                     timeout=self.MIN_TIMEOUT,
                 )
                 self.tap(quick_equip)
                 self.wait_until_template_disappears(
                     template="equipment/quick_equip.png",
-                    crop_regions=_EQUIPMENT_QUICK_EQUIP_CROP_REGIONS,
-                    threshold=_EQUIPMENT_TEMPLATE_THRESHOLD,
+                    crop_regions=self._EQUIPMENT_QUICK_EQUIP_CROP_REGIONS,
+                    threshold=self._EQUIPMENT_TEMPLATE_THRESHOLD,
                     timeout=self.FAST_TIMEOUT,
                 )
                 equipped = True
@@ -174,12 +178,12 @@ class EquipNewEquipment(AFKJourneyBase):
                 raise AutoPlayerUnrecoverableError("Cannot find Equipment screen.")
             try:
                 self.navigate_to_resonating_hall()
-                self.tap(_EQUIPMENT_POINT)
-                templates = ["equipment/open_all.png", *_EQUIPMENT_TEMPLATES]
+                self.tap(self._EQUIPMENT_POINT)
+                templates = ["equipment/open_all.png", *self._EQUIPMENT_TEMPLATES]
                 _ = self.wait_for_any_template(
                     templates=templates,
-                    crop_regions=_EQUIPMENT_TEMPLATE_CROP_REGIONS,
-                    threshold=_EQUIPMENT_TEMPLATE_THRESHOLD,
+                    crop_regions=self._EQUIPMENT_TEMPLATE_CROP_REGIONS,
+                    threshold=self._EQUIPMENT_TEMPLATE_THRESHOLD,
                 )
                 # The equipment class templates can be visible for a brief moment
                 # before the open all pop up fades in
@@ -187,8 +191,8 @@ class EquipNewEquipment(AFKJourneyBase):
 
                 result = self.wait_for_any_template(
                     templates=templates,
-                    crop_regions=_EQUIPMENT_TEMPLATE_CROP_REGIONS,
-                    threshold=_EQUIPMENT_TEMPLATE_THRESHOLD,
+                    crop_regions=self._EQUIPMENT_TEMPLATE_CROP_REGIONS,
+                    threshold=self._EQUIPMENT_TEMPLATE_THRESHOLD,
                 )
 
                 open_all_count = 0
@@ -205,8 +209,8 @@ class EquipNewEquipment(AFKJourneyBase):
                     self.tap(result)
                     result = self.wait_for_any_template(
                         templates=templates,
-                        crop_regions=_EQUIPMENT_TEMPLATE_CROP_REGIONS,
-                        threshold=_EQUIPMENT_TEMPLATE_THRESHOLD,
+                        crop_regions=self._EQUIPMENT_TEMPLATE_CROP_REGIONS,
+                        threshold=self._EQUIPMENT_TEMPLATE_THRESHOLD,
                     )
 
                 break
