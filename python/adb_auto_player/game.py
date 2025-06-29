@@ -827,6 +827,7 @@ class Game:
                 match_mode=match_mode,
                 threshold=threshold or self.default_threshold,
                 screenshot=cropped.image if cropped else screenshot,
+                grayscale=grayscale,
             )
             if result is not None:
                 if cropped:
