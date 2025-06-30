@@ -106,6 +106,12 @@ popup_messages: list[PopupMessage] = [
         # If you quit this fishing attempt will fail. Quit anyway?
         # Does not have "remind me" checkbox
     ),
+    # Legend Trial
+    PopupMessage(
+        text="Legend Trial has been refreshed.",
+        ignore=True,
+        # Would make sense to throw an exception for this
+    ),
 ]
 
 
