@@ -127,6 +127,7 @@ class Fishing(AFKJourneyBase):
             threshold=ConfidenceValue("70%"),
         )
 
+        # TODO could use some code so it always hit the middle in the pull size slider
         self.tap(btn)
         sleep(1)
         _ = self.wait_for_any_template(
