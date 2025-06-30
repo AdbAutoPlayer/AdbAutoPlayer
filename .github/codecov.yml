@@ -4,6 +4,7 @@ codecov:
 ignore:
   - "python/adb_auto_player/games/**"
   - "python/adb_auto_player/game.py"
+  - "python/adb_auto_player/adb.py"
   - "python/tests/**"
   - "app.go"
   - "main.go"
