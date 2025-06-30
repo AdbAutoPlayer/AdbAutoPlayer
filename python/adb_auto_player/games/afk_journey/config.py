@@ -23,6 +23,7 @@ class HeroesEnum(StrEnum):
     Arden = auto()
     Atalanta = auto()
     Athalia = auto()
+    Baelran = auto()
     Berial = auto()
     Bonnie = auto()
     Brutus = auto()
