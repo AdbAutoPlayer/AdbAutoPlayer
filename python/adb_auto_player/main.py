@@ -8,7 +8,7 @@ from adb_auto_player.cli import build_argparse_formatter
 from adb_auto_player.log import setup_logging
 from adb_auto_player.models.commands import Command
 from adb_auto_player.registries import COMMAND_REGISTRY, GAME_REGISTRY
-from adb_auto_player.util import execute_command
+from adb_auto_player.util import DevHelper, execute_command
 
 
 def _load_modules() -> None:
@@ -75,6 +75,8 @@ def main() -> None:
         log_level = 99
 
     setup_logging(args.output, log_level)
+
+    DevHelper.log_is_main_up_to_date()
 
     for category_commands in cmds.values():
         for cmd in category_commands:
