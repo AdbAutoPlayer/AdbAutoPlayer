@@ -291,8 +291,7 @@ def _override_size(device: AdbDevice, override_size: str) -> None:
     try:
         output = device.shell(f"wm size {override_size}")
     except Exception as e:
-        logging.debug(f"wm size {override_size} Error: {e}")
-        raise GenericAdbError(f"Error overriding size: {e}")
+        raise GenericAdbError(f"Error overriding size to {override_size}: {e}")
 
     if "java.lang.SecurityException" in output:
         logging.debug(f"wm size {override_size} Error: {output}")
@@ -460,7 +459,9 @@ def get_display_info(device: AdbDevice) -> DisplayInfo:
     try:
         result = str(device.shell("wm size", timeout=5))
     except Exception as e:
-        raise GenericAdbUnrecoverableError(f"wm size: {e}")
+        raise GenericAdbUnrecoverableError(
+            f"Unable to determine screen resolution: {e}"
+        )
 
     if not result:
         raise GenericAdbUnrecoverableError("Unable to determine screen resolution")
