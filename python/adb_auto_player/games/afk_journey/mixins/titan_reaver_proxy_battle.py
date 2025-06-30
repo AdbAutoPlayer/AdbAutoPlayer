@@ -196,9 +196,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
 
     def _is_in_other_chat(self) -> bool:
         """Check if in other chat channels."""
-        return (
-            self.find_any_template(["assist/tap_to_enter.png"]) is not None
-        )
+        return self.find_any_template(["assist/tap_to_enter.png"]) is not None
 
     def _switch_to_team_chat(self) -> None:
         """Switch to team chat."""
