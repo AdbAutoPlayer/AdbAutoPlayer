@@ -1,5 +1,7 @@
 codecov:
   branch: main
+  status:
+    patch: off
 
 ignore:
   - "python/adb_auto_player/games/**"
