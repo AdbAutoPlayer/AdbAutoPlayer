@@ -34,12 +34,10 @@ from adb_auto_player.exceptions import (
     UnsupportedResolutionError,
 )
 from adb_auto_player.image_manipulation import (
+    Color,
     crop,
     get_bgr_np_array_from_png_bytes,
     load_image,
-    to_bgr,
-    to_grayscale,
-    to_rgb,
 )
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Coordinates, Point
@@ -412,7 +410,7 @@ class Game:
             image = self._stream.get_latest_frame()
             if image is not None:
                 self._debug_save_screenshot(image, is_bgr=False)
-                return to_bgr(image)
+                return Color.to_bgr(image)
 
         max_retries = 3
         for attempt in range(max_retries):
@@ -815,7 +813,7 @@ class Game:
         screenshot = screenshot if screenshot is not None else self.get_screenshot()
 
         if grayscale:
-            screenshot = to_grayscale(screenshot)
+            screenshot = Color.to_grayscale(screenshot)
 
         cropped = None
         if crop_regions:
@@ -1076,7 +1074,7 @@ class Game:
         try:
             os.makedirs(os.path.dirname(file_name), exist_ok=True)
             if is_bgr:
-                image = Image.fromarray(to_rgb(screenshot))
+                image = Image.fromarray(Color.to_rgb(screenshot))
             else:
                 image = Image.fromarray(screenshot)
             image.save(file_name)

@@ -2,7 +2,7 @@
 
 import cv2
 import numpy as np
-from adb_auto_player.image_manipulation import to_grayscale
+from adb_auto_player.image_manipulation import Color
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box, Point
 from adb_auto_player.models.template_matching import MatchMode, MatchResult
@@ -270,6 +270,6 @@ def _prepare_images_for_processing(
     _validate_template_size(base_image=base_image, template_image=template_image)
 
     if grayscale:
-        return to_grayscale(base_image), to_grayscale(template_image)
+        return Color.to_grayscale(base_image), Color.to_grayscale(template_image)
 
     return base_image, template_image

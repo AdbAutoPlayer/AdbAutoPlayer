@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 import numpy as np
 from adb_auto_player import Game
-from adb_auto_player.image_manipulation import ColorFormat, to_grayscale
+from adb_auto_player.image_manipulation import Color, ColorFormat
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
@@ -243,7 +243,7 @@ class AFKJourneyPopupHandler(Game, ABC):
             crop_top = height_35_percent
 
         image = image[crop_top:crop_bottom, 0:width]
-        image = to_grayscale(image, ColorFormat.BGR)
+        image = Color.to_grayscale(image, ColorFormat.BGR)
 
         return PopupPreprocessResult(
             cropped_image=image,

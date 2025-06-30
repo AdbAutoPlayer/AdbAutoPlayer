@@ -9,7 +9,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from .color import to_grayscale
+from .color import Color
 
 template_cache: dict[str, np.ndarray] = {}
 
@@ -51,7 +51,7 @@ def load_image(
         )
 
     if grayscale:
-        image = to_grayscale(image)
+        image = Color.to_grayscale(image)
 
     template_cache[cache_key] = image
     return image
