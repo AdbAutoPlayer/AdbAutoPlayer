@@ -139,6 +139,7 @@ class Fishing(AFKJourneyBase):
             timeout=self.MIN_TIMEOUT,
             delay=0.1,
             threshold=ConfidenceValue("70%"),
+            ensure_order=False,
         )
         sleep(0.6)
         self.tap(btn, blocking=False)
@@ -154,6 +155,7 @@ class Fishing(AFKJourneyBase):
                 timeout=self.MIN_TIMEOUT,
                 delay=0.05,
                 threshold=ConfidenceValue("60%"),
+                ensure_order=False,
             )
         except GameTimeoutError:
             logging.info("Small fish caught.")
