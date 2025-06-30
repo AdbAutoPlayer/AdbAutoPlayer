@@ -810,24 +810,26 @@ class Game:
         """
         screenshot = screenshot if screenshot is not None else self.get_screenshot()
 
-        if grayscale:
-            screenshot = Color.to_grayscale(screenshot)
-
-        cropped = None
+        offset = None
         if crop_regions:
             cropped = Cropping.crop(screenshot, crop_regions)
+            screenshot = cropped.image
+            offset = cropped.offset
+
+        if grayscale:
+            screenshot = Color.to_grayscale(screenshot)
 
         for template in templates:
             result = self.game_find_template_match(
                 template,
                 match_mode=match_mode,
                 threshold=threshold or self.default_threshold,
-                screenshot=cropped.image if cropped else screenshot,
+                screenshot=screenshot,
                 grayscale=grayscale,
             )
             if result is not None:
-                if cropped:
-                    return result.with_offset(cropped.offset)
+                if offset:
+                    return result.with_offset(offset)
                 return result
         return None
 
