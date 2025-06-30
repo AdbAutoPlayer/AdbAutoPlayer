@@ -4,7 +4,7 @@ import numpy as np
 from adb_auto_player.image_manipulation import IO
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.template_matching import MatchMode
-from adb_auto_player.template_matching import find_template_match
+from adb_auto_player.template_matching import TemplateMatcher
 
 from .test_image_creator import TestImageCreator
 
@@ -19,7 +19,7 @@ class TestFindTemplateMatch:
         )
         template = IO.load_image(Path(__file__).parent / "data" / "small_note")
 
-        result = find_template_match(
+        result = TemplateMatcher.find_template_match(
             base_image, template, MatchMode.BEST, ConfidenceValue("100%")
         )
 
@@ -32,7 +32,7 @@ class TestFindTemplateMatch:
         )
         template = IO.load_image(Path(__file__).parent / "data" / "small_note")
 
-        result = find_template_match(
+        result = TemplateMatcher.find_template_match(
             base_image, template, threshold=ConfidenceValue("40%")
         )
 
@@ -51,16 +51,16 @@ class TestFindTemplateMatch:
         template = np.full((30, 30, 3), (255, 255, 255), dtype=np.uint8)
 
         # Test different modes
-        top_left_result = find_template_match(
+        top_left_result = TemplateMatcher.find_template_match(
             base_image, template, MatchMode.TOP_LEFT, ConfidenceValue("80%")
         )
-        top_right_result = find_template_match(
+        top_right_result = TemplateMatcher.find_template_match(
             base_image, template, MatchMode.TOP_RIGHT, ConfidenceValue("80%")
         )
-        bottom_left_result = find_template_match(
+        bottom_left_result = TemplateMatcher.find_template_match(
             base_image, template, MatchMode.BOTTOM_LEFT, ConfidenceValue("80%")
         )
-        bottom_right_result = find_template_match(
+        bottom_right_result = TemplateMatcher.find_template_match(
             base_image, template, MatchMode.BOTTOM_RIGHT, ConfidenceValue("80%")
         )
 
@@ -87,7 +87,7 @@ class TestFindTemplateMatch:
         )
         template = IO.load_image(Path(__file__).parent / "data" / "small_note")
 
-        result = find_template_match(
+        result = TemplateMatcher.find_template_match(
             base_image, template, threshold=ConfidenceValue("90%"), grayscale=True
         )
 

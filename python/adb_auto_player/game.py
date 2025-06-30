@@ -44,12 +44,7 @@ from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.registries import CustomRoutineEntry
 from adb_auto_player.models.template_matching import MatchMode, TemplateMatchResult
 from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY
-from adb_auto_player.template_matching import (
-    find_all_template_matches,
-    find_template_match,
-    find_worst_template_match,
-    similar_image,
-)
+from adb_auto_player.template_matching import TemplateMatcher
 from adb_auto_player.util import ConfigLoader, execute
 from adbutils._device import AdbDevice
 from PIL import Image
@@ -513,7 +508,7 @@ class Game:
                 crop_regions=crop_regions,
             )
 
-            result = not similar_image(
+            result = not TemplateMatcher.similar_image(
                 base_image=crop_result.image,
                 template_image=inner_crop_result.image,
                 threshold=threshold or self.default_threshold,
@@ -563,7 +558,7 @@ class Game:
             crop_regions=crop_regions,
         )
 
-        match = find_template_match(
+        match = TemplateMatcher.find_template_match(
             base_image=crop_result.image,
             template_image=self._load_image(
                 template=template,
@@ -612,7 +607,7 @@ class Game:
             image=self.get_screenshot(), crop_regions=crop_regions
         )
 
-        result = find_worst_template_match(
+        result = TemplateMatcher.find_worst_template_match(
             base_image=crop_result.image,
             template_image=self._load_image(
                 template=template,
@@ -653,7 +648,7 @@ class Game:
             image=self.get_screenshot(), crop_regions=crop_regions
         )
 
-        result = find_all_template_matches(
+        result = TemplateMatcher.find_all_template_matches(
             base_image=crop_result.image,
             template_image=self._load_image(
                 template=template,

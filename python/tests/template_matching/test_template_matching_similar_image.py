@@ -2,7 +2,7 @@ from pathlib import Path
 
 from adb_auto_player.image_manipulation import IO
 from adb_auto_player.models import ConfidenceValue
-from adb_auto_player.template_matching import similar_image
+from adb_auto_player.template_matching import TemplateMatcher
 
 
 class TestSimilarImage:
@@ -11,7 +11,7 @@ class TestSimilarImage:
     def test_identical_images_returns_true(self):
         """Test that identical images return True."""
         image1 = IO.load_image(Path(__file__).parent / "data" / "guitar_girl_busk")
-        result = similar_image(image1, image1, ConfidenceValue("80%"))
+        result = TemplateMatcher.similar_image(image1, image1, ConfidenceValue("80%"))
 
         assert result is True
 
@@ -20,6 +20,6 @@ class TestSimilarImage:
         image1 = IO.load_image(Path(__file__).parent / "data" / "guitar_girl_busk")
         image2 = IO.load_image(Path(__file__).parent / "data" / "guitar_girl_play")
 
-        result = similar_image(image1, image2, ConfidenceValue("90%"))
+        result = TemplateMatcher.similar_image(image1, image2, ConfidenceValue("90%"))
 
         assert result is False

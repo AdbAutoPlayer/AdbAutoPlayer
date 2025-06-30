@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 from adb_auto_player.image_manipulation import IO
 from adb_auto_player.models import ConfidenceValue
-from adb_auto_player.template_matching import find_all_template_matches
+from adb_auto_player.template_matching import TemplateMatcher
 
 from .test_image_creator import TestImageCreator
 
@@ -18,7 +18,7 @@ class TestFindAllTemplateMatches:
         )
         template = IO.load_image(Path(__file__).parent / "data" / "small_note")
 
-        results = find_all_template_matches(
+        results = TemplateMatcher.find_all_template_matches(
             base_image,
             template,
             ConfidenceValue("90%"),
@@ -36,7 +36,7 @@ class TestFindAllTemplateMatches:
         )
         template = IO.load_image(Path(__file__).parent / "data" / "small_note")
 
-        results = find_all_template_matches(
+        results = TemplateMatcher.find_all_template_matches(
             base_image,
             template,
             ConfidenceValue("90%"),
@@ -54,7 +54,7 @@ class TestFindAllTemplateMatches:
 
         template = np.full((30, 30, 3), (0, 255, 0), dtype=np.uint8)
 
-        results = find_all_template_matches(
+        results = TemplateMatcher.find_all_template_matches(
             base_image,
             template,
             ConfidenceValue("80%"),
