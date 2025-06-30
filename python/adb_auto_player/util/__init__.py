@@ -8,6 +8,7 @@ Util modules should aim to not have dependencies on internal packages besides
 """
 
 from .config_loader import ConfigLoader
+from .dev_helper import DevHelper
 from .execute import execute, execute_command
 from .ipc_constraint_extractor import IPCConstraintExtractor
 from .log_message_factory import create_log_message
@@ -19,6 +20,7 @@ from .type_helpers import to_int_if_needed
 
 __all__ = [
     "ConfigLoader",
+    "DevHelper",
     "IPCConstraintExtractor",
     "StringHelper",
     "SummaryGenerator",
