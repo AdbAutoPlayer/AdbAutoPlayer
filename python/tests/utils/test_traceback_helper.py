@@ -4,8 +4,7 @@ from unittest.mock import patch
 
 from adb_auto_player.util.traceback_helper import (
     SourceInfo,
-    extract_source_info,
-    format_debug_info,
+    TracebackHelper,
 )
 
 
@@ -41,7 +40,7 @@ class TestExtractSourceInfo:
             func="test_func",
         )
 
-        result = extract_source_info(record)
+        result = TracebackHelper.extract_source_info(record)
         assert result.source_file == "module.py"
         assert result.function_name == "test_func"
         assert result.line_number == 42
@@ -65,7 +64,7 @@ class TestExtractSourceInfo:
             func="test_func",
         )
 
-        result = extract_source_info(record)
+        result = TracebackHelper.extract_source_info(record)
         # The actual values will depend on where this test is run from
         assert result.source_file.endswith(".py")
         assert result.function_name == "test_extract_source_info_with_traceback"
@@ -88,7 +87,7 @@ class TestExtractSourceInfo:
             func="test_func",
         )
 
-        result = extract_source_info(record)
+        result = TracebackHelper.extract_source_info(record)
         assert result.source_file == "module.py"
         assert result.function_name == "test_func"
         assert result.line_number == 42
@@ -106,7 +105,7 @@ class TestExtractSourceInfo:
             func="test_func",
         )
 
-        result = extract_source_info(record)
+        result = TracebackHelper.extract_source_info(record)
         assert result.source_file == "module.py"
         assert result.function_name == "test_func"
         assert result.line_number == 42
@@ -130,7 +129,7 @@ class TestExtractSourceInfo:
                 func="test_func",
             )
 
-            result = extract_source_info(record)
+            result = TracebackHelper.extract_source_info(record)
             assert result.source_file == "module.py"
             assert result.function_name == "test_func"
             assert result.line_number == 42
@@ -152,7 +151,7 @@ class TestFormatDebugInfo:
             func="test_func",
         )
 
-        result = format_debug_info(record)
+        result = TracebackHelper.format_debug_info(record)
         assert result == "(module.py::test_func::42)"
 
     def test_format_debug_info_with_traceback(self):
@@ -173,7 +172,7 @@ class TestFormatDebugInfo:
             func="test_func",
         )
 
-        result = format_debug_info(record)
+        result = TracebackHelper.format_debug_info(record)
         # The actual values will depend on where this test is run from
         assert result.startswith("(")
         assert "::" in result

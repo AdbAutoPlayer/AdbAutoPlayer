@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import ClassVar, Literal
 
 from adb_auto_player.ipc import LogMessage
-from adb_auto_player.util import SummaryGenerator, create_log_message, format_debug_info
+from adb_auto_player.util import LogMessageFactory, SummaryGenerator, TracebackHelper
 
 from .log_presets import LogPreset
 
@@ -79,7 +79,7 @@ class JsonLogHandler(BaseLogHandler):
         """
         preset: LogPreset | None = getattr(record, "preset", None)
 
-        log_message: LogMessage = create_log_message(
+        log_message: LogMessage = LogMessageFactory.create_log_message(
             record=record,
             message=self.get_sanitized_message(record),
             html_class=preset.get_html_class() if preset else None,
@@ -120,7 +120,8 @@ class TerminalLogHandler(BaseLogHandler):
         formatted_message: str = (
             f"{color}"
             f"[{log_level}] "
-            f"{format_debug_info(record)} {self.get_sanitized_message(record)}"
+            f"{TracebackHelper.format_debug_info(record)} "
+            f"{self.get_sanitized_message(record)}"
             f"{self.COLORS['RESET']}"
         )
         print(formatted_message)
@@ -143,7 +144,8 @@ class TextLogHandler(BaseLogHandler):
         timestamp_with_ms: str = f"{timestamp}.{int(record.msecs):03d}"
 
         formatted_message: str = (
-            f"{timestamp_with_ms} [{log_level}] {format_debug_info(record)} "
+            f"{timestamp_with_ms} [{log_level}] "
+            f"{TracebackHelper.format_debug_info(record)} "
             f"{self.get_sanitized_message(record)}"
         )
         print(formatted_message)

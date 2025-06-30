@@ -18,7 +18,7 @@ from adb_auto_player.models.commands import Command
 from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY
 from pydantic import BaseModel
 
-from .module_helper import get_game_module
+from .string_helper import StringHelper
 
 
 class IPCConstraintExtractor:
@@ -127,7 +127,7 @@ class IPCConstraintExtractor:
                     image_dir_path=field_schema.get("image_dir_path", ""),
                 )
             case "MyCustomRoutine":
-                module = get_game_module(model_module)
+                module = StringHelper.get_game_module(model_module)
                 choices = list(CUSTOM_ROUTINE_REGISTRY.get(module, {}).keys())
                 if not choices:
                     raise ValueError("MyCustomRoutine constraint requires menu options")

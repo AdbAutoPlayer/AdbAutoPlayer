@@ -24,7 +24,7 @@ from types import FunctionType
 
 from adb_auto_player.models.registries import GameGUIMetadata, GameMetadata
 from adb_auto_player.registries import GAME_REGISTRY
-from adb_auto_player.util import get_game_module
+from adb_auto_player.util import StringHelper
 
 
 def register_game(
@@ -47,7 +47,7 @@ def register_game(
         if isinstance(cls, FunctionType):
             raise TypeError("The @register_game decorator can only be used on classes.")
 
-        module_key = get_game_module(cls.__module__)
+        module_key = StringHelper.get_game_module(cls.__module__)
 
         if isinstance(config_file_path, str):
             path_obj = Path(config_file_path)

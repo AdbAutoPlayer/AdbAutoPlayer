@@ -45,7 +45,7 @@ from adb_auto_player.models.registries import CustomRoutineEntry
 from adb_auto_player.models.template_matching import MatchMode, TemplateMatchResult
 from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY
 from adb_auto_player.template_matching import TemplateMatcher
-from adb_auto_player.util import ConfigLoader, execute
+from adb_auto_player.util import ConfigLoader, Execute
 from adbutils._device import AdbDevice
 from PIL import Image
 from pydantic import BaseModel
@@ -1199,8 +1199,8 @@ class Game:
             if not custom_routine:
                 logging.error(f"Task '{task}' not found")
                 continue
-            error = execute(
-                function=custom_routine.func,
+            error = Execute.function(
+                callable_function=custom_routine.func,
                 kwargs=custom_routine.kwargs,
             )
             self._handle_task_error(task, error)
