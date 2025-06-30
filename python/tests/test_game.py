@@ -10,7 +10,7 @@ from adb_auto_player import (
     Game,
 )
 from adb_auto_player.exceptions import GameTimeoutError
-from adb_auto_player.image_manipulation import load_image
+from adb_auto_player.image_manipulation import IO
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import TemplateMatchResult
 from pydantic import BaseModel
@@ -55,7 +55,7 @@ class TestGame(unittest.TestCase):
         """
         game = MockGame()
 
-        start_image = load_image(TEST_DATA_DIR / "records_formation_1.png")
+        start_image = IO.load_image(TEST_DATA_DIR / "records_formation_1.png")
 
         with self.assertRaises(ValueError):
             game.wait_for_roi_change(
@@ -90,8 +90,8 @@ class TestGame(unittest.TestCase):
         f1: Path = TEST_DATA_DIR / "records_formation_1.png"
         f2: Path = TEST_DATA_DIR / "records_formation_2.png"
 
-        start_image = load_image(f1)
-        get_screenshot.return_value = load_image(f1)
+        start_image = IO.load_image(f1)
+        get_screenshot.return_value = IO.load_image(f1)
 
         with self.assertRaises(GameTimeoutError):
             game.wait_for_roi_change(
@@ -99,7 +99,7 @@ class TestGame(unittest.TestCase):
                 timeout=1.0,
             )
 
-        get_screenshot.return_value = load_image(f2)
+        get_screenshot.return_value = IO.load_image(f2)
         self.assertTrue(game.wait_for_roi_change(start_image=start_image, timeout=0))
 
     @patch.object(Game, "get_screenshot")
@@ -117,8 +117,8 @@ class TestGame(unittest.TestCase):
         f1: Path = TEST_DATA_DIR / "records_formation_1.png"
         f2: Path = TEST_DATA_DIR / "records_formation_2.png"
 
-        start_image = load_image(f1)
-        get_screenshot.return_value = load_image(f1)
+        start_image = IO.load_image(f1)
+        get_screenshot.return_value = IO.load_image(f1)
 
         with self.assertRaises(GameTimeoutError):
             game.wait_for_roi_change(
@@ -127,7 +127,7 @@ class TestGame(unittest.TestCase):
                 timeout=1.0,
             )
 
-        get_screenshot.return_value = load_image(f2)
+        get_screenshot.return_value = IO.load_image(f2)
         self.assertTrue(
             game.wait_for_roi_change(
                 start_image=start_image,
@@ -168,7 +168,7 @@ class TestGame(unittest.TestCase):
         base_image: Path = TEST_DATA_DIR / "template_match_base.png"
         template_image = "template_match_template.png"
 
-        get_screenshot.return_value = load_image(base_image)
+        get_screenshot.return_value = IO.load_image(base_image)
         get_template_dir_path.return_value = TEST_DATA_DIR
         resolution.return_value = (1080, 1920)
 

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import numpy as np
-from adb_auto_player.image_manipulation import load_image
+from adb_auto_player.image_manipulation import IO
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.template_matching import MatchMode
 from adb_auto_player.template_matching import find_template_match
@@ -14,10 +14,10 @@ class TestFindTemplateMatch:
 
     def test_perfect_match_found(self):
         """Test finding a perfect template match."""
-        base_image = load_image(
+        base_image = IO.load_image(
             Path(__file__).parent / "data" / "guitar_girl_with_notes"
         )
-        template = load_image(Path(__file__).parent / "data" / "small_note")
+        template = IO.load_image(Path(__file__).parent / "data" / "small_note")
 
         result = find_template_match(
             base_image, template, MatchMode.BEST, ConfidenceValue("100%")
@@ -27,8 +27,10 @@ class TestFindTemplateMatch:
 
     def test_no_match_found_returns_none(self):
         """Test that no match returns None."""
-        base_image = load_image(Path(__file__).parent / "data" / "guitar_girl_no_notes")
-        template = load_image(Path(__file__).parent / "data" / "small_note")
+        base_image = IO.load_image(
+            Path(__file__).parent / "data" / "guitar_girl_no_notes"
+        )
+        template = IO.load_image(Path(__file__).parent / "data" / "small_note")
 
         result = find_template_match(
             base_image, template, threshold=ConfidenceValue("40%")
@@ -80,10 +82,10 @@ class TestFindTemplateMatch:
 
     def test_grayscale_matching(self):
         """Test template matching with grayscale conversion."""
-        base_image = load_image(
+        base_image = IO.load_image(
             Path(__file__).parent / "data" / "guitar_girl_with_notes"
         )
-        template = load_image(Path(__file__).parent / "data" / "small_note")
+        template = IO.load_image(Path(__file__).parent / "data" / "small_note")
 
         result = find_template_match(
             base_image, template, threshold=ConfidenceValue("90%"), grayscale=True

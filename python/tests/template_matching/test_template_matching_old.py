@@ -6,7 +6,7 @@ Some older tests I decided to leave in.
 import unittest
 from pathlib import Path
 
-from adb_auto_player.image_manipulation import load_image
+from adb_auto_player.image_manipulation import IO
 from adb_auto_player.template_matching import (
     similar_image,
 )
@@ -26,13 +26,13 @@ class TestTemplateMatching(unittest.TestCase):
         # f7 = TEST_DATA_DIR / "records_formation_7.png"
 
         result = similar_image(
-            base_image=load_image(f1),
-            template_image=load_image(f1),
+            base_image=IO.load_image(f1),
+            template_image=IO.load_image(f1),
         )
         self.assertTrue(result)
 
         result = similar_image(
-            base_image=load_image(f1),
-            template_image=load_image(f2),
+            base_image=IO.load_image(f1),
+            template_image=IO.load_image(f2),
         )
         self.assertFalse(result)

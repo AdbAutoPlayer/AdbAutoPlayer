@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from adb_auto_player.image_manipulation import load_image
+from adb_auto_player.image_manipulation import IO
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.template_matching import MatchResult
 from adb_auto_player.template_matching import (
@@ -15,10 +15,10 @@ class TestIntegration:
 
     def test_workflow_find_and_verify(self):
         """Test a complete workflow of finding and verifying matches."""
-        base_image = load_image(
+        base_image = IO.load_image(
             Path(__file__).parent / "data" / "guitar_girl_with_notes.png"
         )
-        template = load_image(Path(__file__).parent / "data" / "small_note.png")
+        template = IO.load_image(Path(__file__).parent / "data" / "small_note.png")
 
         result = find_template_match(
             base_image,

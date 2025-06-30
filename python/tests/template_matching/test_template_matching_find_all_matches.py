@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import numpy as np
-from adb_auto_player.image_manipulation import load_image
+from adb_auto_player.image_manipulation import IO
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.template_matching import find_all_template_matches
 
@@ -13,10 +13,10 @@ class TestFindAllTemplateMatches:
 
     def test_find_multiple_matches(self):
         """Test finding multiple template matches."""
-        base_image = load_image(
+        base_image = IO.load_image(
             Path(__file__).parent / "data" / "guitar_girl_with_notes"
         )
-        template = load_image(Path(__file__).parent / "data" / "small_note")
+        template = IO.load_image(Path(__file__).parent / "data" / "small_note")
 
         results = find_all_template_matches(
             base_image,
@@ -31,8 +31,10 @@ class TestFindAllTemplateMatches:
 
     def test_no_matches_returns_empty_list(self):
         """Test that no matches returns empty list."""
-        base_image = load_image(Path(__file__).parent / "data" / "guitar_girl_no_notes")
-        template = load_image(Path(__file__).parent / "data" / "small_note")
+        base_image = IO.load_image(
+            Path(__file__).parent / "data" / "guitar_girl_no_notes"
+        )
+        template = IO.load_image(Path(__file__).parent / "data" / "small_note")
 
         results = find_all_template_matches(
             base_image,

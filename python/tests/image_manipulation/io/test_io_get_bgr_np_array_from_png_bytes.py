@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import pytest
-from adb_auto_player.image_manipulation import get_bgr_np_array_from_png_bytes
+from adb_auto_player.image_manipulation import IO
 
 
 class TestGetBGRNpArrayFromPNGBytes:
@@ -16,7 +16,7 @@ class TestGetBGRNpArrayFromPNGBytes:
 
     def test_valid_png_bytes(self):
         png_bytes = self.create_test_png_bytes()
-        result = get_bgr_np_array_from_png_bytes(png_bytes)
+        result = IO.get_bgr_np_array_from_png_bytes(png_bytes)
         assert isinstance(result, np.ndarray)
         assert result.shape == (1, 1, 3)
         assert np.all(result == 0)
@@ -24,18 +24,18 @@ class TestGetBGRNpArrayFromPNGBytes:
     def test_png_with_warning_prefix(self):
         png_bytes = self.create_test_png_bytes()
         prefixed_data = b"WARNING: something went wrong\n" + png_bytes
-        result = get_bgr_np_array_from_png_bytes(prefixed_data)
+        result = IO.get_bgr_np_array_from_png_bytes(prefixed_data)
         assert isinstance(result, np.ndarray)
         assert result.shape == (1, 1, 3)
         assert np.all(result == 0)
 
     def test_invalid_png_bytes_raises_value_error(self):
         with pytest.raises(ValueError, match="Failed to decode screenshot image data"):
-            get_bgr_np_array_from_png_bytes(b"not a real png")
+            IO.get_bgr_np_array_from_png_bytes(b"not a real png")
 
     def test_no_png_header_raises_value_error(self):
         # Remove the PNG header from otherwise valid PNG bytes
         png_bytes = self.create_test_png_bytes()
         corrupted_bytes = png_bytes[8:]  # Cut off the PNG header
         with pytest.raises(ValueError, match="Failed to decode screenshot image data"):
-            get_bgr_np_array_from_png_bytes(corrupted_bytes)
+            IO.get_bgr_np_array_from_png_bytes(corrupted_bytes)

@@ -34,10 +34,9 @@ from adb_auto_player.exceptions import (
     UnsupportedResolutionError,
 )
 from adb_auto_player.image_manipulation import (
+    IO,
     Color,
-    crop,
-    get_bgr_np_array_from_png_bytes,
-    load_image,
+    Cropping,
 )
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Coordinates, Point
@@ -418,7 +417,7 @@ class Game:
                 with self.device.shell("screencap -p", stream=True) as c:
                     screenshot_data = c.read_until_close(encoding=None)
                 if isinstance(screenshot_data, bytes):
-                    image = get_bgr_np_array_from_png_bytes(screenshot_data)
+                    image = IO.get_bgr_np_array_from_png_bytes(screenshot_data)
                     self._debug_save_screenshot(image, is_bgr=True)
                     return image
             except (OSError, ValueError) as e:
@@ -506,10 +505,10 @@ class Game:
             TimeoutException: If no change is detected within the timeout period.
             ValueError: Invalid crop values.
         """
-        crop_result = crop(image=start_image, crop_regions=crop_regions)
+        crop_result = Cropping.crop(image=start_image, crop_regions=crop_regions)
 
         def roi_changed() -> Literal[True] | None:
-            inner_crop_result = crop(
+            inner_crop_result = Cropping.crop(
                 image=self.get_screenshot(),
                 crop_regions=crop_regions,
             )
@@ -559,7 +558,7 @@ class Game:
         Returns:
             TemplateMatchResult | None
         """
-        crop_result = crop(
+        crop_result = Cropping.crop(
             image=screenshot if screenshot is not None else self.get_screenshot(),
             crop_regions=crop_regions,
         )
@@ -587,7 +586,7 @@ class Game:
         template: str | Path,
         grayscale: bool = False,
     ) -> np.ndarray:
-        return load_image(
+        return IO.load_image(
             image_path=self.get_template_dir_path() / template,
             image_scale_factor=self.get_scale_factor(),
             grayscale=grayscale,
@@ -609,7 +608,9 @@ class Game:
         Returns:
             None | TemplateMatchResult: None or Result of worst Match.
         """
-        crop_result = crop(image=self.get_screenshot(), crop_regions=crop_regions)
+        crop_result = Cropping.crop(
+            image=self.get_screenshot(), crop_regions=crop_regions
+        )
 
         result = find_worst_template_match(
             base_image=crop_result.image,
@@ -648,7 +649,9 @@ class Game:
         Returns:
             list[tuple[int, int]]: List of found coordinates.
         """
-        crop_result = crop(image=self.get_screenshot(), crop_regions=crop_regions)
+        crop_result = Cropping.crop(
+            image=self.get_screenshot(), crop_regions=crop_regions
+        )
 
         result = find_all_template_matches(
             base_image=crop_result.image,
@@ -817,7 +820,7 @@ class Game:
 
         cropped = None
         if crop_regions:
-            cropped = crop(screenshot, crop_regions)
+            cropped = Cropping.crop(screenshot, crop_regions)
 
         for template in templates:
             result = self.game_find_template_match(
