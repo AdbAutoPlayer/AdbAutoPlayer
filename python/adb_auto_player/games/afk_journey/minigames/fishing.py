@@ -19,6 +19,7 @@ DISTANCE_600 = 600
 DISTANCE_400 = 400
 DISTANCE_200 = 200
 DISTANCE_100 = 100
+DISTANCE_50 = 50
 MAX_AVG_INPUT_DELAY_IN_MS = 200  # TODO Change to a reasonable value later
 MAX_AVG_INPUT_DELAY_CANDIDATE = 50
 MAX_SCREENSHOT_DELAY_IN_MS = 100  # TODO Change to a reasonable value later
@@ -209,7 +210,7 @@ class Fishing(AFKJourneyBase):
             return self.hold(btn, duration=0.75, blocking=False)
         if distance > DISTANCE_100:
             return self.hold(btn, duration=0.5, blocking=False)
-        if distance > 0:
+        if distance > DISTANCE_50:
             return self.hold(btn, duration=0.25, blocking=False)
         return thread
 
