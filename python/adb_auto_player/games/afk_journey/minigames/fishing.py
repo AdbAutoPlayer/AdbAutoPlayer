@@ -166,7 +166,8 @@ class Fishing(AFKJourneyBase):
             screenshot = self.get_screenshot()
             if count % check_book_at == 0:
                 if not thread or not thread.is_alive():
-                    self.tap(STRONG_PULL, blocking=False)
+                    # don't log this its clicking like 5 million times
+                    self.tap(STRONG_PULL, blocking=False, log_message=None)
                 if self.game_find_template_match(
                     "fishing/book.png",
                     crop_regions=CropRegions(left=0.9, bottom=0.9),
