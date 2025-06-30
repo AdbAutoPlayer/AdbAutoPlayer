@@ -6,7 +6,13 @@ import sys
 
 
 def _is_dev():
-    return not hasattr(sys, "frozen") or "__compiled__" in globals()
+    if hasattr(sys, "frozen"):
+        return False
+
+    if "__compiled__" in globals():
+        return False
+
+    return True
 
 
 class DevHelper:
