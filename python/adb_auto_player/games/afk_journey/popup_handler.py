@@ -95,6 +95,11 @@ popup_messages: list[PopupMessage] = [
         # Spend 2000 to challenge this stage again?
         ignore=True,  # handled elsewhere
     ),
+    PopupMessage(  # I think this one is duras not sure
+        text="Please wait for the reset",
+        # Multiple attempts made. Please wait for the reset.
+        ignore=True,
+    ),
     # Emporium, other places?
     PopupMessage(
         text="Confirm to use Diamonds?",
