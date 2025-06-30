@@ -77,7 +77,7 @@ class TestLoadImage:
         )
         assert np.array_equal(result, scaled_img)
 
-    @patch("adb_auto_player.image_manipulation.io.to_grayscale")
+    @patch("adb_auto_player.image_manipulation.color.Color.to_grayscale")
     @patch("adb_auto_player.image_manipulation.io.cv2.imdecode")
     @patch("adb_auto_player.image_manipulation.io.np.fromfile")
     def test_load_image_grayscale(self, mock_fromfile, mock_imdecode, mock_to_gray):
