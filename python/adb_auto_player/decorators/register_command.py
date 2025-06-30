@@ -15,7 +15,7 @@ from typing import Any
 from adb_auto_player.models.commands import Command, MenuItem
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.registries import COMMAND_REGISTRY
-from adb_auto_player.util import get_game_module
+from adb_auto_player.util import StringHelper
 
 
 def register_command(
@@ -44,7 +44,7 @@ def register_command(
 
     def decorator(func: Callable):
         try:
-            module_key = get_game_module(func.__module__)
+            module_key = StringHelper.get_game_module(func.__module__)
         except ValueError:
             module_key = (
                 "Commands"  # do not change this it's a special keyword the GUI uses.

@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from adb_auto_player.image_manipulation import crop
+from adb_auto_player.image_manipulation import Cropping
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions, CropResult
 
@@ -73,7 +73,7 @@ class TestCropFunction:
         original = TestImageGeneration.create_test_image(0, 0)
         crop_regions = CropRegions()  # All defaults to 0
 
-        result = crop(original, crop_regions)
+        result = Cropping.crop(original, crop_regions)
 
         assert isinstance(result, CropResult)
         assert result.offset == Point(x=0, y=0)
@@ -86,7 +86,7 @@ class TestCropFunction:
         # Crop 10% from each side
         crop_regions = CropRegions(left=0.1, right=0.1, top=0.1, bottom=0.1)
 
-        result = crop(original, crop_regions)
+        result = Cropping.crop(original, crop_regions)
 
         # Should crop 10px from each side of 100px image = 80x80 result
         assert result.image.shape == (80, 80, 3)
@@ -101,7 +101,7 @@ class TestCropFunction:
         # Crop 15px from each side
         crop_regions = CropRegions(left=15, right=15, top=15, bottom=15)
 
-        result = crop(original, crop_regions)
+        result = Cropping.crop(original, crop_regions)
 
         # Should crop 15px from each side = 70x70 result
         assert result.image.shape == (70, 70, 3)
@@ -116,7 +116,7 @@ class TestCropFunction:
         # Mix percentages and pixels
         crop_regions = CropRegions(left=0.1, right=10, top=5, bottom=0.125)
 
-        result = crop(original, crop_regions)
+        result = Cropping.crop(original, crop_regions)
 
         # left: 10% of 100 = 10px
         # right: 10px
@@ -134,7 +134,7 @@ class TestCropFunction:
         original = TestImageGeneration.create_test_image(60, 80)
         crop_regions = CropRegions(left=5, right=15, top=0.1, bottom=0.2)
 
-        result = crop(original, crop_regions)
+        result = Cropping.crop(original, crop_regions)
 
         # left: 5px, right: 15px, top: 8px (10% of 80), bottom: 16px (20% of 80)
         # Result: 40x56 (60-5-15 x 80-8-16)
@@ -146,7 +146,7 @@ class TestCropFunction:
         original = TestImageGeneration.create_test_image(50, 50, channels=1)
         crop_regions = CropRegions(left=0.2, right=0.2, top=0.2, bottom=0.2)
 
-        result = crop(original, crop_regions)
+        result = Cropping.crop(original, crop_regions)
 
         # Should be 30x30 grayscale
         assert result.image.shape == (30, 30)
@@ -158,7 +158,7 @@ class TestCropFunction:
         crop_regions = CropRegions(left=0.1)
 
         with pytest.raises(ValueError, match="Cannot crop empty image"):
-            crop(empty_image, crop_regions)
+            Cropping.crop(empty_image, crop_regions)
 
     def test_percentage_crop_exceeds_100_percent(self):
         """Test that percentage crop exceeding 100% raises error."""
@@ -172,7 +172,7 @@ class TestCropFunction:
         crop_regions = CropRegions(left=60, right=50)  # 110px total from 100px width
 
         with pytest.raises(ValueError, match="would crop entire image width"):
-            crop(original, crop_regions)
+            Cropping.crop(original, crop_regions)
 
     def test_pixel_crop_exceeds_image_height(self):
         """Test that pixel crop exceeding image height raises error."""
@@ -180,7 +180,7 @@ class TestCropFunction:
         crop_regions = CropRegions(top=50, bottom=40)  # 90px total from 80px height
 
         with pytest.raises(ValueError, match="would crop entire image height"):
-            crop(original, crop_regions)
+            Cropping.crop(original, crop_regions)
 
     def test_single_pixel_crop_exceeds_dimension(self):
         """Test that single pixel value exceeding dimension raises error."""
@@ -188,7 +188,7 @@ class TestCropFunction:
 
         with pytest.raises(ValueError, match="Left crop.*exceeds image dimension"):
             crop_regions = CropRegions(left=60)  # 60px from 50px width
-            crop(original, crop_regions)
+            Cropping.crop(original, crop_regions)
 
     def test_exact_boundary_crop(self):
         """Test cropping right at the boundary (should fail)."""
@@ -196,14 +196,14 @@ class TestCropFunction:
         crop_regions = CropRegions(left=5, right=5)  # Exactly 100%
 
         with pytest.raises(ValueError, match="would crop entire image width"):
-            crop(original, crop_regions)
+            Cropping.crop(original, crop_regions)
 
     def test_minimal_crop_result(self):
         """Test cropping that results in 1x1 image."""
         original = TestImageGeneration.create_test_image(3, 3)
         crop_regions = CropRegions(left=1, right=1, top=1, bottom=1)
 
-        result = crop(original, crop_regions)
+        result = Cropping.crop(original, crop_regions)
 
         assert result.image.shape == (1, 1, 3)
         assert result.offset == Point(x=1, y=1)
@@ -213,7 +213,7 @@ class TestCropFunction:
         original = TestImageGeneration.create_test_image(1000, 800)
         crop_regions = CropRegions(left=0.1, right=0.15, top=0.05, bottom=0.2)
 
-        result = crop(original, crop_regions)
+        result = Cropping.crop(original, crop_regions)
 
         # left: 100px, right: 150px, top: 40px, bottom: 160px
         # Result: 750x600
@@ -225,7 +225,7 @@ class TestCropFunction:
         original = TestImageGeneration.create_checkered_image(40, 40, square_size=10)
         crop_regions = CropRegions(left=10, right=10, top=10, bottom=10)
 
-        result = crop(original, crop_regions)
+        result = Cropping.crop(original, crop_regions)
 
         assert result.image.shape == (20, 20, 3)
         assert result.offset == Point(x=10, y=10)
@@ -240,17 +240,17 @@ class TestCropFunction:
 
         # Test percentage strings
         crop_regions = CropRegions(left="10%", right="15%", top="5%", bottom="20%")
-        result = crop(original, crop_regions)
+        result = Cropping.crop(original, crop_regions)
         assert result.image.shape == (75, 75, 3)  # 100-5-20 x 100-10-15
 
         # Test pixel strings
         crop_regions = CropRegions(left="10px", right="15px", top="5px", bottom="20px")
-        result = crop(original, crop_regions)
+        result = Cropping.crop(original, crop_regions)
         assert result.image.shape == (75, 75, 3)  # Same result
 
         # Test mixed string formats
         crop_regions = CropRegions(left="0.1", right="15", top="5%", bottom="20px")
-        result = crop(original, crop_regions)
+        result = Cropping.crop(original, crop_regions)
         assert result.image.shape == (75, 75, 3)  # Same result
 
     @pytest.mark.parametrize(
@@ -264,7 +264,7 @@ class TestCropFunction:
         crop_regions = CropRegions(left=0.1, right=0.1, top=0.1, bottom=0.1)
 
         if width > 2 and height > 2:  # Only test if there's room to crop
-            result = crop(original, crop_regions)
+            result = Cropping.crop(original, crop_regions)
 
             expected_width = width - int(width * 0.1) - int(width * 0.1)
             expected_height = height - int(height * 0.1) - int(height * 0.1)
@@ -283,7 +283,7 @@ class TestCropFunction:
         original = TestImageGeneration.create_test_image(50, 50)
         crop_regions = CropRegions(left=5, top=10)
 
-        result = crop(original, crop_regions)
+        result = Cropping.crop(original, crop_regions)
 
         assert hasattr(result, "image")
         assert hasattr(result, "offset")
@@ -299,7 +299,7 @@ class TestCropFunction:
         original[5, 5] = [255, 128, 64]  # Distinctive pixel
 
         crop_regions = CropRegions(left=2, right=2, top=2, bottom=2)
-        result = crop(original, crop_regions)
+        result = Cropping.crop(original, crop_regions)
 
         # The distinctive pixel should now be at position (3, 3) in cropped image
         assert result.image.shape == (6, 6, 3)
@@ -310,7 +310,7 @@ class TestCropFunction:
         original = TestImageGeneration.create_test_image(333, 333)  # Odd number
         crop_regions = CropRegions(left=1 / 3, right=1 / 3, top=0.1, bottom=0.1)
 
-        result = crop(original, crop_regions)
+        result = Cropping.crop(original, crop_regions)
 
         # Should handle float precision gracefully
         left_px = int(333 * (1 / 3))  # 111

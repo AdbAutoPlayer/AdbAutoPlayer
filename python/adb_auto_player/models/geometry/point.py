@@ -4,7 +4,7 @@ import math
 from dataclasses import dataclass
 
 import numpy as np
-from adb_auto_player.util import to_int_if_needed
+from adb_auto_player.util import TypeHelper
 
 from .coordinates import Coordinates
 
@@ -53,8 +53,8 @@ class Point(Coordinates):
         """Create Point from numpy array."""
         assert array.shape == (2,), "Input array must be 1-dimensional with 2 elements"
 
-        x = to_int_if_needed(array[0])
-        y = to_int_if_needed(array[1])
+        x = TypeHelper.to_int_if_needed(array[0])
+        y = TypeHelper.to_int_if_needed(array[1])
         return cls(x, y)
 
     def to_numpy(self) -> np.ndarray:

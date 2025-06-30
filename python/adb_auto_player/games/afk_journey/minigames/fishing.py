@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import GameTimeoutError
-from adb_auto_player.image_manipulation import crop
+from adb_auto_player.image_manipulation import Cropping
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Coordinates, Point
 from adb_auto_player.models.image_manipulation import CropRegions
@@ -166,7 +166,8 @@ class Fishing(AFKJourneyBase):
             screenshot = self.get_screenshot()
             if count % check_book_at == 0:
                 if not thread or not thread.is_alive():
-                    self.tap(STRONG_PULL, blocking=False)
+                    # don't log this its clicking like 5 million times
+                    self.tap(STRONG_PULL, blocking=False, log_message=None)
                 if self.game_find_template_match(
                     "fishing/book.png",
                     crop_regions=CropRegions(left=0.9, bottom=0.9),
@@ -177,7 +178,7 @@ class Fishing(AFKJourneyBase):
                     # TODO Not sure how to detect a catch or loss here.
                     # Might have to OCR the remaining attempts?
                     break
-            cropped = crop(
+            cropped = Cropping.crop(
                 screenshot,
                 CropRegions(left=0.1, right=0.1, top="980px", bottom="740px"),
             )

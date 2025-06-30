@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 from adb_auto_player.ipc import LogLevel
-from adb_auto_player.util import create_log_message
+from adb_auto_player.util import LogMessageFactory
 from adb_auto_player.util.traceback_helper import SourceInfo
 
 
@@ -42,10 +42,10 @@ class TestCreateLogMessage:
         )
 
         with patch(
-            "adb_auto_player.util.traceback_helper.extract_source_info",
+            "adb_auto_player.util.traceback_helper.TracebackHelper.extract_source_info",
             return_value=mock_source_info,
         ):
-            result = create_log_message(record)
+            result = LogMessageFactory.create_log_message(record)
 
         assert result.level == LogLevel.DEBUG
         assert result.message == "Debug message"
@@ -65,10 +65,10 @@ class TestCreateLogMessage:
         )
 
         with patch(
-            "adb_auto_player.util.traceback_helper.extract_source_info",
+            "adb_auto_player.util.traceback_helper.TracebackHelper.extract_source_info",
             return_value=mock_source_info,
         ):
-            result = create_log_message(record)
+            result = LogMessageFactory.create_log_message(record)
 
         assert result.level == LogLevel.INFO
 
@@ -83,10 +83,10 @@ class TestCreateLogMessage:
         )
 
         with patch(
-            "adb_auto_player.util.traceback_helper.extract_source_info",
+            "adb_auto_player.util.traceback_helper.TracebackHelper.extract_source_info",
             return_value=mock_source_info,
         ):
-            result = create_log_message(record)
+            result = LogMessageFactory.create_log_message(record)
 
         assert result.level == LogLevel.WARNING
 
@@ -101,10 +101,10 @@ class TestCreateLogMessage:
         )
 
         with patch(
-            "adb_auto_player.util.traceback_helper.extract_source_info",
+            "adb_auto_player.util.traceback_helper.TracebackHelper.extract_source_info",
             return_value=mock_source_info,
         ):
-            result = create_log_message(record)
+            result = LogMessageFactory.create_log_message(record)
 
         assert result.level == LogLevel.ERROR
 
@@ -119,10 +119,10 @@ class TestCreateLogMessage:
         )
 
         with patch(
-            "adb_auto_player.util.traceback_helper.extract_source_info",
+            "adb_auto_player.util.traceback_helper.TracebackHelper.extract_source_info",
             return_value=mock_source_info,
         ):
-            result = create_log_message(record)
+            result = LogMessageFactory.create_log_message(record)
 
         assert result.level == LogLevel.FATAL
 
@@ -137,10 +137,12 @@ class TestCreateLogMessage:
         )
 
         with patch(
-            "adb_auto_player.util.traceback_helper.extract_source_info",
+            "adb_auto_player.util.traceback_helper.TracebackHelper.extract_source_info",
             return_value=mock_source_info,
         ):
-            result = create_log_message(record, message="Custom message")
+            result = LogMessageFactory.create_log_message(
+                record, message="Custom message"
+            )
 
         assert result.message == "Custom message"
 
@@ -155,10 +157,10 @@ class TestCreateLogMessage:
         )
 
         with patch(
-            "adb_auto_player.util.traceback_helper.extract_source_info",
+            "adb_auto_player.util.traceback_helper.TracebackHelper.extract_source_info",
             return_value=mock_source_info,
         ):
-            result = create_log_message(record, html_class="special")
+            result = LogMessageFactory.create_log_message(record, html_class="special")
 
         assert result.html_class == "special"
 
@@ -173,9 +175,9 @@ class TestCreateLogMessage:
         )
 
         with patch(
-            "adb_auto_player.util.traceback_helper.extract_source_info",
+            "adb_auto_player.util.traceback_helper.TracebackHelper.extract_source_info",
             return_value=mock_source_info,
         ):
-            result = create_log_message(record)
+            result = LogMessageFactory.create_log_message(record)
 
         assert result.level == LogLevel.DEBUG
