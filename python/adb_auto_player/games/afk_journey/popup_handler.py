@@ -37,7 +37,7 @@ season_talent_messages = [
     PopupMessage(
         # No hero is placed on the Talent Buff Tile.
         # Do you want to start the battle anyways?
-        text=("No hero is placed on the Talent Buff Tile"),
+        text="No hero is placed on the Talent Buff Tile",
         click_dont_remind_me=True,
     ),
 ]
