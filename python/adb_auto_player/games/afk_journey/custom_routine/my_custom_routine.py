@@ -12,4 +12,7 @@ class AFKJCustomRoutine(AFKJourneyBase):
         name="AFKJCustomRoutine",
     )
     def _execute(self):
+        # This is used to check whether it is AFKJ Global or VN,
+        # needed to restart game between Tasks if necessary.
+        self.open_eyes(device_streaming=False)
         self._my_custom_routine()

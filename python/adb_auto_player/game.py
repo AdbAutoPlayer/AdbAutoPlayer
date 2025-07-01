@@ -1128,10 +1128,6 @@ class Game:
         return self._template_dir_path
 
     def _my_custom_routine(self) -> None:
-        # This is used to check whether it is AFKJ Global or VN,
-        # needed to restart game between Tasks if necessary.
-        self.open_eyes(device_streaming=False)
-
         config = self.get_config().my_custom_routine
         if not config.daily_tasks and not config.repeating_tasks:
             logging.error(
