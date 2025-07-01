@@ -2,6 +2,7 @@ import logging
 import time
 from abc import ABC
 from dataclasses import dataclass
+from difflib import SequenceMatcher
 
 import numpy as np
 from adb_auto_player import Game
@@ -129,6 +130,56 @@ class PopupPreprocessResult:
     dont_remind_me_checkbox: TemplateMatchResult | None = None
 
 
+def _fuzzy_substring_match(
+    text: str,
+    pattern: str,
+    similarity_threshold: ConfidenceValue = ConfidenceValue("80%"),
+) -> bool:
+    """Check if pattern exists as a fuzzy substring in text.
+
+    Args:
+        text: The text to search in (OCR result)
+        pattern: The pattern to search for (popup message text)
+        similarity_threshold: Minimum similarity ratio (0.0 to 1.0)
+
+    Returns:
+        bool: True if fuzzy match found, False otherwise
+    """
+    text_lower = text.lower()
+    pattern_lower = pattern.lower()
+
+    # If pattern is longer than text, no match possible
+    if len(pattern_lower) > len(text_lower):
+        return False
+
+    # Check all possible substrings of text with the same length as pattern
+    for i in range(len(text_lower) - len(pattern_lower) + 1):
+        substring = text_lower[i : i + len(pattern_lower)]
+        similarity = SequenceMatcher(None, substring, pattern_lower).ratio()
+        if similarity >= similarity_threshold:
+            return True
+
+    return False
+
+
+def _find_matching_popup(
+    ocr_text: str, similarity_threshold: ConfidenceValue = ConfidenceValue("80%")
+) -> PopupMessage | None:
+    """Find matching popup message using fuzzy substring matching.
+
+    Args:
+        ocr_text: Text detected by OCR
+        similarity_threshold: Minimum similarity ratio for fuzzy matching
+
+    Returns:
+        PopupMessage or None if no match found
+    """
+    for popup in popup_messages:
+        if _fuzzy_substring_match(ocr_text, popup.text, similarity_threshold):
+            return popup
+    return None
+
+
 class AFKJourneyPopupHandler(Game, ABC):
     def handle_confirmation_popups(self) -> None:
         """Handles multiple popups."""
@@ -162,9 +213,7 @@ class AFKJourneyPopupHandler(Game, ABC):
 
         matching_popup: PopupMessage | None = None
         for i, result in enumerate(ocr_results):
-            matching_popup = next(
-                (popup for popup in popup_messages if popup.text in result.text), None
-            )
+            matching_popup = _find_matching_popup(result.text)
             if matching_popup:
                 break
 
@@ -257,3 +306,59 @@ class AFKJourneyPopupHandler(Game, ABC):
             button=button,
             dont_remind_me_checkbox=checkbox,
         )
+
+
+if __name__ == "__main__":
+    """Test function to check popup message matching."""
+    # Test cases
+    test_strings = [
+        "Spend to challenge this stage apain?",  # OCR error: 'g' -> 'p'
+        "Spend 2000 Gold to challenge this stage apain?",  # OCR error with prefix
+        "to challenge this stage again?",  # Exact match
+        "Are you sure you want to exit the gane",  # OCR error: 'm' -> 'n'
+        "Your formation is imcomplete.",  # OCR error: 'n' -> 'm'
+        "Skip this batlle?",  # OCR error: 't' -> 'l'
+        "Unknown popup message",  # Should not match
+        "Spend 5000 Gold to challenge this stage apain?",
+        # Longer prefix with error
+    ]
+
+    print("Testing popup message matching with fuzzy logic:")
+    print("=" * 60)
+
+    for test_string in test_strings:
+        matching_popup_message = _find_matching_popup(
+            test_string,
+        )
+
+        print(f"Input: '{test_string}'")
+        if matching_popup_message:
+            print(f"  ✓ Matched: '{matching_popup_message.text}'")
+            print(f"  Ignore: {matching_popup_message.ignore}")
+            print(
+                "  Click 'Don't remind me': "
+                f"{matching_popup_message.click_dont_remind_me}"
+            )
+        else:
+            print("  ✗ No match found")
+        print()
+
+    # Interactive testing
+    print("Interactive testing (press Enter with empty input to exit):")
+    print("-" * 50)
+    while True:
+        user_input = input("Enter OCR text to test: ").strip()
+        if not user_input:
+            break
+
+        matching_popup_message = _find_matching_popup(user_input)
+        if matching_popup_message:
+            print(f"  ✓ Matched: '{matching_popup_message.text}'")
+            print(f"  Ignore: {matching_popup_message.ignore}")
+            print(
+                "  Click 'Don't remind me': "
+                f"{matching_popup_message.click_dont_remind_me}"
+            )
+        else:
+            print("  ✗ No match found")
+        print()
