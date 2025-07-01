@@ -2,7 +2,6 @@ import logging
 import time
 from abc import ABC
 from dataclasses import dataclass
-from difflib import SequenceMatcher
 
 import numpy as np
 from adb_auto_player import Game
@@ -13,6 +12,7 @@ from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import MatchMode, TemplateMatchResult
 from adb_auto_player.ocr import PSM, TesseractBackend, TesseractConfig
+from adb_auto_player.util import StringHelper
 
 
 @dataclass(frozen=True)
@@ -157,38 +157,6 @@ class PopupPreprocessResult:
     dont_remind_me_checkbox: TemplateMatchResult | None = None
 
 
-def _fuzzy_substring_match(
-    text: str,
-    pattern: str,
-    similarity_threshold: ConfidenceValue = ConfidenceValue("80%"),
-) -> bool:
-    """Check if pattern exists as a fuzzy substring in text.
-
-    Args:
-        text: The text to search in (OCR result)
-        pattern: The pattern to search for (popup message text)
-        similarity_threshold: Minimum similarity ratio (0.0 to 1.0)
-
-    Returns:
-        bool: True if fuzzy match found, False otherwise
-    """
-    text_lower = text.lower()
-    pattern_lower = pattern.lower()
-
-    # If pattern is longer than text, no match possible
-    if len(pattern_lower) > len(text_lower):
-        return False
-
-    # Check all possible substrings of text with the same length as pattern
-    for i in range(len(text_lower) - len(pattern_lower) + 1):
-        substring = text_lower[i : i + len(pattern_lower)]
-        similarity = SequenceMatcher(None, substring, pattern_lower).ratio()
-        if similarity >= similarity_threshold:
-            return True
-
-    return False
-
-
 def _find_matching_popup(
     ocr_text: str, similarity_threshold: ConfidenceValue = ConfidenceValue("80%")
 ) -> PopupMessage | None:
@@ -202,7 +170,11 @@ def _find_matching_popup(
         PopupMessage or None if no match found
     """
     for popup in popup_messages:
-        if _fuzzy_substring_match(ocr_text, popup.text, similarity_threshold):
+        if StringHelper.fuzzy_substring_match(
+            ocr_text,
+            popup.text,
+            similarity_threshold,
+        ):
             return popup
     return None
 
