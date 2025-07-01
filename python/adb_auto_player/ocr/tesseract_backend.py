@@ -1,5 +1,6 @@
 """Tesseract OCR backend implementation."""
 
+import logging
 import os
 import platform
 import subprocess
@@ -18,6 +19,8 @@ from .tesseract_config import TesseractConfig
 from .tesseract_lang import Lang
 
 _NUM_COLORS_IN_RGB = 3
+
+logging.getLogger("pytesseract").setLevel(logging.ERROR)
 
 
 class _GroupingLevel(IntEnum):
