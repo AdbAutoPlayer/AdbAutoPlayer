@@ -2,16 +2,17 @@ import logging
 import time
 from abc import ABC
 from dataclasses import dataclass
-from difflib import SequenceMatcher
 
 import numpy as np
 from adb_auto_player import Game
+from adb_auto_player.exceptions import AutoPlayerWarningError
 from adb_auto_player.image_manipulation import Color, ColorFormat
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import MatchMode, TemplateMatchResult
 from adb_auto_player.ocr import PSM, TesseractBackend, TesseractConfig
+from adb_auto_player.util import StringHelper
 
 
 @dataclass(frozen=True)
@@ -23,56 +24,51 @@ class PopupMessage:
     hold_to_confirm: bool = False
     hold_duration_seconds: float = 5.0
     ignore: bool = False
+    exception_to_raise: Exception | None = None
 
 
-# You do not actually need to add the whole text of the Popup Message
-# A snippet works.
-popup_messages: list[PopupMessage] = [
-    # Exit Game
+season_talent_messages = [
     PopupMessage(
-        text="Are you sure you want to exit the game",
-        # Does not have "remind me" checkbox
-    ),
-    # Season Talent Stages
-    PopupMessage(
-        text=(
-            "You haven't activated any Season Faction Talent."
-            # Do you want to start the battle anyway?
-        ),
+        # You haven't activated any Season Faction Talent.
+        # Do you want to start the battle anyway?
+        text="You haven't activated any Season Faction Talent",
         click_dont_remind_me=True,
     ),
     PopupMessage(
-        text=(
-            "No hero is placed on the Talent Buff Tile. "
-            "Do you want to start the battle anyways?"
-        ),
+        # No hero is placed on the Talent Buff Tile.
+        # Do you want to start the battle anyways?
+        text=("No hero is placed on the Talent Buff Tile"),
         click_dont_remind_me=True,
     ),
-    # General Battle
+]
+
+general_battle_messages = [
     PopupMessage(
         text="Skip this battle?",
-        # Does not have "remind me" checkbox
+        click_dont_remind_me=False,
     ),
     PopupMessage(
-        text="Your formation is incomplete.",
         # There are 2 different messages for this
         # "Your formation is incomplete. Begin battle anyway?"
         # "Your formation is incomplete. Turn on Auto Battle mode anyway? ..."
+        text="Your formation is incomplete",
         click_dont_remind_me=True,
     ),
-    # Arena
+]
+
+arena_messages = [
     PopupMessage(
-        text="Spend to purchase Warrior's Guarantee",
         # Daily attempts: x/5
+        text="Spend to purchase Warrior's Guarantee",
         ignore=True,
     ),
-    # Arcane Labyrinth
+]
+
+arcane_labyrinth_messages = [
     PopupMessage(
-        text="Do you still want to start your exploration?",
-        # partial text because full text did not get detected, but does not matter.
-        # claimed the Clear Rewards of current difficulty.
         # You won't receive any rewards for attempting this difficulty outside of
         # the event period. Do you still want to start your exploration?
+        text="Do you still want to start your exploration?",
         click_dont_remind_me=False,  # I think it does not have one
     ),
     PopupMessage(
@@ -80,46 +76,77 @@ popup_messages: list[PopupMessage] = [
         confirm_button_template="arcane_labyrinth/hold_to_exit.png",
         hold_to_confirm=True,
         hold_duration_seconds=5.0,
-        # Does not have "remind me" checkbox
+        click_dont_remind_me=False,
     ),
-    # Duras Trials
+]
+
+duras_trials_messages = [
     PopupMessage(
-        text="Keep challenging this stage?",
         # You have made multiple attempts.
         # Keep challenging this stage?
         # Challenge Attempts: x
-        click_dont_remind_me=False,  # I think it does not have one
+        text="Keep challenging this stage?",
+        click_dont_remind_me=False,
     ),
     PopupMessage(
-        # possibly appears in other places too
+        # Spend x to challenge this stage again?
         text="to challenge this stage again?",
-        # Spend 2000 to challenge this stage again?
         ignore=True,  # handled elsewhere
+        # possibly appears in other places
     ),
     PopupMessage(
-        # Should probably throw an exception or something
-        text="Please wait for the reset",
         # Multiple attempts made. Please wait for the reset.
-        ignore=True,
+        text="Please wait for the reset",
+        exception_to_raise=AutoPlayerWarningError(
+            "All attempts used, have to wait for reset."
+        ),
     ),
-    # Emporium, other places?
     PopupMessage(
+        text="Blessed Heroes are not deployed",
+        click_dont_remind_me=True,
+    ),
+]
+
+misc_messages = [
+    PopupMessage(
+        # Emporium
         text="Confirm to use Diamonds?",
         ignore=True,
     ),
-    # Fishing
     PopupMessage(
-        text="You are currently fishing.",
-        # If you quit this fishing attempt will fail. Quit anyway?
-        # Does not have "remind me" checkbox
-    ),
-    # Legend Trial
-    PopupMessage(
-        text="Legend Trial has been refreshed.",
-        ignore=True,
-        # Would make sense to throw an exception for this
+        text="Are you sure you want to exit the game",
+        click_dont_remind_me=False,
     ),
 ]
+
+fishing_messages = [
+    PopupMessage(
+        # You are currently fishing.
+        # If you quit this fishing attempt will fail. Quit anyway?
+        text="You are currently fishing",
+        click_dont_remind_me=False,
+    ),
+]
+
+legend_trial_messages = [
+    PopupMessage(
+        text="Legend Trial has been refreshed",
+        ignore=True,
+        exception_to_raise=AutoPlayerWarningError("Legend Trial has been refreshed."),
+    ),
+]
+
+# Combine all messages into one list
+popup_messages: list[PopupMessage] = (
+    season_talent_messages
+    + general_battle_messages
+    + arena_messages
+    + arcane_labyrinth_messages
+    + duras_trials_messages
+    + misc_messages
+    + fishing_messages
+    + legend_trial_messages
+)
 
 
 @dataclass(frozen=True)
@@ -128,38 +155,6 @@ class PopupPreprocessResult:
     crop_offset: Point
     button: TemplateMatchResult
     dont_remind_me_checkbox: TemplateMatchResult | None = None
-
-
-def _fuzzy_substring_match(
-    text: str,
-    pattern: str,
-    similarity_threshold: ConfidenceValue = ConfidenceValue("80%"),
-) -> bool:
-    """Check if pattern exists as a fuzzy substring in text.
-
-    Args:
-        text: The text to search in (OCR result)
-        pattern: The pattern to search for (popup message text)
-        similarity_threshold: Minimum similarity ratio (0.0 to 1.0)
-
-    Returns:
-        bool: True if fuzzy match found, False otherwise
-    """
-    text_lower = text.lower()
-    pattern_lower = pattern.lower()
-
-    # If pattern is longer than text, no match possible
-    if len(pattern_lower) > len(text_lower):
-        return False
-
-    # Check all possible substrings of text with the same length as pattern
-    for i in range(len(text_lower) - len(pattern_lower) + 1):
-        substring = text_lower[i : i + len(pattern_lower)]
-        similarity = SequenceMatcher(None, substring, pattern_lower).ratio()
-        if similarity >= similarity_threshold:
-            return True
-
-    return False
 
 
 def _find_matching_popup(
@@ -175,20 +170,28 @@ def _find_matching_popup(
         PopupMessage or None if no match found
     """
     for popup in popup_messages:
-        if _fuzzy_substring_match(ocr_text, popup.text, similarity_threshold):
+        if StringHelper.fuzzy_substring_match(
+            ocr_text,
+            popup.text,
+            similarity_threshold,
+        ):
             return popup
     return None
 
 
 class AFKJourneyPopupHandler(Game, ABC):
-    def handle_confirmation_popups(self) -> None:
+    def handle_confirmation_popups(self) -> bool:
         """Handles multiple popups."""
         max_popups = 5
         count = 0
+
+        result = False
         while count < max_popups and self._handle_confirmation_popup():
             count += 1
+            result = True
+        return result
 
-    def _handle_confirmation_popup(self) -> bool:
+    def _handle_confirmation_popup(self) -> PopupMessage | None:
         """Confirm popups.
 
         Returns:
@@ -199,7 +202,7 @@ class AFKJourneyPopupHandler(Game, ABC):
         image = self.get_screenshot()
         preprocess_result = self._preprocess_for_popup(image)
         if not preprocess_result:
-            return False
+            return None
 
         ocr_results = ocr.detect_text_blocks(
             image=preprocess_result.cropped_image, min_confidence=ConfidenceValue("80%")
@@ -222,10 +225,13 @@ class AFKJourneyPopupHandler(Game, ABC):
                 "Unknown popup detected, "
                 f"please post on Discord so it can be added: {ocr_results}"
             )
-            return False
+            return None
+
+        if matching_popup.exception_to_raise:
+            raise matching_popup.exception_to_raise
 
         if matching_popup.ignore:
-            return False
+            return None
 
         if matching_popup.click_dont_remind_me:
             if preprocess_result.dont_remind_me_checkbox:
@@ -245,7 +251,7 @@ class AFKJourneyPopupHandler(Game, ABC):
         result: PopupPreprocessResult,
         popup: PopupMessage,
         image: np.ndarray,
-    ) -> bool:
+    ) -> PopupMessage | None:
         if result.button.template == popup.confirm_button_template:
             button: TemplateMatchResult | None = result.button
         else:
@@ -255,14 +261,14 @@ class AFKJourneyPopupHandler(Game, ABC):
             )
 
         if not button:
-            return False
+            return None
 
         if popup.hold_to_confirm:
             self.hold(coordinates=button, duration=popup.hold_duration_seconds)
         else:
             self.tap(coordinates=button)
         time.sleep(3)
-        return True
+        return popup
 
     def _preprocess_for_popup(self, image: np.ndarray) -> PopupPreprocessResult | None:
         height, width = image.shape[:2]
