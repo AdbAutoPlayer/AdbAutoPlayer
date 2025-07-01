@@ -446,12 +446,12 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         while count < attempts:
             count += 1
             logging.info(f"Starting Battle #{count}")
-            if self.battle_state.section_header:
-                SummaryGenerator.increment(self.battle_state.section_header, "Battles")
-
             if not self._start_battle():
                 result = False
                 break
+
+            if self.battle_state.section_header:
+                SummaryGenerator.increment(self.battle_state.section_header, "Battles")
 
             match = self.wait_for_any_template(
                 templates=battle_over_templates,
