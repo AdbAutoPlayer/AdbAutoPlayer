@@ -115,9 +115,9 @@ class SeasonLegendTrial(AFKJourneyBase):
                 )
                 count += 1
                 if self.battle_state.section_header:
-                    logging.info(f"{self.battle_state.section_header} pushed: {count}")
+                    logging.info(f"{self.battle_state.section_header} cleared: {count}")
                     SummaryGenerator.increment(
-                        self.battle_state.section_header, "Pushed"
+                        self.battle_state.section_header, "Cleared"
                     )
 
                 match match.template:
