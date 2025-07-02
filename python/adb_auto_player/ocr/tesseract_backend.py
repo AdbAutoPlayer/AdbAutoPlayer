@@ -87,8 +87,8 @@ def _initialize_tesseract() -> None:
             raise RuntimeError(f"Tesseract not found in PATH: {e}")
 
         fallback_paths = [
-            ConfigLoader().binaries_dir / "tesseract" / "tesseract.exe",
-            ConfigLoader().binaries_dir / "windows" / "tesseract" / "tesseract.exe",
+            ConfigLoader.binaries_dir() / "tesseract" / "tesseract.exe",
+            ConfigLoader.binaries_dir() / "windows" / "tesseract" / "tesseract.exe",
         ]
 
         for fallback_path in fallback_paths:

@@ -240,7 +240,7 @@ class Game:
         self.check_requirements()
 
         config_streaming = (
-            ConfigLoader().main_config.get("device", {}).get("streaming", True)
+            ConfigLoader.main_config().get("device", {}).get("streaming", True)
         )
         if device_streaming and not config_streaming:
             logging.warning("Device Streaming is disabled in General Settings")
@@ -1068,7 +1068,7 @@ class Game:
     ) -> None:
         if self.disable_debug_screenshots:
             return
-        logging_config = ConfigLoader().main_config.get("logging", {})
+        logging_config = ConfigLoader.main_config().get("logging", {})
         debug_screenshot_save_num = logging_config.get("debug_save_screenshots", 60)
 
         if debug_screenshot_save_num <= 0 or screenshot is None:
@@ -1111,7 +1111,7 @@ class Game:
             module = self._get_game_module()
 
             self._config_file_path = (
-                ConfigLoader().games_dir / module / (snake_to_pascal(module) + ".toml")
+                ConfigLoader.games_dir() / module / (snake_to_pascal(module) + ".toml")
             )
             logging.debug(f"{module} config path: {self._config_file_path}")
 
@@ -1122,7 +1122,7 @@ class Game:
         if self._template_dir_path is None:
             module = self._get_game_module()
 
-            self._template_dir_path = ConfigLoader().games_dir / module / "templates"
+            self._template_dir_path = ConfigLoader.games_dir() / module / "templates"
             logging.debug(f"{module} template path: {self._template_dir_path}")
 
         return self._template_dir_path
