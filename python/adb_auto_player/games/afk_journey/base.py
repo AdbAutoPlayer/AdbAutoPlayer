@@ -88,7 +88,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             to the current game mode.
         """
         match self.battle_state.mode:
-            case Mode.DURAS_TRIALS:
+            case Mode.DURAS_TRIALS | Mode.DURAS_NIGHTMARE_TRIALS:
                 return getattr(self.get_config().duras_trials, attribute)
             case Mode.LEGEND_TRIALS:
                 return getattr(self.get_config().legend_trials, attribute)
@@ -387,7 +387,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
 
     def _get_battle_over_templates(self) -> list[str]:
         match self.battle_state.mode:
-            case Mode.AFK_STAGES:
+            case Mode.AFK_STAGES | Mode.SEASON_TALENT_STAGES:
                 return [
                     "next.png",
                     "battle/victory_rewards.png",
@@ -398,7 +398,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                     "afk_stages/tap_to_close.png",
                 ]
 
-            case Mode.DURAS_TRIALS:
+            case Mode.DURAS_TRIALS | Mode.DURAS_NIGHTMARE_TRIALS:
                 return [
                     "duras_trials/no_next.png",
                     "duras_trials/first_clear.png",

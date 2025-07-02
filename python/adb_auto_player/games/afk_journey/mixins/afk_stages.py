@@ -52,8 +52,10 @@ class AFKStagesMixin(AFKJourneyBase):
             season: Push Season Stage if True otherwise push regular AFK Stages
         """
         self.start_up()
-        self.battle_state.mode = Mode.AFK_STAGES
-        self.battle_state.is_season_talent_stages = season
+        self.battle_state.mode = (
+            Mode.SEASON_TALENT_STAGES if season else Mode.AFK_STAGES
+        )
+
         try:
             self._start_afk_stage()
         except AutoPlayerWarningError as e:
@@ -76,18 +78,24 @@ class AFKStagesMixin(AFKJourneyBase):
             self.get_config().afk_stages.skip_manual_formations,
         ):
             stages_pushed += 1
-            logging.info(f"{self.battle_state.section_header} pushed: {stages_pushed}")
+            logging.info(f"{self.battle_state.section_header} cleared: {stages_pushed}")
             if self.battle_state.section_header:
-                SummaryGenerator.increment(self.battle_state.section_header, "Pushed")
+                SummaryGenerator.increment(self.battle_state.section_header, "Cleared")
 
     def _select_afk_stage(self) -> None:
         """Selects an AFK stage template."""
-        if self.battle_state.is_season_talent_stages:
-            logging.debug("Clicking Talent Trials button")
-            self.tap(Point(x=300, y=1610), scale=True)
+        if self.battle_state.mode == Mode.SEASON_TALENT_STAGES:
+            self.tap(
+                Point(x=300, y=1610),
+                scale=True,
+                log_message="Clicking Talent Trials button",
+            )
         else:
-            logging.debug("Clicking Battle button")
-            self.tap(Point(x=800, y=1610), scale=True)
+            self.tap(
+                Point(x=800, y=1610),
+                scale=True,
+                log_message="Clicking Battle button",
+            )
         sleep(2)
         if confirm := self.game_find_template_match(
             template="navigation/confirm.png",
@@ -96,12 +104,9 @@ class AFKStagesMixin(AFKJourneyBase):
             self.tap(confirm)
 
     def check_stages_are_available(self) -> None:
-        if (
-            not self.battle_state.is_season_talent_stages
-            and self.game_find_template_match(
-                "afk_stages/talent_trials_large.png",
-                crop_regions=CropRegions(left=0.2, right=0.2, top=0.5),
-            )
+        if self.battle_state.mode == Mode.AFK_STAGES and self.game_find_template_match(
+            "afk_stages/talent_trials_large.png",
+            crop_regions=CropRegions(left=0.2, right=0.2, top=0.5),
         ):
             raise AutoPlayerWarningError(
                 "AFK Stages not available are they already cleared? Exiting..."
