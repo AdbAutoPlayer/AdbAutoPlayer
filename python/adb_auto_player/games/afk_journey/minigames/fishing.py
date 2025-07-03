@@ -24,6 +24,7 @@ MAX_AVG_INPUT_DELAY_IN_MS = 200  # TODO Change to a reasonable value later
 MAX_AVG_INPUT_DELAY_CANDIDATE = 100
 MAX_SCREENSHOT_DELAY_IN_MS = 100  # TODO Change to a reasonable value later
 MAX_AVG_SCREENSHOT_DELAY_CANDIDATE = 10
+ONE_FRAME = 1.0 / 30.0
 
 
 class Fishing(AFKJourneyBase):
@@ -68,7 +69,12 @@ class Fishing(AFKJourneyBase):
         # after navigation might be easier to intentionally fail the first time to be
         # inside the fishing screen and not the overworld.
 
-        self._fish()
+        if not self._i_am_in_the_fishing_screen():
+            logging.error("Not in Fishing screen")
+            return
+
+        while self._i_am_in_the_fishing_screen():
+            self._fish()
 
     def _warmup_cache_for_all_fishing_templates(self):
         templates = [
@@ -111,7 +117,6 @@ class Fishing(AFKJourneyBase):
 
     def _fish(self) -> None:
         if not self._i_am_in_the_fishing_screen():
-            logging.error("Not in Fishing screen")
             return
 
         btn = self.wait_for_any_template(
@@ -152,8 +157,8 @@ class Fishing(AFKJourneyBase):
                     "fishing/hook_held",
                 ],
                 crop_regions=CropRegions(left=0.3, right=0.3, top=0.5, bottom=0.2),
-                timeout=self.MIN_TIMEOUT,
-                delay=0.05,
+                timeout=5,
+                delay=ONE_FRAME * 4,
                 threshold=ConfidenceValue("60%"),
                 ensure_order=False,
             )
@@ -171,7 +176,12 @@ class Fishing(AFKJourneyBase):
             if count % check_book_at == 0:
                 if not thread or not thread.is_alive():
                     # don't log this its clicking like 5 million times
-                    self.tap(STRONG_PULL, blocking=False, log_message=None)
+                    self.tap(
+                        STRONG_PULL,
+                        blocking=False,
+                        log_message=None,
+                        non_blocking_sleep_duration=ONE_FRAME * 4,
+                    )
                 if self.game_find_template_match(
                     "fishing/book.png",
                     crop_regions=CropRegions(left=0.9, bottom=0.9),
@@ -195,7 +205,8 @@ class Fishing(AFKJourneyBase):
                         distance=(top - middle),
                         thread=thread,
                     )
-
+            else:
+                sleep(ONE_FRAME * 4)
         return
 
     def _handle_hold_for_distance(
