@@ -86,7 +86,12 @@
           callback: () => openGameConfigForm(activeGame),
           isProcessRunning: false,
           option: ipc.MenuOption.createFrom({
-            label: `${activeGame.game_title} Settings`,
+            // This one needs to be translated because of the params
+            label: $t("{{game}} Settings", {
+              game: activeGame.game_title
+                ? $t(activeGame.game_title)
+                : $t("Game"),
+            }),
             category: "Settings, Phone & Debug",
           }),
         });
