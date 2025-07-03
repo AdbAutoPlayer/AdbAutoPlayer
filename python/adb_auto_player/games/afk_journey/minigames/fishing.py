@@ -170,12 +170,14 @@ class Fishing(AFKJourneyBase):
 
         # Fishing Loop
         check_book_at = 20
+        click_strong_pull_at = 10
         count = 0
         thread = None
         while True:
             count += 1
             screenshot = self.get_screenshot()
-            if count % check_book_at == 0:
+
+            if count % click_strong_pull_at == 0:
                 if not thread or not thread.is_alive():
                     # don't log this its clicking like 5 million times
                     self.tap(
@@ -183,6 +185,8 @@ class Fishing(AFKJourneyBase):
                         blocking=False,
                         log_message=None,
                     )
+
+            if count % check_book_at == 0:
                 if self.game_find_template_match(
                     "fishing/book.png",
                     crop_regions=CropRegions(left=0.9, bottom=0.9),
@@ -193,6 +197,7 @@ class Fishing(AFKJourneyBase):
                     # TODO Not sure how to detect a catch or loss here.
                     # Might have to OCR the remaining attempts?
                     break
+
             cropped = Cropping.crop(
                 screenshot,
                 CropRegions(left=0.1, right=0.1, top="980px", bottom="740px"),
