@@ -19,6 +19,7 @@
   import { sortObjectByOrder } from "$lib/orderHelper";
   import type { MenuButton } from "$lib/model";
   import { showErrorToast } from "$lib/utils/error";
+  import { t } from "$lib/i18n/i18n";
 
   let showConfigForm: boolean = $state(false);
   let configFormProps: Record<string, any> = $state({});
@@ -293,7 +294,7 @@
 </script>
 
 <h1 class="pb-4 text-center h1 text-3xl select-none">
-  {activeGame?.game_title ?? "Start any supported Game!"}
+  {$t(activeGame?.game_title || "Start any supported Game!")}
 </h1>
 <div
   class="flex max-h-[70vh] min-h-[20vh] flex-col overflow-hidden card bg-surface-100-900/50 p-4 text-center select-none"
