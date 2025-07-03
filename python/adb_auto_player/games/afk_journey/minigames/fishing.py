@@ -24,7 +24,9 @@ MAX_AVG_INPUT_DELAY_IN_MS = 200  # TODO Change to a reasonable value later
 MAX_AVG_INPUT_DELAY_CANDIDATE = 100
 MAX_SCREENSHOT_DELAY_IN_MS = 100  # TODO Change to a reasonable value later
 MAX_AVG_SCREENSHOT_DELAY_CANDIDATE = 10
-ONE_FRAME = 1.0 / 30.0
+FISHING_DELAY = 1.0 / 30.0  # 1 Frame this is used for the fishing loop
+# without CPU usage will go crazy
+# could potentially be reduced to 1.0 / 60.0 if device streaming at 60 fps
 
 
 class Fishing(AFKJourneyBase):
@@ -158,7 +160,7 @@ class Fishing(AFKJourneyBase):
                 ],
                 crop_regions=CropRegions(left=0.3, right=0.3, top=0.5, bottom=0.2),
                 timeout=5,
-                delay=ONE_FRAME * 4,
+                delay=FISHING_DELAY,
                 threshold=ConfidenceValue("60%"),
                 ensure_order=False,
             )
@@ -180,7 +182,6 @@ class Fishing(AFKJourneyBase):
                         STRONG_PULL,
                         blocking=False,
                         log_message=None,
-                        non_blocking_sleep_duration=ONE_FRAME * 4,
                     )
                 if self.game_find_template_match(
                     "fishing/book.png",
@@ -205,8 +206,8 @@ class Fishing(AFKJourneyBase):
                         distance=(top - middle),
                         thread=thread,
                     )
-            else:
-                sleep(ONE_FRAME * 4)
+            # Without this CPU usage will go insane
+            sleep(FISHING_DELAY)
         return
 
     def _handle_hold_for_distance(
