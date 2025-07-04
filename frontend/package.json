@@ -28,7 +28,6 @@
 		"vite": "^6.3.5"
 	},
 	"dependencies": {
-		"@skeletonlabs/floating-ui-svelte": "^0.3.9",
 		"@tailwindcss/vite": "^4.1.11",
 		"idb": "^8.0.3",
 		"marked": "^15.0.12",
