@@ -89,7 +89,7 @@
   let taskHeader = $state("Tasks");
   let taskBracketInfo = $state("");
   let taskDescription = $state(
-    "These actions will run in the order shown below.",
+    "These tasks will run in the order shown below.",
   );
 
   const lowerName = name.toLowerCase();
@@ -97,12 +97,12 @@
   if (lowerName.includes("daily")) {
     taskHeader = "Daily Tasks";
     taskBracketInfo = "(Run once per day)";
-    taskDescription = "These actions will run once at the start of each day.";
+    taskDescription = "These tasks will run once at the start of each day.";
   } else if (lowerName.includes("repeat")) {
     taskHeader = "Repeating Tasks";
     taskBracketInfo = "(Run continuously)";
     taskDescription =
-      "These actions will run repeatedly in order, over and over again.";
+      "These tasks will run repeatedly in order, over and over again.";
   }
 </script>
 
@@ -136,19 +136,19 @@
       </div>
 
       <!-- Main Content Grid -->
-      <div class="grid grid-cols-1 gap-x-8 gap-y-4 lg:grid-cols-2">
+      <div class="grid grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">
         <!-- Headers Row -->
-        <div class="contents lg:contents">
+        <div class="contents md:contents">
           <!-- Available Tasks Header -->
           <div class="space-y-2">
             <div class="flex items-center gap-3">
               <div
                 class="h-1 w-8 rounded-full bg-gradient-to-r from-tertiary-500 to-tertiary-600"
               ></div>
-              <h3 class="text-surface-700-200 h4">Available Actions</h3>
+              <h3 class="text-surface-700-200 h4">Available Tasks</h3>
             </div>
             <p class="text-surface-500-400 text-sm">
-              Drag actions to the selected panel or double-click to add
+              Drag tasks to the selected panel or double-click to add
             </p>
           </div>
 
@@ -158,22 +158,16 @@
               <div
                 class="h-1 w-8 rounded-full bg-gradient-to-r from-primary-500 to-primary-600"
               ></div>
-              <h3 class="text-surface-700-200 h4">Selected Actions</h3>
-              {#if value.length > 0}
-                <span class="variant-filled-primary badge text-xs">
-                  {value.length}
-                  {value.length === 1 ? "task" : "tasks"}
-                </span>
-              {/if}
+              <h3 class="text-surface-700-200 h4">Selected Tasks</h3>
             </div>
             <p class="text-surface-500-400 text-sm">
-              Actions will execute in the order shown below
+              Tasks will execute in the order shown below
             </p>
           </div>
         </div>
 
         <!-- Boxes Row -->
-        <div class="contents lg:contents">
+        <div class="contents md:contents">
           <!-- Available Tasks Box -->
           <div
             class="min-h-[300px] space-y-3 rounded-lg border border-surface-200 bg-surface-50 p-4 transition-all duration-200 dark:border-surface-700 dark:bg-surface-900/50"
@@ -181,7 +175,7 @@
             {#if constraint.choices.length === 0}
               <div class="flex h-full items-center justify-center">
                 <p class="text-surface-400-500 text-center text-sm">
-                  No actions available
+                  No tasks available
                 </p>
               </div>
             {:else}
@@ -228,7 +222,7 @@
                     ></div>
                   </div>
                   <p class="text-surface-400-500 text-sm">
-                    Drag actions here to add them
+                    Drag tasks here to add them
                   </p>
                 </div>
               </div>
