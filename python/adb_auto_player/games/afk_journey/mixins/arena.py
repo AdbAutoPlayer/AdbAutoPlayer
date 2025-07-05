@@ -5,12 +5,15 @@ from time import sleep
 
 from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import GameTimeoutError
+from adb_auto_player.game import Game
+from adb_auto_player.games.afk_journey.afkjourneynavigation import (
+    AFKJourneyNavigation as Navigation,
+)
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
-from adb_auto_player.games.afk_journey.game import Game
 
 
 class ArenaMixin(AFKJourneyBase):
@@ -33,7 +36,7 @@ class ArenaMixin(AFKJourneyBase):
             return
 
         for _ in range(5):
-            if self.game_find_template_match("arena/no_attempts.png"):
+            if Game.game_find_template_match(self, "arena/no_attempts.png"):
                 logging.debug("Free attempts exhausted before 5 attempts.")
                 break
 
@@ -54,7 +57,7 @@ class ArenaMixin(AFKJourneyBase):
     def _enter_arena(self) -> None:
         """Enter Arena."""
         logging.info("Entering Arena...")
-        self.navigate_to_default_state()
+        Navigation.navigate_to_default_state(self)
         Game.tap(self, Point(460, 1830))  # Battle Modes
         try:
             arena_mode = Game.wait_for_template(
@@ -81,9 +84,7 @@ class ArenaMixin(AFKJourneyBase):
         try:
             _ = Game.wait_for_any_template(
                 self,
-                templates=[
-                    "arena/weekly_rewards.png", "arena/weekly_notice.png"
-                ],
+                templates=["arena/weekly_rewards.png", "arena/weekly_notice.png"],
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="No notices found.",
             )
@@ -114,8 +115,7 @@ class ArenaMixin(AFKJourneyBase):
             opponent = Game.wait_for_template(
                 self,
                 template="arena/opponent.png",
-                crop_regions=CropRegions(
-                    right=0.6),  # Target weakest opponent.
+                crop_regions=CropRegions(right=0.6),  # Target weakest opponent.
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Arena opponent.",
             )
@@ -186,10 +186,12 @@ class ArenaMixin(AFKJourneyBase):
             logging.debug("Free attempt found.")
         except GameTimeoutError as fail:
             logging.info(fail)
-            cancel = self.game_find_template_match("arena/cancel_purchase.png")
-            (Game.tap(self, cancel) if cancel else Game.tap(
-                self, Point(550, 1790))  # Cancel fallback
-             )
+            cancel = Game.game_find_template_match(self, "arena/cancel_purchase.png")
+            (
+                Game.tap(self, cancel)
+                if cancel
+                else Game.tap(self, Point(550, 1790))  # Cancel fallback
+            )
 
             return False
 

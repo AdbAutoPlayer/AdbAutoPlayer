@@ -6,6 +6,10 @@ from time import sleep
 
 from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import GameTimeoutError
+from adb_auto_player.game import Game
+from adb_auto_player.games.afk_journey.afkjourneynavigation import (
+    AFKJourneyNavigation as Navigation,
+)
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.games.afk_journey.mixins.afk_stages import AFKStagesMixin
@@ -48,13 +52,17 @@ class DailiesMixin(AFKJourneyBase, ABC):
         """Complete daily chores."""
         self.start_up(device_streaming=False)
         do_arena: bool = self.get_config().dailies.arena_battle
-        self.navigate_to_default_state()
+        Navigation.navigate_to_default_state(self)
 
         self.claim_daily_rewards()
         self.buy_emporium()
         self.single_pull()
         DreamRealmMixin().run_dream_realm(daily=True)  # type: ignore[abstract]
-        ArenaMixin().run_arena() if do_arena else logging.info("Arena battle disabled.")  # type: ignore[abstract]
+        (
+            ArenaMixin().run_arena()
+            if do_arena
+            else logging.info("Arena battle disabled.")
+        )  # type: ignore[abstract]
         self.claim_hamburger()
         self.raise_hero_affinity()
         self.swap_essences()
@@ -92,7 +100,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
             bool: True if a free hourglass was claimed, False otherwise.
         """
         try:
-            free_hourglass = self.wait_for_template(
+            free_hourglass = Game.wait_for_template(
+                self,
                 "dailies/daily_rewards/free_hourglass.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="No more free hourglasses.",
@@ -113,12 +122,13 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def buy_emporium(self) -> None:
         """Purchase single pull and optionally affinity items."""
         logging.info("Entering Mystical House...")
-        self.navigate_to_default_state()
+        Navigation.navigate_to_default_state(self)
         self.tap(Point(310, 1840), scale=True)
 
         try:
             logging.debug("Opening Emporium.")
-            emporium = self.wait_for_template(
+            emporium = Game.wait_for_template(
+                self,
                 "dailies/emporium/emporium.png",
                 threshold=ConfidenceValue("70%"),
                 timeout=self.MIN_TIMEOUT,
@@ -142,7 +152,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
         logging.info("Looking for discount Invite Letter...")
         try:
             logging.debug("Opening Guild Store.")
-            guild_store = self.wait_for_template(
+            guild_store = Game.wait_for_template(
+                self,
                 "dailies/emporium/guild_store.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Guild Store.",
@@ -154,7 +165,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         try:
             logging.debug("Look for discount Invite Letter.")
-            invite_letter = self.wait_for_template(
+            invite_letter = Game.wait_for_template(
+                self,
                 "dailies/emporium/invite_letter.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Discount Invite Letter already purchased.",
@@ -162,7 +174,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
             self.tap(invite_letter)
 
             logging.debug("Confirm purchase.")
-            buy_letter = self.wait_for_template(
+            buy_letter = Game.wait_for_template(
+                self,
                 "dailies/emporium/buy_letter.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to purchase Invite Letter.",
@@ -188,7 +201,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
         logging.info("Looking for affinity items...")
         try:
             logging.debug("Open Friendship Store.")
-            friendship_store = self.wait_for_template(
+            friendship_store = Game.wait_for_template(
+                self,
                 "dailies/emporium/friendship_store.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Friendship Store.",
@@ -246,7 +260,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
         logging.info("Looking for Temporal Essences...")
         try:
             logging.debug("Open Dream Store.")
-            dream_store = self.wait_for_template(
+            dream_store = Game.wait_for_template(
+                self,
                 "dailies/emporium/dream_store.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Dream Store.",
@@ -294,7 +309,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
         logging.info("Navigating to Noble Tavern for daily single pull...")
         try:
             logging.debug("Opening Noble Tavern.")
-            tavern = self.wait_for_template(
+            tavern = Game.wait_for_template(
+                self,
                 "dailies/noble_tavern/noble_tavern.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find the Noble Tavern.",
@@ -303,7 +319,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
             sleep(self.FAST_TIMEOUT)
 
             logging.debug("Select All-Hero Recruitment.")
-            all_hero_recruit = self.wait_for_template(
+            all_hero_recruit = Game.wait_for_template(
+                self,
                 "dailies/noble_tavern/all_hero_recruit.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find All-Hero Recruitment.",
@@ -312,7 +329,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
             sleep(self.FAST_TIMEOUT)
 
             logging.debug("Click Recruit 1.")
-            recruit = self.wait_for_template(
+            recruit = Game.wait_for_template(
+                self,
                 "dailies/noble_tavern/recruit.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="No Invite Letters.",
@@ -328,7 +346,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 self.tap(max_hero_continue)
 
             logging.debug("Wait for back button.")
-            confirm_summon = self.wait_for_template(
+            confirm_summon = Game.wait_for_template(
+                self,
                 "back.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to recruit.",
@@ -345,7 +364,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def claim_hamburger(self) -> None:
         """Claim rewards from hamburger menu."""
-        self.navigate_to_default_state()
+        Navigation.navigate_to_default_state(self)
 
         logging.info("Navigating to Hamburger.")
         self.tap(Point(990, 1840), scale=True)
@@ -364,7 +383,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
         logging.info("Claiming friend rewards.")
         try:
             logging.debug("Click Friends.")
-            friends = self.wait_for_template(
+            friends = Game.wait_for_template(
+                self,
                 "dailies/hamburger/friends.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Friends. Sadge.",
@@ -373,7 +393,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
             sleep(1)
 
             logging.debug("Click Send & Receive.")
-            send_receive = self.wait_for_template(
+            send_receive = Game.wait_for_template(
+                self,
                 "dailies/hamburger/send_receive.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Friend rewards already claimed.",
@@ -394,7 +415,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
         logging.info("Claiming Mail.")
         try:
             logging.debug("Click Mail.")
-            mail = self.wait_for_template(
+            mail = Game.wait_for_template(
+                self,
                 "dailies/hamburger/mail.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Mail.",
@@ -407,7 +429,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         try:
             logging.debug("Click Read All.")
-            read_all = self.wait_for_template(
+            read_all = Game.wait_for_template(
+                self,
                 "dailies/hamburger/read_all.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="No mail.",
@@ -428,7 +451,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
         logging.info("Claim Battle Pass rewards.")
         try:
             logging.debug("Click Noble Path.")
-            battle_pass = self.wait_for_template(
+            battle_pass = Game.wait_for_template(
+                self,
                 "dailies/hamburger/battle_pass.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Battle Pass.",
@@ -458,7 +482,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
         logging.info("Claim Quest rewards.")
         try:
             logging.debug("Click Quests.")
-            quests = self.wait_for_template(
+            quests = Game.wait_for_template(
+                self,
                 "dailies/hamburger/quests.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find daily Quests.",
@@ -500,7 +525,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def raise_hero_affinity(self) -> None:
         """Raise hero affinity with 3 clicks per day."""
-        self.navigate_to_default_state()
+        Navigation.navigate_to_default_state(self)
         sleep(5)
 
         logging.debug("Open Resonating Hall.")
@@ -561,7 +586,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def _swap_essence(self) -> bool:
         """Perform a single essence swap."""
         try:
-            new_actions = self.wait_for_template(
+            new_actions = Game.wait_for_template(
+                self,
                 "resonating_hall/new_actions.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find New Actions button.",
@@ -586,7 +612,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 sleep(self.FAST_TIMEOUT)
 
             logging.debug("Confirm essence swap.")
-            confirm = self.wait_for_template(
+            confirm = Game.wait_for_template(
+                self,
                 "confirm_text.png",
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="Failed to find Confirm button.",

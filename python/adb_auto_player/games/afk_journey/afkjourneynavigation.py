@@ -24,7 +24,9 @@ class AFKJourneyNavigation(Game, ABC):
     RESONATING_HALL_POINT = Point(x=620, y=1830)
     BATTLE_MODES_POINT = Point(x=460, y=1830)
 
-    def navigate_to_default_state(self, ) -> None:
+    def navigate_to_default_state(
+        self,
+    ) -> None:
         """Navigate to main default screen."""
         templates = [
             "popup/quick_purchase.png",
@@ -59,7 +61,8 @@ class AFKJourneyNavigation(Game, ABC):
                 restart_attempted = True
             elif attempts >= max_attempts:
                 raise GameNotRunningOrFrozenError(
-                    "Failed to navigate to default state.")
+                    "Failed to navigate to default state."
+                )
             attempts += 1
 
             result = Game.find_any_template(self, templates)
@@ -98,11 +101,13 @@ class AFKJourneyNavigation(Game, ABC):
         # if your game needs more than 6 minutes to start there is no helping yourself
         max_attempts = 120
         attempts = 0
-        while not Game.find_any_template(
-                self, templates) and Game.is_game_running(self):
+        while not Game.find_any_template(self, templates) and Game.is_game_running(
+            self
+        ):
             if attempts >= max_attempts:
                 raise GameNotRunningOrFrozenError(
-                    "Failed to navigate to default state.")
+                    "Failed to navigate to default state."
+                )
             attempts += 1
             Game.tap(self, self.CENTER_POINT, scale=True)
             sleep(3)
@@ -110,12 +115,12 @@ class AFKJourneyNavigation(Game, ABC):
 
     def _handle_confirm_button(self, coords: Coordinates) -> None:
         if Game.find_any_template(
-                self,
-                templates=[
-                    "navigation/exit_the_game.png",
-                    "navigation/are_you_sure_you_want_to_exit_the_game.png",
-                ],
-                threshold=ConfidenceValue("75%"),
+            self,
+            templates=[
+                "navigation/exit_the_game.png",
+                "navigation/are_you_sure_you_want_to_exit_the_game.png",
+            ],
+            threshold=ConfidenceValue("75%"),
         ):
             x_btn = Game.game_find_template_match(
                 self,
@@ -131,7 +136,6 @@ class AFKJourneyNavigation(Game, ABC):
         sleep(1)
 
     def navigate_to_resonating_hall(self) -> None:
-
         def i_am_in_resonating_hall() -> bool:
             try:
                 _ = Game.wait_for_any_template(
@@ -153,10 +157,10 @@ class AFKJourneyNavigation(Game, ABC):
 
         logging.info("Navigating to the Resonating Hall.")
         if shortcut := Game.game_find_template_match(
-                self,
-                template="navigation/resonating_hall_shortcut",
-                crop_regions=CropRegions(top="80%", left="30%", right="30%"),
-                threshold=ConfidenceValue("75%"),
+            self,
+            template="navigation/resonating_hall_shortcut",
+            crop_regions=CropRegions(top="80%", left="30%", right="30%"),
+            threshold=ConfidenceValue("75%"),
         ):
             Game.tap(self, shortcut)
             sleep(3)
@@ -183,7 +187,8 @@ class AFKJourneyNavigation(Game, ABC):
                     click_count += 1
                     if click_count > max_click_count:
                         raise GameActionFailedError(
-                            "Failed to navigate to the Resonating Hall.")
+                            "Failed to navigate to the Resonating Hall."
+                        )
                 _ = Game.wait_for_any_template(
                     self,
                     templates=[
@@ -201,18 +206,22 @@ class AFKJourneyNavigation(Game, ABC):
         return
 
     def _can_see_time_of_day_button(self) -> bool:
-        return (Game.game_find_template_match(
-            self,
-            "navigation/time_of_day.png",
-            crop_regions=CropRegions(left=0.6, bottom=0.6),
-        ) is not None)
+        return (
+            Game.game_find_template_match(
+                self,
+                "navigation/time_of_day.png",
+                crop_regions=CropRegions(left=0.6, bottom=0.6),
+            )
+            is not None
+        )
 
     def navigate_to_afk_stages_screen(self) -> None:
         logging.info("Navigating to AFK stages screen.")
         self.navigate_to_battle_modes_screen()
 
-        self._tap_till_template_disappears("battle_modes/afk_stage.png",
-                                           ConfidenceValue("75%"))
+        self._tap_till_template_disappears(
+            "battle_modes/afk_stage.png", ConfidenceValue("75%")
+        )
 
         self.wait_for_template(
             template="navigation/resonating_hall_label.png",
@@ -303,8 +312,9 @@ class AFKJourneyNavigation(Game, ABC):
         sleep(1)
         return
 
-    def _find_on_battle_modes(self, template: str,
-                              timeout_message: str) -> TemplateMatchResult:
+    def _find_on_battle_modes(
+        self, template: str, timeout_message: str
+    ) -> TemplateMatchResult:
         if not Game.game_find_template_match(self, template):
             Game.swipe_up(self, sy=1350, ey=500)
 
@@ -377,8 +387,7 @@ class AFKJourneyNavigation(Game, ABC):
                 "arcane_labyrinth/heroes_icon.png",
             ],
             threshold=ConfidenceValue("70%"),
-            timeout=
-            27,  # I imagine this animation can take really long for some people
+            timeout=27,  # I imagine this animation can take really long for some people
             delay=1,
         )
         return

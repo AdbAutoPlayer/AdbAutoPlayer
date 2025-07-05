@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import GameTimeoutError
+from adb_auto_player.game import Game
 from adb_auto_player.image_manipulation import Cropping
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Coordinates, Point
@@ -47,7 +48,7 @@ class Fishing(AFKJourneyBase):
                 "without Device Streaming."
             )
 
-        if self.get_scale_factor() != 1.0:
+        if Game.get_scale_factor(self) != 1.0:
             logging.error(
                 "Fishing is optimized for 1080x1920 it will not work with other "
                 "resolutions."
@@ -93,7 +94,8 @@ class Fishing(AFKJourneyBase):
 
     def _i_am_in_the_fishing_screen(self) -> bool:
         try:
-            _ = self.wait_for_any_template(
+            _ = Game.wait_for_any_template(
+                self,
                 [
                     "fishing/hook_fish",
                     "fishing/hook_fish_big",
@@ -107,7 +109,8 @@ class Fishing(AFKJourneyBase):
             return False
 
         # Check we are in the minigame
-        book = self.game_find_template_match(
+        book = Game.game_find_template_match(
+            self,
             "fishing/book.png",
             crop_regions=CropRegions(left=0.9, bottom=0.9),
             threshold=ConfidenceValue("70%"),
@@ -121,7 +124,8 @@ class Fishing(AFKJourneyBase):
         if not self._i_am_in_the_fishing_screen():
             return
 
-        btn = self.wait_for_any_template(
+        btn = Game.wait_for_any_template(
+            self,
             [
                 "fishing/hook_fish",
                 "fishing/hook_fish_big",
@@ -135,9 +139,10 @@ class Fishing(AFKJourneyBase):
         )
 
         # TODO could use some code so it always hit the middle in the pull size slider
-        self.tap(btn)
+        Game.tap(self, btn)
         sleep(1)
-        _ = self.wait_for_any_template(
+        _ = Game.wait_for_any_template(
+            self,
             templates=[
                 "fishing/hook_fish",
                 "fishing/hook_fish_big",
@@ -149,11 +154,12 @@ class Fishing(AFKJourneyBase):
             ensure_order=False,
         )
         sleep(0.6)
-        self.tap(btn, blocking=False)
+        Game.tap(self, btn, blocking=False)
 
         # TODO This part is a bit sus. Needs to be double checked.
         try:
-            _ = self.wait_for_any_template(
+            _ = Game.wait_for_any_template(
+                self,
                 [
                     "fishing/hook",
                     "fishing/hook_held",
@@ -175,19 +181,21 @@ class Fishing(AFKJourneyBase):
         thread = None
         while True:
             count += 1
-            screenshot = self.get_screenshot()
+            screenshot = Game.get_screenshot(self)
 
             if count % click_strong_pull_at == 0:
                 if not thread or not thread.is_alive():
                     # don't log this its clicking like 5 million times
-                    self.tap(
+                    Game.tap(
+                        self,
                         STRONG_PULL,
                         blocking=False,
                         log_message=None,
                     )
 
             if count % check_book_at == 0:
-                if self.game_find_template_match(
+                if Game.game_find_template_match(
+                    self,
                     "fishing/book.png",
                     crop_regions=CropRegions(left=0.9, bottom=0.9),
                     screenshot=screenshot,
@@ -222,20 +230,20 @@ class Fishing(AFKJourneyBase):
     ) -> threading.Thread | None:
         # TODO distance and duration could be adjusted
         if distance > DISTANCE_600:
-            return self.hold(btn, duration=1.75, blocking=False)
+            return Game.hold(self, btn, duration=1.75, blocking=False)
         if distance > DISTANCE_400:
-            return self.hold(btn, duration=1.25, blocking=False)
+            return Game.hold(self, btn, duration=1.25, blocking=False)
         if distance > DISTANCE_200:
-            return self.hold(btn, duration=0.75, blocking=False)
+            return Game.hold(self, btn, duration=0.75, blocking=False)
         if distance > DISTANCE_100:
-            return self.hold(btn, duration=0.5, blocking=False)
+            return Game.hold(self, btn, duration=0.5, blocking=False)
         if distance > DISTANCE_50:
-            return self.hold(btn, duration=0.25, blocking=False)
+            return Game.hold(self, btn, duration=0.25, blocking=False)
         return thread
 
     def _passed_screenshot_delay_check(self) -> bool:
         start_time = time.time()
-        _ = self.get_screenshot()
+        _ = Game.get_screenshot(self)
         total_time = (time.time() - start_time) * 1000
         if total_time > MAX_SCREENSHOT_DELAY_IN_MS:
             logging.error(
@@ -270,7 +278,7 @@ class Fishing(AFKJourneyBase):
         iterations = 10
         for _ in range(iterations):
             start_time = time.time()
-            self.tap(point_off_screen, log_message=None)
+            Game.tap(self, point_off_screen, log_message=None)
             total_time += (time.time() - start_time) * 1000
         average_time = total_time / iterations
         if average_time > MAX_AVG_INPUT_DELAY_IN_MS:

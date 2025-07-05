@@ -12,7 +12,10 @@ from adb_auto_player.exceptions import (
     AutoPlayerWarningError,
     GameTimeoutError,
 )
-from adb_auto_player.games.afk_journey.base import AFKJourneyBase
+from adb_auto_player.games.afk_journey.afkjourneynavigation import (
+    AFKJourneyNavigation as Navigation,
+)
+from adb_auto_player.games.afk_journey.base import AFKJourneyBase, Game
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
@@ -86,14 +89,16 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     continue
             break
 
-        _ = self.wait_for_template(
+        _ = Game.wait_for_template(
+            self,
             "arcane_labyrinth/hold_to_exit.png",
             crop_regions=CropRegions(right=0.5, top=0.5, bottom=0.3),
             timeout_message="Failed to exit Arcane Labyrinth run",
             timeout=self.MIN_TIMEOUT,
         )
         sleep(1)
-        hold_to_exit = self.wait_for_template(
+        hold_to_exit = Game.wait_for_template(
+            self,
             "arcane_labyrinth/hold_to_exit.png",
             crop_regions=CropRegions(right=0.5, top=0.5, bottom=0.3),
             timeout_message="Failed to exit Arcane Labyrinth run",
@@ -155,7 +160,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             clear_count += 1
             logging.info(f"Arcane Labyrinth clear #{clear_count}")
             self._add_clear_key_amount()
-            _ = self.wait_for_template(
+            _ = Game.wait_for_template(
+                self,
                 "arcane_labyrinth/enter.png",
                 crop_regions=CropRegions(top=0.8, left=0.3),
                 timeout=self.MIN_TIMEOUT,
@@ -167,7 +173,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
     def _select_a_crest(self) -> None:
         """Crest selection."""
-        result = self.wait_for_any_template(
+        result = Game.wait_for_any_template(
+            self,
             templates=[
                 "arcane_labyrinth/rarity/epic.png",
                 "arcane_labyrinth/rarity/elite.png",
@@ -203,7 +210,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             "arcane_labyrinth/blessing/soul_blessing.png",
             "arcane_labyrinth/blessing/epic_crest.png",
         ]
-        result = self.wait_for_any_template(
+        result = Game.wait_for_any_template(
+            self,
             templates=templates,
             delay=0.5,
         )
@@ -250,7 +258,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
     def _arcane_lab_start_battle(self) -> None:
         """Start labyrinth battle."""
-        _ = self.wait_for_any_template(
+        _ = Game.wait_for_any_template(
+            self,
             templates=[
                 "arcane_labyrinth/battle.png",
                 "arcane_labyrinth/additional_challenge.png",
@@ -307,7 +316,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         if difficulty < max_difficulty and not self.game_find_template_match(
             "arcane_labyrinth/arrow_right.png"
         ):
-            left_arrow = self.wait_for_template("arcane_labyrinth/arrow_left.png")
+            left_arrow = Game.wait_for_template(self, "arcane_labyrinth/arrow_left.png")
             if not self.game_find_template_match("arcane_labyrinth/arrow_right.png"):
                 logging.debug("Lowering difficulty")
                 while (max_difficulty - difficulty) > 0:
@@ -326,7 +335,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             self.tap(enter)
             sleep(2)
 
-        result = self.wait_for_any_template(
+        result = Game.wait_for_any_template(
+            self,
             templates=[
                 "arcane_labyrinth/heroes_icon.png",
                 "arcane_labyrinth/pure_crystal_icon.png",
@@ -351,7 +361,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             if checkbox is not None:
                 self.tap(checkbox)
         self._click_confirm_on_popup()
-        _ = self.wait_for_any_template(
+        _ = Game.wait_for_any_template(
+            self,
             templates=[
                 "arcane_labyrinth/heroes_icon.png",
                 "arcane_labyrinth/pure_crystal_icon.png",
@@ -380,9 +391,10 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             logging.info("Arcane Labyrinth already started")
             return
 
-        self.navigate_to_arcane_labyrinth()
+        Navigation.navigate_to_arcane_labyrinth(self)
 
-        result = self.wait_for_any_template(
+        result = Game.wait_for_any_template(
+            self,
             templates=[
                 "arcane_labyrinth/select_a_crest.png",
                 "arcane_labyrinth/confirm.png",
@@ -509,7 +521,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         """Handle Fitz's Shop."""
         purchase_count = 0
         while True:
-            _ = self.wait_for_any_template(
+            _ = Game.wait_for_any_template(
+                self,
                 templates=[
                     "arcane_labyrinth/move_forward.png",
                     "arcane_labyrinth/select_a_crest.png",
@@ -560,7 +573,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     self._select_a_crest()
 
         while True:
-            result = self.wait_for_any_template(
+            result = Game.wait_for_any_template(
+                self,
                 templates=[
                     "arcane_labyrinth/move_forward.png",
                     "arcane_labyrinth/select_a_crest.png",
