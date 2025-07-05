@@ -198,12 +198,11 @@ class Fishing(AFKJourneyBase):
                     # Might have to OCR the remaining attempts?
                     break
 
-            cropped = Cropping.crop(
-                screenshot,
-                CropRegions(left=0.1, right=0.1, top="980px", bottom="740px"),
-            )
-
             if not thread or not thread.is_alive():
+                cropped = Cropping.crop(
+                    screenshot,
+                    CropRegions(left=0.1, right=0.1, top="980px", bottom="740px"),
+                )
                 top, middle = _find_fishing_colors_fast(cropped.image)
                 if top and middle and top > middle:
                     thread = self._handle_hold_for_distance(
