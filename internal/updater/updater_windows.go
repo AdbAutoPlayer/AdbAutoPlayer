@@ -22,6 +22,15 @@ import (
 func (um *UpdateManager) CheckForUpdates(autoUpdate bool, checkPrerelease bool) (UpdateInfo, error) {
 	if um.isDev {
 		runtime.LogDebug(um.ctx, "Updater disabled in dev.")
+		/* UI Testing
+		return UpdateInfo{
+			Available:   true,
+			Version:     "1.0.0",
+			DownloadURL: "example.com",
+			Size:        1,
+			AutoUpdate:  false,
+		}, nil
+		*/
 		return UpdateInfo{Available: false}, nil
 	}
 

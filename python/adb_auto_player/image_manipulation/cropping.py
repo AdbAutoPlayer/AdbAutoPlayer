@@ -5,74 +5,80 @@ from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions, CropResult, CropValue
 
 
-def crop(image: np.ndarray, crop_regions: CropRegions) -> CropResult:
-    """Crop an image based on the specified crop regions.
+class Cropping:
+    """Cropping related operations."""
 
-    Args:
-        image: The input image to be cropped as a numpy array
-        crop_regions: CropRegions object specifying how much to crop from each side
+    @staticmethod
+    def crop(image: np.ndarray, crop_regions: CropRegions) -> CropResult:
+        """Crop an image based on the specified crop regions.
 
-    Returns:
-        CropResult containing the cropped image and offset information
+        Args:
+            image: The input image to be cropped as a numpy array
+            crop_regions: CropRegions object specifying how much to crop from each side
 
-    Raises:
-        ValueError: If crop regions would result in invalid cropping or
-            if pixel values exceed image dimensions
-    """
-    # Check for no-op case
-    if all(
-        cv.value == 0
-        for cv in [
-            crop_regions.left,
-            crop_regions.right,
-            crop_regions.top,
-            crop_regions.bottom,
+        Returns:
+            CropResult containing the cropped image and offset information
+
+        Raises:
+            ValueError: If crop regions would result in invalid cropping or
+                if pixel values exceed image dimensions
+        """
+        # Check for no-op case
+        if all(
+            cv.value == 0
+            for cv in [
+                crop_regions.left,
+                crop_regions.right,
+                crop_regions.top,
+                crop_regions.bottom,
+            ]
+        ):
+            return CropResult(image=image, offset=Point(x=0, y=0))
+
+        if image.size == 0:
+            raise ValueError("Cannot crop empty image")
+
+        height, width = image.shape[:2]
+
+        # Convert crop values to pixels
+        left_px = _crop_value_to_pixels(crop_regions.left, width, "left", width)
+        right_px = _crop_value_to_pixels(crop_regions.right, width, "right", width)
+        top_px = _crop_value_to_pixels(crop_regions.top, height, "top", height)
+        bottom_px = _crop_value_to_pixels(crop_regions.bottom, height, "bottom", height)
+
+        # Validate pixel crop values don't exceed image dimensions
+        _validate_pixel_crops(
+            horizontal_crops=(left_px, right_px),
+            vertical_crops=(top_px, bottom_px),
+            dimensions=(width, height),
+        )
+
+        # Calculate crop boundaries
+        left_boundary = left_px
+        right_boundary = width - right_px
+        top_boundary = top_px
+        bottom_boundary = height - bottom_px
+
+        # Validate boundaries make sense
+        if left_boundary >= right_boundary:
+            raise ValueError(
+                f"Left crop ({left_px}px) + Right crop ({right_px}px) "
+                f"would crop entire image width ({width}px)"
+            )
+        if top_boundary >= bottom_boundary:
+            raise ValueError(
+                f"Top crop ({top_px}px) + Bottom crop ({bottom_px}px) "
+                f"would crop entire image height ({height}px)"
+            )
+
+        # Perform the crop
+        cropped_image = image[
+            top_boundary:bottom_boundary, left_boundary:right_boundary
         ]
-    ):
-        return CropResult(image=image, offset=Point(x=0, y=0))
 
-    if image.size == 0:
-        raise ValueError("Cannot crop empty image")
-
-    height, width = image.shape[:2]
-
-    # Convert crop values to pixels
-    left_px = _crop_value_to_pixels(crop_regions.left, width, "left", width)
-    right_px = _crop_value_to_pixels(crop_regions.right, width, "right", width)
-    top_px = _crop_value_to_pixels(crop_regions.top, height, "top", height)
-    bottom_px = _crop_value_to_pixels(crop_regions.bottom, height, "bottom", height)
-
-    # Validate pixel crop values don't exceed image dimensions
-    _validate_pixel_crops(
-        horizontal_crops=(left_px, right_px),
-        vertical_crops=(top_px, bottom_px),
-        dimensions=(width, height),
-    )
-
-    # Calculate crop boundaries
-    left_boundary = left_px
-    right_boundary = width - right_px
-    top_boundary = top_px
-    bottom_boundary = height - bottom_px
-
-    # Validate boundaries make sense
-    if left_boundary >= right_boundary:
-        raise ValueError(
-            f"Left crop ({left_px}px) + Right crop ({right_px}px) "
-            f"would crop entire image width ({width}px)"
+        return CropResult(
+            image=cropped_image, offset=Point(x=left_boundary, y=top_boundary)
         )
-    if top_boundary >= bottom_boundary:
-        raise ValueError(
-            f"Top crop ({top_px}px) + Bottom crop ({bottom_px}px) "
-            f"would crop entire image height ({height}px)"
-        )
-
-    # Perform the crop
-    cropped_image = image[top_boundary:bottom_boundary, left_boundary:right_boundary]
-
-    return CropResult(
-        image=cropped_image, offset=Point(x=left_boundary, y=top_boundary)
-    )
 
 
 def _crop_value_to_pixels(

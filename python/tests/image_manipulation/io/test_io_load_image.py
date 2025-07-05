@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
-from adb_auto_player.image_manipulation.io import load_image, template_cache
+from adb_auto_player.image_manipulation.io import IO, template_cache
 
 
 def synthetic_image(shape=(10, 10, 3)):
@@ -21,7 +21,7 @@ class TestLoadImage:
         mock_imdecode.return_value = dummy_image
 
         path = Path("image.png")
-        result = load_image(path)
+        result = IO.load_image(path)
 
         assert np.array_equal(result, dummy_image)
 
@@ -32,7 +32,7 @@ class TestLoadImage:
         key = f"{path}_1.0_grayscale=False"
         template_cache[key] = img
 
-        result = load_image(path)
+        result = IO.load_image(path)
 
         mock_imdecode.assert_not_called()
         assert np.array_equal(result, img)
@@ -50,7 +50,7 @@ class TestLoadImage:
         path = Path("nonexistent.png")
 
         with pytest.raises(FileNotFoundError):
-            load_image(path)
+            IO.load_image(path)
 
     @patch("adb_auto_player.image_manipulation.io.cv2.resize")
     @patch("adb_auto_player.image_manipulation.io.cv2.imdecode")
@@ -68,7 +68,7 @@ class TestLoadImage:
         path = Path("image.png")
         scale = 0.5
 
-        result = load_image(path, image_scale_factor=scale)
+        result = IO.load_image(path, image_scale_factor=scale)
 
         mock_resize.assert_called_once_with(
             img,
@@ -77,7 +77,7 @@ class TestLoadImage:
         )
         assert np.array_equal(result, scaled_img)
 
-    @patch("adb_auto_player.image_manipulation.io.to_grayscale")
+    @patch("adb_auto_player.image_manipulation.color.Color.to_grayscale")
     @patch("adb_auto_player.image_manipulation.io.cv2.imdecode")
     @patch("adb_auto_player.image_manipulation.io.np.fromfile")
     def test_load_image_grayscale(self, mock_fromfile, mock_imdecode, mock_to_gray):
@@ -92,7 +92,7 @@ class TestLoadImage:
 
         path = Path("img.png")
 
-        result = load_image(path, grayscale=True)
+        result = IO.load_image(path, grayscale=True)
 
         mock_to_gray.assert_called_once_with(img)
         assert np.array_equal(result, gray_img)

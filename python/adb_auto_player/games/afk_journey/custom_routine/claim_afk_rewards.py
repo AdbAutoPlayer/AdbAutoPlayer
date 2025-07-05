@@ -4,8 +4,9 @@ from time import sleep
 from adb_auto_player.decorators import (
     register_custom_routine_choice,
 )
-from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.models.geometry import Point
+
+from ..base import AFKJourneyBase
 
 
 class ClaimAFKRewards(AFKJourneyBase):

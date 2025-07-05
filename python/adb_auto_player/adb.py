@@ -49,8 +49,8 @@ def _set_adb_path() -> None:
 
         if not adb_env_path or not os.path.isfile(adb_env_path):
             candidates: list[Path] = [
-                ConfigLoader().binaries_dir / "adb.exe",
-                ConfigLoader().binaries_dir / "windows" / "adb.exe",
+                ConfigLoader.binaries_dir() / "adb.exe",
+                ConfigLoader.binaries_dir() / "windows" / "adb.exe",
             ]
             adb_env_path = str(
                 next((c for c in candidates if c.exists()), candidates[0])
@@ -92,7 +92,7 @@ def _set_adb_path() -> None:
 def get_adb_client() -> AdbClient:
     """Return AdbClient instance."""
     _set_adb_path()
-    main_config: dict[str, Any] = ConfigLoader().main_config
+    main_config: dict[str, Any] = ConfigLoader.main_config()
     adb_config: Any = main_config.get("adb", {})
     client = AdbClient(
         host=adb_config.get("host", "127.0.0.1"),
@@ -125,7 +125,7 @@ def get_adb_device(
     if not adb_client:
         adb_client = get_adb_client()
 
-    main_config: dict[str, Any] = ConfigLoader().main_config
+    main_config: dict[str, Any] = ConfigLoader.main_config()
     device_id: Any = main_config.get("device", {}).get("ID", "127.0.0.1:5555")
     return _get_adb_device(adb_client, device_id, override_size)
 
@@ -183,7 +183,7 @@ def _get_devices(client: AdbClient) -> list[AdbDeviceInfo]:
     except Exception as e:
         logging.debug(f"client.list exception: {e}")
         raise GenericAdbUnrecoverableError(
-            "Failed to connect to AdbClient; check the Main Config and "
+            "Failed to connect to AdbClient; check the General Settings and "
             "https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/emulator-settings.html"
         )
 
@@ -291,8 +291,7 @@ def _override_size(device: AdbDevice, override_size: str) -> None:
     try:
         output = device.shell(f"wm size {override_size}")
     except Exception as e:
-        logging.debug(f"wm size {override_size} Error: {e}")
-        raise GenericAdbError(f"Error overriding size: {e}")
+        raise GenericAdbError(f"Error overriding size to {override_size}: {e}")
 
     if "java.lang.SecurityException" in output:
         logging.debug(f"wm size {override_size} Error: {output}")
@@ -321,7 +320,7 @@ def _get_adb_device(
         AdbDevice: Connected ADB device.
     """
     # Get configuration for window size override
-    main_config: dict[str, Any] = ConfigLoader().main_config
+    main_config: dict[str, Any] = ConfigLoader.main_config()
     wm_size: Any = main_config.get("device", {}).get("wm_size", False)
 
     # Try to resolve the correct device
@@ -460,7 +459,9 @@ def get_display_info(device: AdbDevice) -> DisplayInfo:
     try:
         result = str(device.shell("wm size", timeout=5))
     except Exception as e:
-        raise GenericAdbUnrecoverableError(f"wm size: {e}")
+        raise GenericAdbUnrecoverableError(
+            f"Unable to determine screen resolution: {e}"
+        )
 
     if not result:
         raise GenericAdbUnrecoverableError("Unable to determine screen resolution")

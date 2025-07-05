@@ -15,7 +15,7 @@ from typing import Any
 
 from adb_auto_player.models.registries import CustomRoutineEntry
 from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY
-from adb_auto_player.util import get_game_module
+from adb_auto_player.util import StringHelper
 
 
 def register_custom_routine_choice(
@@ -43,7 +43,7 @@ def register_custom_routine_choice(
         raise ValueError("The 'label' parameter is required and cannot be empty.")
 
     def decorator(func: Callable) -> Callable:
-        module_key = get_game_module(func.__module__)
+        module_key = StringHelper.get_game_module(func.__module__)
         if module_key not in CUSTOM_ROUTINE_REGISTRY:
             CUSTOM_ROUTINE_REGISTRY[module_key] = {}
 

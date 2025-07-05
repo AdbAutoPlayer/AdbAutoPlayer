@@ -1,5 +1,6 @@
 """Tesseract OCR backend implementation."""
 
+import logging
 import os
 import platform
 import subprocess
@@ -18,6 +19,8 @@ from .tesseract_config import TesseractConfig
 from .tesseract_lang import Lang
 
 _NUM_COLORS_IN_RGB = 3
+
+logging.getLogger("pytesseract").setLevel(logging.ERROR)
 
 
 class _GroupingLevel(IntEnum):
@@ -84,8 +87,8 @@ def _initialize_tesseract() -> None:
             raise RuntimeError(f"Tesseract not found in PATH: {e}")
 
         fallback_paths = [
-            ConfigLoader().binaries_dir / "tesseract" / "tesseract.exe",
-            ConfigLoader().binaries_dir / "windows" / "tesseract" / "tesseract.exe",
+            ConfigLoader.binaries_dir() / "tesseract" / "tesseract.exe",
+            ConfigLoader.binaries_dir() / "windows" / "tesseract" / "tesseract.exe",
         ]
 
         for fallback_path in fallback_paths:

@@ -51,6 +51,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
 
         first_banner = True
         for banner in rate_up_banners:
+            self.battle_state.mode = Mode.DURAS_TRIALS
             if not first_banner:
                 self.navigate_to_duras_trials_screen()
             try:
@@ -59,6 +60,8 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
                 logging.warning(f"{e}")
             except AutoPlayerError as e:
                 logging.error(f"{e}")
+
+            self.battle_state.mode = Mode.DURAS_NIGHTMARE_TRIALS
             self.navigate_to_duras_trials_screen()
             try:
                 self._handle_dura_screen(banner, nightmare_mode=True)
@@ -183,8 +186,8 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             if next_button is not None:
                 nonlocal count
                 count += 1
-                logging.info(f"Dura's Trials pushed: {count}")
-                SummaryGenerator.increment("Dura's Trials", "Pushed")
+                logging.info(f"Dura's Trials cleared: {count}")
+                SummaryGenerator.increment("Dura's Trials", "Cleared")
 
                 self.tap(next_button)
                 self.tap(next_button)
@@ -202,8 +205,8 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             """
             nonlocal count
             count += 1
-            logging.info(f"Dura's Nightmare Trials pushed: {count}")
-            SummaryGenerator.increment("Dura's Nightmare Trials", "Pushed")
+            logging.info(f"Dura's Nightmare Trials cleared: {count}")
+            SummaryGenerator.increment("Dura's Nightmare Trials", "Cleared")
 
             if self.game_find_template_match(
                 template="duras_trials/continue_gray.png",

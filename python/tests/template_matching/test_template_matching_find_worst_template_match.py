@@ -1,8 +1,8 @@
 from pathlib import Path
 
 import numpy as np
-from adb_auto_player.image_manipulation import load_image
-from adb_auto_player.template_matching import find_worst_template_match
+from adb_auto_player.image_manipulation import IO
+from adb_auto_player.template_matching import TemplateMatcher
 
 from .test_image_creator import TestImageCreator
 
@@ -19,16 +19,16 @@ class TestFindWorstTemplateMatch:
 
         template = np.full((30, 30, 3), (0, 255, 0), dtype=np.uint8)  # Green template
 
-        result = find_worst_template_match(base_image, template)
+        result = TemplateMatcher.find_worst_template_match(base_image, template)
 
         assert result is not None
         assert result.box.width == 30
         assert result.box.height == 30
 
     def test_same_image_returns_none(self):
-        image = load_image(Path(__file__).parent / "data" / "small_note")
-        template = load_image(Path(__file__).parent / "data" / "small_note")
-        result = find_worst_template_match(image, template)
+        image = IO.load_image(Path(__file__).parent / "data" / "small_note")
+        template = IO.load_image(Path(__file__).parent / "data" / "small_note")
+        result = TemplateMatcher.find_worst_template_match(image, template)
 
         # Should return None if difference is below threshold
         assert result is None
@@ -40,6 +40,8 @@ class TestFindWorstTemplateMatch:
         )
         template = np.full((30, 30, 3), (128, 128, 128), dtype=np.uint8)
 
-        result = find_worst_template_match(base_image, template, grayscale=True)
+        result = TemplateMatcher.find_worst_template_match(
+            base_image, template, grayscale=True
+        )
 
         assert result is not None

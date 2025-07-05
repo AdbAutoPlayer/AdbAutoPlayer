@@ -57,6 +57,16 @@ func (um *UpdateManager) SetProgressCallback(callback func(float64)) {
 // GetChangelogs combines changelog from latest release and releases in between
 // When latestRelease is not a prerelease, prereleases are filtered out
 func (um *UpdateManager) GetChangelogs() []Changelog {
+	// UI Testing
+	if um.isDev {
+		return []Changelog{
+			{
+				Body:    "## What's Changed\n* **Docs: [Real Phone USB Debugging Guide](https://adbautoplayer.github.io/AdbAutoPlayer/user-guide/real-phone-guide.html)**\n  *Contributed by sieucapoccho*\n* **AFK Journey: Dailies add essence purchase and swap option**\n  *Contributed by @Valextr in https://github.com/AdbAutoPlayer/AdbAutoPlayer/pull/203*\n* **GUI: Improve Error Display for some errors, added Toasts**\n  *Contributed by @yulesxoxo*\n* **GUI: Settings use Accordion Menus and other small improvements**\n  *Contributed by @yulesxoxo*\n* **Global Hotkey (CTRL+SHIFT+ALT+C) to stop the bot**\n  *Contributed by @yulesxoxo in https://github.com/AdbAutoPlayer/AdbAutoPlayer/pull/196*\n* **Make the Summary more depressing**\n  *Contributed by @yulesxoxo in https://github.com/AdbAutoPlayer/AdbAutoPlayer/pull/197*\n* **AFK Journey: Hero exclusion add new Heroes**\n  *Contributed by @yulesxoxo*\n\n\n**Full Changelog**: https://github.com/AdbAutoPlayer/AdbAutoPlayer/compare/8.0.1...8.1.0",
+				Version: "1.0.0",
+			},
+		}
+	}
+
 	var changelogs []Changelog
 
 	filterPrereleases := um.latestRelease != nil && !um.latestRelease.GetPrerelease()

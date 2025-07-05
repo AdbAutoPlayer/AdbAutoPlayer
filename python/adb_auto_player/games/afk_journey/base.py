@@ -19,9 +19,8 @@ from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GameGUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
-from adb_auto_player.models.template_matching import MatchMode
+from adb_auto_player.util import SummaryGenerator
 
-from ...util import SummaryGenerator
 from .afkjourneynavigation import AFKJourneyNavigation
 from .battle_state import BattleState, Mode
 from .config import Config
@@ -89,7 +88,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             to the current game mode.
         """
         match self.battle_state.mode:
-            case Mode.DURAS_TRIALS:
+            case Mode.DURAS_TRIALS | Mode.DURAS_NIGHTMARE_TRIALS:
                 return getattr(self.get_config().duras_trials, attribute)
             case Mode.LEGEND_TRIALS:
                 return getattr(self.get_config().legend_trials, attribute)
@@ -217,6 +216,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             template="battle/records.png",
             crop_regions=CropRegions(right=0.5, top=0.8),
             delay=10.0,
+            error_message="No videos available for this battle",
         )
 
         try:
@@ -304,14 +304,20 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         Returns:
             str | None: Name of excluded hero
         """
-        result = self.find_any_template(
-            templates=list(excluded_heroes.keys()),
-            crop_regions=CropRegions(left=0.1, right=0.2, top=0.3, bottom=0.4),
-        )
-        if result is None:
+        sleep(0.5)
+        try:
+            result = self.wait_for_any_template(
+                templates=list(excluded_heroes.keys()),
+                crop_regions=CropRegions(
+                    left="10%", right="30%", top="35%", bottom="40%"
+                ),
+                threshold=ConfidenceValue("85%"),
+                timeout=1.0,
+                delay=0.5,
+            )
+            return excluded_heroes.get(result.template)
+        except GameTimeoutError:
             return None
-
-        return excluded_heroes.get(result.template)
 
     def _start_battle(self) -> bool:
         """Begin battle.
@@ -352,25 +358,14 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             else:
                 self._click_confirm_on_popup()
 
-        while self.find_any_template(
-            [
-                "battle/no_hero_is_placed_on_the_talent_buff_tile.png",
-                "duras_trials/blessed_heroes_specific_tiles.png",
-            ],
-        ):
-            checkbox = self.game_find_template_match(
-                "popup/checkbox_unchecked.png",
-                match_mode=MatchMode.TOP_LEFT,
-                crop_regions=CropRegions(right=0.8, top=0.2, bottom=0.6),
-                threshold=ConfidenceValue("80%"),
-            )
-            if checkbox is None:
-                logging.error('Could not find "Don\'t remind for x days" checkbox')
-            else:
-                self.tap(checkbox)
+        # Just handle however many popups show up
+        # Needs a counter to prevent infinite loop on freeze though
+        max_count = 10
+        count = 0
+        while self._click_confirm_on_popup() and count < max_count:
             self._click_confirm_on_popup()
-
-        self._click_confirm_on_popup()
+            count += 1
+            sleep(0.5)
         return True
 
     def _click_confirm_on_popup(self) -> bool:
@@ -379,7 +374,10 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         Returns:
             bool: True if confirmed, False if not.
         """
-        self.handle_confirmation_popups()
+        if self.handle_confirmation_popups():
+            return True
+
+        # Legacy code keeping it as a fallback
         result = self.find_any_template(
             templates=["navigation/confirm.png", "confirm_text.png"],
             crop_regions=CropRegions(top=0.4),
@@ -392,7 +390,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
 
     def _get_battle_over_templates(self) -> list[str]:
         match self.battle_state.mode:
-            case Mode.AFK_STAGES:
+            case Mode.AFK_STAGES | Mode.SEASON_TALENT_STAGES:
                 return [
                     "next.png",
                     "battle/victory_rewards.png",
@@ -403,7 +401,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                     "afk_stages/tap_to_close.png",
                 ]
 
-            case Mode.DURAS_TRIALS:
+            case Mode.DURAS_TRIALS | Mode.DURAS_NIGHTMARE_TRIALS:
                 return [
                     "duras_trials/no_next.png",
                     "duras_trials/first_clear.png",
@@ -451,12 +449,12 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         while count < attempts:
             count += 1
             logging.info(f"Starting Battle #{count}")
-            if self.battle_state.section_header:
-                SummaryGenerator.increment(self.battle_state.section_header, "Battles")
-
             if not self._start_battle():
                 result = False
                 break
+
+            if self.battle_state.section_header:
+                SummaryGenerator.increment(self.battle_state.section_header, "Battles")
 
             match = self.wait_for_any_template(
                 templates=battle_over_templates,

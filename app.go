@@ -5,6 +5,7 @@ import (
 	"adb-auto-player/internal/config"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/updater"
+	"adb-auto-player/internal/utils"
 	"archive/zip"
 	"context"
 	"encoding/json"
@@ -133,7 +134,7 @@ func (a *App) GetEditableGameConfig(game ipc.GameGUI) (map[string]interface{}, e
 	if stdruntime.GOOS != "windows" {
 		paths = append(paths, filepath.Join(workingDir, "../../python/adb_auto_player/games", game.ConfigPath))
 	}
-	configPath := internal.GetFirstPathThatExists(paths)
+	configPath := utils.GetFirstPathThatExists(paths)
 
 	if configPath == nil {
 		a.lastOpenGameConfigPath = &paths[0]
@@ -219,7 +220,6 @@ func (a *App) GetRunningSupportedGame(disableLogging bool) (*ipc.GameGUI, error)
 
 		var logMessage ipc.LogMessage
 		if err = json.Unmarshal([]byte(line), &logMessage); err != nil {
-			fmt.Printf("%+v\n", logMessage)
 			runtime.LogErrorf(a.ctx, "Failed to parse JSON log message: %v", err)
 			continue
 		}
@@ -257,10 +257,8 @@ func (a *App) setPythonBinaryPath() error {
 	}
 
 	if runtime.Environment(a.ctx).BuildType == "dev" {
-		fmt.Printf("Working dir: %s\n", workingDir)
 		path := filepath.Join(workingDir, "python")
 		a.pythonBinaryPath = &path
-		fmt.Print("Process Manager is dev = true\n")
 		internal.GetProcessManager().IsDev = true
 		return nil
 	}
@@ -283,7 +281,7 @@ func (a *App) setPythonBinaryPath() error {
 	}
 
 	runtime.LogDebugf(a.ctx, "Paths: %s", strings.Join(paths, ", "))
-	a.pythonBinaryPath = internal.GetFirstPathThatExists(paths)
+	a.pythonBinaryPath = utils.GetFirstPathThatExists(paths)
 	return nil
 }
 
@@ -424,7 +422,7 @@ func (a *App) getMainConfigPath() string {
 		"../../config/config.toml", // macOS dev no not a joke
 	}
 
-	configPath := internal.GetFirstPathThatExists(paths)
+	configPath := utils.GetFirstPathThatExists(paths)
 
 	a.mainConfigPath = configPath
 

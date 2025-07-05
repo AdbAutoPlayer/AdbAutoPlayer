@@ -56,7 +56,7 @@ def _get_best_decoder(hardware_decoding: bool) -> str:
 def _get_codec_context() -> CodecContext:
     """Get codec context using cached decoder selection."""
     hardware_decoding = (
-        ConfigLoader().main_config.get("device", {}).get("hardware_decoding", False)
+        ConfigLoader.main_config().get("device", {}).get("hardware_decoding", False)
     )
 
     decoder_name = _get_best_decoder(hardware_decoding)

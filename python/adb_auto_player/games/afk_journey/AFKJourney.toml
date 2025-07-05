@@ -18,6 +18,8 @@ Difficulty = 13
 'Buy All Affinity' = true
 'Buy Discount Affinity' = true
 'Single Pull' = true
+'Buy Temporal Essences' = false
+'Essence Buy Count' = 1
 
 ['Dream Realm']
 'Spend Gold' = true

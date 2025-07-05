@@ -6,6 +6,7 @@
 - [Real Phone Guide](user-guide/real-phone-guide.md)
 - [Windows Setup Guide](user-guide/windows-setup.md)
 - [macOS Setup Guide](user-guide/macos-setup.md)
+- [Linux Setup Guide](user-guide/linux-setup.md)
 - [Troubleshooting](user-guide/troubleshoot.md)
 
 # Games

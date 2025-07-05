@@ -101,6 +101,16 @@ func createRelease(tagName, body string, assets []string, prerelease bool) *gith
 	return release
 }
 
+func TestGetChangelog_DevReturnsDummyData(t *testing.T) {
+	ctx := context.Background()
+	um := NewUpdateManager(ctx, "1.0.0", true)
+
+	// Test with no releases set
+	changelog := um.GetChangelogs()
+	assert.Equal(t, "1.0.0", changelog[0].Version)
+	assert.True(t, strings.HasPrefix(changelog[0].Body, "## What's Changed"))
+}
+
 func TestGetChangelog_EmptyReleases(t *testing.T) {
 	ctx := context.Background()
 	um := NewUpdateManager(ctx, "1.0.0", false)

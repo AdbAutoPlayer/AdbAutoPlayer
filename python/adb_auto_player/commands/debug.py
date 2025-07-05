@@ -47,7 +47,7 @@ def _log_debug() -> None:
 
 def _log_main_config() -> None:
     logging.info("--- Main Config ---")
-    config = ConfigLoader().main_config
+    config = ConfigLoader.main_config()
     logging.info(f"Config: {pprint.pformat(config)}")
 
 

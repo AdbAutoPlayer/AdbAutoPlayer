@@ -23,6 +23,7 @@ class HeroesEnum(StrEnum):
     Arden = auto()
     Atalanta = auto()
     Athalia = auto()
+    Baelran = auto()
     Berial = auto()
     Bonnie = auto()
     Brutus = auto()
@@ -194,6 +195,8 @@ class DailiesConfig(BaseModel):
     buy_all_affinity: bool = Field(default=False, alias="Buy All Affinity")
     single_pull: bool = Field(default=False, alias="Single Pull")
     arena_battle: bool = Field(default=False, alias="Arena Battle")
+    buy_essences: bool = Field(default=False, alias="Buy Temporal Essences")
+    essence_buy_count: int = Field(default=1, ge=1, le=4, alias="Essence Buy Count")
 
 
 class ClaimAFKRewardsConfig(BaseModel):

@@ -23,14 +23,12 @@ class TitanReaverProxyBattleConstants:
     DEFAULT_BATTLE_LIMIT = TOTAL_LUCKY_KEYS_NEEDED // KEYS_PER_BATTLE
 
     # Timeout settings
-    TEMPLATE_WAIT_TIMEOUT = 15  # Timeout for waiting for template appearance (seconds)
+    TEMPLATE_WAIT_TIMEOUT = 3  # Timeout for waiting for template appearance (seconds)
     RETRY_DELAY = 1  # Retry interval (seconds)
     NAVIGATION_DELAY = 1  # Navigation operation interval (seconds)
 
     # Coordinate constants
     CHAT_BUTTON_POINT = Point(1010, 1080)
-    TEAM_UP_CHAT_POINT = Point(110, 850)
-    WORLD_CHAT_POINT = Point(110, 350)
 
     # Offset values
     PROXY_BATTLE_BANNER_OFFSET_X = -70  # X offset for proxy battle banner tap
@@ -41,12 +39,12 @@ class TitanReaverProxyBattleConstants:
 class TitanReaverProxyBattleStats:
     """Proxy battle statistics with automatic SummaryGenerator updates."""
 
-    battles_attempted: int = 0
+    # battles_attempted: int = 0
     battles_completed: int = 0
 
     # Mapping from field name to display name
     _field_display_names: ClassVar[dict[str, str]] = {
-        "battles_attempted": "Battles Attempted",
+        # "battles_attempted": "Battles Attempted",
         "battles_completed": "Battles Completed",
     }
 
@@ -60,9 +58,9 @@ class TitanReaverProxyBattleStats:
             SummaryGenerator.set("Titan Reaver Proxy Battle", display_name, value)
             print(SummaryGenerator().get_summary_message())
             if value > 0:
-                SummaryGenerator.set(
-                    "Titan Reaver Proxy Battle", "Success Rate", self.success_rate
-                )
+                # SummaryGenerator.set(
+                #     "Titan Reaver Proxy Battle", "Success Rate", self.success_rate
+                # )
                 if name == "battles_completed":
                     estimated_keys = (
                         value * TitanReaverProxyBattleConstants.KEYS_PER_BATTLE
@@ -73,12 +71,12 @@ class TitanReaverProxyBattleStats:
                         estimated_keys,
                     )
 
-    @property
-    def success_rate(self) -> float:
-        """Calculate success rate."""
-        if self.battles_attempted == 0:
-            return 0.0
-        return (self.battles_completed / self.battles_attempted) * 100
+    # @property
+    # def success_rate(self) -> float:
+    #     """Calculate success rate."""
+    #     if self.battles_attempted == 0:
+    #         return 0.0
+    #     return (self.battles_completed / self.battles_attempted) * 100
 
 
 class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
@@ -112,7 +110,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
 
         try:
             while stats.battles_completed < battle_limit:
-                stats.battles_attempted += 1
+                # stats.battles_attempted += 1
 
                 if self._execute_single_proxy_battle():
                     stats.battles_completed += 1
@@ -185,34 +183,27 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
         self.navigate_to_default_state()
         self.tap(TitanReaverProxyBattleConstants.CHAT_BUTTON_POINT, scale=True)
         sleep(TitanReaverProxyBattleConstants.NAVIGATION_DELAY)
-        self.tap(TitanReaverProxyBattleConstants.TEAM_UP_CHAT_POINT, scale=True)
+        self._switch_to_team_chat()
 
         return False  # Requires next loop to check again
 
     def _is_in_team_chat(self) -> bool:
         """Check if in team chat."""
         return (
-            self.find_any_template(
-                templates=[
-                    "assist/label_team-up_chat.png",
-                ],
-            )
-            is not None
+            self.find_any_template(["assist/tap_to_enter.png"]) is None
+            and self.find_any_template(["assist/label_team-up_chat.png"]) is not None
         )
 
     def _is_in_other_chat(self) -> bool:
         """Check if in other chat channels."""
-        return (
-            self.find_any_template(
-                ["assist/tap_to_enter.png", "assist/label_world_chat.png"]
-            )
-            is not None
-        )
+        return self.find_any_template(["assist/tap_to_enter.png"]) is not None
 
     def _switch_to_team_chat(self) -> None:
         """Switch to team chat."""
-        self.tap(TitanReaverProxyBattleConstants.TEAM_UP_CHAT_POINT, scale=True)
-        sleep(TitanReaverProxyBattleConstants.NAVIGATION_DELAY)
+        self._wait_and_tap_template(
+            "assist/label_team-up_chat.png",
+            "team chat label",
+        )
 
     def _find_proxy_battle_banner(self) -> Point | None:
         """Find proxy battle banner.
@@ -223,7 +214,8 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
         banner = self.find_any_template(
             templates=[
                 "assist/proxy_battle_request.png",
-            ]
+            ],
+            grayscale=True,
         )
 
         if banner is None:

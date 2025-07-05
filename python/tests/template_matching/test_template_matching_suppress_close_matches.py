@@ -1,4 +1,4 @@
-from adb_auto_player.template_matching.template_matching import _suppress_close_matches
+from adb_auto_player.template_matching.template_matcher import _suppress_close_matches
 
 
 class TestSuppressCloseMatches:
