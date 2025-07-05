@@ -134,13 +134,14 @@
               {#each Object.entries(sectionConfig) as [key, value]}
                 <div class="mb-4">
                   <div class="flex items-center justify-between">
-                    <label
-                      for="{sectionKey}-{key}"
-                      class="mr-3 w-40 text-right"
-                    >
-                      {key}
-                    </label>
-
+                    {#if !isConstraintOfType(value, "MyCustomRoutine")}
+                      <label
+                        for="{sectionKey}-{key}"
+                        class="mr-3 w-40 text-right"
+                      >
+                        {key}
+                      </label>
+                    {/if}
                     <div class="flex flex-1 items-center">
                       {#if getInputType(sectionKey, key) === "checkbox"}
                         <input

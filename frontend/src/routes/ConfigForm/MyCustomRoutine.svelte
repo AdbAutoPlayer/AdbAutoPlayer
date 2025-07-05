@@ -197,7 +197,7 @@
                 >
                   <div class="flex items-center gap-3">
                     <div
-                      class="h-2 w-2 rounded-full bg-tertiary-500 transition-all duration-200 group-hover:bg-tertiary-600"
+                      class="ml-3 h-2 w-2 rounded-full bg-tertiary-500 transition-all duration-200 group-hover:bg-tertiary-600"
                     ></div>
                     <p
                       class="text-s font-medium text-surface-700 dark:text-surface-200"
@@ -246,7 +246,7 @@
                   <div class="flex items-center justify-between gap-2">
                     <div class="flex flex-1 items-center gap-3">
                       <div
-                        class="flex h-5 w-5 items-center justify-center rounded-full bg-primary-500 font-mono text-xs font-bold text-white"
+                        class="ml-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary-500 font-mono text-xs font-bold text-white"
                       >
                         {index + 1}
                       </div>
