@@ -1,4 +1,5 @@
 from adb_auto_player.decorators import register_command
+from adb_auto_player.game import Game
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 
 
@@ -19,4 +20,4 @@ class StartAFKJourney(AFKJourneyBase):
         # vn com.farlightgames.igame.gp.vn
         self.package_name = "com.farlightgames.igame.gp"  # global
         self.start_up(device_streaming=False)
-        self.start_game()
+        Game.start_game(self)

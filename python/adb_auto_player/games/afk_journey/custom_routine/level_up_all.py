@@ -4,6 +4,10 @@ from time import sleep
 from adb_auto_player.decorators import (
     register_custom_routine_choice,
 )
+from adb_auto_player.game import Game
+from adb_auto_player.games.afk_journey.afkjourneynavigation import (
+    AFKJourneyNavigation as Navigation,
+)
 from adb_auto_player.log import LogPreset
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.image_manipulation import CropRegions
@@ -17,7 +21,7 @@ class LevelUpAllHeroes(AFKJourneyBase):
     def _level_up_all_heroes(self) -> None:
         self.start_up()
         logging.info("Starting Level Up All Heroes.")
-        self.navigate_to_resonating_hall()
+        Navigation.navigate_to_resonating_hall(self)
 
         if self._find_level_up_all_button() is None:
             logging.info(
@@ -30,7 +34,9 @@ class LevelUpAllHeroes(AFKJourneyBase):
         if level_up_all_button := self._find_level_up_all_button():
             for _ in range(3):
                 for _ in range(10):
-                    self.tap(level_up_all_button, blocking=False, log_message=None)
+                    Game.tap(
+                        self, level_up_all_button, blocking=False, log_message=None
+                    )
                 sleep(2)
             sleep(3)
         logging.info("Level Up All Heroes completed.")

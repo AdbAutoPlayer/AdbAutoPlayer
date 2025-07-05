@@ -6,7 +6,11 @@ from time import sleep
 
 from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import GameTimeoutError
-from adb_auto_player.games.afk_journey.base import AFKJourneyBase
+from adb_auto_player.game import Game
+from adb_auto_player.games.afk_journey.afkjourneynavigation import (
+    AFKJourneyNavigation as Navigation,
+)
+from adb_auto_player.games.afk_journey.base import AFKJourneyBase as Base
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
@@ -15,7 +19,7 @@ from adb_auto_player.models.image_manipulation import CropRegions
 _WORLD_CHAT_POINT = Point(110, 350)
 
 
-class AssistMixin(AFKJourneyBase, ABC):
+class AssistMixin(Base, ABC):
     """Assist Mixin."""
 
     @register_command(
@@ -40,7 +44,7 @@ class AssistMixin(AFKJourneyBase, ABC):
                 "you will miss a lot of Synergy and CC requests"
             )
 
-        assist_limit = self.get_config().general.assist_limit
+        assist_limit = Base.get_config(self).general.assist_limit
         logging.info("Searching Synergy & Corrupt Creature requests in World Chat")
         count: int = 0
         while count < assist_limit:
@@ -52,7 +56,8 @@ class AssistMixin(AFKJourneyBase, ABC):
 
     def _find_synergy_or_corrupt_creature(self) -> bool:  # noqa: PLR0911 - TODO
         """Find Synergy or Corrupt Creature."""
-        result = self.find_any_template(
+        result = Game.find_any_template(
+            self,
             templates=[
                 "assist/label_world_chat.png",
                 "assist/tap_to_enter.png",
@@ -61,22 +66,23 @@ class AssistMixin(AFKJourneyBase, ABC):
         )
         if result is None:
             logging.info("Navigating to World Chat")
-            self.navigate_to_default_state()
-            self.tap(Point(1010, 1080), scale=True)
+            Navigation.navigate_to_default_state(self)
+            Game.tap(self, Point(1010, 1080), scale=True)
             sleep(1)
-            self.tap(_WORLD_CHAT_POINT, scale=True)
+            Game.tap(self, _WORLD_CHAT_POINT, scale=True)
             return False
 
         match result.template:
             # Chat Window is open but not on World Chat
             case "assist/tap_to_enter.png" | "assist/label_team-up_chat.png":
                 logging.info("Switching to World Chat")
-                self.tap(_WORLD_CHAT_POINT, scale=True)
+                Game.tap(self, _WORLD_CHAT_POINT, scale=True)
                 return False
             case "assist/label_world_chat.png":
                 pass
 
-        profile_icon = self.find_worst_match(
+        profile_icon = Game.find_worst_match(
+            self,
             "assist/empty_chat.png",
             crop_regions=CropRegions(left=0.2, right=0.7, top=0.7, bottom=0.22),
         )
@@ -85,9 +91,10 @@ class AssistMixin(AFKJourneyBase, ABC):
             sleep(1)
             return False
 
-        self.tap(profile_icon)
+        Game.tap(self, profile_icon)
         try:
-            result = self.wait_for_any_template(
+            result = Game.wait_for_any_template(
+                self,
                 templates=[
                     "assist/join_now.png",
                     "assist/synergy.png",
@@ -101,16 +108,16 @@ class AssistMixin(AFKJourneyBase, ABC):
             return False
         if result.template == "assist/chat_button.png":
             if (
-                self.game_find_template_match(
-                    template="assist/label_world_chat.png",
+                Game.game_find_template_match(
+                    self, template="assist/label_world_chat.png"
                 )
                 is None
             ):
                 # Back button does not always close profile/chat windows
-                self.tap(Point(550, 100), scale=True)
+                Game.tap(self, Point(550, 100), scale=True)
                 sleep(1)
             return False
-        self.tap(result)
+        Game.tap(self, result)
         match result.template:
             case "assist/join_now.png":
                 logging.info("Clicking Corrupt Creature join now button")
@@ -128,21 +135,24 @@ class AssistMixin(AFKJourneyBase, ABC):
 
     def _handle_corrupt_creature(self) -> bool:
         """Handle Corrupt Creature."""
-        ready = self.wait_for_template(
+        ready = Game.wait_for_template(
+            self,
             template="assist/ready.png",
             crop_regions=CropRegions(left=0.2, right=0.1, top=0.8),
             timeout=self.MIN_TIMEOUT,
         )
 
-        while self.game_find_template_match(
+        while Game.game_find_template_match(
+            self,
             template="assist/ready.png",
             crop_regions=CropRegions(left=0.2, right=0.1, top=0.8),
         ):
-            self.tap(ready)
+            Game.tap(self, ready)
             sleep(0.5)
 
         while True:
-            result = self.wait_for_any_template(
+            result = Game.wait_for_any_template(
+                self,
                 templates=[
                     "assist/bell.png",
                     "guide/close.png",
@@ -168,37 +178,40 @@ class AssistMixin(AFKJourneyBase, ABC):
         logging.debug("Placing heroes")
         # click first 5 heroes in row 1 and 2
         for x in [110, 290, 470, 630, 800]:
-            self.tap(Point(x, 1300), scale=True)
+            Game.tap(self, Point(x, 1300), scale=True)
             sleep(0.5)
         while True:
-            cc_ready = self.game_find_template_match(
+            cc_ready = Game.game_find_template_match(
+                self,
                 template="assist/cc_ready.png",
             )
             if cc_ready:
-                self.tap(cc_ready)
+                Game.tap(self, cc_ready)
                 sleep(1)
             else:
                 break
-        self.wait_for_template(
+        Game.wait_for_template(
+            self,
             template="assist/reward.png",
             crop_regions=CropRegions(left=0.3, right=0.3, top=0.6, bottom=0.3),
         )
         logging.info("Corrupt Creature done")
-        self.press_back_button()
+        Game.press_back_button(self)
         return True
 
     def _handle_synergy(self) -> bool:
         """Handle Synergy."""
-        go = self.game_find_template_match(
+        go = Game.game_find_template_match(
+            self,
             template="assist/go.png",
         )
         if go is None:
             logging.info("Clicked Synergy button too late")
             return False
-        self.tap(go)
+        Game.tap(self, go)
         sleep(3)
-        self.tap(Point(130, 900), scale=True)
+        Game.tap(self, Point(130, 900), scale=True)
         sleep(1)
-        self.tap(Point(630, 1800), scale=True)
+        Game.tap(self, Point(630, 1800), scale=True)
         logging.info("Synergy complete")
         return True

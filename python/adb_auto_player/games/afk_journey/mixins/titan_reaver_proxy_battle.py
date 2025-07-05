@@ -6,7 +6,11 @@ from typing import ClassVar
 
 from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import GameTimeoutError
-from adb_auto_player.games.afk_journey.base import AFKJourneyBase
+from adb_auto_player.game import Game
+from adb_auto_player.games.afk_journey.afkjourneynavigation import (
+    AFKJourneyNavigation as Navigation,
+)
+from adb_auto_player.games.afk_journey.base import AFKJourneyBase as Base
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
@@ -79,7 +83,7 @@ class TitanReaverProxyBattleStats:
     #     return (self.battles_completed / self.battles_attempted) * 100
 
 
-class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
+class TitanReaverProxyBattleMixin(Base, ABC):
     """Proxy battle Mixin, provides automation for proxy battles.
 
     (currently for Titan Reaver only)
@@ -129,7 +133,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
         try:
             # Try to fetch from configuration, use default value if not available
             return getattr(
-                self.get_config().titan_reaver_proxy_battles,
+                Base.get_config(self).titan_reaver_proxy_battles,
                 "proxy_battle_limit",
                 TitanReaverProxyBattleConstants.DEFAULT_BATTLE_LIMIT,
             )
@@ -180,8 +184,8 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
 
         # Requires re-navigation
         logging.info("Navigating to Team-Up Chat")
-        self.navigate_to_default_state()
-        self.tap(TitanReaverProxyBattleConstants.CHAT_BUTTON_POINT, scale=True)
+        Navigation.navigate_to_default_state(self)
+        Game.tap(self, TitanReaverProxyBattleConstants.CHAT_BUTTON_POINT, scale=True)
         sleep(TitanReaverProxyBattleConstants.NAVIGATION_DELAY)
         self._switch_to_team_chat()
 
@@ -190,13 +194,14 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
     def _is_in_team_chat(self) -> bool:
         """Check if in team chat."""
         return (
-            self.find_any_template(["assist/tap_to_enter.png"]) is None
-            and self.find_any_template(["assist/label_team-up_chat.png"]) is not None
+            Game.find_any_template(self, ["assist/tap_to_enter.png"]) is None
+            and Game.find_any_template(self, ["assist/label_team-up_chat.png"])
+            is not None
         )
 
     def _is_in_other_chat(self) -> bool:
         """Check if in other chat channels."""
-        return self.find_any_template(["assist/tap_to_enter.png"]) is not None
+        return Game.find_any_template(self, ["assist/tap_to_enter.png"]) is not None
 
     def _switch_to_team_chat(self) -> None:
         """Switch to team chat."""
@@ -211,7 +216,8 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
         Returns:
             Optional[Point]: Banner location, or None if not found
         """
-        banner = self.find_any_template(
+        banner = Game.find_any_template(
+            self,
             templates=[
                 "assist/proxy_battle_request.png",
             ],
@@ -227,7 +233,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
 
     def _swipe_chat_down(self) -> None:
         """Swipe down the chat window."""
-        self.swipe_down(1000, 500, 1500)
+        Game.swipe_down(self, 1000, 500, 1500)
         sleep(TitanReaverProxyBattleConstants.NAVIGATION_DELAY)
 
     def _join_proxy_battle(self, banner_location: Point) -> bool:
@@ -249,7 +255,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
             + TitanReaverProxyBattleConstants.PROXY_BATTLE_BANNER_OFFSET_Y,
         )
 
-        self.tap(click_point)
+        Game.tap(self, click_point)
         sleep(TitanReaverProxyBattleConstants.NAVIGATION_DELAY)
 
         return True
@@ -292,11 +298,13 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
             bool: Whether successfully found and tapped
         """
         try:
-            result = self.wait_for_template(
-                template, timeout=TitanReaverProxyBattleConstants.TEMPLATE_WAIT_TIMEOUT
+            result = Game.wait_for_template(
+                self,
+                template,
+                timeout=TitanReaverProxyBattleConstants.TEMPLATE_WAIT_TIMEOUT,
             )
 
-            self.tap(result)
+            Game.tap(self, result)
 
             if template == "battle/skip.png":
                 sleep(TitanReaverProxyBattleConstants.NAVIGATION_DELAY)

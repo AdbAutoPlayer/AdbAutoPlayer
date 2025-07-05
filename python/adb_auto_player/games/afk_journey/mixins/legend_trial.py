@@ -8,18 +8,22 @@ from adb_auto_player.exceptions import (
     AutoPlayerWarningError,
     GameTimeoutError,
 )
+from adb_auto_player.game import Game
+from adb_auto_player.games.afk_journey.afkjourneynavigation import (
+    AFKJourneyNavigation as Navigation,
+)
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util import SummaryGenerator
 
-from ..base import AFKJourneyBase
+from ..base import AFKJourneyBase as Base
 from ..battle_state import Mode
 from ..gui_category import AFKJCategory
 
 
 # Tested S4 2025.05.23
-class SeasonLegendTrial(AFKJourneyBase):
+class SeasonLegendTrial(Base):
     """Season Legend Trial Mixin."""
 
     @register_command(
@@ -37,12 +41,12 @@ class SeasonLegendTrial(AFKJourneyBase):
 
         if not self._is_on_season_legend_trial_select():
             try:
-                self.navigate_to_legend_trials_select_tower()
+                Navigation.navigate_to_legend_trials_select_tower(self)
             except GameTimeoutError as e:
                 logging.error(f"{e} {self.LANG_ERROR}")
                 return None
 
-        towers = self.get_config().legend_trials.towers
+        towers = Base.get_config(self).legend_trials.towers
 
         factions: list[str] = [
             "Lightbearer",
@@ -54,13 +58,14 @@ class SeasonLegendTrial(AFKJourneyBase):
         for faction in factions:
             self.battle_state.faction = faction
             if not self._is_on_season_legend_trial_select():
-                self.navigate_to_legend_trials_select_tower()
+                Navigation.navigate_to_legend_trials_select_tower(self)
 
             if self.battle_state.faction not in towers:
                 logging.info(f"{faction}s excluded in Settings")
                 continue
 
-            if self.game_find_template_match(
+            if Game.game_find_template_match(
+                self,
                 template=(
                     f"legend_trials/faction_icon_{self.battle_state.faction_lower}.png"
                 ),
@@ -69,7 +74,8 @@ class SeasonLegendTrial(AFKJourneyBase):
                 logging.warning(f"{faction} Tower not available today")
                 continue
 
-            result = self.game_find_template_match(
+            result = Game.game_find_template_match(
+                self,
                 template=f"legend_trials/banner_{self.battle_state.faction_lower}.png",
                 crop_regions=CropRegions(left=0.2, right=0.3, top=0.2, bottom=0.1),
             )
@@ -78,7 +84,7 @@ class SeasonLegendTrial(AFKJourneyBase):
                 continue
 
             logging.info(f"Starting {faction} Tower")
-            self.tap(result)
+            Game.tap(self, result)
             try:
                 self._select_legend_trials_floor()
                 self._handle_legend_trials_battle()
@@ -99,19 +105,20 @@ class SeasonLegendTrial(AFKJourneyBase):
         while True:
             try:
                 result: bool = self._handle_battle_screen(
-                    self.get_config().legend_trials.use_suggested_formations,
-                    self.get_config().legend_trials.skip_manual_formations,
+                    Base.get_config(self).legend_trials.use_suggested_formations,
+                    Base.get_config(self).legend_trials.skip_manual_formations,
                 )
             except GameTimeoutError as e:
                 logging.error(f"{e}")
                 return None
 
             if result is True:
-                match = self.wait_for_any_template(
+                match = Game.wait_for_any_template(
+                    self,
                     templates=[
                         "next.png",
                         "legend_trials/top_floor_reached.png",
-                    ]
+                    ],
                 )
                 count += 1
                 if self.battle_state.section_header:
@@ -122,7 +129,7 @@ class SeasonLegendTrial(AFKJourneyBase):
 
                 match match.template:
                     case "next.png":
-                        self.tap(match)
+                        Game.tap(self, match)
                         continue
                     case _:
                         logging.info(f"{self.battle_state.faction} Top Floor Reached")
@@ -135,11 +142,13 @@ class SeasonLegendTrial(AFKJourneyBase):
         if not self.battle_state.faction:
             raise ValueError("Battle State Faction is required")
 
-        _ = self.wait_for_template(
+        _ = Game.wait_for_template(
+            self,
             template=f"legend_trials/tower_icon_{self.battle_state.faction_lower}.png",
             crop_regions=CropRegions(right=0.8, bottom=0.8),
         )
-        challenge_btn = self.wait_for_any_template(
+        challenge_btn = Game.wait_for_any_template(
+            self,
             templates=[
                 "legend_trials/challenge_ch.png",
                 "legend_trials/challenge_ge.png",
@@ -151,11 +160,12 @@ class SeasonLegendTrial(AFKJourneyBase):
             timeout_message="Cannot find Challenge button "
             "assuming Trial is already cleared",
         )
-        self.tap(challenge_btn)
+        Game.tap(self, challenge_btn)
 
     def _is_on_season_legend_trial_select(self) -> bool:
         return (
-            self.game_find_template_match(
+            Game.game_find_template_match(
+                self,
                 template="legend_trials/s_header.png",
                 crop_regions=CropRegions(right=0.8, bottom=0.8),
             )

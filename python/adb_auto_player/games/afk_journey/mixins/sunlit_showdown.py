@@ -5,6 +5,10 @@ from abc import ABC
 from time import sleep
 
 from adb_auto_player.decorators import register_command
+from adb_auto_player.game import Game
+from adb_auto_player.games.afk_journey.afkjourneynavigation import (
+    AFKJourneyNavigation as Navigation,
+)
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models import ConfidenceValue
@@ -25,7 +29,7 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
     def attempt_sunlit(self) -> None:
         """Attempt to run Sunlit Showdown Battles."""
         self.start_up()
-        self.navigate_to_default_state()
+        Navigation.navigate_to_default_state(self)
 
         logging.info("Attempting to run Sunlit Showdown!")
         logging.warning(
@@ -55,14 +59,14 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
             template="event/sunlit_showdown/sunlit_showdown"
         )
         sleep(2)
-        self.wait_for_template(template="event/sunlit_showdown/title_s")
-        self.tap(Point(650, 1450))  # Join
+        Game.wait_for_template(self, template="event/sunlit_showdown/title_s")
+        Game.tap(self, Point(650, 1450))  # Join
         sleep(3)
-        self.wait_for_template(template="event/sunlit_showdown/title_s")
-        self.tap(Point(800, 1800))  # Start/Continue
+        Game.wait_for_template(self, template="event/sunlit_showdown/title_s")
+        Game.tap(self, Point(800, 1800))  # Start/Continue
         sleep(4)
-        if self.game_find_template_match(
-            template="event/sunlit_showdown/insufficient_resources"
+        if Game.game_find_template_match(
+            self, template="event/sunlit_showdown/insufficient_resources"
         ):
             logging.warning("Out of Sunlit Showdown tokens!")
             return False
@@ -70,20 +74,20 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
 
     def _handle_battle(self) -> bool:
         # Enter hero selection screen
-        self.wait_for_template(template="event/sunlit_showdown/quick_select")
-        self.tap(Point(800, 1800))  # Continue/Battle
+        Game.wait_for_template(self, template="event/sunlit_showdown/quick_select")
+        Game.tap(self, Point(800, 1800))  # Continue/Battle
         sleep(2)
         self._tap_till_template_disappears(template="navigation/confirm")  # consumables
         sleep(4)
 
         # Clear all hero spots
-        self.wait_for_template(template="start_battle")
+        Game.wait_for_template(self, template="start_battle")
         logging.debug("Clearing heroes")
-        self.tap(Point(425, 950))
+        Game.tap(self, Point(425, 950))
         sleep(1)
-        self.tap(Point(325, 870))
+        Game.tap(self, Point(325, 870))
         sleep(1)
-        self.tap(Point(175, 870))
+        Game.tap(self, Point(175, 870))
         sleep(1)
 
         # Select 3 new ones from list of heroes
@@ -139,7 +143,8 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
         # ]
 
         while selected_heroes < hero_slots:
-            hero_checker = self.find_any_template(
+            hero_checker = Game.find_any_template(
+                self,
                 templates=heroes,
                 threshold=ConfidenceValue(
                     "93%"
@@ -151,7 +156,7 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
                     "Selecting "
                     + hero_checker.template.split("/")[1].split("_")[0].capitalize()
                 )
-                self.tap(hero_checker)
+                Game.tap(self, hero_checker)
                 sleep(1)
                 selected_heroes += 1
                 # logging.info(selected_heroes)
@@ -159,19 +164,20 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
                 logging.info(
                     "No listed hero found, scolling down " + str(scrolls) + "/5"
                 )
-                self.swipe_up(630, 1630, 1340, duration=2)
+                Game.swipe_up(self, 630, 1630, 1340, duration=2)
                 sleep(2)
                 scrolls += 1
             if scrolls > max_scrolls:
-                self.tap(Point(1000, 1625))
-                self.tap(Point(715, 1600))
-                self.tap(Point(850, 1600))
-                self.tap(Point(1000, 1450))
+                Game.tap(self, Point(1000, 1625))
+                Game.tap(self, Point(715, 1600))
+                Game.tap(self, Point(850, 1600))
+                Game.tap(self, Point(1000, 1450))
                 logging.info("Hero selection reset")
                 return
 
     def _handle_battle_result(self) -> bool:
-        result = self.wait_for_any_template(
+        result = Game.wait_for_any_template(
+            self,
             templates=["event/sunlit_showdown/victory", "event/sunlit_showdown/defeat"],
             timeout=self.BATTLE_TIMEOUT,
             delay=1.0,
@@ -181,18 +187,20 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
         match result.template:
             case "event/sunlit_showdown/victory":
                 logging.info("Victory!")
-                self.tap(Point(550, 1800))  # Tap to Close
+                Game.tap(self, Point(550, 1800))  # Tap to Close
                 sleep(5)
                 # If we won the final clear Battle Record and use next token
-                if self.game_find_template_match(
-                    template="event/sunlit_showdown/battle_record"
+                if Game.game_find_template_match(
+                    self, template="event/sunlit_showdown/battle_record"
                 ):
-                    self.tap(Point(550, 1800))  # Tap Battle Record
+                    Game.tap(self, Point(550, 1800))  # Tap Battle Record
                     sleep(5)
-                    self.wait_for_template(template="event/sunlit_showdown/title_s")
-                    self.tap(Point(800, 1800))  # Start/Continue
-                    if self.game_find_template_match(
-                        template="event/sunlit_showdown/insufficient_resources"
+                    Game.wait_for_template(
+                        self, template="event/sunlit_showdown/title_s"
+                    )
+                    Game.tap(self, Point(800, 1800))  # Start/Continue
+                    if Game.game_find_template_match(
+                        self, template="event/sunlit_showdown/insufficient_resources"
                     ):
                         logging.warning("Out of Sunlit Showdown tokens!")
                         return False
@@ -200,16 +208,16 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
 
             case "event/sunlit_showdown/defeat":
                 logging.warning("Defeat!")
-                self.tap(Point(550, 1800))  # Tap to Close
+                Game.tap(self, Point(550, 1800))  # Tap to Close
                 sleep(5)
-                self.tap(Point(550, 1800))  # Tap Battle Record
+                Game.tap(self, Point(550, 1800))  # Tap Battle Record
                 sleep(5)
                 # Use another token
-                self.wait_for_template(template="event/sunlit_showdown/title_s")
-                self.tap(Point(800, 1800))  # Start/Continue
+                Game.wait_for_template(self, template="event/sunlit_showdown/title_s")
+                Game.tap(self, Point(800, 1800))  # Start/Continue
                 sleep(4)
-                if self.game_find_template_match(
-                    template="event/sunlit_showdown/insufficient_resources"
+                if Game.game_find_template_match(
+                    self, template="event/sunlit_showdown/insufficient_resources"
                 ):
                     logging.warning("Out of Sunlit Showdown tokens!")
                     return False

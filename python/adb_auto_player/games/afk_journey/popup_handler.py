@@ -199,7 +199,7 @@ class AFKJourneyPopupHandler(Game, ABC):
         """
         # PSM 6 - Single Block of Text works best here.
         ocr = TesseractBackend(config=TesseractConfig(psm=PSM.SINGLE_BLOCK))
-        image = self.get_screenshot()
+        image = Game.get_screenshot(self)
         preprocess_result = self._preprocess_for_popup(image)
         if not preprocess_result:
             return None
@@ -235,7 +235,7 @@ class AFKJourneyPopupHandler(Game, ABC):
 
         if matching_popup.click_dont_remind_me:
             if preprocess_result.dont_remind_me_checkbox:
-                self.tap(preprocess_result.dont_remind_me_checkbox)
+                Game.tap(self, preprocess_result.dont_remind_me_checkbox)
                 time.sleep(1)
             else:
                 logging.warning("Don't remind me checkbox expected but not found.")
@@ -255,7 +255,8 @@ class AFKJourneyPopupHandler(Game, ABC):
         if result.button.template == popup.confirm_button_template:
             button: TemplateMatchResult | None = result.button
         else:
-            button = self.game_find_template_match(
+            button = Game.game_find_template_match(
+                self,
                 template=popup.confirm_button_template,
                 screenshot=image,
             )
@@ -264,9 +265,9 @@ class AFKJourneyPopupHandler(Game, ABC):
             return None
 
         if popup.hold_to_confirm:
-            self.hold(coordinates=button, duration=popup.hold_duration_seconds)
+            Game.hold(self, coordinates=button, duration=popup.hold_duration_seconds)
         else:
-            self.tap(coordinates=button)
+            Game.tap(self, coordinates=button)
         time.sleep(3)
         return popup
 
@@ -276,7 +277,8 @@ class AFKJourneyPopupHandler(Game, ABC):
         height_5_percent = int(0.05 * height)
         height_35_percent = int(0.35 * height)
 
-        if button := self.find_any_template(
+        if button := Game.find_any_template(
+            self,
             templates=[
                 "navigation/confirm.png",
                 "navigation/continue_top_right_corner.png",
@@ -290,7 +292,8 @@ class AFKJourneyPopupHandler(Game, ABC):
             # No button detected this cannot be a supported popup.
             return None
 
-        if checkbox := self.game_find_template_match(
+        if checkbox := Game.game_find_template_match(
+            self,
             template="popup/checkbox_unchecked.png",
             match_mode=MatchMode.TOP_LEFT,
             threshold=ConfidenceValue("80%"),

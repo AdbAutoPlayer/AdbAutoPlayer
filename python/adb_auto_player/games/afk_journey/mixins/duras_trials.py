@@ -9,18 +9,22 @@ from adb_auto_player.exceptions import (
     AutoPlayerError,
     AutoPlayerWarningError,
 )
+from adb_auto_player.game import Game
+from adb_auto_player.games.afk_journey.afkjourneynavigation import (
+    AFKJourneyNavigation as Navigation,
+)
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Coordinates, Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import TemplateMatchResult
 from adb_auto_player.util import SummaryGenerator
 
-from ..base import AFKJourneyBase
+from ..base import AFKJourneyBase as Base
 from ..battle_state import Mode
 from ..gui_category import AFKJCategory
 
 
-class DurasTrialsMixin(AFKJourneyBase, ABC):
+class DurasTrialsMixin(Base, ABC):
     """Dura's Trials Mixin."""
 
     @register_command(
@@ -35,9 +39,10 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
         """Push Dura's Trials."""
         self.start_up()
         self.battle_state.mode = Mode.DURAS_TRIALS
-        self.navigate_to_duras_trials_screen()
+        Navigation.navigate_to_duras_trials_screen(self)
 
-        rate_up_banners = self.find_all_template_matches(
+        rate_up_banners = Game.find_all_template_matches(
+            self,
             template="duras_trials/rate_up.png",
             grayscale=True,
             crop_regions=CropRegions(top=0.6, bottom=0.2),
@@ -53,7 +58,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
         for banner in rate_up_banners:
             self.battle_state.mode = Mode.DURAS_TRIALS
             if not first_banner:
-                self.navigate_to_duras_trials_screen()
+                Navigation.navigate_to_duras_trials_screen(self)
             try:
                 self._handle_dura_screen(banner)
             except AutoPlayerWarningError as e:
@@ -62,7 +67,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
                 logging.error(f"{e}")
 
             self.battle_state.mode = Mode.DURAS_NIGHTMARE_TRIALS
-            self.navigate_to_duras_trials_screen()
+            Navigation.navigate_to_duras_trials_screen(self)
             try:
                 self._handle_dura_screen(banner, nightmare_mode=True)
             except AutoPlayerWarningError as e:
@@ -75,7 +80,8 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
 
     def _dura_resolve_state(self) -> TemplateMatchResult:
         while True:
-            result = self.wait_for_any_template(
+            result = Game.wait_for_any_template(
+                self,
                 templates=[
                     "battle/records.png",
                     "duras_trials/battle.png",
@@ -97,8 +103,8 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
         self, coordinates: Coordinates, nightmare_mode: bool = False
     ) -> None:
         # y+100 clicks closer to center of the button instead of rate up text
-        offset = int(self.get_scale_factor() * 100)
-        self.tap(Point(coordinates.x, coordinates.y + offset))
+        offset = int(Game.get_scale_factor(self) * 100)
+        Game.tap(self, Point(coordinates.x, coordinates.y + offset))
         count = 0
 
         def handle_nightmare_pre_battle() -> bool:
@@ -115,16 +121,18 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             if match.template == "battle/records.png":
                 return True
 
-            nightmare = self.game_find_template_match(
+            nightmare = Game.game_find_template_match(
+                self,
                 template="duras_trials/nightmare.png",
                 crop_regions=CropRegions(left=0.6, top=0.9),
             )
             if nightmare is None:
                 logging.warning("Nightmare Button not found")
                 return False
-            self.tap(nightmare)
+            Game.tap(self, nightmare)
 
-            nightmare_result = self.wait_for_any_template(
+            nightmare_result = Game.wait_for_any_template(
+                self,
                 templates=[
                     "duras_trials/nightmare_skip.png",
                     "duras_trials/nightmare_swords.png",
@@ -134,19 +142,21 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             )
             match nightmare_result.template:
                 case "duras_trials/nightmare_skip.png":
-                    self.tap(nightmare_result)
-                    self.wait_until_template_disappears(
+                    Game.tap(self, nightmare_result)
+                    Game.wait_until_template_disappears(
+                        self,
                         "duras_trials/nightmare_skip.png",
                         crop_regions=CropRegions(top=0.7, bottom=0.1),
                     )
-                    self.tap(nightmare_result)
-                    self.wait_for_template(
+                    Game.tap(self, nightmare_result)
+                    Game.wait_for_template(
+                        self,
                         "duras_trials/nightmare_swords.png",
                         crop_regions=CropRegions(top=0.7, bottom=0.1),
                     )
-                    self.tap(nightmare_result)
+                    Game.tap(self, nightmare_result)
                 case "duras_trials/nightmare_swords.png":
-                    self.tap(nightmare_result)
+                    Game.tap(self, nightmare_result)
                 case "duras_trials/cleared.png":
                     logging.info("Nightmare Trial already cleared")
                     return False
@@ -164,7 +174,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
                     logging.info("Dura's Trial already cleared")
                     return False
                 case "duras_trials/battle.png":
-                    self.tap(dura_state_result)
+                    Game.tap(self, dura_state_result)
                 case "battle/records.png":
                     # No action needed.
                     pass
@@ -176,12 +186,13 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             Returns:
                 True if the trial is complete, or False to continue pushing battles.
             """
-            _ = self.wait_for_any_template(
+            _ = Game.wait_for_any_template(
+                self,
                 templates=["duras_trials/first_clear.png", "duras_trials/sweep.png"],
                 crop_regions=CropRegions(left=0.3, right=0.3, top=0.6, bottom=0.3),
             )
-            next_button = self.game_find_template_match(
-                template="next.png", crop_regions=CropRegions(left=0.6, top=0.9)
+            next_button = Game.game_find_template_match(
+                self, template="next.png", crop_regions=CropRegions(left=0.6, top=0.9)
             )
             if next_button is not None:
                 nonlocal count
@@ -189,8 +200,8 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
                 logging.info(f"Dura's Trials cleared: {count}")
                 SummaryGenerator.increment("Dura's Trials", "Cleared")
 
-                self.tap(next_button)
-                self.tap(next_button)
+                Game.tap(self, next_button)
+                Game.tap(self, next_button)
                 sleep(3)
                 return False  # Continue battle loop
             else:
@@ -208,7 +219,8 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             logging.info(f"Dura's Nightmare Trials cleared: {count}")
             SummaryGenerator.increment("Dura's Nightmare Trials", "Cleared")
 
-            if self.game_find_template_match(
+            if Game.game_find_template_match(
+                self,
                 template="duras_trials/continue_gray.png",
                 crop_regions=CropRegions(top=0.8),
             ):
@@ -226,7 +238,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
 
             # Handle the battle screen.
             result = self._handle_battle_screen(
-                self.get_config().duras_trials.use_suggested_formations,
+                Base.get_config(self).duras_trials.use_suggested_formations,
             )
 
             if result is True:

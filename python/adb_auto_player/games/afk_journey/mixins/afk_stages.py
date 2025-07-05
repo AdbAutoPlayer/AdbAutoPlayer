@@ -8,17 +8,21 @@ from adb_auto_player.exceptions import (
     AutoPlayerError,
     AutoPlayerWarningError,
 )
+from adb_auto_player.game import Game
+from adb_auto_player.games.afk_journey.afkjourneynavigation import (
+    AFKJourneyNavigation as Navigation,
+)
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util import SummaryGenerator
 
-from ..base import AFKJourneyBase
+from ..base import AFKJourneyBase as Base
 from ..battle_state import Mode
 from ..gui_category import AFKJCategory
 
 
-class AFKStagesMixin(AFKJourneyBase):
+class AFKStagesMixin(Base):
     """AFK Stages Mixin."""
 
     @register_command(
@@ -70,12 +74,12 @@ class AFKStagesMixin(AFKJourneyBase):
         """Start push."""
         stages_pushed: int = 0
         logging.info(f"Pushing: {self.battle_state.section_header}")
-        self.navigate_to_afk_stages_screen()
+        Navigation.navigate_to_afk_stages_screen(self)
         self.check_stages_are_available()
         self._select_afk_stage()
         while self._handle_battle_screen(
-            self.get_config().afk_stages.use_suggested_formations,
-            self.get_config().afk_stages.skip_manual_formations,
+            Base.get_config(self).afk_stages.use_suggested_formations,
+            Base.get_config(self).afk_stages.skip_manual_formations,
         ):
             stages_pushed += 1
             logging.info(f"{self.battle_state.section_header} cleared: {stages_pushed}")
@@ -97,14 +101,16 @@ class AFKStagesMixin(AFKJourneyBase):
                 log_message="Clicking Battle button",
             )
         sleep(2)
-        if confirm := self.game_find_template_match(
+        if confirm := Game.game_find_template_match(
+            self,
             template="navigation/confirm.png",
             crop_regions=CropRegions(left=0.5, top=0.5),
         ):
             self.tap(confirm)
 
     def check_stages_are_available(self) -> None:
-        if self.battle_state.mode == Mode.AFK_STAGES and self.game_find_template_match(
+        if self.battle_state.mode == Mode.AFK_STAGES and Game.game_find_template_match(
+            self,
             "afk_stages/talent_trials_large.png",
             crop_regions=CropRegions(left=0.2, right=0.2, top=0.5),
         ):
