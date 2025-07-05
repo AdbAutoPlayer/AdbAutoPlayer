@@ -17,6 +17,7 @@
   let currentDragPosition = $state<
     "above-first" | "between" | "below-last" | null
   >(null);
+  let isOverContainer = $state(false);
 
   function handleDragStart(
     e: DragEvent,
@@ -29,8 +30,10 @@
     draggedIndex = index;
     if (e.dataTransfer) {
       e.dataTransfer.effectAllowed = fromSelected ? "move" : "copy";
+      e.dataTransfer.setData("text/plain", task);
     }
     currentDragPosition = null;
+    isOverContainer = false;
   }
 
   let dropIndicatorPos = $state<{
@@ -40,6 +43,8 @@
 
   function handleDragOver(e: DragEvent) {
     e.preventDefault();
+    if (!draggedItem) return;
+
     if (e.dataTransfer) {
       e.dataTransfer.dropEffect = draggedFromSelected ? "move" : "copy";
     }
@@ -50,6 +55,7 @@
     if (items.length === 0) {
       dropIndicatorPos = null;
       currentDragPosition = null;
+      isOverContainer = true;
       return;
     }
 
@@ -58,6 +64,7 @@
     if (e.clientY < firstItemRect.top + firstItemRect.height * 0.25) {
       dropIndicatorPos = { index: 0, position: "before" };
       currentDragPosition = "above-first";
+      isOverContainer = true;
       return;
     }
 
@@ -66,6 +73,7 @@
     if (e.clientY > lastItemRect.bottom - lastItemRect.height * 0.25) {
       dropIndicatorPos = { index: items.length - 1, position: "after" };
       currentDragPosition = "below-last";
+      isOverContainer = true;
       return;
     }
 
@@ -78,21 +86,30 @@
       if (e.clientY < middleY) {
         dropIndicatorPos = { index: i, position: "before" };
         currentDragPosition = "between";
+        isOverContainer = true;
         return;
       } else if (e.clientY < rect.bottom) {
         dropIndicatorPos = { index: i, position: "after" };
         currentDragPosition = "between";
+        isOverContainer = true;
         return;
       }
     }
 
     dropIndicatorPos = null;
     currentDragPosition = null;
+    isOverContainer = true;
   }
 
   function handleDrop(e: DragEvent) {
     e.preventDefault();
     if (!draggedItem) return;
+
+    // If we're not over the container, don't do anything
+    if (!isOverContainer) {
+      resetDragState();
+      return;
+    }
 
     // Handle empty list
     if (value.length === 0) {
@@ -151,6 +168,7 @@
     draggedFromSelected = false;
     draggedIndex = -1;
     currentDragPosition = null;
+    isOverContainer = false;
   }
 
   function handleDragLeave(e: DragEvent) {
@@ -158,7 +176,10 @@
     const relatedTarget = e.relatedTarget as HTMLElement | null;
 
     if (!relatedTarget || !container.contains(relatedTarget)) {
-      resetDragState();
+      isOverContainer = false;
+      // Don't reset the drag state completely here, just mark as not over container
+      dropIndicatorPos = null;
+      currentDragPosition = null;
     }
   }
 
@@ -175,6 +196,7 @@
       position: e.clientY < middleY ? "before" : "after",
     };
     currentDragPosition = "between";
+    isOverContainer = true;
   }
 
   function removeTask(index: number) {
@@ -283,6 +305,7 @@
             ondragover={handleDragOver}
             ondrop={(e) => handleDrop(e)}
             ondragleave={handleDragLeave}
+            ondragenter={() => (isOverContainer = true)}
           >
             {#if value.length === 0}
               <div class="flex h-full items-center justify-center">
