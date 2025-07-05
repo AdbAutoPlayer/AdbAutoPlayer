@@ -5,6 +5,7 @@
   import ImageCheckbox from "./ImageCheckbox.svelte";
   import MyCustomRoutine from "./MyCustomRoutine.svelte";
   import { isConstraintOfType } from "$lib/utils/constraint";
+  import { t } from "$lib/i18n/i18n";
 
   let {
     configObject,
@@ -128,7 +129,7 @@
     <Accordion multiple>
       {#each configSections as { sectionKey, sectionConfig }}
         <Accordion.Item value={sectionKey}>
-          {#snippet control()}<span class="h5">{sectionKey}</span>{/snippet}
+          {#snippet control()}<span class="h5">{$t(sectionKey)}</span>{/snippet}
           {#snippet panel()}
             <div class="p-4">
               {#each Object.entries(sectionConfig) as [key, value]}
@@ -138,7 +139,7 @@
                       for="{sectionKey}-{key}"
                       class="mr-3 w-40 text-right"
                     >
-                      {key}
+                      {$t(key)}
                     </label>
 
                     <div class="flex flex-1 items-center">

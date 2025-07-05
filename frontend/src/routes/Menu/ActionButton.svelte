@@ -10,6 +10,7 @@
     isProcessRunning: boolean;
     callback: () => void;
   } = $props();
+  import { t } from "$lib/i18n/i18n";
 </script>
 
 <button
@@ -21,5 +22,5 @@
   class:preset-outlined-primary-100-900={isProcessRunning}
   onclick={callback}
 >
-  {label}
+  {$t(label)}
 </button>
