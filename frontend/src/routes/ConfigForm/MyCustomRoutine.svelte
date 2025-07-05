@@ -14,7 +14,6 @@
   let draggedItem = $state<string | null>(null);
   let draggedFromSelected = $state(false);
   let draggedIndex = $state(-1);
-  let isDraggingOverContainer = $state(false);
   let currentDragPosition = $state<
     "above-first" | "between" | "below-last" | null
   >(null);
@@ -41,7 +40,6 @@
 
   function handleDragOver(e: DragEvent) {
     e.preventDefault();
-    isDraggingOverContainer = true;
     if (e.dataTransfer) {
       e.dataTransfer.dropEffect = draggedFromSelected ? "move" : "copy";
     }
@@ -152,7 +150,6 @@
     draggedItem = null;
     draggedFromSelected = false;
     draggedIndex = -1;
-    isDraggingOverContainer = false;
     currentDragPosition = null;
   }
 
@@ -178,7 +175,6 @@
       position: e.clientY < middleY ? "before" : "after",
     };
     currentDragPosition = "between";
-    isDraggingOverContainer = false;
   }
 
   function removeTask(index: number) {
@@ -194,11 +190,6 @@
   function addTask(task: string) {
     value = [...value, task];
   }
-
-  let taskHeader = $state("Tasks");
-  let taskDescription = $state(
-    "These tasks will run in the order shown below.",
-  );
 </script>
 
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-8 p-6">
@@ -209,18 +200,16 @@
       >
         <div class="space-y-2">
           <div class="flex items-center gap-4">
-            <h2 class="h2 text-surface-800 dark:text-surface-100">
-              {taskHeader}
-            </h2>
+            <h2 class="h2 text-surface-800 dark:text-surface-100">Tasks</h2>
           </div>
           <p class="text-surface-600-300 max-w-2xl text-sm leading-relaxed">
-            {taskDescription}
+            These tasks will run in the order shown below.
           </p>
         </div>
         <button
           class="btn rounded-lg bg-red-800 px-4 py-2 font-medium text-red-100 shadow-md transition-all duration-200 hover:scale-105 hover:bg-red-600 hover:text-white hover:shadow-lg"
           type="button"
-          on:click={clearList}
+          onclick={clearList}
         >
           Clear List
         </button>
@@ -268,8 +257,8 @@
                 <div
                   class="group cursor-grab rounded-lg bg-surface-200 p-2 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-surface-300 hover:shadow-md active:scale-95 active:cursor-grabbing dark:bg-surface-800 dark:hover:bg-surface-700"
                   draggable="true"
-                  on:dragstart={(e) => handleDragStart(e, task, false)}
-                  on:dblclick={() => addTask(task)}
+                  ondragstart={(e) => handleDragStart(e, task, false)}
+                  ondblclick={() => addTask(task)}
                   role="button"
                   tabindex="0"
                   title="Double-click to add, or drag to position"
@@ -291,9 +280,9 @@
 
           <div
             class="min-h-[300px] space-y-3 rounded-lg border border-primary-200 bg-primary-50 p-4 transition-all duration-200 dark:border-primary-700 dark:bg-primary-900/20"
-            on:dragover={handleDragOver}
-            on:drop={(e) => handleDrop(e)}
-            on:dragleave={handleDragLeave}
+            ondragover={handleDragOver}
+            ondrop={(e) => handleDrop(e)}
+            ondragleave={handleDragLeave}
           >
             {#if value.length === 0}
               <div class="flex h-full items-center justify-center">
@@ -326,8 +315,8 @@
                 <div
                   class="group relative cursor-grab rounded-lg bg-primary-100 p-2 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-primary-200 hover:shadow-md active:scale-95 active:cursor-grabbing dark:bg-primary-800/50 dark:hover:bg-primary-700/50"
                   draggable="true"
-                  on:dragstart={(e) => handleDragStart(e, task, true, index)}
-                  on:dragover={(e) => handleContainerDragOver(e, index)}
+                  ondragstart={(e) => handleDragStart(e, task, true, index)}
+                  ondragover={(e) => handleContainerDragOver(e, index)}
                   role="button"
                   tabindex="0"
                 >
@@ -347,7 +336,7 @@
                     <button
                       class="variant-filled-error absolute top-1/2 right-2 btn-icon -translate-y-1/2 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:scale-110 active:scale-95"
                       type="button"
-                      on:click={() => removeTask(index)}
+                      onclick={() => removeTask(index)}
                       title="Remove task"
                     >
                       <IconX size={16} />
