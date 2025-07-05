@@ -98,8 +98,7 @@ duras_trials_messages = [
         # Multiple attempts made. Please wait for the reset.
         text="Please wait for the reset",
         exception_to_raise=AutoPlayerWarningError(
-            "All attempts used, have to wait for reset."
-        ),
+            "All attempts used, have to wait for reset."),
     ),
     PopupMessage(
         text="Blessed Heroes are not deployed",
@@ -132,21 +131,18 @@ legend_trial_messages = [
     PopupMessage(
         text="Legend Trial has been refreshed",
         ignore=True,
-        exception_to_raise=AutoPlayerWarningError("Legend Trial has been refreshed."),
+        exception_to_raise=AutoPlayerWarningError(
+            "Legend Trial has been refreshed."),
     ),
 ]
 
 # Combine all messages into one list
-popup_messages: list[PopupMessage] = (
-    season_talent_messages
-    + general_battle_messages
-    + arena_messages
-    + arcane_labyrinth_messages
-    + duras_trials_messages
-    + misc_messages
-    + fishing_messages
-    + legend_trial_messages
-)
+popup_messages: list[PopupMessage] = (season_talent_messages +
+                                      general_battle_messages +
+                                      arena_messages +
+                                      arcane_labyrinth_messages +
+                                      duras_trials_messages + misc_messages +
+                                      fishing_messages + legend_trial_messages)
 
 
 @dataclass(frozen=True)
@@ -158,7 +154,8 @@ class PopupPreprocessResult:
 
 
 def _find_matching_popup(
-    ocr_text: str, similarity_threshold: ConfidenceValue = ConfidenceValue("80%")
+    ocr_text: str,
+    similarity_threshold: ConfidenceValue = ConfidenceValue("80%")
 ) -> PopupMessage | None:
     """Find matching popup message using fuzzy substring matching.
 
@@ -171,15 +168,16 @@ def _find_matching_popup(
     """
     for popup in popup_messages:
         if StringHelper.fuzzy_substring_match(
-            ocr_text,
-            popup.text,
-            similarity_threshold,
+                ocr_text,
+                popup.text,
+                similarity_threshold,
         ):
             return popup
     return None
 
 
 class AFKJourneyPopupHandler(Game, ABC):
+
     def handle_confirmation_popups(self) -> bool:
         """Handles multiple popups."""
         max_popups = 5
@@ -199,19 +197,20 @@ class AFKJourneyPopupHandler(Game, ABC):
         """
         # PSM 6 - Single Block of Text works best here.
         ocr = TesseractBackend(config=TesseractConfig(psm=PSM.SINGLE_BLOCK))
-        image = self.get_screenshot()
+        image = Game.get_screenshot(self)
         preprocess_result = self._preprocess_for_popup(image)
         if not preprocess_result:
             return None
 
         ocr_results = ocr.detect_text_blocks(
-            image=preprocess_result.cropped_image, min_confidence=ConfidenceValue("80%")
-        )
+            image=preprocess_result.cropped_image,
+            min_confidence=ConfidenceValue("80%"))
         # This is actually not needed in this scenario because we do not need
         # The coordinates or boundaries of the text
         # Leaving this for demo though.
         ocr_results = [
-            result.with_offset(preprocess_result.crop_offset) for result in ocr_results
+            result.with_offset(preprocess_result.crop_offset)
+            for result in ocr_results
         ]
 
         matching_popup: PopupMessage | None = None
@@ -223,8 +222,7 @@ class AFKJourneyPopupHandler(Game, ABC):
         if not matching_popup:
             logging.warning(
                 "Unknown popup detected, "
-                f"please post on Discord so it can be added: {ocr_results}"
-            )
+                f"please post on Discord so it can be added: {ocr_results}")
             return None
 
         if matching_popup.exception_to_raise:
@@ -235,10 +233,11 @@ class AFKJourneyPopupHandler(Game, ABC):
 
         if matching_popup.click_dont_remind_me:
             if preprocess_result.dont_remind_me_checkbox:
-                self.tap(preprocess_result.dont_remind_me_checkbox)
+                Game.tap(self, preprocess_result.dont_remind_me_checkbox)
                 time.sleep(1)
             else:
-                logging.warning("Don't remind me checkbox expected but not found.")
+                logging.warning(
+                    "Don't remind me checkbox expected but not found.")
 
         return self._handled_popup_button(
             preprocess_result,
@@ -255,7 +254,8 @@ class AFKJourneyPopupHandler(Game, ABC):
         if result.button.template == popup.confirm_button_template:
             button: TemplateMatchResult | None = result.button
         else:
-            button = self.game_find_template_match(
+            button = Game.game_find_template_match(
+                self,
                 template=popup.confirm_button_template,
                 screenshot=image,
             )
@@ -264,38 +264,43 @@ class AFKJourneyPopupHandler(Game, ABC):
             return None
 
         if popup.hold_to_confirm:
-            self.hold(coordinates=button, duration=popup.hold_duration_seconds)
+            Game.hold(self,
+                      coordinates=button,
+                      duration=popup.hold_duration_seconds)
         else:
-            self.tap(coordinates=button)
+            Game.tap(self, coordinates=button)
         time.sleep(3)
         return popup
 
-    def _preprocess_for_popup(self, image: np.ndarray) -> PopupPreprocessResult | None:
+    def _preprocess_for_popup(
+            self, image: np.ndarray) -> PopupPreprocessResult | None:
         height, width = image.shape[:2]
 
         height_5_percent = int(0.05 * height)
         height_35_percent = int(0.35 * height)
 
-        if button := self.find_any_template(
-            templates=[
-                "navigation/confirm.png",
-                "navigation/continue_top_right_corner.png",
-            ],
-            threshold=ConfidenceValue("80%"),
-            crop_regions=CropRegions(left=0.5, top=0.4),
-            screenshot=image,
+        if button := Game.find_any_template(
+                self,
+                templates=[
+                    "navigation/confirm.png",
+                    "navigation/continue_top_right_corner.png",
+                ],
+                threshold=ConfidenceValue("80%"),
+                crop_regions=CropRegions(left=0.5, top=0.4),
+                screenshot=image,
         ):
             crop_bottom = button.box.top - height_5_percent
         else:
             # No button detected this cannot be a supported popup.
             return None
 
-        if checkbox := self.game_find_template_match(
-            template="popup/checkbox_unchecked.png",
-            match_mode=MatchMode.TOP_LEFT,
-            threshold=ConfidenceValue("80%"),
-            crop_regions=CropRegions(right=0.8, top=0.2, bottom=0.6),
-            screenshot=image,
+        if checkbox := Game.game_find_template_match(
+                self,
+                template="popup/checkbox_unchecked.png",
+                match_mode=MatchMode.TOP_LEFT,
+                threshold=ConfidenceValue("80%"),
+                crop_regions=CropRegions(right=0.8, top=0.2, bottom=0.6),
+                screenshot=image,
         ):
             crop_top = checkbox.box.bottom + height_5_percent
         else:
@@ -333,18 +338,14 @@ if __name__ == "__main__":
     print("=" * 60)
 
     for test_string in test_strings:
-        matching_popup_message = _find_matching_popup(
-            test_string,
-        )
+        matching_popup_message = _find_matching_popup(test_string, )
 
         print(f"Input: '{test_string}'")
         if matching_popup_message:
             print(f"  ✓ Matched: '{matching_popup_message.text}'")
             print(f"  Ignore: {matching_popup_message.ignore}")
-            print(
-                "  Click 'Don't remind me': "
-                f"{matching_popup_message.click_dont_remind_me}"
-            )
+            print("  Click 'Don't remind me': "
+                  f"{matching_popup_message.click_dont_remind_me}")
         else:
             print("  ✗ No match found")
         print()
@@ -361,10 +362,8 @@ if __name__ == "__main__":
         if matching_popup_message:
             print(f"  ✓ Matched: '{matching_popup_message.text}'")
             print(f"  Ignore: {matching_popup_message.ignore}")
-            print(
-                "  Click 'Don't remind me': "
-                f"{matching_popup_message.click_dont_remind_me}"
-            )
+            print("  Click 'Don't remind me': "
+                  f"{matching_popup_message.click_dont_remind_me}")
         else:
             print("  ✗ No match found")
         print()

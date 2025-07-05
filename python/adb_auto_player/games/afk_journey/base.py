@@ -95,9 +95,9 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             case _:
                 return getattr(self.get_config().afk_stages, attribute)
 
-    def _handle_battle_screen(
-        self, use_suggested_formations: bool = True, skip_manual: bool = False
-    ) -> bool:
+    def _handle_battle_screen(self,
+                              use_suggested_formations: bool = True,
+                              skip_manual: bool = False) -> bool:
         """Handles logic for battle screen.
 
         Args:
@@ -113,27 +113,22 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         if not use_suggested_formations:
             formations = 1
 
-        if (
-            self._get_config_attribute_from_mode(
-                "use_current_formation_before_suggested_formation"
-            )
-            and self._handle_single_stage()
-        ):
+        if (self._get_config_attribute_from_mode(
+                "use_current_formation_before_suggested_formation")
+                and self._handle_single_stage()):
             logging.info("Battle using current Formation.")
             return True
 
         while self.battle_state.formation_num < formations:
             self.battle_state.formation_num += 1
 
-            if (
-                use_suggested_formations
-                and not self._copy_suggested_formation_from_records(
-                    formations, skip_manual
-                )
-            ):
+            if (use_suggested_formations
+                    and not self._copy_suggested_formation_from_records(
+                        formations, skip_manual)):
                 continue
             else:
-                _ = self.wait_for_any_template(
+                _ = Game.wait_for_any_template(
+                    self,
                     templates=[
                         "battle/records.png",
                         "battle/formations_icon.png",
@@ -149,12 +144,13 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                 return False
 
         if formations > 1:
-            logging.info("Stopping Battle, tried all attempts for all Formations")
+            logging.info(
+                "Stopping Battle, tried all attempts for all Formations")
         return False
 
-    def _copy_suggested_formation(
-        self, formations: int = 1, start_count: int = 1
-    ) -> bool:
+    def _copy_suggested_formation(self,
+                                  formations: int = 1,
+                                  start_count: int = 1) -> bool:
         """Helper to copy suggested formations from records.
 
         Args:
@@ -170,24 +166,27 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         logging.info(f"Copying Formation #{self.battle_state.formation_num}")
         counter = self.battle_state.formation_num - start_count
         while counter > 0:
-            formation_next = self.wait_for_template(
+            formation_next = Game.wait_for_template(
+                self,
                 "battle/formation_next.png",
                 crop_regions=CropRegions(left=0.8, top=0.5, bottom=0.4),
                 timeout=self.MIN_TIMEOUT,
                 timeout_message=(
-                    f"Formation #{self.battle_state.formation_num} not found"
-                ),
+                    f"Formation #{self.battle_state.formation_num} not found"),
             )
-            start_image = self.get_screenshot()
-            self.tap(formation_next)
-            self.wait_for_roi_change(
+            start_image = Game.get_screenshot(self)
+            Game.tap(self, formation_next)
+            Game.wait_for_roi_change(
+                self,
                 start_image=start_image,
-                crop_regions=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
+                crop_regions=CropRegions(left=0.2,
+                                         right=0.2,
+                                         top=0.15,
+                                         bottom=0.8),
                 threshold=ConfidenceValue("80%"),
                 timeout=self.MIN_TIMEOUT,
                 timeout_message=(
-                    f"Formation #{self.battle_state.formation_num} not found"
-                ),
+                    f"Formation #{self.battle_state.formation_num} not found"),
             )
             counter -= 1
         excluded_hero: str | None = self._formation_contains_excluded_hero()
@@ -200,15 +199,17 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             return self._copy_suggested_formation(formations, start_count)
         return True
 
-    def _copy_suggested_formation_from_records(
-        self, formations: int = 1, skip_manual: bool = False
-    ) -> bool:
+    def _copy_suggested_formation_from_records(self,
+                                               formations: int = 1,
+                                               skip_manual: bool = False
+                                               ) -> bool:
         """Copy suggested formations from records.
 
         Returns:
             True if successful, False otherwise.
         """
-        _ = self.wait_for_template(
+        _ = Game.wait_for_template(
+            self,
             template="battle/records.png",
             crop_regions=CropRegions(right=0.5, top=0.8),
         )
@@ -220,13 +221,18 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         )
 
         try:
-            _ = self.wait_for_template(
+            _ = Game.wait_for_template(
+                self,
                 "battle/copy.png",
-                crop_regions=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
+                crop_regions=CropRegions(left=0.3,
+                                         right=0.1,
+                                         top=0.7,
+                                         bottom=0.1),
                 timeout=self.MIN_TIMEOUT,
             )
         except GameTimeoutError:
-            raise AutoPlayerWarningError("No more formations available for this battle")
+            raise AutoPlayerWarningError(
+                "No more formations available for this battle")
 
         start_count = 1
 
@@ -235,7 +241,8 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                 return False
             sleep(2)
             if skip_manual:
-                manual_clear = self.find_any_template(
+                manual_clear = Game.find_any_template(
+                    self,
                     templates=[
                         "battle/manual_battle.png",
                         # decided to keep old one just in case
@@ -254,18 +261,24 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                     continue
             self._tap_till_template_disappears(
                 template="battle/copy.png",
-                crop_regions=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
+                crop_regions=CropRegions(left=0.3,
+                                         right=0.1,
+                                         top=0.7,
+                                         bottom=0.1),
             )
             sleep(1)
-            cancel = self.game_find_template_match(
+            cancel = Game.game_find_template_match(
+                self,
                 template="cancel.png",
-                crop_regions=CropRegions(left=0.1, right=0.5, top=0.6, bottom=0.3),
+                crop_regions=CropRegions(left=0.1,
+                                         right=0.5,
+                                         top=0.6,
+                                         bottom=0.3),
             )
             if cancel:
                 logging.warning(
-                    "Formation contains locked Artifacts or Heroes skipping"
-                )
-                self.tap(cancel)
+                    "Formation contains locked Artifacts or Heroes skipping")
+                Game.tap(self, cancel)
                 start_count = self.battle_state.formation_num
                 self.battle_state.formation_num += 1
             else:
@@ -281,8 +294,9 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             str | None: Name of excluded hero
         """
         excluded_heroes_dict: dict[str, str] = {
-            f"heroes/{re.sub(r'[\s&]', '', name.value.lower())}.png": name.value
-            for name in self.get_config().general.excluded_heroes
+            f"heroes/{re.sub(r'[\s&]', '', name.value.lower())}.png":
+            name.value
+            for name in Game.get_config(self).general.excluded_heroes
         }
 
         if not excluded_heroes_dict:
@@ -295,7 +309,8 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
 
         return self._find_any_excluded_hero(filtered_dict)
 
-    def _find_any_excluded_hero(self, excluded_heroes: dict[str, str]) -> str | None:
+    def _find_any_excluded_hero(self,
+                                excluded_heroes: dict[str, str]) -> str | None:
         """Find excluded hero templates.
 
         Args:
@@ -306,11 +321,13 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         """
         sleep(0.5)
         try:
-            result = self.wait_for_any_template(
+            result = Game.wait_for_any_template(
+                self,
                 templates=list(excluded_heroes.keys()),
-                crop_regions=CropRegions(
-                    left="10%", right="30%", top="35%", bottom="40%"
-                ),
+                crop_regions=CropRegions(left="10%",
+                                         right="30%",
+                                         top="35%",
+                                         bottom="40%"),
                 threshold=ConfidenceValue("85%"),
                 timeout=1.0,
                 delay=0.5,
@@ -327,7 +344,8 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         """
         spend_gold: str = self._get_config_attribute_from_mode("spend_gold")
 
-        result = self.wait_for_any_template(
+        result = Game.wait_for_any_template(
+            self,
             templates=[
                 "battle/records.png",
                 "battle/formations_icon.png",
@@ -340,8 +358,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                 coordinates=Point(x=850, y=1780),
                 scale=True,
                 template_match_params=TemplateMatchParams(
-                    template=result.template,
-                ),
+                    template=result.template, ),
             )
         except GameActionFailedError:
             logging.warning("Failed to start Battle, are no Heroes selected?")
@@ -349,11 +366,12 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         sleep(1)
 
         # Need to double-check the order of prompts here
-        if self.find_any_template(["battle/spend.png", "battle/gold.png"]):
+        if Game.find_any_template(self,
+                                  ["battle/spend.png", "battle/gold.png"]):
             if not spend_gold:
                 logging.warning("Not spending gold returning")
                 self.battle_state.max_attempts_reached = True
-                self.press_back_button()
+                Game.press_back_button(self)
                 return False
             else:
                 self._click_confirm_on_popup()
@@ -378,12 +396,13 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             return True
 
         # Legacy code keeping it as a fallback
-        result = self.find_any_template(
+        result = Game.find_any_template(
+            self,
             templates=["navigation/confirm.png", "confirm_text.png"],
             crop_regions=CropRegions(top=0.4),
         )
         if result:
-            self.tap(result)
+            Game.tap(self, result)
             sleep(1)
             return True
         return False
@@ -454,9 +473,11 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                 break
 
             if self.battle_state.section_header:
-                SummaryGenerator.increment(self.battle_state.section_header, "Battles")
+                SummaryGenerator.increment(self.battle_state.section_header,
+                                           "Battles")
 
-            match = self.wait_for_any_template(
+            match = Game.wait_for_any_template(
+                self,
                 templates=battle_over_templates,
                 timeout=self.BATTLE_TIMEOUT,
                 crop_regions=CropRegions(top=0.4),
@@ -466,17 +487,17 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
 
             match match.template:
                 case "duras_trials/no_next.png":
-                    self.press_back_button()
+                    Game.press_back_button(self)
                     result = True
                     break
 
                 case "battle/victory_rewards.png":
-                    self.tap(Point(x=550, y=1800), scale=True)
+                    Game.tap(self, Point(x=550, y=1800), scale=True)
                     result = True
                     break
 
                 case "battle/power_up.png":
-                    self.tap(Point(x=550, y=1800), scale=True)
+                    Game.tap(self, Point(x=550, y=1800), scale=True)
                     result = False
                     break
 
@@ -484,33 +505,31 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                     logging.error(
                         "Network Error or Battle data differs between client and server"
                     )
-                    self.tap(match)
+                    Game.tap(self, match)
                     sleep(3)
                     result = False
                     break
 
-                case (
-                    "next.png"
-                    | "duras_trials/first_clear.png"
-                    | "duras_trials/end_sunrise.png"
-                ):
+                case ("next.png"
+                      | "duras_trials/first_clear.png"
+                      | "duras_trials/end_sunrise.png"):
                     result = True
                     break
 
                 case "retry.png":
                     logging.info(f"Lost Battle #{count}")
-                    self.tap(match)
+                    Game.tap(self, match)
                     # Do not break so the loop continues
 
                 case "battle/result.png":
-                    self.tap(Point(x=950, y=1800), scale=True)
+                    Game.tap(self, Point(x=950, y=1800), scale=True)
                     result = True
                     break
 
-                case (
-                    "afk_stages/tap_to_close.png" | "legend_trials/available_after.png"
-                ):
-                    raise AutoPlayerWarningError("Final Stage reached, exiting...")
+                case ("afk_stages/tap_to_close.png"
+                      | "legend_trials/available_after.png"):
+                    raise AutoPlayerWarningError(
+                        "Final Stage reached, exiting...")
 
         # If no branch set result, default to False.
         if result is None:
@@ -518,16 +537,15 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
 
         return result
 
-    def _handle_guide_popup(
-        self,
-    ) -> None:
+    def _handle_guide_popup(self, ) -> None:
         """Close out of guide popups."""
         while True:
-            result = self.find_any_template(
+            result = Game.find_any_template(
+                self,
                 templates=["guide/close.png", "guide/next.png"],
                 crop_regions=CropRegions(top=0.4),
             )
             if result is None:
                 break
-            self.tap(result)
+            Game.tap(self, result)
             sleep(1)

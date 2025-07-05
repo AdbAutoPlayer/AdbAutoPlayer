@@ -2,17 +2,18 @@ import logging
 from time import sleep
 
 from adb_auto_player.decorators import (
-    register_custom_routine_choice,
-)
+    register_custom_routine_choice, )
 from adb_auto_player.log import LogPreset
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import TemplateMatchResult
+from adb_auto_player.game import Game
 
 from ..base import AFKJourneyBase
 
 
 class LevelUpAllHeroes(AFKJourneyBase):
+
     @register_custom_routine_choice("Level Up All Heroes")
     def _level_up_all_heroes(self) -> None:
         self.start_up()
@@ -30,7 +31,10 @@ class LevelUpAllHeroes(AFKJourneyBase):
         if level_up_all_button := self._find_level_up_all_button():
             for _ in range(3):
                 for _ in range(10):
-                    self.tap(level_up_all_button, blocking=False, log_message=None)
+                    Game.tap(self,
+                             level_up_all_button,
+                             blocking=False,
+                             log_message=None)
                 sleep(2)
             sleep(3)
         logging.info("Level Up All Heroes completed.")
@@ -38,9 +42,9 @@ class LevelUpAllHeroes(AFKJourneyBase):
 
     def _find_level_up_all_button(self) -> TemplateMatchResult | None:
         if level_up_all_button := self.game_find_template_match(
-            "resonating_hall/level_up_all.png",
-            crop_regions=CropRegions(left=0.3, right=0.3, top=0.7),
-            threshold=ConfidenceValue("95%"),
+                "resonating_hall/level_up_all.png",
+                crop_regions=CropRegions(left=0.3, right=0.3, top=0.7),
+                threshold=ConfidenceValue("95%"),
         ):
             return level_up_all_button
         return None
