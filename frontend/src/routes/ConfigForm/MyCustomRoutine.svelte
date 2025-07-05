@@ -29,6 +29,11 @@
     }
   }
 
+  let dropIndicatorPos = $state<{
+    index: number;
+    position: "before" | "after";
+  } | null>(null);
+
   function handleDragOver(e: DragEvent) {
     e.preventDefault();
     if (e.dataTransfer) {
@@ -36,40 +41,78 @@
     }
   }
 
-  function handleDrop(e: DragEvent, targetIndex?: number) {
+  function handleDrop(e: DragEvent) {
     e.preventDefault();
     if (!draggedItem) return;
 
-    if (draggedFromSelected) {
-      // Moving within selected tasks
-      if (targetIndex !== undefined && draggedIndex !== -1) {
-        const newValue = [...value];
-        const [movedItem] = newValue.splice(draggedIndex, 1);
-        newValue.splice(targetIndex, 0, movedItem);
-        value = newValue;
-      }
-    } else {
-      // Adding from available tasks
-      if (targetIndex !== undefined) {
-        // Insert at specific position
-        const newValue = [...value];
-        newValue.splice(targetIndex, 0, draggedItem);
-        value = newValue;
-      } else {
-        // Add to end
+    // Handle drop in empty space (end of list)
+    if (value.length === 0 || dropIndicatorPos === null) {
+      if (!draggedFromSelected) {
         value = [...value, draggedItem];
       }
+      dropIndicatorPos = null;
+      draggedItem = null;
+      return;
     }
 
+    const { index, position } = dropIndicatorPos;
+    const insertIndex = position === "before" ? index : index + 1;
+
+    if (draggedFromSelected) {
+      // Don't do anything if dropping on itself
+      if (draggedIndex === insertIndex || draggedIndex + 1 === insertIndex) {
+        dropIndicatorPos = null;
+        draggedItem = null;
+        return;
+      }
+
+      const newValue = [...value];
+      const [movedItem] = newValue.splice(draggedIndex, 1);
+
+      // Adjust insert index if we're moving downward in the array
+      const adjustedIndex =
+        draggedIndex < insertIndex ? insertIndex - 1 : insertIndex;
+      newValue.splice(adjustedIndex, 0, movedItem);
+      value = newValue;
+    } else {
+      // Adding from available tasks
+      const newValue = [...value];
+      newValue.splice(insertIndex, 0, draggedItem);
+      value = newValue;
+    }
+
+    dropIndicatorPos = null;
     draggedItem = null;
     draggedFromSelected = false;
     draggedIndex = -1;
   }
 
-  function handleDropOnSelected(e: DragEvent, targetIndex: number) {
+  function handleDragLeave(e: DragEvent) {
+    const container = e.currentTarget as HTMLElement;
+    const relatedTarget = e.relatedTarget as HTMLElement | null;
+
+    if (!relatedTarget || !container.contains(relatedTarget)) {
+      dropIndicatorPos = null;
+    }
+  }
+
+  function handleContainerDragOver(e: DragEvent, index: number) {
     e.preventDefault();
-    e.stopPropagation();
-    handleDrop(e, targetIndex);
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = draggedFromSelected ? "move" : "copy";
+    }
+
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const middleY = rect.top + rect.height / 2;
+    dropIndicatorPos = {
+      index,
+      position: e.clientY < middleY ? "before" : "after",
+    };
+  }
+
+  function handleContainerDrop(e: DragEvent) {
+    e.preventDefault();
+    handleDrop(e);
   }
 
   function removeTask(index: number) {
@@ -87,23 +130,9 @@
   }
 
   let taskHeader = $state("Tasks");
-  let taskBracketInfo = $state("");
   let taskDescription = $state(
     "These tasks will run in the order shown below.",
   );
-
-  const lowerName = name.toLowerCase();
-
-  if (lowerName.includes("daily")) {
-    taskHeader = "Daily Tasks";
-    taskBracketInfo = "(Run once per day)";
-    taskDescription = "These tasks will run once at the start of each day.";
-  } else if (lowerName.includes("repeat")) {
-    taskHeader = "Repeating Tasks";
-    taskBracketInfo = "(Run continuously)";
-    taskDescription =
-      "These tasks will run repeatedly in order, over and over again.";
-  }
 </script>
 
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-8 p-6">
@@ -118,9 +147,6 @@
             <h2 class="h2 text-surface-800 dark:text-surface-100">
               {taskHeader}
             </h2>
-            <span class="variant-soft-secondary badge font-medium">
-              {taskBracketInfo}
-            </span>
           </div>
           <p class="text-surface-600-300 max-w-2xl text-sm leading-relaxed">
             {taskDescription}
@@ -210,6 +236,7 @@
             class="min-h-[300px] space-y-3 rounded-lg border border-primary-200 bg-primary-50 p-4 transition-all duration-200 dark:border-primary-700 dark:bg-primary-900/20"
             ondragover={handleDragOver}
             ondrop={(e) => handleDrop(e)}
+            ondragleave={handleDragLeave}
           >
             {#if value.length === 0}
               <div class="flex h-full items-center justify-center">
@@ -228,12 +255,16 @@
               </div>
             {:else}
               {#each value as task, index}
+                {#if dropIndicatorPos?.index === index && dropIndicatorPos?.position === "before"}
+                  <div
+                    class="my-1 h-1 w-full rounded-full bg-primary-500"
+                  ></div>
+                {/if}
                 <div
                   class="group relative cursor-grab rounded-lg bg-primary-100 p-2 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-primary-200 hover:shadow-md active:scale-95 active:cursor-grabbing dark:bg-primary-800/50 dark:hover:bg-primary-700/50"
                   draggable="true"
                   ondragstart={(e) => handleDragStart(e, task, true, index)}
-                  ondragover={handleDragOver}
-                  ondrop={(e) => handleDropOnSelected(e, index)}
+                  ondragover={(e) => handleContainerDragOver(e, index)}
                   role="button"
                   tabindex="0"
                 >
@@ -261,6 +292,11 @@
                   </div>
                   <input type="hidden" {name} value={task} />
                 </div>
+                {#if dropIndicatorPos?.index === index && dropIndicatorPos?.position === "after"}
+                  <div
+                    class="my-1 h-1 w-full rounded-full bg-primary-500"
+                  ></div>
+                {/if}
               {/each}
             {/if}
           </div>
