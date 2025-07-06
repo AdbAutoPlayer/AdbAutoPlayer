@@ -224,9 +224,6 @@
           <div class="flex items-center gap-4">
             <h2 class="h2 text-surface-800 dark:text-surface-100">Tasks</h2>
           </div>
-          <p class="text-surface-600-300 max-w-2xl text-sm leading-relaxed">
-            These tasks will run in the order shown below.
-          </p>
         </div>
         <button
           class="btn rounded-lg bg-red-800 px-4 py-2 font-medium text-red-100 shadow-md transition-all duration-200 hover:scale-105 hover:bg-red-600 hover:text-white hover:shadow-lg"

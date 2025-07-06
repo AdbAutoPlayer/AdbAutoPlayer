@@ -8,7 +8,7 @@ class MyCustomRoutineConfig(BaseModel):
 
     display_name: str = Field(default="", alias="Display Name")
     repeat: bool = Field(
-        default=False,
+        default=True,
         alias="Repeat",
     )
     tasks: list = Field(
