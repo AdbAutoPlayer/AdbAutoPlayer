@@ -300,6 +300,7 @@
             {/if}
           </div>
 
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
           <div
             class="min-h-[300px] space-y-3 rounded-lg border border-primary-200 bg-primary-50 p-4 transition-all duration-200 dark:border-primary-700 dark:bg-primary-900/20"
             ondragover={handleDragOver}

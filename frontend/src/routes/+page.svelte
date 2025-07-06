@@ -195,6 +195,7 @@
     try {
       console.log("onGameConfigSave", configObject);
       await SaveGameConfig(configObject);
+      activeGame = await GetRunningSupportedGame(!logGetRunningSupportedGame);
     } catch (error) {
       showErrorToast(error, {
         title: `Failed to Save ${game.game_title} Settings`,
