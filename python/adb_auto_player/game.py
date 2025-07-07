@@ -1,6 +1,5 @@
 """ADB Auto Player Game Base Module."""
 
-import datetime
 import logging
 import os
 import sys
@@ -41,6 +40,7 @@ from adb_auto_player.image_manipulation import (
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Coordinates, Point
 from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.models.pydantic import MyCustomRoutineConfig
 from adb_auto_player.models.registries import CustomRoutineEntry
 from adb_auto_player.models.template_matching import MatchMode, TemplateMatchResult
 from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY
@@ -1127,51 +1127,25 @@ class Game:
 
         return self._template_dir_path
 
-    def _my_custom_routine(self) -> None:
-        config = self.get_config().my_custom_routine
-        if not config.daily_tasks and not config.repeating_tasks:
-            logging.error(
-                'You need to set Tasks in the Game Config "My Custom Routine" Section'
-            )
+    def _get_custom_routine_config(self, name: str) -> MyCustomRoutineConfig:
+        if hasattr(self.get_config(), name):
+            attribute = getattr(self.get_config(), name)
+            if isinstance(attribute, MyCustomRoutineConfig):
+                return attribute
+            else:
+                raise ValueError(
+                    f"Attribute '{name}' exists but is not a TaskListConfig"
+                )
+        raise AttributeError(f"Configuration has no attribute '{name}'")
+
+    def _execute_custom_routine(self, config: MyCustomRoutineConfig) -> None:
+        if not config.tasks:
+            logging.error(f"Task List: {config.display_name} is empty")
             return
-
-        daily_tasks_executed_at = datetime.datetime.now(datetime.UTC)
-        if config.daily_tasks:
-            if config.skip_daily_tasks_today:
-                logging.warning("Skipping daily tasks today")
-            else:
-                logging.info("Executing Daily Tasks")
-                self._execute_tasks(config.daily_tasks)
-        else:
-            logging.info("No Daily Tasks, skipping")
-
-        while True:
-            logging.info("Executing Repeating Tasks")
-            if config.repeating_tasks:
-                self._execute_tasks(config.repeating_tasks)
-            else:
-                logging.warning("No Repeating Tasks, waiting for next day")
-                sleep(180)
-
-            if not config.daily_tasks:
-                continue
-
-            now = datetime.datetime.now(datetime.UTC)
-            if now.date() != daily_tasks_executed_at.date():
-                logging.info("Executing Daily Tasks")
-                self._execute_tasks(config.daily_tasks)
-                daily_tasks_executed_at = now
-                continue
-
-            next_day = datetime.datetime.combine(
-                now.date() + datetime.timedelta(days=1),
-                datetime.time.min,
-                tzinfo=datetime.UTC,
-            )
-            remaining = next_day - now
-            hours, remainder = divmod(remaining.seconds, 3600)
-            minutes = remainder // 60
-            logging.info(f"Time until next Daily Task execution: {hours}h {minutes}m")
+        self._execute_tasks(config.tasks)
+        while config.repeat:
+            self._execute_tasks(config.tasks)
+        return
 
     def _get_game_commands(self) -> dict[str, CustomRoutineEntry] | None:
         commands = CUSTOM_ROUTINE_REGISTRY
@@ -1196,7 +1170,7 @@ class Game:
     def _execute_tasks(self, tasks: list[str]) -> None:
         game_commands = self._get_game_commands()
         if not game_commands:
-            logging.error("Failed to load Custom Routines.")
+            logging.error("Failed to load Custom Routine.")
             return
 
         for task in tasks:

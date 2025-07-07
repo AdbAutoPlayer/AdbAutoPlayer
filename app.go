@@ -180,8 +180,8 @@ func (a *App) SaveGameConfig(gameConfig map[string]interface{}) error {
 	if err := config.SaveConfig[map[string]interface{}](*a.lastOpenGameConfigPath, &gameConfig); err != nil {
 		return err
 	}
-	runtime.LogInfo(a.ctx, "Saved Game Settings")
-	return nil
+	runtime.LogInfo(a.ctx, "Saving Game Settings")
+	return a.setGamesFromPython()
 }
 
 func (a *App) GetRunningSupportedGame(disableLogging bool) (*ipc.GameGUI, error) {

@@ -16,6 +16,8 @@
     onConfigSave: (config: object) => void;
   } = $props();
 
+  let isSaving = $state(false);
+
   // Initialize the form state from configObject and constraints
   function initializeFormState() {
     const newFormState: Record<string, Record<string, any>> = {};
@@ -83,9 +85,12 @@
     }
     console.log(formState);
 
+    isSaving = true;
     // Create a deep copy of formState to pass to onConfigSave
     const configToSave = JSON.parse(JSON.stringify(formState));
-    onConfigSave?.(configToSave);
+    Promise.resolve(onConfigSave?.(configToSave)).finally(() => {
+      isSaving = false;
+    });
   }
 
   function setupRealTimeValidation() {
@@ -134,13 +139,14 @@
               {#each Object.entries(sectionConfig) as [key, value]}
                 <div class="mb-4">
                   <div class="flex items-center justify-between">
-                    <label
-                      for="{sectionKey}-{key}"
-                      class="mr-3 w-40 text-right"
-                    >
-                      {key}
-                    </label>
-
+                    {#if !isConstraintOfType(value, "MyCustomRoutine")}
+                      <label
+                        for="{sectionKey}-{key}"
+                        class="mr-3 w-40 text-right"
+                      >
+                        {key}
+                      </label>
+                    {/if}
                     <div class="flex flex-1 items-center">
                       {#if getInputType(sectionKey, key) === "checkbox"}
                         <input
@@ -220,8 +226,11 @@
       <button
         type="button"
         class="btn preset-filled-primary-100-900 hover:preset-filled-primary-500"
-        onclick={handleSave}>Save</button
+        disabled={isSaving}
+        onclick={handleSave}
       >
+        Save
+      </button>
     </div>
   </form>
 </div>

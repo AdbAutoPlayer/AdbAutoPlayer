@@ -68,7 +68,10 @@ def register_command(
             if isinstance(gui.category, StrEnum):
                 category_value = gui.category.value
             menu_option = MenuItem(
-                label=gui.label, category=category_value, tooltip=gui.tooltip
+                label=gui.label,
+                label_from_config=gui.label_from_config,
+                category=category_value,
+                tooltip=gui.tooltip,
             )
 
         COMMAND_REGISTRY[module_key][resolved_name] = Command(
