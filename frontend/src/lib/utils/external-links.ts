@@ -8,10 +8,6 @@ export function shouldOpenExternally(url: string): boolean {
     return false;
   }
 
-  if (url.startsWith("http://wails.localhost")) {
-    return false;
-  }
-
   try {
     const parsedUrl = new URL(url);
     if (parsedUrl.host === "wails.localhost") {

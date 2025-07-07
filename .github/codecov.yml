@@ -13,6 +13,7 @@ ignore:
   - "main.go"
   - "app*.go"
   - "internal/processmanager.go"
+  - "internal/ipc/**"
 
 flags:
   windows-latest:
