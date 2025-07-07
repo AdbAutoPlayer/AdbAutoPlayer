@@ -116,6 +116,7 @@ class TowerEnum(StrEnum):
 class GeneralConfig(BaseModel):
     """General config model."""
 
+    assist_limit: PositiveInt = Field(default=20, alias="Assist Limit")
     excluded_heroes: list[HeroesEnum] = Field(
         default_factory=list,
         alias="Exclude Heroes",
@@ -124,7 +125,6 @@ class GeneralConfig(BaseModel):
             "group_alphabetically": True,
         },
     )
-    assist_limit: PositiveInt = Field(default=20, alias="Assist Limit")
 
 
 class CommonBattleModeConfig(BaseModel):
