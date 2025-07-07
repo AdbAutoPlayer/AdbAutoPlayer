@@ -223,4 +223,6 @@ class Config(GameConfig):
     titan_reaver_proxy_battles: TitanReaverProxyBattlesConfig = Field(
         alias="Titan Reaver Proxy Battles"
     )
-    my_custom_routine: MyCustomRoutineConfig = Field(alias="My Custom Routine")
+    custom_routine_one: MyCustomRoutineConfig = Field(alias="Custom Routine 1")
+    custom_routine_two: MyCustomRoutineConfig = Field(alias="Custom Routine 2")
+    custom_routine_three: MyCustomRoutineConfig = Field(alias="Custom Routine 3")
