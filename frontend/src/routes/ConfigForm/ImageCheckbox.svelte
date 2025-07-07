@@ -1,6 +1,7 @@
 <script lang="ts">
   import { updateCheckboxArray } from "$lib/checkboxHelper";
   import { t } from "$lib/i18n/i18n";
+  import NoOptionsAvailable from "../Components/NoOptionsAvailable.svelte";
 
   let {
     constraint,
@@ -47,6 +48,6 @@
       </label>
     {/each}
   {:else}
-    <p>{$t("No options available")}</p>
+    <NoOptionsAvailable />
   {/if}
 </div>

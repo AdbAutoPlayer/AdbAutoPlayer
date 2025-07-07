@@ -2,6 +2,7 @@
   import IconX from "../Icons/Feather/IconX.svelte";
   import { t } from "$lib/i18n/i18n";
   import SettingsSectionHeader from "../Components/SettingsSectionHeader.svelte";
+  import NoOptionsAvailable from "../Components/NoOptionsAvailable.svelte";
 
   let {
     constraint,
@@ -391,7 +392,7 @@
       >
         <div class="h-8 w-8 rounded-full bg-warning-500"></div>
       </div>
-      <p class="text-surface-600-300 text-lg">{$t("No options available")}</p>
+      <NoOptionsAvailable />
     </div>
   {/if}
 </div>
