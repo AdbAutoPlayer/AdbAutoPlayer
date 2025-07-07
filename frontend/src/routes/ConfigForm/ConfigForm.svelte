@@ -140,7 +140,7 @@
               {#each Object.entries(sectionConfig) as [key, value]}
                 <div class="mb-4">
                   <div class="flex items-center justify-between">
-                    {#if !isConstraintOfType(value, "MyCustomRoutine")}
+                    {#if !isConstraintOfType(value, "MyCustomRoutine") && !isConstraintOfType(value, "multicheckbox")}
                       <label
                         for="{sectionKey}-{key}"
                         class="mr-3 w-40 text-right"
@@ -168,6 +168,7 @@
                         />
                       {:else if isConstraintOfType(value, "multicheckbox")}
                         <MultiCheckbox
+                          label={key}
                           constraint={value}
                           bind:value={formState[sectionKey][key]}
                           name="{sectionKey}-{key}"

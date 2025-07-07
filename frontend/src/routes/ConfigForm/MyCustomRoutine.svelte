@@ -1,6 +1,7 @@
 <script lang="ts">
   import IconX from "../Icons/Feather/IconX.svelte";
   import { t } from "$lib/i18n/i18n";
+  import SettingsSectionHeader from "../Components/SettingsSectionHeader.svelte";
 
   let {
     constraint,
@@ -221,13 +222,7 @@
       <div
         class="flex items-center justify-between rounded-xl bg-gradient-to-r from-primary-50 to-secondary-50 p-4 shadow-lg dark:from-primary-900/20 dark:to-secondary-900/20"
       >
-        <div class="space-y-2">
-          <div class="flex items-center gap-4">
-            <h2 class="h2 text-surface-800 dark:text-surface-100">
-              {$t("Tasks")}
-            </h2>
-          </div>
-        </div>
+        <SettingsSectionHeader text={"Tasks"} />
         <button
           class="btn rounded-lg bg-red-800 px-4 py-2 font-medium text-red-100 shadow-md transition-all duration-200 hover:scale-105 hover:bg-red-600 hover:text-white hover:shadow-lg"
           type="button"
