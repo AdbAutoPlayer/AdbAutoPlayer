@@ -1,5 +1,6 @@
 <script lang="ts">
   import { updateCheckboxArray } from "$lib/checkboxHelper";
+  import { t } from "$lib/i18n/i18n";
 
   let {
     constraint,
@@ -31,7 +32,7 @@
 
 <div class="flex flex-wrap gap-2.5">
   {#if groupedOptions.size <= 0}
-    <p>No options available</p>
+    <p>{$t("No options available")}</p>
   {:else if constraint.group_alphabetically}
     {#each [...groupedOptions.entries()] as [letter, options]}
       <div class="flex-1 rounded border border-white/20 p-1.25">
@@ -50,7 +51,7 @@
                 onchange={(e) =>
                   handleCheckboxChange(option, e.currentTarget.checked)}
               />
-              <span class="mr-0.25">{option}</span>
+              <span class="mr-0.25">{$t(option)}</span>
             </label>
           {/each}
         </div>
@@ -68,7 +69,7 @@
           onchange={(e) =>
             handleCheckboxChange(choice, e.currentTarget.checked)}
         />
-        <span class="mr-0.25">{choice}</span>
+        <span class="mr-0.25">{$t(choice)}</span>
       </label>
     {/each}
   {/if}

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { updateCheckboxArray } from "$lib/checkboxHelper";
+  import { t } from "$lib/i18n/i18n";
 
   let {
     constraint,
@@ -42,10 +43,10 @@
           alt={choice}
           class="h-6 w-6"
         />
-        <span>{choice}</span>
+        <span>{$t(choice)}</span>
       </label>
     {/each}
   {:else}
-    <p>No options available</p>
+    <p>{$t("No options available")}</p>
   {/if}
 </div>
