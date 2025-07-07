@@ -115,6 +115,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
 
                 if self._execute_single_proxy_battle():
                     stats.battles_completed += 1
+                    stats.exception_count = 0
                     logging.info(f"Proxy Battle #{stats.battles_completed} completed")
                 else:
                     stats.exception_count += 1
