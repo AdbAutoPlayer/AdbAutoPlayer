@@ -27,6 +27,9 @@ class TitanReaverProxyBattleConstants:
     RETRY_DELAY = 1  # Retry interval (seconds)
     NAVIGATION_DELAY = 1  # Navigation operation interval (seconds)
 
+    # Exception handling
+    MAX_EXCEPTION_COUNT = 10  # Maximum consecutive exceptions before reset
+
     # Coordinate constants
     CHAT_BUTTON_POINT = Point(1010, 1080)
 
@@ -119,7 +122,10 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
                     logging.info(f"Proxy Battle #{stats.battles_completed} completed")
                 else:
                     stats.exception_count += 1
-                    if stats.exception_count >= 10:
+                    if (
+                        stats.exception_count
+                        >= TitanReaverProxyBattleConstants.MAX_EXCEPTION_COUNT
+                    ):
                         logging.error(
                             "Too many consecutive failures, resetting to default state"
                         )
