@@ -40,7 +40,8 @@ type LoggingConfig struct {
 }
 
 type UIConfig struct {
-	Theme string `toml:"theme"`
+	Theme  string `toml:"theme"`
+	Locale string `toml:"locale" json:"Language"`
 }
 
 func NewMainConfig() MainConfig {
@@ -65,7 +66,8 @@ func NewMainConfig() MainConfig {
 			ActionLogLimit:       5,
 		},
 		UI: UIConfig{
-			Theme: "catppuccin",
+			Theme:  "catppuccin",
+			Locale: "en",
 		},
 	}
 }

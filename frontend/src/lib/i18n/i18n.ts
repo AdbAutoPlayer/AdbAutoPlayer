@@ -42,6 +42,3 @@ export function setLocale(newLocale: string): void {
     locale.set(SupportedLocale.EN);
   }
 }
-
-// TODO move this to general settings
-(window as any).setLocale = setLocale;
