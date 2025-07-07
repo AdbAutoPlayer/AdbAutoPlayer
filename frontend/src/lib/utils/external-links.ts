@@ -12,6 +12,15 @@ export function shouldOpenExternally(url: string): boolean {
     return false;
   }
 
+  try {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.host === "wails.localhost") {
+      return false;
+    }
+  } catch {
+    return false;
+  }
+
   if (url.startsWith("file://")) {
     return false;
   }
