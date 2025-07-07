@@ -1,5 +1,6 @@
 <script lang="ts">
   import IconX from "../Icons/Feather/IconX.svelte";
+  import { t } from "$lib/i18n/i18n";
 
   let {
     constraint,
@@ -204,7 +205,7 @@
   }
 
   function clearList() {
-    if (confirm("Are you sure you want to clear all tasks?")) {
+    if (confirm($t("Are you sure you want to clear all tasks?"))) {
       value = [];
     }
   }
@@ -222,7 +223,9 @@
       >
         <div class="space-y-2">
           <div class="flex items-center gap-4">
-            <h2 class="h2 text-surface-800 dark:text-surface-100">Tasks</h2>
+            <h2 class="h2 text-surface-800 dark:text-surface-100">
+              {$t("Tasks")}
+            </h2>
           </div>
         </div>
         <button
@@ -230,7 +233,7 @@
           type="button"
           onclick={clearList}
         >
-          Clear List
+          {$t("Clear Tasks")}
         </button>
       </div>
 
@@ -241,10 +244,12 @@
               <div
                 class="h-1 w-8 rounded-full bg-gradient-to-r from-tertiary-500 to-tertiary-600"
               ></div>
-              <h3 class="text-surface-700-200 h4">Available Tasks</h3>
+              <h3 class="text-surface-700-200 h4">
+                {$t("Available Tasks")}
+              </h3>
             </div>
             <p class="text-surface-500-400 text-sm">
-              Drag tasks to the selected panel or double-click to add
+              {$t("Drag tasks to the selected panel or double-click to add")}
             </p>
           </div>
 
@@ -253,10 +258,12 @@
               <div
                 class="h-1 w-8 rounded-full bg-gradient-to-r from-primary-500 to-primary-600"
               ></div>
-              <h3 class="text-surface-700-200 h4">Selected Tasks</h3>
+              <h3 class="text-surface-700-200 h4">
+                {$t("Selected Tasks")}
+              </h3>
             </div>
             <p class="text-surface-500-400 text-sm">
-              Tasks will execute in the order shown below
+              {$t("Tasks will execute in the order shown below")}
             </p>
           </div>
         </div>
@@ -268,7 +275,7 @@
             {#if constraint.choices.length === 0}
               <div class="flex h-full items-center justify-center">
                 <p class="text-surface-400-500 text-center text-sm">
-                  No tasks available
+                  {$t("No tasks available")}
                 </p>
               </div>
             {:else}
@@ -289,7 +296,7 @@
                     <p
                       class="text-s font-medium text-surface-700 dark:text-surface-200"
                     >
-                      {task}
+                      {$t(task)}
                     </p>
                   </div>
                 </div>
@@ -316,7 +323,7 @@
                     ></div>
                   </div>
                   <p class="text-surface-400-500 text-sm">
-                    Drag tasks here to add them
+                    {$t("Drag tasks here to add them")}
                   </p>
                 </div>
               </div>
@@ -351,7 +358,7 @@
                       <p
                         class="text-s font-medium text-surface-700 dark:text-surface-200"
                       >
-                        {task}
+                        {$t(task)}
                       </p>
                     </div>
                     <button
@@ -389,7 +396,7 @@
       >
         <div class="h-8 w-8 rounded-full bg-warning-500"></div>
       </div>
-      <p class="text-surface-600-300 text-lg">No options available</p>
+      <p class="text-surface-600-300 text-lg">{$t("No options available")}</p>
     </div>
   {/if}
 </div>
