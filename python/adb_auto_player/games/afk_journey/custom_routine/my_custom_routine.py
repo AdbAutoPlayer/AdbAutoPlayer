@@ -38,7 +38,11 @@ class AFKJCustomRoutine(AFKJourneyBase):
         # needed to restart game between Tasks if necessary.
         config = self._get_custom_routine_config(custom_routine)
         if not config.tasks:
-            logging.error("Task list is empty")
+            logging.error(
+                f"{config.display_name} Tasks are empty."
+                if config.display_name
+                else "Tasks are empty."
+            )
             return
         self.open_eyes(device_streaming=False)
         self._execute_custom_routine(config)

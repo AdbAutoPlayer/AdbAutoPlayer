@@ -1139,13 +1139,9 @@ class Game:
         raise AttributeError(f"Configuration has no attribute '{name}'")
 
     def _execute_custom_routine(self, config: MyCustomRoutineConfig) -> None:
-        if not config.tasks:
-            logging.error(f"Task List: {config.display_name} is empty")
-            return
         self._execute_tasks(config.tasks)
         while config.repeat:
             self._execute_tasks(config.tasks)
-        return
 
     def _get_game_commands(self) -> dict[str, CustomRoutineEntry] | None:
         commands = CUSTOM_ROUTINE_REGISTRY
