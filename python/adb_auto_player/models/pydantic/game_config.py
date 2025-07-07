@@ -2,6 +2,7 @@
 
 import logging
 import tomllib
+from functools import lru_cache
 from pathlib import Path
 from typing import cast
 
@@ -13,6 +14,7 @@ class GameConfig(BaseModel):
     """Base configuration class with shared functionality."""
 
     @classmethod
+    @lru_cache(maxsize=1)
     def from_toml(cls, file_path: Path):
         """Create a Config instance from a TOML file.
 

@@ -308,7 +308,10 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         try:
             result = self.wait_for_any_template(
                 templates=list(excluded_heroes.keys()),
-                crop_regions=CropRegions(left=0.1, right=0.2, top=0.3, bottom=0.4),
+                crop_regions=CropRegions(
+                    left="10%", right="30%", top="35%", bottom="40%"
+                ),
+                threshold=ConfidenceValue("85%"),
                 timeout=1.0,
                 delay=0.5,
             )

@@ -24,6 +24,9 @@ MAX_AVG_INPUT_DELAY_IN_MS = 200  # TODO Change to a reasonable value later
 MAX_AVG_INPUT_DELAY_CANDIDATE = 100
 MAX_SCREENSHOT_DELAY_IN_MS = 100  # TODO Change to a reasonable value later
 MAX_AVG_SCREENSHOT_DELAY_CANDIDATE = 10
+FISHING_DELAY = 1.0 / 30.0  # 1 Frame this is used for the fishing loop
+# without CPU usage will go crazy
+# could potentially be reduced to 1.0 / 60.0 if device streaming at 60 fps
 
 
 class Fishing(AFKJourneyBase):
@@ -68,7 +71,12 @@ class Fishing(AFKJourneyBase):
         # after navigation might be easier to intentionally fail the first time to be
         # inside the fishing screen and not the overworld.
 
-        self._fish()
+        if not self._i_am_in_the_fishing_screen():
+            logging.error("Not in Fishing screen")
+            return
+
+        while self._i_am_in_the_fishing_screen():
+            self._fish()
 
     def _warmup_cache_for_all_fishing_templates(self):
         templates = [
@@ -111,7 +119,6 @@ class Fishing(AFKJourneyBase):
 
     def _fish(self) -> None:
         if not self._i_am_in_the_fishing_screen():
-            logging.error("Not in Fishing screen")
             return
 
         btn = self.wait_for_any_template(
@@ -152,8 +159,8 @@ class Fishing(AFKJourneyBase):
                     "fishing/hook_held",
                 ],
                 crop_regions=CropRegions(left=0.3, right=0.3, top=0.5, bottom=0.2),
-                timeout=self.MIN_TIMEOUT,
-                delay=0.05,
+                timeout=5,
+                delay=FISHING_DELAY,
                 threshold=ConfidenceValue("60%"),
                 ensure_order=False,
             )
@@ -163,15 +170,23 @@ class Fishing(AFKJourneyBase):
 
         # Fishing Loop
         check_book_at = 20
+        click_strong_pull_at = 10
         count = 0
         thread = None
         while True:
             count += 1
             screenshot = self.get_screenshot()
-            if count % check_book_at == 0:
+
+            if count % click_strong_pull_at == 0:
                 if not thread or not thread.is_alive():
                     # don't log this its clicking like 5 million times
-                    self.tap(STRONG_PULL, blocking=False, log_message=None)
+                    self.tap(
+                        STRONG_PULL,
+                        blocking=False,
+                        log_message=None,
+                    )
+
+            if count % check_book_at == 0:
                 if self.game_find_template_match(
                     "fishing/book.png",
                     crop_regions=CropRegions(left=0.9, bottom=0.9),
@@ -182,12 +197,12 @@ class Fishing(AFKJourneyBase):
                     # TODO Not sure how to detect a catch or loss here.
                     # Might have to OCR the remaining attempts?
                     break
-            cropped = Cropping.crop(
-                screenshot,
-                CropRegions(left=0.1, right=0.1, top="980px", bottom="740px"),
-            )
 
             if not thread or not thread.is_alive():
+                cropped = Cropping.crop(
+                    screenshot,
+                    CropRegions(left=0.1, right=0.1, top="980px", bottom="740px"),
+                )
                 top, middle = _find_fishing_colors_fast(cropped.image)
                 if top and middle and top > middle:
                     thread = self._handle_hold_for_distance(
@@ -195,7 +210,8 @@ class Fishing(AFKJourneyBase):
                         distance=(top - middle),
                         thread=thread,
                     )
-
+            # Without this CPU usage will go insane
+            sleep(FISHING_DELAY)
         return
 
     def _handle_hold_for_distance(
