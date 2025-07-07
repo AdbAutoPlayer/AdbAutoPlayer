@@ -41,6 +41,7 @@ class TitanReaverProxyBattleStats:
 
     # battles_attempted: int = 0
     battles_completed: int = 0
+    exception_count: int = 0
 
     # Mapping from field name to display name
     _field_display_names: ClassVar[dict[str, str]] = {
@@ -116,6 +117,13 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
                     stats.battles_completed += 1
                     logging.info(f"Proxy Battle #{stats.battles_completed} completed")
                 else:
+                    stats.exception_count += 1
+                    if stats.exception_count >= 10:
+                        logging.error(
+                            "Too many consecutive failures, resetting to default state"
+                        )
+                        self.navigate_to_default_state()
+                        stats.exception_count = 0
                     sleep(5)  # Wait longer after failure
 
         except KeyboardInterrupt as e:
@@ -227,7 +235,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
 
     def _swipe_chat_down(self) -> None:
         """Swipe down the chat window."""
-        self.swipe_down(1000, 500, 1500)
+        self.swipe_down(1000, 800, 1500)
         sleep(TitanReaverProxyBattleConstants.NAVIGATION_DELAY)
 
     def _join_proxy_battle(self, banner_location: Point) -> bool:
