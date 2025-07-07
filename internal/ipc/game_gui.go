@@ -1,10 +1,11 @@
 package ipc
 
 type MenuOption struct {
-	Label    string   `json:"label"`
-	Args     []string `json:"args"`
-	Category string   `json:"category,omitempty"`
-	Tooltip  string   `json:"tooltip,omitempty"`
+	Label      string   `json:"label"`
+	Translated bool     `json:"translated,omitempty"`
+	Args       []string `json:"args"`
+	Category   string   `json:"category,omitempty"`
+	Tooltip    string   `json:"tooltip,omitempty"`
 }
 
 type GameGUI struct {

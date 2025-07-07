@@ -23,13 +23,6 @@ def _print_gui_games_menu() -> None:
 def get_gui_games_menu() -> str:
     """Get the menu for the GUI.
 
-    Returns a JSON string containing a list of dictionaries.
-    Each dictionary represents a game and contains the following keys:
-        - game_title: str
-        - config_path: str
-        - menu_options: list[MenuOption]
-        - constraints: dict[str, Any]
-
     Used by the Wails GUI to populate the menu.
     """
     menu = []
@@ -44,13 +37,13 @@ def get_gui_games_menu() -> str:
 
         menu_options: list[MenuItem] = []
         for name, command in COMMAND_REGISTRY.get(module, {}).items():
-            if command.menu_option.display_in_gui:
-                menu_options.append(command.menu_option)
+            if command.menu_item.display_in_gui:
+                menu_options.append(command.menu_item)
 
         # add common commands
         for name, command in COMMAND_REGISTRY.get("Commands", {}).items():
-            if command.menu_option.display_in_gui:
-                menu_options.append(command.menu_option)
+            if command.menu_item.display_in_gui:
+                menu_options.append(command.menu_item)
 
         for menu_option in menu_options:
             if menu_option.category:
