@@ -62,12 +62,12 @@ def register_command(
         if resolved_name in COMMAND_REGISTRY[module_key]:
             raise ValueError(f"Command '{resolved_name}' is already registered.")
 
-        menu_option = None
+        menu_item = None
         if gui:
             category_value = gui.category
             if isinstance(gui.category, StrEnum):
                 category_value = gui.category.value
-            menu_option = MenuItem(
+            menu_item = MenuItem(
                 label=gui.label,
                 label_from_config=gui.label_from_config,
                 category=category_value,
@@ -78,7 +78,7 @@ def register_command(
             name=resolved_name,
             action=func,
             kwargs=kwargs or {},
-            menu_option=menu_option,
+            menu_item=menu_item,
         )
         return func
 
