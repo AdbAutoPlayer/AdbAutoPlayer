@@ -15,6 +15,7 @@
 
 # App Development
 - [Dev & Build](development/dev-and-build.md)
+- [Translations](development/i18n.md)
 - [Frontend README](development/frontend-README.md)
 - [Writing Bots](development/writing-bots.md)
 - [Contribution Opportunities](development/TODO.md)

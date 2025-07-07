@@ -90,7 +90,7 @@ func (a *App) Shutdown(ctx context.Context) {
 	internal.GetProcessManager().KillProcess()
 }
 
-func (a *App) GetEditableMainConfig() map[string]interface{} {
+func (a *App) GetEditableGeneralSettings() map[string]interface{} {
 	mainConfig, err := config.LoadMainConfig(a.getMainConfigPath())
 	if err != nil {
 		runtime.LogDebugf(a.ctx, "%v", err)
@@ -105,7 +105,7 @@ func (a *App) GetEditableMainConfig() map[string]interface{} {
 	return response
 }
 
-func (a *App) SaveMainConfig(mainConfig config.MainConfig) error {
+func (a *App) SaveGeneralSettings(mainConfig config.MainConfig) error {
 	if err := config.SaveConfig[config.MainConfig](a.getMainConfigPath(), &mainConfig); err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func (a *App) SaveMainConfig(mainConfig config.MainConfig) error {
 	return nil
 }
 
-func (a *App) GetEditableGameConfig(game ipc.GameGUI) (map[string]interface{}, error) {
+func (a *App) GetEditableGameSettings(game ipc.GameGUI) (map[string]interface{}, error) {
 	var gameConfig interface{}
 	var err error
 
@@ -161,7 +161,7 @@ func (a *App) GetEditableGameConfig(game ipc.GameGUI) (map[string]interface{}, e
 	return response, nil
 }
 
-func (a *App) GetTheme() string {
+func (a *App) GetUISettings() (config.UIConfig, error) {
 	mainConfig := config.NewMainConfig()
 	loadedConfig, err := config.LoadMainConfig(a.getMainConfigPath())
 	if err != nil {
@@ -169,10 +169,10 @@ func (a *App) GetTheme() string {
 	} else {
 		mainConfig = *loadedConfig
 	}
-	return mainConfig.UI.Theme
+	return mainConfig.UI, nil
 }
 
-func (a *App) SaveGameConfig(gameConfig map[string]interface{}) error {
+func (a *App) SaveGameSettings(gameConfig map[string]interface{}) error {
 	if nil == a.lastOpenGameConfigPath {
 		return errors.New("cannot save game config: no game config found")
 	}
@@ -432,6 +432,6 @@ func (a *App) getMainConfigPath() string {
 	return *configPath
 }
 
-func (a *App) RegisterGlobalHotkeys() {
-	registerGlobalHotkeys(a)
+func (a *App) RegisterGlobalHotkeys() error {
+	return registerGlobalHotkeys(a)
 }

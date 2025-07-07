@@ -1,10 +1,10 @@
 <script lang="ts">
   import {
-    GetEditableMainConfig,
-    SaveMainConfig,
+    GetEditableGeneralSettings,
+    SaveGeneralSettings,
     GetRunningSupportedGame,
-    GetEditableGameConfig,
-    SaveGameConfig,
+    GetEditableGameSettings,
+    SaveGameSettings,
     StartGameProcess,
     Debug,
     SaveDebugZip,
@@ -19,20 +19,22 @@
   import { sortObjectByOrder } from "$lib/orderHelper";
   import type { MenuButton } from "$lib/model";
   import { showErrorToast } from "$lib/utils/error";
+  import { t } from "$lib/i18n/i18n";
+  import { applyUISettings } from "$lib/utils/settings";
 
   let showConfigForm: boolean = $state(false);
   let configFormProps: Record<string, any> = $state({});
   let activeGame: ipc.GameGUI | null = $state(null);
   let logGetRunningSupportedGame: boolean = $state(true);
 
-  let openFormIsMainConfig: boolean = $state(false);
+  let openFormIsGeneralSettings: boolean = $state(false);
 
   let configSaveCallback: (config: object) => void = $derived.by(() => {
-    if (openFormIsMainConfig) {
-      return onMainConfigSave;
+    if (openFormIsGeneralSettings) {
+      return onGeneralSettingsSave;
     }
 
-    return onGameConfigSave;
+    return onGameSettingsSave;
   });
 
   let activeButtonLabel: string | null = $state(null);
@@ -40,7 +42,7 @@
   let defaultButtons: MenuButton[] = $derived.by(() => {
     return [
       {
-        callback: () => openMainConfigForm(),
+        callback: () => openGeneralSettingsForm(),
         isProcessRunning: false,
         option: ipc.MenuOption.createFrom({
           label: "General Settings",
@@ -82,10 +84,15 @@
 
       if (activeGame.config_path) {
         menuButtons.push({
-          callback: () => openGameConfigForm(activeGame),
+          callback: () => openGameSettingsForm(activeGame),
           isProcessRunning: false,
           option: ipc.MenuOption.createFrom({
-            label: `${activeGame.game_title} Settings`,
+            // This one needs to be translated because of the params
+            label: $t("{{game}} Settings", {
+              game: activeGame.game_title
+                ? $t(activeGame.game_title)
+                : $t("Game"),
+            }),
             category: "Settings, Phone & Debug",
           }),
         });
@@ -165,17 +172,13 @@
     setTimeout(updateStateHandler, 1000);
   }
 
-  async function onMainConfigSave(configObject: object) {
-    console.log("onMainConfigSave");
+  async function onGeneralSettingsSave(configObject: object) {
+    console.log("onGeneralSettingsSave");
     const configForm = config.MainConfig.createFrom(configObject);
-    document.documentElement.setAttribute(
-      "data-theme",
-      configForm["User Interface"].Theme,
-    );
-    console.log(configForm);
 
     try {
-      await SaveMainConfig(configForm);
+      await SaveGeneralSettings(configForm);
+      applyUISettings(configForm["User Interface"]);
     } catch (error) {
       showErrorToast(error, { title: "Failed to Save General Settings" });
     }
@@ -186,15 +189,15 @@
     $pollRunningProcess = true;
   }
 
-  async function onGameConfigSave(configObject: object) {
+  async function onGameSettingsSave(configObject: object) {
     const game = activeGame;
     if (!game) {
       return;
     }
 
     try {
-      console.log("onGameConfigSave", configObject);
-      await SaveGameConfig(configObject);
+      console.log("onGameSettingsSave", configObject);
+      await SaveGameSettings(configObject);
       activeGame = await GetRunningSupportedGame(!logGetRunningSupportedGame);
     } catch (error) {
       showErrorToast(error, {
@@ -207,8 +210,8 @@
     $pollRunningProcess = true;
   }
 
-  async function openGameConfigForm(game: ipc.GameGUI | null) {
-    console.log("openGameConfigForm");
+  async function openGameSettingsForm(game: ipc.GameGUI | null) {
+    console.log("openGameSettingsForm");
     if (game === null) {
       console.log("game === null");
       return;
@@ -216,9 +219,9 @@
     $pollRunningGame = false;
     $pollRunningProcess = false;
 
-    openFormIsMainConfig = false;
+    openFormIsGeneralSettings = false;
     try {
-      const result = await GetEditableGameConfig(game);
+      const result = await GetEditableGameSettings(game);
       console.log(result);
       result.constraints = sortObjectByOrder(result.constraints);
       configFormProps = result;
@@ -232,12 +235,12 @@
     }
   }
 
-  async function openMainConfigForm() {
-    openFormIsMainConfig = true;
+  async function openGeneralSettingsForm() {
+    openFormIsGeneralSettings = true;
     $pollRunningGame = false;
     $pollRunningProcess = false;
     try {
-      const result = await GetEditableMainConfig();
+      const result = await GetEditableGeneralSettings();
       result.constraints = sortObjectByOrder(result.constraints);
       configFormProps = result;
       showConfigForm = true;
@@ -294,7 +297,7 @@
 </script>
 
 <h1 class="pb-4 text-center h1 text-3xl select-none">
-  {activeGame?.game_title ?? "Start any supported Game!"}
+  {$t(activeGame?.game_title || "Start any supported Game!")}
 </h1>
 <div
   class="flex max-h-[70vh] min-h-[20vh] flex-col overflow-hidden card bg-surface-100-900/50 p-4 text-center select-none"

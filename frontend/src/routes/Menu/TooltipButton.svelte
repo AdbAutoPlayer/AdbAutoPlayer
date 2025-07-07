@@ -13,6 +13,7 @@
     menuButton: MenuButton;
     disableActions: boolean;
   } = $props();
+  import { t } from "$lib/i18n/i18n";
 </script>
 
 {#if menuButton.option.tooltip}
@@ -40,7 +41,7 @@
     {/snippet}
     {#snippet content()}
       <span class="select-none">
-        {menuButton.option.tooltip}
+        {$t(menuButton.option.tooltip || "")}
       </span>
     {/snippet}
   </Tooltip>

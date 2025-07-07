@@ -123,6 +123,15 @@ func GetMainConfigConstraints() map[string]interface{} {
 				"vox",
 				"wintry",
 			}, "catppuccin"),
+			"Language": NewSelectConstraint([]string{
+				"en",
+				"jp",
+				"vn",
+			}, "en"),
+			"Order": []string{
+				"Theme",
+				"Language",
+			},
 		},
 		"Logging": map[string]interface{}{
 			"Level": NewSelectConstraint([]string{

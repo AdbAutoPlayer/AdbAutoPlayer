@@ -3,6 +3,7 @@
 
   import type { MenuButton } from "$lib/model";
   import TooltipButton from "./TooltipButton.svelte";
+  import { t } from "$lib/i18n/i18n";
 
   let {
     buttons,
@@ -39,7 +40,7 @@
       {#each categories as category}
         {#if categorizedButtons[category] && categorizedButtons[category].length > 0}
           <Accordion.Item value={category}>
-            {#snippet control()}<span class="h5">{category}</span>{/snippet}
+            {#snippet control()}<span class="h5">{$t(category)}</span>{/snippet}
             {#snippet panel()}
               <div class="flex flex-wrap justify-center gap-4">
                 {#each categorizedButtons[category] as menuButton}
