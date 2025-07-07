@@ -18,6 +18,7 @@ from .constraint import (
 from .constraint_factory import ConstraintFactory
 from .game_gui import GameGUIOptions
 from .log_message import LogLevel, LogMessage
+from .menu_option import MenuOption
 from .summary import Summary
 
 __all__: list[str] = [
@@ -29,6 +30,7 @@ __all__: list[str] = [
     "ImageCheckboxConstraintDict",
     "LogLevel",
     "LogMessage",
+    "MenuOption",
     "MultiCheckboxConstraintDict",
     "MyCustomRoutineConstraintDict",
     "NumberConstraintDict",

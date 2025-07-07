@@ -12,3 +12,13 @@ class MenuOption:
     translated: bool = False
     category: str | None = None
     tooltip: str | None = None
+
+    def to_dict(self):
+        """Convert to dict for JSON serialization."""
+        return {
+            "label": self.label,
+            "args": self.args,
+            "translated": self.translated,
+            "category": self.category,
+            "tooltip": self.tooltip,
+        }

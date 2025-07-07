@@ -3,11 +3,8 @@
 from dataclasses import dataclass
 from typing import Any, TypeVar
 
-from adb_auto_player.models.commands import MenuItem
-
-from ..registries import GAME_REGISTRY
-from ..util import ConfigLoader
 from .constraint import ConstraintType
+from .menu_option import MenuOption
 
 
 @dataclass
@@ -15,66 +12,20 @@ class GameGUIOptions:
     """Game GUI Options."""
 
     game_title: str
-    menu_options: list[MenuItem]
+    menu_options: list[MenuOption]
     categories: list[str]
     config_path: str | None = None
     constraints: dict[str, dict[str, ConstraintType]] | None = None
 
     def to_dict(self):
-        """Converts the GameGUIOptions to a dictionary."""
+        """Convert to dict for JSON serialization."""
         return {
             "game_title": self.game_title,
             "config_path": self.config_path,
-            "menu_options": self._get_formatted_menu_options(),
+            "menu_options": [option.to_dict() for option in self.menu_options],
             "categories": self.categories,
             "constraints": add_order_key(self.constraints),
         }
-
-    def _get_formatted_menu_options(self) -> list[dict[str, Any]]:
-        if self.config_path is None:
-            return [menu_option.__dict__ for menu_option in self.menu_options]
-
-        config = None
-        for game in GAME_REGISTRY.values():
-            if (
-                game.name == self.game_title
-                and game.gui_metadata
-                and game.gui_metadata.config_class
-                and game.config_file_path
-            ):
-                try:
-                    config = game.gui_metadata.config_class.from_toml(
-                        ConfigLoader.games_dir() / game.config_file_path
-                    )
-                    break
-                except Exception:
-                    break
-
-        if config is None:
-            return [menu_option.__dict__ for menu_option in self.menu_options]
-        formatted_options = []
-        for menu_option in self.menu_options:
-            option_dict = menu_option.__dict__.copy()
-
-            if (
-                hasattr(menu_option, "label_from_config")
-                and menu_option.label_from_config
-            ):
-                path_parts = menu_option.label_from_config.split(".")
-                current = config
-
-                try:
-                    for part in path_parts:
-                        current = getattr(current, part)
-
-                    if current:
-                        option_dict["label"] = current
-                except AttributeError:
-                    pass
-
-            formatted_options.append(option_dict)
-
-        return formatted_options
 
 
 T = TypeVar("T", bound=dict[str, Any])

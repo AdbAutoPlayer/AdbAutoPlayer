@@ -34,9 +34,7 @@
     {#snippet trigger()}
       <ActionButton
         disabled={!menuButton.alwaysEnabled && disableActions}
-        label={menuButton.option.label}
-        isProcessRunning={menuButton.isProcessRunning}
-        callback={menuButton.callback}
+        {menuButton}
       ></ActionButton>
     {/snippet}
     {#snippet content()}
@@ -48,8 +46,6 @@
 {:else}
   <ActionButton
     disabled={!menuButton.alwaysEnabled && disableActions}
-    label={menuButton.option.label}
-    isProcessRunning={menuButton.isProcessRunning}
-    callback={menuButton.callback}
+    {menuButton}
   ></ActionButton>
 {/if}
