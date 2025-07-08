@@ -5,13 +5,13 @@ version: '3'
 
 # This information is used to generate the build assets.
 info:
-  companyName: "My Company" # The name of the company
-  productName: "My Product" # The name of the application
-  productIdentifier: "com.mycompany.myproduct" # The unique product identifier
-  description: "A program that does X" # The application description
-  copyright: "(c) 2025, My Company" # Copyright text
-  comments: "Some Product Comments" # Comments
-  version: "0.0.1" # The application version
+  companyName: "AdbAutoPlayer" # The name of the company
+  productName: "AdbAutoPlayer" # The name of the application
+  productIdentifier: "com.github.adbautoplayer" # The unique product identifier
+  description: "I'll add a description later." # The application description
+  copyright: "(c) 2025, AdbAutoPlayer" # Copyright text
+  comments: "I'll add comments later." # Comments
+  version: "0.0.0" # The application version
 
 # Dev mode configuration
 dev_mode:
