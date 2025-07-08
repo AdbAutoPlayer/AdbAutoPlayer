@@ -2,9 +2,15 @@
   import { t } from "$lib/i18n/i18n";
   import { updateCheckboxArray } from "$lib/checkboxHelper";
 
-  export let constraint: MultiCheckboxConstraint;
-  export let value: string[];
-  export let name: string;
+  let {
+    constraint,
+    value = $bindable(),
+    name,
+  }: {
+    constraint: MultiCheckboxConstraint;
+    value: string[];
+    name: string;
+  } = $props();
 
   function groupOptionsByFirstLetter(options: string[]): Map<string, string[]> {
     return options.reduce((acc, option) => {

@@ -27,8 +27,8 @@
   {#if constraint.choices?.length <= 0}
     <NoOptionsAvailable />
   {:else if constraint.group_alphabetically}
-    <MultiCheckboxGroupedAlphabetically {constraint} {value} {name} />
+    <MultiCheckboxGroupedAlphabetically {constraint} bind:value {name} />
   {:else}
-    <MultiCheckBoxDefault {constraint} {value} {name} />
+    <MultiCheckBoxDefault {constraint} bind:value {name} />
   {/if}
 </div>
