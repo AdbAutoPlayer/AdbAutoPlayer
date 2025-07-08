@@ -115,10 +115,6 @@ func (u *UpdateManager) GetLatestRelease(checkPrerelease bool) (*github.Reposito
 	return latestRelease, nil
 }
 
-func getContext() context.Context {
-	return application.Get().Context()
-}
-
 // getLatestReleaseIncludingPrerelease gets the latest release including pre-releases
 func (u *UpdateManager) getLatestReleaseIncludingPrerelease() (*github.RepositoryRelease, error) {
 	releases, _, err := u.githubClient.Repositories.ListReleases(getContext(), u.owner, u.repo, &github.ListOptions{
@@ -252,4 +248,12 @@ func (pr *progressReader) Read(p []byte) (int, error) {
 	}
 
 	return n, err
+}
+
+func getContext() context.Context {
+	app := application.Get()
+	if app == nil {
+		return context.Background()
+	}
+	return app.Context()
 }

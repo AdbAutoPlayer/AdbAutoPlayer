@@ -7,7 +7,7 @@ import (
 )
 
 func TestLoadConfig(t *testing.T) {
-	mainConfig, err := LoadTOML[GeneralSettings]("../../settings/settings.toml")
+	mainConfig, err := LoadTOML[GeneralSettings]("../../config/config.toml")
 	if err != nil {
 		t.Errorf("[Error LoadTOML()] %v", err)
 		return

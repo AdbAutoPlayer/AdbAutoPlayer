@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"adb-auto-player/internal/app"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/path"
 	"fmt"
@@ -56,7 +57,7 @@ func (l *FrontendLogger) Errorf(format string, a ...any) {
 }
 
 func (l *FrontendLogger) buildLogMessage(level ipc.LogLevel, format string, a ...any) {
-	if l.LogLevel > logLevelPriority[level] {
+	if !l.shouldLog(level) {
 		return
 	}
 	l.logMessage(ipc.NewLogMessage(level, fmt.Sprintf(format, a...)))
@@ -81,8 +82,12 @@ func getLogLevelFromString(logLevel string) uint8 {
 	}
 }
 
+func (l *FrontendLogger) shouldLog(level ipc.LogLevel) bool {
+	return l.LogLevel <= logLevelPriority[level]
+}
+
 func (l *FrontendLogger) LogMessage(message ipc.LogMessage) {
-	if l.LogLevel > logLevelPriority[message.Level] {
+	if !l.shouldLog(message.Level) {
 		return
 	}
 	l.logMessage(message)
@@ -90,5 +95,5 @@ func (l *FrontendLogger) LogMessage(message ipc.LogMessage) {
 
 func (l *FrontendLogger) logMessage(message ipc.LogMessage) {
 	message.Message = l.sanitizer.SanitizePath(message.Message)
-	application.Get().Event.EmitEvent(&application.CustomEvent{Name: "log-message", Data: message})
+	app.EmitEvent(&application.CustomEvent{Name: "log-message", Data: message})
 }
