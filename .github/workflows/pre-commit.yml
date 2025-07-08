@@ -37,13 +37,13 @@ jobs:
         with:
           go-version: '1.24'
 
-      - name: install Wails3
-        run: go install -v github.com/wailsapp/wails/v3/cmd/wails3@latest
-
       - name: Install system dependencies
         run: |
           sudo apt-get -yq update
           sudo apt-get -yq install libgtk-3-0 libwebkit2gtk-4.1-dev gcc-aarch64-linux-gnu
+
+      - name: install Wails3
+        run: go install -v github.com/wailsapp/wails/v3/cmd/wails3@latest
 
       - name: Wails3 build
         run: wails3 build -tags webkit2_41
