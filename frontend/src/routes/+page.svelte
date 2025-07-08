@@ -192,7 +192,6 @@
   }
 
   async function onGameSettingsSave(settings: object) {
-    console.log(settings);
     const game = activeGame;
     if (!game) {
       return;

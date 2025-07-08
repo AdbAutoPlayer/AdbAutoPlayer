@@ -81,7 +81,6 @@
     isSaving = true;
 
     const settingsToSave = JSON.parse(JSON.stringify(formState));
-    console.log(settingsToSave);
     Promise.resolve(onSettingsSave?.(settingsToSave)).finally(() => {
       isSaving = false;
     });
