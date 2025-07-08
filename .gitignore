@@ -19,3 +19,4 @@ debug
 coverage.xml
 junit.xml
 .coverage
+adb-auto-player.exe

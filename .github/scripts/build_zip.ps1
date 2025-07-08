@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "dev"
+    [string]$Version = "0.0.0"
 )
 
 $ErrorActionPreference = "Stop"
@@ -16,8 +16,10 @@ if (-not $Workspace) {
     exit 1
 }
 
-Write-Output "Running Wails build..."
-wails build -devtools -ldflags "-X main.Version=$Version"
+Write-Output "Running Wails3 Task build..."
+$env:VERSION="$Version"
+$env:PRODUCTION="true"
+wails3 task build
 
 
 Write-Output "Running Nuitka build..."
