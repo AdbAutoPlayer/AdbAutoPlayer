@@ -64,10 +64,10 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
-        config-file: ./.github/codeql/codeql-settings.yml
-        # If you wish to specify custom queries, you can do so here or in a settings file.
-        # By default, queries listed here will override any specified in a settings file.
-        # Prefix the list here with "+" to use these queries and those in the settings file.
+        config-file: ./.github/codeql/codeql-config.yml
+        # If you wish to specify custom queries, you can do so here or in a config file.
+        # By default, queries listed here will override any specified in a config file.
+        # Prefix the list here with "+" to use these queries and those in the config file.
 
         # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
         # queries: security-extended,security-and-quality
