@@ -53,7 +53,6 @@ renderer.list = function (token: Tokens.List) {
 };
 
 renderer.listitem = function (item: Tokens.ListItem) {
-  console.log(item);
   let itemBody = "";
   if (item.task) {
     const checkbox = this.checkbox({ checked: !!item.checked });

@@ -14,7 +14,7 @@ ignore:
   - "app*.go"
   - "internal/processmanager.go"
   - "internal/ipc/**"
-  - "internal/config/**"
+  - "internal/settings/**"
 
 flags:
   windows-latest:

@@ -1,8 +1,8 @@
-import { ipc } from "$lib/wailsjs/go/models";
+import { MenuOption } from "@wails/ipc";
 
 export interface MenuButton {
   callback: (...args: any[]) => void;
   alwaysEnabled?: boolean;
   isProcessRunning: boolean;
-  option: ipc.MenuOption;
+  option: MenuOption;
 }

@@ -1,19 +1,20 @@
 <script lang="ts">
-  import {
-    TerminateGameProcess,
-    CheckForUpdates,
-    DownloadUpdate,
-    GetChangelogs,
-  } from "$lib/wailsjs/go/main/App";
-  import { updater } from "$lib/wailsjs/go/models";
   import { enablePolling, disablePolling } from "$lib/stores/polling";
-  import { EventsOn } from "$lib/wailsjs/runtime/runtime";
-  import { LogInfo } from "$lib/wailsjs/runtime";
   import { version } from "$app/environment";
   import UpdateIconSticky from "./UpdateIconSticky.svelte";
   import UpdateModal from "./UpdateModal.svelte";
   import { onDestroy } from "svelte";
   import { showErrorToast } from "$lib/utils/error";
+  import { LogInfo } from "$lib/utils/logger";
+  import { Events } from "@wailsio/runtime";
+  import { EventNames } from "$lib/eventNames";
+  import {
+    CheckForUpdates,
+    DownloadUpdate,
+    GetChangelogs,
+  } from "@wails/updater/updateservice";
+  import { UpdateInfo, Changelog } from "@wails/updater";
+  import { KillGameProcess } from "@wails/games/gamesservice";
 
   // State management
   let updateState = $state({
@@ -25,8 +26,8 @@
     isInitialUpdateCheck: false,
   });
 
-  let updateInfo: updater.UpdateInfo | null = $state(null);
-  let modalChangelogs: updater.Changelog[] = $state([]);
+  let updateInfo: UpdateInfo | null = $state(null);
+  let modalChangelogs: Changelog[] = $state([]);
 
   async function initialUpdateCheck() {
     LogInfo(`App Version: ${version}`);
@@ -53,14 +54,14 @@
     if (!updateInfo) return;
 
     disablePolling();
-    await TerminateGameProcess();
+    await KillGameProcess();
 
     updateState.isDownloading = true;
     updateState.downloadProgress = 0;
 
     try {
-      const unsubscribe = EventsOn("download-progress", (progress: number) => {
-        updateState.downloadProgress = progress;
+      const unsubscribe = Events.On(EventNames.DOWNLOAD_PROGRESS, (ev) => {
+        updateState.downloadProgress = ev.data;
       });
 
       await DownloadUpdate(updateInfo.downloadURL);
@@ -90,7 +91,7 @@
     }
   }
 
-  async function setAvailableUpdateInfo(info: updater.UpdateInfo) {
+  async function setAvailableUpdateInfo(info: UpdateInfo) {
     updateInfo = info;
     modalChangelogs = await GetChangelogs();
     updateState.showDownloadIcon = true;

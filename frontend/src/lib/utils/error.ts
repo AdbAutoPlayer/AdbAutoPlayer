@@ -1,6 +1,6 @@
 import { capitalizeError } from "$lib/utils/string";
-import { LogError } from "$lib/wailsjs/runtime";
 import { toaster } from "$lib/utils/toaster-svelte";
+import { LogError } from "$lib/utils/logger";
 
 type ErrorToastOptions = {
   title?: string;

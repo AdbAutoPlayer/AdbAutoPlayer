@@ -6,10 +6,10 @@ interface Constraints {
   [sectionKey: string]: ConstraintSection;
 }
 
-interface ConfigSection {
+interface SettingsSection {
   [key: string]: any;
 }
 
-interface ConfigObject {
-  [sectionKey: string]: ConfigSection;
+interface SettingsObject {
+  [sectionKey: string]: SettingsSection;
 }

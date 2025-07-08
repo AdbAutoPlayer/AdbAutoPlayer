@@ -1,35 +1,38 @@
 <script lang="ts">
-  import {
-    GetEditableGeneralSettings,
-    SaveGeneralSettings,
-    GetRunningSupportedGame,
-    GetEditableGameSettings,
-    SaveGameSettings,
-    StartGameProcess,
-    Debug,
-    SaveDebugZip,
-    TerminateGameProcess,
-    IsGameProcessRunning,
-  } from "$lib/wailsjs/go/main/App";
   import { onDestroy, onMount } from "svelte";
-  import ConfigForm from "./ConfigForm/ConfigForm.svelte";
+  import SettingsForm from "./Settings/SettingsForm.svelte";
   import Menu from "./Menu/Menu.svelte";
   import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
-  import { config, ipc } from "$lib/wailsjs/go/models";
   import { sortObjectByOrder } from "$lib/orderHelper";
   import type { MenuButton } from "$lib/model";
   import { showErrorToast } from "$lib/utils/error";
   import { t } from "$lib/i18n/i18n";
   import { applyUISettings } from "$lib/utils/settings";
+  import {
+    GetGeneralSettingsForm,
+    SaveGeneralSettings,
+  } from "@wails/settings/settingsservice";
+  import { GeneralSettings } from "@wails/settings";
+  import {
+    Debug,
+    GetGameGUI,
+    GetGameSettingsForm,
+    SaveDebugZip,
+    SaveGameSettings,
+    StartGameProcess,
+    KillGameProcess,
+    IsGameProcessRunning,
+  } from "@wails/games/gamesservice";
+  import { GameGUI, MenuOption } from "@wails/ipc";
 
-  let showConfigForm: boolean = $state(false);
-  let configFormProps: Record<string, any> = $state({});
-  let activeGame: ipc.GameGUI | null = $state(null);
-  let logGetRunningSupportedGame: boolean = $state(true);
+  let showSettingsForm: boolean = $state(false);
+  let settingsFormProps: Record<string, any> = $state({});
+  let activeGame: GameGUI | null = $state(null);
+  let logGetGameGUI: boolean = $state(true);
 
   let openFormIsGeneralSettings: boolean = $state(false);
 
-  let configSaveCallback: (config: object) => void = $derived.by(() => {
+  let settingsSaveCallback: (settings: object) => void = $derived.by(() => {
     if (openFormIsGeneralSettings) {
       return onGeneralSettingsSave;
     }
@@ -44,7 +47,7 @@
       {
         callback: () => openGeneralSettingsForm(),
         isProcessRunning: false,
-        option: ipc.MenuOption.createFrom({
+        option: MenuOption.createFrom({
           label: "General Settings",
           category: "Settings, Phone & Debug",
           tooltip:
@@ -54,7 +57,7 @@
       {
         callback: () => debug(),
         isProcessRunning: "Show Debug info" === activeButtonLabel,
-        option: ipc.MenuOption.createFrom({
+        option: MenuOption.createFrom({
           label: "Show Debug info",
           category: "Settings, Phone & Debug",
         }),
@@ -62,7 +65,7 @@
       {
         callback: () => SaveDebugZip(),
         isProcessRunning: false,
-        option: ipc.MenuOption.createFrom({
+        option: MenuOption.createFrom({
           label: "Save debug.zip",
           category: "Settings, Phone & Debug",
         }),
@@ -86,7 +89,7 @@
         menuButtons.push({
           callback: () => openGameSettingsForm(activeGame),
           isProcessRunning: false,
-          option: ipc.MenuOption.createFrom({
+          option: MenuOption.createFrom({
             // This one needs to be translated because of the params
             label: $t("{{game}} Settings", {
               game: activeGame.game_title
@@ -102,7 +105,7 @@
         callback: () => stopGameProcess(),
         isProcessRunning: false,
         alwaysEnabled: true,
-        option: ipc.MenuOption.createFrom({
+        option: MenuOption.createFrom({
           label: "Stop Action",
           tooltip: `Stops the currently running process`,
         }),
@@ -136,7 +139,7 @@
   async function stopGameProcess() {
     clearTimeout(updateStateTimeout);
 
-    await TerminateGameProcess();
+    await KillGameProcess();
     activeButtonLabel = null;
 
     setTimeout(updateStateHandler, 1000);
@@ -157,7 +160,7 @@
     setTimeout(updateStateHandler, 1000);
   }
 
-  async function startGameProcess(menuOption: ipc.MenuOption) {
+  async function startGameProcess(menuOption: MenuOption) {
     if (activeButtonLabel !== null) {
       return;
     }
@@ -172,60 +175,58 @@
     setTimeout(updateStateHandler, 1000);
   }
 
-  async function onGeneralSettingsSave(configObject: object) {
-    console.log("onGeneralSettingsSave");
-    const configForm = config.MainConfig.createFrom(configObject);
+  async function onGeneralSettingsSave(settings: object) {
+    const settingsForm = GeneralSettings.createFrom(settings);
 
     try {
-      await SaveGeneralSettings(configForm);
-      applyUISettings(configForm["User Interface"]);
+      await SaveGeneralSettings(settingsForm);
+      applyUISettings(settingsForm["User Interface"]);
     } catch (error) {
       showErrorToast(error, { title: "Failed to Save General Settings" });
     }
 
-    showConfigForm = false;
-    logGetRunningSupportedGame = true;
+    showSettingsForm = false;
+    logGetGameGUI = true;
     $pollRunningGame = true;
     $pollRunningProcess = true;
   }
 
-  async function onGameSettingsSave(configObject: object) {
+  async function onGameSettingsSave(settings: object) {
+    console.log(settings);
     const game = activeGame;
     if (!game) {
       return;
     }
 
     try {
-      console.log("onGameSettingsSave", configObject);
-      await SaveGameSettings(configObject);
-      activeGame = await GetRunningSupportedGame(!logGetRunningSupportedGame);
+      await SaveGameSettings(settings);
+      activeGame = await GetGameGUI(!logGetGameGUI);
     } catch (error) {
       showErrorToast(error, {
         title: `Failed to Save ${game.game_title} Settings`,
       });
     }
 
-    showConfigForm = false;
+    showSettingsForm = false;
     $pollRunningGame = true;
     $pollRunningProcess = true;
   }
 
-  async function openGameSettingsForm(game: ipc.GameGUI | null) {
-    console.log("openGameSettingsForm");
+  async function openGameSettingsForm(game: GameGUI | null) {
     if (game === null) {
-      console.log("game === null");
+      showErrorToast("Failed to Open Game Settings: No game found");
       return;
     }
+
     $pollRunningGame = false;
     $pollRunningProcess = false;
 
     openFormIsGeneralSettings = false;
     try {
-      const result = await GetEditableGameSettings(game);
-      console.log(result);
+      const result = await GetGameSettingsForm(game);
       result.constraints = sortObjectByOrder(result.constraints);
-      configFormProps = result;
-      showConfigForm = true;
+      settingsFormProps = result;
+      showSettingsForm = true;
     } catch (error) {
       showErrorToast(error, {
         title: `Failed to create ${game.game_title} Settings Form`,
@@ -240,10 +241,10 @@
     $pollRunningGame = false;
     $pollRunningProcess = false;
     try {
-      const result = await GetEditableGeneralSettings();
+      const result = await GetGeneralSettingsForm();
       result.constraints = sortObjectByOrder(result.constraints);
-      configFormProps = result;
-      showConfigForm = true;
+      settingsFormProps = result;
+      showSettingsForm = true;
     } catch (error) {
       showErrorToast(error, {
         title: "Failed to create General Settings Form",
@@ -278,8 +279,8 @@
 
     try {
       if ($pollRunningGame) {
-        activeGame = await GetRunningSupportedGame(!logGetRunningSupportedGame);
-        logGetRunningSupportedGame = false;
+        activeGame = await GetGameGUI(!logGetGameGUI);
+        logGetGameGUI = false;
       }
     } catch (error) {
       console.error(error);
@@ -302,12 +303,12 @@
 <div
   class="flex max-h-[70vh] min-h-[20vh] flex-col overflow-hidden card bg-surface-100-900/50 p-4 text-center select-none"
 >
-  {#if showConfigForm}
+  {#if showSettingsForm}
     <div class="flex-grow overflow-y-scroll">
-      <ConfigForm
-        configObject={configFormProps.config ?? []}
-        constraints={configFormProps.constraints ?? []}
-        onConfigSave={configSaveCallback}
+      <SettingsForm
+        settings={settingsFormProps.settings ?? []}
+        constraints={settingsFormProps.constraints ?? []}
+        onSettingsSave={settingsSaveCallback}
       />
     </div>
   {:else}

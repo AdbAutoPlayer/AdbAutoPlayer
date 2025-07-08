@@ -1,0 +1,91 @@
+package settings
+
+import (
+	"adb-auto-player/internal/ipc"
+	"github.com/pelletier/go-toml/v2"
+	"os"
+)
+
+type GeneralSettings struct {
+	ADB     ADBSettings     `toml:"adb" json:"ADB (Advanced)"`
+	Device  DeviceSettings  `toml:"device"`
+	Update  UpdateSettings  `toml:"update"`
+	Logging LoggingSettings `toml:"logging"`
+	UI      UISettings      `toml:"ui" json:"User Interface"`
+}
+
+type DeviceSettings struct {
+	ID               string `toml:"ID"`
+	UseWMResize      bool   `toml:"wm_size" json:"Resize Display (Phone/Tablet only)"`
+	Streaming        bool   `toml:"streaming" json:"Device Streaming (disable for slow PCs)"`
+	HardwareDecoding bool   `toml:"hardware_decoding" json:"Enable Hardware Decoding"`
+}
+
+type ADBSettings struct {
+	Host string `toml:"host"`
+	Port int    `toml:"port"`
+}
+
+type UpdateSettings struct {
+	AutoUpdate         bool `toml:"auto_updates" json:"Automatically download updates"`
+	EnableAlphaUpdates bool `toml:"enable_alpha_updates" json:"Download Alpha updates"`
+}
+
+type LoggingSettings struct {
+	Level                string `toml:"level"`
+	DebugSaveScreenshots int    `toml:"debug_save_screenshots" json:"Debug Screenshot Limit"`
+	ActionLogLimit       int    `toml:"action_log_limit" json:"Action Log Limit"`
+}
+
+type UISettings struct {
+	Theme  string `toml:"theme"`
+	Locale string `toml:"locale" json:"Language"`
+}
+
+func NewGeneralSettings() GeneralSettings {
+	return GeneralSettings{
+		ADB: ADBSettings{
+			Host: "127.0.0.1",
+			Port: 5037,
+		},
+		Device: DeviceSettings{
+			ID:               "127.0.0.1:5555",
+			UseWMResize:      false,
+			Streaming:        true,
+			HardwareDecoding: false,
+		},
+		Update: UpdateSettings{
+			AutoUpdate:         false,
+			EnableAlphaUpdates: false,
+		},
+		Logging: LoggingSettings{
+			Level:                string(ipc.LogLevelInfo),
+			DebugSaveScreenshots: 60,
+			ActionLogLimit:       5,
+		},
+		UI: UISettings{
+			Theme:  "catppuccin",
+			Locale: "en",
+		},
+	}
+}
+
+func LoadGeneralSettings(filePath string) (*GeneralSettings, error) {
+	defaultConfig := NewGeneralSettings()
+
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &defaultConfig, nil
+		}
+		return nil, err
+	}
+
+	config := defaultConfig
+
+	if err = toml.Unmarshal(data, &config); err != nil {
+		return nil, err
+	}
+
+	return &config, nil
+}

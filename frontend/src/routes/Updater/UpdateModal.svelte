@@ -1,13 +1,13 @@
 <script lang="ts">
   import marked from "$lib/markdownRenderer";
-  import { updater } from "$lib/wailsjs/go/models";
   import Modal from "../Components/Modal.svelte";
   import { ProgressRing } from "@skeletonlabs/skeleton-svelte";
+  import { Changelog, UpdateInfo } from "@wails/updater";
 
   interface Props {
     showModal: boolean;
-    updateInfo: updater.UpdateInfo | null;
-    modalChangelogs: updater.Changelog[];
+    updateInfo: UpdateInfo | null;
+    modalChangelogs: Changelog[];
     downloadProgress: number;
     isDownloading: boolean;
     onClose: () => void;

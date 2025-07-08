@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { EventsOn } from "$lib/wailsjs/runtime";
   import IconX from "../Icons/Feather/IconX.svelte";
   import IconArrowDown from "../Icons/Feather/IconArrowDown.svelte";
   import IconArrowUp from "../Icons/Feather/IconArrowUp.svelte";
+  import { Events } from "@wailsio/runtime";
+  import { EventNames } from "$lib/eventNames";
 
   type LogEntry = {
     message: string;
@@ -141,12 +142,12 @@
     currentMatchIndex = -1;
   }
 
-  EventsOn("summary-message", (summary: { summary_message: string }) => {
+  Events.On(EventNames.SUMMARY_MESSAGE, (ev) => {
+    const summary: { summary_message: string } = ev.data;
     summaryMessage = formatMessage(summary.summary_message);
-    console.log("summary-message", summaryMessage);
   });
 
-  EventsOn("add-summary-to-log", () => {
+  Events.On(EventNames.WRITE_SUMMARY_TO_LOG, (ev) => {
     addSummaryMessageToLog();
     summaryMessage = "";
   });
@@ -162,7 +163,8 @@
     summaryMessage = "";
   }
 
-  EventsOn("log-message", (logMessage: LogMessage) => {
+  Events.On(EventNames.LOG_MESSAGE, (ev) => {
+    const logMessage: LogMessage = ev.data;
     let message = "";
     if (logMessage.level === "DEBUG") {
       const parts = [];
@@ -186,7 +188,7 @@
     });
   });
 
-  EventsOn("log-clear", () => {
+  Events.On(EventNames.LOG_CLEAR, (ev) => {
     logs = logs.slice(0, 1);
   });
 

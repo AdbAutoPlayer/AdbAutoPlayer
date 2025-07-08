@@ -1,13 +1,14 @@
-import { GetUISettings, RegisterGlobalHotkeys } from "$lib/wailsjs/go/main/App";
 import { setLocale } from "$lib/i18n/i18n";
-import { LogError } from "$lib/wailsjs/runtime";
 import Locales from "$lib/i18n/locales";
-import { config } from "$lib/wailsjs/go/models";
 import { showErrorToast } from "$lib/utils/error";
+import { GetGeneralSettings } from "@wails/settings/settingsservice";
+import { UISettings } from "@wails/settings";
+import { RegisterGlobalHotkeys } from "@wails/hotkeys/hotkeysservice";
+import { LogError } from "$lib/utils/logger";
 
 const DEFAULT_THEME = "catppuccin";
 
-export function applyUISettings(settings: config.UIConfig) {
+export function applyUISettings(settings: UISettings) {
   console.log("Applying UI:", settings);
   document.documentElement.setAttribute("data-theme", settings.Theme);
   setLocale(settings.Language);
@@ -15,8 +16,8 @@ export function applyUISettings(settings: config.UIConfig) {
 
 export async function applyUISettingsFromFile() {
   try {
-    const settings = await GetUISettings();
-    applyUISettings(settings);
+    const settings = await GetGeneralSettings();
+    applyUISettings(settings["User Interface"]);
   } catch (error) {
     LogError(`Failed to load UI settings: ${error}`);
     document.documentElement.setAttribute("data-theme", DEFAULT_THEME);
