@@ -9,12 +9,12 @@ ignore:
   - "python/adb_auto_player/adb.py"
   - "python/adb_auto_player/commands/**"
   - "python/tests/**"
-  - "app.go"
   - "main.go"
-  - "app*.go"
-  - "internal/processmanager.go"
-  - "internal/ipc/**"
-  - "internal/config/**"
+  - "internal/app/**"
+  - "internal/games/**"
+  - "internal/hotkeys/**"
+  - "internal/process/**"
+
 
 flags:
   windows-latest:

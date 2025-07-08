@@ -1,10 +1,10 @@
 package settings
 
 import (
+	"adb-auto-player/internal/app"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/logger"
 	"adb-auto-player/internal/path"
-	"github.com/wailsapp/wails/v3/pkg/application"
 	"sync"
 )
 
@@ -54,11 +54,11 @@ func (s *SettingsService) GetGeneralSettingsForm() map[string]interface{} {
 
 func (s *SettingsService) SaveGeneralSettings(settings GeneralSettings) error {
 	if err := SaveTOML[GeneralSettings](*s.generalSettingsPath, &settings); err != nil {
-		application.Get().Logger.Error(err.Error())
+		app.Error(err.Error())
 		return err
 	}
 	s.generalSettings = settings
-	application.Get().Event.Emit("log-clear")
+	app.Emit("log-clear")
 	logger.Get().Infof("Saved General Settings")
 	return nil
 }
@@ -73,7 +73,7 @@ func loadGeneralSettingsOrDefault(tomlPath *string) GeneralSettings {
 	if tomlPath != nil {
 		loadedSettings, err := LoadGeneralSettings(*tomlPath)
 		if err != nil {
-			application.Get().Logger.Error(err.Error())
+			app.Error(err.Error())
 		} else {
 			generalSettings = *loadedSettings
 			updateLogLevel(generalSettings.Logging.Level)
