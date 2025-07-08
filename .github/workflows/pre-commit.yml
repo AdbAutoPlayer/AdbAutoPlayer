@@ -46,6 +46,6 @@ jobs:
         run: go install -v github.com/wailsapp/wails/v3/cmd/wails3@latest
 
       - name: Wails3 build
-        run: wails3 build
+        run: wails3 task build
 
       - run: uvx pre-commit run --all-files
