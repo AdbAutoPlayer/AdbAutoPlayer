@@ -290,7 +290,7 @@ func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
 
 			var logMessage ipc.LogMessage
 			if err = json.Unmarshal([]byte(lastLine), &logMessage); err == nil {
-				return "", fmt.Errorf(logMessage.Message)
+				return "", err
 			}
 		}
 
