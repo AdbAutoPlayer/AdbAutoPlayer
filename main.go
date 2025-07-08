@@ -32,6 +32,9 @@ func main() {
 		path.ChangeWorkingDirForProd()
 	}
 
+	// TODO create notifier service that wraps around this
+	// addNotifier(app)
+
 	app := application.New(application.Options{
 		Name:        "AdbAutoPlayer",
 		Description: "I'll add a description later",
@@ -53,10 +56,13 @@ func main() {
 			process.Get().KillProcess()
 		},
 	})
-	app.Window.NewWithOptions(application.WebviewWindowOptions{
+
+	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:  "AdbAutoPlayer",
 		Width:  1168,
 		Height: 776,
+		// This is for DnD outside the window
+		EnableDragAndDrop: false,
 		Mac: application.MacWindow{
 			InvisibleTitleBarHeight: 50,
 			Backdrop:                application.MacBackdropTranslucent,
@@ -65,8 +71,23 @@ func main() {
 		BackgroundColour: application.NewRGB(27, 38, 54),
 		URL:              "/",
 	})
+
+	addSystemTray(app, window)
+
 	err := app.Run()
 	if err != nil {
 		log.Fatal(err)
 	}
 }
+
+func addSystemTray(app *application.App, window *application.WebviewWindow) {
+	systray := app.SystemTray.New()
+	systray.SetLabel("AdbAutoPlayer")
+	systray.SetTooltip("AdbAutoPlayer")
+	systray.AttachWindow(window)
+}
+
+// func addNotifier(app *application.App) {
+// 	notifier := notifications.New()
+// 	app.RegisterService(application.NewService(notifier))
+// }
