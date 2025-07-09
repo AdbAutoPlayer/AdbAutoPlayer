@@ -190,15 +190,34 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                 ),
             )
             counter -= 1
+        return True
+
+    def _formation_should_be_skipped(self, skip_manual: bool = False) -> bool:
+        if skip_manual:
+            manual_clear = self.find_any_template(
+                templates=[
+                    "battle/manual_battle.png",
+                    # decided to keep old one just in case
+                    "battle/manual_battle_old1.png",
+                ],
+                crop_regions=CropRegions(
+                    top=0.5,
+                    right=0.5,
+                ),
+                threshold=ConfidenceValue("80%"),
+            )
+            if manual_clear:
+                logging.info("Manual formation found, skipping.")
+                return True
+
         excluded_hero: str | None = self._formation_contains_excluded_hero()
         if excluded_hero is not None:
-            logging.warning(
-                f"Formation contains excluded Hero: '{excluded_hero}' skipping"
+            logging.info(
+                f"Formation contains excluded Hero: '{excluded_hero}', skipping."
             )
-            start_count = self.battle_state.formation_num
-            self.battle_state.formation_num += 1
-            return self._copy_suggested_formation(formations, start_count)
-        return True
+            return True
+
+        return False
 
     def _copy_suggested_formation_from_records(
         self, formations: int = 1, skip_manual: bool = False
@@ -232,26 +251,14 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
 
         while True:
             if not self._copy_suggested_formation(formations, start_count):
-                return False
+                break
+
+            if self._formation_should_be_skipped(skip_manual):
+                start_count = self.battle_state.formation_num
+                self.battle_state.formation_num += 1
+                continue
+
             sleep(2)
-            if skip_manual:
-                manual_clear = self.find_any_template(
-                    templates=[
-                        "battle/manual_battle.png",
-                        # decided to keep old one just in case
-                        "battle/manual_battle_old1.png",
-                    ],
-                    crop_regions=CropRegions(
-                        top=0.5,
-                        right=0.5,
-                    ),
-                    threshold=ConfidenceValue("80%"),
-                )
-                if manual_clear:
-                    logging.info("Manual formation found, skipping.")
-                    start_count = self.battle_state.formation_num
-                    self.battle_state.formation_num += 1
-                    continue
             self._tap_till_template_disappears(
                 template="battle/copy.png",
                 crop_regions=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
