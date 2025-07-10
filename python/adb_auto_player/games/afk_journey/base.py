@@ -194,21 +194,25 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
 
     def _formation_should_be_skipped(self, skip_manual: bool = False) -> bool:
         if skip_manual:
-            manual_clear = self.find_any_template(
-                templates=[
-                    "battle/manual_battle.png",
-                    # decided to keep old one just in case
-                    "battle/manual_battle_old1.png",
-                ],
-                crop_regions=CropRegions(
-                    top=0.5,
-                    right=0.5,
-                ),
-                threshold=ConfidenceValue("80%"),
-            )
-            if manual_clear:
+            try:
+                _ = self.wait_for_any_template(
+                    templates=[
+                        "battle/manual_battle.png",
+                        # decided to keep old one just in case
+                        "battle/manual_battle_old1.png",
+                    ],
+                    crop_regions=CropRegions(
+                        top=0.5,
+                        right=0.5,
+                    ),
+                    threshold=ConfidenceValue("80%"),
+                    delay=0.5,
+                    timeout=1,
+                )
                 logging.info("Manual formation found, skipping.")
                 return True
+            except GameTimeoutError:
+                pass
 
         excluded_hero: str | None = self._formation_contains_excluded_hero()
         if excluded_hero is not None:
@@ -234,7 +238,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         self._tap_till_template_disappears(
             template="battle/records.png",
             crop_regions=CropRegions(right=0.5, top=0.8),
-            delay=10.0,
+            tap_delay=10.0,
             error_message="No videos available for this battle",
         )
 
@@ -258,7 +262,6 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                 self.battle_state.formation_num += 1
                 continue
 
-            sleep(2)
             self._tap_till_template_disappears(
                 template="battle/copy.png",
                 crop_regions=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
@@ -311,7 +314,6 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         Returns:
             str | None: Name of excluded hero
         """
-        sleep(0.5)
         try:
             result = self.wait_for_any_template(
                 templates=list(excluded_heroes.keys()),
