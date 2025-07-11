@@ -24,20 +24,14 @@ class IPCModelConverter:
             return None
 
         label = menu_item.label
-        translated = False
-        resolved_label = IPCModelConverter._resolve_label_from_config(
-            menu_item,
-            game_metadata,
-        )
-
-        if resolved_label:
-            label = resolved_label
-            translated = True
 
         return MenuOption(
             label=label,
             args=menu_item.args or [],
-            translated=translated,
+            custom_label=IPCModelConverter._resolve_label_from_config(
+                menu_item,
+                game_metadata,
+            ),
             category=menu_item.category,
             tooltip=menu_item.tooltip,
         )

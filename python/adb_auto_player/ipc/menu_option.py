@@ -9,7 +9,7 @@ class MenuOption:
 
     label: str
     args: list[str]
-    translated: bool = False
+    custom_label: str | None = None
     category: str | None = None
     tooltip: str | None = None
 
@@ -18,7 +18,7 @@ class MenuOption:
         return {
             "label": self.label,
             "args": self.args,
-            "translated": self.translated,
+            "custom_label": self.custom_label,
             "category": self.category,
             "tooltip": self.tooltip,
         }

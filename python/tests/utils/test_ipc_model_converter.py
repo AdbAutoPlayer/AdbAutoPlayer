@@ -37,7 +37,7 @@ class TestIPCModelConverter:
         assert result is not None
         assert result.label == "Test Command"
         assert result.args == ["arg1", "arg2"]
-        assert result.translated is False
+        assert result.custom_label is False
         assert result.category == "test"
         assert result.tooltip == "Test tooltip"
 
@@ -66,8 +66,8 @@ class TestIPCModelConverter:
 
     @patch.object(IPCModelConverter, "_resolve_label_from_config")
     def test_convert_menu_item_to_menu_option_with_translation(self, mock_resolve):
-        """Test conversion with label translation."""
-        mock_resolve.return_value = "Translated Label"
+        """Test conversion with customizable label."""
+        mock_resolve.return_value = "Custom Label"
 
         menu_item = MenuItem(label="Original Label", display_in_gui=True)
         game_metadata = GameMetadata(name="Test Game")
@@ -77,8 +77,8 @@ class TestIPCModelConverter:
         )
 
         assert result is not None
-        assert result.label == "Translated Label"
-        assert result.translated is True
+        assert result.label == "Custom Label"
+        assert result.custom_label is True
 
     def test_extract_categories_from_game_no_gui_metadata(self):
         """Test category extraction with no GUI metadata."""

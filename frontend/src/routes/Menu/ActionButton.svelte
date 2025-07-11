@@ -19,8 +19,9 @@
   class:hover:preset-filled-primary-500={!menuButton.isProcessRunning}
   class:preset-outlined-primary-100-900={menuButton.isProcessRunning}
   onclick={menuButton.callback}
+  data-ph-capture-attribute-label={menuButton.option.label}
 >
-  {menuButton.option.translated
-    ? menuButton.option.label
-    : $t(menuButton.option.label)}
+  {menuButton.option.custom_label
+    ? menuButton.option.custom_label
+    : menuButton.option.label}
 </button>

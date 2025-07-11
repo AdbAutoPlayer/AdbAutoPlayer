@@ -90,9 +90,9 @@ export class MenuOption {
         if (/** @type {any} */(false)) {
             /**
              * @member
-             * @type {boolean | undefined}
+             * @type {string | undefined}
              */
-            this["translated"] = undefined;
+            this["custom_label"] = undefined;
         }
         if (!("args" in $$source)) {
             /**

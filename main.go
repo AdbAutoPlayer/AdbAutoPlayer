@@ -59,7 +59,7 @@ func main() {
 		},
 	})
 
-	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
+	app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:  "AdbAutoPlayer",
 		Width:  1168,
 		Height: 776,
@@ -74,7 +74,7 @@ func main() {
 		URL:              "/",
 	})
 
-	addSystemTray(app, window)
+	// addSystemTray(app, window)
 
 	err := app.Run()
 	if err != nil {
@@ -82,12 +82,12 @@ func main() {
 	}
 }
 
-func addSystemTray(app *application.App, window *application.WebviewWindow) {
-	systray := app.SystemTray.New()
-	systray.SetLabel("AdbAutoPlayer")
-	systray.SetTooltip("AdbAutoPlayer")
-	systray.AttachWindow(window)
-}
+// func addSystemTray(app *application.App, window *application.WebviewWindow) {
+//    systray := app.SystemTray.New()
+//	  systray.SetLabel("AdbAutoPlayer")
+//	  systray.SetTooltip("AdbAutoPlayer")
+//	  systray.AttachWindow(window)
+// }
 
 // func addNotifier(app *application.App) {
 // 	notifier := notifications.New()
