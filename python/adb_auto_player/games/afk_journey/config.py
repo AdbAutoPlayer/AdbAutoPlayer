@@ -90,6 +90,7 @@ class HeroesEnum(StrEnum):
     Talene = auto()
     Tasi = auto()
     Temesia = auto()
+    Thador = auto()
     Thoran = auto()
     Ulmus = auto()
     Vala = auto()
