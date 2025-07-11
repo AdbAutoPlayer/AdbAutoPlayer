@@ -37,7 +37,7 @@ class TestIPCModelConverter:
         assert result is not None
         assert result.label == "Test Command"
         assert result.args == ["arg1", "arg2"]
-        assert result.custom_label is False
+        assert result.custom_label is None
         assert result.category == "test"
         assert result.tooltip == "Test tooltip"
 
@@ -77,8 +77,8 @@ class TestIPCModelConverter:
         )
 
         assert result is not None
-        assert result.label == "Custom Label"
-        assert result.custom_label is True
+        assert result.label == "Original Label"
+        assert result.custom_label == "Custom Label"
 
     def test_extract_categories_from_game_no_gui_metadata(self):
         """Test category extraction with no GUI metadata."""
