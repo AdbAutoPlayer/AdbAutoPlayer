@@ -1,5 +1,5 @@
 <script>
-  import IconHelpCircle from "./Icons/Feather/IconHelpCircle.svelte";
+  import IconHelpCircle from "../Icons/Feather/IconHelpCircle.svelte";
 </script>
 
 <div class="fixed top-0 left-0 z-50 m-2 cursor-pointer select-none">

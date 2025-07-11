@@ -1,7 +1,7 @@
 <script lang="ts">
   import IconX from "../Icons/Feather/IconX.svelte";
   import { t } from "$lib/i18n/i18n";
-  import SettingsSectionHeader from "../Components/SettingsSectionHeader.svelte";
+  import SettingsSectionHeader from "./SettingsSectionHeader.svelte";
   import NoOptionsAvailable from "../Components/NoOptionsAvailable.svelte";
 
   let {

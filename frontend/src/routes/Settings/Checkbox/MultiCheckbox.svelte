@@ -1,8 +1,8 @@
 <script lang="ts">
-  import SettingsSectionHeader from "../Components/SettingsSectionHeader.svelte";
-  import NoOptionsAvailable from "../Components/NoOptionsAvailable.svelte";
+  import SettingsSectionHeader from "../SettingsSectionHeader.svelte";
+  import NoOptionsAvailable from "../../Components/NoOptionsAvailable.svelte";
   import MultiCheckboxGroupedAlphabetically from "./MultiCheckboxGroupedAlphabetically.svelte";
-  import MultiCheckBoxDefault from "./MultiCheckBoxDefault.svelte";
+  import MultiCheckboxDefault from "./MultiCheckboxDefault.svelte";
 
   let {
     label,
@@ -29,6 +29,6 @@
   {:else if constraint.group_alphabetically}
     <MultiCheckboxGroupedAlphabetically {constraint} bind:value {name} />
   {:else}
-    <MultiCheckBoxDefault {constraint} bind:value {name} />
+    <MultiCheckboxDefault {constraint} bind:value {name} />
   {/if}
 </div>

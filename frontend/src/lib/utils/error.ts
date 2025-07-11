@@ -1,6 +1,7 @@
 import { capitalizeError } from "$lib/utils/string";
 import { toaster } from "$lib/utils/toaster-svelte";
 import { LogError } from "$lib/utils/logger";
+import posthog from "posthog-js";
 
 type ErrorToastOptions = {
   title?: string;
@@ -25,6 +26,7 @@ export function showErrorToast(
   // Logging
   console.error(error); // Original error for debugging
   if (logToLogDisplay) LogError(message); // Display in LogDisplay in case the toast disappears too fast
+  posthog.captureException(error);
 
   // User feedback
   toaster.error({

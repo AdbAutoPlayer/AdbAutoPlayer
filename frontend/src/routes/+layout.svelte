@@ -1,8 +1,8 @@
 <script lang="ts">
   import "../app.css";
 
-  import LogoSticky from "./LogoSticky.svelte";
-  import DocumentationIconSticky from "./DocumentationIconSticky.svelte";
+  import LogoSticky from "./Sticky/LogoSticky.svelte";
+  import DocumentationIconSticky from "./Sticky/DocumentationIconSticky.svelte";
   import LogDisplayCard from "./Log/LogDisplayCard.svelte";
   import { onMount } from "svelte";
   import UpdateContainer from "./Updater/UpdateContainer.svelte";
