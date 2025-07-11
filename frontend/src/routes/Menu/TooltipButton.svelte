@@ -2,7 +2,7 @@
   import { Tooltip } from "@skeletonlabs/skeleton-svelte";
 
   import ActionButton from "./ActionButton.svelte";
-  import type { MenuButton } from "$lib/model";
+  import type { MenuButton } from "$lib/settings-form/model";
 
   let openTooltip: string | null = $state(null);
 

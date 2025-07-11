@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { MenuButton } from "$lib/model";
+  import type { MenuButton } from "$lib/settings-form/model";
 
   let {
     disabled,

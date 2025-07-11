@@ -1,6 +1,6 @@
 import { writable, derived, type Readable } from "svelte/store";
 import locales, { SupportedLocale } from "./locales";
-import { showErrorToast } from "$lib/utils/error";
+import { showErrorToast } from "$lib/toast/toast-error";
 
 type InterpolationValues = Record<string, string>;
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { t } from "$lib/i18n/i18n";
-  import { updateCheckboxArray } from "$lib/checkboxHelper";
+  import { updateCheckboxArray } from "$lib/settings-form/checkboxHelper";
 
   let {
     constraint,

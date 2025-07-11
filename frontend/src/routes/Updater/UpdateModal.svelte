@@ -1,5 +1,5 @@
 <script lang="ts">
-  import marked from "$lib/markdownRenderer";
+  import marked from "$lib/utils/markdownRenderer";
   import Modal from "../Components/Modal.svelte";
   import { ProgressRing } from "@skeletonlabs/skeleton-svelte";
   import { Changelog, UpdateInfo } from "@wails/updater";

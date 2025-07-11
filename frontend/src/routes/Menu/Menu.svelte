@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Accordion } from "@skeletonlabs/skeleton-svelte";
 
-  import type { MenuButton } from "$lib/model";
+  import type { MenuButton } from "$lib/settings-form/model";
   import TooltipButton from "./TooltipButton.svelte";
   import { t } from "$lib/i18n/i18n";
 

@@ -7,7 +7,7 @@
   import { onMount } from "svelte";
   import UpdateContainer from "./Updater/UpdateContainer.svelte";
   import { Toaster } from "@skeletonlabs/skeleton-svelte";
-  import { toaster } from "$lib/utils/toaster-svelte";
+  import { toaster } from "$lib/toast/toaster-svelte";
   import {
     applyUISettingsFromFile,
     registerGlobalHotkeys,

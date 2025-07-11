@@ -4,10 +4,10 @@
   import UpdateIconSticky from "../Sticky/UpdateIconSticky.svelte";
   import UpdateModal from "./UpdateModal.svelte";
   import { onDestroy } from "svelte";
-  import { showErrorToast } from "$lib/utils/error";
-  import { LogInfo } from "$lib/utils/logger";
+  import { showErrorToast } from "$lib/toast/toast-error";
+  import { logInfo } from "$lib/log/log-events";
   import { Events } from "@wailsio/runtime";
-  import { EventNames } from "$lib/eventNames";
+  import { EventNames } from "$lib/log/eventNames";
   import {
     CheckForUpdates,
     DownloadUpdate,
@@ -30,7 +30,7 @@
   let modalChangelogs: Changelog[] = $state([]);
 
   async function initialUpdateCheck() {
-    LogInfo(`App Version: ${version}`);
+    logInfo(`App Version: ${version}`);
 
     try {
       const info = await CheckForUpdates();

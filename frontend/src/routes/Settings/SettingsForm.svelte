@@ -4,9 +4,9 @@
   import MultiCheckbox from "./Checkbox/MultiCheckbox.svelte";
   import ImageCheckbox from "./Checkbox/ImageCheckbox.svelte";
   import MyCustomRoutine from "./MyCustomRoutine.svelte";
-  import { isConstraintOfType } from "$lib/utils/constraint";
+  import { isConstraintOfType } from "$lib/settings-form/constraint";
   import { t } from "$lib/i18n/i18n";
-  import { showErrorToast } from "$lib/utils/error";
+  import { showErrorToast } from "$lib/toast/toast-error";
 
   let {
     settings,

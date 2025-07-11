@@ -3,9 +3,8 @@
   import SettingsForm from "./Settings/SettingsForm.svelte";
   import Menu from "./Menu/Menu.svelte";
   import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
-  import { sortObjectByOrder } from "$lib/orderHelper";
-  import type { MenuButton } from "$lib/model";
-  import { showErrorToast } from "$lib/utils/error";
+  import { sortObjectByOrder } from "$lib/settings-form/orderHelper";
+  import { showErrorToast } from "$lib/toast/toast-error";
   import { t } from "$lib/i18n/i18n";
   import { applyUISettings } from "$lib/utils/settings";
   import {
@@ -24,6 +23,8 @@
     IsGameProcessRunning,
   } from "@wails/games/gamesservice";
   import { GameGUI, MenuOption } from "@wails/ipc";
+  import { logDevOnly } from "$lib/utils/error-reporting";
+  import type { MenuButton } from "$lib/settings-form/model";
 
   let showSettingsForm: boolean = $state(false);
   let settingsFormProps: Record<string, any> = $state({});
@@ -41,7 +42,6 @@
   });
 
   let activeButtonLabel: string | null = $state(null);
-
   let defaultButtons: MenuButton[] = $derived.by(() => {
     return [
       {
@@ -51,7 +51,7 @@
           label: "General Settings",
           category: "Settings, Phone & Debug",
           tooltip:
-            "Global settings that apply to the app as a whole, not specific to any game.",
+            "Global settings-form that apply to the app as a whole, not specific to any game.",
         }),
       },
       {
@@ -264,16 +264,12 @@
   }
 
   async function updateState() {
-    try {
-      if ($pollRunningProcess) {
-        const isProcessRunning = await IsGameProcessRunning();
-        $pollRunningGame = !isProcessRunning;
-        if (!isProcessRunning) {
-          activeButtonLabel = null;
-        }
+    if ($pollRunningProcess) {
+      const isProcessRunning = await IsGameProcessRunning();
+      $pollRunningGame = !isProcessRunning;
+      if (!isProcessRunning) {
+        activeButtonLabel = null;
       }
-    } catch (error) {
-      console.error(error);
     }
 
     try {
@@ -282,7 +278,7 @@
         logGetGameGUI = false;
       }
     } catch (error) {
-      console.error(error);
+      logDevOnly(error);
       activeGame = null;
     }
   }

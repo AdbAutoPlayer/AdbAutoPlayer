@@ -1,6 +1,7 @@
 import posthog from "posthog-js";
 import { browser } from "$app/environment";
 import { version } from "$app/environment";
+import { logDevOnly, reportError } from "$lib/utils/error-reporting";
 
 const POSTHOG_KEY = "phc_GXmHn56fL10ymOt3inmqSER4wh5YuN3AG6lmauJ5b0o";
 const POSTHOG_HOST = "https://eu.i.posthog.com";
@@ -23,6 +24,6 @@ export function initPostHog() {
       app_version: version as string,
     });
   } catch (error) {
-    console.error("Failed to initialize PostHog:", error);
+    logDevOnly(error);
   }
 }

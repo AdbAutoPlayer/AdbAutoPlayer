@@ -1,5 +1,5 @@
 // @ts-ignore
-import { showErrorToast } from "$lib/utils/error";
+import { showErrorToast } from "$lib/toast/toast-error";
 import { Browser } from "@wailsio/runtime";
 
 export function shouldOpenExternally(url: string): boolean {

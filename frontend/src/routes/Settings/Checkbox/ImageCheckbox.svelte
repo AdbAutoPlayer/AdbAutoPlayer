@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { updateCheckboxArray } from "$lib/checkboxHelper";
+  import { updateCheckboxArray } from "$lib/settings-form/checkboxHelper";
   import { t } from "$lib/i18n/i18n";
   import NoOptionsAvailable from "../../Components/NoOptionsAvailable.svelte";
 

@@ -3,7 +3,7 @@
   import IconArrowDown from "../Icons/Feather/IconArrowDown.svelte";
   import IconArrowUp from "../Icons/Feather/IconArrowUp.svelte";
   import { Events } from "@wailsio/runtime";
-  import { EventNames } from "$lib/eventNames";
+  import { EventNames } from "$lib/log/eventNames";
 
   type LogEntry = {
     message: string;

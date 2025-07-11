@@ -1,7 +1,8 @@
 import { Events } from "@wailsio/runtime";
-import { EventNames } from "$lib/eventNames";
+import { EventNames } from "$lib/log/eventNames";
+import { reportError } from "$lib/utils/error-reporting";
 
-export function LogDebug(message: string) {
+export function logDebug(message: string) {
   emit({
     level: "DEBUG",
     message: message,
@@ -9,7 +10,7 @@ export function LogDebug(message: string) {
   });
 }
 
-export function LogInfo(message: string) {
+export function logInfo(message: string) {
   emit({
     level: "INFO",
     message: message,
@@ -17,7 +18,7 @@ export function LogInfo(message: string) {
   });
 }
 
-export function LogWarning(message: string) {
+export function logWarning(message: string) {
   emit({
     level: "WARNING",
     message: message,
@@ -25,17 +26,9 @@ export function LogWarning(message: string) {
   });
 }
 
-export function LogError(message: string) {
+export function logError(message: string) {
   emit({
     level: "ERROR",
-    message: message,
-    timestamp: new Date().toISOString(),
-  });
-}
-
-export function LogFatal(message: string) {
-  emit({
-    level: "FATAL",
     message: message,
     timestamp: new Date().toISOString(),
   });
@@ -45,5 +38,7 @@ function emit(message: LogMessage) {
   Events.Emit({
     name: EventNames.LOG_MESSAGE,
     data: message,
-  }).catch((err) => console.error("Background emit failed:", err));
+  }).catch((err) => {
+    reportError(err);
+  });
 }
