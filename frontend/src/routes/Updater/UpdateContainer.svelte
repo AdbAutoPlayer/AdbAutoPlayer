@@ -34,7 +34,6 @@
 
     try {
       const info = await CheckForUpdates();
-      console.log(info);
       if (info.available) {
         updateState.isInitialUpdateCheck = true;
         await setAvailableUpdateInfo(info);

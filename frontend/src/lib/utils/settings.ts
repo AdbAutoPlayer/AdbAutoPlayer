@@ -9,7 +9,6 @@ import { LogError } from "$lib/utils/logger";
 const DEFAULT_THEME = "catppuccin";
 
 export function applyUISettings(settings: UISettings) {
-  console.log("Applying UI:", settings);
   document.documentElement.setAttribute("data-theme", settings.Theme);
   setLocale(settings.Language);
 }
