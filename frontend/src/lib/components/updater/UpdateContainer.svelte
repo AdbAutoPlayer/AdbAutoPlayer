@@ -1,7 +1,7 @@
 <script lang="ts">
   import { enablePolling, disablePolling } from "$lib/stores/polling";
   import { version } from "$app/environment";
-  import UpdateIconSticky from "../Sticky/UpdateIconSticky.svelte";
+  import UpdateIconSticky from "$lib/components/sticky/UpdateIconSticky.svelte";
   import UpdateModal from "./UpdateModal.svelte";
   import { onDestroy } from "svelte";
   import { showErrorToast } from "$lib/toast/toast-error";

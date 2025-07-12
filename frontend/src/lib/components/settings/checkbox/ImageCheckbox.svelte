@@ -1,7 +1,7 @@
 <script lang="ts">
   import { updateCheckboxArray } from "$lib/settings-form/checkboxHelper";
   import { t } from "$lib/i18n/i18n";
-  import NoOptionsAvailable from "../../Components/NoOptionsAvailable.svelte";
+  import NoOptionsAvailable from "$lib/components/generic/NoOptionsAvailable.svelte";
 
   let {
     constraint,

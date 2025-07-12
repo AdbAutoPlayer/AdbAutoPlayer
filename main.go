@@ -73,7 +73,7 @@ func main() {
 			TitleBar:                application.MacTitleBarDefault,
 		},
 		BackgroundColour: application.NewRGB(27, 38, 54),
-		URL:              "/",
+		URL:              "/app",
 	})
 
 	_ = buildSpotifyesqueSystemTray(
@@ -99,6 +99,28 @@ func buildSpotifyesqueSystemTray(app *application.App, window *application.Webvi
 		window.Show()
 		window.Focus()
 	})
+
+	systemTrayWindow := app.Window.NewWithOptions(application.WebviewWindowOptions{
+		Width:             100,
+		Height:            50,
+		EnableDragAndDrop: false,
+		DisableResize:     true,
+		AlwaysOnTop:       true,
+		Frameless:         true,
+		StartState:        application.WindowStateMinimised,
+		Hidden:            true,
+		Windows: application.WindowsWindow{
+			Theme: application.Dark,
+		},
+		Mac: application.MacWindow{
+			InvisibleTitleBarHeight: 50,
+			Backdrop:                application.MacBackdropTranslucent,
+			TitleBar:                application.MacTitleBarDefault,
+		},
+		BackgroundColour: application.NewRGB(27, 38, 54),
+		URL:              "/system-tray",
+	})
+	app.Window.Add(systemTrayWindow)
 
 	menu := app.NewMenu()
 	systemTray.SetMenu(menu)

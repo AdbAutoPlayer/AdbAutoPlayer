@@ -1,7 +1,7 @@
 <script lang="ts">
-  import IconX from "../Icons/Feather/IconX.svelte";
-  import IconArrowDown from "../Icons/Feather/IconArrowDown.svelte";
-  import IconArrowUp from "../Icons/Feather/IconArrowUp.svelte";
+  import IconX from "$lib/components/icons/feather/IconX.svelte";
+  import IconArrowDown from "$lib/components/icons/feather/IconArrowDown.svelte";
+  import IconArrowUp from "$lib/components/icons/feather/IconArrowUp.svelte";
   import { Events } from "@wailsio/runtime";
   import { EventNames } from "$lib/log/eventNames";
 

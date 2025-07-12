@@ -1,5 +1,5 @@
 <script lang="ts">
-  import IconDownloadCloud from "../Icons/Feather/IconDownloadCloud.svelte";
+  import IconDownloadCloud from "$lib/components/icons/feather/IconDownloadCloud.svelte";
 
   interface Props {
     show: boolean;

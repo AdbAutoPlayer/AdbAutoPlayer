@@ -1,11 +1,11 @@
 <script lang="ts">
-  import "../app.css";
+  import "../../app.css";
 
-  import LogoSticky from "./Sticky/LogoSticky.svelte";
-  import DocumentationIconSticky from "./Sticky/DocumentationIconSticky.svelte";
-  import LogDisplayCard from "./Log/LogDisplayCard.svelte";
+  import LogoSticky from "$lib/components/sticky/LogoSticky.svelte";
+  import DocumentationIconSticky from "$lib/components/sticky/DocumentationIconSticky.svelte";
+  import LogDisplayCard from "$lib/components/log/LogDisplayCard.svelte";
   import { onMount } from "svelte";
-  import UpdateContainer from "./Updater/UpdateContainer.svelte";
+  import UpdateContainer from "$lib/components/updater/UpdateContainer.svelte";
   import { Toaster } from "@skeletonlabs/skeleton-svelte";
   import { toaster } from "$lib/toast/toaster-svelte";
   import {

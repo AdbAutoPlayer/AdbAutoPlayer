@@ -1,6 +1,6 @@
 <script lang="ts">
-  import SettingsSectionHeader from "../SettingsSectionHeader.svelte";
-  import NoOptionsAvailable from "../../Components/NoOptionsAvailable.svelte";
+  import SettingsSectionHeader from "$lib/components/settings/SettingsSectionHeader.svelte";
+  import NoOptionsAvailable from "$lib/components/generic/NoOptionsAvailable.svelte";
   import MultiCheckboxGroupedAlphabetically from "./MultiCheckboxGroupedAlphabetically.svelte";
   import MultiCheckboxDefault from "./MultiCheckboxDefault.svelte";
 

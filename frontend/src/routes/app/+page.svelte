@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import SettingsForm from "./Settings/SettingsForm.svelte";
-  import Menu from "./Menu/Menu.svelte";
+  import SettingsForm from "$lib/components/settings/SettingsForm.svelte";
+  import Menu from "$lib/components/menu/Menu.svelte";
   import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
   import { sortObjectByOrder } from "$lib/settings-form/orderHelper";
   import { showErrorToast } from "$lib/toast/toast-error";

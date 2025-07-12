@@ -1,8 +1,8 @@
 <script lang="ts">
-  import IconX from "../Icons/Feather/IconX.svelte";
+  import IconX from "$lib/components/icons/feather/IconX.svelte";
   import { t } from "$lib/i18n/i18n";
   import SettingsSectionHeader from "./SettingsSectionHeader.svelte";
-  import NoOptionsAvailable from "../Components/NoOptionsAvailable.svelte";
+  import NoOptionsAvailable from "$lib/components/generic/NoOptionsAvailable.svelte";
 
   let {
     constraint,

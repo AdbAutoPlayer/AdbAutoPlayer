@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { Accordion } from "@skeletonlabs/skeleton-svelte";
-  import MultiCheckbox from "./Checkbox/MultiCheckbox.svelte";
-  import ImageCheckbox from "./Checkbox/ImageCheckbox.svelte";
+  import MultiCheckbox from "./checkbox/MultiCheckbox.svelte";
+  import ImageCheckbox from "./checkbox/ImageCheckbox.svelte";
   import MyCustomRoutine from "./MyCustomRoutine.svelte";
   import { isConstraintOfType } from "$lib/settings-form/constraint";
   import { t } from "$lib/i18n/i18n";
