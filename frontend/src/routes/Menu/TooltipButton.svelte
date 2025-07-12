@@ -28,7 +28,8 @@
     }}
     positioning={{ placement: "top" }}
     contentBase="card preset-filled-primary-500 p-4"
-    openDelay={800}
+    openDelay={500}
+    closeDelay={0}
     arrow
   >
     {#snippet trigger()}
