@@ -9,7 +9,7 @@ Interested in contributing? Below are available tasks across different areas of 
 ## 🔧 Backend Development
 
 ### Device Abstraction Layer for ADB retry mechanism
-1. Implement a `AndroidDevice` class and remove all adbutils specific code from game.py
+1. Implement a `ADBDevice` class and remove all adbutils specific code from game.py
 2. Create some general retry logic or wrapper for anything that uses adbutils
 
 Rough idea with a decorator:
@@ -100,17 +100,6 @@ ___
 Create a Svelte Component to edit a single Global Hotkey in the config.  
 You can decide what format it should be stored in, in the config too. 
 
-___
-
-### Custom Routine Component Upgrade
-**Current:** Basic functionality implemented  
-**Goal:** Enhanced drag-and-drop interface, or you might have better ideas?
-
-**Design Opportunities:**
-- UX/UI improvements
-- Multi-routine management
-- Intuitive drag-and-drop implementation
-
 ---
 
 ## 📖 Documentation
@@ -119,8 +108,8 @@ ___
 **Format:** Individual `.md` files per emulator
 
 **Needed Guides:**
-- BlueStacks
 - MuMu Player
+- BlueStacks
 - LDPlayer
 - MuMu Pro (Mac)
 - BlueStacks Air (Mac)
@@ -135,11 +124,7 @@ ___
 
 ### Physical Device Setup
 **Topics Needed:**
-- USB debugging activation
 - Wireless debugging setup
-- Device ID identification
-- Display configuration
-- Security best practices
 
 ___
 
