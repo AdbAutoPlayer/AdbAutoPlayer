@@ -1,6 +1,8 @@
 package process
 
 import (
+	"adb-auto-player/internal/app"
+	"adb-auto-player/internal/event_names"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/logger"
 	"bufio"
@@ -130,7 +132,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 			var summaryMessage ipc.Summary
 			if err = json.Unmarshal([]byte(line), &summaryMessage); err == nil {
 				if summaryMessage.SummaryMessage != "" {
-					application.Get().Event.EmitEvent(&application.CustomEvent{Name: "summary-message", Data: summaryMessage})
+					app.EmitEvent(&application.CustomEvent{Name: event_names.SummaryMessage, Data: summaryMessage})
 					continue
 				}
 			}
@@ -308,5 +310,5 @@ func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
 
 func (pm *Manager) processEnded() {
 	pm.running = nil
-	application.Get().Event.Emit("add-summary-to-log")
+	app.Emit(event_names.AddSummaryToLog)
 }

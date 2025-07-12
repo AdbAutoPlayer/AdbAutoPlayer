@@ -3,6 +3,7 @@
 package updater
 
 import (
+	"adb-auto-player/internal/app"
 	"adb-auto-player/internal/logger"
 	process2 "adb-auto-player/internal/process"
 	"archive/zip"
@@ -10,7 +11,6 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/google/go-github/v72/github"
 	"github.com/shirou/gopsutil/process"
-	"github.com/wailsapp/wails/v3/pkg/application"
 	"io"
 	"os"
 	"os/exec"
@@ -540,6 +540,6 @@ func (u *UpdateManager) executeRestartBatch(batchPath string) error {
 
 	// Give the batch script a moment to start, then exit
 	time.Sleep(1 * time.Second)
-	application.Get().Quit()
+	app.Quit()
 	return nil
 }

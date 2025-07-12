@@ -188,7 +188,7 @@
     });
   });
 
-  Events.On(EventNames.LOG_CLEAR, (ev) => {
+  Events.On(EventNames.GENERAL_SETTINGS_UPDATED, () => {
     logs = logs.slice(0, 1);
   });
 

@@ -2,9 +2,11 @@ package settings
 
 import (
 	"adb-auto-player/internal/app"
+	"adb-auto-player/internal/event_names"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/logger"
 	"adb-auto-player/internal/path"
+	"github.com/wailsapp/wails/v3/pkg/application"
 	"sync"
 )
 
@@ -58,7 +60,7 @@ func (s *SettingsService) SaveGeneralSettings(settings GeneralSettings) error {
 		return err
 	}
 	s.generalSettings = settings
-	app.Emit("log-clear")
+	app.EmitEvent(&application.CustomEvent{Name: event_names.GeneralSettingsUpdated, Data: s.generalSettings})
 	logger.Get().Infof("Saved General Settings")
 	return nil
 }

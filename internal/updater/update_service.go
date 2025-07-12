@@ -1,6 +1,8 @@
 package updater
 
 import (
+	"adb-auto-player/internal/app"
+	"adb-auto-player/internal/event_names"
 	"adb-auto-player/internal/settings"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -27,7 +29,7 @@ func (u *UpdateService) GetChangelogs() []Changelog {
 
 func (u *UpdateService) DownloadUpdate(downloadURL string) error {
 	u.updateManager.SetProgressCallback(func(progress float64) {
-		application.Get().Event.EmitEvent(&application.CustomEvent{Name: "download-progress", Data: progress})
+		app.EmitEvent(&application.CustomEvent{Name: event_names.DownloadProgress, Data: progress})
 	})
 
 	return u.updateManager.DownloadAndApplyUpdate(downloadURL)

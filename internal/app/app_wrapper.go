@@ -17,10 +17,15 @@ func Emit(name string) {
 }
 
 func Error(msg string, args ...any) {
-
 	app := application.Get()
 	if app != nil {
 		app.Logger.Error(msg, args...)
 	}
+}
 
+func Quit() {
+	app := application.Get()
+	if app != nil {
+		app.Quit()
+	}
 }

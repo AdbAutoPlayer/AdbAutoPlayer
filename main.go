@@ -6,10 +6,10 @@ import (
 	"adb-auto-player/internal/path"
 	"adb-auto-player/internal/process"
 	"adb-auto-player/internal/settings"
+	"adb-auto-player/internal/system_tray"
 	"adb-auto-player/internal/updater"
 	"embed"
 	"github.com/wailsapp/wails/v3/pkg/application"
-	"github.com/wailsapp/wails/v3/pkg/events"
 	"log"
 	"log/slog"
 )
@@ -76,95 +76,12 @@ func main() {
 		URL:              "/app",
 	})
 
-	_ = buildSpotifyesqueSystemTray(
-		app,
-		window,
-	)
+	app.RegisterService(application.NewService(system_tray.NewSystemTrayService(app, window)))
 
 	err := app.Run()
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func buildSpotifyesqueSystemTray(app *application.App, window *application.WebviewWindow) *application.SystemTray {
-	systemTray := app.SystemTray.New()
-	systemTray.SetLabel(app.Config().Name)
-	systemTray.SetTooltip(app.Config().Name)
-
-	// Do nothing
-	systemTray.OnClick(func() {})
-
-	systemTray.OnDoubleClick(func() {
-		window.Show()
-		window.Focus()
-	})
-
-	systemTrayWindow := app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Width:             100,
-		Height:            50,
-		EnableDragAndDrop: false,
-		DisableResize:     true,
-		AlwaysOnTop:       true,
-		Frameless:         true,
-		StartState:        application.WindowStateMinimised,
-		Hidden:            true,
-		Windows: application.WindowsWindow{
-			Theme: application.Dark,
-		},
-		Mac: application.MacWindow{
-			InvisibleTitleBarHeight: 50,
-			Backdrop:                application.MacBackdropTranslucent,
-			TitleBar:                application.MacTitleBarDefault,
-		},
-		BackgroundColour: application.NewRGB(27, 38, 54),
-		URL:              "/system-tray",
-	})
-	app.Window.Add(systemTrayWindow)
-
-	menu := app.NewMenu()
-	systemTray.SetMenu(menu)
-
-	minimizeToTray := menu.Add("Minimize to Tray")
-	minimizeToTray.SetHidden(true)
-	minimizeToTray.OnClick(func(context *application.Context) {
-		window.Hide()
-	})
-
-	showApp := menu.Add("Show " + app.Config().Name)
-	showApp.SetHidden(true)
-	showApp.OnClick(func(context *application.Context) {
-		window.Show()
-		window.Focus()
-	})
-
-	menu.Add("Exit").OnClick(func(context *application.Context) {
-		app.Quit()
-	})
-
-	window.RegisterHook(events.Common.WindowHide, func(e *application.WindowEvent) {
-		minimizeToTray.SetHidden(true)
-		showApp.SetHidden(false)
-	})
-
-	window.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
-		if settings.Get().GetGeneralSettings().UI.CloseShouldMinimize {
-			e.Cancel()
-			window.Hide()
-		}
-	})
-
-	window.RegisterHook(events.Common.WindowShow, func(e *application.WindowEvent) {
-		minimizeToTray.SetHidden(false)
-		showApp.SetHidden(true)
-	})
-
-	// Without this the window minimizes to systray when focus is lost
-	window.RegisterHook(events.Common.WindowLostFocus, func(e *application.WindowEvent) {
-		e.Cancel()
-	})
-
-	return systemTray
 }
 
 // func addNotifier(app *application.App) {

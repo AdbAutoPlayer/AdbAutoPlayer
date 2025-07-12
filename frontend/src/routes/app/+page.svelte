@@ -6,7 +6,6 @@
   import { sortObjectByOrder } from "$lib/settings-form/orderHelper";
   import { showErrorToast } from "$lib/toast/toast-error";
   import { t } from "$lib/i18n/i18n";
-  import { applyUISettings } from "$lib/utils/settings";
   import {
     GetGeneralSettingsForm,
     SaveGeneralSettings,
@@ -180,7 +179,6 @@
 
     try {
       await SaveGeneralSettings(settingsForm);
-      applyUISettings(settingsForm["User Interface"]);
     } catch (error) {
       showErrorToast(error, { title: "Failed to Save General Settings" });
     }

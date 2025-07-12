@@ -2,6 +2,7 @@ package logger
 
 import (
 	"adb-auto-player/internal/app"
+	"adb-auto-player/internal/event_names"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/path"
 	"fmt"
@@ -95,5 +96,5 @@ func (l *FrontendLogger) LogMessage(message ipc.LogMessage) {
 
 func (l *FrontendLogger) logMessage(message ipc.LogMessage) {
 	message.Message = l.sanitizer.SanitizePath(message.Message)
-	app.EmitEvent(&application.CustomEvent{Name: "log-message", Data: message})
+	app.EmitEvent(&application.CustomEvent{Name: event_names.LogMessage, Data: message})
 }
