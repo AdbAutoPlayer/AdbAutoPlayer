@@ -9,6 +9,7 @@ import (
 	"adb-auto-player/internal/updater"
 	"embed"
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
 	"log"
 	"log/slog"
 )
@@ -26,8 +27,6 @@ func main() {
 	isDev := Version == "dev"
 	process.Get().IsDev = isDev
 
-	settingsService := settings.Get()
-
 	if !isDev {
 		path.ChangeWorkingDirForProd()
 	}
@@ -41,7 +40,7 @@ func main() {
 		// This is for Wails system messages generally not interesting outside of dev.
 		LogLevel: slog.LevelError,
 		Services: []application.Service{
-			application.NewService(settingsService),
+			application.NewService(settings.Get()),
 			application.NewService(&hotkeys.HotkeysService{}),
 			application.NewService(updater.NewUpdateService(Version, isDev)),
 			application.NewService(games.NewGamesService(isDev)),
@@ -59,12 +58,15 @@ func main() {
 		},
 	})
 
-	app.Window.NewWithOptions(application.WebviewWindowOptions{
+	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:  "AdbAutoPlayer",
 		Width:  1168,
 		Height: 776,
 		// This is for DnD outside the window
 		EnableDragAndDrop: false,
+		Windows: application.WindowsWindow{
+			Theme: application.Dark,
+		},
 		Mac: application.MacWindow{
 			InvisibleTitleBarHeight: 50,
 			Backdrop:                application.MacBackdropTranslucent,
@@ -74,7 +76,10 @@ func main() {
 		URL:              "/",
 	})
 
-	// addSystemTray(app, window)
+	_ = buildSpotifyesqueSystemTray(
+		app,
+		window,
+	)
 
 	err := app.Run()
 	if err != nil {
@@ -82,12 +87,63 @@ func main() {
 	}
 }
 
-// func addSystemTray(app *application.App, window *application.WebviewWindow) {
-//    systray := app.SystemTray.New()
-//	  systray.SetLabel("AdbAutoPlayer")
-//	  systray.SetTooltip("AdbAutoPlayer")
-//	  systray.AttachWindow(window)
-// }
+func buildSpotifyesqueSystemTray(app *application.App, window *application.WebviewWindow) *application.SystemTray {
+	systemTray := app.SystemTray.New()
+	systemTray.SetLabel(app.Config().Name)
+	systemTray.SetTooltip(app.Config().Name)
+
+	// Do nothing
+	systemTray.OnClick(func() {})
+
+	systemTray.OnDoubleClick(func() {
+		window.Show()
+		window.Focus()
+	})
+
+	menu := app.NewMenu()
+	systemTray.SetMenu(menu)
+
+	minimizeToTray := menu.Add("Minimize to Tray")
+	minimizeToTray.SetHidden(true)
+	minimizeToTray.OnClick(func(context *application.Context) {
+		window.Hide()
+	})
+
+	showApp := menu.Add("Show " + app.Config().Name)
+	showApp.SetHidden(true)
+	showApp.OnClick(func(context *application.Context) {
+		window.Show()
+		window.Focus()
+	})
+
+	menu.Add("Exit").OnClick(func(context *application.Context) {
+		app.Quit()
+	})
+
+	window.RegisterHook(events.Common.WindowHide, func(e *application.WindowEvent) {
+		minimizeToTray.SetHidden(true)
+		showApp.SetHidden(false)
+	})
+
+	window.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
+		if settings.Get().GetGeneralSettings().UI.CloseShouldMinimize {
+			e.Cancel()
+			window.Hide()
+		}
+	})
+
+	window.RegisterHook(events.Common.WindowShow, func(e *application.WindowEvent) {
+		minimizeToTray.SetHidden(false)
+		showApp.SetHidden(true)
+	})
+
+	// Without this the window minimizes to systray when focus is lost
+	window.RegisterHook(events.Common.WindowLostFocus, func(e *application.WindowEvent) {
+		e.Cancel()
+	})
+
+	return systemTray
+}
 
 // func addNotifier(app *application.App) {
 // 	notifier := notifications.New()

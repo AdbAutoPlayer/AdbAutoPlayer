@@ -38,9 +38,12 @@ type LoggingSettings struct {
 }
 
 type UISettings struct {
-	Theme  string `toml:"theme"`
-	Locale string `toml:"locale" json:"Language"`
+	Theme               string `toml:"theme"`
+	Locale              string `toml:"locale" json:"Language"`
+	CloseShouldMinimize bool   `toml:"close_should_minimize" json:"Close button should minimize the window"`
 }
+
+// TODO type NotificationSettings struct
 
 func NewGeneralSettings() GeneralSettings {
 	return GeneralSettings{
@@ -64,8 +67,9 @@ func NewGeneralSettings() GeneralSettings {
 			ActionLogLimit:       5,
 		},
 		UI: UISettings{
-			Theme:  "catppuccin",
-			Locale: "en",
+			Theme:               "catppuccin",
+			Locale:              "en",
+			CloseShouldMinimize: false,
 		},
 	}
 }

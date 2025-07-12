@@ -228,6 +228,13 @@ export class UISettings {
              */
             this["Language"] = "";
         }
+        if (!("Close button should minimize the window" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["Close button should minimize the window"] = false;
+        }
 
         Object.assign(this, $$source);
     }
