@@ -6,6 +6,11 @@ port = 5037
 ID = '127.0.0.1:5555'
 wm_size = false
 streaming = true
+hardware_decoding = true
+
+[update]
+auto_updates = false
+enable_alpha_updates = false
 
 [logging]
 level = 'INFO'
@@ -14,3 +19,5 @@ action_log_limit = 10
 
 [ui]
 theme = 'terminus'
+locale = 'en'
+close_should_minimize = true

@@ -1,5 +1,6 @@
 import { writable, derived, type Readable } from "svelte/store";
 import locales, { SupportedLocale } from "./locales";
+import { showErrorToast } from "$lib/toast/toast-error";
 
 type InterpolationValues = Record<string, string>;
 
@@ -36,8 +37,9 @@ export function setLocale(newLocale: string): void {
   if (Object.values(SupportedLocale).includes(newLocale as SupportedLocale)) {
     locale.set(newLocale as SupportedLocale);
   } else {
-    console.warn(
-      `Locale "${newLocale}" is not supported. Falling back to "${SupportedLocale.EN}".`,
+    showErrorToast(
+      `Locale "${newLocale}" is not supported. Using default: "${SupportedLocale.EN}".`,
+      { title: "Invalid Locale" },
     );
     locale.set(SupportedLocale.EN);
   }

@@ -5,7 +5,8 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"build": "vite build",
+		"build:dev": "vite build --minify false --mode development",
+		"build": "vite build --mode production",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
@@ -27,6 +28,7 @@
 		"vite": "^6.3.5"
 	},
 	"dependencies": {
+		"@wailsio/runtime": "latest",
 		"@tailwindcss/vite": "^4.1.11",
 		"marked": "^16.0.0",
 		"posthog-js": "^1.253.3",

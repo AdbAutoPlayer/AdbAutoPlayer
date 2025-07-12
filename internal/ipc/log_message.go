@@ -7,7 +7,6 @@ import (
 type LogLevel string
 
 const (
-	LogLevelTrace   LogLevel = "TRACE"
 	LogLevelDebug   LogLevel = "DEBUG"
 	LogLevelInfo    LogLevel = "INFO"
 	LogLevelWarning LogLevel = "WARNING"
