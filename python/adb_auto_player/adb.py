@@ -457,7 +457,7 @@ def get_display_info(device: AdbDevice) -> DisplayInfo:
         DisplayInfo: Resolution and orientation.
     """
     try:
-        result = str(device.shell("wm size", timeout=5))
+        result = str(device.shell("wm size", timeout=30))
     except Exception as e:
         raise GenericAdbUnrecoverableError(
             f"Unable to determine screen resolution: {e}"
