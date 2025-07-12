@@ -24,6 +24,7 @@
   import { GameGUI, MenuOption } from "@wails/ipc";
   import { logDevOnly } from "$lib/utils/error-reporting";
   import type { MenuButton } from "$lib/settings-form/model";
+  import { NotificationService } from "@wails/notifications";
 
   let showSettingsForm: boolean = $state(false);
   let settingsFormProps: Record<string, any> = $state({});

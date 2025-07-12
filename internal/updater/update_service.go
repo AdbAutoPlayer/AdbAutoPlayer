@@ -18,7 +18,7 @@ func NewUpdateService(currentVersion string, isDev bool) *UpdateService {
 }
 
 func (u *UpdateService) CheckForUpdates() (UpdateInfo, error) {
-	updateSettings := settings.Get().GetGeneralSettings().Update
+	updateSettings := settings.GetService().GetGeneralSettings().Update
 
 	return u.updateManager.CheckForUpdates(updateSettings.AutoUpdate, updateSettings.EnableAlphaUpdates)
 }

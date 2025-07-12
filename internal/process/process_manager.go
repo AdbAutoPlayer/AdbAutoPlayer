@@ -5,6 +5,7 @@ import (
 	"adb-auto-player/internal/event_names"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/logger"
+	"adb-auto-player/internal/notifications"
 	"bufio"
 	"bytes"
 	"encoding/json"
@@ -23,11 +24,14 @@ import (
 )
 
 type Manager struct {
-	mutex          sync.Mutex
-	running        *process.Process
-	Blocked        bool
-	IsDev          bool
-	ActionLogLimit int
+	mutex              sync.Mutex
+	running            *process.Process
+	Blocked            bool
+	IsDev              bool
+	ActionLogLimit     int
+	notifyWhenTaskEnds bool
+	summary            *ipc.Summary
+	lastLogMessage     *ipc.LogMessage
 }
 
 var (
@@ -42,7 +46,7 @@ func Get() *Manager {
 	return instance
 }
 
-func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...uint8) error {
+func (pm *Manager) StartProcess(binaryPath *string, args []string, notifyWhenTaskEnds bool, logLevel ...uint8) error {
 	if nil == binaryPath {
 		return errors.New("python binary not found")
 	}
@@ -53,7 +57,6 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 		if pm.isProcessRunning() {
 			return errors.New("a process is already running")
 		}
-		pm.processEnded()
 	}
 
 	cmd, err := pm.getCommand(*binaryPath, args...)
@@ -62,9 +65,9 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 	}
 
 	if !pm.IsDev {
-		workingDir, err := os.Getwd()
-		if err != nil {
-			return err
+		workingDir, err2 := os.Getwd()
+		if err2 != nil {
+			return err2
 		}
 		cmd.Dir = workingDir
 	}
@@ -89,7 +92,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 		return fmt.Errorf("failed to create process handle: %w", err)
 	}
 	pm.running = proc
-
+	pm.notifyWhenTaskEnds = notifyWhenTaskEnds
 	debugDir := "debug"
 	if err = os.MkdirAll(debugDir, 0755); err != nil {
 		logger.Get().Errorf("Failed to create debug directory: %v", err)
@@ -106,8 +109,8 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 		logger.Get().Errorf("Failed to create log file: %v", err)
 	}
 	if pm.ActionLogLimit > 0 {
-		files, err := filepath.Glob(filepath.Join(debugDir, "*.log"))
-		if err == nil && len(files) > pm.ActionLogLimit {
+		files, err3 := filepath.Glob(filepath.Join(debugDir, "*.log"))
+		if err3 == nil && len(files) > pm.ActionLogLimit {
 			sort.Slice(files, func(i, j int) bool {
 				infoI, _ := os.Stat(files[i])
 				infoJ, _ := os.Stat(files[j])
@@ -132,7 +135,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 			var summaryMessage ipc.Summary
 			if err = json.Unmarshal([]byte(line), &summaryMessage); err == nil {
 				if summaryMessage.SummaryMessage != "" {
-					app.EmitEvent(&application.CustomEvent{Name: event_names.SummaryMessage, Data: summaryMessage})
+					pm.summary = &summaryMessage
 					continue
 				}
 			}
@@ -146,6 +149,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 			var logMessage ipc.LogMessage
 			if err = json.Unmarshal([]byte(line), &logMessage); err == nil {
 				logger.Get().LogMessage(logMessage)
+				pm.lastLogMessage = &logMessage
 				continue
 			}
 
@@ -162,7 +166,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, logLevel ...u
 	go func() {
 		_, err = cmd.Process.Wait()
 		if err != nil {
-			logger.Get().Errorf("Process ended with error: %v", err)
+			logger.Get().Errorf("Task ended with Error: %v", err)
 		}
 
 		pm.mutex.Lock()
@@ -181,6 +185,8 @@ func (pm *Manager) KillProcess(msg ...string) {
 	if pm.running == nil || !pm.isProcessRunning() {
 		return
 	}
+
+	pm.notifyWhenTaskEnds = false
 
 	killProcessTree(pm.running)
 
@@ -227,10 +233,7 @@ func (pm *Manager) isProcessRunning() bool {
 		return false
 	}
 
-	running, err := pm.running.IsRunning()
-	if err != nil {
-		return false
-	}
+	running, _ := pm.running.IsRunning()
 
 	if !running {
 		pm.processEnded()
@@ -310,5 +313,19 @@ func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
 
 func (pm *Manager) processEnded() {
 	pm.running = nil
-	app.Emit(event_names.AddSummaryToLog)
+
+	if pm.notifyWhenTaskEnds {
+		if pm.lastLogMessage != nil && pm.lastLogMessage.Level == ipc.LogLevelError {
+			notifications.GetService().SendNotification("Task exited with Error", pm.lastLogMessage.Message)
+		} else {
+			summaryMessage := ""
+			if pm.summary != nil {
+				summaryMessage = pm.summary.SummaryMessage
+			}
+			notifications.GetService().SendNotification("Task ended", summaryMessage)
+		}
+	}
+	app.EmitEvent(&application.CustomEvent{Name: event_names.WriteSummaryToLog, Data: pm.summary})
+	pm.summary = nil
+	pm.notifyWhenTaskEnds = false
 }

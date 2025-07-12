@@ -97,7 +97,7 @@ func (g *GamesService) Debug() error {
 
 	args := []string{"Debug"}
 
-	if err := process.Get().StartProcess(g.pythonBinaryPath, args, 2); err != nil {
+	if err := process.Get().StartProcess(g.pythonBinaryPath, args, false, 2); err != nil {
 		logger.Get().Errorf("Starting process: %v", err)
 
 		return err
@@ -177,7 +177,7 @@ func (g *GamesService) SaveDebugZip() {
 }
 
 func (g *GamesService) StartGameProcess(args []string) error {
-	if err := process.Get().StartProcess(g.pythonBinaryPath, args); err != nil {
+	if err := process.Get().StartProcess(g.pythonBinaryPath, args, true); err != nil {
 		logger.Get().Errorf("Starting process: %v", err)
 		return err
 	}

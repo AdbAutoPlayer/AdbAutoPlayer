@@ -21,3 +21,4 @@ action_log_limit = 10
 theme = 'terminus'
 locale = 'en'
 close_should_minimize = true
+notifications_enabled = false

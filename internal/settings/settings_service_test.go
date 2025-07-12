@@ -16,8 +16,8 @@ func resetSingleton() {
 func TestSettingsService_Singleton(t *testing.T) {
 	resetSingleton()
 
-	service1 := Get()
-	service2 := Get()
+	service1 := GetService()
+	service2 := GetService()
 
 	if service1 != service2 {
 		t.Error("Expected singleton pattern to return same instance")
@@ -27,7 +27,7 @@ func TestSettingsService_Singleton(t *testing.T) {
 func TestSettingsService_GetGeneralSettings(t *testing.T) {
 	resetSingleton()
 
-	service := Get()
+	service := GetService()
 	settings := service.GetGeneralSettings()
 
 	// Test that we get a non-nil settings object
@@ -39,7 +39,7 @@ func TestSettingsService_GetGeneralSettings(t *testing.T) {
 func TestSettingsService_LoadGeneralSettings(t *testing.T) {
 	resetSingleton()
 
-	service := Get()
+	service := GetService()
 	settings := service.LoadGeneralSettings()
 
 	// Test that loading returns the same as getting
@@ -52,7 +52,7 @@ func TestSettingsService_LoadGeneralSettings(t *testing.T) {
 func TestSettingsService_GetGeneralSettingsForm(t *testing.T) {
 	resetSingleton()
 
-	service := Get()
+	service := GetService()
 	form := service.GetGeneralSettingsForm()
 
 	// Test that form contains expected keys
@@ -198,7 +198,7 @@ func TestSettingsService_ConcurrentAccess(t *testing.T) {
 	for i := 0; i < numGoroutines; i++ {
 		go func(index int) {
 			defer wg.Done()
-			instances[index] = Get()
+			instances[index] = GetService()
 		}(i)
 	}
 

@@ -1,5 +1,4 @@
 export const EventNames = {
-  SUMMARY_MESSAGE: "summary-message",
   WRITE_SUMMARY_TO_LOG: "write-summary-to-log",
   LOG_MESSAGE: "log-message",
   DOWNLOAD_PROGRESS: "download-progress",

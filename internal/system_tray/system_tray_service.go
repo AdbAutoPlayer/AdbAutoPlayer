@@ -88,7 +88,7 @@ func buildSystemTray(wailsApp *application.App, appWindow *application.WebviewWi
 	})
 
 	appWindow.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
-		if settings.Get().GetGeneralSettings().UI.CloseShouldMinimize {
+		if settings.GetService().GetGeneralSettings().UI.CloseShouldMinimize {
 			e.Cancel()
 			appWindow.Hide()
 		}

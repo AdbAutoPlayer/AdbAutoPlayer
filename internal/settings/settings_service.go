@@ -7,6 +7,7 @@ import (
 	"adb-auto-player/internal/logger"
 	"adb-auto-player/internal/path"
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"runtime"
 	"sync"
 )
 
@@ -20,8 +21,8 @@ type SettingsService struct {
 	generalSettingsPath *string
 }
 
-// Get returns the singleton instance of SettingsService
-func Get() *SettingsService {
+// GetService returns the singleton instance of SettingsService
+func GetService() *SettingsService {
 	generalSettingsPath := resolveGeneralSettingsPath()
 	once.Do(func() {
 		instance = &SettingsService{
@@ -60,6 +61,11 @@ func (s *SettingsService) SaveGeneralSettings(settings GeneralSettings) error {
 		return err
 	}
 	s.generalSettings = settings
+
+	if settings.UI.NotificationsEnabled && runtime.GOOS != "windows" {
+		logger.Get().Warningf("Notifications only work on Windows")
+	}
+
 	app.EmitEvent(&application.CustomEvent{Name: event_names.GeneralSettingsUpdated, Data: s.generalSettings})
 	logger.Get().Infof("Saved General Settings")
 	return nil

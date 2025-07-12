@@ -3,6 +3,7 @@ package main
 import (
 	"adb-auto-player/internal/games"
 	"adb-auto-player/internal/hotkeys"
+	"adb-auto-player/internal/notifications"
 	"adb-auto-player/internal/path"
 	"adb-auto-player/internal/process"
 	"adb-auto-player/internal/settings"
@@ -40,10 +41,11 @@ func main() {
 		// This is for Wails system messages generally not interesting outside of dev.
 		LogLevel: slog.LevelError,
 		Services: []application.Service{
-			application.NewService(settings.Get()),
+			application.NewService(settings.GetService()),
 			application.NewService(&hotkeys.HotkeysService{}),
 			application.NewService(updater.NewUpdateService(Version, isDev)),
 			application.NewService(games.NewGamesService(isDev)),
+			application.NewService(notifications.GetService()),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),

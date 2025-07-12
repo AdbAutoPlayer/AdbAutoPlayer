@@ -11,7 +11,6 @@
   };
 
   let logs: LogEntry[] = $state([]);
-  let summaryMessage: string = $state("");
   let searchTerm: string = $state("");
   let searchVisible: boolean = $state(false);
   let currentMatchIndex: number = $state(-1);
@@ -142,17 +141,16 @@
     currentMatchIndex = -1;
   }
 
-  Events.On(EventNames.SUMMARY_MESSAGE, (ev) => {
-    const summary: { summary_message: string } = ev.data;
-    summaryMessage = formatMessage(summary.summary_message);
-  });
-
   Events.On(EventNames.WRITE_SUMMARY_TO_LOG, (ev) => {
-    addSummaryMessageToLog();
-    summaryMessage = "";
+    const summary = ev.data;
+    if (!summary) {
+      return;
+    }
+    addSummaryMessageToLog(ev.data);
   });
 
-  function addSummaryMessageToLog() {
+  function addSummaryMessageToLog(summary: { summary_message: string }) {
+    const summaryMessage = formatMessage(summary.summary_message);
     if ("" === summaryMessage) {
       return;
     }
@@ -160,7 +158,6 @@
       message: summaryMessage,
       html_class: "whitespace-pre-wrap text-success-950",
     });
-    summaryMessage = "";
   }
 
   Events.On(EventNames.LOG_MESSAGE, (ev) => {
