@@ -63,7 +63,10 @@ func (s *SettingsService) SaveGeneralSettings(settings GeneralSettings) error {
 	s.generalSettings = settings
 
 	if settings.UI.NotificationsEnabled && runtime.GOOS != "windows" {
-		logger.Get().Warningf("Notifications only work on Windows")
+		logger.Get().Warningf("Setting: 'Enable Notifications' only works on Windows")
+	}
+	if settings.UI.CloseShouldMinimize && runtime.GOOS != "windows" {
+		logger.Get().Warningf("Setting: 'Close button should minimize the window' only works on Windows")
 	}
 
 	app.EmitEvent(&application.CustomEvent{Name: event_names.GeneralSettingsUpdated, Data: s.generalSettings})

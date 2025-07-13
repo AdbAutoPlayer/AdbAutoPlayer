@@ -41,7 +41,7 @@ type UISettings struct {
 	Theme                string `toml:"theme"`
 	Locale               string `toml:"locale" json:"Language"`
 	CloseShouldMinimize  bool   `toml:"close_should_minimize" json:"Close button should minimize the window"`
-	NotificationsEnabled bool   `toml:"notifications_enabled" json:"Notifications enabled"`
+	NotificationsEnabled bool   `toml:"notifications_enabled" json:"Enable Notifications"`
 }
 
 func NewGeneralSettings() GeneralSettings {
