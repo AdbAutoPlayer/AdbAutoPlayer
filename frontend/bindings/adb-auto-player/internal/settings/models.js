@@ -235,12 +235,12 @@ export class UISettings {
              */
             this["Close button should minimize the window"] = false;
         }
-        if (!("Notifications enabled" in $$source)) {
+        if (!("Enable Notifications" in $$source)) {
             /**
              * @member
              * @type {boolean}
              */
-            this["Notifications enabled"] = false;
+            this["Enable Notifications"] = false;
         }
 
         Object.assign(this, $$source);
