@@ -6,6 +6,7 @@ import (
 	"adb-auto-player/internal/settings"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
+	"runtime"
 )
 
 type SystemTrayService struct {
@@ -30,6 +31,13 @@ func (s *SystemTrayService) Exit() {
 }
 
 func NewSystemTrayService(app *application.App, appWindow *application.WebviewWindow) *SystemTrayService {
+	if runtime.GOOS != "windows" {
+		return &SystemTrayService{
+			systemTray:       nil,
+			appWindow:        nil,
+			systemTrayWindow: nil,
+		}
+	}
 	systemTray, systemTrayWindow := buildSystemTray(app, appWindow)
 	return &SystemTrayService{
 		systemTray:       systemTray,
