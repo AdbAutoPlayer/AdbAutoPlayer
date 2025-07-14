@@ -34,7 +34,7 @@ type UpdateConfig struct {
 }
 
 type LoggingConfig struct {
-	Level                string `toml:"level"`
+	Level                string `toml:"level" json:"Log Level"`
 	DebugSaveScreenshots int    `toml:"debug_save_screenshots" json:"Debug Screenshot Limit"`
 	ActionLogLimit       int    `toml:"action_log_limit" json:"Action Log Limit"`
 }

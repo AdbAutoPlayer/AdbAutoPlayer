@@ -231,7 +231,7 @@
         disabled={isSaving}
         onclick={handleSave}
       >
-        Save
+        {$t("Save")}
       </button>
     </div>
   </form>

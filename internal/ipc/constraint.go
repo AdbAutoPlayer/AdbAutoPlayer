@@ -134,7 +134,7 @@ func GetMainConfigConstraints() map[string]interface{} {
 			},
 		},
 		"Logging": map[string]interface{}{
-			"Level": NewSelectConstraint([]string{
+			"Log Level": NewSelectConstraint([]string{
 				string(LogLevelDebug),
 				string(LogLevelInfo),
 				string(LogLevelWarning),
