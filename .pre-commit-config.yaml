@@ -13,6 +13,7 @@ repos:
         exclude: '^(frontend/package-lock\.json|frontend/package\.json|build/windows/info\.json|wails\.json)$'
         args:
           - "--autofix"
+          - "--no-ensure-ascii"
 
   # Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
