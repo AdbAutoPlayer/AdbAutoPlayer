@@ -62,7 +62,7 @@
               onchange={(e) =>
                 handleCheckboxChange(option.original, e.currentTarget.checked)}
             />
-            <span class="mr-0.25">{option.translated}</span>
+            <span class="mr-0.25 break-keep">{option.translated}</span>
           </label>
         {/each}
       </div>
