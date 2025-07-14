@@ -120,6 +120,10 @@ class ConfidenceValue:
         """Greater than or equal comparison."""
         return self == other or self > other
 
+    def __hash__(self) -> int:
+        """Hash comparison."""
+        return hash(self.value)
+
 
 def _normalize_numeric_value(value: int | float) -> float:
     """Normalize numeric value to 0.0-1.0 range.

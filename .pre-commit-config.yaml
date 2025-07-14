@@ -9,6 +9,10 @@ repos:
       - id: check-json
       - id: check-yaml
       - id: check-toml
+      - id: pretty-format-json
+        exclude: '^(frontend/package-lock\.json|frontend/package\.json|build/windows/info\.json|wails\.json)$'
+        args:
+          - "--autofix"
 
   # Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
@@ -29,7 +33,7 @@ repos:
       - id: black
         files: python/
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.2
+    rev: v0.12.3
     hooks:
       - id: ruff
         files: python/
@@ -37,26 +41,25 @@ repos:
       - id: ruff-format
         files: python/
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.15.0'
+    rev: 'v1.16.1'
     hooks:
       - id: mypy
         files: python/
 
   # UV
   - repo: https://github.com/astral-sh/uv-pre-commit
-    # uv version.
-    rev: 0.7.9
+    rev: 0.7.20
     hooks:
       - id: uv-lock
-  - repo: https://github.com/astral-sh/uv-pre-commit
-    # uv version.
-    rev: 0.7.9
-    hooks:
+        files: python/pyproject.toml
+        args: [--project, python]
       - id: uv-export
+        files: python/pyproject.toml
+        args: [--project, python]
 
   # Golang
   - repo: https://github.com/golangci/golangci-lint
-    rev: v2.0.2
+    rev: v2.2.2
     hooks:
       - id: golangci-lint
         files: \.go$
