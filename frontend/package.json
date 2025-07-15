@@ -29,7 +29,7 @@
 	"dependencies": {
 		"@tailwindcss/vite": "^4.1.11",
 		"marked": "^16.0.0",
-		"posthog-js": "^1.253.3",
+		"posthog-js": "^1.257.0",
 		"tailwindcss": "^4.1.11"
 	}
 }
