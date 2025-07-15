@@ -1,4 +1,5 @@
 import logging
+import re
 import time
 from abc import ABC
 from dataclasses import dataclass
@@ -24,6 +25,7 @@ class PopupMessage:
     hold_to_confirm: bool = False
     hold_duration_seconds: float = 5.0
     ignore: bool = False
+    strip_numbers: bool = False
     exception_to_raise: Exception | None = None
 
 
@@ -90,8 +92,9 @@ duras_trials_messages = [
     ),
     PopupMessage(
         # Spend x to challenge this stage again?
-        text="to challenge this stage again?",
+        text="Spend to challenge",
         ignore=True,  # handled elsewhere
+        strip_numbers=True,
         # possibly appears in other places
     ),
     PopupMessage(
@@ -170,11 +173,7 @@ def _find_matching_popup(
         PopupMessage or None if no match found
     """
     for popup in popup_messages:
-        if StringHelper.fuzzy_substring_match(
-            ocr_text,
-            popup.text,
-            similarity_threshold,
-        ):
+        if _popup_fuzzy_substring_search(ocr_text, popup, similarity_threshold):
             return popup
     return None
 
@@ -314,19 +313,37 @@ class AFKJourneyPopupHandler(Game, ABC):
         )
 
 
+def _popup_fuzzy_substring_search(
+    text: str,
+    popup: PopupMessage,
+    similarity_threshold: ConfidenceValue = ConfidenceValue("80%"),
+) -> bool:
+    pattern = popup.text
+    if popup.strip_numbers:
+        text = re.sub(r"\d+", "", text)
+        text = re.sub(r"\s+", " ", text)
+        text = text.strip()
+
+    if StringHelper.fuzzy_substring_match(
+        text,
+        pattern,
+        similarity_threshold,
+    ):
+        return True
+    return False
+
+
 if __name__ == "__main__":
     """Test function to check popup message matching."""
     # Test cases
     test_strings = [
         "Spend to challenge this stage apain?",  # OCR error: 'g' -> 'p'
-        "Spend 2000 Gold to challenge this stage apain?",  # OCR error with prefix
-        "to challenge this stage again?",  # Exact match
+        "Spend to challenge this stage",
+        "Spend 4000 to challenge this stage",
         "Are you sure you want to exit the gane",  # OCR error: 'm' -> 'n'
         "Your formation is imcomplete.",  # OCR error: 'n' -> 'm'
         "Skip this batlle?",  # OCR error: 't' -> 'l'
         "Unknown popup message",  # Should not match
-        "Spend 5000 Gold to challenge this stage apain?",
-        # Longer prefix with error
     ]
 
     print("Testing popup message matching with fuzzy logic:")
