@@ -11,16 +11,44 @@ from adb_auto_player.models.commands import Command
 from adb_auto_player.util import Execute
 from websockets.asyncio.server import ServerConnection, serve
 
-task_processes: dict[str, Process] = {}
-running_tasks: dict[str, asyncio.Task] = {}
+
+class TaskManager:
+    """Manages running tasks and processes."""
+
+    def __init__(self):
+        """Init."""
+        self.task_process: Process | None = None
+        self.running_task: asyncio.Task | None = None
+
+    def is_task_running(self) -> bool:
+        """Check if a task is currently running."""
+        return self.task_process is not None and self.task_process.is_alive()
+
+    def stop_task(self) -> None:
+        """Stop the current task if running."""
+        if self.task_process and self.task_process.is_alive():
+            self.task_process.terminate()
+            self.task_process.join()
+        self.task_process = None
+        self.running_task = None
+
+    def start_task(self, target, args) -> None:
+        """Start a new task."""
+        if self.is_task_running():
+            return  # Don't start if already running
+
+        self.task_process = Process(target=target, args=args)
+        self.task_process.start()
 
 
-async def monitor_process(proc: Process, websocket, socket_id: str):
+async def monitor_process(
+    proc: Process, websocket: ServerConnection, task_manager: TaskManager
+):
     """Monitor a process and see if it is running."""
     loop = asyncio.get_running_loop()
     await loop.run_in_executor(None, proc.join, None)
-    task_processes.pop(socket_id, None)
-    running_tasks.clear()
+    task_manager.task_process = None
+    task_manager.running_task = None
     await websocket.close()
 
 
@@ -30,11 +58,11 @@ def handle_start_message(args: list[str], cmds: dict[str, list[Command]]) -> Non
 
 
 async def handle_connection(
-    websocket: ServerConnection, cmds: dict[str, list[Command]]
+    websocket: ServerConnection,
+    cmds: dict[str, list[Command]],
+    task_manager: TaskManager,
 ):
     """Handles incoming messages."""
-    socket_id = str(websocket.id)
-
     async for raw_message in websocket:
         try:
             data = json.loads(raw_message)
@@ -47,32 +75,27 @@ async def handle_connection(
             continue
 
         if msg.command == "stop":
-            proc = task_processes.get(socket_id)
-            if proc and proc.is_alive():
-                proc.terminate()
-                proc.join()
-                if msg.notify:
-                    await websocket.send(json.dumps({"status": "stopped"}))
-            _ = task_processes.pop(socket_id, None)
+            task_manager.stop_task()
+            if msg.notify:
+                await websocket.send(json.dumps({"status": "stopped"}))
             await websocket.close()
             return
 
-        if msg.command == "start" and (
-            socket_id not in task_processes or not task_processes[socket_id].is_alive()
-        ):
-            proc = Process(target=handle_start_message, args=(msg.args, cmds))
-            task_processes[socket_id] = proc
-            proc.start()
-            running_tasks[socket_id] = asyncio.create_task(
-                monitor_process(proc, websocket, socket_id)
+        if msg.command == "start" and not task_manager.is_task_running():
+            task_manager.start_task(target=handle_start_message, args=(msg.args, cmds))
+            if task_manager.task_process is None:
+                continue
+            task_manager.running_task = asyncio.create_task(
+                monitor_process(task_manager.task_process, websocket, task_manager)
             )
 
 
 async def main(host: str, port: int, cmds: dict[str, list[Command]]):
     """Server main function."""
+    task_manager = TaskManager()
 
     async def connection_handler(websocket: ServerConnection):
-        await handle_connection(websocket, cmds)
+        await handle_connection(websocket, cmds, task_manager)
 
     async with serve(connection_handler, host, port, max_queue=1) as server:
         await server.serve_forever()
