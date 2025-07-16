@@ -52,7 +52,7 @@ func (s *IPCService) InitializeManager() {
 }
 
 func (s *IPCService) initializeSTDIOManager() {
-	if nil == s.STDIOManager {
+	if nil == s.STDIOManager || s.pythonBinaryPath != s.STDIOManager.pythonBinaryPath {
 		s.STDIOManager = NewSTDIOManager(
 			s.IsDev,
 			s.pythonBinaryPath,
@@ -105,10 +105,6 @@ func (s *IPCService) Exec(args []string) (string, error) {
 	}
 
 	return "", errors.New("no IPC Process Manager is running")
-}
-
-func (s *IPCService) Shutdown() {
-	s.StopTask()
 }
 
 func getCommand(isDev bool, name string, args ...string) (*exec.Cmd, error) {

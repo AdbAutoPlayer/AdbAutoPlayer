@@ -57,9 +57,6 @@ func main() {
 		Mac: application.MacOptions{
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
 		},
-		OnShutdown: func() {
-			process.GetService().Shutdown()
-		},
 	})
 
 	initializeEventHandlers(app)

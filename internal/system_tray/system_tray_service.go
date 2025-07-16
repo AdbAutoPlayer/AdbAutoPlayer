@@ -16,17 +16,22 @@ type SystemTrayService struct {
 }
 
 func (s *SystemTrayService) MinimizeToTray() {
-	s.systemTrayWindow.Hide()
+	if s.systemTray != nil {
+		s.systemTrayWindow.Hide()
+	}
 	s.appWindow.Hide()
 }
 
 func (s *SystemTrayService) ShowWindow() {
-	s.systemTrayWindow.Hide()
+	if s.systemTray != nil {
+		s.systemTrayWindow.Hide()
+	}
 	s.appWindow.Show()
 	s.appWindow.Focus()
 }
 
 func (s *SystemTrayService) Exit() {
+	s.systemTrayWindow.Hide()
 	app.Quit()
 }
 
@@ -84,8 +89,10 @@ func buildSystemTray(wailsApp *application.App, appWindow *application.WebviewWi
 		appWindow.Focus()
 	})
 	systemTray.OnRightClick(func() {
-		_ = systemTray.PositionWindow(systemTrayWindow, 5)
-		systemTrayWindow.Show()
+		if systemTrayWindow != nil {
+			_ = systemTray.PositionWindow(systemTrayWindow, 5)
+			systemTrayWindow.Show()
+		}
 	})
 
 	appWindow.RegisterHook(events.Common.WindowHide, func(e *application.WindowEvent) {
