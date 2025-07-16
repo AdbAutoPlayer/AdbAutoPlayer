@@ -8,7 +8,7 @@ info:
   companyName: "AdbAutoPlayer" # The name of the company
   productName: "AdbAutoPlayer" # The name of the application
   productIdentifier: "com.github.adbautoplayer" # The unique product identifier
-  description: "I'll add a description later." # The application description
+  description: "AdbAutoPlayer" # The application description
   copyright: "(c) 2025, AdbAutoPlayer" # Copyright text
   comments: "I'll add comments later." # Comments
   version: "0.0.0" # The application version
