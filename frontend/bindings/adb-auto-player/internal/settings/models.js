@@ -19,19 +19,19 @@ export class AdvancedSettings {
              */
             this["ADB Host"] = "";
         }
-        if (!("ADB Port" in $$source)) {
+        if (!("ADB port" in $$source)) {
             /**
              * @member
              * @type {number}
              */
-            this["ADB Port"] = 0;
+            this["ADB port"] = 0;
         }
-        if (!("WebSocket Port" in $$source)) {
+        if (!("WebSocket port" in $$source)) {
             /**
              * @member
              * @type {number}
              */
-            this["WebSocket Port"] = 0;
+            this["WebSocket port"] = 0;
         }
         if (!("Disable WebSockets" in $$source)) {
             /**

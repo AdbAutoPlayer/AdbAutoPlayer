@@ -150,13 +150,13 @@ func GetMainConfigConstraints() map[string]interface{} {
 		},
 		"Advanced": map[string]interface{}{
 			"ADB Host":           NewTextConstraint("127.0.0.1"),
-			"ADB Port":           NewNumberConstraint(&portMin, &portMax, nil, 5037),
-			"WebSocket Port":     NewNumberConstraint(&portMin, &portMax, nil, 8765),
+			"ADB port":           NewNumberConstraint(&portMin, &portMax, nil, 5037),
+			"WebSocket port":     NewNumberConstraint(&portMin, &portMax, nil, 8765),
 			"Disable WebSockets": NewCheckboxConstraint(false),
 			"Order": []string{
 				"ADB Host",
-				"ADB Port",
-				"WebSocket Port",
+				"ADB port",
+				"WebSocket port",
 				"Disable WebSockets",
 			},
 		},

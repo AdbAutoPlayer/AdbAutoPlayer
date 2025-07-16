@@ -56,13 +56,14 @@ func (s *SettingsService) GetGeneralSettingsForm() map[string]interface{} {
 }
 
 func (s *SettingsService) SaveGeneralSettings(settings GeneralSettings) error {
+	defer app.EmitEvent(&application.CustomEvent{Name: event_names.GeneralSettingsUpdated, Data: s.generalSettings})
+
 	if err := SaveTOML[GeneralSettings](*s.generalSettingsPath, &settings); err != nil {
 		app.Error(err.Error())
 		return err
 	}
 	s.generalSettings = settings
 
-	app.EmitEvent(&application.CustomEvent{Name: event_names.GeneralSettingsUpdated, Data: s.generalSettings})
 	if settings.UI.NotificationsEnabled && runtime.GOOS != "windows" {
 		logger.Get().Warningf("Setting: 'Enable Notifications' only works on Windows")
 	}
@@ -101,9 +102,9 @@ func resolveGeneralSettingsPath() string {
 	}
 
 	settingsPath := path.GetFirstPathThatExists(paths)
-	if settingsPath == nil {
+	if settingsPath == "" {
 		return paths[0]
 	}
 
-	return *settingsPath
+	return settingsPath
 }

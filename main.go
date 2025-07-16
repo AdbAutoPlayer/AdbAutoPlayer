@@ -1,6 +1,7 @@
 package main
 
 import (
+	"adb-auto-player/internal/event_names"
 	"adb-auto-player/internal/games"
 	"adb-auto-player/internal/hotkeys"
 	"adb-auto-player/internal/notifications"
@@ -26,7 +27,8 @@ func main() {
 	println("Version:", Version)
 
 	isDev := Version == "dev"
-	process.Get().IsDev = isDev
+	ipcService := process.GetService()
+	ipcService.IsDev = isDev
 
 	if !isDev {
 		path.ChangeWorkingDirForProd()
@@ -44,7 +46,7 @@ func main() {
 			application.NewService(settings.GetService()),
 			application.NewService(&hotkeys.HotkeysService{}),
 			application.NewService(updater.NewUpdateService(Version, isDev)),
-			application.NewService(games.NewGamesService(isDev)),
+			application.NewService(games.NewGamesService()),
 			application.NewService(notifications.GetService()),
 		},
 		Assets: application.AssetOptions{
@@ -56,9 +58,11 @@ func main() {
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
 		},
 		OnShutdown: func() {
-			process.Get().KillProcess()
+			process.GetService().Shutdown()
 		},
 	})
+
+	initializeEventHandlers(app)
 
 	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:  "AdbAutoPlayer",
@@ -86,7 +90,12 @@ func main() {
 	}
 }
 
-// func addNotifier(app *application.App) {
-// 	notifier := notifications.New()
-// 	app.RegisterService(application.NewService(notifier))
-// }
+func initializeEventHandlers(app *application.App) {
+	if nil == app {
+		return
+	}
+
+	app.Event.On(event_names.GeneralSettingsUpdated, func(event *application.CustomEvent) {
+		process.GetService().InitializeManager()
+	})
+}

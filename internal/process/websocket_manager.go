@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
@@ -16,26 +17,29 @@ import (
 )
 
 type WebSocketManager struct {
+	port               int
+	pythonBinaryPath   string
 	mutex              sync.Mutex
-	IsDev              bool
+	isDev              bool
 	notifyWhenTaskEnds bool
 	summary            *ipc.Summary
 	lastLogMessage     *ipc.LogMessage
 	conn               *websocket.Conn
 	ctx                context.Context
 	cancel             context.CancelFunc
-	port               int
 }
 
-func NewWebSocketManager(pythonBinaryPath *string, port int) *WebSocketManager {
-	startWebSocketServer()
-
-	return &WebSocketManager{
-		port: port,
+func NewWebSocketManager(isDev bool, port int, pythonBinaryPath string) *WebSocketManager {
+	ws := &WebSocketManager{
+		port:             port,
+		pythonBinaryPath: pythonBinaryPath,
+		isDev:            isDev,
 	}
+	ws.startWebSocketServer()
+	return ws
 }
 
-func startWebSocketServer() {
+func (ws *WebSocketManager) startWebSocketServer() {
 	// TODO
 }
 
@@ -117,4 +121,8 @@ func (pm *WebSocketManager) readWebSocket() {
 			logger.Get().Debugf("Skipping non-JSON WebSocket message: %s", string(message))
 		}
 	}
+}
+
+func (wm *WebSocketManager) getCommand(args ...string) (*exec.Cmd, error) {
+	return getCommand(wm.isDev, wm.pythonBinaryPath, args...)
 }

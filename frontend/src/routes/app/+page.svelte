@@ -2,7 +2,7 @@
   import { onDestroy, onMount } from "svelte";
   import SettingsForm from "$lib/components/settings/SettingsForm.svelte";
   import Menu from "$lib/components/menu/Menu.svelte";
-  import { pollRunningGame, pollRunningProcess } from "$lib/stores/polling";
+  import { pollRunningGame } from "$lib/stores/polling";
   import { sortObjectByOrder } from "$lib/settings-form/orderHelper";
   import { showErrorToast } from "$lib/toast/toast-error";
   import { t } from "$lib/i18n/i18n";
@@ -19,17 +19,16 @@
     SaveGameSettings,
     StartGameProcess,
     KillGameProcess,
-    IsGameProcessRunning,
   } from "@wails/games/gamesservice";
   import { GameGUI, MenuOption } from "@wails/ipc";
   import { logDevOnly } from "$lib/utils/error-reporting";
   import type { MenuButton } from "$lib/settings-form/model";
-  import { NotificationService } from "@wails/notifications";
+  import { Events } from "@wailsio/runtime";
+  import { EventNames } from "$lib/log/eventNames";
 
   let showSettingsForm: boolean = $state(false);
   let settingsFormProps: Record<string, any> = $state({});
   let activeGame: GameGUI | null = $state(null);
-  let logGetGameGUI: boolean = $state(true);
 
   let openFormIsGeneralSettings: boolean = $state(false);
 
@@ -164,6 +163,7 @@
     if (activeButtonLabel !== null) {
       return;
     }
+    $pollRunningGame = false;
     clearTimeout(updateStateTimeout);
 
     try {
@@ -185,9 +185,6 @@
     }
 
     showSettingsForm = false;
-    logGetGameGUI = true;
-    $pollRunningGame = true;
-    $pollRunningProcess = true;
   }
 
   async function onGameSettingsSave(settings: object) {
@@ -197,8 +194,7 @@
     }
 
     try {
-      await SaveGameSettings(settings);
-      activeGame = await GetGameGUI(!logGetGameGUI);
+      activeGame = await SaveGameSettings(settings);
     } catch (error) {
       showErrorToast(error, {
         title: `Failed to Save ${game.game_title} Settings`,
@@ -206,8 +202,6 @@
     }
 
     showSettingsForm = false;
-    $pollRunningGame = true;
-    $pollRunningProcess = true;
   }
 
   async function openGameSettingsForm(game: GameGUI | null) {
@@ -217,7 +211,6 @@
     }
 
     $pollRunningGame = false;
-    $pollRunningProcess = false;
 
     openFormIsGeneralSettings = false;
     try {
@@ -230,14 +223,12 @@
         title: `Failed to create ${game.game_title} Settings Form`,
       });
       $pollRunningGame = true;
-      $pollRunningProcess = true;
     }
   }
 
   async function openGeneralSettingsForm() {
     openFormIsGeneralSettings = true;
     $pollRunningGame = false;
-    $pollRunningProcess = false;
     try {
       const result = await GetGeneralSettingsForm();
       result.constraints = sortObjectByOrder(result.constraints);
@@ -248,7 +239,6 @@
         title: "Failed to create General Settings Form",
       });
       $pollRunningGame = true;
-      $pollRunningProcess = true;
     }
   }
 
@@ -262,20 +252,22 @@
     }
   }
 
+  Events.On(EventNames.TASK_STOPPED, enablePolling);
+  Events.On(EventNames.GAME_SETTINGS_UPDATED, enablePolling);
+  Events.On(EventNames.GENERAL_SETTINGS_UPDATED, enablePolling);
+
+  function enablePolling() {
+    $pollRunningGame = true;
+    activeButtonLabel = null;
+  }
+
   async function updateState() {
-    if ($pollRunningProcess) {
-      const isProcessRunning = await IsGameProcessRunning();
-      $pollRunningGame = !isProcessRunning;
-      if (!isProcessRunning) {
-        activeButtonLabel = null;
-      }
+    if (!$pollRunningGame) {
+      return;
     }
 
     try {
-      if ($pollRunningGame) {
-        activeGame = await GetGameGUI(!logGetGameGUI);
-        logGetGameGUI = false;
-      }
+      activeGame = await GetGameGUI();
     } catch (error) {
       logDevOnly(error);
       activeGame = null;

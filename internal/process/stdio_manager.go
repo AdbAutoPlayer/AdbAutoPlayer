@@ -24,39 +24,34 @@ import (
 )
 
 type STDIOManager struct {
+	isDev              bool
+	pythonBinaryPath   string
 	running            *process.Process
-	IsDev              bool
 	notifyWhenTaskEnds bool
 	summary            *ipc.Summary
 	lastLogMessage     *ipc.LogMessage
-	pythonBinaryPath   *string
-	LogLevelOverwrite  uint8
 }
 
-// NewSTDIOManager TODO Ignore this I will finish it myself
-func NewSTDIOManager(isDev bool) *STDIOManager {
+func NewSTDIOManager(isDev bool, pythonBinaryPath string) *STDIOManager {
 	return &STDIOManager{
-		IsDev: isDev,
+		isDev:            isDev,
+		pythonBinaryPath: pythonBinaryPath,
 	}
 }
 
 func (pm *STDIOManager) StartProcess(args []string, notifyWhenTaskEnds bool) error {
-	if nil == pm.pythonBinaryPath {
-		return errors.New("python binary not found")
-	}
-
 	if pm.running != nil {
 		if pm.isProcessRunning() {
 			return errors.New("a process is already running")
 		}
 	}
 
-	cmd, err := pm.getCommand(*pm.pythonBinaryPath, args...)
+	cmd, err := pm.getCommand(args...)
 	if err != nil {
 		return err
 	}
 
-	if !pm.IsDev {
+	if !pm.isDev {
 		workingDir, err2 := os.Getwd()
 		if err2 != nil {
 			return err2
@@ -73,9 +68,6 @@ func (pm *STDIOManager) StartProcess(args []string, notifyWhenTaskEnds bool) err
 		return fmt.Errorf("failed to start command: %w", err)
 	}
 	logger.Get().Debugf("Started process with PID: %d", cmd.Process.Pid)
-
-	originalLogLevel := logger.Get().LogLevel
-	logger.Get().LogLevel = pm.LogLevelOverwrite
 
 	proc, err := process.NewProcess(int32(cmd.Process.Pid))
 	if err != nil {
@@ -163,7 +155,6 @@ func (pm *STDIOManager) StartProcess(args []string, notifyWhenTaskEnds bool) err
 			logger.Get().Errorf("Task ended with Error: %v", err)
 		}
 
-		logger.Get().LogLevel = originalLogLevel
 		pm.processEnded()
 	}()
 
@@ -213,28 +204,12 @@ func (pm *STDIOManager) isProcessRunning() bool {
 	return running
 }
 
-func (pm *STDIOManager) getCommand(name string, args ...string) (*exec.Cmd, error) {
-	if pm.IsDev {
-		if _, err := os.Stat(name); os.IsNotExist(err) {
-			return nil, fmt.Errorf("dev Python dir does not exist: %s", name)
-		}
-
-		uvPath, err := exec.LookPath("uv")
-		if err != nil {
-			return nil, fmt.Errorf("uv not found in PATH: %w", err)
-		}
-
-		cmd := exec.Command(uvPath, append([]string{"run", "adb-auto-player"}, args...)...)
-		cmd.Dir = name
-
-		return cmd, nil
-	}
-
-	return exec.Command(name, args...), nil
+func (pm *STDIOManager) getCommand(args ...string) (*exec.Cmd, error) {
+	return getCommand(pm.isDev, pm.pythonBinaryPath, args...)
 }
 
-func (pm *STDIOManager) Exec(binaryPath string, args ...string) (string, error) {
-	cmd, err := pm.getCommand(binaryPath, args...)
+func (pm *STDIOManager) Exec(args ...string) (string, error) {
+	cmd, err := pm.getCommand(args...)
 	if err != nil {
 		return "", err
 	}
@@ -270,15 +245,14 @@ func (pm *STDIOManager) Exec(binaryPath string, args ...string) (string, error) 
 			}
 		}
 
-		if pm.IsDev {
-			return "", fmt.Errorf("failed to execute '%s': %w\nStdout: %s\nStderr: %s", binaryPath, err, output, errorOutput)
+		if pm.isDev {
+			return "", fmt.Errorf("failed to execute '%s': %w\nStdout: %s\nStderr: %s", pm.pythonBinaryPath, err, output, errorOutput)
 		}
 
-		logger.Get().Debugf("failed to execute '%s': %v\nStdout: %s\nStderr: %s", binaryPath, err, output, errorOutput)
+		logger.Get().Debugf("failed to execute '%s': %v\nStdout: %s\nStderr: %s", pm.pythonBinaryPath, err, output, errorOutput)
 
 		return "", fmt.Errorf("failed to execute command: %w\nStderr: %s", err, errorOutput)
 	}
-
 	return stdout.String(), nil
 }
 
@@ -297,6 +271,7 @@ func (pm *STDIOManager) processEnded() {
 		}
 	}
 	app.EmitEvent(&application.CustomEvent{Name: event_names.WriteSummaryToLog, Data: pm.summary})
+	app.Emit(event_names.TaskStopped)
 	pm.summary = nil
 	pm.notifyWhenTaskEnds = false
 }

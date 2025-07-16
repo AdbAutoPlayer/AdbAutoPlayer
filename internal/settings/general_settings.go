@@ -23,8 +23,8 @@ type DeviceSettings struct {
 
 type AdvancedSettings struct {
 	ADBHost           string `toml:"adb_host" json:"ADB Host"`
-	ADBPort           int    `toml:"adb_port" json:"ADB Port"`
-	WebSocketPort     int    `toml:"websocket_port" json:"WebSocket Port"`
+	ADBPort           int    `toml:"adb_port" json:"ADB port"`
+	WebSocketPort     int    `toml:"websocket_port" json:"WebSocket port"`
 	DisableWebSockets bool   `toml:"disable_websockets" json:"Disable WebSockets"`
 }
 

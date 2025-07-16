@@ -8,14 +8,14 @@ import (
 	"strings"
 )
 
-func GetFirstPathThatExists(paths []string) *string {
+func GetFirstPathThatExists(paths []string) string {
 	for _, path := range paths {
 		if stat, _ := os.Stat(path); stat != nil {
-			return &path
+			return path
 		}
 	}
 
-	return nil
+	return ""
 }
 
 // ChangeWorkingDirForProd changes the working directory for production builds
