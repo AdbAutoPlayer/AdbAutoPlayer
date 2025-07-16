@@ -223,7 +223,7 @@
       <div
         class="flex items-center justify-between rounded-xl bg-gradient-to-r from-primary-50 to-secondary-50 p-4 shadow-lg dark:from-primary-900/20 dark:to-secondary-900/20"
       >
-        <SettingsSectionHeader text={"Tasks"} />
+        <SettingsSectionHeader text={$t("Tasks")} />
         <button
           class="btn rounded-lg bg-red-800 px-4 py-2 font-medium text-red-100 shadow-md transition-all duration-200 hover:scale-105 hover:bg-red-600 hover:text-white hover:shadow-lg"
           type="button"

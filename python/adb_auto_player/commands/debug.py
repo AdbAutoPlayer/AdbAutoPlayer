@@ -88,7 +88,7 @@ def _test_input_delay(device) -> None:
         total_time += (time.time() - start_time) * 1000
     average_time = total_time / iterations
     logging.info(
-        f"Average time taken to tap screen {iterations} times: {average_time:.2f} ms"
+        f"Average time to tap screen over {iterations} attempts: {average_time:.2f} ms"
     )
 
 

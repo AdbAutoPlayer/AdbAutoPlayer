@@ -138,7 +138,7 @@ func GetMainConfigConstraints() map[string]interface{} {
 			},
 		},
 		"Logging": map[string]interface{}{
-			"Level": NewSelectConstraint([]string{
+			"Log Level": NewSelectConstraint([]string{
 				string(LogLevelDebug),
 				string(LogLevelInfo),
 				string(LogLevelWarning),
@@ -146,7 +146,7 @@ func GetMainConfigConstraints() map[string]interface{} {
 				string(LogLevelFatal),
 			}, string(LogLevelInfo)),
 			"Debug Screenshot Limit": NewNumberConstraint(&minZero, nil, nil, 60),
-			"Action Log Limit":       NewNumberConstraint(&minZero, nil, nil, 5),
+			"Task Log Limit":         NewNumberConstraint(&minZero, nil, nil, 5),
 		},
 		"Advanced": map[string]interface{}{
 			"ADB Host": NewTextConstraint("127.0.0.1"),

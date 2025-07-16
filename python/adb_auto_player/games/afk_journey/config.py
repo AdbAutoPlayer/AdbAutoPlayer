@@ -72,6 +72,7 @@ class HeroesEnum(StrEnum):
     Natsu = auto()
     Niru = auto()
     Odie = auto()
+    Parisa = auto()
     Phraesto = auto()
     Reinier = auto()
     Rhys = auto()

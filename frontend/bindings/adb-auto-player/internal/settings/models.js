@@ -19,26 +19,12 @@ export class AdvancedSettings {
              */
             this["ADB Host"] = "";
         }
-        if (!("ADB port" in $$source)) {
+        if (!("ADB Port" in $$source)) {
             /**
              * @member
              * @type {number}
              */
-            this["ADB port"] = 0;
-        }
-        if (!("WebSocket port" in $$source)) {
-            /**
-             * @member
-             * @type {number}
-             */
-            this["WebSocket port"] = 0;
-        }
-        if (!("Disable WebSockets" in $$source)) {
-            /**
-             * @member
-             * @type {boolean}
-             */
-            this["Disable WebSockets"] = false;
+            this["ADB Port"] = 0;
         }
 
         Object.assign(this, $$source);
@@ -186,12 +172,12 @@ export class LoggingSettings {
      * @param {Partial<LoggingSettings>} [$$source = {}] - The source object to create the LoggingSettings.
      */
     constructor($$source = {}) {
-        if (!("Level" in $$source)) {
+        if (!("Log Level" in $$source)) {
             /**
              * @member
              * @type {string}
              */
-            this["Level"] = "";
+            this["Log Level"] = "";
         }
         if (!("Debug Screenshot Limit" in $$source)) {
             /**
@@ -200,12 +186,12 @@ export class LoggingSettings {
              */
             this["Debug Screenshot Limit"] = 0;
         }
-        if (!("Action Log Limit" in $$source)) {
+        if (!("Task Log Limit" in $$source)) {
             /**
              * @member
              * @type {number}
              */
-            this["Action Log Limit"] = 0;
+            this["Task Log Limit"] = 0;
         }
 
         Object.assign(this, $$source);

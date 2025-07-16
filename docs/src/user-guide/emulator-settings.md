@@ -4,17 +4,7 @@
 
 ---
 
-## BlueStacks 5 (Windows) & BlueStacks Air (MacOS)
-
-### Emulator Settings
-- **Display**:
-  - **Display Resolution**: Select **Portrait (1080 × 1920)**.
-- **Advanced**:
-  - **Android Debug Bridge (ADB)**: Enable this.
-
----
-
-## MuMuPlayer (Windows)
+## MuMuPlayer (Windows) ← Best
 
 > [!NOTE]
 > MuMuPlayer does not require enabling ADB in settings.
@@ -29,6 +19,18 @@ Device ID: `127.0.0.1:7555`
 
 
 ---
+
+
+## BlueStacks 5 (Windows) & BlueStacks Air (MacOS)
+
+### Emulator Settings
+- **Display**:
+  - **Display Resolution**: Select **Portrait (1080 × 1920)**.
+- **Advanced**:
+  - **Android Debug Bridge (ADB)**: Enable this.
+
+---
+
 
 ## LDPlayer (Windows)
 

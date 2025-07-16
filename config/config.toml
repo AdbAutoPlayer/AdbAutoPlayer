@@ -1,4 +1,4 @@
-[adb]
+[advanced]
 host = '127.0.0.1'
 port = 5037
 
@@ -14,11 +14,11 @@ enable_alpha_updates = false
 
 [logging]
 level = 'INFO'
-debug_save_screenshots = 60
-action_log_limit = 10
+debug_save_screenshots = 0
+action_log_limit = 0
 
 [ui]
 theme = 'terminus'
 locale = 'en'
-close_should_minimize = true
+close_should_minimize = false
 notifications_enabled = false

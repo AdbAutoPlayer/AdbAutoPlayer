@@ -3,6 +3,7 @@
 import importlib
 import inspect
 import pkgutil
+import sys
 
 from adb_auto_player import Game
 
@@ -11,8 +12,6 @@ __all__ = []
 
 def load_modules():
     """Recursively discover and import all submodules in the `games` package."""
-    import sys
-
     package = sys.modules[__name__]
     yield package  # Yield the root package itself (optional)
 

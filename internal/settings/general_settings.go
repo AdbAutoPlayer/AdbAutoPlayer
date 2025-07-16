@@ -22,8 +22,8 @@ type DeviceSettings struct {
 }
 
 type AdvancedSettings struct {
-	ADBHost string `toml:"adb_host" json:"ADB Host"`
-	ADBPort int    `toml:"adb_port" json:"ADB Port"`
+	ADBHost string `toml:"host" json:"ADB Host"`
+	ADBPort int    `toml:"port" json:"ADB Port"`
 }
 
 type UpdateSettings struct {
@@ -32,9 +32,9 @@ type UpdateSettings struct {
 }
 
 type LoggingSettings struct {
-	Level                string `toml:"level"`
+	Level                string `toml:"level" json:"Log Level"`
 	DebugSaveScreenshots int    `toml:"debug_save_screenshots" json:"Debug Screenshot Limit"`
-	ActionLogLimit       int    `toml:"action_log_limit" json:"Action Log Limit"`
+	ActionLogLimit       int    `toml:"action_log_limit" json:"Task Log Limit"`
 }
 
 type UISettings struct {

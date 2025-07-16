@@ -8,7 +8,6 @@ from adb_auto_player.cli import build_argparse_formatter
 from adb_auto_player.log import setup_logging
 from adb_auto_player.models.commands import Command
 from adb_auto_player.registries import COMMAND_REGISTRY, GAME_REGISTRY
-from adb_auto_player.server import start_server
 from adb_auto_player.util import DevHelper, Execute
 
 
@@ -47,9 +46,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         formatter_class=build_argparse_formatter(_get_commands())
     )
-    parser.add_argument("--ws-port", type=int, default=8765)
 
-    command_names = ["StartServer"]
+    command_names = []
     for category_commands in cmds.values():
         for cmd in category_commands:
             command_names.append(cmd.name)
@@ -80,10 +78,6 @@ def main() -> None:
     setup_logging(args.output, log_level)
 
     DevHelper.log_is_main_up_to_date()
-
-    if args.command == "StartServer":
-        start_server(args.ws_port, cmds)
-        sys.exit(0)
 
     if Execute.find_command_and_execute(args.command, cmds):
         sys.exit(0)

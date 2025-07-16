@@ -12,18 +12,32 @@
     name: string;
   } = $props();
 
-  function groupOptionsByFirstLetter(options: string[]): Map<string, string[]> {
-    return options.reduce((acc, option) => {
-      const firstLetter = option.charAt(0).toUpperCase();
-      if (!acc.has(firstLetter)) {
-        acc.set(firstLetter, []);
+  function groupOptionsByFirstLetter(
+    options: string[],
+  ): Map<string, Array<{ original: string; translated: string }>> {
+    // First, create array of objects with original and translated values
+    const translatedOptions = options.map((option) => ({
+      original: option,
+      translated: $t(option),
+    }));
+
+    // Sort by translated text using locale-aware sorting
+    translatedOptions.sort((a, b) => a.translated.localeCompare(b.translated));
+
+    // Group by first character of translated text
+    return translatedOptions.reduce((acc, option) => {
+      const firstChar = option.translated.charAt(0).toUpperCase();
+      if (!acc.has(firstChar)) {
+        acc.set(firstChar, []);
       }
-      acc.get(firstLetter)!.push(option);
+      acc.get(firstChar)!.push(option);
       return acc;
-    }, new Map<string, string[]>());
+    }, new Map<string, Array<{ original: string; translated: string }>>());
   }
 
-  const groupedOptions = groupOptionsByFirstLetter(constraint.choices || []);
+  let groupedOptions = $derived(
+    groupOptionsByFirstLetter(constraint.choices || []),
+  );
 
   function handleCheckboxChange(choice: string, isChecked: boolean) {
     value = updateCheckboxArray(value, choice, isChecked);
@@ -43,12 +57,12 @@
               type="checkbox"
               class="mr-1.5 ml-0.25 checkbox"
               {name}
-              value={option}
-              checked={value.includes(option)}
+              value={option.original}
+              checked={value.includes(option.original)}
               onchange={(e) =>
-                handleCheckboxChange(option, e.currentTarget.checked)}
+                handleCheckboxChange(option.original, e.currentTarget.checked)}
             />
-            <span class="mr-0.25">{$t(option)}</span>
+            <span class="mr-0.25 break-keep">{option.translated}</span>
           </label>
         {/each}
       </div>
