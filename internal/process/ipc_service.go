@@ -46,33 +46,49 @@ func (s *IPCService) InitializeManager() {
 	defer s.mutex.Unlock()
 
 	if settings.GetService().GetGeneralSettings().Advanced.DisableWebSockets {
-		if nil != s.WebSocketManager {
-			s.WebSocketManager.killServer()
-			s.WebSocketManager = nil
-		}
-		if nil == s.STDIOManager {
-			s.STDIOManager = NewSTDIOManager(
-				s.IsDev,
-				s.pythonBinaryPath,
-			)
-		}
+		s.initializeSTDIOManager()
 		return
 	}
 
+	if err := s.initializeWebSocketManager(); err != nil {
+		logger.Get().Errorf("Failed to initialize WebSocketManager: '%v' using fallback", err)
+		s.initializeSTDIOManager()
+	}
+}
+
+func (s *IPCService) initializeSTDIOManager() {
+	if nil != s.WebSocketManager {
+		s.WebSocketManager.killServer()
+		s.WebSocketManager = nil
+	}
+	if nil == s.STDIOManager {
+		s.STDIOManager = NewSTDIOManager(
+			s.IsDev,
+			s.pythonBinaryPath,
+		)
+	}
+}
+
+func (s *IPCService) initializeWebSocketManager() error {
 	s.STDIOManager = nil
 	if nil == s.WebSocketManager {
-		s.setNewWebSocketManager()
-		return
+		return s.setWebSocketManager()
 	}
 
 	if settings.GetService().GetGeneralSettings().Advanced.WebSocketPort != s.WebSocketManager.port {
 		s.WebSocketManager.killServer()
-		s.setNewWebSocketManager()
+		return s.setWebSocketManager()
 	}
+	return nil
 }
 
-func (s *IPCService) setNewWebSocketManager() *WebSocketManager {
-	return NewWebSocketManager(s.IsDev, settings.GetService().GetGeneralSettings().Advanced.WebSocketPort, s.pythonBinaryPath)
+func (s *IPCService) setWebSocketManager() error {
+	wsm, err := NewWebSocketManager(s.IsDev, settings.GetService().GetGeneralSettings().Advanced.WebSocketPort, s.pythonBinaryPath)
+	if nil != err {
+		return err
+	}
+	s.WebSocketManager = wsm
+	return nil
 }
 
 func (s *IPCService) StopTask(msg ...string) {
