@@ -22,10 +22,8 @@ type DeviceSettings struct {
 }
 
 type AdvancedSettings struct {
-	ADBHost           string `toml:"adb_host" json:"ADB Host"`
-	ADBPort           int    `toml:"adb_port" json:"ADB port"`
-	WebSocketPort     int    `toml:"websocket_port" json:"WebSocket port"`
-	DisableWebSockets bool   `toml:"disable_websockets" json:"Disable WebSockets"`
+	ADBHost string `toml:"adb_host" json:"ADB Host"`
+	ADBPort int    `toml:"adb_port" json:"ADB Port"`
 }
 
 type UpdateSettings struct {
@@ -49,10 +47,8 @@ type UISettings struct {
 func NewGeneralSettings() GeneralSettings {
 	return GeneralSettings{
 		Advanced: AdvancedSettings{
-			ADBHost:           "127.0.0.1",
-			ADBPort:           5037,
-			WebSocketPort:     8765,
-			DisableWebSockets: false,
+			ADBHost: "127.0.0.1",
+			ADBPort: 5037,
 		},
 		Device: DeviceSettings{
 			ID:               "127.0.0.1:5555",

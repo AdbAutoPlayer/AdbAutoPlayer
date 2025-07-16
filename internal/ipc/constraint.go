@@ -149,15 +149,11 @@ func GetMainConfigConstraints() map[string]interface{} {
 			"Action Log Limit":       NewNumberConstraint(&minZero, nil, nil, 5),
 		},
 		"Advanced": map[string]interface{}{
-			"ADB Host":           NewTextConstraint("127.0.0.1"),
-			"ADB port":           NewNumberConstraint(&portMin, &portMax, nil, 5037),
-			"WebSocket port":     NewNumberConstraint(&portMin, &portMax, nil, 8765),
-			"Disable WebSockets": NewCheckboxConstraint(false),
+			"ADB Host": NewTextConstraint("127.0.0.1"),
+			"ADB Port": NewNumberConstraint(&portMin, &portMax, nil, 5037),
 			"Order": []string{
 				"ADB Host",
-				"ADB port",
-				"WebSocket port",
-				"Disable WebSockets",
+				"ADB Port",
 			},
 		},
 		"Order": []string{
