@@ -7,11 +7,11 @@ import (
 )
 
 type GeneralSettings struct {
-	ADB     ADBSettings     `toml:"adb" json:"ADB (Advanced)"`
-	Device  DeviceSettings  `toml:"device"`
-	Update  UpdateSettings  `toml:"update"`
-	Logging LoggingSettings `toml:"logging"`
-	UI      UISettings      `toml:"ui" json:"User Interface"`
+	Advanced AdvancedSettings `toml:"advanced" json:"Advanced"`
+	Device   DeviceSettings   `toml:"device"`
+	Update   UpdateSettings   `toml:"update"`
+	Logging  LoggingSettings  `toml:"logging"`
+	UI       UISettings       `toml:"ui" json:"User Interface"`
 }
 
 type DeviceSettings struct {
@@ -21,9 +21,11 @@ type DeviceSettings struct {
 	HardwareDecoding bool   `toml:"hardware_decoding" json:"Enable Hardware Decoding"`
 }
 
-type ADBSettings struct {
-	Host string `toml:"host"`
-	Port int    `toml:"port"`
+type AdvancedSettings struct {
+	ADBHost           string `toml:"adb_host" json:"ADB Host"`
+	ADBPort           int    `toml:"adb_port" json:"ADB Port"`
+	WebSocketPort     int    `toml:"websocket_port" json:"WebSocket Port"`
+	DisableWebSockets bool   `toml:"disable_websockets" json:"Disable WebSockets"`
 }
 
 type UpdateSettings struct {
@@ -46,9 +48,9 @@ type UISettings struct {
 
 func NewGeneralSettings() GeneralSettings {
 	return GeneralSettings{
-		ADB: ADBSettings{
-			Host: "127.0.0.1",
-			Port: 5037,
+		Advanced: AdvancedSettings{
+			ADBHost: "127.0.0.1",
+			ADBPort: 5037,
 		},
 		Device: DeviceSettings{
 			ID:               "127.0.0.1:5555",

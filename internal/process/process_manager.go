@@ -132,6 +132,10 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, notifyWhenTas
 
 		for scanner.Scan() {
 			line := scanner.Text()
+			// Skip empty or invalid lines
+			if strings.TrimSpace(line) == "" {
+				continue
+			}
 			var summaryMessage ipc.Summary
 			if err = json.Unmarshal([]byte(line), &summaryMessage); err == nil {
 				if summaryMessage.SummaryMessage != "" {
@@ -153,7 +157,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, notifyWhenTas
 				continue
 			}
 
-			logger.Get().Errorf("Failed to parse JSON message: %v", err)
+			logger.Get().Debugf("Skipping non-JSON output: %s", line)
 		}
 
 		if err = scanner.Err(); err != nil {
