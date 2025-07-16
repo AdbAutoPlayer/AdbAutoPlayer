@@ -8,6 +8,7 @@ from adb_auto_player.cli import build_argparse_formatter
 from adb_auto_player.log import setup_logging
 from adb_auto_player.models.commands import Command
 from adb_auto_player.registries import COMMAND_REGISTRY, GAME_REGISTRY
+from adb_auto_player.server import start_server
 from adb_auto_player.util import DevHelper, Execute
 
 
@@ -43,14 +44,16 @@ def main() -> None:
     the output format and log level, and then runs the specified command.
     """
     cmds = _get_commands()
-    command_names = []
+    parser = argparse.ArgumentParser(
+        formatter_class=build_argparse_formatter(_get_commands())
+    )
+    parser.add_argument("--ws-port", type=int, default=8765)
+
+    command_names = ["StartServer"]
     for category_commands in cmds.values():
         for cmd in category_commands:
             command_names.append(cmd.name)
 
-    parser = argparse.ArgumentParser(
-        formatter_class=build_argparse_formatter(_get_commands())
-    )
     parser.add_argument(
         "command",
         help="Command to run",
@@ -70,21 +73,20 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+
     log_level = args.log_level
     if log_level == "DISABLE":
         log_level = 99
-
     setup_logging(args.output, log_level)
 
     DevHelper.log_is_main_up_to_date()
 
-    for category_commands in cmds.values():
-        for cmd in category_commands:
-            if str.lower(cmd.name) == str.lower(args.command):
-                if Execute.command(cmd) is None:
-                    sys.exit(0)
-                else:
-                    sys.exit(1)
+    if args.command == "StartServer":
+        start_server(args.ws_port, cmds)
+        sys.exit(0)
+
+    if Execute.find_command_and_execute(args.command, cmds):
+        sys.exit(0)
     sys.exit(1)
 
 

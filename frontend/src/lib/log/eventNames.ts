@@ -5,4 +5,6 @@ export const EventNames = {
   GENERAL_SETTINGS_UPDATED: "general-settings-updated",
   WINDOW_IS_VISIBLE: "window-is-visible",
   WINDOW_HIDDEN: "window-hidden",
+  TASK_STOPPED: "task-stopped",
+  GAME_SETTINGS_UPDATED: "game-settings-updated",
 };

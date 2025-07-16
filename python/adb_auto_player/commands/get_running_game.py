@@ -26,7 +26,7 @@ def _print_running_game() -> None:
     if running_game:
         # Need to force debug here for
         logging.getLogger().setLevel(logging.DEBUG)
-        logging.debug(f"Running game: {running_game}")
+        print(running_game)
     else:
         logging.debug("No running game")
 

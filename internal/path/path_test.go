@@ -67,12 +67,12 @@ func TestGetFirstPathThatExists(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := GetFirstPathThatExists(tt.paths)
 
-			if tt.expected == nil && result != nil {
-				t.Errorf("Expected nil, got %v", *result)
-			} else if tt.expected != nil && result == nil {
+			if tt.expected == nil && result != "" {
+				t.Errorf("Expected nil, got %v", result)
+			} else if tt.expected != nil && result == "" {
 				t.Errorf("Expected %v, got nil", *tt.expected)
-			} else if tt.expected != nil && result != nil && *tt.expected != *result {
-				t.Errorf("Expected %v, got %v", *tt.expected, *result)
+			} else if tt.expected != nil && result != "" && *tt.expected != result {
+				t.Errorf("Expected %v, got %v", *tt.expected, result)
 			}
 		})
 	}

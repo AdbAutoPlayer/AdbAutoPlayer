@@ -6,4 +6,6 @@ const (
 	LogMessage             = "log-message"
 	DownloadProgress       = "download-progress"
 	WindowIsVisible        = "window-is-visible"
+	TaskStopped            = "task-stopped"
+	GameSettingsUpdated    = "game-settings-updated"
 )

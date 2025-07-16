@@ -18,11 +18,10 @@ export function Debug() {
 }
 
 /**
- * @param {boolean} disableLogging
  * @returns {$CancellablePromise<ipc$0.GameGUI | null>}
  */
-export function GetGameGUI(disableLogging) {
-    return $Call.ByID(1729333075, disableLogging).then(/** @type {($result: any) => any} */(($result) => {
+export function GetGameGUI() {
+    return $Call.ByID(1729333075).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -60,10 +59,12 @@ export function SaveDebugZip() {
 
 /**
  * @param {{ [_: string]: any }} gameSettings
- * @returns {$CancellablePromise<void>}
+ * @returns {$CancellablePromise<ipc$0.GameGUI | null>}
  */
 export function SaveGameSettings(gameSettings) {
-    return $Call.ByID(3663949236, gameSettings);
+    return $Call.ByID(3663949236, gameSettings).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType1($result);
+    }));
 }
 
 /**

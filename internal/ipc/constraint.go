@@ -148,12 +148,16 @@ func GetMainConfigConstraints() map[string]interface{} {
 			"Debug Screenshot Limit": NewNumberConstraint(&minZero, nil, nil, 60),
 			"Action Log Limit":       NewNumberConstraint(&minZero, nil, nil, 5),
 		},
-		"ADB (Advanced)": map[string]interface{}{
-			"Host": NewTextConstraint("127.0.0.1"),
-			"Port": NewNumberConstraint(&portMin, &portMax, nil, 5037),
+		"Advanced": map[string]interface{}{
+			"ADB Host": NewTextConstraint("127.0.0.1"),
+			"ADB Port": NewNumberConstraint(&portMin, &portMax, nil, 5037),
+			"Order": []string{
+				"ADB Host",
+				"ADB Port",
+			},
 		},
 		"Order": []string{
-			"Device", "Update", "User Interface", "Logging", "ADB (Advanced)",
+			"Device", "Update", "User Interface", "Logging", "Advanced",
 		},
 	}
 }

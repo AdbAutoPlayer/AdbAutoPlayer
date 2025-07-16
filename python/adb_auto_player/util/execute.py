@@ -106,3 +106,17 @@ class Execute:
             logging.error(f"{e}", exc_info=True)
             return e
         return None
+
+    @staticmethod
+    def find_command_and_execute(
+        command_name: str, commands: dict[str, list[Command]]
+    ) -> bool:
+        """Helper that iterates through the commands list to execute the correct one."""
+        for category_commands in commands.values():
+            for cmd in category_commands:
+                if str.lower(cmd.name) == str.lower(command_name):
+                    if Execute.command(cmd) is None:
+                        return True
+                    else:
+                        return False
+        return False

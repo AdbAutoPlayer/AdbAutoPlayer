@@ -1,70 +1,53 @@
 package process
 
 import (
-	"adb-auto-player/internal/app"
-	"adb-auto-player/internal/event_names"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/logger"
-	"adb-auto-player/internal/notifications"
+	"adb-auto-player/internal/settings"
 	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/shirou/gopsutil/process"
-	"github.com/wailsapp/wails/v3/pkg/application"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 )
 
-type Manager struct {
-	mutex              sync.Mutex
+type STDIOManager struct {
+	isDev              bool
+	pythonBinaryPath   string
 	running            *process.Process
-	Blocked            bool
-	IsDev              bool
-	ActionLogLimit     int
 	notifyWhenTaskEnds bool
 	summary            *ipc.Summary
 	lastLogMessage     *ipc.LogMessage
 }
 
-var (
-	instance *Manager
-	once     sync.Once
-)
-
-func Get() *Manager {
-	once.Do(func() {
-		instance = &Manager{}
-	})
-	return instance
+func NewSTDIOManager(isDev bool, pythonBinaryPath string) *STDIOManager {
+	return &STDIOManager{
+		isDev:            isDev,
+		pythonBinaryPath: pythonBinaryPath,
+	}
 }
 
-func (pm *Manager) StartProcess(binaryPath *string, args []string, notifyWhenTaskEnds bool, logLevel ...uint8) error {
-	if nil == binaryPath {
-		return errors.New("python binary not found")
-	}
-	pm.mutex.Lock()
-	defer pm.mutex.Unlock()
-
+func (pm *STDIOManager) StartProcess(args []string, notifyWhenTaskEnds bool) error {
 	if pm.running != nil {
 		if pm.isProcessRunning() {
 			return errors.New("a process is already running")
 		}
 	}
 
-	cmd, err := pm.getCommand(*binaryPath, args...)
+	cmd, err := pm.getCommand(args...)
 	if err != nil {
 		return err
 	}
 
-	if !pm.IsDev {
+	if !pm.isDev {
 		workingDir, err2 := os.Getwd()
 		if err2 != nil {
 			return err2
@@ -81,11 +64,6 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, notifyWhenTas
 		return fmt.Errorf("failed to start command: %w", err)
 	}
 	logger.Get().Debugf("Started process with PID: %d", cmd.Process.Pid)
-
-	originalLogLevel := logger.Get().LogLevel
-	if len(logLevel) > 0 {
-		logger.Get().LogLevel = logLevel[0]
-	}
 
 	proc, err := process.NewProcess(int32(cmd.Process.Pid))
 	if err != nil {
@@ -108,16 +86,16 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, notifyWhenTas
 	if err != nil {
 		logger.Get().Errorf("Failed to create log file: %v", err)
 	}
-	if pm.ActionLogLimit > 0 {
+	if settings.GetService().GetGeneralSettings().Logging.ActionLogLimit > 0 {
 		files, err3 := filepath.Glob(filepath.Join(debugDir, "*.log"))
-		if err3 == nil && len(files) > pm.ActionLogLimit {
+		if err3 == nil && len(files) > settings.GetService().GetGeneralSettings().Logging.ActionLogLimit {
 			sort.Slice(files, func(i, j int) bool {
 				infoI, _ := os.Stat(files[i])
 				infoJ, _ := os.Stat(files[j])
 				return infoI.ModTime().Before(infoJ.ModTime())
 			})
 
-			filesToDelete := len(files) - pm.ActionLogLimit
+			filesToDelete := len(files) - settings.GetService().GetGeneralSettings().Logging.ActionLogLimit
 			for i := 0; i < filesToDelete; i++ {
 				if err = os.Remove(files[i]); err != nil {
 					logger.Get().Debugf("Failed to delete old log file %s: %v", files[i], err)
@@ -132,6 +110,10 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, notifyWhenTas
 
 		for scanner.Scan() {
 			line := scanner.Text()
+			// Skip empty or invalid lines
+			if strings.TrimSpace(line) == "" {
+				continue
+			}
 			var summaryMessage ipc.Summary
 			if err = json.Unmarshal([]byte(line), &summaryMessage); err == nil {
 				if summaryMessage.SummaryMessage != "" {
@@ -153,7 +135,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, notifyWhenTas
 				continue
 			}
 
-			logger.Get().Errorf("Failed to parse JSON message: %v", err)
+			logger.Get().Debugf("Skipping non-JSON output: %s", line)
 		}
 
 		if err = scanner.Err(); err != nil {
@@ -169,19 +151,13 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, notifyWhenTas
 			logger.Get().Errorf("Task ended with Error: %v", err)
 		}
 
-		pm.mutex.Lock()
-		logger.Get().LogLevel = originalLogLevel
 		pm.processEnded()
-		pm.mutex.Unlock()
 	}()
 
 	return nil
 }
 
-func (pm *Manager) KillProcess(msg ...string) {
-	pm.mutex.Lock()
-	defer pm.mutex.Unlock()
-
+func (pm *STDIOManager) KillProcess() {
 	if pm.running == nil || !pm.isProcessRunning() {
 		return
 	}
@@ -189,14 +165,6 @@ func (pm *Manager) KillProcess(msg ...string) {
 	pm.notifyWhenTaskEnds = false
 
 	killProcessTree(pm.running)
-
-	message := "Stopping"
-	if len(msg) > 0 {
-		message = msg[0]
-	}
-
-	logger.Get().Warningf("%s", message)
-	time.Sleep(2 * time.Second)
 }
 
 func killProcessTree(p *process.Process) {
@@ -218,17 +186,7 @@ func killProcessTree(p *process.Process) {
 	}
 }
 
-func (pm *Manager) IsProcessRunning() bool {
-	if pm.Blocked {
-		return true
-	}
-	pm.mutex.Lock()
-	defer pm.mutex.Unlock()
-
-	return pm.isProcessRunning()
-}
-
-func (pm *Manager) isProcessRunning() bool {
+func (pm *STDIOManager) isProcessRunning() bool {
 	if pm.running == nil {
 		return false
 	}
@@ -242,28 +200,12 @@ func (pm *Manager) isProcessRunning() bool {
 	return running
 }
 
-func (pm *Manager) getCommand(name string, args ...string) (*exec.Cmd, error) {
-	if pm.IsDev {
-		if _, err := os.Stat(name); os.IsNotExist(err) {
-			return nil, fmt.Errorf("dev Python dir does not exist: %s", name)
-		}
-
-		uvPath, err := exec.LookPath("uv")
-		if err != nil {
-			return nil, fmt.Errorf("uv not found in PATH: %w", err)
-		}
-
-		cmd := exec.Command(uvPath, append([]string{"run", "adb-auto-player"}, args...)...)
-		cmd.Dir = name
-
-		return cmd, nil
-	}
-
-	return exec.Command(name, args...), nil
+func (pm *STDIOManager) getCommand(args ...string) (*exec.Cmd, error) {
+	return getCommand(pm.isDev, pm.pythonBinaryPath, args...)
 }
 
-func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
-	cmd, err := pm.getCommand(binaryPath, args...)
+func (pm *STDIOManager) Exec(args ...string) (string, error) {
+	cmd, err := pm.getCommand(args...)
 	if err != nil {
 		return "", err
 	}
@@ -299,33 +241,21 @@ func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
 			}
 		}
 
-		if pm.IsDev {
-			return "", fmt.Errorf("failed to execute '%s': %w\nStdout: %s\nStderr: %s", binaryPath, err, output, errorOutput)
+		if pm.isDev {
+			return "", fmt.Errorf("failed to execute '%s': %w\nStdout: %s\nStderr: %s", pm.pythonBinaryPath, err, output, errorOutput)
 		}
 
-		logger.Get().Debugf("failed to execute '%s': %v\nStdout: %s\nStderr: %s", binaryPath, err, output, errorOutput)
+		logger.Get().Debugf("failed to execute '%s': %v\nStdout: %s\nStderr: %s", pm.pythonBinaryPath, err, output, errorOutput)
 
 		return "", fmt.Errorf("failed to execute command: %w\nStderr: %s", err, errorOutput)
 	}
-
 	return stdout.String(), nil
 }
 
-func (pm *Manager) processEnded() {
+func (pm *STDIOManager) processEnded() {
+	taskEndedNotification(pm.notifyWhenTaskEnds, pm.lastLogMessage, pm.summary)
 	pm.running = nil
-
-	if pm.notifyWhenTaskEnds {
-		if pm.lastLogMessage != nil && pm.lastLogMessage.Level == ipc.LogLevelError {
-			notifications.GetService().SendNotification("Task exited with Error", pm.lastLogMessage.Message)
-		} else {
-			summaryMessage := ""
-			if pm.summary != nil {
-				summaryMessage = pm.summary.SummaryMessage
-			}
-			notifications.GetService().SendNotification("Task ended", summaryMessage)
-		}
-	}
-	app.EmitEvent(&application.CustomEvent{Name: event_names.WriteSummaryToLog, Data: pm.summary})
 	pm.summary = nil
+	pm.lastLogMessage = nil
 	pm.notifyWhenTaskEnds = false
 }

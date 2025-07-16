@@ -8,7 +8,7 @@ export {
 };
 
 export {
-    ADBSettings,
+    AdvancedSettings,
     DeviceSettings,
     GeneralSettings,
     LoggingSettings,

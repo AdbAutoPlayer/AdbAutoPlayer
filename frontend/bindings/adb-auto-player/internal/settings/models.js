@@ -6,38 +6,52 @@
 // @ts-ignore: Unused imports
 import { Create as $Create } from "@wailsio/runtime";
 
-export class ADBSettings {
+export class AdvancedSettings {
     /**
-     * Creates a new ADBSettings instance.
-     * @param {Partial<ADBSettings>} [$$source = {}] - The source object to create the ADBSettings.
+     * Creates a new AdvancedSettings instance.
+     * @param {Partial<AdvancedSettings>} [$$source = {}] - The source object to create the AdvancedSettings.
      */
     constructor($$source = {}) {
-        if (!("Host" in $$source)) {
+        if (!("ADB Host" in $$source)) {
             /**
              * @member
              * @type {string}
              */
-            this["Host"] = "";
+            this["ADB Host"] = "";
         }
-        if (!("Port" in $$source)) {
+        if (!("ADB port" in $$source)) {
             /**
              * @member
              * @type {number}
              */
-            this["Port"] = 0;
+            this["ADB port"] = 0;
+        }
+        if (!("WebSocket port" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["WebSocket port"] = 0;
+        }
+        if (!("Disable WebSockets" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["Disable WebSockets"] = false;
         }
 
         Object.assign(this, $$source);
     }
 
     /**
-     * Creates a new ADBSettings instance from a string or object.
+     * Creates a new AdvancedSettings instance from a string or object.
      * @param {any} [$$source = {}]
-     * @returns {ADBSettings}
+     * @returns {AdvancedSettings}
      */
     static createFrom($$source = {}) {
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
-        return new ADBSettings(/** @type {Partial<ADBSettings>} */($$parsedSource));
+        return new AdvancedSettings(/** @type {Partial<AdvancedSettings>} */($$parsedSource));
     }
 }
 
@@ -96,12 +110,12 @@ export class GeneralSettings {
      * @param {Partial<GeneralSettings>} [$$source = {}] - The source object to create the GeneralSettings.
      */
     constructor($$source = {}) {
-        if (!("ADB (Advanced)" in $$source)) {
+        if (!("Advanced" in $$source)) {
             /**
              * @member
-             * @type {ADBSettings}
+             * @type {AdvancedSettings}
              */
-            this["ADB (Advanced)"] = (new ADBSettings());
+            this["Advanced"] = (new AdvancedSettings());
         }
         if (!("Device" in $$source)) {
             /**
@@ -147,8 +161,8 @@ export class GeneralSettings {
         const $$createField3_0 = $$createType3;
         const $$createField4_0 = $$createType4;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
-        if ("ADB (Advanced)" in $$parsedSource) {
-            $$parsedSource["ADB (Advanced)"] = $$createField0_0($$parsedSource["ADB (Advanced)"]);
+        if ("Advanced" in $$parsedSource) {
+            $$parsedSource["Advanced"] = $$createField0_0($$parsedSource["Advanced"]);
         }
         if ("Device" in $$parsedSource) {
             $$parsedSource["Device"] = $$createField1_0($$parsedSource["Device"]);
@@ -293,7 +307,7 @@ export class UpdateSettings {
 }
 
 // Private type creation functions
-const $$createType0 = ADBSettings.createFrom;
+const $$createType0 = AdvancedSettings.createFrom;
 const $$createType1 = DeviceSettings.createFrom;
 const $$createType2 = UpdateSettings.createFrom;
 const $$createType3 = LoggingSettings.createFrom;

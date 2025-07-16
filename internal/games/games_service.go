@@ -1,6 +1,8 @@
 package games
 
 import (
+	"adb-auto-player/internal/app"
+	"adb-auto-player/internal/event_names"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/logger"
 	"adb-auto-player/internal/path"
@@ -18,21 +20,19 @@ import (
 )
 
 type GamesService struct {
-	isDev                  bool
-	pythonBinaryPath       *string
 	games                  []ipc.GameGUI
-	lastOpenGameConfigPath *string
+	runningGame            string
+	lastOpenGameConfigPath string
 }
 
-func NewGamesService(isDev bool) *GamesService {
+func NewGamesService() *GamesService {
 	return &GamesService{
-		isDev: isDev,
 		games: []ipc.GameGUI{}, // initialize empty slice
 		// other fields will be their zero values (nil for pointers)
 	}
 }
 
-func (g *GamesService) GetGameGUI(disableLogging bool) (*ipc.GameGUI, error) {
+func (g *GamesService) GetGameGUI() (*ipc.GameGUI, error) {
 	if err := g.resolvePythonBinaryPathIfNeeded(); err != nil {
 		return nil, err
 	}
@@ -41,52 +41,27 @@ func (g *GamesService) GetGameGUI(disableLogging bool) (*ipc.GameGUI, error) {
 		return nil, err
 	}
 
-	runningGame := ""
-	args := []string{"GetRunningGame"}
-	if disableLogging {
-		args = append(args, "--log-level=DISABLE")
-	}
-	output, err := process.Get().Exec(*g.pythonBinaryPath, args...)
-
+	runningGame, err := process.GetService().Exec([]string{"GetRunningGame", "--log-level=DISABLE"})
 	if err != nil {
 		logger.Get().Errorf("%v", err)
 		return nil, err
 	}
-
-	lines := strings.Split(output, "\n")
-	for _, line := range lines {
-		if line == "" {
-			continue
-		}
-
-		var logMessage ipc.LogMessage
-		if err = json.Unmarshal([]byte(line), &logMessage); err != nil {
-			logger.Get().Errorf("Failed to parse JSON log message: %v", err)
-			continue
-		}
-
-		if strings.HasPrefix(logMessage.Message, "Running game: ") {
-			runningGame = strings.TrimSpace(strings.TrimPrefix(logMessage.Message, "Running game: "))
-			break
-		}
-		logger.Get().LogMessage(logMessage)
-	}
-
-	if runningGame == "" {
+	g.runningGame = strings.TrimSpace(runningGame)
+	if g.runningGame == "" {
 		return nil, nil
 	}
 
+	return g.getActiveGameGUI()
+}
+
+func (g *GamesService) getActiveGameGUI() (*ipc.GameGUI, error) {
 	for _, game := range g.games {
-		if runningGame == game.GameTitle {
+		if g.runningGame == game.GameTitle {
 			return &game, nil
 		}
 	}
-	if g.pythonBinaryPath == nil {
-		logger.Get().Debugf("Python Binary Path: nil")
-	} else {
-		logger.Get().Debugf("Python Binary Path: %s", *g.pythonBinaryPath)
-	}
-	logger.Get().Debugf("App: %s not supported", runningGame)
+
+	logger.Get().Debugf("Game: %s not supported", g.runningGame)
 	return nil, nil
 }
 
@@ -94,14 +69,14 @@ func (g *GamesService) Debug() error {
 	if err := g.resolvePythonBinaryPathIfNeeded(); err != nil {
 		return err
 	}
-
-	args := []string{"Debug"}
-
-	if err := process.Get().StartProcess(g.pythonBinaryPath, args, false, 2); err != nil {
-		logger.Get().Errorf("Starting process: %v", err)
-
+	originalLogLevel := logger.Get().LogLevel
+	logger.Get().LogLevel = 2
+	if err := process.GetService().StartTask([]string{"Debug"}, false); err != nil {
+		logger.Get().Errorf("Failed starting process: %v", err)
+		logger.Get().LogLevel = originalLogLevel
 		return err
 	}
+	logger.Get().LogLevel = originalLogLevel
 	return nil
 }
 
@@ -177,23 +152,23 @@ func (g *GamesService) SaveDebugZip() {
 }
 
 func (g *GamesService) StartGameProcess(args []string) error {
-	if err := process.Get().StartProcess(g.pythonBinaryPath, args, true); err != nil {
-		logger.Get().Errorf("Starting process: %v", err)
+	if err := process.GetService().StartTask(args, true); err != nil {
+		logger.Get().Errorf("Failed starting process: %v", err)
 		return err
 	}
 	return nil
 }
 
 func (g *GamesService) KillGameProcess() {
-	process.Get().KillProcess()
+	process.GetService().StopTask()
 }
 
 func (g *GamesService) IsGameProcessRunning() bool {
-	return process.Get().IsProcessRunning()
+	return process.GetService().IsTaskRunning()
 }
 
 func (g *GamesService) resolvePythonBinaryPathIfNeeded() error {
-	if g.pythonBinaryPath == nil {
+	if process.GetService().GetPythonBinaryPath() == "" {
 		err := g.setPythonBinaryPath()
 		if err != nil {
 			logger.Get().Errorf("Error resolving python binary path: %v", err)
@@ -221,9 +196,9 @@ func (g *GamesService) setPythonBinaryPath() error {
 		return err
 	}
 
-	if process.Get().IsDev {
+	if process.GetService().IsDev {
 		pythonPath := filepath.Join(workingDir, "python")
-		g.pythonBinaryPath = &pythonPath
+		process.GetService().SetPythonBinaryPath(pythonPath)
 		return nil
 	}
 
@@ -245,16 +220,12 @@ func (g *GamesService) setPythonBinaryPath() error {
 	}
 
 	logger.Get().Debugf("Paths: %s", strings.Join(paths, ", "))
-	g.pythonBinaryPath = path.GetFirstPathThatExists(paths)
+	process.GetService().SetPythonBinaryPath(path.GetFirstPathThatExists(paths))
 	return nil
 }
 
 func (g *GamesService) setGamesFromPython() error {
-	if g.pythonBinaryPath == nil {
-		return errors.New("missing files: https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/troubleshoot.html#missing-files")
-	}
-
-	gamesString, err := process.Get().Exec(*g.pythonBinaryPath, "GUIGamesMenu", "--log-level=DISABLE")
+	gamesString, err := process.GetService().Exec([]string{"GUIGamesMenu", "--log-level=DISABLE"})
 	if err != nil {
 		return err
 	}
@@ -289,8 +260,8 @@ func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interfa
 	}
 	configPath := path.GetFirstPathThatExists(paths)
 
-	if configPath == nil {
-		g.lastOpenGameConfigPath = &paths[0]
+	if configPath == "" {
+		g.lastOpenGameConfigPath = paths[0]
 		response := map[string]interface{}{
 			"settings":    map[string]interface{}{},
 			"constraints": game.Constraints,
@@ -301,7 +272,7 @@ func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interfa
 
 	g.lastOpenGameConfigPath = configPath
 
-	gameConfig, err = settings.LoadTOML[map[string]interface{}](*configPath)
+	gameConfig, err = settings.LoadTOML[map[string]interface{}](configPath)
 	if err != nil {
 
 		return nil, err
@@ -314,14 +285,45 @@ func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interfa
 	return response, nil
 }
 
-func (g *GamesService) SaveGameSettings(gameSettings map[string]interface{}) error {
-	if nil == g.lastOpenGameConfigPath {
-		return errors.New("cannot save game settings: no game settings found")
+func (g *GamesService) SaveGameSettings(gameSettings map[string]interface{}) (*ipc.GameGUI, error) {
+	defer app.Emit(event_names.GameSettingsUpdated)
+
+	if g.lastOpenGameConfigPath == "" {
+		return nil, errors.New("cannot save game settings: no game settings found")
 	}
 
-	if err := settings.SaveTOML[map[string]interface{}](*g.lastOpenGameConfigPath, &gameSettings); err != nil {
-		return err
+	if err := settings.SaveTOML[map[string]interface{}](g.lastOpenGameConfigPath, &gameSettings); err != nil {
+		return nil, err
 	}
 	logger.Get().Infof("Saving Game Settings")
-	return g.setGamesFromPython()
+
+	g.lastOpenGameConfigPath = ""
+	gameGUI, err := g.getActiveGameGUI()
+	if err != nil {
+		return nil, err
+	}
+
+	displayNames := make(map[string]string)
+	for key, value := range gameSettings {
+		if nestedMap, ok := value.(map[string]interface{}); ok {
+			if displayName, okDN := nestedMap["Display Name"].(string); okDN {
+				displayNames[key] = displayName
+			}
+		}
+	}
+
+	for i, option := range gameGUI.MenuOptions {
+		if displayName, exists := displayNames[option.Label]; exists {
+			gameGUI.MenuOptions[i].CustomLabel = displayName
+		}
+	}
+
+	for i, game := range g.games {
+		if game.GameTitle == gameGUI.GameTitle {
+			g.games[i] = *gameGUI
+			break
+		}
+	}
+
+	return gameGUI, nil
 }
