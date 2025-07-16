@@ -96,6 +96,7 @@ func (s *IPCService) StopTask(msg ...string) {
 	defer s.mutex.Unlock()
 
 	if s.WebSocketManager != nil {
+		// TODO 1. send STOP to current websocket connection
 		// s.WebSocketManager.write(...)
 	} else if s.STDIOManager != nil {
 		s.STDIOManager.KillProcess()
@@ -113,7 +114,7 @@ func (s *IPCService) StartTask(args []string, notifyWhenTaskEnds bool) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	if s.WebSocketManager != nil {
-		// s.WebSocketManager.write(...)
+		// TODO 1. Start websocket connection and send the args to the server
 	}
 	if s.STDIOManager != nil {
 		return s.STDIOManager.StartProcess(args, notifyWhenTaskEnds)
@@ -125,7 +126,7 @@ func (s *IPCService) IsTaskRunning() bool {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	if s.WebSocketManager != nil {
-		// s.WebSocketManager.write(...)
+		// TODO return if s.WebSocketManager.conn is not nil and it is active if possible
 	}
 	if s.STDIOManager != nil {
 		return s.STDIOManager.isProcessRunning()
@@ -137,7 +138,7 @@ func (s *IPCService) Exec(args []string) (string, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	if s.WebSocketManager != nil {
-		// s.WebSocketManager.write(...)
+		// TODO 1. Start websocket connection and send the args to the server, same as StartTask
 	}
 
 	if s.STDIOManager != nil {
