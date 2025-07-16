@@ -82,16 +82,11 @@ def main() -> None:
     DevHelper.log_is_main_up_to_date()
 
     if args.command == "StartServer":
-        start_server(args.ws_port)
+        start_server(args.ws_port, cmds)
         sys.exit(0)
 
-    for category_commands in cmds.values():
-        for cmd in category_commands:
-            if str.lower(cmd.name) == str.lower(args.command):
-                if Execute.command(cmd) is None:
-                    sys.exit(0)
-                else:
-                    sys.exit(1)
+    if Execute.find_command_and_execute(args.command, cmds):
+        sys.exit(0)
     sys.exit(1)
 
 

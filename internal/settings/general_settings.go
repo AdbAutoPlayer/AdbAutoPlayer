@@ -51,7 +51,7 @@ func NewGeneralSettings() GeneralSettings {
 		Advanced: AdvancedSettings{
 			ADBHost:           "127.0.0.1",
 			ADBPort:           5037,
-			WebSocketPort:     5037,
+			WebSocketPort:     8765,
 			DisableWebSockets: false,
 		},
 		Device: DeviceSettings{

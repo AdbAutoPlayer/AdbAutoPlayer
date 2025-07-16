@@ -1,10 +1,15 @@
 package process
 
 import (
+	"adb-auto-player/internal/app"
+	"adb-auto-player/internal/event_names"
+	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/logger"
+	"adb-auto-player/internal/notifications"
 	"adb-auto-player/internal/settings"
 	"errors"
 	"fmt"
+	"github.com/wailsapp/wails/v3/pkg/application"
 	"os"
 	"os/exec"
 	"sync"
@@ -96,8 +101,11 @@ func (s *IPCService) StopTask(msg ...string) {
 	defer s.mutex.Unlock()
 
 	if s.WebSocketManager != nil {
-		// TODO 1. send STOP to current websocket connection
-		// s.WebSocketManager.write(...)
+		// Send STOP command to WebSocket server
+		err := s.WebSocketManager.SendMessage(map[string]string{"command": "stop"})
+		if err != nil {
+			logger.Get().Errorf("Failed to send STOP command: %v", err)
+		}
 	} else if s.STDIOManager != nil {
 		s.STDIOManager.KillProcess()
 	}
@@ -114,7 +122,15 @@ func (s *IPCService) StartTask(args []string, notifyWhenTaskEnds bool) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	if s.WebSocketManager != nil {
-		// TODO 1. Start websocket connection and send the args to the server
+		// Send task arguments to WebSocket server
+		message := map[string]interface{}{
+			"command": "start",
+			"args":    args,
+		}
+		if err := s.WebSocketManager.SendMessage(message); err != nil {
+			return fmt.Errorf("failed to start WebSocket task: %w", err)
+		}
+		return nil
 	}
 	if s.STDIOManager != nil {
 		return s.STDIOManager.StartProcess(args, notifyWhenTaskEnds)
@@ -126,7 +142,7 @@ func (s *IPCService) IsTaskRunning() bool {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	if s.WebSocketManager != nil {
-		// TODO return if s.WebSocketManager.conn is not nil and it is active if possible
+		return s.WebSocketManager.IsConnectionActive()
 	}
 	if s.STDIOManager != nil {
 		return s.STDIOManager.isProcessRunning()
@@ -138,7 +154,32 @@ func (s *IPCService) Exec(args []string) (string, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	if s.WebSocketManager != nil {
-		// TODO 1. Start websocket connection and send the args to the server, same as StartTask
+		// Send exec command and wait for response
+		message := map[string]interface{}{
+			"command": "exec",
+			"args":    args,
+		}
+		if err := s.WebSocketManager.SendMessage(message); err != nil {
+			return "", fmt.Errorf("failed to send EXEC command: %w", err)
+		}
+
+		// Wait for response (assuming server sends back a JSON response)
+		var response map[string]interface{}
+		if err := s.WebSocketManager.conn.ReadJSON(&response); err != nil {
+			return "", fmt.Errorf("failed to read WebSocket response: %w", err)
+		}
+
+		// Extract output or error from response
+		if errMsg, ok := response["error"]; ok {
+			return "", fmt.Errorf("server error: %v", errMsg)
+		}
+		if output, ok := response["output"]; ok {
+			if str, ok := output.(string); ok {
+				return str, nil
+			}
+			return fmt.Sprintf("%v", output), nil
+		}
+		return "", fmt.Errorf("no output in server response")
 	}
 
 	if s.STDIOManager != nil {
@@ -173,4 +214,20 @@ func getCommand(isDev bool, name string, args ...string) (*exec.Cmd, error) {
 	}
 
 	return exec.Command(name, args...), nil
+}
+
+func taskEndedNotification(notifyWhenTaskEnds bool, lastLogMessage *ipc.LogMessage, summary *ipc.Summary) {
+	if notifyWhenTaskEnds {
+		if lastLogMessage != nil && lastLogMessage.Level == ipc.LogLevelError {
+			notifications.GetService().SendNotification("Task exited with Error", lastLogMessage.Message)
+		} else {
+			summaryMessage := ""
+			if summary != nil {
+				summaryMessage = summary.SummaryMessage
+			}
+			notifications.GetService().SendNotification("Task ended", summaryMessage)
+		}
+	}
+	app.EmitEvent(&application.CustomEvent{Name: event_names.WriteSummaryToLog, Data: summary})
+	app.Emit(event_names.TaskStopped)
 }

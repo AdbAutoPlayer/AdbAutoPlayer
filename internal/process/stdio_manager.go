@@ -1,11 +1,8 @@
 package process
 
 import (
-	"adb-auto-player/internal/app"
-	"adb-auto-player/internal/event_names"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/logger"
-	"adb-auto-player/internal/notifications"
 	"adb-auto-player/internal/settings"
 	"bufio"
 	"bytes"
@@ -13,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/shirou/gopsutil/process"
-	"github.com/wailsapp/wails/v3/pkg/application"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -257,21 +253,9 @@ func (pm *STDIOManager) Exec(args ...string) (string, error) {
 }
 
 func (pm *STDIOManager) processEnded() {
+	taskEndedNotification(pm.notifyWhenTaskEnds, pm.lastLogMessage, pm.summary)
 	pm.running = nil
-
-	if pm.notifyWhenTaskEnds {
-		if pm.lastLogMessage != nil && pm.lastLogMessage.Level == ipc.LogLevelError {
-			notifications.GetService().SendNotification("Task exited with Error", pm.lastLogMessage.Message)
-		} else {
-			summaryMessage := ""
-			if pm.summary != nil {
-				summaryMessage = pm.summary.SummaryMessage
-			}
-			notifications.GetService().SendNotification("Task ended", summaryMessage)
-		}
-	}
-	app.EmitEvent(&application.CustomEvent{Name: event_names.WriteSummaryToLog, Data: pm.summary})
-	app.Emit(event_names.TaskStopped)
 	pm.summary = nil
+	pm.lastLogMessage = nil
 	pm.notifyWhenTaskEnds = false
 }

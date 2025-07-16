@@ -20,6 +20,7 @@ from .game_gui import GameGUIOptions
 from .log_message import LogLevel, LogMessage
 from .menu_option import MenuOption
 from .summary import Summary
+from .websocket import WebsocketMessage
 
 __all__: list[str] = [
     "CheckboxConstraintDict",
@@ -37,4 +38,5 @@ __all__: list[str] = [
     "SelectConstraintDict",
     "Summary",
     "TextConstraintDict",
+    "WebsocketMessage",
 ]
