@@ -41,37 +41,13 @@ func (g *GamesService) GetGameGUI(disableLogging bool) (*ipc.GameGUI, error) {
 		return nil, err
 	}
 
-	runningGame := ""
-	args := []string{"GetRunningGame"}
-	if disableLogging {
-		args = append(args, "--log-level=DISABLE")
-	}
-	output, err := process.Get().Exec(*g.pythonBinaryPath, args...)
-
+	args := []string{"GetRunningGame", "--log-level=DISABLE"}
+	runningGame, err := process.Get().Exec(g.pythonBinaryPath, args...)
 	if err != nil {
 		logger.Get().Errorf("%v", err)
 		return nil, err
 	}
-
-	lines := strings.Split(output, "\n")
-	for _, line := range lines {
-		if line == "" {
-			continue
-		}
-
-		var logMessage ipc.LogMessage
-		if err = json.Unmarshal([]byte(line), &logMessage); err != nil {
-			logger.Get().Errorf("Failed to parse JSON log message: %v", err)
-			continue
-		}
-
-		if strings.HasPrefix(logMessage.Message, "Running game: ") {
-			runningGame = strings.TrimSpace(strings.TrimPrefix(logMessage.Message, "Running game: "))
-			break
-		}
-		logger.Get().LogMessage(logMessage)
-	}
-
+	runningGame = strings.TrimSpace(runningGame)
 	if runningGame == "" {
 		return nil, nil
 	}
@@ -81,11 +57,7 @@ func (g *GamesService) GetGameGUI(disableLogging bool) (*ipc.GameGUI, error) {
 			return &game, nil
 		}
 	}
-	if g.pythonBinaryPath == nil {
-		logger.Get().Debugf("Python Binary Path: nil")
-	} else {
-		logger.Get().Debugf("Python Binary Path: %s", *g.pythonBinaryPath)
-	}
+
 	logger.Get().Debugf("App: %s not supported", runningGame)
 	return nil, nil
 }
@@ -94,14 +66,14 @@ func (g *GamesService) Debug() error {
 	if err := g.resolvePythonBinaryPathIfNeeded(); err != nil {
 		return err
 	}
-
-	args := []string{"Debug"}
-
-	if err := process.Get().StartProcess(g.pythonBinaryPath, args, false, 2); err != nil {
-		logger.Get().Errorf("Starting process: %v", err)
-
+	originalLogLevel := logger.Get().LogLevel
+	logger.Get().LogLevel = 2
+	if err := process.Get().StartProcess(g.pythonBinaryPath, []string{"Debug"}, false); err != nil {
+		logger.Get().Errorf("Failed starting process: %v", err)
+		logger.Get().LogLevel = originalLogLevel
 		return err
 	}
+	logger.Get().LogLevel = originalLogLevel
 	return nil
 }
 
@@ -178,7 +150,7 @@ func (g *GamesService) SaveDebugZip() {
 
 func (g *GamesService) StartGameProcess(args []string) error {
 	if err := process.Get().StartProcess(g.pythonBinaryPath, args, true); err != nil {
-		logger.Get().Errorf("Starting process: %v", err)
+		logger.Get().Errorf("Failed starting process: %v", err)
 		return err
 	}
 	return nil
@@ -250,11 +222,7 @@ func (g *GamesService) setPythonBinaryPath() error {
 }
 
 func (g *GamesService) setGamesFromPython() error {
-	if g.pythonBinaryPath == nil {
-		return errors.New("missing files: https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/troubleshoot.html#missing-files")
-	}
-
-	gamesString, err := process.Get().Exec(*g.pythonBinaryPath, "GUIGamesMenu", "--log-level=DISABLE")
+	gamesString, err := process.Get().Exec(g.pythonBinaryPath, "GUIGamesMenu", "--log-level=DISABLE")
 	if err != nil {
 		return err
 	}

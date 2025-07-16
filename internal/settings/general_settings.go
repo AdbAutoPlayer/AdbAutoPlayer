@@ -49,8 +49,10 @@ type UISettings struct {
 func NewGeneralSettings() GeneralSettings {
 	return GeneralSettings{
 		Advanced: AdvancedSettings{
-			ADBHost: "127.0.0.1",
-			ADBPort: 5037,
+			ADBHost:           "127.0.0.1",
+			ADBPort:           5037,
+			WebSocketPort:     5037,
+			DisableWebSockets: false,
 		},
 		Device: DeviceSettings{
 			ID:               "127.0.0.1:5555",

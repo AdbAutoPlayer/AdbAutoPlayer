@@ -26,12 +26,11 @@ import (
 type Manager struct {
 	mutex              sync.Mutex
 	running            *process.Process
-	Blocked            bool
 	IsDev              bool
 	ActionLogLimit     int
 	notifyWhenTaskEnds bool
 	summary            *ipc.Summary
-	lastLogMessage     *ipc.LogMessage
+	LastLogMessage     *ipc.LogMessage
 }
 
 var (
@@ -46,12 +45,13 @@ func Get() *Manager {
 	return instance
 }
 
-func (pm *Manager) StartProcess(binaryPath *string, args []string, notifyWhenTaskEnds bool, logLevel ...uint8) error {
-	if nil == binaryPath {
-		return errors.New("python binary not found")
-	}
+func (pm *Manager) StartProcess(binaryPath *string, args []string, notifyWhenTaskEnds bool) error {
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
+
+	if nil == binaryPath {
+		return errors.New("missing files: https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/troubleshoot.html#missing-files")
+	}
 
 	if pm.running != nil {
 		if pm.isProcessRunning() {
@@ -81,11 +81,6 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, notifyWhenTas
 		return fmt.Errorf("failed to start command: %w", err)
 	}
 	logger.Get().Debugf("Started process with PID: %d", cmd.Process.Pid)
-
-	originalLogLevel := logger.Get().LogLevel
-	if len(logLevel) > 0 {
-		logger.Get().LogLevel = logLevel[0]
-	}
 
 	proc, err := process.NewProcess(int32(cmd.Process.Pid))
 	if err != nil {
@@ -153,7 +148,7 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, notifyWhenTas
 			var logMessage ipc.LogMessage
 			if err = json.Unmarshal([]byte(line), &logMessage); err == nil {
 				logger.Get().LogMessage(logMessage)
-				pm.lastLogMessage = &logMessage
+				pm.LastLogMessage = &logMessage
 				continue
 			}
 
@@ -174,7 +169,6 @@ func (pm *Manager) StartProcess(binaryPath *string, args []string, notifyWhenTas
 		}
 
 		pm.mutex.Lock()
-		logger.Get().LogLevel = originalLogLevel
 		pm.processEnded()
 		pm.mutex.Unlock()
 	}()
@@ -203,29 +197,7 @@ func (pm *Manager) KillProcess(msg ...string) {
 	time.Sleep(2 * time.Second)
 }
 
-func killProcessTree(p *process.Process) {
-	children, err := p.Children()
-	if err != nil && !errors.Is(err, process.ErrorNoChildren) {
-		logger.Get().Debugf("Failed to get children of process %d: %v", p.Pid, err)
-	}
-
-	for _, child := range children {
-		killProcessTree(child) // recurse
-	}
-
-	if err = p.Kill(); err != nil {
-		if strings.Contains(err.Error(), "no such process") {
-			logger.Get().Debugf("Process %d already exited", p.Pid)
-		} else {
-			logger.Get().Errorf("Failed to kill process %d: %v", p.Pid, err)
-		}
-	}
-}
-
 func (pm *Manager) IsProcessRunning() bool {
-	if pm.Blocked {
-		return true
-	}
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
 
@@ -266,8 +238,12 @@ func (pm *Manager) getCommand(name string, args ...string) (*exec.Cmd, error) {
 	return exec.Command(name, args...), nil
 }
 
-func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
-	cmd, err := pm.getCommand(binaryPath, args...)
+func (pm *Manager) Exec(binaryPath *string, args ...string) (string, error) {
+	if nil == binaryPath {
+		return "", errors.New("missing files: https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/troubleshoot.html#missing-files")
+	}
+
+	cmd, err := pm.getCommand(*binaryPath, args...)
 	if err != nil {
 		return "", err
 	}
@@ -311,7 +287,6 @@ func (pm *Manager) Exec(binaryPath string, args ...string) (string, error) {
 
 		return "", fmt.Errorf("failed to execute command: %w\nStderr: %s", err, errorOutput)
 	}
-
 	return stdout.String(), nil
 }
 
@@ -319,8 +294,8 @@ func (pm *Manager) processEnded() {
 	pm.running = nil
 
 	if pm.notifyWhenTaskEnds {
-		if pm.lastLogMessage != nil && pm.lastLogMessage.Level == ipc.LogLevelError {
-			notifications.GetService().SendNotification("Task exited with Error", pm.lastLogMessage.Message)
+		if pm.LastLogMessage != nil && pm.LastLogMessage.Level == ipc.LogLevelError {
+			notifications.GetService().SendNotification("Task exited with Error", pm.LastLogMessage.Message)
 		} else {
 			summaryMessage := ""
 			if pm.summary != nil {
