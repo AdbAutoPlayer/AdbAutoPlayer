@@ -553,13 +553,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         # Dependency: We will be in Resonating Hall after raising affinity.
         logging.info("Begin swapping essences...")
-        swapped: bool = True
-        while swapped:
-            swapped = self._swap_essence()
-        logging.info("Essence swaps completed.")
-
-    def _swap_essence(self) -> bool:
-        """Perform a single essence swap."""
+        
+        # Click New Actions once at the beginning (fixes essence swap bug)
         try:
             new_actions = self.wait_for_template(
                 "resonating_hall/new_actions.png",
@@ -568,7 +563,18 @@ class DailiesMixin(AFKJourneyBase, ABC):
             )
             self.tap(new_actions)
             sleep(self.FAST_TIMEOUT)
+        except GameTimeoutError as fail:
+            logging.error(f"Could not find New Actions button: {fail}")
+            return
+        
+        swapped: bool = True
+        while swapped:
+            swapped = self._swap_essence()
+        logging.info("Essence swaps completed.")
 
+    def _swap_essence(self) -> bool:
+        """Perform a single essence swap."""
+        try:
             for i in range(3):
                 # The action template displays on all 3 areas within this flow.
                 logging.debug(f"Looking for action template #{i}.")
