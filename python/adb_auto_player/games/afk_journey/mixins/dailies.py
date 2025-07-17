@@ -515,14 +515,6 @@ class DailiesMixin(AFKJourneyBase, ABC):
             self._click_hero()
         self._click_hero()  # Give Chippy some love too.
 
-        # Return to Resonating Hall.
-        back = self.game_find_template_match("back.png")
-        if back:
-            self.tap(back)
-        else:
-            self.press_back_button()
-        sleep(self.FAST_TIMEOUT)
-
         logging.info("Done raising affinity.")
 
     def _click_hero(self) -> None:
@@ -551,7 +543,13 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.info("No essences purchased. Skipping swap.")
             return
 
-        # Dependency: We will be in Resonating Hall after raising affinity.
+        # Navigate to Resonating Hall explicitly.
+        self.navigate_to_default_state()
+        sleep(5)
+        logging.debug("Open Resonating Hall.")
+        self.tap(Point(620, 1830), scale=True)
+        sleep(5)
+
         logging.info("Begin swapping essences...")
         
         # Click New Actions once at the beginning (fixes essence swap bug)
