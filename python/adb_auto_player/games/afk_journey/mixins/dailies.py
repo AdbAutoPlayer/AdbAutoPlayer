@@ -551,7 +551,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         sleep(5)
 
         logging.info("Begin swapping essences...")
-        
+
         # Click New Actions once at the beginning (fixes essence swap bug)
         try:
             new_actions = self.wait_for_template(
@@ -564,7 +564,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         except GameTimeoutError as fail:
             logging.error(f"Could not find New Actions button: {fail}")
             return
-        
+
         swapped: bool = True
         while swapped:
             swapped = self._swap_essence()
