@@ -34,7 +34,7 @@
   });
 </script>
 
-<div class="h-full max-h-full overflow-y-auto">
+<div class="h-full max-h-full">
   {#if categories.length > 0}
     <Accordion multiple>
       {#each categories as category}

@@ -289,19 +289,19 @@
 <div
   class="flex max-h-[70vh] min-h-[20vh] flex-col overflow-hidden card bg-surface-100-900/50 p-4 text-center select-none"
 >
-  {#if showSettingsForm}
-    <div class="flex-grow overflow-y-scroll">
+  <div class="flex-grow overflow-y-scroll pr-4">
+    {#if showSettingsForm}
       <SettingsForm
         settings={settingsFormSettings}
         constraints={settingsFormConstraints}
         onSettingsSave={settingsSaveCallback}
       />
-    </div>
-  {:else}
-    <Menu
-      buttons={activeGameMenuButtons}
-      disableActions={!$pollRunningGame}
-      {categories}
-    ></Menu>
-  {/if}
+    {:else}
+      <Menu
+        buttons={activeGameMenuButtons}
+        disableActions={!$pollRunningGame}
+        {categories}
+      ></Menu>
+    {/if}
+  </div>
 </div>

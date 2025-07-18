@@ -46,7 +46,7 @@ func main() {
 			application.NewService(settings.GetService()),
 			application.NewService(&hotkeys.HotkeysService{}),
 			application.NewService(updater.NewUpdateService(Version, isDev)),
-			application.NewService(games.NewGamesService()),
+			application.NewService(&games.GamesService{}),
 			application.NewService(notifications.GetService()),
 		},
 		Assets: application.AssetOptions{

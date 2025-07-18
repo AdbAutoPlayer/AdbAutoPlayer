@@ -24,10 +24,6 @@ type GamesService struct {
 	lastOpenGameConfigPath string
 }
 
-func NewGamesService() *GamesService {
-	return &GamesService{}
-}
-
 func (g *GamesService) GetGameGUI() (*ipc.GameGUI, error) {
 	if err := g.resolvePythonBinaryPathIfNeeded(); err != nil {
 		return nil, err

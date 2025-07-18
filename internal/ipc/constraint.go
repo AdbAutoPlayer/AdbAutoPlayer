@@ -129,12 +129,12 @@ func GetMainConfigConstraints() map[string]interface{} {
 				"vn",
 			}, "en"),
 			"Close button should minimize the window": NewCheckboxConstraint(false),
-			"Notifications enabled":                   NewCheckboxConstraint(false),
+			"Enable Notifications":                    NewCheckboxConstraint(false),
 			"Order": []string{
 				"Theme",
 				"Language",
 				"Close button should minimize the window",
-				"Notifications enabled",
+				"Enable Notifications",
 			},
 		},
 		"Logging": map[string]interface{}{

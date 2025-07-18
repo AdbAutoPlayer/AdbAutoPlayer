@@ -124,7 +124,7 @@
   });
 </script>
 
-<div class="h-full max-h-full overflow-y-auto">
+<div class="h-full max-h-full">
   <form id="settings-form" class="settings-form">
     <Accordion multiple>
       {#each settingsSections as { sectionKey, sectionSettings }}
