@@ -17,6 +17,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -37,6 +38,7 @@ type ServerManager struct {
 	process          *process.Process
 	stdin            *io.WriteCloser
 	stdoutPipe       *io.ReadCloser
+	mutex            sync.Mutex
 }
 
 func NewSTDIOManager(isDev bool, pythonBinaryPath string) *STDIOManager {
@@ -276,7 +278,8 @@ func (pm *STDIOManager) exec(args ...string) (string, error) {
 }
 
 func (pm *STDIOManager) ServerExec(args ...string) (string, error) {
-
+	pm.serverManager.mutex.Lock()
+	defer pm.serverManager.mutex.Unlock()
 	if err := pm.serverManager.startServer(); err != nil {
 		return "", err
 	}
