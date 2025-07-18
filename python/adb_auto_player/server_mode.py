@@ -19,6 +19,15 @@ def server_mode(commands: dict[str, list[Command]]):
 
     for line in sys.stdin:
         string = line.strip().split()
+
+        if string == "general-settings-updated":
+            _on_general_settings_updated()
+            continue
+
+        if string == "game-settings-updated":
+            _on_game_settings_updated()
+            continue
+
         try:
             args = parser.parse_args(string)
             logging.getLogger().setLevel(ArgparseHelper.get_log_level_from_args(args))
@@ -33,11 +42,18 @@ def server_mode(commands: dict[str, list[Command]]):
 
 def _on_game_settings_updated() -> None:
     _clear_cache(CacheGroup.GAME_SETTINGS)
+    _print_ok()
 
 
 def _on_general_settings_updated() -> None:
     _clear_cache(CacheGroup.GENERAL_SETTINGS)
     _clear_cache(CacheGroup.ADB)
+    _print_ok()
+
+
+def _print_ok() -> None:
+    print("ok")
+    sys.stdout.flush()
 
 
 def _clear_cache(group: CacheGroup) -> None:
