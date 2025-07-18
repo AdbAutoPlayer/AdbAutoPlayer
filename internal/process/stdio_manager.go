@@ -220,7 +220,7 @@ func (pm *STDIOManager) getCommand(args ...string) (*exec.Cmd, error) {
 }
 
 func (pm *STDIOManager) Exec(args ...string) (string, error) {
-	result, err := pm.serverExec(args...)
+	result, err := pm.ServerExec(args...)
 	if err == nil {
 		return result, err
 	}
@@ -275,7 +275,7 @@ func (pm *STDIOManager) exec(args ...string) (string, error) {
 	return stdout.String(), nil
 }
 
-func (pm *STDIOManager) serverExec(args ...string) (string, error) {
+func (pm *STDIOManager) ServerExec(args ...string) (string, error) {
 
 	if err := pm.serverManager.startServer(); err != nil {
 		return "", err
