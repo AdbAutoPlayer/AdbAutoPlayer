@@ -9,13 +9,16 @@ import shutil
 import sys
 from dataclasses import dataclass
 from enum import StrEnum
+from functools import lru_cache
 from logging import DEBUG, WARNING
 from pathlib import Path
 from typing import Any
 
 import adbutils._utils
+from adb_auto_player.decorators import register_cache
 from adb_auto_player.exceptions import GenericAdbError, GenericAdbUnrecoverableError
-from adb_auto_player.util import ConfigLoader
+from adb_auto_player.models.decorators import CacheGroup
+from adb_auto_player.settings import ConfigLoader
 from adbutils import AdbClient, AdbDevice, AdbError
 from adbutils._proto import AdbDeviceInfo
 
@@ -36,6 +39,8 @@ class DisplayInfo:
     orientation: Orientation
 
 
+@register_cache(CacheGroup.ADB)
+@lru_cache(maxsize=1)
 def _set_adb_path() -> None:
     """Helper function to set environment variable ADBUTILS_ADB_PATH depending on OS.
 

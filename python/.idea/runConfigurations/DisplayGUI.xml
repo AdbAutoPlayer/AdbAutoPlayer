@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="GetRunningGame" type="PythonConfigurationType" factoryName="Python" folderName="General">
+  <configuration default="false" name="DisplayGUI" type="PythonConfigurationType" factoryName="Python" folderName="General">
     <module name="python" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
@@ -14,7 +14,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/adb_auto_player/main.py" />
-    <option name="PARAMETERS" value="GetRunningGame --log-level=DISABLE" />
+    <option name="PARAMETERS" value="DisplayGUI --log-level=DISABLE" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

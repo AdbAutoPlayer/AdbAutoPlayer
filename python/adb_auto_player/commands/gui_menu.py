@@ -1,12 +1,13 @@
 """GUI Command: fetches the Menu."""
 
 import json
+import sys
 
 from adb_auto_player.decorators import (
     register_command,
 )
+from adb_auto_player.ipc_util import IPCModelConverter
 from adb_auto_player.registries import GAME_REGISTRY
-from adb_auto_player.util import IPCModelConverter
 
 
 @register_command(
@@ -15,6 +16,7 @@ from adb_auto_player.util import IPCModelConverter
 )
 def _print_gui_games_menu() -> None:
     print(get_gui_games_menu())
+    sys.stdout.flush()
 
 
 def get_gui_games_menu() -> str:

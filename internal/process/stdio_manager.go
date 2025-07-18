@@ -36,6 +36,7 @@ type ServerManager struct {
 	pythonBinaryPath string
 	process          *process.Process
 	stdin            *io.WriteCloser
+	stdoutPipe       *io.ReadCloser
 }
 
 func NewSTDIOManager(isDev bool, pythonBinaryPath string) *STDIOManager {
@@ -223,8 +224,6 @@ func (pm *STDIOManager) Exec(args ...string) (string, error) {
 	if err == nil {
 		return result, err
 	}
-
-	println("real exec")
 	return pm.exec(args...)
 }
 
@@ -277,15 +276,12 @@ func (pm *STDIOManager) exec(args ...string) (string, error) {
 }
 
 func (pm *STDIOManager) serverExec(args ...string) (string, error) {
+
 	if err := pm.serverManager.startServer(); err != nil {
 		return "", err
 	}
 
-	if err := pm.serverManager.sendCommand(strings.Join(args, " ")); err != nil {
-		return "", err
-	}
-
-	return "", nil
+	return pm.serverManager.sendCommand(strings.Join(args, " "))
 }
 
 func (pm *STDIOManager) processEnded() {
@@ -301,7 +297,6 @@ func (sm *ServerManager) startServer() error {
 	if sm.process != nil && sm.isServerRunning() {
 		return nil
 	}
-
 	cmd, err := getCommand(sm.isDev, sm.pythonBinaryPath, "--server")
 	if err != nil {
 		return fmt.Errorf("failed to get server command: %w", err)
@@ -328,28 +323,7 @@ func (sm *ServerManager) startServer() error {
 	}
 	sm.process = proc
 	sm.stdin = &stdinPipe
-
-	// Handle stdout in a goroutine
-	go func() {
-		scanner := bufio.NewScanner(stdoutPipe)
-		scanner.Buffer(make([]byte, 4096), 1024*1024)
-
-		for scanner.Scan() {
-			line := scanner.Text()
-			if strings.TrimSpace(line) == "" {
-				continue
-			}
-			fmt.Println(line) // Print server response
-		}
-
-		if err = scanner.Err(); err != nil {
-			if !strings.Contains(err.Error(), "file already closed") {
-				logger.Get().Errorf("Error while reading server stdout: %v", err)
-			}
-		}
-		sm.process = nil
-		sm.stdin = nil
-	}()
+	sm.stdoutPipe = &stdoutPipe
 
 	go func() {
 		_, err = cmd.Process.Wait()
@@ -358,6 +332,7 @@ func (sm *ServerManager) startServer() error {
 		}
 		sm.process = nil
 		sm.stdin = nil
+		sm.stdoutPipe = nil
 	}()
 
 	return nil
@@ -373,20 +348,44 @@ func (sm *ServerManager) isServerRunning() bool {
 	if !running {
 		sm.process = nil
 		sm.stdin = nil
+		sm.stdoutPipe = nil
 	}
 	return running
 }
 
-// sendCommand sends a command to the server process and prints the response.
-func (sm *ServerManager) sendCommand(command string) error {
-	if !sm.isServerRunning() {
-		if err := sm.startServer(); err != nil {
-			return fmt.Errorf("failed to start server: %w", err)
+// sendCommand sends a command to the server process and returns the response.
+func (sm *ServerManager) sendCommand(command string) (string, error) {
+	scanner := bufio.NewScanner(*sm.stdoutPipe)
+	scanner.Buffer(make([]byte, 4096), 1024*1024)
+
+	responseChan := make(chan string, 1)
+	errChan := make(chan error, 1)
+
+	go func() {
+		if scanner.Scan() {
+			line := scanner.Text()
+			if strings.TrimSpace(line) != "" {
+				responseChan <- line
+				return
+			}
 		}
-	}
+		if err := scanner.Err(); err != nil {
+			errChan <- fmt.Errorf("failed to read server response: %w", err)
+			return
+		}
+		errChan <- errors.New("no response received from server")
+	}()
 
 	if _, err := fmt.Fprintln(*sm.stdin, command); err != nil {
-		return fmt.Errorf("failed to send command to server: %w", err)
+		return "", fmt.Errorf("failed to send command to server: %w", err)
 	}
-	return nil
+
+	select {
+	case response := <-responseChan:
+		return response, nil
+	case err := <-errChan:
+		return "", err
+	case <-time.After(5 * time.Second):
+		return "", errors.New("timeout waiting for server response")
+	}
 }

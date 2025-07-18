@@ -58,12 +58,14 @@ select = [
     "PL",  # pylint
 ]
 ignore = [
+    "D100",  # Missing docstring in public module
+    # I feel this is incredibly pointless when most modules are as small as they are.
     "D203",  # incorrect-blank-line-before-class
     "D406",  # missing-new-line-after-section-name
     "D407",  # missing-dashed-underline-after-section
     "UP017", # datetime-timezone-utc
     # PLR0913 is simply too annoying in practise we have a lot of optionals that
-    # are can be nice to have but not used all the time.
+    # can be nice to have but not used all the time.
     "PLR0913", # too-many-arguments
 ]
 

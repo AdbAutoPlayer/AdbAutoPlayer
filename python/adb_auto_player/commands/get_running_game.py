@@ -1,6 +1,7 @@
 """GUI Command: fetches currently running game."""
 
 import logging
+import sys
 
 from adb_auto_player import Game, games
 from adb_auto_player.adb import get_adb_device, get_running_app
@@ -24,11 +25,11 @@ def _print_running_game() -> None:
     """
     running_game: str | None = _get_running_game()
     if running_game:
-        # Need to force debug here for
-        logging.getLogger().setLevel(logging.DEBUG)
         print(running_game)
     else:
-        logging.debug("No running game")
+        print("404 Not Found")
+
+    sys.stdout.flush()
 
 
 def _get_games() -> list[Game]:

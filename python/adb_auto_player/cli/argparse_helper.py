@@ -1,11 +1,63 @@
-"""Argparse Formatter Factory."""
+"""Anything Argparse related."""
 
 import argparse
+from argparse import Namespace
 
 from adb_auto_player.models.commands import Command
 
 
-def build_argparse_formatter(commands_by_category: dict[str, list[Command]]):
+class ArgparseHelper:
+    """Argparse helper functions."""
+
+    @staticmethod
+    def build_argument_parser(
+        commands: dict[str, list[Command]], exit_on_error: bool = True
+    ) -> argparse.ArgumentParser:
+        """Builds argparse.ArgumentParser."""
+        parser = argparse.ArgumentParser(
+            formatter_class=_build_argparse_formatter(commands),
+            exit_on_error=exit_on_error,
+        )
+        parser.add_argument(
+            "command",
+            help="Command to run",
+            nargs="?",  # Make command optional for --server mode
+            choices=[
+                cmd.name
+                for category_commands in commands.values()
+                for cmd in category_commands
+            ],
+        )
+        parser.add_argument(
+            "--output",
+            choices=["json", "terminal", "text", "raw"],
+            default="json",
+            help="Output format",
+        )
+        parser.add_argument(
+            "--log-level",
+            choices=["DISABLE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+            default="DEBUG",
+            help="Log level",
+        )
+        parser.add_argument(
+            "--server",
+            action="store_true",
+            help="Run in server mode for GUI communication",
+        )
+
+        return parser
+
+    @staticmethod
+    def get_log_level_from_args(args: Namespace) -> int | str:
+        """Get log level from command line arguments."""
+        log_level = args.log_level
+        if log_level == "DISABLE":
+            log_level = 99
+        return log_level
+
+
+def _build_argparse_formatter(commands_by_category: dict[str, list[Command]]):
     """Builds argparse.HelpFormatter."""
 
     class CustomArgparseFormatter(argparse.HelpFormatter):

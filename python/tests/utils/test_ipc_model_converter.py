@@ -4,9 +4,9 @@ from enum import StrEnum
 from pathlib import Path
 from unittest.mock import patch
 
+from adb_auto_player.ipc_util import IPCModelConverter
 from adb_auto_player.models.commands import MenuItem
 from adb_auto_player.models.registries import GameMetadata
-from adb_auto_player.util import IPCModelConverter
 
 
 class TestCategory(StrEnum):

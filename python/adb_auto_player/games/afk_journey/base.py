@@ -2,6 +2,7 @@
 
 import logging
 import re
+from functools import lru_cache
 from time import sleep
 from typing import Any
 
@@ -9,14 +10,14 @@ from adb_auto_player import (
     Game,
     TemplateMatchParams,
 )
-from adb_auto_player.decorators import register_game
+from adb_auto_player.decorators import register_cache, register_game
 from adb_auto_player.exceptions import (
     AutoPlayerWarningError,
     GameActionFailedError,
     GameTimeoutError,
 )
 from adb_auto_player.models import ConfidenceValue
-from adb_auto_player.models.decorators import GameGUIMetadata
+from adb_auto_player.models.decorators import CacheGroup, GameGUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util import SummaryGenerator
@@ -71,6 +72,8 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         self.config = Config.from_toml(self._get_config_file_path())
         return self.config
 
+    @register_cache(CacheGroup.GAME_SETTINGS)
+    @lru_cache(maxsize=1)
     def get_config(self) -> Config:
         """Get config."""
         if self.config is None:

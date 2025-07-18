@@ -9,7 +9,7 @@ from functools import lru_cache
 import av
 import numpy as np
 from adb_auto_player.exceptions import AutoPlayerWarningError
-from adb_auto_player.util import ConfigLoader
+from adb_auto_player.settings import ConfigLoader
 from adbutils import AdbConnection, AdbDevice
 from av.codec.codec import UnknownCodecError
 from av.codec.context import CodecContext
