@@ -161,26 +161,22 @@ class TestIntegrationWithRealDecoding(unittest.TestCase):
                 mock_device = Mock()
                 mock_connection = MockAdbConnection(video_data)
                 mock_device.shell.return_value = mock_connection
+                mock_device.is_controlling_emulator = False
+                stream = DeviceStream(mock_device, fps=5)
+                stream.start()
 
-                with patch(
-                    "adb_auto_player.device.adb.adb_controller.AdbController.is_controlling_emulator",
-                    return_value=False,
-                ):
-                    stream = DeviceStream(mock_device, fps=5)
-                    stream.start()
+                # Wait for decoding
+                timeout = time.time() + 10
+                while stream.latest_frame is None and time.time() < timeout:
+                    time.sleep(0.1)
 
-                    # Wait for decoding
-                    timeout = time.time() + 10
-                    while stream.latest_frame is None and time.time() < timeout:
-                        time.sleep(0.1)
+                # Verify frame dimensions
+                if stream.latest_frame is not None:
+                    self.assertEqual(stream.latest_frame.shape[0], height)
+                    self.assertEqual(stream.latest_frame.shape[1], width)
+                    self.assertEqual(stream.latest_frame.shape[2], 3)
 
-                    # Verify frame dimensions
-                    if stream.latest_frame is not None:
-                        self.assertEqual(stream.latest_frame.shape[0], height)
-                        self.assertEqual(stream.latest_frame.shape[1], width)
-                        self.assertEqual(stream.latest_frame.shape[2], 3)
-
-                    stream.stop()
+                stream.stop()
 
     def _create_video_with_dimensions(
         self, width: int, height: int, frame_count: int
