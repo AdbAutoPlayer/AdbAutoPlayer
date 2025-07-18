@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/shirou/gopsutil/process"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,12 +27,25 @@ type STDIOManager struct {
 	notifyWhenTaskEnds bool
 	summary            *ipc.Summary
 	lastLogMessage     *ipc.LogMessage
+	serverManager      *ServerManager // Embedded server manager
+}
+
+// ServerManager handles the server process and communication.
+type ServerManager struct {
+	isDev            bool
+	pythonBinaryPath string
+	process          *process.Process
+	stdin            *io.WriteCloser
 }
 
 func NewSTDIOManager(isDev bool, pythonBinaryPath string) *STDIOManager {
 	return &STDIOManager{
 		isDev:            isDev,
 		pythonBinaryPath: pythonBinaryPath,
+		serverManager: &ServerManager{
+			isDev:            isDev,
+			pythonBinaryPath: pythonBinaryPath,
+		},
 	}
 }
 
@@ -205,6 +219,16 @@ func (pm *STDIOManager) getCommand(args ...string) (*exec.Cmd, error) {
 }
 
 func (pm *STDIOManager) Exec(args ...string) (string, error) {
+	result, err := pm.serverExec(args...)
+	if err == nil {
+		return result, err
+	}
+
+	println("real exec")
+	return pm.exec(args...)
+}
+
+func (pm *STDIOManager) exec(args ...string) (string, error) {
 	cmd, err := pm.getCommand(args...)
 	if err != nil {
 		return "", err
@@ -252,10 +276,117 @@ func (pm *STDIOManager) Exec(args ...string) (string, error) {
 	return stdout.String(), nil
 }
 
+func (pm *STDIOManager) serverExec(args ...string) (string, error) {
+	if err := pm.serverManager.startServer(); err != nil {
+		return "", err
+	}
+
+	if err := pm.serverManager.sendCommand(strings.Join(args, " ")); err != nil {
+		return "", err
+	}
+
+	return "", nil
+}
+
 func (pm *STDIOManager) processEnded() {
 	taskEndedNotification(pm.notifyWhenTaskEnds, pm.lastLogMessage, pm.summary)
 	pm.running = nil
 	pm.summary = nil
 	pm.lastLogMessage = nil
 	pm.notifyWhenTaskEnds = false
+}
+
+// startServer starts a server process running 'python -m adb_auto_player --server'.
+func (sm *ServerManager) startServer() error {
+	if sm.process != nil && sm.isServerRunning() {
+		return nil
+	}
+
+	cmd, err := getCommand(sm.isDev, sm.pythonBinaryPath, "--server")
+	if err != nil {
+		return fmt.Errorf("failed to get server command: %w", err)
+	}
+
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		return fmt.Errorf("failed to create stdout pipe: %w", err)
+	}
+
+	stdinPipe, err := cmd.StdinPipe()
+	if err != nil {
+		return fmt.Errorf("failed to create stdin pipe: %w", err)
+	}
+
+	if err = cmd.Start(); err != nil {
+		return fmt.Errorf("failed to start server: %w", err)
+	}
+	logger.Get().Debugf("Started server with PID: %d", cmd.Process.Pid)
+
+	proc, err := process.NewProcess(int32(cmd.Process.Pid))
+	if err != nil {
+		return fmt.Errorf("failed to create process handle: %w", err)
+	}
+	sm.process = proc
+	sm.stdin = &stdinPipe
+
+	// Handle stdout in a goroutine
+	go func() {
+		scanner := bufio.NewScanner(stdoutPipe)
+		scanner.Buffer(make([]byte, 4096), 1024*1024)
+
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.TrimSpace(line) == "" {
+				continue
+			}
+			fmt.Println(line) // Print server response
+		}
+
+		if err = scanner.Err(); err != nil {
+			if !strings.Contains(err.Error(), "file already closed") {
+				logger.Get().Errorf("Error while reading server stdout: %v", err)
+			}
+		}
+		sm.process = nil
+		sm.stdin = nil
+	}()
+
+	go func() {
+		_, err = cmd.Process.Wait()
+		if err != nil {
+			logger.Get().Errorf("Server ended with error: %v", err)
+		}
+		sm.process = nil
+		sm.stdin = nil
+	}()
+
+	return nil
+}
+
+// isServerRunning checks if the server process is running.
+func (sm *ServerManager) isServerRunning() bool {
+	if sm.process == nil {
+		return false
+	}
+
+	running, _ := sm.process.IsRunning()
+	if !running {
+		sm.process = nil
+		sm.stdin = nil
+	}
+	return running
+}
+
+// sendCommand sends a command to the server process and prints the response.
+func (sm *ServerManager) sendCommand(command string) error {
+	if !sm.isServerRunning() {
+		if err := sm.startServer(); err != nil {
+			return fmt.Errorf("failed to start server: %w", err)
+		}
+	}
+
+	if _, err := fmt.Fprintln(*sm.stdin, command); err != nil {
+		return fmt.Errorf("failed to send command to server: %w", err)
+	}
+	return nil
 }
