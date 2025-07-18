@@ -13,23 +13,15 @@ from time import sleep, time
 from typing import Literal, TypeVar
 
 import numpy as np
-from adb_auto_player import DeviceStream
-from adb_auto_player.adb import (
-    Orientation,
-    get_adb_device,
-    get_display_info,
-    get_running_app,
-)
+from adb_auto_player.device.adb import AdbController, DeviceStream
 from adb_auto_player.exceptions import (
     AutoPlayerError,
     AutoPlayerUnrecoverableError,
     AutoPlayerWarningError,
     GameActionFailedError,
     GameNotRunningOrFrozenError,
-    GameStartError,
     GameTimeoutError,
     GenericAdbUnrecoverableError,
-    NotInitializedError,
     UnsupportedResolutionError,
 )
 from adb_auto_player.image_manipulation import (
@@ -38,6 +30,7 @@ from adb_auto_player.image_manipulation import (
     Cropping,
 )
 from adb_auto_player.models import ConfidenceValue
+from adb_auto_player.models.device import DisplayInfo, Orientation
 from adb_auto_player.models.geometry import Coordinates, Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.pydantic import MyCustomRoutineConfig
@@ -47,7 +40,6 @@ from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY
 from adb_auto_player.settings import ConfigLoader
 from adb_auto_player.template_matching import TemplateMatcher
 from adb_auto_player.util import Execute
-from adbutils._device import AdbDevice
 from PIL import Image
 from pydantic import BaseModel
 
@@ -79,16 +71,6 @@ class _SwipeParams:
     duration: float = 1.0
 
 
-@dataclass
-class TemplateMatchParams:
-    """Params for Template Matching functions."""
-
-    template: str | Path
-    threshold: ConfidenceValue | None = None
-    grayscale: bool = False
-    crop_regions: CropRegions | None = None
-
-
 class Game:
     """Generic Game class."""
 
@@ -106,7 +88,7 @@ class Game:
 
         self._config_file_path: Path | None = None
         self._debug_screenshot_counter: int = 0
-        self._device: AdbDevice | None = None
+        self._device: AdbController | None = None
         self._resolution: tuple[int, int] | None = None
         self._scale_factor: float | None = None
         self._stream: DeviceStream | None = None
@@ -135,21 +117,20 @@ class Game:
                     return True
         return False
 
-    def check_requirements(self) -> None:
+    def check_requirements(self, display_info: DisplayInfo | None) -> None:
         """Validates Device properties such as resolution and orientation.
 
         Raises:
              UnsupportedResolutionException: Device resolution is not supported.
         """
-        display_info = get_display_info(self.device)
+        if display_info is None:
+            display_info = self.device.get_display_info()
 
         if not self.is_supported_resolution(display_info.width, display_info.height):
             raise UnsupportedResolutionError(
                 "This bot only supports these resolutions: "
                 f"{', '.join(self.supported_resolutions)}"
             )
-
-        self.resolution = (display_info.width, display_info.height)
 
         if (
             self.supports_portrait
@@ -202,23 +183,16 @@ class Game:
     def resolution(self) -> tuple[int, int]:
         """Get resolution."""
         if self._resolution is None:
-            raise NotInitializedError()
+            display_info = self.device.get_display_info()
+            self._resolution = (display_info.width, display_info.height)
         return self._resolution
 
-    @resolution.setter
-    def resolution(self, value: tuple[int, int]) -> None:
-        """Set resolution."""
-        self._resolution = value
-
     @property
-    def device(self) -> AdbDevice:
+    def device(self) -> AdbController:
         """Get device."""
+        if self._device is None:
+            self._device = AdbController()
         return self._device
-
-    @device.setter
-    def device(self, value: AdbDevice) -> None:
-        """Set device."""
-        self._device = value
 
     def stop_stream(self):
         """Stop the device stream."""
@@ -237,8 +211,14 @@ class Game:
         suggested_resolution: str | None = next(
             (res for res in self.supported_resolutions if "x" in res), None
         )
-        self.device = get_adb_device(suggested_resolution)
-        self.check_requirements()
+        display_info = self.device.get_display_info()
+        if (
+            suggested_resolution
+            and suggested_resolution != display_info.resolution
+            and ConfigLoader.main_config().get("device", {}).get("wm_size", False)
+        ):
+            self.device.set_display_size(suggested_resolution)
+        self.check_requirements(display_info=display_info)
 
         config_streaming = (
             ConfigLoader.main_config().get("device", {}).get("streaming", True)
@@ -386,12 +366,7 @@ class Game:
         log_message: str | None = None,
     ) -> None:
         """Internal click method - logging should typically be handled by the caller."""
-        with self.device.shell(
-            f"input tap {coordinates.x} {coordinates.y}",
-            timeout=3,  # if the click didn't happen in 3 seconds it's never happening
-            stream=True,
-        ) as connection:
-            connection.read_until_close()
+        self.device.tap(coordinates)
         if log_message:
             logging.debug(log_message)
 
@@ -410,10 +385,9 @@ class Game:
         max_retries = 3
         for attempt in range(max_retries):
             try:
-                with self.device.shell("screencap -p", stream=True) as c:
-                    screenshot_data = c.read_until_close(encoding=None)
-                if isinstance(screenshot_data, bytes):
-                    image = IO.get_bgr_np_array_from_png_bytes(screenshot_data)
+                data = self.device.screenshot()
+                if isinstance(data, bytes):
+                    image = IO.get_bgr_np_array_from_png_bytes(data)
                     self._debug_save_screenshot(image, is_bgr=True)
                     return image
             except (OSError, ValueError) as e:
@@ -424,17 +398,18 @@ class Game:
                 sleep(0.1)
 
         raise GenericAdbUnrecoverableError(
-            f"Screenshots cannot be recorded from device: {self.device.serial}"
+            f"Screenshots cannot be recorded from device: {self.device.identifier}"
         )
 
     def force_stop_game(self):
         """Force stops the Game."""
-        self.device.shell(["am", "force-stop", self.package_name])
-        sleep(5)
+        if not self.package_name:
+            return
+        self.device.stop_game(self.package_name)
 
     def is_game_running(self) -> bool:
         """Check if Game is still running."""
-        package_name = get_running_app(self.device)
+        package_name = self.device.get_running_app()
         if package_name is None:
             return False
 
@@ -450,20 +425,9 @@ class Game:
         Raises:
             GameStartError: Game cannot be started.
         """
-        output = self.device.shell(
-            [
-                "monkey",
-                "-p",
-                self.package_name,
-                "-c",
-                "android.intent.category.LAUNCHER",
-                "1",
-            ]
-        )
-        if "No activities found to run" in output:
-            logging.debug(f"start_game: {output}")
-            raise GameStartError("Game cannot be started")
-        sleep(15)
+        if not self.package_name:
+            return
+        self.device.start_game(self.package_name)
 
     def wait_for_roi_change(
         self,
@@ -843,9 +807,7 @@ class Game:
 
     def press_back_button(self) -> None:
         """Presses the back button."""
-        with self.device.shell("input keyevent 4", stream=True) as connection:
-            logging.debug("pressed back button")
-            connection.read_until_close()
+        self.device.press_back_button()
 
     def swipe_down(
         self,
@@ -969,7 +931,11 @@ class Game:
         )
 
         logging.debug(f"swipe_{direction} - from ({sx}, {sy}) to ({ex}, {ey})")
-        self._swipe(Point(sx, sy), Point(ex, ey), duration=params.duration)
+        self.device.swipe(
+            Point(sx, sy).scale(self._scale_factor),
+            Point(ex, ey).scale(self._scale_factor),
+            duration=params.duration,
+        )
 
     def hold(
         self, coordinates: Coordinates, duration: float = 3.0, blocking: bool = True
@@ -984,16 +950,16 @@ class Game:
         logging.debug(
             f"hold: ({coordinates.x}, {coordinates.y}) for {duration} seconds"
         )
+
+        point = Point(coordinates.x, coordinates.y).scale(self._scale_factor)
+
         if blocking:
-            self._swipe(
-                start_point=coordinates, end_point=coordinates, duration=duration
-            )
+            self.device.hold(coordinates=point, duration=duration)
             return None
         thread = threading.Thread(
-            target=self._swipe,
+            target=self.device.hold,
             kwargs={
-                "start_point": coordinates,
-                "end_point": coordinates,
+                "coordinates": point,
                 "duration": duration,
                 "sleep_duration": None,
             },
@@ -1001,33 +967,6 @@ class Game:
         )
         thread.start()
         return thread
-
-    def _swipe(
-        self,
-        start_point: Coordinates,
-        end_point: Coordinates,
-        duration: float = 1.0,
-        sleep_duration: float | None = 2.0,
-    ) -> None:
-        """Swipes the screen.
-
-        Args:
-            start_point: Start Point on the screen.
-            end_point: End Point on the screen.
-            duration: Swipe duration. Defaults to 1.0.
-            sleep_duration: Sleep duration. Defaults to 2.0. No sleep if None
-        """
-        start_point = Point(start_point.x, start_point.y).scale(self._scale_factor)
-        end_point = Point(end_point.x, end_point.y).scale(self._scale_factor)
-        self.device.swipe(
-            sx=start_point.x,
-            sy=start_point.y,
-            ex=end_point.x,
-            ey=end_point.y,
-            duration=duration,
-        )
-        if sleep_duration is not None:
-            sleep(sleep_duration)
 
     T = TypeVar("T")
 
@@ -1259,7 +1198,10 @@ class Game:
     def _tap_coordinates_till_template_disappears(
         self,
         coordinates: Coordinates,
-        template_match_params: TemplateMatchParams,
+        template: str | Path,
+        threshold: ConfidenceValue | None = None,
+        grayscale: bool = False,
+        crop_regions: CropRegions | None = None,
         scale: bool = False,
         delay: float = 10.0,
     ) -> None:
@@ -1267,20 +1209,16 @@ class Game:
         tap_count = 0
         time_since_last_tap = delay  # force immediate first tap
         while self.game_find_template_match(
-            template=template_match_params.template,
-            threshold=template_match_params.threshold,
-            grayscale=template_match_params.grayscale,
-            crop_regions=(
-                template_match_params.crop_regions
-                if template_match_params.crop_regions
-                else CropRegions()
-            ),
+            template=template,
+            threshold=threshold,
+            grayscale=grayscale,
+            crop_regions=(crop_regions if crop_regions else CropRegions()),
         ):
             if tap_count >= max_tap_count:
                 # converting to point here for the error message.
                 message = (
                     f"Failed to tap: {Point(coordinates.x, coordinates.y)}, "
-                    f"Template: {template_match_params.template} still visible."
+                    f"Template: {template} still visible."
                 )
                 raise GameActionFailedError(message)
             if time_since_last_tap >= delay:

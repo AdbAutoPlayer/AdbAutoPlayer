@@ -10,9 +10,11 @@ import av
 import numpy as np
 from adb_auto_player.exceptions import AutoPlayerWarningError
 from adb_auto_player.settings import ConfigLoader
-from adbutils import AdbConnection, AdbDevice
+from adbutils import AdbConnection
 from av.codec.codec import UnknownCodecError
 from av.codec.context import CodecContext
+
+from .adb_controller import AdbController
 
 
 @lru_cache(maxsize=1)
@@ -56,7 +58,7 @@ def _get_best_decoder(hardware_decoding: bool) -> str:
 def _get_codec_context() -> CodecContext:
     """Get codec context using cached decoder selection."""
     hardware_decoding = (
-        ConfigLoader.main_config().get("device", {}).get("hardware_decoding", False)
+        ConfigLoader.main_config().get("..", {}).get("hardware_decoding", False)
     )
 
     decoder_name = _get_best_decoder(hardware_decoding)
@@ -72,11 +74,11 @@ class StreamingNotSupportedError(AutoPlayerWarningError):
 class DeviceStream:
     """Device screen streaming."""
 
-    def __init__(self, device: AdbDevice, fps: int = 30):
+    def __init__(self, controller: AdbController, fps: int = 30):
         """Initialize the screen stream.
 
         Args:
-            device: AdbDevice instance
+            controller: AdbDevice instance
             fps: Target frames per second (default: 30)
 
         Raises:
@@ -85,14 +87,14 @@ class DeviceStream:
         is_arm_mac = platform.system() == "Darwin" and platform.machine().startswith(
             ("arm", "aarch")
         )
-        if is_arm_mac and _device_is_emulator(device):
+        if is_arm_mac and controller.is_controlling_emulator:
             raise StreamingNotSupportedError(
                 "Emulators running on macOS do not support Device Streaming "
                 "you can try using your Phone."
             )
 
         self.codec = _get_codec_context()
-        self.device = device
+        self.controller = controller
         self.fps = fps
         self.latest_frame: np.ndarray | None = None
         self._frame_lock = threading.Lock()
@@ -136,7 +138,7 @@ class DeviceStream:
 
     def _handle_stream(self) -> None:
         """Generic stream handler."""
-        self._process = self.device.shell(
+        self._process = self.controller.d.shell(
             cmdargs="screenrecord --output-format=h264 --time-limit=1 -",
             stream=True,
         )
@@ -187,16 +189,6 @@ class DeviceStream:
                         if "'NoneType' object has no attribute 'close'" in str(e):
                             return
                         raise
-
-
-def _device_is_emulator(device: AdbDevice) -> bool:
-    """Checks if the device is an emulator."""
-    result = str(device.shell('getprop | grep "Build"'))
-    if "Build" in result:
-        logging.debug('getprop contains "Build" assuming Emulator')
-        return True
-    logging.debug('getprop does not contain "Build" assuming Phone')
-    return False
 
 
 def _get_available_h264_decoders():
