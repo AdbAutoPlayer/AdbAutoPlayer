@@ -52,14 +52,10 @@ func (g *GamesService) Debug() error {
 	if err := g.resolvePythonBinaryPathIfNeeded(); err != nil {
 		return err
 	}
-	originalLogLevel := logger.Get().LogLevel
-	logger.Get().LogLevel = 2
-	if err := process.GetService().StartTask([]string{"Debug"}, false); err != nil {
+	if err := process.GetService().StartTask([]string{"Debug"}, false, 2); err != nil {
 		logger.Get().Errorf("Failed starting process: %v", err)
-		logger.Get().LogLevel = originalLogLevel
 		return err
 	}
-	logger.Get().LogLevel = originalLogLevel
 	return nil
 }
 

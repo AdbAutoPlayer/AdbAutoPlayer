@@ -76,12 +76,12 @@ func (s *IPCService) StopTask(msg ...string) {
 	time.Sleep(2 * time.Second)
 }
 
-func (s *IPCService) StartTask(args []string, notifyWhenTaskEnds bool) error {
+func (s *IPCService) StartTask(args []string, notifyWhenTaskEnds bool, logLevel ...uint8) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	if s.STDIOManager != nil {
-		return s.STDIOManager.StartProcess(args, notifyWhenTaskEnds)
+		return s.STDIOManager.StartProcess(args, notifyWhenTaskEnds, logLevel...)
 	}
 	return errors.New("no IPC Process Manager is running")
 }

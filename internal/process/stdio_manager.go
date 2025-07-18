@@ -52,7 +52,7 @@ func NewSTDIOManager(isDev bool, pythonBinaryPath string) *STDIOManager {
 	}
 }
 
-func (pm *STDIOManager) StartProcess(args []string, notifyWhenTaskEnds bool) error {
+func (pm *STDIOManager) StartProcess(args []string, notifyWhenTaskEnds bool, logLevel ...uint8) error {
 	if pm.running != nil {
 		if pm.isProcessRunning() {
 			return errors.New("a process is already running")
@@ -80,8 +80,13 @@ func (pm *STDIOManager) StartProcess(args []string, notifyWhenTaskEnds bool) err
 	if err = cmd.Start(); err != nil {
 		return fmt.Errorf("failed to start command: %w", err)
 	}
-	logger.Get().Debugf("Started process with PID: %d", cmd.Process.Pid)
 
+	originalLogLevel := logger.Get().LogLevel
+	if len(logLevel) > 0 {
+		logger.Get().LogLevel = logLevel[0]
+	}
+
+	logger.Get().Debugf("Started process with PID: %d", cmd.Process.Pid)
 	proc, err := process.NewProcess(int32(cmd.Process.Pid))
 	if err != nil {
 		return fmt.Errorf("failed to create process handle: %w", err)
@@ -168,6 +173,7 @@ func (pm *STDIOManager) StartProcess(args []string, notifyWhenTaskEnds bool) err
 			logger.Get().Errorf("Task ended with Error: %v", err)
 		}
 
+		logger.Get().LogLevel = originalLogLevel
 		pm.processEnded()
 	}()
 

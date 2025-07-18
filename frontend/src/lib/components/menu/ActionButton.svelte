@@ -23,5 +23,5 @@
 >
   {menuButton.option.custom_label
     ? menuButton.option.custom_label
-    : menuButton.option.label}
+    : $t(menuButton.option.label)}
 </button>

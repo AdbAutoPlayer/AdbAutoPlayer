@@ -16,6 +16,7 @@ from adbutils import AdbClient
     name="Debug",
 )
 def _log_debug() -> None:
+    logging.getLogger().setLevel(logging.DEBUG)
     logging.info("--- Debug Info Start ---")
     _log_main_config()
     if not _get_and_log_adb_client():

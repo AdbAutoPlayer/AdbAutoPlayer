@@ -56,8 +56,6 @@ func (s *SettingsService) GetGeneralSettingsForm() map[string]interface{} {
 }
 
 func (s *SettingsService) SaveGeneralSettings(settings GeneralSettings) error {
-	defer app.EmitEvent(&application.CustomEvent{Name: event_names.GeneralSettingsUpdated, Data: s.generalSettings})
-
 	if err := SaveTOML[GeneralSettings](*s.generalSettingsPath, &settings); err != nil {
 		app.Error(err.Error())
 		return err
@@ -70,6 +68,8 @@ func (s *SettingsService) SaveGeneralSettings(settings GeneralSettings) error {
 	if settings.UI.CloseShouldMinimize && runtime.GOOS != "windows" {
 		logger.Get().Warningf("Setting: 'Close button should minimize the window' only works on Windows")
 	}
+
+	app.EmitEvent(&application.CustomEvent{Name: event_names.GeneralSettingsUpdated, Data: settings})
 	logger.Get().Infof("Saved General Settings")
 	return nil
 }
