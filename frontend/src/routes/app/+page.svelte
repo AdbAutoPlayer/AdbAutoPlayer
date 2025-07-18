@@ -27,7 +27,9 @@
   import { EventNames } from "$lib/log/eventNames";
 
   let showSettingsForm: boolean = $state(false);
-  let settingsFormProps: Record<string, any> = $state({});
+  let settingsFormSettings: Record<string, any> = $state({});
+  let settingsFormConstraints: Record<string, any> = $state({});
+
   let activeGame: GameGUI | null = $state(null);
 
   let openFormIsGeneralSettings: boolean = $state(false);
@@ -215,8 +217,9 @@
     openFormIsGeneralSettings = false;
     try {
       const result = await GetGameSettingsForm(game);
-      result.constraints = sortObjectByOrder(result.constraints);
-      settingsFormProps = result;
+      settingsFormSettings = result.settings;
+      settingsFormConstraints = sortObjectByOrder(result.constraints);
+
       showSettingsForm = true;
     } catch (error) {
       showErrorToast(error, {
@@ -231,8 +234,8 @@
     $pollRunningGame = false;
     try {
       const result = await GetGeneralSettingsForm();
-      result.constraints = sortObjectByOrder(result.constraints);
-      settingsFormProps = result;
+      settingsFormSettings = result.settings;
+      settingsFormConstraints = sortObjectByOrder(result.constraints);
       showSettingsForm = true;
     } catch (error) {
       showErrorToast(error, {
@@ -292,8 +295,8 @@
   {#if showSettingsForm}
     <div class="flex-grow overflow-y-scroll">
       <SettingsForm
-        settings={settingsFormProps.settings ?? []}
-        constraints={settingsFormProps.constraints ?? []}
+        settings={settingsFormSettings}
+        constraints={settingsFormConstraints}
         onSettingsSave={settingsSaveCallback}
       />
     </div>
