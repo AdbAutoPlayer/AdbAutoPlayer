@@ -8,7 +8,6 @@ from typing import Any
 
 from adb_auto_player import (
     Game,
-    TemplateMatchParams,
 )
 from adb_auto_player.decorators import register_cache, register_game
 from adb_auto_player.exceptions import (
@@ -351,9 +350,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             self._tap_coordinates_till_template_disappears(
                 coordinates=Point(x=850, y=1780),
                 scale=True,
-                template_match_params=TemplateMatchParams(
-                    template=result.template,
-                ),
+                template=result.template,
             )
         except GameActionFailedError:
             logging.warning("Failed to start Battle, are no Heroes selected?")

@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 import av
 import numpy as np
-from adb_auto_player.device_stream import DeviceStream, StreamingNotSupportedError
+from adb_auto_player.device.adb import DeviceStream, StreamingNotSupportedError
 
 
 class MockAdbConnection:
@@ -88,7 +88,8 @@ class TestDeviceStream(unittest.TestCase):
         self.mock_device.shell.return_value = mock_connection
 
         with patch(
-            "adb_auto_player.device_stream._device_is_emulator", return_value=False
+            "adb_auto_player.device.adb.adb_controller.AdbController.is_controlling_emulator",
+            return_value=False,
         ):
             stream = DeviceStream(self.mock_device, fps=5)
 
@@ -107,13 +108,15 @@ class TestDeviceStream(unittest.TestCase):
     def test_emulator_detection_on_arm_mac(self):
         """Test emulator detection prevents streaming on ARM Mac."""
         with patch(
-            "adb_auto_player.device_stream.platform.system", return_value="Darwin"
+            "adb_auto_player.device.adb.device_stream.platform.system",
+            return_value="Darwin",
         ):
             with patch(
-                "adb_auto_player.device_stream.platform.machine", return_value="arm64"
+                "adb_auto_player.device.adb.device_stream.platform.machine",
+                return_value="arm64",
             ):
                 with patch(
-                    "adb_auto_player.device_stream._device_is_emulator",
+                    "adb_auto_player.device.adb.adb_controller.AdbController.is_controlling_emulator",
                     return_value=True,
                 ):
                     with self.assertRaises(StreamingNotSupportedError):
@@ -128,7 +131,8 @@ class TestDeviceStream(unittest.TestCase):
         self.mock_device.shell.return_value = mock_connection
 
         with patch(
-            "adb_auto_player.device_stream._device_is_emulator", return_value=False
+            "adb_auto_player.device.adb.adb_controller.AdbController.is_controlling_emulator",
+            return_value=False,
         ):
             stream = DeviceStream(self.mock_device, fps=5)
 
@@ -166,7 +170,7 @@ class TestIntegrationWithRealDecoding(unittest.TestCase):
                 mock_device.shell.return_value = mock_connection
 
                 with patch(
-                    "adb_auto_player.device_stream._device_is_emulator",
+                    "adb_auto_player.device.adb.adb_controller.AdbController.is_controlling_emulator",
                     return_value=False,
                 ):
                     stream = DeviceStream(mock_device, fps=5)

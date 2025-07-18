@@ -4,14 +4,13 @@ import sys
 from functools import lru_cache
 
 from adb_auto_player import Game, games
-from adb_auto_player.adb import get_adb_device, get_running_app
 from adb_auto_player.decorators import register_cache, register_command
+from adb_auto_player.device.adb import AdbController
 from adb_auto_player.exceptions import GenericAdbError, GenericAdbUnrecoverableError
 from adb_auto_player.ipc import GameGUIOptions
 from adb_auto_player.ipc_util import IPCModelConverter
 from adb_auto_player.models.decorators import CacheGroup
 from adb_auto_player.registries import GAME_REGISTRY
-from adbutils import AdbDevice, AdbError
 
 
 @register_command(
@@ -19,18 +18,15 @@ from adbutils import AdbDevice, AdbError
     name="DisplayGUI",
 )
 def _display_gui() -> None:
-    print(_get_running_game_gui())
+    print(get_game_menu_string(_get_running_game()))
     sys.stdout.flush()
 
 
-def _get_running_game_gui() -> str:
-    options = _get_game_gui_options()
-    running_game = _get_running_game()
-
-    if running_game is not None:
-        matching_option = next(
-            (opt for opt in options if opt.game_title == running_game), None
-        )
+def get_game_menu_string(game: str | None) -> str:
+    """Returns menu json string for a game."""
+    if game is not None:
+        options = _get_game_gui_options()
+        matching_option = next((opt for opt in options if opt.game_title == game), None)
         if matching_option is not None:
             return json.dumps(matching_option.to_dict())
 
@@ -51,9 +47,8 @@ def _get_running_game() -> str | None:
         detected.
     """
     try:
-        device: AdbDevice = get_adb_device()
-        return _get_game_from_package_name(get_running_app(device))
-    except (AdbError, GenericAdbError, GenericAdbUnrecoverableError) as e:
+        return _get_game_from_package_name(AdbController().get_running_app())
+    except (GenericAdbError, GenericAdbUnrecoverableError) as e:
         if str(e) == "closed":
             # This error usually happens when you try to initialize an ADB Connection
             # Before the device is ready e.g. emulator is starting
