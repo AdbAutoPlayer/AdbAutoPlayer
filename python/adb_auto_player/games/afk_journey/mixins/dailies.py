@@ -515,14 +515,6 @@ class DailiesMixin(AFKJourneyBase, ABC):
             self._click_hero()
         self._click_hero()  # Give Chippy some love too.
 
-        # Return to Resonating Hall.
-        back = self.game_find_template_match("back.png")
-        if back:
-            self.tap(back)
-        else:
-            self.press_back_button()
-        sleep(self.FAST_TIMEOUT)
-
         logging.info("Done raising affinity.")
 
     def _click_hero(self) -> None:
@@ -551,15 +543,16 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.info("No essences purchased. Skipping swap.")
             return
 
-        # Dependency: We will be in Resonating Hall after raising affinity.
-        logging.info("Begin swapping essences...")
-        swapped: bool = True
-        while swapped:
-            swapped = self._swap_essence()
-        logging.info("Essence swaps completed.")
+        # Navigate to Resonating Hall explicitly.
+        self.navigate_to_default_state()
+        sleep(5)
+        logging.debug("Open Resonating Hall.")
+        self.tap(Point(620, 1830), scale=True)
+        sleep(5)
 
-    def _swap_essence(self) -> bool:
-        """Perform a single essence swap."""
+        logging.info("Begin swapping essences...")
+
+        # Click New Actions once at the beginning (fixes essence swap bug)
         try:
             new_actions = self.wait_for_template(
                 "resonating_hall/new_actions.png",
@@ -568,7 +561,18 @@ class DailiesMixin(AFKJourneyBase, ABC):
             )
             self.tap(new_actions)
             sleep(self.FAST_TIMEOUT)
+        except GameTimeoutError as fail:
+            logging.error(f"Could not find New Actions button: {fail}")
+            return
 
+        swapped: bool = True
+        while swapped:
+            swapped = self._swap_essence()
+        logging.info("Essence swaps completed.")
+
+    def _swap_essence(self) -> bool:
+        """Perform a single essence swap."""
+        try:
             for i in range(3):
                 # The action template displays on all 3 areas within this flow.
                 logging.debug(f"Looking for action template #{i}.")
