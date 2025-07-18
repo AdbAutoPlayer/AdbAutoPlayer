@@ -115,14 +115,12 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         if not use_suggested_formations:
             formations = 1
 
-        if (
-            self._get_config_attribute_from_mode(
-                "use_current_formation_before_suggested_formation"
-            )
-            and self._handle_single_stage()
+        if self._get_config_attribute_from_mode(
+            "use_current_formation_before_suggested_formation"
         ):
             logging.info("Battle using current Formation.")
-            return True
+            if self._handle_single_stage():
+                return True
 
         while self.battle_state.formation_num < formations:
             self.battle_state.formation_num += 1
@@ -134,14 +132,6 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                 )
             ):
                 continue
-            else:
-                _ = self.wait_for_any_template(
-                    templates=[
-                        "battle/records.png",
-                        "battle/formations_icon.png",
-                    ],
-                    crop_regions=CropRegions(top=0.5),
-                )
 
             if self._handle_single_stage():
                 return True
