@@ -6,9 +6,9 @@ from adb_auto_player.ipc import GameGUIOptions, MenuOption
 from adb_auto_player.models.commands import MenuItem
 from adb_auto_player.models.registries import GameMetadata
 from adb_auto_player.registries import COMMAND_REGISTRY
-from adb_auto_player.util import IPCConstraintExtractor
+from adb_auto_player.settings import ConfigLoader
 
-from .config_loader import ConfigLoader
+from .ipc_constraint_extractor import IPCConstraintExtractor
 
 
 class IPCModelConverter:

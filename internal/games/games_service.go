@@ -20,16 +20,12 @@ import (
 )
 
 type GamesService struct {
-	games                  []ipc.GameGUI
-	runningGame            string
+	gameGUI                *ipc.GameGUI
 	lastOpenGameConfigPath string
 }
 
 func NewGamesService() *GamesService {
-	return &GamesService{
-		games: []ipc.GameGUI{}, // initialize empty slice
-		// other fields will be their zero values (nil for pointers)
-	}
+	return &GamesService{}
 }
 
 func (g *GamesService) GetGameGUI() (*ipc.GameGUI, error) {
@@ -37,32 +33,19 @@ func (g *GamesService) GetGameGUI() (*ipc.GameGUI, error) {
 		return nil, err
 	}
 
-	if err := g.setGamesIfNeeded(); err != nil {
-		return nil, err
-	}
-
-	runningGame, err := process.GetService().Exec([]string{"GetRunningGame", "--log-level=DISABLE"})
+	gui, err := process.GetService().Exec([]string{"DisplayGUI", "--log-level=DISABLE"})
 	if err != nil {
-		logger.Get().Errorf("%v", err)
 		return nil, err
 	}
-	g.runningGame = strings.TrimSpace(runningGame)
-	if g.runningGame == "" {
-		return nil, nil
+	var gameGUI ipc.GameGUI
+
+	err = json.Unmarshal([]byte(gui), &gameGUI)
+	if err != nil {
+		return nil, err
 	}
 
-	return g.getActiveGameGUI()
-}
-
-func (g *GamesService) getActiveGameGUI() (*ipc.GameGUI, error) {
-	for _, game := range g.games {
-		if g.runningGame == game.GameTitle {
-			return &game, nil
-		}
-	}
-
-	logger.Get().Debugf("Game: %s not supported", g.runningGame)
-	return nil, nil
+	g.gameGUI = &gameGUI
+	return g.gameGUI, nil
 }
 
 func (g *GamesService) Debug() error {
@@ -179,17 +162,6 @@ func (g *GamesService) resolvePythonBinaryPathIfNeeded() error {
 	return nil
 }
 
-func (g *GamesService) setGamesIfNeeded() error {
-	if len(g.games) == 0 {
-		err := g.setGamesFromPython()
-		if err != nil {
-			logger.Get().Errorf("%v", err)
-			return err
-		}
-	}
-	return nil
-}
-
 func (g *GamesService) setPythonBinaryPath() error {
 	workingDir, err := os.Getwd()
 	if err != nil {
@@ -221,23 +193,6 @@ func (g *GamesService) setPythonBinaryPath() error {
 
 	logger.Get().Debugf("Paths: %s", strings.Join(paths, ", "))
 	process.GetService().SetPythonBinaryPath(path.GetFirstPathThatExists(paths))
-	return nil
-}
-
-func (g *GamesService) setGamesFromPython() error {
-	gamesString, err := process.GetService().Exec([]string{"GUIGamesMenu", "--log-level=DISABLE"})
-	if err != nil {
-		return err
-	}
-	var gameGUIs []ipc.GameGUI
-
-	err = json.Unmarshal([]byte(gamesString), &gameGUIs)
-	if err != nil {
-		return err
-	}
-
-	g.games = gameGUIs
-
 	return nil
 }
 
@@ -288,7 +243,7 @@ func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interfa
 func (g *GamesService) SaveGameSettings(gameSettings map[string]interface{}) (*ipc.GameGUI, error) {
 	defer app.Emit(event_names.GameSettingsUpdated)
 
-	if g.lastOpenGameConfigPath == "" {
+	if g.lastOpenGameConfigPath == "" || nil == g.gameGUI {
 		return nil, errors.New("cannot save game settings: no game settings found")
 	}
 
@@ -298,10 +253,6 @@ func (g *GamesService) SaveGameSettings(gameSettings map[string]interface{}) (*i
 	logger.Get().Infof("Saving Game Settings")
 
 	g.lastOpenGameConfigPath = ""
-	gameGUI, err := g.getActiveGameGUI()
-	if err != nil {
-		return nil, err
-	}
 
 	displayNames := make(map[string]string)
 	for key, value := range gameSettings {
@@ -312,18 +263,11 @@ func (g *GamesService) SaveGameSettings(gameSettings map[string]interface{}) (*i
 		}
 	}
 
-	for i, option := range gameGUI.MenuOptions {
+	for i, option := range g.gameGUI.MenuOptions {
 		if displayName, exists := displayNames[option.Label]; exists {
-			gameGUI.MenuOptions[i].CustomLabel = displayName
+			g.gameGUI.MenuOptions[i].CustomLabel = displayName
 		}
 	}
 
-	for i, game := range g.games {
-		if game.GameTitle == gameGUI.GameTitle {
-			g.games[i] = *gameGUI
-			break
-		}
-	}
-
-	return gameGUI, nil
+	return g.gameGUI, nil
 }

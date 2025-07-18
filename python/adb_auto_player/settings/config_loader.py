@@ -6,6 +6,9 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from adb_auto_player.decorators import register_cache
+from adb_auto_player.models.decorators import CacheGroup
+
 
 class ConfigLoader:
     """Utility class for resolving and caching important configuration paths."""
@@ -50,6 +53,7 @@ class ConfigLoader:
         return ConfigLoader.games_dir().parent / "binaries"
 
     @staticmethod
+    @register_cache(CacheGroup.GENERAL_SETTINGS)
     @lru_cache(maxsize=1)
     def main_config() -> dict[str, Any]:
         """Locate and load the main config.toml file."""

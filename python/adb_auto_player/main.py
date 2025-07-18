@@ -1,13 +1,14 @@
 """Main module."""
 
-import argparse
 import sys
+from functools import lru_cache
 
 from adb_auto_player import commands, games
-from adb_auto_player.cli import build_argparse_formatter
+from adb_auto_player.cli import ArgparseHelper
 from adb_auto_player.log import setup_logging
 from adb_auto_player.models.commands import Command
 from adb_auto_player.registries import COMMAND_REGISTRY, GAME_REGISTRY
+from adb_auto_player.server_mode import server_mode
 from adb_auto_player.util import DevHelper, Execute
 
 
@@ -17,22 +18,17 @@ def _load_modules() -> None:
     _ = commands.__all__
 
 
+@lru_cache(maxsize=1)
 def _get_commands() -> dict[str, list[Command]]:
     cmds: dict[str, list[Command]] = {}
-
     for module, registered_commands in COMMAND_REGISTRY.items():
-        # Check if module has a game registered
         if module in GAME_REGISTRY:
             game_name = GAME_REGISTRY[module].name
         else:
-            # do not change this it's a special keyword the GUI uses.
             game_name = "Commands"
-
-        if game_name not in registered_commands:
+        if game_name not in cmds:
             cmds[game_name] = []
-
         cmds[game_name].extend(registered_commands.values())
-
     return cmds
 
 
@@ -42,44 +38,19 @@ def main() -> None:
     This function parses the command line arguments, sets up the logging based on
     the output format and log level, and then runs the specified command.
     """
-    cmds = _get_commands()
-    parser = argparse.ArgumentParser(
-        formatter_class=build_argparse_formatter(_get_commands())
-    )
-
-    command_names = []
-    for category_commands in cmds.values():
-        for cmd in category_commands:
-            command_names.append(cmd.name)
-
-    parser.add_argument(
-        "command",
-        help="Command to run",
-        choices=command_names,
-    )
-    parser.add_argument(
-        "--output",
-        choices=["json", "terminal", "text", "raw"],
-        default="json",
-        help="Output format",
-    )
-    parser.add_argument(
-        "--log-level",
-        choices=["DISABLE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        default="DEBUG",
-        help="Log level",
-    )
-
+    parser = ArgparseHelper.build_argument_parser(_get_commands())
     args = parser.parse_args()
+    if args.server:
+        server_mode(_get_commands())
+        sys.exit(0)
 
-    log_level = args.log_level
-    if log_level == "DISABLE":
-        log_level = 99
-    setup_logging(args.output, log_level)
+    if not args.command:
+        parser.error("the following arguments are required: command")
 
+    setup_logging(args.output, ArgparseHelper.get_log_level_from_args(args))
     DevHelper.log_is_main_up_to_date()
 
-    if Execute.find_command_and_execute(args.command, cmds):
+    if Execute.find_command_and_execute(args.command, _get_commands()):
         sys.exit(0)
     sys.exit(1)
 

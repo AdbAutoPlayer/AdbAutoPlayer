@@ -10,12 +10,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/shirou/gopsutil/process"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -26,12 +28,27 @@ type STDIOManager struct {
 	notifyWhenTaskEnds bool
 	summary            *ipc.Summary
 	lastLogMessage     *ipc.LogMessage
+	serverManager      *ServerManager // Embedded server manager
+}
+
+// ServerManager handles the server process and communication.
+type ServerManager struct {
+	isDev            bool
+	pythonBinaryPath string
+	process          *process.Process
+	stdin            *io.WriteCloser
+	stdoutPipe       *io.ReadCloser
+	mutex            sync.Mutex
 }
 
 func NewSTDIOManager(isDev bool, pythonBinaryPath string) *STDIOManager {
 	return &STDIOManager{
 		isDev:            isDev,
 		pythonBinaryPath: pythonBinaryPath,
+		serverManager: &ServerManager{
+			isDev:            isDev,
+			pythonBinaryPath: pythonBinaryPath,
+		},
 	}
 }
 
@@ -205,6 +222,14 @@ func (pm *STDIOManager) getCommand(args ...string) (*exec.Cmd, error) {
 }
 
 func (pm *STDIOManager) Exec(args ...string) (string, error) {
+	result, err := pm.ServerExec(args...)
+	if err == nil {
+		return result, err
+	}
+	return pm.exec(args...)
+}
+
+func (pm *STDIOManager) exec(args ...string) (string, error) {
 	cmd, err := pm.getCommand(args...)
 	if err != nil {
 		return "", err
@@ -252,10 +277,118 @@ func (pm *STDIOManager) Exec(args ...string) (string, error) {
 	return stdout.String(), nil
 }
 
+func (pm *STDIOManager) ServerExec(args ...string) (string, error) {
+	pm.serverManager.mutex.Lock()
+	defer pm.serverManager.mutex.Unlock()
+	if err := pm.serverManager.startServer(); err != nil {
+		return "", err
+	}
+
+	return pm.serverManager.sendCommand(strings.Join(args, " "))
+}
+
 func (pm *STDIOManager) processEnded() {
 	taskEndedNotification(pm.notifyWhenTaskEnds, pm.lastLogMessage, pm.summary)
 	pm.running = nil
 	pm.summary = nil
 	pm.lastLogMessage = nil
 	pm.notifyWhenTaskEnds = false
+}
+
+// startServer starts a server process running 'python -m adb_auto_player --server'.
+func (sm *ServerManager) startServer() error {
+	if sm.process != nil && sm.isServerRunning() {
+		return nil
+	}
+	cmd, err := getCommand(sm.isDev, sm.pythonBinaryPath, "--server")
+	if err != nil {
+		return fmt.Errorf("failed to get server command: %w", err)
+	}
+
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		return fmt.Errorf("failed to create stdout pipe: %w", err)
+	}
+
+	stdinPipe, err := cmd.StdinPipe()
+	if err != nil {
+		return fmt.Errorf("failed to create stdin pipe: %w", err)
+	}
+
+	if err = cmd.Start(); err != nil {
+		return fmt.Errorf("failed to start server: %w", err)
+	}
+	logger.Get().Debugf("Started server with PID: %d", cmd.Process.Pid)
+
+	proc, err := process.NewProcess(int32(cmd.Process.Pid))
+	if err != nil {
+		return fmt.Errorf("failed to create process handle: %w", err)
+	}
+	sm.process = proc
+	sm.stdin = &stdinPipe
+	sm.stdoutPipe = &stdoutPipe
+
+	go func() {
+		_, err = cmd.Process.Wait()
+		if err != nil {
+			logger.Get().Errorf("Server ended with error: %v", err)
+		}
+		sm.process = nil
+		sm.stdin = nil
+		sm.stdoutPipe = nil
+	}()
+
+	return nil
+}
+
+// isServerRunning checks if the server process is running.
+func (sm *ServerManager) isServerRunning() bool {
+	if sm.process == nil {
+		return false
+	}
+
+	running, _ := sm.process.IsRunning()
+	if !running {
+		sm.process = nil
+		sm.stdin = nil
+		sm.stdoutPipe = nil
+	}
+	return running
+}
+
+// sendCommand sends a command to the server process and returns the response.
+func (sm *ServerManager) sendCommand(command string) (string, error) {
+	scanner := bufio.NewScanner(*sm.stdoutPipe)
+	scanner.Buffer(make([]byte, 4096), 1024*1024)
+
+	responseChan := make(chan string, 1)
+	errChan := make(chan error, 1)
+
+	go func() {
+		if scanner.Scan() {
+			line := scanner.Text()
+			if strings.TrimSpace(line) != "" {
+				responseChan <- line
+				return
+			}
+		}
+		if err := scanner.Err(); err != nil {
+			errChan <- fmt.Errorf("failed to read server response: %w", err)
+			return
+		}
+		errChan <- errors.New("no response received from server")
+	}()
+
+	if _, err := fmt.Fprintln(*sm.stdin, command); err != nil {
+		return "", fmt.Errorf("failed to send command to server: %w", err)
+	}
+
+	select {
+	case response := <-responseChan:
+		return response, nil
+	case err := <-errChan:
+		return "", err
+	case <-time.After(5 * time.Second):
+		return "", errors.New("timeout waiting for server response")
+	}
 }

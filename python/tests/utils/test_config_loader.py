@@ -5,7 +5,7 @@ import tomllib
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
-from adb_auto_player.util import ConfigLoader
+from adb_auto_player.settings import ConfigLoader
 
 
 class TestConfigLoader:

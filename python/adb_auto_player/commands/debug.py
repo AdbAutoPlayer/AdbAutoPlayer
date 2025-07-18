@@ -14,7 +14,7 @@ from adb_auto_player.adb import (
     wm_size_reset,
 )
 from adb_auto_player.decorators import register_command
-from adb_auto_player.util import ConfigLoader
+from adb_auto_player.settings import ConfigLoader
 from adbutils import AdbClient, AdbDevice
 
 

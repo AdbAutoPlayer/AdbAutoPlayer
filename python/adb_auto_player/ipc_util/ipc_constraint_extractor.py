@@ -16,9 +16,8 @@ from adb_auto_player.ipc import (
 )
 from adb_auto_player.models.commands import Command
 from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY
+from adb_auto_player.util import StringHelper
 from pydantic import BaseModel
-
-from .string_helper import StringHelper
 
 
 class IPCConstraintExtractor:

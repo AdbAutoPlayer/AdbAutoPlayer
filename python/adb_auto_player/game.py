@@ -44,8 +44,9 @@ from adb_auto_player.models.pydantic import MyCustomRoutineConfig
 from adb_auto_player.models.registries import CustomRoutineEntry
 from adb_auto_player.models.template_matching import MatchMode, TemplateMatchResult
 from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY
+from adb_auto_player.settings import ConfigLoader
 from adb_auto_player.template_matching import TemplateMatcher
-from adb_auto_player.util import ConfigLoader, Execute
+from adb_auto_player.util import Execute
 from adbutils._device import AdbDevice
 from PIL import Image
 from pydantic import BaseModel
