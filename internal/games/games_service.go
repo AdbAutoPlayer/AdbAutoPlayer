@@ -41,6 +41,8 @@ func (g *GamesService) GetGameGUI() (*ipc.GameGUI, error) {
 
 	err = json.Unmarshal([]byte(gui), &gameGUI)
 	if err != nil {
+		println(gui)
+		println(err.Error())
 		return nil, err
 	}
 

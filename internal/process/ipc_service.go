@@ -12,7 +12,6 @@ import (
 	"os"
 	"os/exec"
 	"sync"
-	"time"
 )
 
 type IPCService struct {
@@ -64,6 +63,10 @@ func (s *IPCService) StopTask(msg ...string) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	if !s.STDIOManager.isProcessRunning() {
+		return
+	}
+
 	if s.STDIOManager != nil {
 		s.STDIOManager.KillProcess()
 	}
@@ -73,7 +76,6 @@ func (s *IPCService) StopTask(msg ...string) {
 		message = msg[0]
 	}
 	logger.Get().Warningf("%s", message)
-	time.Sleep(2 * time.Second)
 }
 
 func (s *IPCService) StartTask(args []string, notifyWhenTaskEnds bool, logLevel ...uint8) error {
@@ -97,9 +99,6 @@ func (s *IPCService) IsTaskRunning() bool {
 }
 
 func (s *IPCService) Exec(args []string) (string, error) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
 	if s.STDIOManager != nil {
 		return s.STDIOManager.Exec(args...)
 	}

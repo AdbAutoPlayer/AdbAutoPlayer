@@ -133,8 +133,8 @@ class CommonBattleModeConfig(BaseModel):
     """Common config shared across battle modes."""
 
     attempts: PositiveInt = Field(default=5, alias="Attempts")
-    use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
     formations: FormationsInt = Field(default=7, alias="Formations")
+    use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
     use_current_formation_before_suggested_formation: bool = Field(
         default=True,
         alias="Start with current Formation",

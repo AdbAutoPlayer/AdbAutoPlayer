@@ -143,22 +143,24 @@
     await KillGameProcess();
     activeButtonLabel = null;
 
-    setTimeout(updateStateHandler, 1000);
+    setTimeout(updateStateHandler, 3000);
   }
 
   async function debug() {
     if (activeButtonLabel !== null) {
       return;
     }
+
+    $pollRunningGame = false;
     clearTimeout(updateStateTimeout);
 
     try {
       activeButtonLabel = "Show Debug info";
       await Debug();
     } catch (error) {
-      showErrorToast(error, { title: "Failed to generate Debug Info" });
+      showErrorToast(error, { title: `Failed to Start: Show Debug info` });
     }
-    setTimeout(updateStateHandler, 1000);
+    setTimeout(updateStateHandler, 3000);
   }
 
   async function startGameProcess(menuOption: MenuOption) {
@@ -174,7 +176,7 @@
     } catch (error) {
       showErrorToast(error, { title: `Failed to Start: ${menuOption.label}` });
     }
-    setTimeout(updateStateHandler, 1000);
+    setTimeout(updateStateHandler, 3000);
   }
 
   async function onGeneralSettingsSave(settings: object) {
@@ -248,11 +250,7 @@
   let updateStateTimeout: number | undefined;
   async function updateStateHandler() {
     await updateState();
-    if (activeGame) {
-      updateStateTimeout = setTimeout(updateStateHandler, 10000);
-    } else {
-      updateStateTimeout = setTimeout(updateStateHandler, 3000);
-    }
+    updateStateTimeout = setTimeout(updateStateHandler, 3000);
   }
 
   Events.On(EventNames.TASK_STOPPED, enablePolling);
@@ -273,7 +271,6 @@
       activeGame = await GetGameGUI();
     } catch (error) {
       logDevOnly(error);
-      activeGame = null;
     }
   }
 

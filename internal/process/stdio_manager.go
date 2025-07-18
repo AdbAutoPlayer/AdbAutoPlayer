@@ -364,6 +364,9 @@ func (sm *ServerManager) isServerRunning() bool {
 
 // sendCommand sends a command to the server process and returns the response.
 func (sm *ServerManager) sendCommand(command string) (string, error) {
+	if err := sm.drainStdout(); err != nil {
+		return "", fmt.Errorf("failed to drain stdout: %w", err)
+	}
 	scanner := bufio.NewScanner(*sm.stdoutPipe)
 	scanner.Buffer(make([]byte, 4096), 1024*1024)
 
@@ -397,4 +400,34 @@ func (sm *ServerManager) sendCommand(command string) (string, error) {
 	case <-time.After(5 * time.Second):
 		return "", errors.New("timeout waiting for server response")
 	}
+}
+
+func (sm *ServerManager) drainStdout() error {
+	// Set a short read deadline to make reads non-blocking
+	if conn, ok := (*sm.stdoutPipe).(interface{ SetReadDeadline(time.Time) error }); ok {
+		err := conn.SetReadDeadline(time.Now().Add(50 * time.Millisecond))
+		if err != nil {
+			return err
+		}
+		err = conn.SetReadDeadline(time.Time{})
+		if err != nil { // reset
+			return err
+		}
+	}
+
+	scanner := bufio.NewScanner(*sm.stdoutPipe)
+	scanner.Buffer(make([]byte, 4096), 1024*1024)
+
+	for scanner.Scan() {
+		// Discard buffered output
+	}
+
+	// Reset deadline after draining
+	if conn, ok := (*sm.stdoutPipe).(interface{ SetReadDeadline(time.Time) error }); ok {
+		if err := conn.SetReadDeadline(time.Time{}); err != nil {
+			return err
+		}
+	}
+
+	return scanner.Err()
 }

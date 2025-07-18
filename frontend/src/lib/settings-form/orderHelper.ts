@@ -27,7 +27,5 @@ export function sortObjectByOrder(obj: SortableObject): SortableObject {
     }
   }
 
-  delete obj.Order;
-
   return obj;
 }

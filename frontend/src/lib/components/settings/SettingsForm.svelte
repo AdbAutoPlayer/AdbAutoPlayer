@@ -49,10 +49,14 @@
     sectionKey: string;
     sectionSettings: ConstraintSection;
   }> = $derived(
-    Object.entries(constraints).map(([sectionKey, sectionSettings]) => ({
-      sectionKey,
-      sectionSettings: sectionSettings,
-    })),
+    Object.entries(constraints)
+      .filter(([sectionKey]) => sectionKey !== "Order")
+      .map(([sectionKey, sectionSettings]) => ({
+        sectionKey,
+        sectionSettings: Object.fromEntries(
+          Object.entries(sectionSettings).filter(([key]) => key !== "Order"),
+        ),
+      })),
   );
 
   function getInputType(sectionKey: string, key: string): string {

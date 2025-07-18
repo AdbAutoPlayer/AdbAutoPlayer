@@ -44,9 +44,10 @@ class IPCModelConverter:
         """Convert GameMetadata to GameGUIOptions for GUI IPC."""
         categories = IPCModelConverter._extract_categories_from_game(game)
         menu_options = IPCModelConverter._build_menu_options(module, game)
-        categories.update(
-            IPCModelConverter._extract_categories_from_menu_options(menu_options)
+        categories_from_menu = IPCModelConverter._extract_categories_from_menu_options(
+            menu_options
         )
+        categories = list(dict.fromkeys(categories + categories_from_menu))
         constraints = IPCModelConverter._extract_constraints_from_game(game)
 
         return GameGUIOptions(
@@ -60,18 +61,16 @@ class IPCModelConverter:
         )
 
     @staticmethod
-    def _extract_categories_from_game(game: GameMetadata) -> set[str]:
-        """Extract categories from game metadata."""
-        categories: set[str] = set()
+    def _extract_categories_from_game(game: GameMetadata) -> list[str]:
+        """Extract categories from game metadata, preserving order and uniqueness."""
+        categories: dict[str, None] = {}
 
         if game.gui_metadata and game.gui_metadata.categories:
             for value in game.gui_metadata.categories:
-                if isinstance(value, StrEnum):
-                    categories.add(value.value)
-                else:
-                    categories.add(value)
+                key = value.value if isinstance(value, StrEnum) else value
+                categories[key] = None  # insertion order is preserved
 
-        return categories
+        return list(categories.keys())
 
     @staticmethod
     def _build_menu_options(module: str, game: GameMetadata) -> list[MenuOption]:
@@ -107,15 +106,15 @@ class IPCModelConverter:
     @staticmethod
     def _extract_categories_from_menu_options(
         menu_options: list[MenuOption],
-    ) -> set[str]:
-        """Extract categories from menu options."""
-        categories: set[str] = set()
+    ) -> list[str]:
+        """Extract categories from menu options, preserving order and uniqueness."""
+        categories: dict[str, None] = {}
 
         for menu_option in menu_options:
             if menu_option.category:
-                categories.add(menu_option.category)
+                categories[menu_option.category] = None  # Insert while preserving order
 
-        return categories
+        return list(categories.keys())
 
     @staticmethod
     def _extract_constraints_from_game(game: GameMetadata) -> dict | None:

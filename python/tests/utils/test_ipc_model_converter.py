@@ -86,7 +86,7 @@ class TestIPCModelConverter:
 
         categories = IPCModelConverter._extract_categories_from_game(game)
 
-        assert categories == set()
+        assert categories == list()
 
     @patch("adb_auto_player.registries.COMMAND_REGISTRY")
     def test_get_menu_options_from_commands_empty_module(self, mock_registry):
@@ -120,9 +120,9 @@ class TestIPCModelConverter:
     ):
         """Test conversion with no config file path."""
         # Setup mocks
-        mock_extract_game_categories.return_value = set()
+        mock_extract_game_categories.return_value = list()
         mock_build_menu.return_value = []
-        mock_extract_menu_categories.return_value = set()
+        mock_extract_menu_categories.return_value = list()
         mock_extract_constraints.return_value = None
 
         game = GameMetadata(name="Test Game", config_file_path=None)
