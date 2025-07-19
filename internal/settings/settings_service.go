@@ -19,6 +19,7 @@ var (
 type SettingsService struct {
 	generalSettings     GeneralSettings
 	generalSettingsPath *string
+	mu                  sync.RWMutex
 }
 
 // GetService returns the singleton instance of SettingsService
@@ -35,6 +36,8 @@ func GetService() *SettingsService {
 
 // LoadGeneralSettings reloads the general settings
 func (s *SettingsService) LoadGeneralSettings() GeneralSettings {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.generalSettings = loadGeneralSettingsOrDefault(s.generalSettingsPath)
 	updateLogLevel(s.generalSettings.Logging.Level)
 	return s.GetGeneralSettings()
@@ -42,6 +45,8 @@ func (s *SettingsService) LoadGeneralSettings() GeneralSettings {
 
 // GetGeneralSettings returns the current general settings
 func (s *SettingsService) GetGeneralSettings() GeneralSettings {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.generalSettings
 }
 
@@ -56,11 +61,14 @@ func (s *SettingsService) GetGeneralSettingsForm() map[string]interface{} {
 }
 
 func (s *SettingsService) SaveGeneralSettings(settings GeneralSettings) error {
+	s.mu.Lock()
 	if err := SaveTOML[GeneralSettings](*s.generalSettingsPath, &settings); err != nil {
+		s.mu.Unlock()
 		app.Error(err.Error())
 		return err
 	}
 	s.generalSettings = settings
+	s.mu.Unlock()
 
 	if settings.UI.NotificationsEnabled && runtime.GOOS != "windows" {
 		logger.Get().Warningf("Setting: 'Enable Notifications' only works on Windows")

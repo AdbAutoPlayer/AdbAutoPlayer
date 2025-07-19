@@ -78,7 +78,7 @@ func (s *IPCService) StopTask(msg ...string) {
 	logger.Get().Warningf("%s", message)
 }
 
-func (s *IPCService) StartTask(args []string, notifyWhenTaskEnds bool, logLevel ...uint8) error {
+func (s *IPCService) StartTask(args []string, notifyWhenTaskEnds bool, logLevel ...uint32) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 

@@ -8,15 +8,16 @@ import (
 	"fmt"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"sync"
+	"sync/atomic"
 )
 
 type FrontendLogger struct {
-	LogLevel  uint8
+	logLevel  *atomic.Uint32
 	sanitizer *path.PathSanitizer
 }
 
 var (
-	logLevelPriority = map[ipc.LogLevel]uint8{
+	logLevelMap = map[ipc.LogLevel]uint32{
 		ipc.LogLevelDebug:   2,
 		ipc.LogLevelInfo:    3,
 		ipc.LogLevelWarning: 4,
@@ -28,15 +29,19 @@ var (
 	once     sync.Once
 )
 
-func newFrontendLogger() *FrontendLogger {
+func newFrontendLogger(level ipc.LogLevel) *FrontendLogger {
+	a := new(atomic.Uint32)
+	a.Store(logLevelMap[level])
+
 	return &FrontendLogger{
+		logLevel:  a,
 		sanitizer: path.NewPathSanitizer(),
 	}
 }
 
 func Get() *FrontendLogger {
 	once.Do(func() {
-		instance = newFrontendLogger()
+		instance = newFrontendLogger(ipc.LogLevelError)
 	})
 	return instance
 }
@@ -65,26 +70,30 @@ func (l *FrontendLogger) buildLogMessage(level ipc.LogLevel, format string, a ..
 }
 
 func (l *FrontendLogger) SetLogLevelFromString(logLevel string) {
-	l.LogLevel = getLogLevelFromString(logLevel)
+	l.logLevel.Store(getLogLevelFromString(logLevel))
 }
 
-func getLogLevelFromString(logLevel string) uint8 {
+func (l *FrontendLogger) SetLogLevel(level uint32) {
+	l.logLevel.Store(level)
+}
+
+func getLogLevelFromString(logLevel string) uint32 {
 	switch logLevel {
 	case string(ipc.LogLevelDebug):
-		return logLevelPriority[ipc.LogLevelDebug]
+		return logLevelMap[ipc.LogLevelDebug]
 	case string(ipc.LogLevelWarning):
-		return logLevelPriority[ipc.LogLevelWarning]
+		return logLevelMap[ipc.LogLevelWarning]
 	case string(ipc.LogLevelError):
-		return logLevelPriority[ipc.LogLevelError]
+		return logLevelMap[ipc.LogLevelError]
 	case string(ipc.LogLevelFatal):
-		return logLevelPriority[ipc.LogLevelFatal]
+		return logLevelMap[ipc.LogLevelFatal]
 	default:
-		return logLevelPriority[ipc.LogLevelInfo]
+		return logLevelMap[ipc.LogLevelInfo]
 	}
 }
 
 func (l *FrontendLogger) shouldLog(level ipc.LogLevel) bool {
-	return l.LogLevel <= logLevelPriority[level]
+	return l.logLevel.Load() <= logLevelMap[level]
 }
 
 func (l *FrontendLogger) LogMessage(message ipc.LogMessage) {
@@ -92,6 +101,10 @@ func (l *FrontendLogger) LogMessage(message ipc.LogMessage) {
 		return
 	}
 	l.logMessage(message)
+}
+
+func (l *FrontendLogger) GetLogLevel() uint32 {
+	return l.logLevel.Load()
 }
 
 func (l *FrontendLogger) logMessage(message ipc.LogMessage) {

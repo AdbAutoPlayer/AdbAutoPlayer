@@ -17,22 +17,22 @@ func TestFrontendLoggerSingleton(t *testing.T) {
 func TestLogLevelFromString(t *testing.T) {
 	tests := []struct {
 		input    string
-		expected uint8
+		expected uint32
 	}{
-		{string(ipc.LogLevelDebug), logLevelPriority[ipc.LogLevelDebug]},
-		{string(ipc.LogLevelInfo), logLevelPriority[ipc.LogLevelInfo]},
-		{string(ipc.LogLevelWarning), logLevelPriority[ipc.LogLevelWarning]},
-		{string(ipc.LogLevelError), logLevelPriority[ipc.LogLevelError]},
-		{string(ipc.LogLevelFatal), logLevelPriority[ipc.LogLevelFatal]},
-		{"unknown", logLevelPriority[ipc.LogLevelInfo]},
+		{string(ipc.LogLevelDebug), logLevelMap[ipc.LogLevelDebug]},
+		{string(ipc.LogLevelInfo), logLevelMap[ipc.LogLevelInfo]},
+		{string(ipc.LogLevelWarning), logLevelMap[ipc.LogLevelWarning]},
+		{string(ipc.LogLevelError), logLevelMap[ipc.LogLevelError]},
+		{string(ipc.LogLevelFatal), logLevelMap[ipc.LogLevelFatal]},
+		{"unknown", logLevelMap[ipc.LogLevelInfo]},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
 			logger := Get()
 			logger.SetLogLevelFromString(tt.input)
-			if logger.LogLevel != tt.expected {
-				t.Errorf("Expected level %d for input %s, got %d", tt.expected, tt.input, logger.LogLevel)
+			if logger.GetLogLevel() != tt.expected {
+				t.Errorf("Expected level %d for input %s, got %d", tt.expected, tt.input, logger.logLevel)
 			}
 		})
 	}
