@@ -37,10 +37,11 @@ func GetService() *SettingsService {
 // LoadGeneralSettings reloads the general settings
 func (s *SettingsService) LoadGeneralSettings() GeneralSettings {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.generalSettings = loadGeneralSettingsOrDefault(s.generalSettingsPath)
-	updateLogLevel(s.generalSettings.Logging.Level)
-	return s.GetGeneralSettings()
+	generalSettings := loadGeneralSettingsOrDefault(s.generalSettingsPath)
+	s.generalSettings = generalSettings
+	s.mu.Unlock()
+	updateLogLevel(generalSettings.Logging.Level)
+	return generalSettings
 }
 
 // GetGeneralSettings returns the current general settings

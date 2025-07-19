@@ -17,9 +17,11 @@ import (
 	"path/filepath"
 	stdruntime "runtime"
 	"strings"
+	"sync"
 )
 
 type GamesService struct {
+	mu                     sync.Mutex
 	gameGUI                *ipc.GameGUI
 	lastOpenGameConfigPath string
 }
@@ -42,8 +44,12 @@ func (g *GamesService) GetGameGUI() (*ipc.GameGUI, error) {
 		return nil, err
 	}
 
+	g.mu.Lock()
 	g.gameGUI = &gameGUI
-	return g.gameGUI, nil
+	result := g.gameGUI
+	g.mu.Unlock()
+
+	return result, nil
 }
 
 func (g *GamesService) Debug() error {
@@ -209,8 +215,10 @@ func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interfa
 	}
 	configPath := path.GetFirstPathThatExists(paths)
 
+	g.mu.Lock()
 	if configPath == "" {
 		g.lastOpenGameConfigPath = paths[0]
+		g.mu.Unlock()
 		response := map[string]interface{}{
 			"settings":    map[string]interface{}{},
 			"constraints": game.Constraints,
@@ -220,10 +228,10 @@ func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interfa
 	}
 
 	g.lastOpenGameConfigPath = configPath
+	g.mu.Unlock()
 
 	gameConfig, err = settings.LoadTOML[map[string]interface{}](configPath)
 	if err != nil {
-
 		return nil, err
 	}
 
@@ -235,7 +243,9 @@ func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interfa
 }
 
 func (g *GamesService) SaveGameSettings(gameSettings map[string]interface{}) (*ipc.GameGUI, error) {
+	g.mu.Lock()
 	defer app.Emit(event_names.GameSettingsUpdated)
+	defer g.mu.Unlock()
 
 	if g.lastOpenGameConfigPath == "" || nil == g.gameGUI {
 		return nil, errors.New("cannot save game settings: no game settings found")
