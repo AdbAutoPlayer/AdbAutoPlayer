@@ -9,7 +9,7 @@ from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.image_manipulation import Cropping
 from adb_auto_player.models import ConfidenceValue
-from adb_auto_player.models.geometry import Coordinates, Point
+from adb_auto_player.models.geometry import Coordinates, Point, PointOutsideDisplay
 from adb_auto_player.models.image_manipulation import CropRegions
 
 from ..base import AFKJourneyBase
@@ -254,23 +254,11 @@ class Fishing(AFKJourneyBase):
         return True
 
     def _passed_input_delay_check(self) -> bool:
-        # Create a custom Point that (-1, -1)
-        class PointOffScreen(Coordinates):
-            @property
-            def x(self) -> int:
-                return -1
-
-            @property
-            def y(self) -> int:
-                return -1
-
-        point_off_screen = PointOffScreen()
-
         total_time = 0.0
         iterations = 10
         for _ in range(iterations):
             start_time = time.time()
-            self.tap(point_off_screen, log_message=None)
+            self.tap(PointOutsideDisplay(), log_message=None)
             total_time += (time.time() - start_time) * 1000
         average_time = total_time / iterations
         if average_time > MAX_AVG_INPUT_DELAY_IN_MS:

@@ -4,9 +4,9 @@ from enum import StrEnum
 from pathlib import Path
 from unittest.mock import patch
 
+from adb_auto_player.ipc_util import IPCModelConverter
 from adb_auto_player.models.commands import MenuItem
 from adb_auto_player.models.registries import GameMetadata
-from adb_auto_player.util import IPCModelConverter
 
 
 class TestCategory(StrEnum):
@@ -37,7 +37,7 @@ class TestIPCModelConverter:
         assert result is not None
         assert result.label == "Test Command"
         assert result.args == ["arg1", "arg2"]
-        assert result.translated is False
+        assert result.custom_label is None
         assert result.category == "test"
         assert result.tooltip == "Test tooltip"
 
@@ -66,8 +66,8 @@ class TestIPCModelConverter:
 
     @patch.object(IPCModelConverter, "_resolve_label_from_config")
     def test_convert_menu_item_to_menu_option_with_translation(self, mock_resolve):
-        """Test conversion with label translation."""
-        mock_resolve.return_value = "Translated Label"
+        """Test conversion with customizable label."""
+        mock_resolve.return_value = "Custom Label"
 
         menu_item = MenuItem(label="Original Label", display_in_gui=True)
         game_metadata = GameMetadata(name="Test Game")
@@ -77,8 +77,8 @@ class TestIPCModelConverter:
         )
 
         assert result is not None
-        assert result.label == "Translated Label"
-        assert result.translated is True
+        assert result.label == "Original Label"
+        assert result.custom_label == "Custom Label"
 
     def test_extract_categories_from_game_no_gui_metadata(self):
         """Test category extraction with no GUI metadata."""
@@ -86,7 +86,7 @@ class TestIPCModelConverter:
 
         categories = IPCModelConverter._extract_categories_from_game(game)
 
-        assert categories == set()
+        assert categories == list()
 
     @patch("adb_auto_player.registries.COMMAND_REGISTRY")
     def test_get_menu_options_from_commands_empty_module(self, mock_registry):
@@ -120,9 +120,9 @@ class TestIPCModelConverter:
     ):
         """Test conversion with no config file path."""
         # Setup mocks
-        mock_extract_game_categories.return_value = set()
+        mock_extract_game_categories.return_value = list()
         mock_build_menu.return_value = []
-        mock_extract_menu_categories.return_value = set()
+        mock_extract_menu_categories.return_value = list()
         mock_extract_constraints.return_value = None
 
         game = GameMetadata(name="Test Game", config_file_path=None)

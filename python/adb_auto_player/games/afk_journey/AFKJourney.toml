@@ -3,7 +3,7 @@ Attempts = 5
 Formations = 7
 'Skip Manual Formations' = true
 'Spend Gold' = true
-'Start with current Formation' = true
+'Start with current Formation' = false
 'Suggested Formations' = true
 
 ['Arcane Labyrinth']
@@ -13,13 +13,28 @@ Difficulty = 13
 ['Claim AFK Rewards']
 'Claim Stage Rewards' = true
 
+['Custom Routine 1']
+'Display Name' = ''
+Repeat = true
+'Task List' = []
+
+['Custom Routine 2']
+'Display Name' = ''
+Repeat = true
+'Task List' = []
+
+['Custom Routine 3']
+'Display Name' = ''
+Repeat = true
+'Task List' = []
+
 [Dailies]
 'Arena Battle' = true
 'Buy All Affinity' = true
 'Buy Discount Affinity' = true
-'Single Pull' = true
 'Buy Temporal Essences' = false
 'Essence Buy Count' = 1
+'Single Pull' = true
 
 ['Dream Realm']
 'Spend Gold' = true
@@ -27,9 +42,8 @@ Difficulty = 13
 ["Dura's Trials"]
 Attempts = 5
 Formations = 7
-'Skip Manual Formations' = true
 'Spend Gold' = true
-'Start with current Formation' = true
+'Start with current Formation' = false
 'Suggested Formations' = true
 
 [General]
@@ -41,11 +55,9 @@ Attempts = 5
 Formations = 7
 'Skip Manual Formations' = true
 'Spend Gold' = true
-'Start with current Formation' = true
+'Start with current Formation' = false
 'Suggested Formations' = true
 Towers = ['Lightbearer', 'Wilder', 'Graveborn', 'Mauler']
 
-['My Custom Routine']
-'Daily Tasks' = []
-'Repeating Tasks' = ['Claim AFK Rewards', 'Level Up All Heroes', 'Season Talent Stages', 'AFK Stages', 'Season Legend Trial']
-'Skip Daily Tasks Today' = false
+['Titan Reaver Proxy Battles']
+'Titan Reaver Proxy Battle Limit' = 50

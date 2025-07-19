@@ -2,21 +2,21 @@
 
 import logging
 import re
+from functools import lru_cache
 from time import sleep
 from typing import Any
 
 from adb_auto_player import (
     Game,
-    TemplateMatchParams,
 )
-from adb_auto_player.decorators import register_game
+from adb_auto_player.decorators import register_cache, register_game
 from adb_auto_player.exceptions import (
     AutoPlayerWarningError,
     GameActionFailedError,
     GameTimeoutError,
 )
 from adb_auto_player.models import ConfidenceValue
-from adb_auto_player.models.decorators import GameGUIMetadata
+from adb_auto_player.models.decorators import CacheGroup, GameGUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util import SummaryGenerator
@@ -71,6 +71,8 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         self.config = Config.from_toml(self._get_config_file_path())
         return self.config
 
+    @register_cache(CacheGroup.GAME_SETTINGS)
+    @lru_cache(maxsize=1)
     def get_config(self) -> Config:
         """Get config."""
         if self.config is None:
@@ -113,14 +115,12 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         if not use_suggested_formations:
             formations = 1
 
-        if (
-            self._get_config_attribute_from_mode(
-                "use_current_formation_before_suggested_formation"
-            )
-            and self._handle_single_stage()
+        if self._get_config_attribute_from_mode(
+            "use_current_formation_before_suggested_formation"
         ):
             logging.info("Battle using current Formation.")
-            return True
+            if self._handle_single_stage():
+                return True
 
         while self.battle_state.formation_num < formations:
             self.battle_state.formation_num += 1
@@ -132,14 +132,6 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                 )
             ):
                 continue
-            else:
-                _ = self.wait_for_any_template(
-                    templates=[
-                        "battle/records.png",
-                        "battle/formations_icon.png",
-                    ],
-                    crop_regions=CropRegions(top=0.5),
-                )
 
             if self._handle_single_stage():
                 return True
@@ -348,9 +340,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             self._tap_coordinates_till_template_disappears(
                 coordinates=Point(x=850, y=1780),
                 scale=True,
-                template_match_params=TemplateMatchParams(
-                    template=result.template,
-                ),
+                template=result.template,
             )
         except GameActionFailedError:
             logging.warning("Failed to start Battle, are no Heroes selected?")

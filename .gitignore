@@ -1,3 +1,11 @@
+# Wails 3 default .gitignore
+.task
+bin
+frontend/dist
+frontend/node_modules
+build/linux/appimage/build
+build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
+
 build/bin
 *.zip
 AdbAutoPlayer
@@ -11,3 +19,4 @@ debug
 coverage.xml
 junit.xml
 .coverage
+adb-auto-player.exe
