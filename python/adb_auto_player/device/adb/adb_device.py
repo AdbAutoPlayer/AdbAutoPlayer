@@ -56,7 +56,7 @@ class AdbDeviceWrapper:
         x1, y1, x2, y2 = map(str, [sx, sy, ex, ey])
         return self.shell(["input", "swipe", x1, y1, x2, y2, str(int(duration * 1000))])
 
-    def shell_no_retry(
+    def shell_unsafe(
         self,
         cmdargs: str | list | tuple,
         stream: bool = False,
@@ -64,7 +64,10 @@ class AdbDeviceWrapper:
         encoding: str | None = "utf-8",
         rstrip=True,
     ) -> AdbConnection | str | bytes:
-        """Shell without retry."""
+        """Shell without retry.
+
+        Should not be used really unless you have a good reason.
+        """
         output = self.d.shell(
             cmdargs=cmdargs,
             stream=stream,

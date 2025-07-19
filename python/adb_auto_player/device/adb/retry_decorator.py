@@ -1,4 +1,5 @@
 import logging
+import subprocess
 import time
 from collections.abc import Callable
 from functools import wraps
@@ -14,7 +15,7 @@ def adb_retry(func: Callable) -> Callable:
     """Decorator that adds retry logic with ADB process killing.
 
     1. Try 2 times normally
-    2. If that fails, kill ADB process and recreate device
+    2. If that fails, kill ADB server and recreate device
     3. Try 2 more times
     """
 
@@ -49,9 +50,9 @@ def adb_retry(func: Callable) -> Callable:
 
         logging.debug(
             f"{func.__name__} initial attempts failed, "
-            "killing ADB process and recreating device"
+            "attempting to restart ADB server and recreate device"
         )
-        _kill_adb_process()
+        _restart_adb_server()
 
         new_device = _recreate_device(self.d)
         if new_device is not None:
@@ -88,18 +89,60 @@ def _recreate_device(d: AdbDevice) -> AdbDevice | None:
     return AdbClientHelper.get_adb_device(d.serial)
 
 
-def _kill_adb_process():
-    """Kill the ADB process directly instead of using adb kill-server."""
+def _restart_adb_server() -> None:
+    """Restart ADB server, first trying kill-server command, then process killing."""
+    if _try_adb_kill_server():
+        logging.debug("ADB server killed successfully using kill-server command")
+        return
+
+    logging.debug("kill-server command failed, attempting to kill ADB process directly")
+    _kill_adb_process()
+
+
+def _try_adb_kill_server(timeout: int = 5) -> bool:
+    """Try to kill ADB server using adb kill-server command.
+
+    Args:
+        timeout: Timeout in seconds for the command
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        result = subprocess.run(
+            ["adb", "kill-server"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        return result.returncode == 0
+    except (
+        subprocess.TimeoutExpired,
+        subprocess.CalledProcessError,
+        FileNotFoundError,
+    ) as e:
+        logging.debug(f"adb kill-server command failed: {e}")
+        return False
+
+
+def _kill_adb_process() -> None:
+    """Kill the ADB process directly using psutil."""
     for proc in psutil.process_iter(["name"]):
         if proc.info["name"].lower() in ["adb", "adb.exe"]:
             try:
                 proc.terminate()
                 proc.wait(timeout=3)
+                logging.debug("ADB process terminated successfully")
+                return
             except psutil.NoSuchProcess:
                 return
             except psutil.TimeoutExpired:
                 proc.kill()
+                logging.debug("ADB process killed forcefully")
+                return
             except psutil.AccessDenied:
                 raise GenericAdbUnrecoverableError(
                     "Access Denied: cannot restart ADB Server."
                 )
+    return

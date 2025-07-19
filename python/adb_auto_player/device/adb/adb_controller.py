@@ -236,7 +236,7 @@ def _check_orientation(d: AdbDeviceWrapper) -> Orientation:
     # Check 1: SurfaceOrientation (most reliable)
     try:
         orientation_check = str(
-            d.shell_no_retry("dumpsys input | grep 'SurfaceOrientation'")
+            d.shell("dumpsys input | grep 'SurfaceOrientation'")
         ).strip()
         if orientation_check:
             if "Orientation: 0" in orientation_check:
@@ -252,7 +252,7 @@ def _check_orientation(d: AdbDeviceWrapper) -> Orientation:
     # Check 2: Current rotation (fallback)
     try:
         rotation_check = str(
-            d.shell_no_retry("dumpsys window | grep mCurrentRotation")
+            d.shell_unsafe("dumpsys window | grep mCurrentRotation")
         ).strip()
         if rotation_check:
             if "ROTATION_0" in rotation_check:
@@ -266,7 +266,7 @@ def _check_orientation(d: AdbDeviceWrapper) -> Orientation:
     # Check 3: Display orientation (last resort)
     try:
         display_check = str(
-            d.shell_no_retry("dumpsys display | grep -E 'orientation'")
+            d.shell_unsafe("dumpsys display | grep -E 'orientation'")
         ).strip()
         if display_check:
             if "orientation=0" in display_check:
