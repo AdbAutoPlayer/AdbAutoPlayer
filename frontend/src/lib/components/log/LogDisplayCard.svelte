@@ -215,7 +215,7 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="flex min-h-6 flex-grow flex-col p-4">
+<div class="flex min-h-6 flex-grow flex-col pr-4 pb-4 pl-4">
   <div
     class="relative h-full flex-grow flex-col card bg-surface-100-900/50 p-4"
   >

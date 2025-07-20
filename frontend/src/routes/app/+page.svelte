@@ -283,7 +283,7 @@
   });
 </script>
 
-<h1 class="pb-4 text-center h1 text-3xl select-none">
+<h1 class="pb-2 text-center h1 text-3xl select-none">
   {$t(activeGame?.game_title || "Start any supported Game!")}
 </h1>
 <div

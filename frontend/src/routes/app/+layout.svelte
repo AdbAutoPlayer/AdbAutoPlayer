@@ -25,7 +25,7 @@
     <UpdateContainer />
     <LogoSticky />
   </div>
-  <main class="w-full p-4">
+  <main class="w-full pt-2 pr-4 pb-4 pl-4">
     {@render children()}
   </main>
   <LogDisplayCard />
