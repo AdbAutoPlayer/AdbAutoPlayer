@@ -39,7 +39,7 @@
     <Accordion multiple>
       {#each categories as category}
         {#if categorizedButtons[category] && categorizedButtons[category].length > 0}
-          <Accordion.Item value={category}>
+          <Accordion.Item value={category} controlPadding="py-1 px-2">
             {#snippet control()}<span class="h5">{$t(category)}</span>{/snippet}
             {#snippet panel()}
               <div class="flex flex-wrap justify-center gap-4">
