@@ -28,7 +28,7 @@
 	},
 	"dependencies": {
 		"@tailwindcss/vite": "^4.1.11",
-		"marked": "^16.0.0",
+		"marked": "^16.1.1",
 		"posthog-js": "^1.257.0",
 		"tailwindcss": "^4.1.11"
 	}
