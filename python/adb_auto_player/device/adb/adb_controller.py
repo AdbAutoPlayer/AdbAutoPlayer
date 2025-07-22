@@ -96,7 +96,6 @@ class AdbController:
         if "\n" in app:
             app = app.split("\n")[0].strip()
         if app:
-            logging.debug(f"Currently running app: {app}")
             return app
         return None
 
@@ -208,6 +207,8 @@ class AdbController:
         )
 
     @property
+    @register_cache(CacheGroup.ADB)
+    @lru_cache(maxsize=1)
     def is_controlling_emulator(self):
         """Whether the controlled device is an emulator or not."""
         result = str(self.d.shell('getprop | grep "Build"'))

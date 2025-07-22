@@ -6,10 +6,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import DEFAULT, patch
 
-from adb_auto_player import (
-    Game,
-)
 from adb_auto_player.exceptions import GameTimeoutError
+from adb_auto_player.game import Game
 from adb_auto_player.image_manipulation import IO
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import TemplateMatchResult

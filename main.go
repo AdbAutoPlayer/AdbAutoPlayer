@@ -49,6 +49,9 @@ func main() {
 			application.NewService(&games.GamesService{}),
 			application.NewService(notifications.GetService()),
 		},
+		OnShutdown: func() {
+			ipcService.Shutdown()
+		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 			// Really no need to log this

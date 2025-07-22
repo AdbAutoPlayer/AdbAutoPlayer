@@ -106,6 +106,23 @@ func (s *IPCService) Exec(args []string) (string, error) {
 	return "", errors.New("no IPC Process Manager is running")
 }
 
+func (s *IPCService) Shutdown() {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	if s.STDIOManager == nil {
+		return
+	}
+
+	if sm := s.STDIOManager.serverManager; sm != nil && sm.process != nil {
+		_ = sm.process.Kill()
+	}
+
+	if r := s.STDIOManager.running; r != nil {
+		_ = r.Kill()
+	}
+}
+
 func getCommand(isDev bool, name string, args ...string) (*exec.Cmd, error) {
 	if isDev {
 		if _, err := os.Stat(name); os.IsNotExist(err) {

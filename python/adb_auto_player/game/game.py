@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 import threading
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum, auto
@@ -39,7 +39,7 @@ from adb_auto_player.models.template_matching import MatchMode, TemplateMatchRes
 from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY
 from adb_auto_player.settings import ConfigLoader
 from adb_auto_player.template_matching import TemplateMatcher
-from adb_auto_player.util import Execute
+from adb_auto_player.util import Execute, StringHelper
 from PIL import Image
 from pydantic import BaseModel
 
@@ -71,7 +71,7 @@ class _SwipeParams:
     duration: float = 1.0
 
 
-class Game:
+class Game(ABC):
     """Generic Game class."""
 
     def __init__(self) -> None:
@@ -89,7 +89,6 @@ class Game:
         self._config_file_path: Path | None = None
         self._debug_screenshot_counter: int = 0
         self._device: AdbController | None = None
-        self._resolution: tuple[int, int] | None = None
         self._scale_factor: float | None = None
         self._stream: DeviceStream | None = None
         self._template_dir_path: Path | None = None
@@ -104,57 +103,8 @@ class Game:
         """Required method to return the game configuration."""
         ...
 
-    def is_supported_resolution(self, width: int, height: int) -> bool:
-        """Return True if the resolution is supported."""
-        for supported_resolution in self.supported_resolutions:
-            if "x" in supported_resolution:
-                res_width, res_height = map(int, supported_resolution.split("x"))
-                if res_width == width and res_height == height:
-                    return True
-            elif ":" in supported_resolution:
-                aspect_width, aspect_height = map(int, supported_resolution.split(":"))
-                if width * aspect_height == height * aspect_width:
-                    return True
-        return False
-
-    def check_requirements(self, display_info: DisplayInfo | None) -> None:
-        """Validates Device properties such as resolution and orientation.
-
-        Raises:
-             UnsupportedResolutionException: Device resolution is not supported.
-        """
-        if display_info is None:
-            display_info = self.device.get_display_info()
-
-        if not self.is_supported_resolution(display_info.width, display_info.height):
-            raise UnsupportedResolutionError(
-                "This bot only supports these resolutions: "
-                f"{', '.join(self.supported_resolutions)}"
-            )
-
-        if (
-            self.supports_portrait
-            and not self.supports_landscape
-            and display_info.orientation == Orientation.LANDSCAPE
-        ):
-            raise UnsupportedResolutionError(
-                "This bot only works in Portrait mode: "
-                "https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/"
-                "troubleshoot.html#this-bot-only-works-in-portrait-mode"
-            )
-
-        if (
-            self.supports_landscape
-            and not self.supports_portrait
-            and display_info.orientation == Orientation.PORTRAIT
-        ):
-            raise UnsupportedResolutionError(
-                "This bot only works in Landscape mode: "
-                "https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/"
-                "troubleshoot.html#this-bot-only-works-in-portrait-mode"
-            )
-
-    def get_scale_factor(self) -> float:
+    @property
+    def scale_factor(self) -> float:
         """Get the scale factor of the current resolution relative to a reference.
 
         The reference resolution is (1080, 1920) and the scale factor is the width of
@@ -172,20 +122,17 @@ class Game:
         resolution_str = self.supported_resolutions[0]
         width, height = map(int, resolution_str.split("x"))
         reference_resolution = (width, height)
-        if self.resolution == reference_resolution:
+        if self.display_info.dimensions == reference_resolution:
             self._scale_factor = 1.0
         else:
-            self._scale_factor = self.resolution[0] / reference_resolution[0]
+            self._scale_factor = self.display_info.width / reference_resolution[0]
         logging.debug(f"scale_factor: {self._scale_factor}")
         return self._scale_factor
 
     @property
-    def resolution(self) -> tuple[int, int]:
-        """Get resolution."""
-        if self._resolution is None:
-            display_info = self.device.get_display_info()
-            self._resolution = (display_info.width, display_info.height)
-        return self._resolution
+    def display_info(self) -> DisplayInfo:
+        """Resolves and returns DisplayInfo instance."""
+        return self.device.get_display_info()
 
     @property
     def device(self) -> AdbController:
@@ -193,73 +140,6 @@ class Game:
         if self._device is None:
             self._device = AdbController()
         return self._device
-
-    def stop_stream(self):
-        """Stop the device stream."""
-        if self._stream:
-            self._stream.stop()
-            self._stream = None
-
-    def open_eyes(self, device_streaming: bool = True) -> None:
-        """Give the bot eyes.
-
-        Set the device for the game and start the device stream.
-
-        Args:
-            device_streaming (bool, optional): Whether to start the device stream.
-        """
-        suggested_resolution: str | None = next(
-            (res for res in self.supported_resolutions if "x" in res), None
-        )
-        display_info = self.device.get_display_info()
-        if (
-            suggested_resolution
-            and suggested_resolution != display_info.resolution
-            and ConfigLoader.main_config().get("device", {}).get("wm_size", False)
-        ):
-            self.device.set_display_size(suggested_resolution)
-        self.check_requirements(display_info=display_info)
-
-        config_streaming = (
-            ConfigLoader.main_config().get("device", {}).get("streaming", True)
-        )
-        if device_streaming and not config_streaming:
-            logging.warning("Device Streaming is disabled in General Settings")
-
-        if config_streaming and device_streaming:
-            self.start_stream()
-            height, width = self.get_screenshot().shape[:2]
-            if (width, height) != self.resolution:
-                logging.warning(
-                    f"Device Stream resolution ({width}, {height}) "
-                    f"does not match Display Resolution {self.resolution}, "
-                    "stopping Device Streaming"
-                )
-                self.stop_stream()
-
-        self._check_screenshot_matches_display_resolution()
-
-        if self.is_game_running():
-            return
-
-        if not self.package_name:
-            raise GameNotRunningOrFrozenError("Game is not running, exiting...")
-
-        logging.warning("Game is not running, trying to start the game.")
-        self.start_game()
-        if not self.is_game_running():
-            raise GameNotRunningOrFrozenError("Game could not be started, exiting...")
-        return
-
-    def _check_screenshot_matches_display_resolution(self) -> None:
-        height, width = self.get_screenshot().shape[:2]
-        if (width, height) != self.resolution:
-            logging.error(
-                f"Screenshot resolution ({width}, {height}) "
-                f"does not match Display Resolution {self.resolution}, "
-                f"exiting..."
-            )
-            sys.exit(1)
 
     def start_stream(self) -> None:
         """Start the device stream."""
@@ -288,6 +168,146 @@ class Game:
                 break
             sleep(1)
             time_waiting_for_stream_to_start += 1
+
+    def stop_stream(self):
+        """Stop the device stream."""
+        if self._stream:
+            self._stream.stop()
+            self._stream = None
+
+    def open_eyes(self, device_streaming: bool = True) -> None:
+        """Give the bot eyes.
+
+        Set the device for the game and start the device stream.
+
+        Args:
+            device_streaming (bool, optional): Whether to start the device stream.
+        """
+        self._set_device_resolution()
+        self._check_requirements()
+
+        self._start_device_streaming(device_streaming=device_streaming)
+        self._check_screenshot_matches_display_resolution(device_streaming_check=False)
+
+        if self.is_game_running():
+            return
+
+        if not self.package_name:
+            raise GameNotRunningOrFrozenError("Game is not running, exiting...")
+
+        logging.warning("Game is not running, trying to start the game.")
+        self.start_game()
+        if not self.is_game_running():
+            raise GameNotRunningOrFrozenError("Game could not be started, exiting...")
+        return
+
+    def _start_device_streaming(self, device_streaming: bool = True) -> None:
+        if self._stream and not device_streaming:
+            logging.debug("Stopping device streaming")
+            self._stream.stop()
+            return
+
+        if self._stream:
+            logging.debug("Device stream already started")
+            return
+
+        config_streaming = (
+            ConfigLoader.main_config().get("device", {}).get("streaming", True)
+        )
+        if device_streaming:
+            if not config_streaming:
+                logging.warning("Device Streaming is disabled in General Settings")
+                return
+
+            self.start_stream()
+            self._check_screenshot_matches_display_resolution(
+                device_streaming_check=True
+            )
+        return
+
+    def _set_device_resolution(self):
+        if not ConfigLoader.main_config().get("device", {}).get("wm_size", False):
+            return
+
+        suggested_resolution: str | None = next(
+            (res for res in self.supported_resolutions if "x" in res), None
+        )
+        if (
+            suggested_resolution
+            and suggested_resolution != self.display_info.resolution
+        ):
+            self.device.set_display_size(suggested_resolution)
+        return
+
+    def _is_supported_resolution(self) -> bool:
+        """Return True if the resolution is supported."""
+        width = self.display_info.width
+        height = self.display_info.height
+        for supported_resolution in self.supported_resolutions:
+            if "x" in supported_resolution:
+                res_width, res_height = map(int, supported_resolution.split("x"))
+                if res_width == width and res_height == height:
+                    return True
+            elif ":" in supported_resolution:
+                aspect_width, aspect_height = map(int, supported_resolution.split(":"))
+                if width * aspect_height == height * aspect_width:
+                    return True
+        return False
+
+    def _check_requirements(self) -> None:
+        """Validates Device properties such as resolution and orientation.
+
+        Raises:
+             UnsupportedResolutionException: Device resolution is not supported.
+        """
+        if not self._is_supported_resolution():
+            raise UnsupportedResolutionError(
+                "This bot only supports these resolutions: "
+                f"{', '.join(self.supported_resolutions)}"
+            )
+
+        if (
+            self.supports_portrait
+            and not self.supports_landscape
+            and self.display_info.orientation == Orientation.LANDSCAPE
+        ):
+            raise UnsupportedResolutionError(
+                "This bot only works in Portrait mode: "
+                "https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/"
+                "troubleshoot.html#this-bot-only-works-in-portrait-mode"
+            )
+
+        if (
+            self.supports_landscape
+            and not self.supports_portrait
+            and self.display_info.orientation == Orientation.PORTRAIT
+        ):
+            raise UnsupportedResolutionError(
+                "This bot only works in Landscape mode: "
+                "https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/"
+                "troubleshoot.html#this-bot-only-works-in-portrait-mode"
+            )
+
+    def _check_screenshot_matches_display_resolution(
+        self, device_streaming_check: bool = False
+    ) -> None:
+        height, width = self.get_screenshot().shape[:2]
+        if (width, height) != self.display_info.dimensions:
+            if device_streaming_check:
+                logging.warning(
+                    f"Device Stream resolution ({width}, {height}) "
+                    f"does not match Display Resolution {self.display_info}, "
+                    "stopping Device Streaming"
+                )
+                self.stop_stream()
+                return
+            logging.error(
+                f"Screenshot resolution ({width}, {height}) "
+                f"does not match Display Resolution {self.display_info}, "
+                f"exiting..."
+            )
+            sys.exit(1)
+        return
 
     def tap(
         self,
@@ -480,7 +500,7 @@ class Game:
                 grayscale=grayscale,
             )
 
-            if result is True:
+            if result:
                 return True
             return None
 
@@ -548,7 +568,7 @@ class Game:
     ) -> np.ndarray:
         return IO.load_image(
             image_path=self.get_template_dir_path() / template,
-            image_scale_factor=self.get_scale_factor(),
+            image_scale_factor=self.scale_factor,
             grayscale=grayscale,
         )
 
@@ -901,7 +921,7 @@ class Game:
         )
 
     def _swipe_direction(self, params: _SwipeParams) -> None:
-        rx, ry = self.resolution
+        rx, ry = self.display_info.dimensions
         direction = params.direction
 
         coord = params.x if direction.is_vertical else params.y
@@ -1051,7 +1071,9 @@ class Game:
             module = self._get_game_module()
 
             self._config_file_path = (
-                ConfigLoader.games_dir() / module / (snake_to_pascal(module) + ".toml")
+                ConfigLoader.games_dir()
+                / module
+                / (StringHelper.snake_to_pascal(module) + ".toml")
             )
             logging.debug(f"{module} config path: {self._config_file_path}")
 
@@ -1228,8 +1250,3 @@ class Game:
 
             sleep(0.5)
             time_since_last_tap += 0.5
-
-
-def snake_to_pascal(s: str):
-    """snake_case to PascalCase."""
-    return "".join(word.capitalize() for word in s.split("_"))

@@ -5,7 +5,7 @@ import inspect
 import pkgutil
 import sys
 
-from adb_auto_player import Game
+from adb_auto_player.game import Game
 
 __all__ = []
 

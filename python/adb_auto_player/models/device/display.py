@@ -25,3 +25,15 @@ class DisplayInfo:
     def resolution(self) -> str:
         """Return device resolution."""
         return str(self.width) + "x" + str(self.height)
+
+    @property
+    def dimensions(self) -> tuple[int, int]:
+        """Return device resolution tuple."""
+        return self.width, self.height
+
+    def __str__(self) -> str:
+        """Return a string representation of the display info."""
+        return (
+            f"DisplayInfo(width={self.width}, height={self.height}, "
+            f"orientation={self.orientation})"
+        )

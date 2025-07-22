@@ -6,15 +6,13 @@ from functools import lru_cache
 from time import sleep
 from typing import Any
 
-from adb_auto_player import (
-    Game,
-)
 from adb_auto_player.decorators import register_cache, register_game
 from adb_auto_player.exceptions import (
     AutoPlayerWarningError,
     GameActionFailedError,
     GameTimeoutError,
 )
+from adb_auto_player.game import Game
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import CacheGroup, GameGUIMetadata
 from adb_auto_player.models.geometry import Point
@@ -63,16 +61,15 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
 
     def start_up(self, device_streaming: bool = True) -> None:
         """Give the bot eyes."""
-        if self.device is None:
-            self.open_eyes(device_streaming=device_streaming)
+        self.open_eyes(device_streaming=device_streaming)
 
+    @register_cache(CacheGroup.GAME_SETTINGS)
+    @lru_cache(maxsize=1)
     def _load_config(self) -> Config:
         """Load config TOML."""
         self.config = Config.from_toml(self._get_config_file_path())
         return self.config
 
-    @register_cache(CacheGroup.GAME_SETTINGS)
-    @lru_cache(maxsize=1)
     def get_config(self) -> Config:
         """Get config."""
         if self.config is None:
@@ -227,6 +224,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             template="battle/records.png",
             crop_regions=CropRegions(right=0.5, top=0.8),
         )
+        sleep(0.5)
         self._tap_till_template_disappears(
             template="battle/records.png",
             crop_regions=CropRegions(right=0.5, top=0.8),
@@ -272,7 +270,6 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                 self.battle_state.formation_num += 1
             else:
                 self._click_confirm_on_popup()
-                logging.debug("Formation copied")
                 return True
         return False
 

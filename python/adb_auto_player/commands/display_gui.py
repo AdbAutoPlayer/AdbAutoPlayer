@@ -3,10 +3,11 @@ import logging
 import sys
 from functools import lru_cache
 
-from adb_auto_player import Game, games
+from adb_auto_player import games
 from adb_auto_player.decorators import register_cache, register_command
 from adb_auto_player.device.adb import AdbController
 from adb_auto_player.exceptions import GenericAdbError, GenericAdbUnrecoverableError
+from adb_auto_player.game import Game
 from adb_auto_player.ipc import GameGUIOptions
 from adb_auto_player.ipc_util import IPCModelConverter
 from adb_auto_player.models.decorators import CacheGroup

@@ -77,3 +77,8 @@ class StringHelper:
                 return True
 
         return False
+
+    @staticmethod
+    def snake_to_pascal(s: str):
+        """snake_case to PascalCase."""
+        return "".join(word.capitalize() for word in s.split("_"))
