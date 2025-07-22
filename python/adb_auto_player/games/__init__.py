@@ -31,7 +31,11 @@ def load_modules():
 
 def is_valid_class(cls):
     """Check if the class is a valid subclass of `Game`."""
-    return issubclass(cls, Game) and cls is not Game
+    return (
+        issubclass(cls, Game)
+        and cls is not Game
+        and not getattr(cls, "__abstractmethods__", False)
+    )
 
 
 def discover_and_add_games():
