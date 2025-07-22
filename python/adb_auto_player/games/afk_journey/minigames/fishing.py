@@ -47,7 +47,7 @@ class Fishing(AFKJourneyBase):
                 "without Device Streaming."
             )
 
-        if self.get_scale_factor() != 1.0:
+        if self.scale_factor != 1.0:
             logging.error(
                 "Fishing is optimized for 1080x1920 it will not work with other "
                 "resolutions."
