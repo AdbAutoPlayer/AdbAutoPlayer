@@ -69,6 +69,7 @@ func (s *SettingsService) SaveGeneralSettings(settings GeneralSettings) error {
 		return err
 	}
 	s.generalSettings = settings
+	updateLogLevel(s.generalSettings.Logging.Level)
 	s.mu.Unlock()
 
 	if settings.UI.NotificationsEnabled && runtime.GOOS != "windows" {
