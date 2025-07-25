@@ -120,6 +120,13 @@ misc_messages = [
         text="Are you sure you want to exit the game",
         click_dont_remind_me=False,
     ),
+    PopupMessage(
+        # could just throw an exception here
+        text="Daily Instant AFK attempt limit reached",
+        # Daily Instant AFK attempt limit reached.
+        # Available again after the cooldown ends.
+        ignore=True,
+    ),
 ]
 
 fishing_messages = [
