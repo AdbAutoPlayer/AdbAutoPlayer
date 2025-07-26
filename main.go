@@ -78,8 +78,9 @@ func main() {
 			Backdrop:                application.MacBackdropTranslucent,
 			TitleBar:                application.MacTitleBarDefault,
 		},
-		BackgroundColour: application.NewRGB(27, 38, 54),
-		URL:              "/app",
+		BackgroundColour:   application.NewRGB(27, 38, 54),
+		URL:                "/app",
+		ZoomControlEnabled: false,
 	})
 
 	app.RegisterService(application.NewService(system_tray.NewSystemTrayService(app, window)))
