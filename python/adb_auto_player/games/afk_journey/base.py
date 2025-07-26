@@ -228,7 +228,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         self._tap_till_template_disappears(
             template="battle/records.png",
             crop_regions=CropRegions(right=0.5, top=0.8),
-            tap_delay=10.0,
+            tap_delay=5.0,
             error_message="No videos available for this battle",
         )
 
