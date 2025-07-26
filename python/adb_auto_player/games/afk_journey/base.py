@@ -255,19 +255,22 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             self._tap_till_template_disappears(
                 template="battle/copy.png",
                 crop_regions=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
+                threshold=ConfidenceValue("75%"),
+                sleep_duration=1.5,  # Tap animation can play without triggering the
+                # button, this lets the animation play out before checking if the button
+                # is still there
             )
-            sleep(1)
-            cancel = self.game_find_template_match(
+            if cancel := self.game_find_template_match(
                 template="cancel.png",
                 crop_regions=CropRegions(left=0.1, right=0.5, top=0.6, bottom=0.3),
-            )
-            if cancel:
+            ):
                 logging.warning(
                     "Formation contains locked Artifacts or Heroes skipping"
                 )
                 self.tap(cancel)
                 start_count = self.battle_state.formation_num
                 self.battle_state.formation_num += 1
+                continue
             else:
                 self._click_confirm_on_popup()
                 return True
@@ -325,13 +328,17 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         """
         spend_gold: str = self._get_config_attribute_from_mode("spend_gold")
 
-        result = self.wait_for_any_template(
-            templates=[
-                "battle/records.png",
-                "battle/formations_icon.png",
-            ],
-            crop_regions=CropRegions(top=0.5),
-        )
+        try:
+            result = self.wait_for_any_template(
+                templates=[
+                    "battle/records.png",
+                    "battle/formations_icon.png",
+                ],
+                crop_regions=CropRegions(top=0.5),
+                timeout=10,
+            )
+        except GameTimeoutError as e:
+            raise e
 
         try:
             self._tap_coordinates_till_template_disappears(
@@ -440,7 +447,6 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         attempts = self._get_config_attribute_from_mode("attempts")
         count = 0
         result: bool | None = None
-        battle_over_templates = self._get_battle_over_templates()
 
         while count < attempts:
             count += 1
@@ -453,7 +459,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                 SummaryGenerator.increment(self.battle_state.section_header, "Battles")
 
             match = self.wait_for_any_template(
-                templates=battle_over_templates,
+                templates=self._get_battle_over_templates(),
                 timeout=self.BATTLE_TIMEOUT,
                 crop_regions=CropRegions(top=0.4),
                 delay=1.0,
