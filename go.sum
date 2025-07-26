@@ -123,6 +123,8 @@ github.com/wailsapp/mimetype v1.4.1 h1:pQN9ycO7uo4vsUUuPeHEYoUkLVkaRntMnHJxVwYhw
 github.com/wailsapp/mimetype v1.4.1/go.mod h1:9aV5k31bBOv5z6u+QP8TltzvNGJPmNJD4XlAL3U+j3o=
 github.com/wailsapp/wails/v3 v3.0.0-alpha.14 h1:WsVa1cR4n+eB8wDLiJuuo3ArO3CMFohHwcIQQFV7sn8=
 github.com/wailsapp/wails/v3 v3.0.0-alpha.14/go.mod h1:4LCCW7s9e4PuSmu7l9OTvfWIGMO8TaSiftSeR5NpBIc=
+github.com/wailsapp/wails/v3 v3.0.0-alpha.16 h1:lJUi7HdnLYHueHVSoyacm14iZFSFGHtai1++FIfrZvQ=
+github.com/wailsapp/wails/v3 v3.0.0-alpha.16/go.mod h1:4LCCW7s9e4PuSmu7l9OTvfWIGMO8TaSiftSeR5NpBIc=
 github.com/xanzy/ssh-agent v0.3.3 h1:+/15pJfg/RsTxqYcX6fHqOXZwwMP+2VyYWJeWM2qQFM=
 github.com/xanzy/ssh-agent v0.3.3/go.mod h1:6dzNDKs0J9rVPHPhaGCukekBHKqfl+L3KghI1Bc68Uw=
 github.com/yusufpapurcu/wmi v1.2.4 h1:zFUKzehAFReQwLys1b/iSMl+JQGSCSjtVqQn9bBrPo0=
