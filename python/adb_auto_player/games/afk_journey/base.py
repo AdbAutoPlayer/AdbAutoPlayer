@@ -328,17 +328,14 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         """
         spend_gold: str = self._get_config_attribute_from_mode("spend_gold")
 
-        try:
-            result = self.wait_for_any_template(
-                templates=[
-                    "battle/records.png",
-                    "battle/formations_icon.png",
-                ],
-                crop_regions=CropRegions(top=0.5),
-                timeout=10,
-            )
-        except GameTimeoutError as e:
-            raise e
+        result = self.wait_for_any_template(
+            templates=[
+                "battle/records.png",
+                "battle/formations_icon.png",
+            ],
+            crop_regions=CropRegions(top=0.5),
+            timeout=10,
+        )
 
         try:
             self._tap_coordinates_till_template_disappears(
