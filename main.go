@@ -34,9 +34,6 @@ func main() {
 		path.ChangeWorkingDirForProd()
 	}
 
-	// TODO create notifier service that wraps around this
-	// addNotifier(app)
-
 	app := application.New(application.Options{
 		Name:        "AdbAutoPlayer",
 		Description: "I'll add a description later",
@@ -49,9 +46,6 @@ func main() {
 			application.NewService(&games.GamesService{}),
 			application.NewService(notifications.GetService()),
 		},
-		OnShutdown: func() {
-			ipcService.Shutdown()
-		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 			// Really no need to log this
@@ -59,6 +53,9 @@ func main() {
 		},
 		Mac: application.MacOptions{
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
+		},
+		OnShutdown: func() {
+			ipcService.Shutdown()
 		},
 	})
 
@@ -83,7 +80,8 @@ func main() {
 		ZoomControlEnabled: false,
 	})
 
-	app.RegisterService(application.NewService(system_tray.NewSystemTrayService(app, window)))
+	systemTrayService := system_tray.NewSystemTrayService(app, window)
+	app.RegisterService(application.NewService(systemTrayService))
 
 	err := app.Run()
 	if err != nil {
