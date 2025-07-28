@@ -16,16 +16,16 @@
 		"@skeletonlabs/skeleton": "^3.1.7",
 		"@skeletonlabs/skeleton-svelte": "^1.3.1",
 		"@sveltejs/adapter-static": "^3.0.8",
-		"@sveltejs/kit": "^2.25.1",
+		"@sveltejs/kit": "^2.26.1",
 		"@sveltejs/vite-plugin-svelte": "^6.1.0",
 		"@tailwindcss/forms": "^0.5.10",
 		"prettier": "^3.6.2",
 		"prettier-plugin-svelte": "^3.4.0",
 		"prettier-plugin-tailwindcss": "^0.6.14",
-		"svelte": "^5.36.13",
+		"svelte": "^5.37.1",
 		"svelte-check": "^4.3.0",
 		"typescript": "^5.8.3",
-		"vite": "^7.0.5",
+		"vite": "^7.0.6",
 		"vite-plugin-devtools-json": "^0.3.0"
 	},
 	"dependencies": {
@@ -33,7 +33,7 @@
 		"@tailwindcss/vite": "^4.1.11",
 		"@wailsio/runtime": "latest",
 		"marked": "^16.1.1",
-		"posthog-js": "^1.257.1",
+		"posthog-js": "^1.258.2",
 		"tailwindcss": "^4.1.11"
 	}
 }
