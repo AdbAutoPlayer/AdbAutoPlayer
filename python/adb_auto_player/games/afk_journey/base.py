@@ -170,6 +170,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                 )
                 start_image = self.get_screenshot()
                 self.tap(formation_next)
+                sleep(1.0 / 30.0)
                 self.wait_for_roi_change(
                     start_image=start_image,
                     crop_regions=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
@@ -242,7 +243,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="No more formations available for this battle",
             )
-        except GameTimeoutError as e:
+        except (GameTimeoutError, GameActionFailedError) as e:
             raise AutoPlayerWarningError(e)
 
         start_count = 1

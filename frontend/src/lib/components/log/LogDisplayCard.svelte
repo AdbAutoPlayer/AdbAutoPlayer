@@ -4,10 +4,11 @@
   import IconArrowUp from "$lib/components/icons/feather/IconArrowUp.svelte";
   import { Events } from "@wailsio/runtime";
   import { EventNames } from "$lib/log/eventNames";
+  import { Instant } from "@js-joda/core";
 
   type LogEntry = {
     message: string;
-    timestamp: number;
+    timestamp: Instant;
     html_class: string;
   };
 
@@ -157,7 +158,7 @@
     }
     insertLogEntry({
       message: summaryMessage,
-      timestamp: Date.now(),
+      timestamp: Instant.now(),
       html_class: "whitespace-pre-wrap text-success-950",
     });
   }
@@ -182,7 +183,7 @@
     }
     insertLogEntry({
       message,
-      timestamp: new Date(logMessage.timestamp).getTime(),
+      timestamp: Instant.parse(logMessage.timestamp),
       html_class: logMessage.html_class ?? getLogClass(message),
     });
   });
@@ -194,7 +195,7 @@
   function insertLogEntry(entry: LogEntry) {
     let i = logs.length - 1;
 
-    while (i >= 0 && logs[i].timestamp > entry.timestamp) {
+    while (i >= 0 && logs[i].timestamp.isAfter(entry.timestamp)) {
       i--;
     }
 

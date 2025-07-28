@@ -29,8 +29,15 @@ func (n *NotificationService) SendNotification(title string, body string) string
 	if runtime.GOOS != "windows" || !settings.GetService().GetGeneralSettings().UI.NotificationsEnabled {
 		return ""
 	}
+	service := notifications.New()
+	if nil == service {
+		return ""
+	}
+
+	_ = service.RemoveAllDeliveredNotifications()
+	_ = service.RemoveAllPendingNotifications()
 	id := uuid.New().String()
-	err := notifications.New().SendNotification(notifications.NotificationOptions{
+	err := service.SendNotification(notifications.NotificationOptions{
 		ID:    id,
 		Title: title,
 		Body:  body,
