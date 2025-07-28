@@ -228,21 +228,22 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             crop_regions=CropRegions(right=0.5, top=0.8),
         )
         sleep(0.5)
-        self._tap_till_template_disappears(
-            template="battle/records.png",
-            crop_regions=CropRegions(right=0.5, top=0.8),
-            tap_delay=5.0,
-            error_message="No videos available for this battle",
-        )
-
         try:
+            self._tap_till_template_disappears(
+                template="battle/records.png",
+                crop_regions=CropRegions(right=0.5, top=0.8),
+                tap_delay=5.0,
+                error_message="No videos available for this battle",
+            )
+
             _ = self.wait_for_template(
                 "battle/copy.png",
                 crop_regions=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
                 timeout=self.MIN_TIMEOUT,
+                timeout_message="No more formations available for this battle",
             )
-        except GameTimeoutError:
-            raise AutoPlayerWarningError("No more formations available for this battle")
+        except GameTimeoutError as e:
+            raise AutoPlayerWarningError(e)
 
         start_count = 1
 
