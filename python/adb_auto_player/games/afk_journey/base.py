@@ -158,27 +158,30 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
 
         logging.info(f"Copying Formation #{self.battle_state.formation_num}")
         counter = self.battle_state.formation_num - start_count
-        while counter > 0:
-            formation_next = self.wait_for_template(
-                "battle/formation_next.png",
-                crop_regions=CropRegions(left=0.8, top=0.5, bottom=0.4),
-                timeout=self.MIN_TIMEOUT,
-                timeout_message=(
-                    f"Formation #{self.battle_state.formation_num} not found"
-                ),
-            )
-            start_image = self.get_screenshot()
-            self.tap(formation_next)
-            self.wait_for_roi_change(
-                start_image=start_image,
-                crop_regions=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
-                threshold=ConfidenceValue("80%"),
-                timeout=self.MIN_TIMEOUT,
-                timeout_message=(
-                    f"Formation #{self.battle_state.formation_num} not found"
-                ),
-            )
-            counter -= 1
+        try:
+            while counter > 0:
+                formation_next = self.wait_for_template(
+                    "battle/formation_next.png",
+                    crop_regions=CropRegions(left=0.8, top=0.5, bottom=0.4),
+                    timeout=self.MIN_TIMEOUT,
+                    timeout_message=(
+                        f"Formation #{self.battle_state.formation_num} not found"
+                    ),
+                )
+                start_image = self.get_screenshot()
+                self.tap(formation_next)
+                self.wait_for_roi_change(
+                    start_image=start_image,
+                    crop_regions=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
+                    threshold=ConfidenceValue("80%"),
+                    timeout=self.MIN_TIMEOUT,
+                    timeout_message=(
+                        f"Formation #{self.battle_state.formation_num} not found"
+                    ),
+                )
+                counter -= 1
+        except GameTimeoutError as e:
+            raise AutoPlayerWarningError(e)
         return True
 
     def _formation_should_be_skipped(self, skip_manual: bool = False) -> bool:

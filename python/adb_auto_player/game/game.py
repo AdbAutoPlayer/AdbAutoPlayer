@@ -666,7 +666,7 @@ class Game(ABC):
         """Waits for the template to appear in the screen.
 
         Raises:
-            TimeoutError: Template not found.
+            GameTimeoutError: Template not found.
         """
 
         def find_template() -> TemplateMatchResult | None:
@@ -1001,7 +1001,7 @@ class Game(ABC):
         """Repeatedly executes an operation until a desired result is reached.
 
         Raises:
-            TimeoutError: Operation did not return the desired result.
+            GameTimeoutError: Operation did not return the desired result.
         """
         time_spent_waiting: float = 0
         end_time: float = time() + timeout
