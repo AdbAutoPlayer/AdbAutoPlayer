@@ -7,6 +7,7 @@
 
   type LogEntry = {
     message: string;
+    timestamp: number;
     html_class: string;
   };
 
@@ -154,8 +155,9 @@
     if ("" === summaryMessage) {
       return;
     }
-    logs.push({
+    insertLogEntry({
       message: summaryMessage,
+      timestamp: Date.now(),
       html_class: "whitespace-pre-wrap text-success-950",
     });
   }
@@ -178,9 +180,9 @@
     if (logs.length >= maxLogEntries) {
       logs.shift();
     }
-
-    logs.push({
+    insertLogEntry({
       message,
+      timestamp: new Date(logMessage.timestamp).getTime(),
       html_class: logMessage.html_class ?? getLogClass(message),
     });
   });
@@ -188,6 +190,16 @@
   Events.On(EventNames.GENERAL_SETTINGS_UPDATED, () => {
     logs = logs.slice(0, 1);
   });
+
+  function insertLogEntry(entry: LogEntry) {
+    let i = logs.length - 1;
+
+    while (i >= 0 && logs[i].timestamp > entry.timestamp) {
+      i--;
+    }
+
+    logs.splice(i + 1, 0, entry);
+  }
 
   let logContainer: HTMLDivElement;
 
