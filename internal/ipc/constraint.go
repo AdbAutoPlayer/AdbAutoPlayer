@@ -149,11 +149,11 @@ func GetMainConfigConstraints() map[string]interface{} {
 			"Task Log Limit":         NewNumberConstraint(&minZero, nil, nil, 5),
 		},
 		"Advanced": map[string]interface{}{
-			"ADB Host": NewTextConstraint("127.0.0.1"),
-			"ADB Port": NewNumberConstraint(&portMin, &portMax, nil, 5037),
+			"ADB Server Host": NewTextConstraint("127.0.0.1"),
+			"ADB Server Port": NewNumberConstraint(&portMin, &portMax, nil, 5037),
 			"Order": []string{
-				"ADB Host",
-				"ADB Port",
+				"ADB Server Host",
+				"ADB Server Port",
 			},
 		},
 		"Order": []string{
