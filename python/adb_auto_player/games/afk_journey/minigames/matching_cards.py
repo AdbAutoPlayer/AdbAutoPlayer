@@ -5,11 +5,13 @@ from time import sleep
 from adb_auto_player.decorators import register_command
 from adb_auto_player.image_manipulation import Cropping, Scaling
 from adb_auto_player.models import ConfidenceValue
+from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Box, Point, PointOutsideDisplay
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.template_matching import TemplateMatcher
 
 from ..base import AFKJourneyBase
+from ..gui_category import AFKJCategory
 
 MATCH_TARGET_BOX = Box(
     top_left=Point(80, 160),
@@ -34,7 +36,10 @@ MAX_AVG_SCREENSHOT_DELAY_CANDIDATE = 10
 
 class MatchingCards(AFKJourneyBase):
     @register_command(
-        # Probably never exposing to the GUI
+        gui=GUIMetadata(
+            label="Matching Cards",
+            category=AFKJCategory.EVENTS_AND_OTHER,
+        ),
     )
     def matching_cards(self) -> None:
         """Matching Card minigame.
