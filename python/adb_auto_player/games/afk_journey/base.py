@@ -170,7 +170,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                 )
                 start_image = self.get_screenshot()
                 self.tap(formation_next)
-                sleep(1.0 / 30.0)
+                sleep(5.0 / 30.0)
                 self.wait_for_roi_change(
                     start_image=start_image,
                     crop_regions=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
@@ -502,8 +502,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
                     break
 
                 case "retry.png":
-                    logging.info(f"Lost Battle #{count}")
-                    self.tap(match)
+                    self.tap(match, log_message=f"Lost Battle #{count}, retrying")
                     # Do not break so the loop continues
 
                 case "battle/result.png":
