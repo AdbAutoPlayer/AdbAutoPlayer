@@ -1,7 +1,7 @@
 """Simple ADB Commands."""
 
-from adb_auto_player.adb import exec_wm_size, wm_size_reset
 from adb_auto_player.decorators import register_command
+from adb_auto_player.device.adb import AdbController
 from adb_auto_player.ipc import CommandGUICategory
 from adb_auto_player.models.decorators import GUIMetadata
 
@@ -16,7 +16,7 @@ from adb_auto_player.models.decorators import GUIMetadata
     name="WMSize1080x1920",
 )
 def _exec_wm_size_1080_1920():
-    exec_wm_size(resolution="1080x1920")
+    AdbController().set_display_size("1080x1920")
 
 
 @register_command(
@@ -27,4 +27,4 @@ def _exec_wm_size_1080_1920():
     name="WMSizeReset",
 )
 def _reset_display_size():
-    wm_size_reset()
+    AdbController().reset_display_size()

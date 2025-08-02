@@ -97,7 +97,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
         self, coordinates: Coordinates, nightmare_mode: bool = False
     ) -> None:
         # y+100 clicks closer to center of the button instead of rate up text
-        offset = int(self.get_scale_factor() * 100)
+        offset = int(self.scale_factor * 100)
         self.tap(Point(coordinates.x, coordinates.y + offset))
         count = 0
 

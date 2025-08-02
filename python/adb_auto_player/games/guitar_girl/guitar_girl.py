@@ -2,11 +2,8 @@ import logging
 from time import sleep
 from typing import NoReturn
 
-from adb_auto_player import (
-    Game,
-    TemplateMatchParams,
-)
 from adb_auto_player.decorators import register_command, register_game
+from adb_auto_player.game import Game
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
@@ -157,6 +154,6 @@ class GuitarGirl(Game):
         ):
             self._tap_coordinates_till_template_disappears(
                 coordinates=result,
-                template_match_params=TemplateMatchParams(template=result.template),
+                template=result.template,
             )
             sleep(5)

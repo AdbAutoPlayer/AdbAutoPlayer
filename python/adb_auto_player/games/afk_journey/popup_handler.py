@@ -5,8 +5,8 @@ from abc import ABC
 from dataclasses import dataclass
 
 import numpy as np
-from adb_auto_player import Game
 from adb_auto_player.exceptions import AutoPlayerWarningError
+from adb_auto_player.game import Game
 from adb_auto_player.image_manipulation import Color, ColorFormat
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Point

@@ -9,7 +9,7 @@ from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.image_manipulation import Cropping
 from adb_auto_player.models import ConfidenceValue
-from adb_auto_player.models.geometry import Coordinates, Point
+from adb_auto_player.models.geometry import Coordinates, Point, PointOutsideDisplay
 from adb_auto_player.models.image_manipulation import CropRegions
 
 from ..base import AFKJourneyBase
@@ -47,7 +47,7 @@ class Fishing(AFKJourneyBase):
                 "without Device Streaming."
             )
 
-        if self.get_scale_factor() != 1.0:
+        if self.scale_factor != 1.0:
             logging.error(
                 "Fishing is optimized for 1080x1920 it will not work with other "
                 "resolutions."
@@ -91,7 +91,7 @@ class Fishing(AFKJourneyBase):
         for template in templates:
             _ = self._load_image(template)
 
-    def _i_am_in_the_fishing_screen(self) -> bool:
+    def _i_am_in_the_fishing_screen(self, is_quest_fishing_spot: bool = True) -> bool:
         try:
             _ = self.wait_for_any_template(
                 [
@@ -102,19 +102,26 @@ class Fishing(AFKJourneyBase):
                 ],
                 timeout=self.MIN_TIMEOUT,
                 threshold=ConfidenceValue("70%"),
+                crop_regions=CropRegions(
+                    top="50%",
+                    bottom="10%",
+                    left="30%",
+                    right="30%",
+                ),
             )
         except GameTimeoutError:
             return False
 
-        # Check we are in the minigame
-        book = self.game_find_template_match(
-            "fishing/book.png",
-            crop_regions=CropRegions(left=0.9, bottom=0.9),
-            threshold=ConfidenceValue("70%"),
-        )
-
-        if not book:
-            return False
+        # Check we are in the regular minigame
+        if not is_quest_fishing_spot:
+            return (
+                self.game_find_template_match(
+                    "fishing/book.png",
+                    crop_regions=CropRegions(left=0.9, bottom=0.9),
+                    threshold=ConfidenceValue("70%"),
+                )
+                is not None
+            )
         return True
 
     def _fish(self) -> None:
@@ -187,6 +194,8 @@ class Fishing(AFKJourneyBase):
                     )
 
             if count % check_book_at == 0:
+                # TODO for quest fishing spot book does not exist,
+                # Would have to check for dialogue buttons or the sun/moon time switch
                 if self.game_find_template_match(
                     "fishing/book.png",
                     crop_regions=CropRegions(left=0.9, bottom=0.9),
@@ -254,23 +263,11 @@ class Fishing(AFKJourneyBase):
         return True
 
     def _passed_input_delay_check(self) -> bool:
-        # Create a custom Point that (-1, -1)
-        class PointOffScreen(Coordinates):
-            @property
-            def x(self) -> int:
-                return -1
-
-            @property
-            def y(self) -> int:
-                return -1
-
-        point_off_screen = PointOffScreen()
-
         total_time = 0.0
         iterations = 10
         for _ in range(iterations):
             start_time = time.time()
-            self.tap(point_off_screen, log_message=None)
+            self.tap(PointOutsideDisplay(), log_message=None)
             total_time += (time.time() - start_time) * 1000
         average_time = total_time / iterations
         if average_time > MAX_AVG_INPUT_DELAY_IN_MS:

@@ -2,13 +2,13 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player import Game
 from adb_auto_player.exceptions import (
     AutoPlayerError,
     GameActionFailedError,
     GameNotRunningOrFrozenError,
     GameTimeoutError,
 )
+from adb_auto_player.game import Game
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Coordinates, Point
 from adb_auto_player.models.image_manipulation import CropRegions

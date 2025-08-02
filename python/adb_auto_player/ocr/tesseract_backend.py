@@ -13,7 +13,7 @@ import pytesseract
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box, Point
 from adb_auto_player.models.ocr import OCRResult
-from adb_auto_player.util import ConfigLoader
+from adb_auto_player.settings import ConfigLoader
 
 from .tesseract_config import TesseractConfig
 from .tesseract_lang import Lang

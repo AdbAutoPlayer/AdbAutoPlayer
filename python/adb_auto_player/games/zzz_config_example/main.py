@@ -2,12 +2,12 @@
 
 import logging
 
-from adb_auto_player import Game
 from adb_auto_player.decorators import (
     register_command,
     register_custom_routine_choice,
     register_game,
 )
+from adb_auto_player.game import Game
 from adb_auto_player.games.zzz_config_example.config import Config
 from adb_auto_player.models.decorators import GameGUIMetadata, GUIMetadata
 from pydantic import BaseModel

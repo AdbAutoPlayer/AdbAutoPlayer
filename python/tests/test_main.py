@@ -3,14 +3,14 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from adb_auto_player.commands.gui_menu import get_gui_games_menu
+from adb_auto_player.commands.display_gui import get_game_menu_string
 
 
 class TestMain(unittest.TestCase):
     """Test Main Module."""
 
     @patch("builtins.print")
-    def test_get_gui_games_menu(self, mock_print: MagicMock) -> None:
+    def test_get_game_menu_string(self, mock_print: MagicMock) -> None:
         """Test get_gui_games_menu function.
 
         This test verifies that the get_gui_games_menu function returns a JSON string
@@ -19,7 +19,7 @@ class TestMain(unittest.TestCase):
         constraints. It also ensures that the print function is not called, indicating
         no output to the console during the function's execution.
         """
-        menu_json_string = get_gui_games_menu()
+        menu_json_string = get_game_menu_string("AFK Journey")
         self.assertIn('"game_title": "AFK Journey"', menu_json_string)
         self.assertIn(
             '"config_path": "afk_journey/AFKJourney.toml"',

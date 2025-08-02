@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 import av
 import numpy as np
-from adb_auto_player.device_stream import DeviceStream, StreamingNotSupportedError
+from adb_auto_player.device.adb import DeviceStream, StreamingNotSupportedError
 
 
 class MockAdbConnection:
@@ -75,6 +75,7 @@ class TestDeviceStream(unittest.TestCase):
 
     def test_stream_initialization(self):
         """Test DeviceStream initialization."""
+        self.mock_device.is_controlling_emulator = False
         stream = DeviceStream(self.mock_device, fps=5)
         self.assertEqual(stream.fps, 5)
         self.assertIsNone(stream.latest_frame)
@@ -86,38 +87,35 @@ class TestDeviceStream(unittest.TestCase):
         mock_connection = Mock()
         mock_connection.read.side_effect = Exception("Connection failed")
         self.mock_device.shell.return_value = mock_connection
+        self.mock_device.is_controlling_emulator = False
 
-        with patch(
-            "adb_auto_player.device_stream._device_is_emulator", return_value=False
-        ):
-            stream = DeviceStream(self.mock_device, fps=5)
+        stream = DeviceStream(self.mock_device, fps=5)
 
-            # Start streaming
-            stream.start()
+        # Start streaming
+        stream.start()
 
-            # Wait a bit to let error handling kick in
-            time.sleep(0.5)
+        # Wait a bit to let error handling kick in
+        time.sleep(0.5)
 
-            # Should still be running (error handling keeps it alive)
-            self.assertTrue(stream._running)
+        # Should still be running (error handling keeps it alive)
+        self.assertTrue(stream._running)
 
-            # Stop streaming
-            stream.stop()
+        # Stop streaming
+        stream.stop()
 
     def test_emulator_detection_on_arm_mac(self):
         """Test emulator detection prevents streaming on ARM Mac."""
         with patch(
-            "adb_auto_player.device_stream.platform.system", return_value="Darwin"
+            "adb_auto_player.device.adb.device_stream.platform.system",
+            return_value="Darwin",
         ):
             with patch(
-                "adb_auto_player.device_stream.platform.machine", return_value="arm64"
+                "adb_auto_player.device.adb.device_stream.platform.machine",
+                return_value="arm64",
             ):
-                with patch(
-                    "adb_auto_player.device_stream._device_is_emulator",
-                    return_value=True,
-                ):
-                    with self.assertRaises(StreamingNotSupportedError):
-                        DeviceStream(self.mock_device, fps=5)
+                self.mock_device.is_controlling_emulator = True
+                with self.assertRaises(StreamingNotSupportedError):
+                    DeviceStream(self.mock_device, fps=5)
 
     def test_buffer_overflow_protection(self):
         """Test that large buffers are truncated to prevent memory issues."""
@@ -127,19 +125,18 @@ class TestDeviceStream(unittest.TestCase):
         mock_connection.read.return_value = large_chunk
         self.mock_device.shell.return_value = mock_connection
 
-        with patch(
-            "adb_auto_player.device_stream._device_is_emulator", return_value=False
-        ):
-            stream = DeviceStream(self.mock_device, fps=5)
+        self.mock_device.is_controlling_emulator = False
 
-            # Start streaming
-            stream.start()
+        stream = DeviceStream(self.mock_device, fps=5)
 
-            # Let it run for a bit to trigger buffer management
-            time.sleep(0.5)
+        # Start streaming
+        stream.start()
 
-            # Should not crash due to memory issues
-            stream.stop()
+        # Let it run for a bit to trigger buffer management
+        time.sleep(0.5)
+
+        # Should not crash due to memory issues
+        stream.stop()
 
 
 class TestIntegrationWithRealDecoding(unittest.TestCase):
@@ -164,26 +161,22 @@ class TestIntegrationWithRealDecoding(unittest.TestCase):
                 mock_device = Mock()
                 mock_connection = MockAdbConnection(video_data)
                 mock_device.shell.return_value = mock_connection
+                mock_device.is_controlling_emulator = False
+                stream = DeviceStream(mock_device, fps=5)
+                stream.start()
 
-                with patch(
-                    "adb_auto_player.device_stream._device_is_emulator",
-                    return_value=False,
-                ):
-                    stream = DeviceStream(mock_device, fps=5)
-                    stream.start()
+                # Wait for decoding
+                timeout = time.time() + 10
+                while stream.latest_frame is None and time.time() < timeout:
+                    time.sleep(0.1)
 
-                    # Wait for decoding
-                    timeout = time.time() + 10
-                    while stream.latest_frame is None and time.time() < timeout:
-                        time.sleep(0.1)
+                # Verify frame dimensions
+                if stream.latest_frame is not None:
+                    self.assertEqual(stream.latest_frame.shape[0], height)
+                    self.assertEqual(stream.latest_frame.shape[1], width)
+                    self.assertEqual(stream.latest_frame.shape[2], 3)
 
-                    # Verify frame dimensions
-                    if stream.latest_frame is not None:
-                        self.assertEqual(stream.latest_frame.shape[0], height)
-                        self.assertEqual(stream.latest_frame.shape[1], width)
-                        self.assertEqual(stream.latest_frame.shape[2], 3)
-
-                    stream.stop()
+                stream.stop()
 
     def _create_video_with_dimensions(
         self, width: int, height: int, frame_count: int

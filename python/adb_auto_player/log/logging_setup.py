@@ -48,17 +48,6 @@ def sanitize_path(log_message: str) -> str:
 class BaseLogHandler(logging.Handler):
     """Base log handler with common functionality."""
 
-    def get_sanitized_message(self, record: logging.LogRecord) -> str:
-        """Get sanitized log message.
-
-        Args:
-            record (logging.LogRecord): The log record
-
-        Returns:
-            str: Sanitized log message
-        """
-        return sanitize_path(record.getMessage())
-
 
 class JsonLogHandler(BaseLogHandler):
     """JSON log handler this is used for IPC between CLI and GUI."""
@@ -77,16 +66,7 @@ class JsonLogHandler(BaseLogHandler):
         Args:
             record (logging.LogRecord): The log record to emit.
         """
-        preset: LogPreset | None = getattr(record, "preset", None)
-
-        log_message: LogMessage = LogMessageFactory.create_log_message(
-            record=record,
-            message=self.get_sanitized_message(record),
-            html_class=preset.get_html_class() if preset else None,
-        )
-        log_dict = log_message.to_dict()
-        log_json: str = json.dumps(log_dict)
-        print(log_json)
+        print(build_log_message_json_string(record))
         sys.stdout.flush()
 
 
@@ -121,7 +101,7 @@ class TerminalLogHandler(BaseLogHandler):
             f"{color}"
             f"[{log_level}] "
             f"{TracebackHelper.format_debug_info(record)} "
-            f"{self.get_sanitized_message(record)}"
+            f"{get_sanitized_message(record)}"
             f"{self.COLORS['RESET']}"
         )
         print(formatted_message)
@@ -146,7 +126,7 @@ class TextLogHandler(BaseLogHandler):
         formatted_message: str = (
             f"{timestamp_with_ms} [{log_level}] "
             f"{TracebackHelper.format_debug_info(record)} "
-            f"{self.get_sanitized_message(record)}"
+            f"{get_sanitized_message(record)}"
         )
         print(formatted_message)
         sys.stdout.flush()
@@ -182,3 +162,28 @@ def setup_logging(handler_type: LogHandlerType, level: int | str) -> None:
         logger.addHandler(handler_class())
     else:
         raise ValueError(f"Unknown handler type: {handler_type}")
+
+
+def build_log_message_json_string(record: logging.LogRecord) -> str:
+    """Convert logging.LogRecord to a json string."""
+    preset: LogPreset | None = getattr(record, "preset", None)
+
+    log_message: LogMessage = LogMessageFactory.create_log_message(
+        record=record,
+        message=get_sanitized_message(record),
+        html_class=preset.get_html_class() if preset else None,
+    )
+    log_dict = log_message.to_dict()
+    return json.dumps(log_dict)
+
+
+def get_sanitized_message(record: logging.LogRecord) -> str:
+    """Get sanitized log message.
+
+    Args:
+        record (logging.LogRecord): The log record
+
+    Returns:
+        str: Sanitized log message
+    """
+    return sanitize_path(record.getMessage())

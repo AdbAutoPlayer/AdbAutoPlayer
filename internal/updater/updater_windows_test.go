@@ -3,7 +3,6 @@
 package updater
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -23,8 +22,7 @@ func TestCheckForUpdates_NoUpdateAvailable(t *testing.T) {
 	server, client := mockGitHubServer(t, releases)
 	defer server.Close()
 
-	ctx := context.Background()
-	um := NewUpdateManager(ctx, "1.0.0", false)
+	um := NewUpdateManager("1.0.0", false)
 	um.githubClient = client
 
 	updateInfo, err := um.CheckForUpdates(false, false)
@@ -44,8 +42,7 @@ func TestCheckForUpdates_UpdateAvailable(t *testing.T) {
 	server, client := mockGitHubServer(t, releases)
 	defer server.Close()
 
-	ctx := context.Background()
-	um := NewUpdateManager(ctx, "1.0.0", false)
+	um := NewUpdateManager("1.0.0", false)
 	um.githubClient = client
 
 	updateInfo, err := um.CheckForUpdates(true, false)
@@ -66,8 +63,7 @@ func TestCheckForUpdates_PrereleasesIncluded(t *testing.T) {
 	server, client := mockGitHubServer(t, releases)
 	defer server.Close()
 
-	ctx := context.Background()
-	um := NewUpdateManager(ctx, "1.0.0", false)
+	um := NewUpdateManager("1.0.0", false)
 	um.githubClient = client
 
 	// Test with prereleases enabled
@@ -106,8 +102,7 @@ func TestCheckForUpdates_PrereleasesExcluded(t *testing.T) {
 	requestUrl, _ := url.Parse(server.URL + "/")
 	client.BaseURL = requestUrl
 
-	ctx := context.Background()
-	um := NewUpdateManager(ctx, "1.0.0", false)
+	um := NewUpdateManager("1.0.0", false)
 	um.githubClient = client
 
 	// Test with prereleases disabled - should not find any update since current version equals latest stable
@@ -126,8 +121,7 @@ func TestCheckForUpdates_CurrentVersionIsPrerelease(t *testing.T) {
 	server, client := mockGitHubServer(t, releases)
 	defer server.Close()
 
-	ctx := context.Background()
-	um := NewUpdateManager(ctx, "1.1.0-beta.1", false)
+	um := NewUpdateManager("1.1.0-beta.1", false)
 	um.githubClient = client
 
 	// When current version is prerelease, should automatically check prereleases
@@ -145,8 +139,7 @@ func TestCheckForUpdates_NoWindowsAsset(t *testing.T) {
 	server, client := mockGitHubServer(t, releases)
 	defer server.Close()
 
-	ctx := context.Background()
-	um := NewUpdateManager(ctx, "1.0.0", false)
+	um := NewUpdateManager("1.0.0", false)
 	um.githubClient = client
 
 	updateInfo, err := um.CheckForUpdates(false, true)
@@ -165,8 +158,7 @@ func TestCheckForUpdates_NoAssets(t *testing.T) {
 	server, client := mockGitHubServer(t, releases)
 	defer server.Close()
 
-	ctx := context.Background()
-	um := NewUpdateManager(ctx, "1.0.0", false)
+	um := NewUpdateManager("1.0.0", false)
 	um.githubClient = client
 
 	updateInfo, err := um.CheckForUpdates(false, true)
@@ -175,8 +167,7 @@ func TestCheckForUpdates_NoAssets(t *testing.T) {
 }
 
 func TestCheckForUpdates_InvalidCurrentVersion(t *testing.T) {
-	ctx := context.Background()
-	um := NewUpdateManager(ctx, "invalid-version", false)
+	um := NewUpdateManager("invalid-version", false)
 
 	updateInfo, err := um.CheckForUpdates(false, false)
 	require.Error(t, err)
@@ -192,8 +183,7 @@ func TestCheckForUpdates_InvalidLatestVersion(t *testing.T) {
 	server, client := mockGitHubServer(t, releases)
 	defer server.Close()
 
-	ctx := context.Background()
-	um := NewUpdateManager(ctx, "1.0.0", false)
+	um := NewUpdateManager("1.0.0", false)
 	um.githubClient = client
 
 	updateInfo, err := um.CheckForUpdates(false, true)
@@ -213,8 +203,7 @@ func TestCheckForUpdates_GitHubAPIError(t *testing.T) {
 	requestUrl, _ := url.Parse(server.URL + "/")
 	client.BaseURL = requestUrl
 
-	ctx := context.Background()
-	um := NewUpdateManager(ctx, "1.0.0", false)
+	um := NewUpdateManager("1.0.0", false)
 	um.githubClient = client
 
 	updateInfo, err := um.CheckForUpdates(false, false)
@@ -237,8 +226,7 @@ func TestCheckForUpdates_NilLatestRelease(t *testing.T) {
 	requestUrl, _ := url.Parse(server.URL + "/")
 	client.BaseURL = requestUrl
 
-	ctx := context.Background()
-	um := NewUpdateManager(ctx, "1.0.0", false)
+	um := NewUpdateManager("1.0.0", false)
 	um.githubClient = client
 
 	updateInfo, err := um.CheckForUpdates(false, false)
@@ -256,8 +244,7 @@ func TestCheckForUpdates_SetsReleasesBetween(t *testing.T) {
 	server, client := mockGitHubServer(t, releases)
 	defer server.Close()
 
-	ctx := context.Background()
-	um := NewUpdateManager(ctx, "1.0.0", false)
+	um := NewUpdateManager("1.0.0", false)
 	um.githubClient = client
 
 	updateInfo, err := um.CheckForUpdates(false, true)
