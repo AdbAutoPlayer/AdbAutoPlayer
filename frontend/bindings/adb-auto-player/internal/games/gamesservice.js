@@ -37,13 +37,6 @@ export function GetGameSettingsForm(game) {
 }
 
 /**
- * @returns {$CancellablePromise<boolean>}
- */
-export function IsGameProcessRunning() {
-    return $Call.ByID(2867506436);
-}
-
-/**
  * @returns {$CancellablePromise<void>}
  */
 export function KillGameProcess() {

@@ -19,6 +19,9 @@ from adb_auto_player.registries import GAME_REGISTRY
     name="DisplayGUI",
 )
 def _display_gui() -> None:
+    result = get_game_menu_string(_get_running_game())
+    logging.info(result)
+    # backwards compatability
     print(get_game_menu_string(_get_running_game()))
     sys.stdout.flush()
 

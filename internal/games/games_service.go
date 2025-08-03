@@ -31,15 +31,22 @@ func (g *GamesService) GetGameGUI() (*ipc.GameGUI, error) {
 		return nil, err
 	}
 
-	gui, err := process.GetService().Exec([]string{"DisplayGUI", "--log-level=DISABLE"})
+	logMessages, err := process.GetService().Exec([]string{"DisplayGUI", "--log-level=DISABLE"})
 	if err != nil {
 		return nil, err
 	}
+
 	var gameGUI ipc.GameGUI
 
-	err = json.Unmarshal([]byte(gui), &gameGUI)
+	if len(logMessages) == 0 {
+		return nil, errors.New("empty Response from Python")
+	}
+
+	last := logMessages[len(logMessages)-1]
+
+	err = json.Unmarshal([]byte(last.Message), &gameGUI)
 	if err != nil {
-		println(gui)
+		println(last.Message)
 		println(err.Error())
 		return nil, err
 	}
@@ -144,10 +151,6 @@ func (g *GamesService) StartGameProcess(args []string) error {
 
 func (g *GamesService) KillGameProcess() {
 	process.GetService().StopTask()
-}
-
-func (g *GamesService) IsGameProcessRunning() bool {
-	return process.GetService().IsTaskRunning()
 }
 
 func (g *GamesService) resolvePythonBinaryPathIfNeeded() error {

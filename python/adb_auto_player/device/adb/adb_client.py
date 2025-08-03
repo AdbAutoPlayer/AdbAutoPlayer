@@ -3,7 +3,9 @@ from functools import lru_cache
 from logging import DEBUG, WARNING
 from typing import Any
 
+from adb_auto_player.decorators import register_cache
 from adb_auto_player.exceptions import GenericAdbError, GenericAdbUnrecoverableError
+from adb_auto_player.models.decorators import CacheGroup
 from adb_auto_player.settings import ConfigLoader
 from adbutils import AdbClient, AdbDevice, AdbError
 from adbutils._proto import AdbDeviceInfo
@@ -21,15 +23,15 @@ class AdbClientHelper:
         return _connect_to_device(client, device_id)
 
     @staticmethod
+    @register_cache(CacheGroup.ADB)
     @lru_cache(maxsize=1)
     def get_adb_client() -> AdbClient:
         """Return AdbClient instance."""
         _set_adb_path()
-        main_config: dict[str, Any] = ConfigLoader.main_config()
-        adb_config: Any = main_config.get("adb", {})
+        advanced_config: Any = ConfigLoader.main_config().get("advanced", {})
         client = AdbClient(
-            host=adb_config.get("host", "127.0.0.1"),
-            port=adb_config.get("port", 5037),
+            host=advanced_config.get("host", "127.0.0.1"),
+            port=advanced_config.get("port", 5037),
         )
 
         server_version = client.server_version()
@@ -43,6 +45,7 @@ class AdbClientHelper:
         return client
 
     @staticmethod
+    @register_cache(CacheGroup.ADB)
     @lru_cache(maxsize=1)
     def resolve_adb_device() -> AdbDevice:
         """Connects to an Android device using ADB and returns the device object.

@@ -10,7 +10,6 @@
   import { Events } from "@wailsio/runtime";
   import { EventNames } from "$lib/log/eventNames";
   import { GeneralSettings } from "@wails/settings";
-  import { NotificationService } from "@wails/notifications";
 
   let { children } = $props();
 

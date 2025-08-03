@@ -2,47 +2,19 @@
 
 import json
 import logging
-import os
-import re
 import sys
 from datetime import datetime
 from typing import ClassVar, Literal
 
 from adb_auto_player.ipc import LogMessage
-from adb_auto_player.util import LogMessageFactory, SummaryGenerator, TracebackHelper
+from adb_auto_player.util import (
+    LogMessageFactory,
+    StringHelper,
+    SummaryGenerator,
+    TracebackHelper,
+)
 
 from .log_presets import LogPreset
-
-
-def sanitize_path(log_message: str) -> str:
-    """Replaces the username in file paths with $USER or $env:USERNAME.
-
-    Works with both Windows and Unix-style paths.
-
-    Args:
-        log_message (str): The log message containing file paths
-
-    Returns:
-        str: The sanitized log message with environment variable placeholders
-    """
-    home_dir: str = os.path.expanduser("~")
-
-    if "\\" in home_dir:  # Windows path
-        username: str = home_dir.split("\\")[-1]
-        pattern: str = re.escape(f":\\Users\\{username}")
-        replacement = r":\\Users\\$env:USERNAME"
-        log_message = re.sub(pattern, replacement, log_message)
-        pattern = re.escape(f":\\\\Users\\\\{username}")
-        replacement = r":\\\\Users\\\\$env:USERNAME"
-        log_message = re.sub(pattern, replacement, log_message)
-
-    else:  # Unix path
-        username = home_dir.split("/")[-1]
-        pattern = f"/home/{username}"
-        replacement = "/home/$USER"
-        log_message = re.sub(pattern, replacement, log_message)
-
-    return log_message
 
 
 class BaseLogHandler(logging.Handler):
@@ -66,7 +38,15 @@ class JsonLogHandler(BaseLogHandler):
         Args:
             record (logging.LogRecord): The log record to emit.
         """
-        print(build_log_message_json_string(record))
+        preset: LogPreset | None = getattr(record, "preset", None)
+
+        log_message: LogMessage = LogMessageFactory.create_log_message(
+            record=record,
+            message=StringHelper.sanitize_path(record.getMessage()),
+            html_class=preset.get_html_class() if preset else None,
+        )
+        log_dict = log_message.to_dict()
+        print(json.dumps(log_dict))
         sys.stdout.flush()
 
 
@@ -101,7 +81,7 @@ class TerminalLogHandler(BaseLogHandler):
             f"{color}"
             f"[{log_level}] "
             f"{TracebackHelper.format_debug_info(record)} "
-            f"{get_sanitized_message(record)}"
+            f"{StringHelper.sanitize_path(record.getMessage())}"
             f"{self.COLORS['RESET']}"
         )
         print(formatted_message)
@@ -126,10 +106,45 @@ class TextLogHandler(BaseLogHandler):
         formatted_message: str = (
             f"{timestamp_with_ms} [{log_level}] "
             f"{TracebackHelper.format_debug_info(record)} "
-            f"{get_sanitized_message(record)}"
+            f"{StringHelper.sanitize_path(record.getMessage())}"
         )
         print(formatted_message)
         sys.stdout.flush()
+
+
+class MemoryLogHandler(logging.Handler):
+    """Log handler that stores log messages in memory for API responses."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.messages: list[LogMessage] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        """Store log message in memory.
+
+        Args:
+            record (logging.LogRecord): The log record to store.
+        """
+        preset: LogPreset | None = getattr(record, "preset", None)
+
+        log_message: LogMessage = LogMessageFactory.create_log_message(
+            record=record,
+            message=StringHelper.sanitize_path(record.getMessage()),
+            html_class=preset.get_html_class() if preset else None,
+        )
+        self.messages.append(log_message)
+
+    def get_messages(self) -> list[LogMessage]:
+        """Get all stored log messages.
+
+        Returns:
+            List[LogMessage]: All captured log messages.
+        """
+        return self.messages.copy()
+
+    def clear(self) -> None:
+        """Clear all stored log messages."""
+        self.messages.clear()
 
 
 LogHandlerType = Literal["json", "terminal", "text", "raw"]
@@ -162,28 +177,3 @@ def setup_logging(handler_type: LogHandlerType, level: int | str) -> None:
         logger.addHandler(handler_class())
     else:
         raise ValueError(f"Unknown handler type: {handler_type}")
-
-
-def build_log_message_json_string(record: logging.LogRecord) -> str:
-    """Convert logging.LogRecord to a json string."""
-    preset: LogPreset | None = getattr(record, "preset", None)
-
-    log_message: LogMessage = LogMessageFactory.create_log_message(
-        record=record,
-        message=get_sanitized_message(record),
-        html_class=preset.get_html_class() if preset else None,
-    )
-    log_dict = log_message.to_dict()
-    return json.dumps(log_dict)
-
-
-def get_sanitized_message(record: logging.LogRecord) -> str:
-    """Get sanitized log message.
-
-    Args:
-        record (logging.LogRecord): The log record
-
-    Returns:
-        str: Sanitized log message
-    """
-    return sanitize_path(record.getMessage())

@@ -68,6 +68,12 @@ func (s *SettingsService) SaveGeneralSettings(settings GeneralSettings) error {
 		app.Error(err.Error())
 		return err
 	}
+
+	old := s.generalSettings.Advanced
+	if old.AutoPlayerHost != settings.Advanced.AutoPlayerHost || old.AutoPlayerPort != settings.Advanced.AutoPlayerPort {
+		app.Emit(event_names.ServerAddressChanged)
+	}
+
 	s.generalSettings = settings
 	updateLogLevel(s.generalSettings.Logging.Level)
 	s.mu.Unlock()
