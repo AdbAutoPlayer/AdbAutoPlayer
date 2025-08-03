@@ -98,12 +98,12 @@ func (s *IPCService) IsTaskRunning() bool {
 	return false
 }
 
-func (s *IPCService) Exec(args []string) (string, []ipc.LogMessage, error) {
+func (s *IPCService) Exec(args []string) ([]ipc.LogMessage, error) {
 	if s.STDIOManager != nil {
 		return s.STDIOManager.Exec(args...)
 	}
 	var logMessages []ipc.LogMessage
-	return "", logMessages, errors.New("no IPC Process Manager is running")
+	return logMessages, errors.New("no IPC Process Manager is running")
 }
 
 func (s *IPCService) Shutdown() {
@@ -115,12 +115,20 @@ func (s *IPCService) Shutdown() {
 	}
 
 	if sm := s.STDIOManager.serverManager; sm != nil && sm.process != nil {
-		_ = sm.stopServer()
+		sm.stopServer()
 	}
 
 	if r := s.STDIOManager.running; r != nil {
 		_ = r.Kill()
 	}
+}
+
+func (s *IPCService) SendPOST(endpoint string, requestBody interface{}) ([]byte, error) {
+	if s.STDIOManager == nil || s.STDIOManager.serverManager == nil {
+		return nil, errors.New("no IPC Process Manager is running")
+	}
+
+	return s.STDIOManager.serverManager.sendPOST(endpoint, requestBody)
 }
 
 func getCommand(isDev bool, name string, args ...string) (*exec.Cmd, error) {

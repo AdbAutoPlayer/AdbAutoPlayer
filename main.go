@@ -99,9 +99,9 @@ func initializeEventHandlers(app *application.App) {
 	})
 	app.Event.On(event_names.GeneralSettingsUpdated, func(event *application.CustomEvent) {
 		process.GetService().InitializeManager()
-		_, _ = process.GetService().STDIOManager.ServerExec(event_names.GeneralSettingsUpdated)
+		_, _ = process.GetService().SendPOST("/general-settings-updated", nil)
 	})
 	app.Event.On(event_names.GameSettingsUpdated, func(event *application.CustomEvent) {
-		_, _ = process.GetService().STDIOManager.ServerExec(event_names.GameSettingsUpdated)
+		_, _ = process.GetService().SendPOST("/game-settings-updated", nil)
 	})
 }

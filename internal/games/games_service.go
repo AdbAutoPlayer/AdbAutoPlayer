@@ -31,24 +31,22 @@ func (g *GamesService) GetGameGUI() (*ipc.GameGUI, error) {
 		return nil, err
 	}
 
-	str, logMessages, err := process.GetService().Exec([]string{"DisplayGUI", "--log-level=DISABLE"})
+	logMessages, err := process.GetService().Exec([]string{"DisplayGUI", "--log-level=DISABLE"})
 	if err != nil {
 		return nil, err
 	}
 
 	var gameGUI ipc.GameGUI
 
-	if len(logMessages) > 0 {
-		last := logMessages[len(logMessages)-1]
-		if last.Level == "ERROR" {
-			return nil, errors.New(last.Message)
-		}
-		str = last.Message
+	if len(logMessages) == 0 {
+		return nil, errors.New("empty Response from Python")
 	}
 
-	err = json.Unmarshal([]byte(str), &gameGUI)
+	last := logMessages[len(logMessages)-1]
+
+	err = json.Unmarshal([]byte(last.Message), &gameGUI)
 	if err != nil {
-		println(str)
+		println(last.Message)
 		println(err.Error())
 		return nil, err
 	}

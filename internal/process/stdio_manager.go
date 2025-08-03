@@ -10,15 +10,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/shirou/gopsutil/process"
-	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -30,14 +27,6 @@ type STDIOManager struct {
 	summary            *ipc.Summary
 	lastLogMessage     *ipc.LogMessage
 	serverManager      *ServerManager // Embedded server manager
-}
-
-// ServerManager handles the server process and communication.
-type ServerManager struct {
-	isDev            bool
-	pythonBinaryPath string
-	process          *process.Process
-	mutex            sync.Mutex
 }
 
 func NewSTDIOManager(isDev bool, pythonBinaryPath string) *STDIOManager {
@@ -226,15 +215,6 @@ func (pm *STDIOManager) getCommand(args ...string) (*exec.Cmd, error) {
 	return getCommand(pm.isDev, pm.pythonBinaryPath, args...)
 }
 
-func (pm *STDIOManager) Exec(args ...string) (string, []ipc.LogMessage, error) {
-	messages, err := pm.ServerExec(args...)
-	if err == nil {
-		return "", messages, nil
-	}
-	result, err := pm.exec(args...)
-	return result, messages, err
-}
-
 func (pm *STDIOManager) exec(args ...string) (string, error) {
 	cmd, err := pm.getCommand(args...)
 	if err != nil {
@@ -283,7 +263,7 @@ func (pm *STDIOManager) exec(args ...string) (string, error) {
 	return stdout.String(), nil
 }
 
-func (pm *STDIOManager) ServerExec(args ...string) ([]ipc.LogMessage, error) {
+func (pm *STDIOManager) Exec(args ...string) ([]ipc.LogMessage, error) {
 	pm.serverManager.mutex.Lock()
 	defer pm.serverManager.mutex.Unlock()
 	if err := pm.serverManager.startServer(); err != nil {
@@ -299,108 +279,4 @@ func (pm *STDIOManager) processEnded() {
 	pm.summary = nil
 	pm.lastLogMessage = nil
 	pm.notifyWhenTaskEnds = false
-}
-
-// startServer starts a server process running 'python -m adb_auto_player --server'.
-func (sm *ServerManager) startServer() error {
-	if sm.process != nil && sm.isServerRunning() {
-		return nil
-	}
-	cmd, err := getCommand(sm.isDev, sm.pythonBinaryPath, "--server")
-	if err != nil {
-		return fmt.Errorf("failed to get server command: %w", err)
-	}
-
-	if err = cmd.Start(); err != nil {
-		return fmt.Errorf("failed to start server: %w", err)
-	}
-	logger.Get().Debugf("Started server with PID: %d", cmd.Process.Pid)
-
-	proc, err := process.NewProcess(int32(cmd.Process.Pid))
-	if err != nil {
-		return fmt.Errorf("failed to create process handle: %w", err)
-	}
-	sm.process = proc
-
-	// Give the server a moment to start up
-	time.Sleep(1 * time.Second)
-
-	return nil
-}
-
-func (sm *ServerManager) stopServer() error {
-	if sm.process == nil {
-		return nil
-	}
-	children, _ := sm.process.Children()
-	for _, child := range children {
-		_ = child.Kill()
-	}
-
-	err := sm.process.Kill()
-	if err != nil {
-		return fmt.Errorf("failed to kill process: %w", err)
-	}
-
-	return nil
-}
-
-// isServerRunning checks if the server process is running.
-func (sm *ServerManager) isServerRunning() bool {
-	if sm.process == nil {
-		return false
-	}
-
-	running, _ := sm.process.IsRunning()
-	if !running {
-		sm.process = nil
-	}
-	return running
-}
-
-// sendCommand sends a POST request with CommandRequest to the FastAPI server.
-func (sm *ServerManager) sendCommand(args []string) ([]ipc.LogMessage, error) {
-	client := &http.Client{
-		Timeout: 10 * time.Second,
-	}
-	commandRequest := struct {
-		Command []string `json:"command"`
-	}{Command: args}
-
-	var logMessages []ipc.LogMessage
-
-	body, err := json.Marshal(commandRequest)
-	if err != nil {
-		return logMessages, fmt.Errorf("failed to marshal command request: %w", err)
-	}
-	url := fmt.Sprintf(
-		"http://%s:%d/execute",
-		settings.GetService().GetGeneralSettings().Advanced.AutoPlayerHost,
-		settings.GetService().GetGeneralSettings().Advanced.AutoPlayerPort,
-	)
-	resp, err := client.Post(url, "application/json", bytes.NewBuffer(body))
-	if err != nil {
-		return logMessages, fmt.Errorf("failed to send POST request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	responseBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return logMessages, fmt.Errorf("failed to read response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return logMessages, fmt.Errorf("server returned non-OK status: %d, response: %s", resp.StatusCode, string(responseBody))
-	}
-
-	var logResponse struct {
-		Messages []ipc.LogMessage `json:"messages"`
-	}
-	if err = json.Unmarshal(responseBody, &logResponse); err != nil {
-		fmt.Println("Still failed:", err)
-
-		return logMessages, fmt.Errorf("failed to unmarshal response: %w", err)
-	}
-
-	return logResponse.Messages, nil
 }

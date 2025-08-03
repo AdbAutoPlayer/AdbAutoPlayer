@@ -115,14 +115,15 @@ class FastAPIServer:
                 status_code=404, detail=f"Unrecognized command: {request.command}"
             )
 
-        @self.app.post("/settings/general/updated", response_model=OKResponse)
+        @self.app.post("/general-settings-updated", response_model=OKResponse)
         async def general_settings_updated():
             """Handle general settings update."""
             self._clear_cache(CacheGroup.GENERAL_SETTINGS)
+            self._clear_cache(CacheGroup.GAME_SETTINGS)
             self._clear_cache(CacheGroup.ADB)
             return OKResponse()
 
-        @self.app.post("/settings/game/updated", response_model=OKResponse)
+        @self.app.post("/game-settings-updated", response_model=OKResponse)
         async def game_settings_updated():
             """Handle game settings update."""
             self._clear_cache(CacheGroup.GAME_SETTINGS)

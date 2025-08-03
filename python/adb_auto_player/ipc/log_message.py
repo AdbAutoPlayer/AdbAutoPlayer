@@ -25,7 +25,7 @@ class LogMessage(BaseModel):
     source_file: str | None = None
     function_name: str | None = None
     line_number: int | None = None
-    html_class: str | None = (None,)
+    html_class: str | None = None
 
     def to_dict(self):
         """Convert LogMessage to dictionary for JSON serialization."""
