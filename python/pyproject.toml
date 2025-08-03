@@ -9,10 +9,10 @@ authors = [
 requires-python = ">=3.13"
 readme = "README.md"
 dependencies = [
-    "adbutils>=2.8.7,<3",
+    "adbutils>=2.10.0,<3",
     "opencv-python>=4.10.0.84,<5",
     "pydantic>=2.10.5,<3",
-    "av>=14.1.0,<15",
+    "av>=15.0.0,<16",
     "pillow>=11.1.0",
     "pytesseract>=0.3.13",
     "psutil>=7.0.0",
@@ -26,7 +26,7 @@ adb-auto-player = "adb_auto_player.main:main"
 
 [dependency-groups]
 dev = [
-    "nuitka>=2.7.10",
+    "nuitka>=2.7.12",
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
     "commitizen>=4.2.2,<5",
