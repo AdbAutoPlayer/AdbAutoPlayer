@@ -180,12 +180,7 @@ class FastAPIServer:
         self.app = FastAPI(title="ADB Auto Player Server")
         self.commands = commands
         self.websocket_handler = WebSocketLogHandler()
-        self.current_process: Process | None = None
-        self.current_log_queue: Queue | None = None
-        self.log_reader_task: asyncio.Task | None = None
-        self.command_execution_task: asyncio.Task | None = None
 
-        # Setup logging
         self._setup_logging()
         self._setup_middleware()
         self._setup_tcp_routes()
@@ -221,11 +216,10 @@ class FastAPIServer:
                 current_request_handler.set(None)
 
     @staticmethod
-    async def _read_log_queue(log_queue: Queue):
+    async def _read_log_queue(log_queue: Queue, shutdown_event: asyncio.Event):
         """Read LogMessage objects from the queue and forward them to WebSocket."""
-        while True:
+        while not shutdown_event.is_set():
             try:
-                # Use a small timeout to make this cancellable
                 await asyncio.sleep(0.01)
 
                 if not log_queue.empty():
@@ -240,94 +234,129 @@ class FastAPIServer:
                             websocket
                             and websocket.client_state == WebSocketState.CONNECTED
                         ):
-                            await websocket.send_text(json.dumps(log_data))
+                            try:
+                                await asyncio.wait_for(
+                                    websocket.send_text(json.dumps(log_data)),
+                                    timeout=1.0,
+                                )
+                            except Exception as e:
+                                logging.warning(f"WebSocket send failed: {e}")
+                                break
 
                     except Exception as e:
-                        print(f"Error processing log message: {e}")
+                        logging.error(f"Error processing log message: {e}")
 
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                print(f"Error in log queue reader: {e}")
+                logging.error(f"Error in log queue reader: {e}")
                 await asyncio.sleep(0.1)
 
     async def _execute_command_background(self, command: list[str]) -> None:
         """Execute command in background process."""
+        process = None
+        log_reader_task = None
+        log_queue: Queue[LogMessage] = Queue()
+
         try:
-            self.current_log_queue = Queue()
+            shutdown_event = asyncio.Event()
 
-            self.current_process = Process(
+            process = Process(
                 target=run_command_in_process,
-                args=(command, self.commands, self.current_log_queue),
+                args=(command, self.commands, log_queue),
             )
-            self.current_process.start()
+            process.start()
 
-            self.log_reader_task = asyncio.create_task(
-                FastAPIServer._read_log_queue(self.current_log_queue)
+            log_reader_task = asyncio.create_task(
+                self._read_log_queue(log_queue, shutdown_event)
             )
 
-            while self.current_process.is_alive():
-                await asyncio.sleep(0.1)
-
-            if self.log_reader_task and not self.log_reader_task.done():
+            while process.is_alive():
                 try:
-                    await asyncio.wait_for(self.log_reader_task, timeout=1.0)
+                    await asyncio.wait_for(asyncio.sleep(0.1), timeout=0.1)
                 except TimeoutError:
-                    self.log_reader_task.cancel()
+                    continue
+
+            shutdown_event.set()
+
+            if log_reader_task and not log_reader_task.done():
+                try:
+                    await asyncio.wait_for(log_reader_task, timeout=2.0)
+                except TimeoutError:
+                    logging.warning("Log reader task timeout during cleanup")
+                    log_reader_task.cancel()
 
         except asyncio.CancelledError:
-            await self._stop_current_command()
             raise
+        except Exception as e:
+            logging.error(f"Error in command execution: {e}")
         finally:
-            if self.current_process and self.current_process.is_alive():
-                self.current_process.terminate()
-                self.current_process.join(timeout=5)
-                if self.current_process.is_alive():
-                    self.current_process.kill()
+            await FastAPIServer._cleanup_process_and_tasks(
+                process,
+                log_reader_task,
+                log_queue,
+            )
 
-            self.current_process = None
-            self.current_log_queue = None
-
-            if self.log_reader_task and not self.log_reader_task.done():
-                self.log_reader_task.cancel()
-            self.log_reader_task = None
-
-    async def _stop_current_command(self) -> None:
-        """Stop the currently running command process."""
-        if self.command_execution_task and not self.command_execution_task.done():
-            self.command_execution_task.cancel()
+    @staticmethod
+    async def _cleanup_process_and_tasks(process, log_reader_task, log_queue):
+        """Comprehensive cleanup of process and associated tasks."""
+        if log_reader_task and not log_reader_task.done():
+            log_reader_task.cancel()
             try:
-                await self.command_execution_task
-            except asyncio.CancelledError:
+                await asyncio.wait_for(log_reader_task, timeout=1.0)
+            except (TimeoutError, asyncio.CancelledError):
                 pass
-            self.command_execution_task = None
 
-        if self.current_process and self.current_process.is_alive():
+        if process and process.is_alive():
             try:
-                self.current_process.terminate()
-                # Wait a bit for graceful shutdown
-                await asyncio.sleep(0.5)
-                if self.current_process.is_alive():
-                    self.current_process.kill()
-                self.current_process.join(timeout=2)
+                process.terminate()
+
+                for _ in range(10):
+                    if not process.is_alive():
+                        break
+                    await asyncio.sleep(0.1)
+
+                if process.is_alive():
+                    process.kill()
+
+                try:
+                    process.join(timeout=2)
+                except Exception as e:
+                    logging.error(f"Error joining process: {e}")
+
             except Exception as e:
-                logging.error(f"Error stopping command: {e}")
+                logging.error(f"Error during process cleanup: {e}")
 
-        if self.log_reader_task and not self.log_reader_task.done():
-            self.log_reader_task.cancel()
+        if log_queue:
             try:
-                await self.log_reader_task
-            except asyncio.CancelledError:
+                while not log_queue.empty():
+                    log_queue.get_nowait()
+            except Exception:
                 pass
 
-    def _setup_websocket_routes(self):
-        """Set up websocket routes."""
+    def _setup_websocket_routes(self):  # noqa: PLR0915
+        """Set up websocket routes with improved error handling."""
 
         @self.app.websocket("/ws")
-        async def websocket_endpoint(websocket: WebSocket):
+        async def websocket_endpoint(websocket: WebSocket):  # noqa: PLR0915
             """WebSocket endpoint for real-time command execution and logging."""
             await websocket.accept()
             current_websocket.set(websocket)
+
+            # Track the current task for this specific WebSocket connection
+            current_task = None
+
+            async def stop_current_task():
+                """Stop the current task for this WebSocket connection."""
+                nonlocal current_task
+                if current_task and not current_task.done():
+                    current_task.cancel()
+                    try:
+                        await asyncio.wait_for(current_task, timeout=3.0)
+                    except (TimeoutError, asyncio.CancelledError):
+                        pass
+                    finally:
+                        current_task = None
 
             def on_command_done(task: asyncio.Task):
                 async def close_ws():
@@ -336,12 +365,15 @@ class FastAPIServer:
                     except Exception as e:
                         logging.error(f"Error closing websocket: {e}")
 
-                self.on_command_done_task = asyncio.create_task(close_ws())
+                close_task = asyncio.create_task(close_ws())
+                close_task.add_done_callback(lambda t: None)
 
             try:
                 while True:
                     try:
-                        data = await websocket.receive_text()
+                        data = await asyncio.wait_for(
+                            websocket.receive_text(), timeout=5.0
+                        )
                         message = json.loads(data)
 
                         if message.get("type") == "execute_command":
@@ -349,28 +381,41 @@ class FastAPIServer:
                             if not command:
                                 continue
 
-                            await self._stop_current_command()
+                            await stop_current_task()
 
-                            self.command_execution_task = asyncio.create_task(
+                            current_task = asyncio.create_task(
                                 self._execute_command_background(command)
                             )
-                            self.command_execution_task.add_done_callback(
-                                on_command_done
-                            )
-                        elif message.get("type") == "stop":
-                            await self._stop_current_command()
-                            await websocket.close(reason="Task stopped")
+                            current_task.add_done_callback(on_command_done)
 
+                        elif message.get("type") == "stop":
+                            await stop_current_task()
+
+                    except TimeoutError:
+                        # Ping/pong could be implemented here
+                        continue
                     except WebSocketDisconnect:
                         break
+                    except json.JSONDecodeError:
+                        logging.warning("Invalid JSON received via WebSocket")
+                        continue
                     except Exception as e:
-                        logging.error(f"WebSocket error: {e}")
+                        logging.error(f"WebSocket message handling error: {e}")
+                        break
+
             except WebSocketDisconnect:
                 pass
-            finally:
-                # Clean up on disconnect
-                await self._stop_current_command()
-                current_websocket.set(None)
+            except Exception as e:
+                logging.error(f"WebSocket error: {e}")
+
+            await stop_current_task()
+            current_websocket.set(None)
+
+            try:
+                if websocket.client_state == WebSocketState.CONNECTED:
+                    await websocket.close()
+            except Exception as e:
+                logging.error(f"Error closing WebSocket: {e}")
 
     def _setup_tcp_routes(self):
         """Setup TCP routes."""

@@ -38,9 +38,9 @@ type IPCManager struct {
 	wsConn      *websocket.Conn
 	wsConnected bool
 
-	notifyWhenTaskEnds bool
-	summary            *ipc.Summary
-	lastLogMessage     *ipc.LogMessage
+	sendNotificationWhenTaskEnds bool
+	summary                      *ipc.Summary
+	lastLogMessage               *ipc.LogMessage
 
 	mutex sync.Mutex
 
@@ -151,9 +151,7 @@ func (pm *IPCManager) readWebSocketMessages() {
 		pm.wsConnected = false
 		pm.mutex.Unlock()
 
-		if pm.notifyWhenTaskEnds {
-			pm.taskEnded()
-		}
+		pm.taskEnded()
 	}()
 
 	for {
@@ -167,14 +165,14 @@ func (pm *IPCManager) readWebSocketMessages() {
 
 		// Try to parse as LogMessage
 		var logMessage ipc.LogMessage
-		if err := json.Unmarshal(message, &logMessage); err == nil {
+		if err = json.Unmarshal(message, &logMessage); err == nil {
 			pm.handleLogMessage(logMessage)
 			continue
 		}
 
 		// Try to parse as Summary
 		var summaryMessage ipc.Summary
-		if err := json.Unmarshal(message, &summaryMessage); err == nil {
+		if err = json.Unmarshal(message, &summaryMessage); err == nil {
 			if summaryMessage.SummaryMessage != "" {
 				pm.summary = &summaryMessage
 			}
@@ -294,7 +292,7 @@ func (pm *IPCManager) StartTask(args []string, notifyWhenTaskEnds bool, logLevel
 		return fmt.Errorf("failed to send command via WebSocket: %w", err)
 	}
 
-	pm.notifyWhenTaskEnds = notifyWhenTaskEnds
+	pm.sendNotificationWhenTaskEnds = notifyWhenTaskEnds
 	pm.summary = nil
 	pm.lastLogMessage = nil
 
@@ -310,8 +308,7 @@ func (pm *IPCManager) StopTask() {
 		return
 	}
 
-	pm.notifyWhenTaskEnds = false
-
+	pm.sendNotificationWhenTaskEnds = false
 	stopRequest := WebSocketStopRequest{
 		Type: "stop",
 	}
@@ -321,6 +318,15 @@ func (pm *IPCManager) StopTask() {
 	}
 
 	pm.closeLogFile()
+
+	if pm.wsConn != nil {
+		err := pm.wsConn.Close()
+		if err != nil {
+			return
+		}
+		pm.wsConn = nil
+		pm.wsConnected = false
+	}
 }
 
 // isTaskRunning returns whether a command is currently running.
@@ -348,12 +354,12 @@ func (pm *IPCManager) isTaskRunning() bool {
 
 // taskEnded handles cleanup when a command execution ends.
 func (pm *IPCManager) taskEnded() {
-	taskEndedNotification(pm.notifyWhenTaskEnds, pm.lastLogMessage, pm.summary)
+	taskEndedNotification(pm.sendNotificationWhenTaskEnds, pm.lastLogMessage, pm.summary)
 	pm.closeLogFile()
 
 	pm.summary = nil
 	pm.lastLogMessage = nil
-	pm.notifyWhenTaskEnds = false
+	pm.sendNotificationWhenTaskEnds = false
 }
 
 func taskEndedNotification(notifyWhenTaskEnds bool, lastLogMessage *ipc.LogMessage, summary *ipc.Summary) {
