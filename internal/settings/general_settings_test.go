@@ -12,7 +12,7 @@ func TestLoadConfig(t *testing.T) {
 		t.Errorf("[Error LoadTOML()] %v", err)
 		return
 	}
-	assert.Equal(t, "127.0.0.1:5555", mainConfig.Device.ID)
+	assert.Equal(t, "127.0.0.1:7555", mainConfig.Device.ID)
 }
 
 func TestSaveConfig(t *testing.T) {

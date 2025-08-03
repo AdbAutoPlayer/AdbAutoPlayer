@@ -55,7 +55,7 @@ func NewGeneralSettings() GeneralSettings {
 			AutoPlayerPort: 62121,
 		},
 		Device: DeviceSettings{
-			ID:               "127.0.0.1:5555",
+			ID:               "127.0.0.1:7555",
 			UseWMResize:      false,
 			Streaming:        true,
 			HardwareDecoding: false,

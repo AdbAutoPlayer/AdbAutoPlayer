@@ -58,7 +58,7 @@ class AdbClientHelper:
         """
         adb_client = AdbClientHelper.get_adb_client()
         main_config: dict[str, Any] = ConfigLoader.main_config()
-        device_id: Any = main_config.get("device", {}).get("ID", "127.0.0.1:5555")
+        device_id: Any = main_config.get("device", {}).get("ID", "127.0.0.1:7555")
         return _resolve_device(adb_client, device_id)
 
     @staticmethod
@@ -195,13 +195,13 @@ def _try_common_ports_and_device_ids(
     """
     logging.debug("Trying common device ids")
     common_device_ids: list[str] = [
+        "127.0.0.1:5555",
+        "emulator-5554",
         "127.0.0.1:7555",
         "127.0.0.1:7565",
         "127.0.0.1:7556",
-        "127.0.0.1:5555",
         "127.0.0.1:5565",
         "127.0.0.1:5556",
-        "emulator-5554",
         "emulator-5555",
     ]
 
