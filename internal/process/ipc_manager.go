@@ -65,11 +65,11 @@ func NewIPCManager(isDev bool, pythonBinaryPath string) *IPCManager {
 
 // startServer starts the FastAPI server process.
 func (pm *IPCManager) startServer() error {
-	if pm.serverProcess != nil && pm.isServerRunning() {
+	if pm.isServerRunning() {
 		return nil
 	}
 
-	cmd, err := getCommand(pm.isDev, pm.pythonBinaryPath, "--server")
+	cmd, err := getUVDevCommand(pm.isDev, pm.pythonBinaryPath, "--server")
 	if err != nil {
 		return fmt.Errorf("failed to get server command: %w", err)
 	}
@@ -86,7 +86,7 @@ func (pm *IPCManager) startServer() error {
 	pm.serverProcess = proc
 
 	// Give the server a moment to start up
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	return nil
 }
@@ -129,8 +129,6 @@ func (pm *IPCManager) connectWebSocket() error {
 		Path:   "/ws",
 	}
 
-	logger.Get().Debugf("Connecting to WebSocket: %s", u.String())
-
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		return fmt.Errorf("failed to connect to WebSocket: %w", err)
@@ -163,25 +161,28 @@ func (pm *IPCManager) readWebSocketMessages() {
 			break
 		}
 
-		// Try to parse as LogMessage
 		var logMessage ipc.LogMessage
-		if err = json.Unmarshal(message, &logMessage); err == nil {
+		if err = unmarshalStrict(message, &logMessage); err == nil {
 			pm.handleLogMessage(logMessage)
 			continue
 		}
 
-		// Try to parse as Summary
 		var summaryMessage ipc.Summary
-		if err = json.Unmarshal(message, &summaryMessage); err == nil {
+		if err = unmarshalStrict(message, &summaryMessage); err == nil {
 			if summaryMessage.SummaryMessage != "" {
 				pm.summary = &summaryMessage
 			}
 			continue
 		}
 
-		// Log unknown message
 		logger.Get().Debugf("Received unknown WebSocket message: %s", string(message))
 	}
+}
+
+func unmarshalStrict(data []byte, v interface{}) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	return decoder.Decode(v)
 }
 
 // handleLogMessage processes a log message received from WebSocket.
@@ -282,6 +283,10 @@ func (pm *IPCManager) StartTask(args []string, notifyWhenTaskEnds bool, logLevel
 		logger.Get().Errorf("Failed to setup log file: %v", err)
 	}
 
+	pm.sendNotificationWhenTaskEnds = notifyWhenTaskEnds
+	pm.summary = nil
+	pm.lastLogMessage = nil
+
 	commandRequest := WebSocketCommandRequest{
 		Type:    "execute_command",
 		Command: args,
@@ -291,10 +296,6 @@ func (pm *IPCManager) StartTask(args []string, notifyWhenTaskEnds bool, logLevel
 		pm.closeLogFile()
 		return fmt.Errorf("failed to send command via WebSocket: %w", err)
 	}
-
-	pm.sendNotificationWhenTaskEnds = notifyWhenTaskEnds
-	pm.summary = nil
-	pm.lastLogMessage = nil
 
 	return nil
 }
@@ -354,7 +355,7 @@ func (pm *IPCManager) isTaskRunning() bool {
 
 // taskEnded handles cleanup when a command execution ends.
 func (pm *IPCManager) taskEnded() {
-	taskEndedNotification(pm.sendNotificationWhenTaskEnds, pm.lastLogMessage, pm.summary)
+	pm.taskEndedNotification()
 	pm.closeLogFile()
 
 	pm.summary = nil
@@ -362,37 +363,31 @@ func (pm *IPCManager) taskEnded() {
 	pm.sendNotificationWhenTaskEnds = false
 }
 
-func taskEndedNotification(notifyWhenTaskEnds bool, lastLogMessage *ipc.LogMessage, summary *ipc.Summary) {
-	if notifyWhenTaskEnds {
-		if lastLogMessage != nil && lastLogMessage.Level == ipc.LogLevelError {
-			notifications.GetService().SendNotification("Task exited with Error", lastLogMessage.Message)
+func (pm *IPCManager) taskEndedNotification() {
+	if pm.sendNotificationWhenTaskEnds {
+		if pm.lastLogMessage != nil && pm.lastLogMessage.Level == ipc.LogLevelError {
+			notifications.GetService().SendNotification("Task exited with Error", pm.lastLogMessage.Message)
 		} else {
 			summaryMessage := ""
-			if summary != nil {
-				summaryMessage = summary.SummaryMessage
+			if pm.summary != nil {
+				summaryMessage = pm.summary.SummaryMessage
 			}
 			notifications.GetService().SendNotification("Task ended", summaryMessage)
 		}
 	}
-	app.EmitEvent(&application.CustomEvent{Name: event_names.WriteSummaryToLog, Data: summary})
+	app.EmitEvent(&application.CustomEvent{Name: event_names.WriteSummaryToLog, Data: pm.summary})
 	app.Emit(event_names.TaskStopped)
 }
 
-// Exec executes a command and returns the log messages.
-func (pm *IPCManager) Exec(args ...string) ([]ipc.LogMessage, error) {
+// POSTCommand sends a command via HTTP.
+func (pm *IPCManager) POSTCommand(args []string) ([]ipc.LogMessage, error) {
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
 
-	// For short commands, we can still use the HTTP endpoint
 	if err := pm.startServer(); err != nil {
 		return nil, err
 	}
 
-	return pm.sendCommand(args)
-}
-
-// sendCommand sends a command via HTTP.
-func (pm *IPCManager) sendCommand(args []string) ([]ipc.LogMessage, error) {
 	commandRequest := struct {
 		Command []string `json:"command"`
 	}{Command: args}

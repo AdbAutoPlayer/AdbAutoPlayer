@@ -13,7 +13,12 @@ from adb_auto_player.log import LogPreset, MemoryLogHandler
 from adb_auto_player.models.commands import Command
 from adb_auto_player.models.decorators import CacheGroup
 from adb_auto_player.registries import LRU_CACHE_REGISTRY
-from adb_auto_player.util import Execute, LogMessageFactory, StringHelper
+from adb_auto_player.util import (
+    Execute,
+    LogMessageFactory,
+    StringHelper,
+    SummaryGenerator,
+)
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from starlette.requests import Request
@@ -31,9 +36,9 @@ current_request_handler: ContextVar[MemoryLogHandler | None] = ContextVar(
 class ProcessLogHandler(logging.Handler):
     """A logging handler that sends LogMessage objects to a queue for ipc."""
 
-    def __init__(self, log_queue: Queue):
+    def __init__(self, message_queue):
         super().__init__()
-        self.log_queue = log_queue
+        self.message_queue = message_queue
 
     def emit(self, record):
         """Convert log record to LogMessage and send to queue."""
@@ -46,12 +51,14 @@ class ProcessLogHandler(logging.Handler):
                 html_class=preset.get_html_class() if preset else None,
             )
 
-            self.log_queue.put(log_message.to_dict())
+            self.message_queue.put(log_message.to_dict())
         except Exception as e:
             print(f"Failed to send log to queue: {e}")
 
 
-def run_command_in_process(command: list[str], commands_dict: dict, log_queue: Queue):
+def run_command_in_process(
+    command: list[str], commands_dict: dict, message_queue: Queue
+):
     """Function to run a command in a separate process.
 
     This function will be executed in the child process.
@@ -62,10 +69,11 @@ def run_command_in_process(command: list[str], commands_dict: dict, log_queue: Q
         for handler in logger.handlers[:]:
             logger.removeHandler(handler)
 
-        queue_handler = ProcessLogHandler(log_queue)
+        queue_handler = ProcessLogHandler(message_queue)
         queue_handler.setLevel(logging.DEBUG)
         logger.addHandler(queue_handler)
         logger.setLevel(logging.DEBUG)
+        SummaryGenerator.set_message_queue(message_queue)
 
         parser = ArgparseHelper.build_argument_parser(
             commands_dict, exit_on_error=False
@@ -74,19 +82,19 @@ def run_command_in_process(command: list[str], commands_dict: dict, log_queue: Q
 
         if not Execute.find_command_and_execute(args.command, commands_dict):
             logging.error(f"Unrecognized command: {command}")
-            log_queue.put(None)
+            message_queue.put(None)
             return False
 
-        log_queue.put(None)
+        message_queue.put(None)
         return True
 
     except argparse.ArgumentError as e:
         logging.error(f"Unrecognized command: {e}")
-        log_queue.put(None)
+        message_queue.put(None)
         return False
     except Exception as e:
         logging.error(f"Execution error: {e!s}")
-        log_queue.put(None)
+        message_queue.put(None)
         return False
 
 
@@ -183,7 +191,7 @@ class FastAPIServer:
 
         self._setup_logging()
         self._setup_middleware()
-        self._setup_tcp_routes()
+        self._setup_http_routes()
         self._setup_websocket_routes()
 
     def _setup_logging(self):
@@ -216,15 +224,15 @@ class FastAPIServer:
                 current_request_handler.set(None)
 
     @staticmethod
-    async def _read_log_queue(log_queue: Queue, shutdown_event: asyncio.Event):
-        """Read LogMessage objects from the queue and forward them to WebSocket."""
+    async def _read_message_queue(message_queue: Queue, shutdown_event: asyncio.Event):
+        """Read json messages from the queue and forward them to WebSocket."""
         while not shutdown_event.is_set():
             try:
                 await asyncio.sleep(0.01)
 
-                if not log_queue.empty():
+                if not message_queue.empty():
                     try:
-                        log_data = log_queue.get_nowait()
+                        log_data = message_queue.get_nowait()
 
                         if log_data is None:
                             break
@@ -256,19 +264,19 @@ class FastAPIServer:
         """Execute command in background process."""
         process = None
         log_reader_task = None
-        log_queue: Queue[LogMessage] = Queue()
+        message_queue: Queue = Queue()
 
         try:
             shutdown_event = asyncio.Event()
 
             process = Process(
                 target=run_command_in_process,
-                args=(command, self.commands, log_queue),
+                args=(command, self.commands, message_queue),
             )
             process.start()
 
             log_reader_task = asyncio.create_task(
-                self._read_log_queue(log_queue, shutdown_event)
+                self._read_message_queue(message_queue, shutdown_event)
             )
 
             while process.is_alive():
@@ -294,11 +302,15 @@ class FastAPIServer:
             await FastAPIServer._cleanup_process_and_tasks(
                 process,
                 log_reader_task,
-                log_queue,
+                message_queue,
             )
 
     @staticmethod
-    async def _cleanup_process_and_tasks(process, log_reader_task, log_queue):
+    async def _cleanup_process_and_tasks(
+        process: Process | None,
+        log_reader_task: asyncio.Task | None,
+        message_queue: Queue,
+    ):
         """Comprehensive cleanup of process and associated tasks."""
         if log_reader_task and not log_reader_task.done():
             log_reader_task.cancel()
@@ -327,10 +339,10 @@ class FastAPIServer:
             except Exception as e:
                 logging.error(f"Error during process cleanup: {e}")
 
-        if log_queue:
+        if message_queue:
             try:
-                while not log_queue.empty():
-                    log_queue.get_nowait()
+                while not message_queue.empty():
+                    message_queue.get_nowait()
             except Exception:
                 pass
 
@@ -417,7 +429,7 @@ class FastAPIServer:
             except Exception as e:
                 logging.error(f"Error closing WebSocket: {e}")
 
-    def _setup_tcp_routes(self):
+    def _setup_http_routes(self):
         """Setup TCP routes."""
 
         @self.app.post("/execute", response_model=LogMessageListResponse)

@@ -1,6 +1,5 @@
 """ADB Auto Player Logging Setup Module."""
 
-import json
 import logging
 import sys
 from datetime import datetime
@@ -10,7 +9,6 @@ from adb_auto_player.ipc import LogMessage
 from adb_auto_player.util import (
     LogMessageFactory,
     StringHelper,
-    SummaryGenerator,
     TracebackHelper,
 )
 
@@ -19,35 +17,6 @@ from .log_presets import LogPreset
 
 class BaseLogHandler(logging.Handler):
     """Base log handler with common functionality."""
-
-
-class JsonLogHandler(BaseLogHandler):
-    """JSON log handler this is used for IPC between CLI and GUI."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialize JsonLogHandler.
-
-        Lets the SummaryGenerator know that it needs to start sending data to the GUI.
-        """
-        super().__init__(*args, **kwargs)
-        SummaryGenerator.set_json_handler_present()
-
-    def emit(self, record: logging.LogRecord) -> None:
-        """Emit a log message in JSON format.
-
-        Args:
-            record (logging.LogRecord): The log record to emit.
-        """
-        preset: LogPreset | None = getattr(record, "preset", None)
-
-        log_message: LogMessage = LogMessageFactory.create_log_message(
-            record=record,
-            message=StringHelper.sanitize_path(record.getMessage()),
-            html_class=preset.get_html_class() if preset else None,
-        )
-        log_dict = log_message.to_dict()
-        print(json.dumps(log_dict))
-        sys.stdout.flush()
 
 
 class TerminalLogHandler(BaseLogHandler):
@@ -147,7 +116,7 @@ class MemoryLogHandler(logging.Handler):
         self.messages.clear()
 
 
-LogHandlerType = Literal["json", "terminal", "text", "raw"]
+LogHandlerType = Literal["terminal", "text", "raw"]
 
 
 def setup_logging(handler_type: LogHandlerType, level: int | str) -> None:
@@ -167,7 +136,6 @@ def setup_logging(handler_type: LogHandlerType, level: int | str) -> None:
         logger.removeHandler(handler)
 
     handler_mapping = {
-        "json": JsonLogHandler,
         "terminal": TerminalLogHandler,
         "text": TextLogHandler,
     }

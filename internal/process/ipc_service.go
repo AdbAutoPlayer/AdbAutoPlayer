@@ -43,10 +43,6 @@ func (s *IPCService) InitializeManager() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	s.initializeSTDIOManager()
-}
-
-func (s *IPCService) initializeSTDIOManager() {
 	if nil == s.manager || s.pythonBinaryPath != s.manager.pythonBinaryPath {
 		s.manager = NewIPCManager(
 			s.IsDev,
@@ -84,9 +80,9 @@ func (s *IPCService) StartTask(args []string, notifyWhenTaskEnds bool, logLevel 
 	return errors.New("no IPC Process Manager is running")
 }
 
-func (s *IPCService) Exec(args []string) ([]ipc.LogMessage, error) {
+func (s *IPCService) POSTCommand(args []string) ([]ipc.LogMessage, error) {
 	if s.manager != nil {
-		return s.manager.Exec(args...)
+		return s.manager.POSTCommand(args)
 	}
 	var logMessages []ipc.LogMessage
 	return logMessages, errors.New("no IPC Process Manager is running")
@@ -111,7 +107,7 @@ func (s *IPCService) SendPOST(endpoint string, requestBody interface{}) ([]byte,
 	return s.manager.sendPOST(endpoint, requestBody)
 }
 
-func getCommand(isDev bool, name string, args ...string) (*exec.Cmd, error) {
+func getUVDevCommand(isDev bool, name string, args ...string) (*exec.Cmd, error) {
 	if isDev {
 		if _, err := os.Stat(name); os.IsNotExist(err) {
 			return nil, fmt.Errorf("dev Python dir does not exist: %s", name)

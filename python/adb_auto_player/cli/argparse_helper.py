@@ -30,8 +30,8 @@ class ArgparseHelper:
         )
         parser.add_argument(
             "--output",
-            choices=["json", "terminal", "text", "raw"],
-            default="json",
+            choices=["terminal", "text", "raw"],
+            default="terminal",
             help="Output format",
         )
         parser.add_argument(

@@ -31,7 +31,7 @@ func (g *GamesService) GetGameGUI() (*ipc.GameGUI, error) {
 		return nil, err
 	}
 
-	logMessages, err := process.GetService().Exec([]string{"DisplayGUI", "--log-level=DISABLE"})
+	logMessages, err := process.GetService().POSTCommand([]string{"DisplayGUI", "--log-level=DISABLE"})
 	if err != nil {
 		return nil, err
 	}
