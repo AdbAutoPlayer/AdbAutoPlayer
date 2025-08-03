@@ -153,10 +153,6 @@ func (g *GamesService) KillGameProcess() {
 	process.GetService().StopTask()
 }
 
-func (g *GamesService) IsGameProcessRunning() bool {
-	return process.GetService().IsTaskRunning()
-}
-
 func (g *GamesService) resolvePythonBinaryPathIfNeeded() error {
 	if process.GetService().GetPythonBinaryPath() == "" {
 		err := g.setPythonBinaryPath()

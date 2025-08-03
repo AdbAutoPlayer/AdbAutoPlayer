@@ -1,14 +1,10 @@
 package process
 
 import (
-	"adb-auto-player/internal/app"
-	"adb-auto-player/internal/event_names"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/logger"
-	"adb-auto-player/internal/notifications"
 	"errors"
 	"fmt"
-	"github.com/wailsapp/wails/v3/pkg/application"
 	"os"
 	"os/exec"
 	"sync"
@@ -16,7 +12,7 @@ import (
 
 type IPCService struct {
 	mutex            sync.Mutex
-	STDIOManager     *STDIOManager
+	manager          *IPCManager
 	IsDev            bool
 	pythonBinaryPath string
 }
@@ -51,8 +47,8 @@ func (s *IPCService) InitializeManager() {
 }
 
 func (s *IPCService) initializeSTDIOManager() {
-	if nil == s.STDIOManager || s.pythonBinaryPath != s.STDIOManager.pythonBinaryPath {
-		s.STDIOManager = NewSTDIOManager(
+	if nil == s.manager || s.pythonBinaryPath != s.manager.pythonBinaryPath {
+		s.manager = NewIPCManager(
 			s.IsDev,
 			s.pythonBinaryPath,
 		)
@@ -63,12 +59,12 @@ func (s *IPCService) StopTask(msg ...string) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	if !s.STDIOManager.isProcessRunning() {
+	if !s.manager.isTaskRunning() {
 		return
 	}
 
-	if s.STDIOManager != nil {
-		s.STDIOManager.KillProcess()
+	if s.manager != nil {
+		s.manager.StopTask()
 	}
 
 	message := "Stopping"
@@ -82,25 +78,15 @@ func (s *IPCService) StartTask(args []string, notifyWhenTaskEnds bool, logLevel 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	if s.STDIOManager != nil {
-		return s.STDIOManager.StartProcess(args, notifyWhenTaskEnds, logLevel...)
+	if s.manager != nil {
+		return s.manager.StartTask(args, notifyWhenTaskEnds, logLevel...)
 	}
 	return errors.New("no IPC Process Manager is running")
 }
 
-func (s *IPCService) IsTaskRunning() bool {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	if s.STDIOManager != nil {
-		return s.STDIOManager.isProcessRunning()
-	}
-	return false
-}
-
 func (s *IPCService) Exec(args []string) ([]ipc.LogMessage, error) {
-	if s.STDIOManager != nil {
-		return s.STDIOManager.Exec(args...)
+	if s.manager != nil {
+		return s.manager.Exec(args...)
 	}
 	var logMessages []ipc.LogMessage
 	return logMessages, errors.New("no IPC Process Manager is running")
@@ -110,25 +96,19 @@ func (s *IPCService) Shutdown() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	if s.STDIOManager == nil {
+	if s.manager == nil {
 		return
 	}
 
-	if sm := s.STDIOManager.serverManager; sm != nil && sm.process != nil {
-		sm.stopServer()
-	}
-
-	if r := s.STDIOManager.running; r != nil {
-		_ = r.Kill()
-	}
+	s.manager.Cleanup()
 }
 
 func (s *IPCService) SendPOST(endpoint string, requestBody interface{}) ([]byte, error) {
-	if s.STDIOManager == nil || s.STDIOManager.serverManager == nil {
+	if s.manager == nil {
 		return nil, errors.New("no IPC Process Manager is running")
 	}
 
-	return s.STDIOManager.serverManager.sendPOST(endpoint, requestBody)
+	return s.manager.sendPOST(endpoint, requestBody)
 }
 
 func getCommand(isDev bool, name string, args ...string) (*exec.Cmd, error) {
@@ -149,20 +129,4 @@ func getCommand(isDev bool, name string, args ...string) (*exec.Cmd, error) {
 	}
 
 	return exec.Command(name, args...), nil
-}
-
-func taskEndedNotification(notifyWhenTaskEnds bool, lastLogMessage *ipc.LogMessage, summary *ipc.Summary) {
-	if notifyWhenTaskEnds {
-		if lastLogMessage != nil && lastLogMessage.Level == ipc.LogLevelError {
-			notifications.GetService().SendNotification("Task exited with Error", lastLogMessage.Message)
-		} else {
-			summaryMessage := ""
-			if summary != nil {
-				summaryMessage = summary.SummaryMessage
-			}
-			notifications.GetService().SendNotification("Task ended", summaryMessage)
-		}
-	}
-	app.EmitEvent(&application.CustomEvent{Name: event_names.WriteSummaryToLog, Data: summary})
-	app.Emit(event_names.TaskStopped)
 }

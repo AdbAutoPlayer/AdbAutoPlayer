@@ -320,10 +320,6 @@ class FastAPIServer:
             except asyncio.CancelledError:
                 pass
 
-    async def _handle_websocket_stop(self) -> None:
-        """Handle stop request via WebSocket."""
-        await self._stop_current_command()
-
     def _setup_websocket_routes(self):
         """Set up websocket routes."""
 
@@ -332,6 +328,15 @@ class FastAPIServer:
             """WebSocket endpoint for real-time command execution and logging."""
             await websocket.accept()
             current_websocket.set(websocket)
+
+            def on_command_done(task: asyncio.Task):
+                async def close_ws():
+                    try:
+                        await websocket.close(reason="Task completed")
+                    except Exception as e:
+                        logging.error(f"Error closing websocket: {e}")
+
+                self.on_command_done_task = asyncio.create_task(close_ws())
 
             try:
                 while True:
@@ -349,8 +354,12 @@ class FastAPIServer:
                             self.command_execution_task = asyncio.create_task(
                                 self._execute_command_background(command)
                             )
+                            self.command_execution_task.add_done_callback(
+                                on_command_done
+                            )
                         elif message.get("type") == "stop":
-                            await self._handle_websocket_stop()
+                            await self._stop_current_command()
+                            await websocket.close(reason="Task stopped")
 
                     except WebSocketDisconnect:
                         break
