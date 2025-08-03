@@ -22,8 +22,10 @@ type DeviceSettings struct {
 }
 
 type AdvancedSettings struct {
-	ADBHost string `toml:"host" json:"ADB Host"`
-	ADBPort int    `toml:"port" json:"ADB Port"`
+	ADBHost        string `toml:"host" json:"ADB Server Host"`
+	ADBPort        int    `toml:"port" json:"ADB Server Port"`
+	AutoPlayerHost string `toml:"auto_player_host" json:"AutoPlayer Host"`
+	AutoPlayerPort int    `toml:"auto_player_port" json:"AutoPlayer Port"`
 }
 
 type UpdateSettings struct {
@@ -47,8 +49,10 @@ type UISettings struct {
 func NewGeneralSettings() GeneralSettings {
 	return GeneralSettings{
 		Advanced: AdvancedSettings{
-			ADBHost: "127.0.0.1",
-			ADBPort: 5037,
+			ADBHost:        "127.0.0.1",
+			ADBPort:        5037,
+			AutoPlayerHost: "127.0.0.1",
+			AutoPlayerPort: 62121,
 		},
 		Device: DeviceSettings{
 			ID:               "127.0.0.1:5555",

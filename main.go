@@ -94,6 +94,9 @@ func initializeEventHandlers(app *application.App) {
 		return
 	}
 
+	app.Event.On(event_names.ServerAddressChanged, func(event *application.CustomEvent) {
+		process.GetService().Shutdown()
+	})
 	app.Event.On(event_names.GeneralSettingsUpdated, func(event *application.CustomEvent) {
 		process.GetService().InitializeManager()
 		_, _ = process.GetService().STDIOManager.ServerExec(event_names.GeneralSettingsUpdated)

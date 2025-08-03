@@ -31,15 +31,24 @@ func (g *GamesService) GetGameGUI() (*ipc.GameGUI, error) {
 		return nil, err
 	}
 
-	gui, err := process.GetService().Exec([]string{"DisplayGUI", "--log-level=DISABLE"})
+	str, logMessages, err := process.GetService().Exec([]string{"DisplayGUI", "--log-level=DISABLE"})
 	if err != nil {
 		return nil, err
 	}
+
 	var gameGUI ipc.GameGUI
 
-	err = json.Unmarshal([]byte(gui), &gameGUI)
+	if len(logMessages) > 0 {
+		last := logMessages[len(logMessages)-1]
+		if last.Level == "ERROR" {
+			return nil, errors.New(last.Message)
+		}
+		str = last.Message
+	}
+
+	err = json.Unmarshal([]byte(str), &gameGUI)
 	if err != nil {
-		println(gui)
+		println(str)
 		println(err.Error())
 		return nil, err
 	}

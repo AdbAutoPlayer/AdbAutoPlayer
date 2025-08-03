@@ -2,6 +2,8 @@
 
 from datetime import datetime, timezone
 
+from pydantic import BaseModel
+
 
 class LogLevel:
     """Logging levels."""
@@ -14,27 +16,16 @@ class LogLevel:
     FATAL = "FATAL"
 
 
-class LogMessage:
+class LogMessage(BaseModel):
     """Log message class."""
 
-    def __init__(
-        self,
-        level: str,
-        message: str,
-        timestamp: datetime,
-        source_file: str | None = None,
-        function_name: str | None = None,
-        line_number: int | None = None,
-        html_class: str | None = None,
-    ) -> None:
-        """Initialize LogMessage."""
-        self.level = level
-        self.message = message
-        self.timestamp = timestamp
-        self.source_file = source_file
-        self.function_name = function_name
-        self.line_number = line_number
-        self.html_class = html_class
+    level: str
+    message: str
+    timestamp: datetime
+    source_file: str | None = None
+    function_name: str | None = None
+    line_number: int | None = None
+    html_class: str | None = (None,)
 
     def to_dict(self):
         """Convert LogMessage to dictionary for JSON serialization."""

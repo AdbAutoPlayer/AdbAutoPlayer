@@ -151,7 +151,11 @@ func GetMainConfigConstraints() map[string]interface{} {
 		"Advanced": map[string]interface{}{
 			"ADB Server Host": NewTextConstraint("127.0.0.1"),
 			"ADB Server Port": NewNumberConstraint(&portMin, &portMax, nil, 5037),
+			"AutoPlayer Host": NewTextConstraint("127.0.0.1"),
+			"AutoPlayer Port": NewNumberConstraint(&portMin, &portMax, nil, 62121),
 			"Order": []string{
+				"AutoPlayer Host",
+				"AutoPlayer Port",
 				"ADB Server Host",
 				"ADB Server Port",
 			},

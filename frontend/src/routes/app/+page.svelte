@@ -270,7 +270,7 @@
     try {
       activeGame = await GetGameGUI();
     } catch (error) {
-      logDevOnly(error);
+      showErrorToast(error);
     }
   }
 

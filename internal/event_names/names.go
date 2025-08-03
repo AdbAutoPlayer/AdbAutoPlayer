@@ -1,6 +1,7 @@
 package event_names
 
 const (
+	ServerAddressChanged   = "server-address-changed"
 	GeneralSettingsUpdated = "general-settings-updated"
 	WriteSummaryToLog      = "write-summary-to-log"
 	LogMessage             = "log-message"

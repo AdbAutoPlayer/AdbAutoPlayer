@@ -132,6 +132,41 @@ class TextLogHandler(BaseLogHandler):
         sys.stdout.flush()
 
 
+class MemoryLogHandler(logging.Handler):
+    """Log handler that stores log messages in memory for API responses."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.messages: list[LogMessage] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        """Store log message in memory.
+
+        Args:
+            record (logging.LogRecord): The log record to store.
+        """
+        preset: LogPreset | None = getattr(record, "preset", None)
+
+        log_message: LogMessage = LogMessageFactory.create_log_message(
+            record=record,
+            message=get_sanitized_message(record),
+            html_class=preset.get_html_class() if preset else None,
+        )
+        self.messages.append(log_message)
+
+    def get_messages(self) -> list[LogMessage]:
+        """Get all stored log messages.
+
+        Returns:
+            List[LogMessage]: All captured log messages.
+        """
+        return self.messages.copy()
+
+    def clear(self) -> None:
+        """Clear all stored log messages."""
+        self.messages.clear()
+
+
 LogHandlerType = Literal["json", "terminal", "text", "raw"]
 
 

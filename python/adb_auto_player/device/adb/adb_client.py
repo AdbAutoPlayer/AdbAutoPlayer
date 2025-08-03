@@ -25,11 +25,10 @@ class AdbClientHelper:
     def get_adb_client() -> AdbClient:
         """Return AdbClient instance."""
         _set_adb_path()
-        main_config: dict[str, Any] = ConfigLoader.main_config()
-        adb_config: Any = main_config.get("adb", {})
+        advanced_config: Any = ConfigLoader.main_config().get("advanced", {})
         client = AdbClient(
-            host=adb_config.get("host", "127.0.0.1"),
-            port=adb_config.get("port", 5037),
+            host=advanced_config.get("host", "127.0.0.1"),
+            port=advanced_config.get("port", 5037),
         )
 
         server_version = client.server_version()

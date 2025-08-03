@@ -16,6 +16,9 @@ dependencies = [
     "pillow>=11.1.0",
     "pytesseract>=0.3.13",
     "psutil>=7.0.0",
+    "fastapi>=0.116.1",
+    "uvicorn[standard]>=0.35.0",
+    "websockets>=15.0.1",
 ]
 
 [project.scripts]
@@ -61,6 +64,7 @@ select = [
 ignore = [
     "D100",  # Missing docstring in public module
     "D104", # Missing docstring in public package
+    "D107", # Missing docstring in `__init__`
      # I feel D100 and D104 are pointless when most modules are as small as they are.
     "D203",  # incorrect-blank-line-before-class
     "D406",  # missing-new-line-after-section-name
@@ -74,10 +78,10 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # Ignore D100 (Missing docstring in public module) only in games subdirs
 "**/games/**/*.py" = [
-    "D101", "D102", "D103", "D107",
+    "D101", "D102", "D103",
 ]
 "**/tests/**/*.py" = [
-    "D101", "D102", "D103", "D107",
+    "D101", "D102", "D103",
     "PLR0913", "PLR2004",
 ]
 

@@ -12,19 +12,33 @@ export class AdvancedSettings {
      * @param {Partial<AdvancedSettings>} [$$source = {}] - The source object to create the AdvancedSettings.
      */
     constructor($$source = {}) {
-        if (!("ADB Host" in $$source)) {
+        if (!("ADB Server Host" in $$source)) {
             /**
              * @member
              * @type {string}
              */
-            this["ADB Host"] = "";
+            this["ADB Server Host"] = "";
         }
-        if (!("ADB Port" in $$source)) {
+        if (!("ADB Server Port" in $$source)) {
             /**
              * @member
              * @type {number}
              */
-            this["ADB Port"] = 0;
+            this["ADB Server Port"] = 0;
+        }
+        if (!("AutoPlayer Host" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["AutoPlayer Host"] = "";
+        }
+        if (!("AutoPlayer Port" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["AutoPlayer Port"] = 0;
         }
 
         Object.assign(this, $$source);

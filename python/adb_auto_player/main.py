@@ -2,13 +2,16 @@
 
 import sys
 from functools import lru_cache
+from typing import Any
 
+import uvicorn
 from adb_auto_player import commands, games
 from adb_auto_player.cli import ArgparseHelper
 from adb_auto_player.log import setup_logging
 from adb_auto_player.models.commands import Command
 from adb_auto_player.registries import COMMAND_REGISTRY, GAME_REGISTRY
-from adb_auto_player.server_mode import server_mode
+from adb_auto_player.server import create_fastapi_server
+from adb_auto_player.settings import ConfigLoader
 from adb_auto_player.util import DevHelper, Execute
 
 
@@ -41,7 +44,13 @@ def main() -> None:
     parser = ArgparseHelper.build_argument_parser(_get_commands())
     args = parser.parse_args()
     if args.server:
-        server_mode(_get_commands())
+        app = create_fastapi_server(_get_commands())
+        advanced_config: Any = ConfigLoader.main_config().get("advanced", {})
+        uvicorn.run(
+            app,
+            host=advanced_config.get("auto_player_host", "127.0.0.1"),
+            port=advanced_config.get("auto_player_port", 62121),
+        )
         sys.exit(0)
 
     if not args.command:

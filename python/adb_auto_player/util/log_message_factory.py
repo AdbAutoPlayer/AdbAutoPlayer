@@ -1,7 +1,7 @@
 """Log Message Factory."""
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from adb_auto_player.ipc import LogLevel, LogMessage
 
@@ -30,7 +30,7 @@ class LogMessageFactory:
         return LogMessage(
             level=level_mapping.get(record.levelno, LogLevel.DEBUG),
             message=message if message else record.getMessage(),
-            timestamp=datetime.now(),
+            timestamp=datetime.now().astimezone(timezone.utc),
             source_file=source_info.source_file,
             function_name=source_info.function_name,
             line_number=source_info.line_number,
