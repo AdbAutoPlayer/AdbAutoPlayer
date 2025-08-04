@@ -50,11 +50,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
         do_arena: bool = self.get_config().dailies.arena_battle
         self.navigate_to_default_state()
 
-        self.claim_daily_rewards()
-        self.buy_emporium()
-        self.single_pull()
-        DreamRealmMixin().run_dream_realm(daily=True)  # type: ignore[abstract]
-        ArenaMixin().run_arena() if do_arena else logging.info("Arena battle disabled.")  # type: ignore[abstract]
+        # self.claim_daily_rewards()
+        # self.buy_emporium()
+        # self.single_pull()
+        # DreamRealmMixin().run_dream_realm(daily=True)  # type: ignore[abstract]
+        # ArenaMixin().run_arena() if do_arena else logging.info("Arena battle disabled.")  # type: ignore[abstract]
         self.claim_hamburger()
         self.raise_hero_affinity()
         self.swap_essences()
@@ -384,6 +384,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             sleep(1)
         except GameTimeoutError as fail:
             logging.info(f"{fail} {self.LANG_ERROR}")
+            return
 
         logging.debug("Back.")  # TODO: Create generic back method.
         back = self.game_find_template_match("back.png")
