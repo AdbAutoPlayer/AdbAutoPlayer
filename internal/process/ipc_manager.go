@@ -63,6 +63,27 @@ func NewIPCManager(isDev bool, pythonBinaryPath string) *IPCManager {
 	}
 }
 
+// sendGET sends a GET request to the specified endpoint.
+func (pm *IPCManager) sendGET(endpoint string) (*http.Response, error) {
+	client := &http.Client{
+		Timeout: 2 * time.Second,
+	}
+
+	serverUrl := fmt.Sprintf(
+		"http://%s:%d%s",
+		settings.GetService().GetGeneralSettings().Advanced.AutoPlayerHost,
+		settings.GetService().GetGeneralSettings().Advanced.AutoPlayerPort,
+		endpoint,
+	)
+
+	resp, err := client.Get(serverUrl)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send GET request to %s: %w", endpoint, err)
+	}
+
+	return resp, nil
+}
+
 // startServer starts the FastAPI server process.
 func (pm *IPCManager) startServer() error {
 	if pm.isServerRunning() {
@@ -85,10 +106,30 @@ func (pm *IPCManager) startServer() error {
 	}
 	pm.serverProcess = proc
 
-	// Give the server a moment to start up
-	time.Sleep(2 * time.Second)
+	// Wait for the server to respond to /health endpoint
+	timeout := time.After(30 * time.Second)
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
 
-	return nil
+	for {
+		select {
+		case <-timeout:
+			killProcessTree(pm.serverProcess)
+			pm.serverProcess = nil
+			return fmt.Errorf("failed to start ADB Server")
+		case <-ticker.C:
+			resp, err2 := pm.sendGET("/health")
+			if err2 == nil && resp.StatusCode == http.StatusOK {
+				_ = resp.Body.Close()
+				logger.Get().Infof("ADB Server started")
+				println("wow")
+				return nil
+			}
+			if resp != nil {
+				_ = resp.Body.Close()
+			}
+		}
+	}
 }
 
 // stopServer stops the FastAPI server process.

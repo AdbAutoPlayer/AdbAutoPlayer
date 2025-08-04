@@ -460,6 +460,11 @@ class FastAPIServer:
                 status_code=404, detail=f"Unrecognized command: {request.command}"
             )
 
+        @self.app.get("/health", response_model=OKResponse)
+        async def health_check():
+            """Health check."""
+            return OKResponse()
+
         @self.app.post("/general-settings-updated", response_model=OKResponse)
         async def general_settings_updated():
             """Handle general settings update."""
