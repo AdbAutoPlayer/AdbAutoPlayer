@@ -14,7 +14,6 @@
     GetChangelogs,
   } from "@wails/updater/updateservice";
   import { UpdateInfo, Changelog } from "@wails/updater";
-  import { KillGameProcess } from "@wails/games/gamesservice";
 
   // State management
   let updateState = $state({
