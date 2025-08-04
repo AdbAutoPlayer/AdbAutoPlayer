@@ -1,9 +1,11 @@
 [advanced]
 host = '127.0.0.1'
 port = 5037
+auto_player_host = '127.0.0.1'
+auto_player_port = 62121
 
 [device]
-ID = '127.0.0.1:5555'
+ID = '127.0.0.1:7555'
 wm_size = false
 streaming = true
 hardware_decoding = true
