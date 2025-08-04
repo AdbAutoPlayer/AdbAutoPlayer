@@ -50,11 +50,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
         do_arena: bool = self.get_config().dailies.arena_battle
         self.navigate_to_default_state()
 
-        # self.claim_daily_rewards()
-        # self.buy_emporium()
-        # self.single_pull()
-        # DreamRealmMixin().run_dream_realm(daily=True)  # type: ignore[abstract]
-        # ArenaMixin().run_arena() if do_arena else logging.info("Arena battle disabled.")  # type: ignore[abstract]
+        self.claim_daily_rewards()
+        self.buy_emporium()
+        self.single_pull()
+        DreamRealmMixin().run_dream_realm(daily=True)  # type: ignore[abstract]
+        ArenaMixin().run_arena() if do_arena else logging.info("Arena battle disabled.")  # type: ignore[abstract]
         self.claim_hamburger()
         self.raise_hero_affinity()
         self.swap_essences()
