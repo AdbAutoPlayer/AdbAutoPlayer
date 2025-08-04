@@ -7,7 +7,7 @@ export const handleError: HandleClientError = async ({
   status,
   message,
 }) => {
-  if (status !== 404) {
+  if (error && status !== 404) {
     posthog.captureException(error);
   }
 };

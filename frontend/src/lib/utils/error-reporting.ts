@@ -7,23 +7,20 @@ import { version } from "$app/environment";
  * - Production: sends to PostHog for tracking
  */
 export function reportError(error: unknown, additionalProperties?: Properties) {
-  if (isDev()) {
-    console.error(error, additionalProperties);
+  if (!error) {
     return;
   }
 
   try {
     posthog.captureException(error, additionalProperties);
   } catch (e) {
-    // can be ignored because console is not available in webview
-    return;
+    console.error(e);
   }
 }
 
 export function logDevOnly(error: unknown) {
   if (isDev()) {
     console.error(error);
-    return;
   }
 }
 

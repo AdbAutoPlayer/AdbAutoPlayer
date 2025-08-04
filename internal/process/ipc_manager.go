@@ -118,7 +118,6 @@ func (pm *IPCManager) healthCheck() (bool, error) {
 		return false, fmt.Errorf("failed to parse health check response: %w", err)
 	}
 
-	println(healthResp.Detail)
 	if healthResp.Detail != "ADB Auto Player Server" {
 		return false, fmt.Errorf("invalid health check response: expected detail='ADB Auto Player Server', got '%s'", healthResp.Detail)
 	}
