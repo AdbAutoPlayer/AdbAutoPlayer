@@ -15,6 +15,7 @@ import (
 	"github.com/shirou/gopsutil/process"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -43,7 +44,8 @@ type IPCManager struct {
 	summary                      *ipc.Summary
 	lastLogMessage               *ipc.LogMessage
 
-	mutex sync.Mutex
+	websocketMutex sync.Mutex
+	serverMutex    sync.Mutex
 
 	logFile *os.File
 }
@@ -123,12 +125,25 @@ func (pm *IPCManager) healthCheck() (bool, error) {
 	return true, nil
 }
 
+// checkPortInUse checks if the specified host and port are already in use.
+func (pm *IPCManager) checkPortInUse() (bool, error) {
+	host := settings.GetService().GetGeneralSettings().Advanced.AutoPlayerHost
+	port := settings.GetService().GetGeneralSettings().Advanced.AutoPlayerPort
+	addr := fmt.Sprintf("%s:%d", host, port)
+
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		if strings.Contains(err.Error(), "address already in use") || strings.Contains(err.Error(), "bind:") {
+			return true, nil
+		}
+		return false, fmt.Errorf("failed to check port %s: %w", addr, err)
+	}
+	_ = listener.Close()
+	return false, nil
+}
+
 // startServer starts the FastAPI server process.
 func (pm *IPCManager) startServer() error {
-	if pm.isServerRunning() {
-		return nil
-	}
-
 	cmd, err := getUVDevCommand(pm.isDev, pm.pythonBinaryPath, "--server")
 	if err != nil {
 		return fmt.Errorf("failed to get server command: %w", err)
@@ -151,25 +166,38 @@ func (pm *IPCManager) startServer() error {
 
 // startOrResolveServer attempts to use an existing server or start a new one.
 func (pm *IPCManager) startOrResolveServer() error {
+	pm.serverMutex.Lock()
+	defer pm.serverMutex.Unlock()
+	host := settings.GetService().GetGeneralSettings().Advanced.AutoPlayerHost
+	port := settings.GetService().GetGeneralSettings().Advanced.AutoPlayerPort
+
 	if pm.isServerRunning() {
 		return nil
 	}
 
-	host := settings.GetService().GetGeneralSettings().Advanced.AutoPlayerHost
-	port := settings.GetService().GetGeneralSettings().Advanced.AutoPlayerPort
-
-	// Attempt to start a server
-	err := pm.startServer()
+	// Check if the port is already in use
+	inUse, err := pm.checkPortInUse()
 	if err != nil {
-		// Retry health check to confirm failure
+		logger.Get().Errorf("Failed to check if port %s:%d is in use: %v", host, port, err)
+		return fmt.Errorf("failed to check port availability: %w", err)
+	}
+
+	if inUse {
+		// Port is in use, check if it's a valid ADB Auto Player Server
 		isValid, err2 := pm.healthCheck()
 		if isValid && err2 == nil {
-			logger.Get().Infof("ADB Server found running after start attempt on %s:%d", host, port)
+			if !pm.serverRunningInSeparateProcess {
+				logger.Get().Infof("ADB Server found running on %s:%d", host, port)
+			}
 			pm.serverRunningInSeparateProcess = true
 			return nil
 		}
-		logger.Get().Errorf("Failed to start ADB Server on %s:%d: %v", host, port, err)
-		return err
+		return fmt.Errorf("port %s:%d is in use by another process", host, port)
+	}
+
+	if err = pm.startServer(); err != nil {
+		return fmt.Errorf("failed to start ADB Server on %s:%d: %v", host, port, err)
+
 	}
 
 	// Wait for the server to respond to /health endpoint
@@ -180,6 +208,7 @@ func (pm *IPCManager) startOrResolveServer() error {
 	for {
 		select {
 		case <-timeout:
+			logger.Get().Errorf("Failed to start ADB Server on %s:%d: timeout waiting for health check", host, port)
 			killProcessTree(pm.serverProcess)
 			pm.serverProcess = nil
 			return fmt.Errorf("failed to start ADB Server")
@@ -262,9 +291,9 @@ func (pm *IPCManager) connectWebSocket() error {
 // readWebSocketMessages reads log messages from the WebSocket connection.
 func (pm *IPCManager) readWebSocketMessages() {
 	defer func() {
-		pm.mutex.Lock()
+		pm.websocketMutex.Lock()
 		pm.wsConnected = false
-		pm.mutex.Unlock()
+		pm.websocketMutex.Unlock()
 
 		pm.taskEnded()
 	}()
@@ -272,7 +301,7 @@ func (pm *IPCManager) readWebSocketMessages() {
 	for {
 		_, message, err := pm.wsConn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) && !websocket.IsCloseError(err, websocket.CloseNormalClosure) {
 				logger.Get().Errorf("WebSocket error: %v", err)
 			}
 			break
@@ -369,8 +398,8 @@ func (pm *IPCManager) closeLogFile() {
 
 // StartTask starts a command execution via WebSocket.
 func (pm *IPCManager) StartTask(args []string, notifyWhenTaskEnds bool, logLevel ...uint32) error {
-	pm.mutex.Lock()
-	defer pm.mutex.Unlock()
+	pm.websocketMutex.Lock()
+	defer pm.websocketMutex.Unlock()
 
 	originalLogLevel := logger.Get().GetLogLevel()
 	if len(logLevel) > 0 {
@@ -419,8 +448,8 @@ func (pm *IPCManager) StartTask(args []string, notifyWhenTaskEnds bool, logLevel
 
 // StopTask stops the current command execution.
 func (pm *IPCManager) StopTask() {
-	pm.mutex.Lock()
-	defer pm.mutex.Unlock()
+	pm.websocketMutex.Lock()
+	defer pm.websocketMutex.Unlock()
 
 	if pm.wsConn == nil {
 		return
@@ -449,8 +478,8 @@ func (pm *IPCManager) StopTask() {
 
 // isTaskRunning returns whether a command is currently running.
 func (pm *IPCManager) isTaskRunning() bool {
-	pm.mutex.Lock()
-	defer pm.mutex.Unlock()
+	pm.websocketMutex.Lock()
+	defer pm.websocketMutex.Unlock()
 
 	if !pm.wsConnected || pm.wsConn == nil {
 		return false
@@ -498,9 +527,6 @@ func (pm *IPCManager) taskEndedNotification() {
 
 // POSTCommand sends a command via HTTP.
 func (pm *IPCManager) POSTCommand(args []string) ([]ipc.LogMessage, error) {
-	pm.mutex.Lock()
-	defer pm.mutex.Unlock()
-
 	if err := pm.startOrResolveServer(); err != nil {
 		return nil, err
 	}
