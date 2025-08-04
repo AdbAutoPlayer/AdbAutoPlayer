@@ -28,8 +28,9 @@ import (
 
 // IPCManager handles both server process management and WebSocket communication.
 type IPCManager struct {
-	isDev            bool
-	pythonBinaryPath string
+	isDev                          bool
+	pythonBinaryPath               string
+	serverRunningInSeparateProcess bool
 
 	// Server process management
 	serverProcess *process.Process
@@ -105,6 +106,37 @@ func (pm *IPCManager) startServer() error {
 		return fmt.Errorf("failed to create process handle: %w", err)
 	}
 	pm.serverProcess = proc
+	pm.serverRunningInSeparateProcess = false
+
+	return nil
+}
+
+// startOrResolveServer attempts to use an existing server or start a new one.
+func (pm *IPCManager) startOrResolveServer() error {
+	if pm.isServerRunning() {
+		return nil
+	}
+
+	host := settings.GetService().GetGeneralSettings().Advanced.AutoPlayerHost
+	port := settings.GetService().GetGeneralSettings().Advanced.AutoPlayerPort
+
+	// Attempt to start a server
+	err := pm.startServer()
+	if err != nil {
+		// Retry health check to confirm failure
+		resp, err2 := pm.sendGET("/health")
+		if err2 == nil && resp.StatusCode == http.StatusOK {
+			_ = resp.Body.Close()
+			logger.Get().Infof("ADB Server found running after start attempt on %s:%d", host, port)
+			pm.serverRunningInSeparateProcess = true
+			return nil
+		}
+		if resp != nil {
+			_ = resp.Body.Close()
+		}
+		logger.Get().Errorf("Failed to start ADB Server on %s:%d: %v", host, port, err)
+		return err
+	}
 
 	// Wait for the server to respond to /health endpoint
 	timeout := time.After(30 * time.Second)
@@ -122,7 +154,6 @@ func (pm *IPCManager) startServer() error {
 			if err2 == nil && resp.StatusCode == http.StatusOK {
 				_ = resp.Body.Close()
 				logger.Get().Infof("ADB Server started")
-				println("wow")
 				return nil
 			}
 			if resp != nil {
@@ -134,6 +165,11 @@ func (pm *IPCManager) startServer() error {
 
 // stopServer stops the FastAPI server process.
 func (pm *IPCManager) stopServer() {
+	if pm.serverRunningInSeparateProcess {
+		logger.Get().Debugf("Not stopping server as it's running in a separate process")
+		return
+	}
+
 	if pm.serverProcess == nil {
 		return
 	}
@@ -144,6 +180,19 @@ func (pm *IPCManager) stopServer() {
 
 // isServerRunning checks if the server process is running.
 func (pm *IPCManager) isServerRunning() bool {
+	if pm.serverRunningInSeparateProcess {
+		resp, err := pm.sendGET("/health")
+		if err == nil && resp.StatusCode == http.StatusOK {
+			_ = resp.Body.Close()
+			return true
+		}
+		if resp != nil {
+			_ = resp.Body.Close()
+		}
+		pm.serverRunningInSeparateProcess = false
+		return false
+	}
+
 	if pm.serverProcess == nil {
 		return false
 	}
@@ -312,8 +361,8 @@ func (pm *IPCManager) StartTask(args []string, notifyWhenTaskEnds bool, logLevel
 		}
 	}()
 
-	if err := pm.startServer(); err != nil {
-		return fmt.Errorf("failed to start server: %w", err)
+	if err := pm.startOrResolveServer(); err != nil {
+		return fmt.Errorf("failed to start or resolve server: %w", err)
 	}
 
 	if err := pm.connectWebSocket(); err != nil {
@@ -425,7 +474,7 @@ func (pm *IPCManager) POSTCommand(args []string) ([]ipc.LogMessage, error) {
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
 
-	if err := pm.startServer(); err != nil {
+	if err := pm.startOrResolveServer(); err != nil {
 		return nil, err
 	}
 
