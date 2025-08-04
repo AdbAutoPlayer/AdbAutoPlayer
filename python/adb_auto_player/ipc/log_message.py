@@ -32,7 +32,10 @@ class LogMessage(BaseModel):
         return {
             "level": self.level,
             "message": self.message,
-            "timestamp": self.timestamp.astimezone(timezone.utc).isoformat(),
+            "timestamp": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[
+                :-3
+            ]
+            + "Z",
             "source_file": self.source_file,
             "function_name": self.function_name,
             "line_number": self.line_number,
