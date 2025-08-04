@@ -28,12 +28,12 @@ import (
 
 // IPCManager handles both server process management and WebSocket communication.
 type IPCManager struct {
-	isDev                          bool
-	pythonBinaryPath               string
-	serverRunningInSeparateProcess bool
+	isDev            bool
+	pythonBinaryPath string
 
-	// Server process management
-	serverProcess *process.Process
+	// Server management
+	serverProcess                  *process.Process
+	serverRunningInSeparateProcess bool
 
 	// WebSocket connection management
 	wsConn      *websocket.Conn
@@ -55,6 +55,11 @@ type WebSocketCommandRequest struct {
 
 type WebSocketStopRequest struct {
 	Type string `json:"type"`
+}
+
+// HealthCheckResponse represents the expected response from the /health endpoint.
+type HealthCheckResponse struct {
+	Detail string `json:"detail"`
 }
 
 func NewIPCManager(isDev bool, pythonBinaryPath string) *IPCManager {
@@ -83,6 +88,39 @@ func (pm *IPCManager) sendGET(endpoint string) (*http.Response, error) {
 	}
 
 	return resp, nil
+}
+
+// healthCheck verifies if the correct server is running by checking the /health endpoint.
+func (pm *IPCManager) healthCheck() (bool, error) {
+	resp, err := pm.sendGET("/health")
+	if err != nil {
+		return false, err
+	}
+	defer func() {
+		if err = resp.Body.Close(); err != nil {
+			logger.Get().Errorf("resp.Body.Close error: %v", err)
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("health check returned non-OK status: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return false, fmt.Errorf("failed to read health check response: %w", err)
+	}
+
+	var healthResp HealthCheckResponse
+	if err = json.Unmarshal(body, &healthResp); err != nil {
+		return false, fmt.Errorf("failed to parse health check response: %w", err)
+	}
+
+	if healthResp.Detail != "ADB Auto Player Server" {
+		return false, fmt.Errorf("invalid health check response: expected detail='ADB Auto Player Server', got '%s'", healthResp.Detail)
+	}
+
+	return true, nil
 }
 
 // startServer starts the FastAPI server process.
@@ -124,15 +162,11 @@ func (pm *IPCManager) startOrResolveServer() error {
 	err := pm.startServer()
 	if err != nil {
 		// Retry health check to confirm failure
-		resp, err2 := pm.sendGET("/health")
-		if err2 == nil && resp.StatusCode == http.StatusOK {
-			_ = resp.Body.Close()
+		isValid, err2 := pm.healthCheck()
+		if isValid && err2 == nil {
 			logger.Get().Infof("ADB Server found running after start attempt on %s:%d", host, port)
 			pm.serverRunningInSeparateProcess = true
 			return nil
-		}
-		if resp != nil {
-			_ = resp.Body.Close()
 		}
 		logger.Get().Errorf("Failed to start ADB Server on %s:%d: %v", host, port, err)
 		return err
@@ -150,14 +184,10 @@ func (pm *IPCManager) startOrResolveServer() error {
 			pm.serverProcess = nil
 			return fmt.Errorf("failed to start ADB Server")
 		case <-ticker.C:
-			resp, err2 := pm.sendGET("/health")
-			if err2 == nil && resp.StatusCode == http.StatusOK {
-				_ = resp.Body.Close()
+			isValid, err2 := pm.healthCheck()
+			if isValid && err2 == nil {
 				logger.Get().Infof("ADB Server started")
 				return nil
-			}
-			if resp != nil {
-				_ = resp.Body.Close()
 			}
 		}
 	}
@@ -181,13 +211,10 @@ func (pm *IPCManager) stopServer() {
 // isServerRunning checks if the server process is running.
 func (pm *IPCManager) isServerRunning() bool {
 	if pm.serverRunningInSeparateProcess {
-		resp, err := pm.sendGET("/health")
-		if err == nil && resp.StatusCode == http.StatusOK {
-			_ = resp.Body.Close()
+		// Verify if the separate process is still accessible
+		isValid, err := pm.healthCheck()
+		if isValid && err == nil {
 			return true
-		}
-		if resp != nil {
-			_ = resp.Body.Close()
 		}
 		pm.serverRunningInSeparateProcess = false
 		return false

@@ -463,7 +463,7 @@ class FastAPIServer:
         @self.app.get("/health", response_model=OKResponse)
         async def health_check():
             """Health check."""
-            return OKResponse()
+            return OKResponse(detail="ADB Auto Player Server")
 
         @self.app.post("/general-settings-updated", response_model=OKResponse)
         async def general_settings_updated():
