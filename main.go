@@ -95,6 +95,7 @@ func initializeEventHandlers(app *application.App) {
 	}
 
 	app.Event.On(event_names.ServerAddressChanged, func(event *application.CustomEvent) {
+		println("server address changed")
 		process.GetService().Shutdown()
 	})
 	app.Event.On(event_names.GeneralSettingsUpdated, func(event *application.CustomEvent) {

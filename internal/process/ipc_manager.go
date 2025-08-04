@@ -118,6 +118,7 @@ func (pm *IPCManager) healthCheck() (bool, error) {
 		return false, fmt.Errorf("failed to parse health check response: %w", err)
 	}
 
+	println(healthResp.Detail)
 	if healthResp.Detail != "ADB Auto Player Server" {
 		return false, fmt.Errorf("invalid health check response: expected detail='ADB Auto Player Server', got '%s'", healthResp.Detail)
 	}
@@ -175,7 +176,6 @@ func (pm *IPCManager) startOrResolveServer() error {
 		return nil
 	}
 
-	// Check if the port is already in use
 	inUse, err := pm.checkPortInUse()
 	if err != nil {
 		logger.Get().Errorf("Failed to check if port %s:%d is in use: %v", host, port, err)
@@ -183,7 +183,6 @@ func (pm *IPCManager) startOrResolveServer() error {
 	}
 
 	if inUse {
-		// Port is in use, check if it's a valid ADB Auto Player Server
 		isValid, err2 := pm.healthCheck()
 		if isValid && err2 == nil {
 			if !pm.serverRunningInSeparateProcess {
@@ -192,7 +191,7 @@ func (pm *IPCManager) startOrResolveServer() error {
 			pm.serverRunningInSeparateProcess = true
 			return nil
 		}
-		return fmt.Errorf("port %s:%d is in use by another process", host, port)
+		return fmt.Errorf("address %s:%d is used by another app, try any other number between 49152-65535", host, port)
 	}
 
 	if err = pm.startServer(); err != nil {
@@ -240,7 +239,6 @@ func (pm *IPCManager) stopServer() {
 // isServerRunning checks if the server process is running.
 func (pm *IPCManager) isServerRunning() bool {
 	if pm.serverRunningInSeparateProcess {
-		// Verify if the separate process is still accessible
 		isValid, err := pm.healthCheck()
 		if isValid && err == nil {
 			return true
@@ -461,7 +459,10 @@ func (pm *IPCManager) StopTask() {
 	}
 
 	if err := pm.wsConn.WriteJSON(stopRequest); err != nil {
-		logger.Get().Errorf("Failed to send stop command via WebSocket: %v", err)
+		if err.Error() != "websocket: close sent" {
+			// can happen when changing host/port in general settings it is not a real problem.
+			logger.Get().Errorf("Failed to send stop command via WebSocket: %v", err)
+		}
 	}
 
 	pm.closeLogFile()
