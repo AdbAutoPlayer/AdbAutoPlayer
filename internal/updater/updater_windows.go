@@ -5,7 +5,6 @@ package updater
 import (
 	"adb-auto-player/internal/app"
 	"adb-auto-player/internal/logger"
-	processService "adb-auto-player/internal/process"
 	"archive/zip"
 	"fmt"
 	"github.com/Masterminds/semver"
@@ -203,8 +202,6 @@ func (u *UpdateManager) extractZip(src, dest string) error {
 }
 
 func (u *UpdateManager) applyUpdate(extractDir string) error {
-	processService.GetService().StopTask()
-
 	// Get current executable path
 	currentExe, err := os.Executable()
 	if err != nil {

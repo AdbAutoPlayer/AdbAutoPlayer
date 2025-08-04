@@ -53,7 +53,6 @@
     if (!updateInfo) return;
 
     $pollRunningGame = false;
-    await KillGameProcess();
 
     updateState.isDownloading = true;
     updateState.downloadProgress = 0;
