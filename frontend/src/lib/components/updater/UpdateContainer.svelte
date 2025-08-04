@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { enablePolling, disablePolling } from "$lib/stores/polling";
+  import { pollRunningGame } from "$lib/stores/polling";
   import { version } from "$app/environment";
   import UpdateIconSticky from "$lib/components/sticky/UpdateIconSticky.svelte";
   import UpdateModal from "./UpdateModal.svelte";
@@ -45,14 +45,14 @@
     }
 
     if (!updateState.isInitialUpdateCheck) {
-      enablePolling();
+      $pollRunningGame = true;
     }
   }
 
   async function startUpdate() {
     if (!updateInfo) return;
 
-    disablePolling();
+    $pollRunningGame = false;
     await KillGameProcess();
 
     updateState.isDownloading = true;
@@ -77,7 +77,7 @@
     }
 
     if (updateState.isInitialUpdateCheck) {
-      enablePolling();
+      $pollRunningGame = true;
       updateState.isInitialUpdateCheck = false;
     }
     updateState.showModal = false;

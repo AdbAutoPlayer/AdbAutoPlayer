@@ -13,14 +13,20 @@
 
   let { children } = $props();
 
-  Events.On(EventNames.GENERAL_SETTINGS_UPDATED, (ev) => {
-    const generalSettings = ev.data as GeneralSettings;
-    applyUISettings(generalSettings["User Interface"]);
-  });
-
   onMount(() => {
     applyUISettingsFromFile();
 
+    const unsubscribe = Events.On(EventNames.GENERAL_SETTINGS_UPDATED, (ev) => {
+      const generalSettings = ev.data as GeneralSettings;
+      applyUISettings(generalSettings["User Interface"]);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  });
+
+  onMount(() => {
     return setupExternalLinkHandler();
   });
 </script>

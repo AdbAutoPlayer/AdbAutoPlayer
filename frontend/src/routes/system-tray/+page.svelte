@@ -6,11 +6,18 @@
     ShowWindow,
     Exit,
   } from "@wails/system_tray/systemtrayservice";
+  import { onMount } from "svelte";
 
   let windowIsVisible = $state(true);
 
-  Events.On(EventNames.WINDOW_IS_VISIBLE, (ev) => {
-    windowIsVisible = ev.data;
+  onMount(() => {
+    const unsubscribe = Events.On(EventNames.WINDOW_IS_VISIBLE, (ev) => {
+      windowIsVisible = ev.data;
+    });
+
+    return () => {
+      unsubscribe();
+    };
   });
 </script>
 

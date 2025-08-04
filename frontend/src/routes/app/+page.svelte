@@ -21,7 +21,6 @@
     KillGameProcess,
   } from "@wails/games/gamesservice";
   import { GameGUI, MenuOption } from "@wails/ipc";
-  import { logDevOnly } from "$lib/utils/error-reporting";
   import type { MenuButton } from "$lib/settings-form/model";
   import { Events } from "@wailsio/runtime";
   import { EventNames } from "$lib/log/eventNames";
@@ -143,7 +142,7 @@
     await KillGameProcess();
     activeButtonLabel = null;
 
-    setTimeout(updateStateHandler, 3000);
+    updateStateTimeout = setTimeout(updateStateHandler, 1000);
   }
 
   async function debug() {
@@ -160,7 +159,7 @@
     } catch (error) {
       showErrorToast(error, { title: `Failed to Start: Show Debug info` });
     }
-    setTimeout(updateStateHandler, 3000);
+    updateStateTimeout = setTimeout(updateStateHandler, 1000);
   }
 
   async function startGameProcess(menuOption: MenuOption) {
@@ -176,10 +175,11 @@
     } catch (error) {
       showErrorToast(error, { title: `Failed to Start: ${menuOption.label}` });
     }
-    setTimeout(updateStateHandler, 3000);
+    updateStateTimeout = setTimeout(updateStateHandler, 1000);
   }
 
   async function onGeneralSettingsSave(settings: object) {
+    clearTimeout(updateStateTimeout);
     const settingsForm = GeneralSettings.createFrom(settings);
 
     try {
@@ -188,6 +188,7 @@
       showErrorToast(error, { title: "Failed to Save General Settings" });
     }
 
+    updateStateTimeout = setTimeout(updateStateHandler, 1000);
     showSettingsForm = false;
   }
 
@@ -249,17 +250,13 @@
 
   let updateStateTimeout: number | undefined;
   async function updateStateHandler() {
-    await updateState();
-    updateStateTimeout = setTimeout(updateStateHandler, 3000);
-  }
-
-  Events.On(EventNames.TASK_STOPPED, enablePolling);
-  Events.On(EventNames.GAME_SETTINGS_UPDATED, enablePolling);
-  Events.On(EventNames.GENERAL_SETTINGS_UPDATED, enablePolling);
-
-  function enablePolling() {
-    $pollRunningGame = true;
-    activeButtonLabel = null;
+    try {
+      await updateState();
+      updateStateTimeout = setTimeout(updateStateHandler, 3000);
+    } catch (error) {
+      showErrorToast(error, { title: "Failed to connect to Device" });
+      updateStateTimeout = setTimeout(updateStateHandler, 30000);
+    }
   }
 
   async function updateState() {
@@ -267,12 +264,31 @@
       return;
     }
 
-    try {
-      activeGame = await GetGameGUI();
-    } catch (error) {
-      showErrorToast(error);
-    }
+    activeGame = await GetGameGUI();
   }
+
+  onMount(() => {
+    function enablePolling() {
+      $pollRunningGame = true;
+      activeButtonLabel = null;
+    }
+
+    const unsubTaskStoped = Events.On(EventNames.TASK_STOPPED, enablePolling);
+    const unsubGameSettingsUpdated = Events.On(
+      EventNames.GAME_SETTINGS_UPDATED,
+      enablePolling,
+    );
+    const unsubGeneralSettingsUpdated = Events.On(
+      EventNames.GENERAL_SETTINGS_UPDATED,
+      enablePolling,
+    );
+
+    return () => {
+      unsubTaskStoped();
+      unsubGameSettingsUpdated();
+      unsubGeneralSettingsUpdated();
+    };
+  });
 
   onMount(() => {
     updateStateHandler();
