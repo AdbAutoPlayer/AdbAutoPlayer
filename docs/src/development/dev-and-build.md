@@ -1,14 +1,17 @@
 # Dev & Build
 
 ## Build scripts
-### Windows .github/scripts/build_windows.ps1
+### Windows .exe
 ```powershell
 .github\scripts\build_windows.ps1
 ```
 
-### MacOS .github/scripts/build_macos.sh
+### MacOS .app Bundle
+> [!IMPORTANT]
+> macOS Gatekeeper will not allow unsigned .app Bundles to run on other devices.
+> When you build it yourself it will run on your Mac but if you share it, it will not work.
 ```shell
-.github/scripts/build_macos_app.sh
+.github/scripts/build_macos.sh
 ```
 
 ## CLI

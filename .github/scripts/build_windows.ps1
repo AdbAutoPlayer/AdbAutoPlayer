@@ -89,9 +89,4 @@ foreach ($Item in $Items) {
 
 Copy-Item -Path "$Workspace/python/adb_auto_player/binaries/windows/*" -Destination $BinariesDir -Recurse -Force
 
-$ZipFile = Join-Path $Workspace "AdbAutoPlayer_Windows.zip"
-Compress-Archive -Path "$ReleaseZipDir\*" -DestinationPath $ZipFile -Force
-Write-Output "ZIP file created at ${ZipFile}"
-
-Write-Output "Files collected in ${ReleaseZipDir}:"
-Get-ChildItem -Path $ReleaseZipDir -Recurse
+Write-Output "Build completed successfully. Artifacts are organized in $ReleaseZipDir"
