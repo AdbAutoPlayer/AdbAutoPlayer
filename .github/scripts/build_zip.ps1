@@ -1,26 +1,25 @@
 param(
-    [string]$Version = "0.0.0"
+    [string]$Version = "dev"
 )
 
 $ErrorActionPreference = "Stop"
 
 $Workspace = $env:GITHUB_WORKSPACE
+if (-not $Workspace) {
+    $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+    $Workspace = Split-Path -Parent (Split-Path -Parent $ScriptDir)
+}
+
 $ReleaseZipDir = Join-Path $Workspace "AdbAutoPlayer"
 
 if (Test-Path $ReleaseZipDir) {
     Remove-Item -Recurse -Force $ReleaseZipDir
 }
 
-if (-not $Workspace) {
-    Write-Error "GITHUB_WORKSPACE environment variable is not set."
-    exit 1
-}
-
 Write-Output "Running Wails3 Task build..."
 $env:VERSION="$Version"
 $env:PRODUCTION="true"
 wails3 task build
-
 
 Write-Output "Running Nuitka build..."
 Push-Location (Join-Path $Workspace "python")
@@ -61,15 +60,6 @@ $Items = Get-ChildItem -Path $GamesSource -Recurse | Where-Object {
     -not ($_.FullName -match '\\mixins($|\\)') -and  # Exclude directories named "mixins"
     -not ($_.Extension -eq '.py') -and        # Exclude .py files
     -not ($_.Extension -eq '.toml')           # Exclude .toml files
-}
-
-foreach ($Item in $Items) {
-    $DestPath = $Item.FullName.Replace($GamesSource, $GamesDir)
-    if ($Item.PSIsContainer) {
-        New-Item -ItemType Directory -Force -Path $DestPath
-    } else {
-        Copy-Item -Path $Item.FullName -Destination $DestPath -Force
-    }
 }
 
 foreach ($Item in $Items) {
