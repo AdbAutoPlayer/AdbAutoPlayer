@@ -161,19 +161,19 @@ class TitanReaverProxyBattleMixin(AssistMixin):
         if self.game_find_template_match("assist/label_team-up_chat.png"):
             return True
 
-        result = self.game_find_template_match(
+        world_chat_label = self.game_find_template_match(
             "assist/label_world_chat.png",
             crop_regions=CropRegions(bottom="50%", right="50%", left="10%"),
         )
 
-        if not result:
+        if not world_chat_label:
             self._open_chat()
             return False
 
-        # The left side chat navigation buttons are see-through
-        # We can derive the button position based on the world chat label
+        # The left side chat navigation buttons are see-through so template matching
+        # does not work we can derive the button position based on the world chat label
         self.tap(
-            result.box.top_left + Offset(-70, 550),
+            world_chat_label.box.top_left + Offset(-70, 550),
             log_message="Opening Team-Up chat",
         )
         return False
