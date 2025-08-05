@@ -6,118 +6,6 @@ import (
 	"testing"
 )
 
-func TestUpdateManager_CheckForUpdates_NonWindows(t *testing.T) {
-	tests := []struct {
-		name               string
-		isDev              bool
-		autoUpdate         bool
-		enableAlphaUpdates bool
-		expectAvailable    bool
-		expectError        bool
-		expectedErrorMsg   string
-	}{
-		{
-			name:               "dev mode returns no updates available",
-			isDev:              true,
-			autoUpdate:         false,
-			enableAlphaUpdates: false,
-			expectAvailable:    false,
-			expectError:        false,
-		},
-		{
-			name:               "dev mode with auto update enabled",
-			isDev:              true,
-			autoUpdate:         true,
-			enableAlphaUpdates: false,
-			expectAvailable:    false,
-			expectError:        false,
-		},
-		{
-			name:               "dev mode with alpha updates enabled",
-			isDev:              true,
-			autoUpdate:         false,
-			enableAlphaUpdates: true,
-			expectAvailable:    false,
-			expectError:        false,
-		},
-		{
-			name:               "dev mode with all options enabled",
-			isDev:              true,
-			autoUpdate:         true,
-			enableAlphaUpdates: true,
-			expectAvailable:    false,
-			expectError:        false,
-		},
-		{
-			name:               "production mode returns not implemented error",
-			isDev:              false,
-			autoUpdate:         false,
-			enableAlphaUpdates: false,
-			expectAvailable:    false,
-			expectError:        true,
-			expectedErrorMsg:   "not implemented",
-		},
-		{
-			name:               "production mode with auto update",
-			isDev:              false,
-			autoUpdate:         true,
-			enableAlphaUpdates: false,
-			expectAvailable:    false,
-			expectError:        true,
-			expectedErrorMsg:   "not implemented",
-		},
-		{
-			name:               "production mode with alpha updates",
-			isDev:              false,
-			autoUpdate:         false,
-			enableAlphaUpdates: true,
-			expectAvailable:    false,
-			expectError:        true,
-			expectedErrorMsg:   "not implemented",
-		},
-		{
-			name:               "production mode with all options",
-			isDev:              false,
-			autoUpdate:         true,
-			enableAlphaUpdates: true,
-			expectAvailable:    false,
-			expectError:        true,
-			expectedErrorMsg:   "not implemented",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			um := &UpdateManager{
-				isDev: tt.isDev,
-			}
-
-			result, err := um.CheckForUpdates(tt.autoUpdate, tt.enableAlphaUpdates)
-
-			// Check error expectation
-			if tt.expectError {
-				if err == nil {
-					t.Errorf("expected error but got none")
-					return
-				}
-				if err.Error() != tt.expectedErrorMsg {
-					t.Errorf("expected error message %q, got %q", tt.expectedErrorMsg, err.Error())
-				}
-			} else {
-				if err != nil {
-					t.Errorf("expected no error but got: %v", err)
-					return
-				}
-			}
-
-			// Check availability
-			if result.Available != tt.expectAvailable {
-				t.Errorf("expected Available to be %v, got %v", tt.expectAvailable, result.Available)
-			}
-		})
-	}
-}
-
 func TestUpdateManager_DownloadAndApplyUpdate_NonWindows(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -170,8 +58,8 @@ func TestUpdateManager_MethodSignatures_NonWindows(t *testing.T) {
 
 	// Test CheckForUpdates signature
 	_, err := um.CheckForUpdates(false, false)
-	if err == nil {
-		t.Error("CheckForUpdates should return an error on non-Windows platforms in production mode")
+	if err != nil {
+		t.Error("CheckForUpdates should not return an error just log an error")
 	}
 
 	// Test DownloadAndApplyUpdate signature
