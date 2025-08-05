@@ -166,6 +166,11 @@ class AdbController:
         with self.d.shell("input keyevent 4", stream=True) as connection:
             connection.read_until_close()
 
+    def press_enter(self) -> None:
+        """Press enter button."""
+        with self.d.shell("input keyevent 66", stream=True) as connection:
+            connection.read_until_close()
+
     def swipe(
         self,
         start_point: Coordinates,
