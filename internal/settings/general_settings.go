@@ -37,7 +37,7 @@ type UpdateSettings struct {
 type LoggingSettings struct {
 	Level                string `toml:"level" json:"Log Level"`
 	DebugSaveScreenshots int    `toml:"debug_save_screenshots" json:"Debug Screenshot Limit"`
-	ActionLogLimit       int    `toml:"action_log_limit" json:"Task Log Limit"`
+	TaskLogLimit         int    `toml:"action_log_limit" json:"Task Log Limit"`
 }
 
 type UISettings struct {
@@ -69,7 +69,7 @@ func NewGeneralSettings() GeneralSettings {
 		Logging: LoggingSettings{
 			Level:                string(ipc.LogLevelInfo),
 			DebugSaveScreenshots: 60,
-			ActionLogLimit:       5,
+			TaskLogLimit:         5,
 		},
 		UI: UISettings{
 			Theme:                "catppuccin",

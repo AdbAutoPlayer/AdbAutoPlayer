@@ -1,12 +1,15 @@
 import json
 import logging
-import sys
 from functools import lru_cache
 
 from adb_auto_player import games
 from adb_auto_player.decorators import register_cache, register_command
 from adb_auto_player.device.adb import AdbController
-from adb_auto_player.exceptions import GenericAdbError, GenericAdbUnrecoverableError
+from adb_auto_player.exceptions import (
+    AutoPlayerError,
+    GenericAdbError,
+    GenericAdbUnrecoverableError,
+)
 from adb_auto_player.game import Game
 from adb_auto_player.ipc import GameGUIOptions
 from adb_auto_player.ipc_util import IPCModelConverter
@@ -19,11 +22,11 @@ from adb_auto_player.registries import GAME_REGISTRY
     name="DisplayGUI",
 )
 def _display_gui() -> None:
-    result = get_game_menu_string(_get_running_game())
-    logging.info(result)
-    # backwards compatability
-    print(get_game_menu_string(_get_running_game()))
-    sys.stdout.flush()
+    try:
+        result = get_game_menu_string(_get_running_game())
+        logging.info(result)
+    except Exception as e:
+        logging.error(f"{e}")
 
 
 def get_game_menu_string(game: str | None) -> str:
@@ -59,10 +62,7 @@ def _get_running_game() -> str | None:
             # Also contains no actionable information so best to hide from Users
             logging.debug("ADB Error: closed")
             return None
-        logging.error(f"ADB Error: {e}")
-    except Exception as e:
-        logging.error(f"{e}")
-    return None
+        raise AutoPlayerError(f"ADB Error: {e}")
 
 
 @lru_cache(maxsize=3)

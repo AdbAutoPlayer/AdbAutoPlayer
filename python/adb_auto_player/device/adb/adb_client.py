@@ -173,7 +173,8 @@ def _resolve_device(
             AdbClientHelper.log_devices(devices, WARNING)
         raise GenericAdbUnrecoverableError(
             f"Unable to resolve ADB device. Device ID '{device_id}' not found. "
-            f"Make sure the device is connected and ADB is enabled."
+            f"Make sure the device is connected, ADB is enabled and check the "
+            f"`Show Debug info` button."
         )
 
     logging.debug(f"Connected to Device: {device.serial}")

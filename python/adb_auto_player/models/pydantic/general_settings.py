@@ -12,7 +12,7 @@ from pydantic.fields import FieldInfo
 # Type constraints
 PortInt = Annotated[int, Field(ge=1024, le=65535)]
 FPSInt = Annotated[int, Field(ge=1, le=60)]
-GreaterThanZeroInt = Annotated[int, Field(ge=1, le=999)]
+NonNegativeInt = Annotated[int, Field(ge=0)]
 
 
 class AdvancedSettings(BaseModel):
@@ -38,8 +38,8 @@ class LoggingSettings(BaseModel):
     """Logging settings model."""
 
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "FATAL"] = Field("INFO")
-    debug_save_screenshots: GreaterThanZeroInt = Field(60)
-    action_log_limit: GreaterThanZeroInt = Field(5)
+    debug_save_screenshots: NonNegativeInt = Field(60)
+    action_log_limit: NonNegativeInt = Field(5)
 
 
 class GeneralSettings(BaseModel):

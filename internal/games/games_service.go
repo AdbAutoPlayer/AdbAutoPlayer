@@ -31,7 +31,7 @@ func (g *GamesService) GetGameGUI() (*ipc.GameGUI, error) {
 		return nil, err
 	}
 
-	logMessages, err := process.GetService().POSTCommand([]string{"DisplayGUI", "--log-level=DISABLE"})
+	logMessages, err := process.GetService().POSTCommand([]string{"DisplayGUI"})
 	if err != nil {
 		return nil, err
 	}
@@ -43,6 +43,9 @@ func (g *GamesService) GetGameGUI() (*ipc.GameGUI, error) {
 	}
 
 	last := logMessages[len(logMessages)-1]
+	if last.Level == "ERROR" {
+		return nil, errors.New(last.Message)
+	}
 
 	err = json.Unmarshal([]byte(last.Message), &gameGUI)
 	if err != nil {

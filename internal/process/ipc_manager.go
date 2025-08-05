@@ -343,6 +343,10 @@ func (pm *IPCManager) handleLogMessage(logMessage ipc.LogMessage) {
 
 // setupLogFile creates a log file for the current command execution.
 func (pm *IPCManager) setupLogFile(args []string) error {
+	if settings.GetService().GetGeneralSettings().Logging.TaskLogLimit <= 0 {
+		return nil
+	}
+
 	debugDir := "debug"
 	if err := os.MkdirAll(debugDir, 0755); err != nil {
 		logger.Get().Errorf("Failed to create debug directory: %v", err)
@@ -364,16 +368,16 @@ func (pm *IPCManager) setupLogFile(args []string) error {
 	pm.logFile = logFile
 
 	// Clean up old log files if needed
-	if settings.GetService().GetGeneralSettings().Logging.ActionLogLimit > 0 {
+	if settings.GetService().GetGeneralSettings().Logging.TaskLogLimit > 0 {
 		files, err2 := filepath.Glob(filepath.Join(debugDir, "*.log"))
-		if err2 == nil && len(files) > settings.GetService().GetGeneralSettings().Logging.ActionLogLimit {
+		if err2 == nil && len(files) > settings.GetService().GetGeneralSettings().Logging.TaskLogLimit {
 			sort.Slice(files, func(i, j int) bool {
 				infoI, _ := os.Stat(files[i])
 				infoJ, _ := os.Stat(files[j])
 				return infoI.ModTime().Before(infoJ.ModTime())
 			})
 
-			filesToDelete := len(files) - settings.GetService().GetGeneralSettings().Logging.ActionLogLimit
+			filesToDelete := len(files) - settings.GetService().GetGeneralSettings().Logging.TaskLogLimit
 			for i := 0; i < filesToDelete; i++ {
 				if err = os.Remove(files[i]); err != nil {
 					logger.Get().Debugf("Failed to delete old log file %s: %v", files[i], err)
@@ -553,7 +557,7 @@ func (pm *IPCManager) POSTCommand(args []string) ([]ipc.LogMessage, error) {
 // sendPOST sends a POST request to the server.
 func (pm *IPCManager) sendPOST(endpoint string, requestBody interface{}) ([]byte, error) {
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 30 * time.Second,
 	}
 
 	body, err := json.Marshal(requestBody)

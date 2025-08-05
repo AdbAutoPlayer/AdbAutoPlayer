@@ -90,7 +90,7 @@ class AdbController:
         app = str(
             self.d.shell(
                 "dumpsys activity activities | grep ResumedActivity | "
-                'cut -d "{" -f2 | cut -d \' \' -f3 | cut -d "/" -f1'
+                'cut -d "{" -f2 | cut -d \' \' -f3 | cut -d "/" -f1',
             )
         ).strip()
         if "\n" in app:
