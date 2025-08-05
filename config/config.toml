@@ -3,6 +3,7 @@ host = '127.0.0.1'
 port = 5037
 auto_player_host = '127.0.0.1'
 auto_player_port = 62121
+streaming_fps = 30
 
 [device]
 ID = '127.0.0.1:7555'
