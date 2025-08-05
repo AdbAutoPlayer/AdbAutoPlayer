@@ -6,7 +6,7 @@ $ErrorActionPreference = "Stop"
 
 Write-Output "Checking for required tools..."
 if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
-    Write-Error "UV is not installed or not found in PATH. Please install UV. https://adbautoplayer.github.io/AdbAutoPlayer/development/dev-and-build.html#cli"
+    Write-Error "uv is not installed or not found in PATH. Please install uv. https://adbautoplayer.github.io/AdbAutoPlayer/development/dev-and-build.html#cli"
     exit 1
 }
 if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
@@ -17,7 +17,7 @@ if (-not (Get-Command wails3 -ErrorAction SilentlyContinue)) {
     Write-Error "Wails3 is not installed or not found in PATH. Please install Wails3. https://adbautoplayer.github.io/AdbAutoPlayer/development/dev-and-build.html#gui"
     exit 1
 }
-Write-Output "All required tools (UV, npm, Wails3) are installed."
+Write-Output "All required tools (uv, npm, Wails3) are installed."
 
 # Use GITHUB_WORKSPACE if set, otherwise default to two directories up from script location
 $Workspace = $env:GITHUB_WORKSPACE
