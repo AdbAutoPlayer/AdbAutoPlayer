@@ -43,9 +43,8 @@ def _log_debug() -> None:
 
 
 def _log_main_config() -> None:
-    logging.info("--- Main Config ---")
-    config = ConfigLoader.main_config()
-    logging.info(f"Config: {pprint.pformat(config)}")
+    logging.info("--- General Settings ---")
+    logging.info(f"{pprint.pformat(ConfigLoader.general_settings())}")
 
 
 def _get_and_log_adb_client() -> AdbClient | None:

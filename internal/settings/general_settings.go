@@ -26,6 +26,7 @@ type AdvancedSettings struct {
 	ADBPort        int    `toml:"port" json:"ADB Server Port"`
 	AutoPlayerHost string `toml:"auto_player_host" json:"AutoPlayer Host"`
 	AutoPlayerPort int    `toml:"auto_player_port" json:"AutoPlayer Port"`
+	StreamingFPS   int    `toml:"streaming_fps" json:"Streaming FPS"`
 }
 
 type UpdateSettings struct {
@@ -53,6 +54,7 @@ func NewGeneralSettings() GeneralSettings {
 			ADBPort:        5037,
 			AutoPlayerHost: "127.0.0.1",
 			AutoPlayerPort: 62121,
+			StreamingFPS:   30,
 		},
 		Device: DeviceSettings{
 			ID:               "127.0.0.1:7555",

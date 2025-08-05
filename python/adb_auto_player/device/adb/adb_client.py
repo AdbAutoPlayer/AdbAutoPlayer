@@ -1,7 +1,6 @@
 import logging
 from functools import lru_cache
 from logging import DEBUG, WARNING
-from typing import Any
 
 from adb_auto_player.decorators import register_cache
 from adb_auto_player.exceptions import GenericAdbError, GenericAdbUnrecoverableError
@@ -28,10 +27,10 @@ class AdbClientHelper:
     def get_adb_client() -> AdbClient:
         """Return AdbClient instance."""
         _set_adb_path()
-        advanced_config: Any = ConfigLoader.main_config().get("advanced", {})
+        advanced_settings = ConfigLoader.general_settings().advanced
         client = AdbClient(
-            host=advanced_config.get("host", "127.0.0.1"),
-            port=advanced_config.get("port", 5037),
+            host=advanced_settings.adb_host,
+            port=advanced_settings.adb_port,
         )
 
         server_version = client.server_version()
@@ -57,9 +56,7 @@ class AdbClientHelper:
             AdbException: Device not found.
         """
         adb_client = AdbClientHelper.get_adb_client()
-        main_config: dict[str, Any] = ConfigLoader.main_config()
-        device_id: Any = main_config.get("device", {}).get("ID", "127.0.0.1:7555")
-        return _resolve_device(adb_client, device_id)
+        return _resolve_device(adb_client)
 
     @staticmethod
     def log_devices(devices: list[AdbDeviceInfo], log_level: int = DEBUG) -> None:
@@ -137,7 +134,6 @@ def _get_devices(client: AdbClient) -> list[AdbDeviceInfo]:
 
 def _resolve_device(
     client: AdbClient,
-    device_id: str,
 ) -> AdbDevice:
     """Attempts to connect to a specific ADB device.
 
@@ -151,6 +147,7 @@ def _resolve_device(
     Returns:
         AdbDevice: Connected device instance.
     """
+    device_id = ConfigLoader.general_settings().device.id
     device: AdbDevice | None = _connect_to_device(client, device_id)
     devices: list[AdbDeviceInfo] = _get_devices(client)
 

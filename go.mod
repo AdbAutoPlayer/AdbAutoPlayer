@@ -10,7 +10,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/stretchr/testify v1.10.0
-	github.com/wailsapp/wails/v3 v3.0.0-alpha.18
+	github.com/wailsapp/wails/v3 v3.0.0-alpha.19
 	golang.design/x/hotkey v0.4.1
 )
 

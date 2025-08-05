@@ -81,6 +81,8 @@ func GetMainConfigConstraints() map[string]interface{} {
 	portMin := 1024.0
 	portMax := 65535.0
 	minZero := 0.0
+	minFPS := 1.0
+	maxFPS := 60.0
 
 	return map[string]interface{}{
 		"Device": map[string]interface{}{
@@ -153,11 +155,13 @@ func GetMainConfigConstraints() map[string]interface{} {
 			"ADB Server Port": NewNumberConstraint(&portMin, &portMax, nil, 5037),
 			"AutoPlayer Host": NewTextConstraint("127.0.0.1"),
 			"AutoPlayer Port": NewNumberConstraint(&portMin, &portMax, nil, 62121),
+			"Streaming FPS":   NewNumberConstraint(&minFPS, &maxFPS, nil, 30),
 			"Order": []string{
 				"AutoPlayer Host",
 				"AutoPlayer Port",
 				"ADB Server Host",
 				"ADB Server Port",
+				"Streaming FPS",
 			},
 		},
 		"Order": []string{

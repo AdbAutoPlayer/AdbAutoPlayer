@@ -57,11 +57,9 @@ def _get_best_decoder(hardware_decoding: bool) -> str:
 
 def _get_codec_context() -> CodecContext:
     """Get codec context using cached decoder selection."""
-    hardware_decoding = (
-        ConfigLoader.main_config().get("..", {}).get("hardware_decoding", False)
+    decoder_name = _get_best_decoder(
+        ConfigLoader.general_settings().device.hardware_decoding
     )
-
-    decoder_name = _get_best_decoder(hardware_decoding)
     return CodecContext.create(decoder_name, "r")
 
 
@@ -74,7 +72,7 @@ class StreamingNotSupportedError(AutoPlayerWarningError):
 class DeviceStream:
     """Device screen streaming."""
 
-    def __init__(self, controller: AdbController, fps: int = 30):
+    def __init__(self, controller: AdbController, fps: int | None = None):
         """Initialize the screen stream.
 
         Args:
@@ -92,6 +90,9 @@ class DeviceStream:
                 "Emulators running on macOS do not support Device Streaming "
                 "you can try using your Phone."
             )
+
+        if fps is None:
+            fps = ConfigLoader.general_settings().advanced.streaming_fps
 
         self.codec = _get_codec_context()
         self.controller = controller

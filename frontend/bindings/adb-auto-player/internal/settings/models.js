@@ -40,6 +40,13 @@ export class AdvancedSettings {
              */
             this["AutoPlayer Port"] = 0;
         }
+        if (!("Streaming FPS" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["Streaming FPS"] = 0;
+        }
 
         Object.assign(this, $$source);
     }

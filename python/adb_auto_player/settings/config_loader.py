@@ -1,13 +1,12 @@
 """ADB Auto Player Config Loader Module."""
 
 import logging
-import tomllib
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
 
 from adb_auto_player.decorators import register_cache
 from adb_auto_player.models.decorators import CacheGroup
+from adb_auto_player.models.pydantic.general_settings import GeneralSettings
 
 
 class ConfigLoader:
@@ -55,8 +54,8 @@ class ConfigLoader:
     @staticmethod
     @register_cache(CacheGroup.GENERAL_SETTINGS)
     @lru_cache(maxsize=1)
-    def main_config() -> dict[str, Any]:
-        """Locate and load the main config.toml file."""
+    def general_settings() -> GeneralSettings:
+        """Locate and load the general settings config.toml file."""
         working_dir = ConfigLoader.working_dir()
         candidates: list[Path] = [
             working_dir / "config.toml",  # distributed GUI context
@@ -69,11 +68,4 @@ class ConfigLoader:
             (c for c in candidates if c.exists()), candidates[0]
         )
         logging.debug(f"Python config.toml path: {config_toml_path}")
-        try:
-            with open(config_toml_path, "rb") as f:
-                return tomllib.load(f)
-        except Exception as e:
-            logging.debug(
-                f"Failed to load main config: {e}; Using default main config values"
-            )
-        return {}
+        return GeneralSettings.from_toml(config_toml_path)

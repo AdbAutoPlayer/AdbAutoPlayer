@@ -211,11 +211,8 @@ class Game(ABC):
             logging.debug("Device stream already started")
             return
 
-        config_streaming = (
-            ConfigLoader.main_config().get("device", {}).get("streaming", True)
-        )
         if device_streaming:
-            if not config_streaming:
+            if not ConfigLoader.general_settings().device.streaming:
                 logging.warning("Device Streaming is disabled in General Settings")
                 return
 
@@ -226,7 +223,7 @@ class Game(ABC):
         return
 
     def _set_device_resolution(self):
-        if not ConfigLoader.main_config().get("device", {}).get("wm_size", False):
+        if not ConfigLoader.general_settings().device.use_wm_resize:
             return
 
         suggested_resolution: str | None = next(
@@ -1028,8 +1025,9 @@ class Game(ABC):
     ) -> None:
         if self.disable_debug_screenshots:
             return
-        logging_config = ConfigLoader.main_config().get("logging", {})
-        debug_screenshot_save_num = logging_config.get("debug_save_screenshots", 60)
+        debug_screenshot_save_num = (
+            ConfigLoader.general_settings().logging.debug_save_screenshots
+        )
 
         if debug_screenshot_save_num <= 0 or screenshot is None:
             return
@@ -1048,10 +1046,8 @@ class Game(ABC):
             if file_index == 0:
                 logging.debug(f"Saved screenshot {file_name}")
         except Exception as e:
-            logging.warning(
-                f"Cannot save debug screenshot: {file_name}, disabling. Error: {e}"
-            )
-            logging_config["debug_save_screenshots"] = 0
+            logging.warning(f"Cannot save debug screenshot: {file_name} Error: {e}")
+            self.disable_debug_screenshots = True
 
         self._debug_screenshot_counter = file_index + 1
         return

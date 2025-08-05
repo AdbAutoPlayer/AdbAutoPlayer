@@ -2,7 +2,6 @@
 
 import sys
 from functools import lru_cache
-from typing import Any
 
 import uvicorn
 from adb_auto_player import commands, games
@@ -45,11 +44,11 @@ def main() -> None:
     args = parser.parse_args()
     if args.server:
         app = create_fastapi_server(_get_commands())
-        advanced_config: Any = ConfigLoader.main_config().get("advanced", {})
+        advanced_settings = ConfigLoader.general_settings().advanced
         uvicorn.run(
             app,
-            host=advanced_config.get("auto_player_host", "127.0.0.1"),
-            port=advanced_config.get("auto_player_port", 62121),
+            host=advanced_settings.auto_player_host,
+            port=advanced_settings.auto_player_port,
         )
         sys.exit(0)
 
