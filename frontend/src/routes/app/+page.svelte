@@ -24,6 +24,7 @@
   import type { MenuButton } from "$lib/settings-form/model";
   import { Events } from "@wailsio/runtime";
   import { EventNames } from "$lib/log/eventNames";
+  import { resetScrollOnStateChange } from "$lib/attachments/resetScrollOnStateChange";
 
   let showSettingsForm: boolean = $state(false);
   let settingsFormSettings: Record<string, any> = $state({});
@@ -305,7 +306,10 @@
 <div
   class="flex max-h-[70vh] min-h-[20vh] flex-col overflow-hidden card bg-surface-100-900/50 p-4 text-center select-none"
 >
-  <div class="flex-grow overflow-y-scroll pr-4">
+  <div
+    {@attach resetScrollOnStateChange(showSettingsForm)}
+    class="flex-grow overflow-y-scroll pr-4"
+  >
     {#if showSettingsForm}
       <SettingsForm
         settings={settingsFormSettings}
@@ -317,7 +321,7 @@
         buttons={activeGameMenuButtons}
         disableActions={!$pollRunningGame}
         {categories}
-      ></Menu>
+      />
     {/if}
   </div>
 </div>

@@ -37,7 +37,7 @@ $env:VERSION="$Version"
 $env:PRODUCTION="true"
 wails3 task build
 
-Write-Output "Running Nuitka build..."
+Write-Output "Running Nuitka build, this can take a long time..."
 Push-Location (Join-Path $Workspace "python")
 
 uv run nuitka --standalone --output-filename=adb_auto_player.exe --assume-yes-for-downloads --include-package=adb_auto_player.games --include-plugin-directory=adb_auto_player/games --follow-import-to=adb_auto_player.games --include-package=adb_auto_player.commands --include-plugin-directory=adb_auto_player/commands  --follow-import-to=adb_auto_player.commands --include-module=pkgutil --windows-console-mode=attach adb_auto_player/main.py

@@ -16,7 +16,6 @@ import (
 	"os"
 	"path/filepath"
 	stdruntime "runtime"
-	"strings"
 	"sync"
 )
 
@@ -182,23 +181,14 @@ func (g *GamesService) setPythonBinaryPath() error {
 
 	executable := "adb_auto_player.exe"
 	if stdruntime.GOOS != "windows" {
-		executable = "adb_auto_player_py_app"
+		executable = "adb_auto_player"
 	}
 
-	paths := []string{
-		filepath.Join(workingDir, "binaries", executable),
-	}
-
-	if stdruntime.GOOS != "windows" {
-		paths = append(paths, filepath.Join(workingDir, "../../../python/main.dist/", executable))
-		paths = append(paths, filepath.Join(workingDir, "../../python/main.dist/", executable))
-
+	if stdruntime.GOOS == "darwin" {
+		process.GetService().SetPythonBinaryPath(filepath.Join(workingDir, "../Resources/binaries", executable))
 	} else {
-		paths = append(paths, filepath.Join(workingDir, "python/main.dist/", executable))
+		process.GetService().SetPythonBinaryPath(filepath.Join(workingDir, "binaries", executable))
 	}
-
-	logger.Get().Debugf("Paths: %s", strings.Join(paths, ", "))
-	process.GetService().SetPythonBinaryPath(path.GetFirstPathThatExists(paths))
 	return nil
 }
 
@@ -213,11 +203,9 @@ func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interfa
 	}
 
 	paths := []string{
-		filepath.Join(workingDir, "games", game.ConfigPath),
-		filepath.Join(workingDir, "python/adb_auto_player/games", game.ConfigPath),
-	}
-	if stdruntime.GOOS != "windows" {
-		paths = append(paths, filepath.Join(workingDir, "../../python/adb_auto_player/games", game.ConfigPath))
+		filepath.Join(workingDir, "games", game.ConfigPath),                        // Windows .exe
+		filepath.Join(workingDir, "python/adb_auto_player/games", game.ConfigPath), // Dev
+		filepath.Join(workingDir, "../Resources/games", game.ConfigPath),           // MacOS .app Bundle
 	}
 	configPath := path.GetFirstPathThatExists(paths)
 

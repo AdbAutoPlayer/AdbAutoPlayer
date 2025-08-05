@@ -24,6 +24,9 @@
     const newFormState: Record<string, Record<string, any>> = {};
 
     for (const sectionKey in constraints) {
+      if (sectionKey === "Order") {
+        continue;
+      }
       newFormState[sectionKey] = {};
 
       for (const key in constraints[sectionKey]) {
@@ -38,12 +41,10 @@
         }
       }
     }
-    return newFormState;
+    formState = newFormState;
   }
 
-  let formState: Record<string, Record<string, any>> = $state(
-    initializeFormState(),
-  );
+  let formState: Record<string, Record<string, any>> = $state({});
 
   const settingsSections: Array<{
     sectionKey: string;
@@ -114,13 +115,8 @@
   }
 
   onMount(() => {
+    initializeFormState();
     setupRealTimeValidation();
-  });
-
-  $effect(() => {
-    if (settings || constraints) {
-      formState = initializeFormState();
-    }
   });
 </script>
 

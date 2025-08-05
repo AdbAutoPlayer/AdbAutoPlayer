@@ -35,11 +35,10 @@ class ConfigLoader:
         """Determine and return the games directory."""
         working_dir = ConfigLoader.working_dir()
         candidates: list[Path] = [
-            working_dir / "games",  # distributed GUI Context
-            working_dir.parent / "games",  # distributed CLI Context
-            working_dir / "adb_auto_player" / "games",
-            working_dir.parent.parent / "python" / "adb_auto_player" / "games",
-            working_dir / "python" / "adb_auto_player" / "games",
+            working_dir / "games",  # Windows distributed GUI Context
+            working_dir.parent / "games",  # Windows distributed CLI Context
+            working_dir / "adb_auto_player" / "games",  # dev
+            working_dir.parent / "Resources" / "games",  # MacOS .app Bundle
         ]
         games_dir = next((c for c in candidates if c.exists()), candidates[0])
         logging.debug(f"Python games path: {games_dir}")

@@ -34,21 +34,26 @@ export PRODUCTION="true"
 # this creates $WORKSPACE/bin/AdbAutoPlayer.app
 wails3 task package
 
-echo "Running Nuitka build..."
-pushd "$WORKSPACE/python"
 
-if ! uv run nuitka --standalone --output-filename=adb_auto_player --assume-yes-for-downloads --include-package=adb_auto_player.games --include-plugin-directory=adb_auto_player/games --follow-import-to=adb_auto_player.games --include-package=adb_auto_player.commands --include-plugin-directory=adb_auto_player/commands --follow-import-to=adb_auto_player.commands --include-module=pkgutil adb_auto_player/main.py; then
-    echo "Nuitka failed with exit code $?"
-    exit 1
+if [ "${SKIP_NUITKA:-false}" = "false" ]; then
+    echo "Running Nuitka build, this can take a long time..."
+    pushd "$WORKSPACE/python"
+
+    if ! uv run nuitka --standalone --output-filename=adb_auto_player --assume-yes-for-downloads --include-package=adb_auto_player.games --include-plugin-directory=adb_auto_player/games --follow-import-to=adb_auto_player.games --include-package=adb_auto_player.commands --include-plugin-directory=adb_auto_player/commands --follow-import-to=adb_auto_player.commands --include-module=pkgutil adb_auto_player/main.py; then
+        echo "Nuitka failed with exit code $?"
+        exit 1
+    fi
+
+    if [ -f "nuitka-crash-report.xml" ]; then
+        echo "Nuitka generated a crash report. Failing the build."
+        cat nuitka-crash-report.xml
+        exit 1
+    fi
+
+    popd
+else
+    echo "Skipping Nuitka build as SKIP_NUITKA environment variable is set to true"
 fi
-
-if [ -f "nuitka-crash-report.xml" ]; then
-    echo "Nuitka generated a crash report. Failing the build."
-    cat nuitka-crash-report.xml
-    exit 1
-fi
-
-popd
 
 # Move the .app bundle to the root directory
 mv "$WORKSPACE/bin/AdbAutoPlayer.app" "$WORKSPACE"

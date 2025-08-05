@@ -80,7 +80,10 @@ def run_command_in_process(
         )
         args = parser.parse_args(command)
 
-        if not Execute.find_command_and_execute(args.command, commands_dict):
+        result = Execute.find_command_and_execute(args.command, commands_dict)
+        if isinstance(result, Exception):
+            logging.error(f"Task ended with Error: {result}")
+        if not result:
             logging.error(f"Unrecognized command: {command}")
             message_queue.put(None)
             return False
@@ -448,7 +451,10 @@ class FastAPIServer:
                 command = request.command
                 args = parser.parse_args(command)
 
-                if Execute.find_command_and_execute(args.command, self.commands):
+                result = Execute.find_command_and_execute(args.command, self.commands)
+                if isinstance(result, Exception):
+                    logging.error(f"Task ended with Error: {result}")
+                if result:
                     return LogMessageListResponse(messages=handler.get_messages())
             except argparse.ArgumentError:
                 raise HTTPException(
