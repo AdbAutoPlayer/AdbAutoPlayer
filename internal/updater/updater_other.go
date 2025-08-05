@@ -2,14 +2,19 @@
 
 package updater
 
-import "fmt"
+import (
+	"adb-auto-player/internal/logger"
+	"fmt"
+)
 
 func (u *UpdateManager) CheckForUpdates(autoUpdate bool, enableAlphaUpdates bool) (UpdateInfo, error) {
 	if u.isDev {
 		return UpdateInfo{Available: false}, nil
 	}
 
-	return UpdateInfo{Available: false}, fmt.Errorf("not implemented")
+	logger.Get().Warningf("Self updater disabled on macOS.")
+
+	return UpdateInfo{Available: false}, nil
 }
 
 func (u *UpdateManager) DownloadAndApplyUpdate(downloadURL string) error {
