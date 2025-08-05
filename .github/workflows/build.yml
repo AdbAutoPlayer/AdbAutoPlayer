@@ -130,6 +130,12 @@ jobs:
         shell: bash
         run: .github/scripts/build_macos.sh
 
+      - name: Zip macOS artifact
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          zip -r AdbAutoPlayer.app.zip AdbAutoPlayer.app
+        shell: bash
+
       - name: Release macOS artifact
         if: github.event_name == 'release' && github.event.action == 'published'
         uses: softprops/action-gh-release@v2
