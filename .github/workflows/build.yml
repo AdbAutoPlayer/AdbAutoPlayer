@@ -11,15 +11,9 @@ permissions:
   id-token: write
 
 jobs:
-  build:
-    name: ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest]
-        include:
-          - os: windows-latest
-            zip_file: "AdbAutoPlayer_Windows.zip"
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -44,7 +38,8 @@ jobs:
       - name: Install uv
         run: python -m pip install uv
 
-      - if: github.event_name == 'release' && github.event.action == 'published'
+      - name: uv version
+        if: github.event_name == 'release' && github.event.action == 'published'
         working-directory: python
         run: uv version ${{ github.event.release.tag_name }}
 
@@ -52,7 +47,7 @@ jobs:
         with:
           go-version: '1.24'
 
-      - name: install Wails3
+      - name: Install Wails3
         run: go install -v github.com/wailsapp/wails/v3/cmd/wails3@latest
 
       - name: Build with version (release)
@@ -65,23 +60,89 @@ jobs:
         shell: pwsh
         run: .github/scripts/build_windows.ps1
 
-      - run: .github/scripts/zip_windows.ps1
+      - name: Zip output
         shell: pwsh
+        run: .github/scripts/zip_windows.ps1
 
-      - uses: softprops/action-gh-release@v2
+      - name: Release Windows artifact
         if: github.event_name == 'release' && github.event.action == 'published'
+        uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.zip_file }}
+          files: AdbAutoPlayer_Windows.zip
 
-      - uses: actions/upload-artifact@v4
-        if: github.event_name == 'workflow_dispatch' && matrix.os == 'windows-latest'
+      - name: Upload Windows artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
         with:
           if-no-files-found: 'error'
-          name: ${{ matrix.zip_file }}
-          path: ${{ github.workspace }}/AdbAutoPlayer/[!.]*
+          name: AdbAutoPlayer_Windows.zip
+          path: AdbAutoPlayer/[!.]*
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'latest'
+
+      - name: npm version tag_name
+        if: github.event_name == 'release' && github.event.action == 'published'
+        working-directory: frontend
+        run: npm version "${{ github.event.release.tag_name }}"
+
+      - name: npm install
+        working-directory: frontend
+        run: npm install
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        run: python -m pip install uv
+
+      - name: uv version
+        if: github.event_name == 'release' && github.event.action == 'published'
+        working-directory: python
+        run: uv version ${{ github.event.release.tag_name }}
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Install Wails3
+        run: go install -v github.com/wailsapp/wails/v3/cmd/wails3@latest
+
+      - name: Build with version (release)
+        if: github.event_name == 'release' && github.event.action == 'published'
+        shell: bash
+        run: VERSION="${{ github.event.release.tag_name }}" .github/scripts/build_macos.sh
+
+      - name: Build without version (manual)
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: .github/scripts/build_macos.sh
+
+      - name: Release macOS artifact
+        if: github.event_name == 'release' && github.event.action == 'published'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: AdbAutoPlayer.app
+
+      - name: Upload macOS artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: 'error'
+          name: AdbAutoPlayer.app
+          path: AdbAutoPlayer.app
 
   publish:
-    needs: build
+    needs: [build-windows, build-macos]
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.event.release.tag_name, 'alpha')
 
