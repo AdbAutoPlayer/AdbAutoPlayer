@@ -65,8 +65,9 @@ More examples in [UV Docs](https://docs.astral.sh/uv/pip/environments/#creating-
 1. Follow all the steps in the [CLI section](#cli)
 2. Install [Go](https://go.dev/dl/)
 3. Install [Node](https://nodejs.org/en/download/)
-4. Install [Wails3](https://v3alpha.wails.io/getting-started/installation/#installation)
-5. Run the dev command from the root directory
+4. (MacOS) Install [Xcode](https://apps.apple.com/us/app/xcode/id497799835)
+5. Install [Wails3](https://v3alpha.wails.io/getting-started/installation/#installation)
+6. Run the dev command from the root directory
    ```shell
    wails3 dev
    ```

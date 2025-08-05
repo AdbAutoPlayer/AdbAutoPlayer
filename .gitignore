@@ -6,17 +6,23 @@ frontend/node_modules
 build/linux/appimage/build
 build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
 
-build/bin
-*.zip
+
 AdbAutoPlayer
-PATCH_*
 *.syso
 .vscode
 node_modules
-release_zip
 debug
 *instructions.md
 coverage.xml
 junit.xml
 .coverage
 adb-auto-player.exe
+
+# Build Artifacts
+build/bin
+*.zip
+
+# Windows Build Artifacts
+
+# MacOS Build Artifacts
+AdbAutoPlayer.app
