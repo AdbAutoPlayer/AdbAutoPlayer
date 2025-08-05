@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	stdruntime "runtime"
@@ -74,14 +75,27 @@ func (g *GamesService) Debug() error {
 
 func (g *GamesService) SaveDebugZip() {
 	const debugDir = "debug"
-	const zipName = "debug.zip"
+
+	var zipPath string
+	if stdruntime.GOOS == "darwin" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			log.Fatalf("failed to get current directory: %v", err)
+		}
+
+		parentDir := filepath.Clean(filepath.Join(cwd, "..", "..", ".."))
+		zipPath = filepath.Join(parentDir, "debug.zip")
+	} else {
+		zipPath = "debug.zip"
+
+	}
 
 	if _, err := os.Stat(debugDir); os.IsNotExist(err) {
 		logger.Get().Errorf("debug directory does not exist")
 		return
 	}
 
-	zipFile, err := os.Create(zipName)
+	zipFile, err := os.Create(zipPath)
 	if err != nil {
 		logger.Get().Errorf("%s", fmt.Errorf("failed to create zip file: %w", err))
 		return
