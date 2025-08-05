@@ -117,6 +117,9 @@ jobs:
       - name: Install Wails3
         run: go install -v github.com/wailsapp/wails/v3/cmd/wails3@latest
 
+      - name: Make build_macos.sh executable
+        run: chmod +x .github/scripts/build_macos.sh
+
       - name: Build with version (release)
         if: github.event_name == 'release' && github.event.action == 'published'
         shell: bash
