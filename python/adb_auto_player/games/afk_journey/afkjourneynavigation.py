@@ -89,6 +89,9 @@ class AFKJourneyNavigation(Game, ABC):
                     sleep(1)
                     self.tap(result)
                     sleep(1)
+                case "arcane_labyrinth/back_arrow.png":
+                    self.tap(result)
+                    sleep(2)
                 case _:
                     self.tap(result)
                     sleep(1)
