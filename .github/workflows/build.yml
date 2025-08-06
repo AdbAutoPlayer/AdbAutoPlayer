@@ -157,22 +157,23 @@ jobs:
       - name: Zip macOS artifact
         if: github.event_name == 'workflow_dispatch'
         run: |
-          zip -r AdbAutoPlayer.app.zip AdbAutoPlayer.app .github/scripts/MACOS_READ_THIS_IMPORTANT.txt
+          zip -r AdbAutoPlayer_MacOS.zip AdbAutoPlayer.app .github/scripts/MACOS_READ_THIS_IMPORTANT.txt
         shell: bash
 
       - name: Release macOS artifact
         if: github.event_name == 'release' && github.event.action == 'published'
         uses: softprops/action-gh-release@v2
         with:
-          files: AdbAutoPlayer.app.zip
+          name: AdbAutoPlayer_MacOS.zip
+          files: AdbAutoPlayer_MacOS.zip
 
       - name: Upload macOS artifact
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: 'error'
-          name: AdbAutoPlayer.app
-          path: AdbAutoPlayer.app.zip
+          name: AdbAutoPlayer_MacOS.zip
+          path: AdbAutoPlayer_MacOS.zip
 
   publish:
     needs: [build-windows, build-macos]

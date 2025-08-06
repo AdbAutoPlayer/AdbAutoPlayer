@@ -1,7 +1,5 @@
 # Windows Setup Guide
 
-This guide will walk you through setting up **AdbAutoPlayer** on Windows.
-
 > [!IMPORTANT]
 > Check [Emulator Settings](emulator-settings.md) if you haven't already!
 

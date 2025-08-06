@@ -1,3 +1,5 @@
+Install everything listed here if you haven't already: https://adbautoplayer.github.io/AdbAutoPlayer/user-guide/macos-setup.html
+
 macOS will display a warning that "AdbAutoPlayer" cannot be verified or is broken.
 
 To run the app, follow these steps:
