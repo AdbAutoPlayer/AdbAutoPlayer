@@ -39,6 +39,7 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
         cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
     - name: Install uv
       if: inputs.tool == 'all' || inputs.tool == 'uv-python'
       uses: astral-sh/setup-uv@v6
