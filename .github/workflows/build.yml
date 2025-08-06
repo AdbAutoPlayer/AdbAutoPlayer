@@ -22,6 +22,8 @@ jobs:
   build-windows:
     name: Build Windows
     runs-on: windows-latest
+    env:
+      NUITKA_CACHE_DIR: ${{ runner.temp }}/nuitka-cache
 
     steps:
       - uses: actions/checkout@v4
@@ -29,7 +31,7 @@ jobs:
       - name: Cache Nuitka
         uses: actions/cache@v4
         with:
-          path: ${{ env.USERPROFILE }}\.cache\Nuitka
+          path: ${{ env.NUITKA_CACHE_DIR }}
           key: nuitka-${{ runner.os }}-${{ runner.arch }}-files-${{ hashFiles('python/adb_auto_player/**/*.py', 'python/pyproject.toml', 'python/uv.lock') }}
           restore-keys: |
             nuitka-${{ runner.os }}-${{ runner.arch }}-
@@ -98,6 +100,8 @@ jobs:
   build-macos:
     name: Build macOS
     runs-on: macos-latest
+    env:
+      NUITKA_CACHE_DIR: ${{ runner.temp }}/nuitka-cache
 
     steps:
       - uses: actions/checkout@v4
@@ -105,7 +109,7 @@ jobs:
       - name: Cache Nuitka
         uses: actions/cache@v4
         with:
-          path: ~/.cache/Nuitka
+          path: ${{ env.NUITKA_CACHE_DIR }}
           key: nuitka-${{ runner.os }}-${{ runner.arch }}-files-${{ hashFiles('python/adb_auto_player/**/*.py', 'python/pyproject.toml', 'python/uv.lock') }}
           restore-keys: |
             nuitka-${{ runner.os }}-${{ runner.arch }}-
