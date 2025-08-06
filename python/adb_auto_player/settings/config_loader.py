@@ -35,9 +35,9 @@ class ConfigLoader:
         """Determine and return the games directory."""
         working_dir = ConfigLoader.working_dir()
         candidates: list[Path] = [
-            working_dir / "games",  # Windows distributed GUI Context
-            working_dir.parent / "games",  # Windows distributed CLI Context
-            working_dir / "adb_auto_player" / "games",  # dev
+            working_dir / "games",  # Windows GUI .exe, PyCharm
+            working_dir.parent / "games",  # Windows CLI .exe
+            working_dir / "adb_auto_player" / "games",  # uv
             working_dir.parent / "Resources" / "games",  # MacOS .app Bundle
         ]
         games_dir = next((c for c in candidates if c.exists()), candidates[0])
@@ -57,9 +57,9 @@ class ConfigLoader:
         """Locate and load the general settings config.toml file."""
         working_dir = ConfigLoader.working_dir()
         candidates: list[Path] = [
-            working_dir / "config.toml",  # distributed GUI context
-            working_dir.parent / "config.toml",  # distributed CLI context
-            working_dir.parent / "config" / "config.toml",  # Python CLI in /python
+            working_dir / "config.toml",  #  Windows GUI .exe, macOS .app Bundle
+            working_dir.parent / "config.toml",  # Windows CLI .exe
+            working_dir.parent / "config" / "config.toml",  # uv
             working_dir.parent.parent / "config" / "config.toml",  # PyCharm
         ]
 

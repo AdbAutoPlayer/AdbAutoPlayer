@@ -225,7 +225,11 @@ func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interfa
 
 	g.mu.Lock()
 	if configPath == "" {
-		g.lastOpenGameConfigPath = paths[0]
+		if stdruntime.GOOS == "darwin" {
+			g.lastOpenGameConfigPath = filepath.Join(workingDir, "../Resources/games", game.ConfigPath)
+		} else {
+			g.lastOpenGameConfigPath = filepath.Join(workingDir, "games", game.ConfigPath)
+		}
 		g.mu.Unlock()
 		response := map[string]interface{}{
 			"settings":    map[string]interface{}{},
