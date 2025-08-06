@@ -164,15 +164,15 @@ jobs:
         if: github.event_name == 'release' && github.event.action == 'published'
         uses: softprops/action-gh-release@v2
         with:
-          files: AdbAutoPlayer.app
+          files: AdbAutoPlayer.app.zip
 
       - name: Upload macOS artifact
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: 'error'
-          name: AdbAutoPlayer.app
-          path: AdbAutoPlayer.app
+          name: AdbAutoPlayer.app.zip
+          path: AdbAutoPlayer.app.zip
 
   publish:
     needs: [build-windows, build-macos]
