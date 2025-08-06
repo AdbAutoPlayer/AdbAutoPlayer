@@ -28,7 +28,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.USERPROFILE }}\.cache\Nuitka
-          key: nuitka-${{ runner.os }}-${{ runner.arch }}-python-${{ env.PYTHON_VERSION }}-${{ github.sha }}
+          key: nuitka-${{ runner.os }}-${{ runner.arch }}-python-${{ env.PYTHON_VERSION }}-files-${{ hashFiles('python/adb_auto_player/**/*.py', 'python/pyproject.toml', 'python/uv.lock') }}
           restore-keys: |
             nuitka-${{ runner.os }}-${{ runner.arch }}-python-${{ env.PYTHON_VERSION }}-
             nuitka-${{ runner.os }}-${{ runner.arch }}-
@@ -104,7 +104,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/Nuitka
-          key: nuitka-${{ runner.os }}-${{ runner.arch }}-python-${{ env.PYTHON_VERSION }}-${{ github.sha }}
+          key: nuitka-${{ runner.os }}-${{ runner.arch }}-python-${{ env.PYTHON_VERSION }}-files-${{ hashFiles('python/adb_auto_player/**/*.py', 'python/pyproject.toml', 'python/uv.lock') }}
           restore-keys: |
             nuitka-${{ runner.os }}-${{ runner.arch }}-python-${{ env.PYTHON_VERSION }}-
             nuitka-${{ runner.os }}-${{ runner.arch }}-
