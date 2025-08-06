@@ -136,7 +136,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: ${{ ENV.GO_VERSION }}
+          go-version: ${{ env.GO_VERSION }}
 
       - name: Install Wails3
         run: go install -v github.com/wailsapp/wails/v3/cmd/wails3@${{ env.WAILS_VERSION }}
@@ -157,7 +157,7 @@ jobs:
       - name: Zip macOS artifact
         if: github.event_name == 'workflow_dispatch'
         run: |
-          zip -r AdbAutoPlayer.app.zip AdbAutoPlayer.app
+          zip -r AdbAutoPlayer.app.zip AdbAutoPlayer.app .github/scripts/MACOS_READ_THIS_IMPORTANT.txt
         shell: bash
 
       - name: Release macOS artifact
