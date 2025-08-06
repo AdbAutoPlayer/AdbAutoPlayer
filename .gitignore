@@ -26,3 +26,5 @@ build/bin
 
 # MacOS Build Artifacts
 AdbAutoPlayer.app
+AdbAutoPlayer_MacOS
+AdbAutoPlayer_MacOS.zip

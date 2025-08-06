@@ -4,20 +4,13 @@ macOS will display a warning that "AdbAutoPlayer" cannot be verified or is broke
 
 To run the app, follow these steps:
 
-Option 1: Use Terminal
 1. Open Terminal (located in Applications > Utilities).
 2. Run the following command, replacing "/path/to/" with the actual location of AdbAutoPlayer.app:
    xattr -d com.apple.quarantine /path/to/AdbAutoPlayer.app
    Tip: Drag AdbAutoPlayer.app from Finder into Terminal after typing "xattr -d com.apple.quarantine " to auto-fill the path.
    Example (if the app is in Applications):
    xattr -d com.apple.quarantine /Applications/AdbAutoPlayer.app
-3. Press Enter. You should now be able to open the app.
-
-Option 2: Right-Click in Finder
-1. Locate AdbAutoPlayer.app in Finder.
-2. Hold the Control key, click the app, and select "Open."
-3. In the dialog that appears, click "Open" to allow the app to run.
-
+3. Press Enter. You should now be able to start the app.
 
 If macOS still blocks the app, go to System Settings > Privacy & Security and approve AdbAutoPlayer.
 

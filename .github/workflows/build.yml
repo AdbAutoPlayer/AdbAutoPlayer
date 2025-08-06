@@ -115,7 +115,8 @@ jobs:
       - name: Zip macOS artifact
         if: github.event_name == 'workflow_dispatch'
         run: |
-          zip -r AdbAutoPlayer_MacOS.zip AdbAutoPlayer.app .github/scripts/MACOS_READ_THIS_IMPORTANT.txt
+          zip -r AdbAutoPlayer_MacOS.zip AdbAutoPlayer.app
+          zip -j AdbAutoPlayer_MacOS.zip .github/scripts/MACOS_READ_THIS_IMPORTANT.txt
         shell: bash
 
       - name: Release macOS artifact
