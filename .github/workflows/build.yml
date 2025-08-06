@@ -113,7 +113,6 @@ jobs:
         run: .github/scripts/build_macos.sh
 
       - name: Zip macOS artifact
-        if: github.event_name == 'workflow_dispatch'
         run: |
           zip -r AdbAutoPlayer_MacOS.zip AdbAutoPlayer.app
           zip -j AdbAutoPlayer_MacOS.zip .github/scripts/MACOS_READ_THIS_IMPORTANT.txt
