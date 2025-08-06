@@ -92,7 +92,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: 'error'
-          name: AdbAutoPlayer_Windows.zip
+          name: AdbAutoPlayer_Windows
           path: AdbAutoPlayer/[!.]*
 
   build-macos:
@@ -166,7 +166,6 @@ jobs:
         if: github.event_name == 'release' && github.event.action == 'published'
         uses: softprops/action-gh-release@v2
         with:
-          name: AdbAutoPlayer_MacOS.zip
           files: AdbAutoPlayer_MacOS.zip
 
       - name: Upload macOS artifact
@@ -174,7 +173,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: 'error'
-          name: AdbAutoPlayer_MacOS.zip
+          name: AdbAutoPlayer_MacOS
           path: AdbAutoPlayer_MacOS.zip
 
   publish:
