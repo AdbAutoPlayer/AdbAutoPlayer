@@ -45,6 +45,8 @@ runs:
       uses: astral-sh/setup-uv@v6
       with:
         version: ${{ inputs.uv-version }}
+        enable-cache: true
+
     - name: Set up Python
       if: inputs.tool == 'all' || inputs.tool == 'uv-python'
       run: uv python install ${{ inputs.python-version }}
