@@ -15,7 +15,7 @@ To run the app, follow these steps:
 If macOS still blocks the app, go to System Settings > Privacy & Security and approve AdbAutoPlayer.
 
 Additional Notes:
-- AdbAutoPlayer is safe to use but is not signed. Signing apps on macOS requires spending 99 $ a year and exposing private information publicly.
+- AdbAutoPlayer is safe to use but is not signed. Signing apps on macOS requires spending 99 USD per year and exposing private information publicly. https://developer.apple.com/programs/enroll/
 - If it still doesn't run ask ChatGPT or the LLM of your choice.
 - If you are worried about the code being malicious, you can copy it into the LLM of your choice to get assurance.
 - These instructions are for macOS Ventura and later. For older versions, ask a LLM.
