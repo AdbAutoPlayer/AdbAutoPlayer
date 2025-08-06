@@ -3,7 +3,6 @@
 package updater
 
 import (
-	"adb-auto-player/internal/logger"
 	"fmt"
 )
 
@@ -11,8 +10,6 @@ func (u *UpdateManager) CheckForUpdates(autoUpdate bool, enableAlphaUpdates bool
 	if u.isDev {
 		return UpdateInfo{Available: false}, nil
 	}
-
-	logger.Get().Warningf("Self updater disabled on macOS.")
 
 	return UpdateInfo{Available: false}, nil
 }

@@ -21,7 +21,6 @@ import (
 
 func (u *UpdateManager) CheckForUpdates(autoUpdate bool, checkPrerelease bool) (UpdateInfo, error) {
 	if u.isDev {
-		logger.Get().Debugf("Updater disabled in dev.")
 		/* UI Testing
 		return UpdateInfo{
 			Available:   true,

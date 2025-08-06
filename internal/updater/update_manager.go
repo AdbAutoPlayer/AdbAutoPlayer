@@ -19,6 +19,7 @@ type UpdateInfo struct {
 	DownloadURL string `json:"downloadURL"`
 	Size        int64  `json:"size"`
 	AutoUpdate  bool   `json:"autoUpdate"`
+	Disabled    bool   `json:"disabled"`
 }
 
 type Changelog struct {

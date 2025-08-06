@@ -23,6 +23,7 @@
     isDownloading: false,
     autoUpdate: false,
     isInitialUpdateCheck: false,
+    disabled: false,
   });
 
   let updateInfo: UpdateInfo | null = $state(null);
@@ -33,7 +34,10 @@
 
     try {
       const info = await CheckForUpdates();
-      if (info.available) {
+      if (info.disabled) {
+        updateState.disabled = true;
+        clearInterval(updateCheckInterval);
+      } else if (info.available) {
         updateState.isInitialUpdateCheck = true;
         await setAvailableUpdateInfo(info);
         updateState.autoUpdate = info.autoUpdate;
@@ -95,6 +99,10 @@
   }
 
   async function checkForUpdates() {
+    if (updateState.disabled) {
+      // Should not happen because the update check interval is already cleared but doesn't hurt.
+      return;
+    }
     updateState.autoUpdate = false; // At this point we do not want to auto update it would interrupt whatever action is running without the user knowing about it.
 
     try {

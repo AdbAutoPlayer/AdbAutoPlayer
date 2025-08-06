@@ -82,6 +82,13 @@ export class UpdateInfo {
              */
             this["autoUpdate"] = false;
         }
+        if (!("disabled" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["disabled"] = false;
+        }
 
         Object.assign(this, $$source);
     }
