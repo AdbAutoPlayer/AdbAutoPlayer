@@ -185,16 +185,20 @@ func (pm *IPCManager) startOrResolveServer() error {
 		isValid, err2 := pm.healthCheck()
 		if isValid && err2 == nil {
 			if !pm.serverRunningInSeparateProcess {
-				logger.Get().Infof("ADB Server found running on %s:%d", host, port)
+				logger.Get().Infof("AutoPlayer Server found running on %s:%d", host, port)
 			}
 			pm.serverRunningInSeparateProcess = true
 			return nil
 		}
-		return fmt.Errorf("address %s:%d is used by another app, try any other number between 49152-65535", host, port)
+		return fmt.Errorf(
+			"address %s:%d is used by another app, try changing the 'AutoPlayer Host' in General Settings - Advanced to any other number between 49152-65535",
+			host,
+			port,
+		)
 	}
 
 	if err = pm.startServer(); err != nil {
-		return fmt.Errorf("failed to start ADB Server on %s:%d: %v", host, port, err)
+		return fmt.Errorf("failed to start AutoPlayer Server on %s:%d: %v", host, port, err)
 
 	}
 
@@ -206,14 +210,14 @@ func (pm *IPCManager) startOrResolveServer() error {
 	for {
 		select {
 		case <-timeout:
-			logger.Get().Errorf("Failed to start ADB Server on %s:%d: timeout waiting for health check", host, port)
+			logger.Get().Errorf("Failed to start AutoPlayer Server on %s:%d: timeout waiting for health check", host, port)
 			killProcessTree(pm.serverProcess)
 			pm.serverProcess = nil
-			return fmt.Errorf("failed to start ADB Server")
+			return fmt.Errorf("failed to start AutoPlayer Server")
 		case <-ticker.C:
 			isValid, err2 := pm.healthCheck()
 			if isValid && err2 == nil {
-				logger.Get().Infof("ADB Server started")
+				logger.Get().Infof("AutoPlayer Server started")
 				return nil
 			}
 		}
