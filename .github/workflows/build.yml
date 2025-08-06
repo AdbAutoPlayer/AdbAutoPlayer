@@ -15,6 +15,8 @@ env:
   NODE_VERSION: 'latest'
   GO_VERSION: '1.24'
   WAILS_VERSION: 'v3.0.0-alpha.19'
+  # uv optimizations and warning suppression
+  UV_LINK_MODE: 'copy'
 
 jobs:
   build-windows:
