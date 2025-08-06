@@ -15,7 +15,6 @@ from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
-from adb_auto_player.util import SummaryGenerator
 
 from .legend_trial import SeasonLegendTrial
 
@@ -48,8 +47,6 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def run_dailies(self) -> None:
         """Complete daily chores."""
         self.start_up(device_streaming=False)
-        SummaryGenerator.set("blabla", "123", 1)
-        return
         do_arena: bool = self.get_config().dailies.arena_battle
         self.navigate_to_default_state()
 
