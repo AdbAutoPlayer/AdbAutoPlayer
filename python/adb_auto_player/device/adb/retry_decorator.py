@@ -1,5 +1,4 @@
 import logging
-import subprocess
 import time
 from collections.abc import Callable
 from functools import wraps
@@ -97,31 +96,19 @@ def _restart_adb_server() -> None:
 
     logging.debug("kill-server command failed, attempting to kill ADB process directly")
     _kill_adb_process()
+    return
 
 
-def _try_adb_kill_server(timeout: int = 5) -> bool:
+def _try_adb_kill_server() -> bool:
     """Try to kill ADB server using adb kill-server command.
-
-    Args:
-        timeout: Timeout in seconds for the command
 
     Returns:
         True if successful, False otherwise
     """
     try:
-        result = subprocess.run(
-            ["adb", "kill-server"],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-        return result.returncode == 0
-    except (
-        subprocess.TimeoutExpired,
-        subprocess.CalledProcessError,
-        FileNotFoundError,
-    ) as e:
+        AdbClientHelper.get_adb_client().server_kill()
+        return True
+    except Exception as e:
         logging.debug(f"adb kill-server command failed: {e}")
         return False
 
