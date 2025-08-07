@@ -210,10 +210,9 @@ func (pm *IPCManager) startOrResolveServer() error {
 	for {
 		select {
 		case <-timeout:
-			logger.Get().Errorf("Failed to start AutoPlayer Server on %s:%d: timeout waiting for health check", host, port)
 			killProcessTree(pm.serverProcess)
 			pm.serverProcess = nil
-			return fmt.Errorf("failed to start AutoPlayer Server")
+			return fmt.Errorf("failed to start AutoPlayer Server on %s:%d: timeout waiting for health check", host, port)
 		case <-ticker.C:
 			isValid, err2 := pm.healthCheck()
 			if isValid && err2 == nil {
