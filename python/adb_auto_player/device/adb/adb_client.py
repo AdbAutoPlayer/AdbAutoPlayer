@@ -139,7 +139,6 @@ def _resolve_device(
 
     Args:
         client (AdbClient): ADB client.
-        device_id (str): Expected ADB device ID to connect to.
 
     Raises:
         GenericAdbUnrecoverableError: If the device cannot be resolved.

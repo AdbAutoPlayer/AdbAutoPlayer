@@ -104,6 +104,17 @@ class AFKStagesMixin(AFKJourneyBase):
             self.tap(confirm)
 
     def check_stages_are_available(self) -> None:
+        if (
+            self.battle_state.mode == Mode.SEASON_TALENT_STAGES
+            and self.game_find_template_match(
+                "afk_stages/battle_large.png",
+                crop_regions=CropRegions(left=0.3, right=0.3, top=0.5),
+            )
+        ):
+            raise AutoPlayerWarningError(
+                "Season Talent Stages not available are they already cleared? "
+                "Exiting..."
+            )
         if self.battle_state.mode == Mode.AFK_STAGES and self.game_find_template_match(
             "afk_stages/talent_trials_large.png",
             crop_regions=CropRegions(left=0.2, right=0.2, top=0.5),
