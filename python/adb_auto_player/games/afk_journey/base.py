@@ -118,6 +118,9 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
             logging.info("Battle using current Formation.")
             if self._handle_single_stage():
                 return True
+            if not use_suggested_formations:
+                # With use_suggested_formations == False we do not want to run again
+                return False
 
         while self.battle_state.formation_num < formations:
             self.battle_state.formation_num += 1
