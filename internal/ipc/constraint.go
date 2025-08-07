@@ -88,7 +88,7 @@ func GetMainConfigConstraints() map[string]interface{} {
 		"Device": map[string]interface{}{
 			"ID": NewTextConstraint("127.0.0.1:7555"),
 			"Device Streaming (disable for slow PCs)": NewCheckboxConstraint(true),
-			"Enable Hardware Decoding":                NewCheckboxConstraint(false),
+			"Enable Hardware Decoding":                NewCheckboxConstraint(true),
 			"Resize Display (Phone/Tablet only)":      NewCheckboxConstraint(false),
 			"Order": []string{
 				"ID",
