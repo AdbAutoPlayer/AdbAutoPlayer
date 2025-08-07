@@ -6,11 +6,10 @@ import unittest
 from pathlib import Path
 from unittest.mock import DEFAULT, patch
 
-from adb_auto_player import (
-    Game,
-)
 from adb_auto_player.exceptions import GameTimeoutError
+from adb_auto_player.game import Game
 from adb_auto_player.image_manipulation import IO
+from adb_auto_player.models.device import DisplayInfo, Orientation
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import TemplateMatchResult
 from pydantic import BaseModel
@@ -39,7 +38,8 @@ class MockGame(Game):
         """Mocked method."""
         return MockConfig()
 
-    def get_scale_factor(self) -> float:
+    @property
+    def scale_factor(self) -> float:
         """Mocked method."""
         return 1.0
 
@@ -140,13 +140,13 @@ class TestGame(unittest.TestCase):
         Game,
         get_screenshot=DEFAULT,
         get_template_dir_path=DEFAULT,
-        resolution=DEFAULT,
+        display_info=DEFAULT,
     )
     def test_template_matching_speed(
         self,
         get_template_dir_path,
         get_screenshot,
-        resolution,
+        display_info,
     ) -> None:
         """Test performance of template matching with and without cropping.
 
@@ -170,7 +170,9 @@ class TestGame(unittest.TestCase):
 
         get_screenshot.return_value = IO.load_image(base_image)
         get_template_dir_path.return_value = TEST_DATA_DIR
-        resolution.return_value = (1080, 1920)
+        display_info.return_value = DisplayInfo(
+            width=1080, height=1920, orientation=Orientation.PORTRAIT
+        )
 
         full_times = []
         cropped_times = []

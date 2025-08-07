@@ -6,102 +6,14 @@ from typing import Annotated
 from adb_auto_player.models.pydantic import GameConfig, MyCustomRoutineConfig
 from pydantic import BaseModel, Field
 
+from .heroes import HeroesEnum
+
 # Type constraints
 PositiveInt = Annotated[int, Field(ge=1, le=999)]
 FormationsInt = Annotated[int, Field(ge=1, le=7)]
 
 
 # Enums
-class HeroesEnum(StrEnum):
-    """All heroes."""
-
-    def _generate_next_value_(name, start, count, last_values):  # noqa: N805
-        return name.replace("_and_", " & ").replace("_", " ")
-
-    Alsa = auto()
-    Antandra = auto()
-    Arden = auto()
-    Atalanta = auto()
-    Athalia = auto()
-    Baelran = auto()
-    Berial = auto()
-    Bonnie = auto()
-    Brutus = auto()
-    Bryon = auto()
-    Callan = auto()
-    Carolina = auto()
-    Cassadee = auto()
-    Cecia = auto()
-    Cryonaia = auto()
-    Cyran = auto()
-    Daimon = auto()
-    Damian = auto()
-    Dionel = auto()
-    Dunlingr = auto()
-    Eironn = auto()
-    Elijah_and_Lailah = auto()
-    Fae = auto()
-    Faramor = auto()
-    Florabelle = auto()
-    Gerda = auto()
-    Granny_Dahnie = auto()
-    Harak = auto()
-    Hewynn = auto()
-    Hodgkin = auto()
-    Hugin = auto()
-    Igor = auto()
-    Indris = auto()
-    Kafra = auto()
-    Koko = auto()
-    Korin = auto()
-    Kruger = auto()
-    Kulu = auto()
-    Lenya = auto()
-    Lily_May = auto()
-    Lorsan = auto()
-    Lucca = auto()
-    Lucius = auto()
-    Lucy = auto()
-    Ludovic = auto()
-    Lumont = auto()
-    Lyca = auto()
-    Marilee = auto()
-    Mikola = auto()
-    Mirael = auto()
-    Nara = auto()
-    Natsu = auto()
-    Niru = auto()
-    Odie = auto()
-    Parisa = auto()
-    Phraesto = auto()
-    Reinier = auto()
-    Rhys = auto()
-    Rowan = auto()
-    Salazer = auto()
-    Satrana = auto()
-    Scarlita = auto()
-    Seth = auto()
-    Shakir = auto()
-    Shemira = auto()
-    Silvina = auto()
-    Sinbad = auto()
-    Smokey = auto()
-    Sonja = auto()
-    Soren = auto()
-    Talene = auto()
-    Tasi = auto()
-    Temesia = auto()
-    Thador = auto()
-    Thoran = auto()
-    Ulmus = auto()
-    Vala = auto()
-    Valen = auto()
-    Valka = auto()
-    Velara = auto()
-    Viperian = auto()
-    Walker = auto()
-
-
 class TowerEnum(StrEnum):
     """All faction towers."""
 
@@ -133,8 +45,8 @@ class CommonBattleModeConfig(BaseModel):
     """Common config shared across battle modes."""
 
     attempts: PositiveInt = Field(default=5, alias="Attempts")
-    use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
     formations: FormationsInt = Field(default=7, alias="Formations")
+    use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
     use_current_formation_before_suggested_formation: bool = Field(
         default=True,
         alias="Start with current Formation",

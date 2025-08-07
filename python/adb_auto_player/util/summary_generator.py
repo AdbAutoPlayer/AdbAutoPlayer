@@ -1,6 +1,6 @@
 """Module responsible for generating and managing summary counts of phrases."""
 
-import sys
+from multiprocessing import Queue
 
 from adb_auto_player.ipc import Summary
 
@@ -11,6 +11,7 @@ class SummaryGenerator:
     """Singleton class to maintain and update counts for given phrases."""
 
     _instance = None
+    _message_queue = None
 
     def __new__(cls):
         """Create or return the singleton instance of SummaryGenerator.
@@ -30,13 +31,17 @@ class SummaryGenerator:
         """
         if not hasattr(self, "entries"):
             self.entries: dict[str, dict[str, _ValueType]] = {}
-            self._json_handler_present = False
 
     @classmethod
-    def set_json_handler_present(cls):
-        """Called by JsonLogHandler to notify of its presence."""
-        instance = cls()
-        instance._json_handler_present = True
+    def set_message_queue(cls, message_queue: Queue) -> None:
+        """Set the log queue for IPC communication.
+
+        This should be called from the process that needs to send summaries.
+
+        Args:
+            message_queue: Queue for sending messages to the main process
+        """
+        cls()._message_queue = message_queue
 
     @classmethod
     def increment(cls, section_header: str, item: str, count: int = 1) -> None:
@@ -63,7 +68,7 @@ class SummaryGenerator:
                 f"Current value: {value} (type: {type(value).__name__})"
             )
         instance.entries[section_header][item] = value + count
-        instance._json_flush()
+        instance._flush_summary()
 
     @classmethod
     def set(cls, section_header: str, item: str, value: _ValueType) -> None:
@@ -80,12 +85,20 @@ class SummaryGenerator:
             instance.entries[section_header] = {}
 
         instance.entries[section_header][item] = value
-        instance._json_flush()
+        instance._flush_summary()
 
-    def _json_flush(self) -> None:
-        if self._json_handler_present and (message := self.get_summary_message()):
-            print(Summary(message).to_json())
-            sys.stdout.flush()
+    def _flush_summary(self) -> None:
+        """Send summary via log queue or STDOUT depending on availability."""
+        message = self.get_summary_message()
+        if not message:
+            return
+
+        if self._message_queue:
+            try:
+                summary_data = Summary(message).to_dict()
+                self._message_queue.put(summary_data)
+            except Exception as e:
+                print(f"Failed to send summary via queue: {e}")
 
     def get_summary_message(self) -> str | None:
         """Generate a formatted summary message from the current entries.

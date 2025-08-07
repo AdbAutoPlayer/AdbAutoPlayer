@@ -1,16 +1,27 @@
-[adb]
+[advanced]
 host = '127.0.0.1'
 port = 5037
+auto_player_host = '127.0.0.1'
+auto_player_port = 62121
+streaming_fps = 30
 
 [device]
-ID = '127.0.0.1:5555'
+ID = '127.0.0.1:7555'
 wm_size = false
 streaming = true
+hardware_decoding = true
+
+[update]
+auto_updates = false
+enable_alpha_updates = false
 
 [logging]
 level = 'INFO'
-debug_save_screenshots = 60
-action_log_limit = 10
+debug_save_screenshots = 0
+action_log_limit = 0
 
 [ui]
 theme = 'terminus'
+locale = 'en'
+close_should_minimize = false
+notifications_enabled = false

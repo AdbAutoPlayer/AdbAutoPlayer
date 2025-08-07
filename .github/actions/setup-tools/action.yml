@@ -1,0 +1,53 @@
+name: Setup Tools
+description: Installs Go, Node.js, UV, and Python, either all at once or a specific tool
+inputs:
+  tool:
+    description: 'The tool to set up (go, node, uv-python, or all)'
+    required: false
+    default: 'all'
+  go-version:
+    description: 'Go version to install'
+    default: '1.24'
+  wails-version:
+    description: 'Wails version to install'
+    default: 'v3.0.0-alpha.19'
+  node-version:
+    description: 'Node.js version to install'
+    default: 'latest'
+  uv-version:
+    description: 'UV version to install'
+    default: '0.7.11'
+  python-version:
+    description: 'Python version to install'
+    default: '3.13'
+runs:
+  using: composite
+  steps:
+    - name: Setup Go
+      if: inputs.tool == 'all' || inputs.tool == 'go'
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ inputs.go-version }}
+        cache: true
+    - name: Install Wails3
+      if: inputs.tool == 'all' || inputs.tool == 'wails'
+      run: go install -v github.com/wailsapp/wails/v3/cmd/wails3@${{ inputs.wails-version }}
+      shell: bash
+    - name: Setup Node
+      if: inputs.tool == 'all' || inputs.tool == 'node'
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    - name: Install uv
+      if: inputs.tool == 'all' || inputs.tool == 'uv-python'
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: ${{ inputs.uv-version }}
+        enable-cache: true
+
+    - name: Set up Python
+      if: inputs.tool == 'all' || inputs.tool == 'uv-python'
+      run: uv python install ${{ inputs.python-version }}
+      shell: bash

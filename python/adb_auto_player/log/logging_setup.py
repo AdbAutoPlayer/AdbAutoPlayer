@@ -1,93 +1,22 @@
 """ADB Auto Player Logging Setup Module."""
 
-import json
 import logging
-import os
-import re
 import sys
 from datetime import datetime
 from typing import ClassVar, Literal
 
 from adb_auto_player.ipc import LogMessage
-from adb_auto_player.util import LogMessageFactory, SummaryGenerator, TracebackHelper
+from adb_auto_player.util import (
+    LogMessageFactory,
+    StringHelper,
+    TracebackHelper,
+)
 
 from .log_presets import LogPreset
 
 
-def sanitize_path(log_message: str) -> str:
-    """Replaces the username in file paths with $USER or $env:USERNAME.
-
-    Works with both Windows and Unix-style paths.
-
-    Args:
-        log_message (str): The log message containing file paths
-
-    Returns:
-        str: The sanitized log message with environment variable placeholders
-    """
-    home_dir: str = os.path.expanduser("~")
-
-    if "\\" in home_dir:  # Windows path
-        username: str = home_dir.split("\\")[-1]
-        pattern: str = re.escape(f":\\Users\\{username}")
-        replacement = r":\\Users\\$env:USERNAME"
-        log_message = re.sub(pattern, replacement, log_message)
-        pattern = re.escape(f":\\\\Users\\\\{username}")
-        replacement = r":\\\\Users\\\\$env:USERNAME"
-        log_message = re.sub(pattern, replacement, log_message)
-
-    else:  # Unix path
-        username = home_dir.split("/")[-1]
-        pattern = f"/home/{username}"
-        replacement = "/home/$USER"
-        log_message = re.sub(pattern, replacement, log_message)
-
-    return log_message
-
-
 class BaseLogHandler(logging.Handler):
     """Base log handler with common functionality."""
-
-    def get_sanitized_message(self, record: logging.LogRecord) -> str:
-        """Get sanitized log message.
-
-        Args:
-            record (logging.LogRecord): The log record
-
-        Returns:
-            str: Sanitized log message
-        """
-        return sanitize_path(record.getMessage())
-
-
-class JsonLogHandler(BaseLogHandler):
-    """JSON log handler this is used for IPC between CLI and GUI."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialize JsonLogHandler.
-
-        Lets the SummaryGenerator know that it needs to start sending data to the GUI.
-        """
-        super().__init__(*args, **kwargs)
-        SummaryGenerator.set_json_handler_present()
-
-    def emit(self, record: logging.LogRecord) -> None:
-        """Emit a log message in JSON format.
-
-        Args:
-            record (logging.LogRecord): The log record to emit.
-        """
-        preset: LogPreset | None = getattr(record, "preset", None)
-
-        log_message: LogMessage = LogMessageFactory.create_log_message(
-            record=record,
-            message=self.get_sanitized_message(record),
-            html_class=preset.get_html_class() if preset else None,
-        )
-        log_dict = log_message.to_dict()
-        log_json: str = json.dumps(log_dict)
-        print(log_json)
-        sys.stdout.flush()
 
 
 class TerminalLogHandler(BaseLogHandler):
@@ -121,7 +50,7 @@ class TerminalLogHandler(BaseLogHandler):
             f"{color}"
             f"[{log_level}] "
             f"{TracebackHelper.format_debug_info(record)} "
-            f"{self.get_sanitized_message(record)}"
+            f"{StringHelper.sanitize_path(record.getMessage())}"
             f"{self.COLORS['RESET']}"
         )
         print(formatted_message)
@@ -146,13 +75,48 @@ class TextLogHandler(BaseLogHandler):
         formatted_message: str = (
             f"{timestamp_with_ms} [{log_level}] "
             f"{TracebackHelper.format_debug_info(record)} "
-            f"{self.get_sanitized_message(record)}"
+            f"{StringHelper.sanitize_path(record.getMessage())}"
         )
         print(formatted_message)
         sys.stdout.flush()
 
 
-LogHandlerType = Literal["json", "terminal", "text", "raw"]
+class MemoryLogHandler(logging.Handler):
+    """Log handler that stores log messages in memory for API responses."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.messages: list[LogMessage] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        """Store log message in memory.
+
+        Args:
+            record (logging.LogRecord): The log record to store.
+        """
+        preset: LogPreset | None = getattr(record, "preset", None)
+
+        log_message: LogMessage = LogMessageFactory.create_log_message(
+            record=record,
+            message=StringHelper.sanitize_path(record.getMessage()),
+            html_class=preset.get_html_class() if preset else None,
+        )
+        self.messages.append(log_message)
+
+    def get_messages(self) -> list[LogMessage]:
+        """Get all stored log messages.
+
+        Returns:
+            List[LogMessage]: All captured log messages.
+        """
+        return self.messages.copy()
+
+    def clear(self) -> None:
+        """Clear all stored log messages."""
+        self.messages.clear()
+
+
+LogHandlerType = Literal["terminal", "text", "raw"]
 
 
 def setup_logging(handler_type: LogHandlerType, level: int | str) -> None:
@@ -172,7 +136,6 @@ def setup_logging(handler_type: LogHandlerType, level: int | str) -> None:
         logger.removeHandler(handler)
 
     handler_mapping = {
-        "json": JsonLogHandler,
         "terminal": TerminalLogHandler,
         "text": TextLogHandler,
     }

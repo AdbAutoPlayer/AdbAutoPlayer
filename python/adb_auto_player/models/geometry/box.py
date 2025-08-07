@@ -128,16 +128,19 @@ class Box(Coordinates):
 
         return Point(x, y)
 
-    def contains(self, point: Point) -> bool:
+    def contains(self, coordinates: Coordinates) -> bool:
         """Check if a point is contained within the box.
 
         Args:
-            point: The point to check
+            coordinates: The point to check
 
         Returns:
             bool: True if the point is inside the box, False otherwise
         """
-        return self.left <= point.x < self.right and self.top <= point.y < self.bottom
+        return (
+            self.left <= coordinates.x < self.right
+            and self.top <= coordinates.y < self.bottom
+        )
 
     def __str__(self):
         """Return a string representation of the box."""
@@ -153,11 +156,11 @@ class Box(Coordinates):
             f"center={self.center})"
         )
 
-    def with_offset(self, offset: Point) -> "Box":
+    def with_offset(self, offset: Coordinates) -> "Box":
         """Return a new Box with coordinates offset.
 
         Args:
-            offset: Point representing the offset to add to the box coordinates
+            offset: Coordinates representing the offset to add to the box coordinates
 
         Returns:
             TemplateMatchResult: New Template MatchResult with adjusted box coordinates

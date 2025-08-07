@@ -9,12 +9,16 @@ authors = [
 requires-python = ">=3.13"
 readme = "README.md"
 dependencies = [
-    "adbutils>=2.8.7,<3",
+    "adbutils>=2.10.0,<3",
     "opencv-python>=4.10.0.84,<5",
     "pydantic>=2.10.5,<3",
-    "av>=14.1.0,<15",
+    "av>=15.0.0,<16",
     "pillow>=11.1.0",
     "pytesseract>=0.3.13",
+    "psutil>=7.0.0",
+    "fastapi>=0.116.1",
+    "uvicorn[standard]>=0.35.0",
+    "websockets>=15.0.1",
 ]
 
 [project.scripts]
@@ -22,7 +26,7 @@ adb-auto-player = "adb_auto_player.main:main"
 
 [dependency-groups]
 dev = [
-    "nuitka>=2.7.10",
+    "nuitka>=2.7.12",
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
     "commitizen>=4.2.2,<5",
@@ -58,22 +62,26 @@ select = [
     "PL",  # pylint
 ]
 ignore = [
+    "D100",  # Missing docstring in public module
+    "D104", # Missing docstring in public package
+    "D107", # Missing docstring in `__init__`
+     # I feel D100 and D104 are pointless when most modules are as small as they are.
     "D203",  # incorrect-blank-line-before-class
     "D406",  # missing-new-line-after-section-name
     "D407",  # missing-dashed-underline-after-section
     "UP017", # datetime-timezone-utc
     # PLR0913 is simply too annoying in practise we have a lot of optionals that
-    # are can be nice to have but not used all the time.
+    # can be nice to have but not used all the time.
     "PLR0913", # too-many-arguments
 ]
 
 [tool.ruff.lint.per-file-ignores]
 # Ignore D100 (Missing docstring in public module) only in games subdirs
 "**/games/**/*.py" = [
-    "D100", "D101", "D102", "D103", "D104", "D107",
+    "D101", "D102", "D103",
 ]
 "**/tests/**/*.py" = [
-    "D100", "D101", "D102", "D103", "D104", "D107",
+    "D101", "D102", "D103",
     "PLR0913", "PLR2004",
 ]
 

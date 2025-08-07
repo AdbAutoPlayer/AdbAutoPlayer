@@ -5,7 +5,8 @@ import tomllib
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
-from adb_auto_player.util import ConfigLoader
+from adb_auto_player.models.pydantic.general_settings import GeneralSettings
+from adb_auto_player.settings import ConfigLoader
 
 
 class TestConfigLoader:
@@ -16,7 +17,7 @@ class TestConfigLoader:
         ConfigLoader.working_dir.cache_clear()
         ConfigLoader.games_dir.cache_clear()
         ConfigLoader.binaries_dir.cache_clear()
-        ConfigLoader.main_config.cache_clear()
+        ConfigLoader.general_settings.cache_clear()
 
     def test_working_dir_normal_case(self):
         """Test working_dir returns current working directory in normal case."""
@@ -94,15 +95,15 @@ class TestConfigLoader:
 
     def test_main_config_successful_load(self):
         """Test main_config successfully loads valid TOML file."""
-        config_data = {"app": {"name": "test"}}
+        config_data = {"device": {"ID": "test"}}
         working_path = Path("home") / "user" / "project"
 
         with patch.object(ConfigLoader, "working_dir", return_value=working_path):
             with patch("pathlib.Path.exists", return_value=True):
                 with patch("builtins.open", mock_open()):
                     with patch("tomllib.load", return_value=config_data):
-                        result = ConfigLoader.main_config()
-                        assert result == config_data
+                        result = ConfigLoader.general_settings()
+                        assert result.device.id == "test"
 
     def test_main_config_file_not_found(self):
         """Test main_config handles file not found gracefully."""
@@ -111,8 +112,8 @@ class TestConfigLoader:
         with patch.object(ConfigLoader, "working_dir", return_value=working_path):
             with patch("pathlib.Path.exists", return_value=False):
                 with patch("builtins.open", side_effect=FileNotFoundError()):
-                    result = ConfigLoader.main_config()
-                    assert result == {}
+                    result = ConfigLoader.general_settings()
+                    assert isinstance(result, GeneralSettings)
 
     def test_main_config_toml_decode_error(self):
         """Test main_config handles TOML parsing errors gracefully."""
@@ -125,8 +126,8 @@ class TestConfigLoader:
                         "tomllib.load",
                         side_effect=tomllib.TOMLDecodeError("Invalid TOML", "", 0),
                     ):
-                        result = ConfigLoader.main_config()
-                        assert result == {}
+                        result = ConfigLoader.general_settings()
+                        assert isinstance(result, GeneralSettings)
 
     def test_main_config_permission_error(self):
         """Test main_config handles permission errors gracefully."""
@@ -137,8 +138,8 @@ class TestConfigLoader:
                 with patch(
                     "builtins.open", side_effect=PermissionError("Permission denied")
                 ):
-                    result = ConfigLoader.main_config()
-                    assert result == {}
+                    result = ConfigLoader.general_settings()
+                    assert isinstance(result, GeneralSettings)
 
     def test_integration_with_real_temp_directories(self):
         """Integration test using real temporary directories."""

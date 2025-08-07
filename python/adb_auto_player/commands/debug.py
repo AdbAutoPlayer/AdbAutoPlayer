@@ -4,18 +4,11 @@ import logging
 import pprint
 import time
 
-from adb_auto_player.adb import (
-    exec_wm_size,
-    get_adb_client,
-    get_adb_device,
-    get_display_info,
-    get_running_app,
-    log_devices,
-    wm_size_reset,
-)
 from adb_auto_player.decorators import register_command
-from adb_auto_player.util import ConfigLoader
-from adbutils import AdbClient, AdbDevice
+from adb_auto_player.device.adb import AdbClientHelper, AdbController
+from adb_auto_player.models.geometry import PointOutsideDisplay
+from adb_auto_player.settings import ConfigLoader
+from adbutils import AdbClient
 
 
 @register_command(
@@ -23,68 +16,62 @@ from adbutils import AdbClient, AdbDevice
     name="Debug",
 )
 def _log_debug() -> None:
+    logging.getLogger().setLevel(logging.DEBUG)
     logging.info("--- Debug Info Start ---")
     _log_main_config()
-    client = _get_and_log_adb_client()
-    if not client:
+    if not _get_and_log_adb_client():
         logging.warning("ADB client could not be initialized.")
         logging.info("--- Debug Info End ---")
         return
 
-    device = _get_and_log_adb_device(client)
-    if not device:
+    logging.info("--- ADB Controller ---")
+    try:
+        controller = AdbController()
+    except Exception as e:
+        logging.error(f"Error: {e}")
         logging.warning("ADB device could not be resolved.")
         logging.info("--- Debug Info End ---")
         return
-    _log_device_info(device)
-    _test_input_delay(device)
-    _log_display_info(device)
-    _test_resize_display(device)
+
+    _log_device_info(controller)
+    _test_input_delay(controller)
+    _log_display_info(controller)
+    _test_resize_display(controller)
 
     logging.info("--- Debug Info End ---")
     return
 
 
 def _log_main_config() -> None:
-    logging.info("--- Main Config ---")
-    config = ConfigLoader.main_config()
-    logging.info(f"Config: {pprint.pformat(config)}")
+    logging.info("--- General Settings ---")
+    logging.info(f"{pprint.pformat(ConfigLoader.general_settings())}")
 
 
 def _get_and_log_adb_client() -> AdbClient | None:
     logging.info("--- ADB Client ---")
     try:
-        client = get_adb_client()
-        log_devices(client.list(), logging.INFO)
+        client = AdbClientHelper.get_adb_client()
+        AdbClientHelper.log_devices(client.list(), logging.INFO)
         return client
     except Exception as e:
         logging.error(f"Error: {e}")
     return None
 
 
-def _get_and_log_adb_device(client: AdbClient) -> AdbDevice | None:
-    logging.info("--- ADB Device ---")
-    try:
-        return get_adb_device(adb_client=client)
-    except Exception as e:
-        logging.error(f"Error: {e}")
-    return None
-
-
-def _log_device_info(device):
+def _log_device_info(controller: AdbController) -> None:
     logging.info("--- Device Info ---")
-    logging.info(f"Device Serial: {device.serial}")
-    logging.info(f"Device Info: {device.info}")
-    _ = get_running_app(device)
+    logging.info(f"Device Serial: {controller.d.serial}")
+    logging.info(f"Device Info: {controller.d.info}")
+    _ = controller.get_running_app()
 
 
-def _test_input_delay(device) -> None:
+def _test_input_delay(controller: AdbController) -> None:
     logging.info("--- Testing Input Delay ---")
     total_time = 0.0
     iterations = 10
     for _ in range(iterations):
         start_time = time.time()
-        device.click(-1, -1)
+        controller.tap(PointOutsideDisplay())
         total_time += (time.time() - start_time) * 1000
     average_time = total_time / iterations
     logging.info(
@@ -92,28 +79,22 @@ def _test_input_delay(device) -> None:
     )
 
 
-def _log_display_info(device) -> None:
+def _log_display_info(controller: AdbController) -> None:
     logging.info("--- Device Display ---")
-    display_info = get_display_info(device)
+    display_info = controller.get_display_info()
     logging.info(f"Resolution: {display_info.width}x{display_info.height}")
     logging.info(f"Orientation: {display_info.orientation}")
 
 
-def _test_resize_display(device) -> None:
+def _test_resize_display(controller: AdbController) -> None:
     logging.info("--- Test Resize Display ---")
     try:
-        exec_wm_size("1080x1920", device)
+        controller.set_display_size("1080x1920")
         logging.info("Set Display Size 1080x1920 - OK")
     except Exception as e:
-        if "java.lang.SecurityException" in str(e):
-            logging.error(
-                "Missing permissions, check if your device has settings, such as: "
-                '"USB debugging (Security settings)" and enable them.'
-            )
-        else:
-            logging.error(f"{e}", exc_info=True)
+        logging.error(f"{e}", exc_info=True)
     try:
-        wm_size_reset(device)
+        controller.reset_display_size()
         logging.info("Reset Display Size - OK")
     except Exception as e:
         logging.error(f"Reset Display Size - Error: {e}")

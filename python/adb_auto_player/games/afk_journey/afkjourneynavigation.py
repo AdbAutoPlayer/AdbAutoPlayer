@@ -2,13 +2,13 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player import Game
 from adb_auto_player.exceptions import (
     AutoPlayerError,
     GameActionFailedError,
     GameNotRunningOrFrozenError,
     GameTimeoutError,
 )
+from adb_auto_player.game import Game
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Coordinates, Point
 from adb_auto_player.models.image_manipulation import CropRegions
@@ -89,6 +89,9 @@ class AFKJourneyNavigation(Game, ABC):
                     sleep(1)
                     self.tap(result)
                     sleep(1)
+                case "arcane_labyrinth/back_arrow.png":
+                    self.tap(result)
+                    sleep(2)
                 case _:
                     self.tap(result)
                     sleep(1)

@@ -12,9 +12,15 @@ const config = {
   preprocess: vitePreprocess(),
 
   kit: {
-    adapter: adapter(),
+    adapter: adapter({
+      pages: "dist",
+      assets: "dist",
+    }),
     version: {
       name: pkg.version,
+    },
+    alias: {
+      "@wails": "./bindings/adb-auto-player/internal",
     },
   },
 };

@@ -1,37 +1,30 @@
 import logging
-from abc import ABC
 from dataclasses import dataclass
 from time import sleep
 from typing import ClassVar
 
 from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import GameTimeoutError
-from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models.decorators import GUIMetadata
-from adb_auto_player.models.geometry import Point
+from adb_auto_player.models.geometry import Offset, Point
+from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util import SummaryGenerator
+
+from .assist import AssistMixin
 
 
 class TitanReaverProxyBattleConstants:
     """Constants related to proxy battles (currently for Titan Reaver only)."""
 
-    # Calculation logic: Total number of lucky keys needed
-    # divided by keys earned per battle
-    TOTAL_LUCKY_KEYS_NEEDED = 100 * 3 * 9  # Total keys needed to unlock all cards
     KEYS_PER_BATTLE = 7  # Keys earned per battle
-    DEFAULT_BATTLE_LIMIT = TOTAL_LUCKY_KEYS_NEEDED // KEYS_PER_BATTLE
 
     # Timeout settings
     TEMPLATE_WAIT_TIMEOUT = 3  # Timeout for waiting for template appearance (seconds)
-    RETRY_DELAY = 1  # Retry interval (seconds)
     NAVIGATION_DELAY = 1  # Navigation operation interval (seconds)
 
     # Exception handling
     MAX_EXCEPTION_COUNT = 10  # Maximum consecutive exceptions before reset
-
-    # Coordinate constants
-    CHAT_BUTTON_POINT = Point(1010, 1080)
 
     # Offset values
     PROXY_BATTLE_BANNER_OFFSET_X = -70  # X offset for proxy battle banner tap
@@ -42,13 +35,11 @@ class TitanReaverProxyBattleConstants:
 class TitanReaverProxyBattleStats:
     """Proxy battle statistics with automatic SummaryGenerator updates."""
 
-    # battles_attempted: int = 0
     battles_completed: int = 0
     exception_count: int = 0
 
     # Mapping from field name to display name
     _field_display_names: ClassVar[dict[str, str]] = {
-        # "battles_attempted": "Battles Attempted",
         "battles_completed": "Battles Completed",
     }
 
@@ -60,11 +51,7 @@ class TitanReaverProxyBattleStats:
         if name in self._field_display_names:
             display_name = self._field_display_names[name]
             SummaryGenerator.set("Titan Reaver Proxy Battle", display_name, value)
-            print(SummaryGenerator().get_summary_message())
             if value > 0:
-                # SummaryGenerator.set(
-                #     "Titan Reaver Proxy Battle", "Success Rate", self.success_rate
-                # )
                 if name == "battles_completed":
                     estimated_keys = (
                         value * TitanReaverProxyBattleConstants.KEYS_PER_BATTLE
@@ -75,15 +62,8 @@ class TitanReaverProxyBattleStats:
                         estimated_keys,
                     )
 
-    # @property
-    # def success_rate(self) -> float:
-    #     """Calculate success rate."""
-    #     if self.battles_attempted == 0:
-    #         return 0.0
-    #     return (self.battles_completed / self.battles_attempted) * 100
 
-
-class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
+class TitanReaverProxyBattleMixin(AssistMixin):
     """Proxy battle Mixin, provides automation for proxy battles.
 
     (currently for Titan Reaver only)
@@ -107,15 +87,20 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
                 "You may miss proxy battle opportunities."
             )
 
-        battle_limit = self._get_battle_limit()
+        logging.warning("@Czesito has quit the game, this is no longer supported.")
+
         stats = TitanReaverProxyBattleStats()
 
-        logging.info(f"Starting Proxy Battle automation (limit: {battle_limit})")
+        logging.info(
+            "Starting Proxy Battle automation (limit: "
+            f"{self.get_config().titan_reaver_proxy_battles.proxy_battle_limit})"
+        )
 
         try:
-            while stats.battles_completed < battle_limit:
-                # stats.battles_attempted += 1
-
+            while (
+                stats.battles_completed
+                < self.get_config().titan_reaver_proxy_battles.proxy_battle_limit
+            ):
                 if self._execute_single_proxy_battle():
                     stats.battles_completed += 1
                     stats.exception_count = 0
@@ -138,18 +123,6 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
             raise e
         except Exception as e:
             logging.error(f"Unexpected error in proxy battle automation: {e}")
-
-    def _get_battle_limit(self) -> int:
-        """Get battle limit."""
-        try:
-            # Try to fetch from configuration, use default value if not available
-            return getattr(
-                self.get_config().titan_reaver_proxy_battles,
-                "proxy_battle_limit",
-                TitanReaverProxyBattleConstants.DEFAULT_BATTLE_LIMIT,
-            )
-        except AttributeError:
-            return TitanReaverProxyBattleConstants.DEFAULT_BATTLE_LIMIT
 
     def _execute_single_proxy_battle(self) -> bool:
         """Execute a single proxy battle.
@@ -185,40 +158,25 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase, ABC):
             bool: Whether navigation was successful
         """
         # Check if already in team chat
-        if self._is_in_team_chat():
+        if self.game_find_template_match("assist/label_team-up_chat.png"):
             return True
 
-        # Check if in other chat channels
-        if self._is_in_other_chat():
-            self._switch_to_team_chat()
-            return self._is_in_team_chat()
-
-        # Requires re-navigation
-        logging.info("Navigating to Team-Up Chat")
-        self.navigate_to_default_state()
-        self.tap(TitanReaverProxyBattleConstants.CHAT_BUTTON_POINT, scale=True)
-        sleep(TitanReaverProxyBattleConstants.NAVIGATION_DELAY)
-        self._switch_to_team_chat()
-
-        return False  # Requires next loop to check again
-
-    def _is_in_team_chat(self) -> bool:
-        """Check if in team chat."""
-        return (
-            self.find_any_template(["assist/tap_to_enter.png"]) is None
-            and self.find_any_template(["assist/label_team-up_chat.png"]) is not None
+        world_chat_label = self.game_find_template_match(
+            "assist/label_world_chat.png",
+            crop_regions=CropRegions(bottom="50%", right="50%", left="10%"),
         )
 
-    def _is_in_other_chat(self) -> bool:
-        """Check if in other chat channels."""
-        return self.find_any_template(["assist/tap_to_enter.png"]) is not None
+        if not world_chat_label:
+            self._open_chat()
+            return False
 
-    def _switch_to_team_chat(self) -> None:
-        """Switch to team chat."""
-        self._wait_and_tap_template(
-            "assist/label_team-up_chat.png",
-            "team chat label",
+        # The left side chat navigation buttons are see-through so template matching
+        # does not work we can derive the button position based on the world chat label
+        self.tap(
+            world_chat_label.box.top_left + Offset(-70, 550),
+            log_message="Opening Team-Up chat",
         )
+        return False
 
     def _find_proxy_battle_banner(self) -> Point | None:
         """Find proxy battle banner.

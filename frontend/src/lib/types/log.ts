@@ -1,4 +1,4 @@
-type LogLevel = "TRACE" | "DEBUG" | "INFO" | "WARNING" | "ERROR" | "FATAL";
+type LogLevel = "DEBUG" | "INFO" | "WARNING" | "ERROR" | "FATAL";
 
 interface LogMessage {
   level: LogLevel;

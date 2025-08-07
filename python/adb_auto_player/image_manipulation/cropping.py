@@ -80,6 +80,55 @@ class Cropping:
             image=cropped_image, offset=Point(x=left_boundary, y=top_boundary)
         )
 
+    @staticmethod
+    def crop_to_box(image: np.ndarray, box) -> CropResult:
+        """Crop an image to the specified box region.
+
+        Args:
+            image: The input image to be cropped as a numpy array
+            box: Box object
+
+        Returns:
+            CropResult containing the cropped image and offset information
+
+        Raises:
+            ValueError: If the box extends beyond image boundaries or
+                if the image is empty
+        """
+        if image.size == 0:
+            raise ValueError("Cannot crop empty image")
+
+        height, width = image.shape[:2]
+
+        left = box.top_left.x
+        top = box.top_left.y
+        right = left + box.width
+        bottom = top + box.height
+
+        if left < 0 or top < 0:
+            raise ValueError(
+                f"Box top_left ({left}, {top}) cannot have negative coordinates"
+            )
+
+        if right > width:
+            raise ValueError(
+                f"Box right boundary ({right}) exceeds image width ({width})"
+            )
+
+        if bottom > height:
+            raise ValueError(
+                f"Box bottom boundary ({bottom}) exceeds image height ({height})"
+            )
+
+        if left >= right or top >= bottom:
+            raise ValueError(
+                f"Invalid box dimensions: width={box.width}, height={box.height}"
+            )
+
+        cropped_image = image[top:bottom, left:right]
+
+        return CropResult(image=cropped_image, offset=Point(x=left, y=top))
+
 
 def _crop_value_to_pixels(
     crop_value: CropValue, dimension: int, side_name: str, total_dimension: int

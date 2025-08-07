@@ -1,4 +1,6 @@
-import { BrowserOpenURL } from "$lib/wailsjs/runtime";
+// @ts-ignore
+import { showErrorToast } from "$lib/toast/toast-error";
+import { Browser } from "@wailsio/runtime";
 
 export function shouldOpenExternally(url: string): boolean {
   if (!url) {
@@ -37,7 +39,9 @@ export function setupExternalLinkHandler(): () => void {
 
     if (shouldOpenExternally(url)) {
       e.preventDefault();
-      BrowserOpenURL(url);
+      Browser.OpenURL(url).catch((e: any) => {
+        showErrorToast(e);
+      });
     }
   };
 

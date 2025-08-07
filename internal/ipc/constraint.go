@@ -81,12 +81,14 @@ func GetMainConfigConstraints() map[string]interface{} {
 	portMin := 1024.0
 	portMax := 65535.0
 	minZero := 0.0
+	minFPS := 1.0
+	maxFPS := 60.0
 
 	return map[string]interface{}{
 		"Device": map[string]interface{}{
-			"ID": NewTextConstraint("127.0.0.1:5555"),
+			"ID": NewTextConstraint("127.0.0.1:7555"),
 			"Device Streaming (disable for slow PCs)": NewCheckboxConstraint(true),
-			"Enable Hardware Decoding":                NewCheckboxConstraint(false),
+			"Enable Hardware Decoding":                NewCheckboxConstraint(true),
 			"Resize Display (Phone/Tablet only)":      NewCheckboxConstraint(false),
 			"Order": []string{
 				"ID",
@@ -128,9 +130,13 @@ func GetMainConfigConstraints() map[string]interface{} {
 				"jp",
 				"vn",
 			}, "en"),
+			"Close button should minimize the window": NewCheckboxConstraint(false),
+			"Enable Notifications":                    NewCheckboxConstraint(false),
 			"Order": []string{
 				"Theme",
 				"Language",
+				"Close button should minimize the window",
+				"Enable Notifications",
 			},
 		},
 		"Logging": map[string]interface{}{
@@ -142,14 +148,24 @@ func GetMainConfigConstraints() map[string]interface{} {
 				string(LogLevelFatal),
 			}, string(LogLevelInfo)),
 			"Debug Screenshot Limit": NewNumberConstraint(&minZero, nil, nil, 60),
-			"Action Log Limit":       NewNumberConstraint(&minZero, nil, nil, 5),
+			"Task Log Limit":         NewNumberConstraint(&minZero, nil, nil, 5),
 		},
-		"ADB (Advanced)": map[string]interface{}{
-			"Host": NewTextConstraint("127.0.0.1"),
-			"Port": NewNumberConstraint(&portMin, &portMax, nil, 5037),
+		"Advanced": map[string]interface{}{
+			"ADB Server Host": NewTextConstraint("127.0.0.1"),
+			"ADB Server Port": NewNumberConstraint(&portMin, &portMax, nil, 5037),
+			"AutoPlayer Host": NewTextConstraint("127.0.0.1"),
+			"AutoPlayer Port": NewNumberConstraint(&portMin, &portMax, nil, 62121),
+			"Streaming FPS":   NewNumberConstraint(&minFPS, &maxFPS, nil, 30),
+			"Order": []string{
+				"AutoPlayer Host",
+				"AutoPlayer Port",
+				"ADB Server Host",
+				"ADB Server Port",
+				"Streaming FPS",
+			},
 		},
 		"Order": []string{
-			"Device", "Update", "User Interface", "Logging", "ADB (Advanced)",
+			"Device", "Update", "User Interface", "Logging", "Advanced",
 		},
 	}
 }

@@ -1,8 +1,9 @@
 """Coordinates interface."""
 
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 
+@runtime_checkable
 class Coordinates(Protocol):
     """Protocol for objects with x, y-coordinates."""
 

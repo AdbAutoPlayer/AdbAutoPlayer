@@ -7,7 +7,6 @@ import (
 type LogLevel string
 
 const (
-	LogLevelTrace   LogLevel = "TRACE"
 	LogLevelDebug   LogLevel = "DEBUG"
 	LogLevelInfo    LogLevel = "INFO"
 	LogLevelWarning LogLevel = "WARNING"
@@ -16,25 +15,23 @@ const (
 )
 
 type LogMessage struct {
-	Level        LogLevel  `json:"level"`
-	Message      string    `json:"message"`
-	Timestamp    time.Time `json:"timestamp"`
-	SourceFile   *string   `json:"source_file"`
-	FunctionName *string   `json:"function_name"`
-	LineNumber   *int32    `json:"line_number"`
-	HTMLClass    *string   `json:"html_class"`
+	Level        LogLevel `json:"level"`
+	Message      string   `json:"message"`
+	Timestamp    string   `json:"timestamp"`
+	SourceFile   *string  `json:"source_file"`
+	FunctionName *string  `json:"function_name"`
+	LineNumber   *int32   `json:"line_number"`
+	HTMLClass    *string  `json:"html_class"`
 }
 
 func NewLogMessage(
 	level LogLevel,
 	message string,
 ) LogMessage {
-	now := time.Now()
-	timestamp := &now
 	return LogMessage{
 		Level:        level,
 		Message:      message,
-		Timestamp:    *timestamp,
+		Timestamp:    time.Now().UTC().Format("2006-01-02T15:04:05.000Z"),
 		SourceFile:   nil,
 		FunctionName: nil,
 		LineNumber:   nil,

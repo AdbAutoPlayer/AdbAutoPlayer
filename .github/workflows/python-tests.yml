@@ -28,9 +28,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - name: Python
+        uses: ./.github/actions/setup-tools
         with:
-          python-version: '3.13'
+          tool: uv-python
 
       - name: macOS install dependencies
         if: runner.os == 'macOS'
@@ -51,8 +52,6 @@ jobs:
 
           # Verify installation
           adb --version || (echo "Fallback installation failed" && exit 1)
-
-      - run: python -m pip install uv
 
       - name: Run Pytests for Codecov Test Analytics
         id: run_tests

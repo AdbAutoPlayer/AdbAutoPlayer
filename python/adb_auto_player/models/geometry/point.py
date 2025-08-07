@@ -17,7 +17,8 @@ class Point(Coordinates):
         """Initialize point with x, y-coordinates."""
         if x < 0 or y < 0:
             raise ValueError(
-                f"Invalid Point coordinates: x={x}, y={y}. Both must be non-negative."
+                f"Invalid Point coordinates: x={x}, y={y}. "
+                f"Both values must be non-negative."
             )
         self._x = x
         self._y = y
@@ -27,7 +28,7 @@ class Point(Coordinates):
         if self.x < 0 or self.y < 0:
             raise ValueError(
                 f"Invalid Point coordinates: x={self.x}, y={self.y}. "
-                "Both must be non-negative."
+                "Both values must be non-negative."
             )
 
     @property
@@ -40,11 +41,11 @@ class Point(Coordinates):
         """Y-coordinate."""
         return self._y
 
-    def distance_to(self, other: "Point") -> float:
+    def distance_to(self, other: Coordinates) -> float:
         """Calculate Euclidean distance to another point."""
         return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
 
-    def is_close_to(self, other: "Point", threshold: float) -> bool:
+    def is_close_to(self, other: Coordinates, threshold: float) -> bool:
         """Check if this point is within threshold distance of another point."""
         return self.distance_to(other) < threshold
 
@@ -93,10 +94,19 @@ class Point(Coordinates):
         """Return a string representation of the point."""
         return f"Point(x={int(self.x)}, y={int(self.y)})"
 
-    def __add__(self, other: "Point") -> "Point":
-        """Creates a new Point with coordinates added to this point."""
-        if not isinstance(other, Point):
+    def __add__(self, other: Coordinates) -> "Point":
+        """Creates a new Point with coordinates added to this point.
+
+        Raises:
+            ValueError: If the resulting coordinates are negative.
+        """
+        if not isinstance(other, Coordinates):
             return NotImplemented
         new_x = self.x + other.x
         new_y = self.y + other.y
+        if new_x < 0 or new_y < 0:
+            raise ValueError(
+                f"Invalid Point coordinates: x={new_x}, y={new_y}. "
+                "Both values must be non-negative."
+            )
         return Point(new_x, new_y)

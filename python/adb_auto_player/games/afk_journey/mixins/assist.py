@@ -9,10 +9,9 @@ from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models.decorators import GUIMetadata
-from adb_auto_player.models.geometry import Point
+from adb_auto_player.models.geometry import Box, Point
 from adb_auto_player.models.image_manipulation import CropRegions
-
-_WORLD_CHAT_POINT = Point(110, 350)
+from adb_auto_player.models.template_matching import TemplateMatchResult
 
 
 class AssistMixin(AFKJourneyBase, ABC):
@@ -27,11 +26,6 @@ class AssistMixin(AFKJourneyBase, ABC):
     )
     def assist_synergy_corrupt_creature(self) -> None:
         """Assist Synergy and Corrupt Creature."""
-        # TODO this needs to be refactored
-        # because the chat window can be moved
-        # the crop region for "assist/empty_chat.png"
-        # needs to be dynamically derived based on the location from the world chat
-        # or tap to enter labels
         self.start_up()
 
         if self._stream is None:
@@ -40,41 +34,44 @@ class AssistMixin(AFKJourneyBase, ABC):
                 "you will miss a lot of Synergy and CC requests"
             )
 
-        assist_limit = self.get_config().general.assist_limit
         logging.info("Searching Synergy & Corrupt Creature requests in World Chat")
         count: int = 0
-        while count < assist_limit:
+        while count < self.get_config().general.assist_limit:
             if self._find_synergy_or_corrupt_creature():
                 count += 1
                 logging.info(f"Assist #{count}")
 
         logging.info("Finished: Synergy & CC")
 
+    def _open_chat(self) -> None:
+        logging.info("Opening Chat")
+        self.navigate_to_default_state()
+        self.device.press_enter()
+        sleep(2)
+
+    def _find_profile_icon(self, world_chat_label: Box) -> TemplateMatchResult | None:
+        crop_left = world_chat_label.top_left.x
+        crop_top = world_chat_label.top_left.y + 990
+
+        return self.find_worst_match(
+            "assist/empty_chat.png",
+            crop_regions=CropRegions(
+                left=str(crop_left) + "px",
+                right=str(1080 - crop_left - 130) + "px",
+                top=str(crop_top) + "px",
+                bottom=str(1920 - 250 - crop_top) + "px",
+            ),
+        )
+
     def _find_synergy_or_corrupt_creature(self) -> bool:  # noqa: PLR0911 - TODO
         """Find Synergy or Corrupt Creature."""
-        result = self.find_any_template(
-            templates=[
-                "assist/label_world_chat.png",
-                "assist/tap_to_enter.png",
-                "assist/label_team-up_chat.png",
-            ],
+        result = self.game_find_template_match(
+            "assist/label_world_chat.png",
+            crop_regions=CropRegions(bottom="50%", right="50%", left="10%"),
         )
         if result is None:
-            logging.info("Navigating to World Chat")
-            self.navigate_to_default_state()
-            self.tap(Point(1010, 1080), scale=True)
-            sleep(1)
-            self.tap(_WORLD_CHAT_POINT, scale=True)
+            self._open_chat()
             return False
-
-        match result.template:
-            # Chat Window is open but not on World Chat
-            case "assist/tap_to_enter.png" | "assist/label_team-up_chat.png":
-                logging.info("Switching to World Chat")
-                self.tap(_WORLD_CHAT_POINT, scale=True)
-                return False
-            case "assist/label_world_chat.png":
-                pass
 
         profile_icon = self.find_worst_match(
             "assist/empty_chat.png",
@@ -152,7 +149,6 @@ class AssistMixin(AFKJourneyBase, ABC):
                 ],
                 timeout=self.BATTLE_TIMEOUT,
             )
-            logging.debug(f"template {result.template}")
             match result.template:
                 case "assist/bell.png":
                     sleep(2)
@@ -160,12 +156,8 @@ class AssistMixin(AFKJourneyBase, ABC):
                 case "guide/close.png" | "guide/next.png":
                     self._handle_guide_popup()
                 case _:
-                    logging.debug("false")
-                    logging.debug(f"template {result.template}")
-
                     return False
 
-        logging.debug("Placing heroes")
         # click first 5 heroes in row 1 and 2
         for x in [110, 290, 470, 630, 800]:
             self.tap(Point(x, 1300), scale=True)

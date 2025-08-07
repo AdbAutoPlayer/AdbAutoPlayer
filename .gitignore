@@ -1,13 +1,30 @@
-build/bin
-*.zip
+# Wails 3 default .gitignore
+.task
+bin
+frontend/dist
+frontend/node_modules
+build/linux/appimage/build
+build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
+
+
 AdbAutoPlayer
-PATCH_*
 *.syso
 .vscode
 node_modules
-release_zip
 debug
 *instructions.md
 coverage.xml
 junit.xml
 .coverage
+adb-auto-player.exe
+
+# Build Artifacts
+build/bin
+*.zip
+
+# Windows Build Artifacts
+
+# MacOS Build Artifacts
+AdbAutoPlayer.app
+AdbAutoPlayer_MacOS
+AdbAutoPlayer_MacOS.zip
