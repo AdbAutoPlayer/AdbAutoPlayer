@@ -15,7 +15,7 @@ inputs:
     description: 'Node.js version to install'
     default: 'latest'
   uv-version:
-    description: 'UV version to install'
+    description: 'uv version to install'
     default: '0.7.11'
   python-version:
     description: 'Python version to install'
