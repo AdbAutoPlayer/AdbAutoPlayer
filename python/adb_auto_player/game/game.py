@@ -31,7 +31,7 @@ from adb_auto_player.image_manipulation import (
 )
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.device import DisplayInfo, Orientation
-from adb_auto_player.models.geometry import Coordinates, Point
+from adb_auto_player.models.geometry import Coordinates, Point, PointOutsideDisplay
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.pydantic import MyCustomRoutineConfig
 from adb_auto_player.models.registries import CustomRoutineEntry
@@ -1259,3 +1259,63 @@ class Game(ABC):
 
             sleep(0.5)
             time_since_last_tap += 0.5
+
+    def assert_no_scaling(self, message: str | None) -> None:
+        """Assert no scaling is required.
+
+        This is meant for bots where exact pixel offsets are used or scaling breaks
+        logic.
+
+        Raises:
+            AutoPlayerUnrecoverableError: if scaling is required.
+        """
+        if self.scale_factor != 1.0:
+            raise AutoPlayerUnrecoverableError(
+                message
+                if message
+                else f"Bot will only work with: {self.supported_resolutions[0]}"
+            )
+
+    def assert_frame_and_input_delay_below_threshold(
+        self,
+        max_frame_delay: int = 10,
+        max_input_delay: int = 80,
+    ) -> None:
+        """Assert no frame and input lag is below threshold.
+
+        This is meant for bots where fast input/reaction time is needed.
+
+        Args:
+            max_frame_delay(int, optional): maximum frame delay in milliseconds.
+            max_input_delay(int, optional): maximum input delay in milliseconds.
+
+        Raises:
+            AutoPlayerUnrecoverableError: frame or input delay above max allowed value.
+        """
+        # Debug screenshots add additional IO, we can disable this here because we know
+        # the feature needs to be fast if this function is called...
+        self.disable_debug_screenshots = True
+
+        start_time = time()
+        _ = self.get_screenshot()
+        total_time = (time() - start_time) * 1000
+        if total_time > max_frame_delay:
+            raise AutoPlayerUnrecoverableError(
+                f"Screenshot/Frame delay: {int(total_time)} ms above max frame delay: "
+                f"{max_frame_delay} ms exiting..."
+            )
+        logging.info(f"Screenshot/Frame delay: {int(total_time)} ms")
+
+        total_time = 0.0
+        iterations = 10
+        for _ in range(iterations):
+            start_time = time()
+            self.tap(PointOutsideDisplay(), log=False)
+            total_time += (time() - start_time) * 1000
+        average_time = total_time / iterations
+        if average_time > max_input_delay:
+            raise AutoPlayerUnrecoverableError(
+                f"Average input delay: {int(average_time)} ms above max input delay: "
+                f"{max_input_delay} ms exiting..."
+            )
+        logging.info(f"Average input delay: {int(average_time)} ms")

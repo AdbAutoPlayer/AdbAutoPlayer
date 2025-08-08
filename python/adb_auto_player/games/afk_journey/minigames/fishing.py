@@ -1,6 +1,5 @@
 import logging
 import threading
-import time
 from time import sleep
 
 import cv2
@@ -9,10 +8,12 @@ from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.image_manipulation import Cropping
 from adb_auto_player.models import ConfidenceValue
-from adb_auto_player.models.geometry import Coordinates, Point, PointOutsideDisplay
+from adb_auto_player.models.decorators import GUIMetadata
+from adb_auto_player.models.geometry import Coordinates, Point
 from adb_auto_player.models.image_manipulation import CropRegions
 
 from ..base import AFKJourneyBase
+from ..gui_category import AFKJCategory
 
 STRONG_PULL = Point(780, 1290)
 DISTANCE_600 = 600
@@ -20,12 +21,8 @@ DISTANCE_400 = 400
 DISTANCE_200 = 200
 DISTANCE_100 = 100
 DISTANCE_50 = 50
-MAX_AVG_INPUT_DELAY_IN_MS = 200  # TODO Change to a reasonable value later
-MAX_AVG_INPUT_DELAY_CANDIDATE = 100
-MAX_SCREENSHOT_DELAY_IN_MS = 100  # TODO Change to a reasonable value later
-MAX_AVG_SCREENSHOT_DELAY_CANDIDATE = 10
 FISHING_DELAY = 1.0 / 30.0  # 1 Frame this is used for the fishing loop
-# without CPU usage will go crazy
+# without this CPU usage will go crazy
 # could potentially be reduced to 1.0 / 60.0 if device streaming at 60 fps
 
 
@@ -33,38 +30,27 @@ class Fishing(AFKJourneyBase):
     """Fishing."""
 
     @register_command(
-        # TODO expose in GUI when its done
-        # gui=GUIMetadata(
-        #     label="Fishing",
-        #     category=AFKJCategory.EVENTS_AND_OTHER,
-        # ),
+        gui=GUIMetadata(
+            label="Fishing",
+            category=AFKJCategory.EVENTS_AND_OTHER,
+        ),
     )
     def fishing(self) -> None:
         self.start_up(device_streaming=True)
-        if self._stream is None:
-            logging.warning(
-                "Quite frankly there is not a very good chance this will work "
-                "without Device Streaming."
-            )
 
-        if self.scale_factor != 1.0:
-            logging.error(
-                "Fishing is optimized for 1080x1920 it will not work with other "
-                "resolutions."
-            )
-            return
+        self.assert_no_scaling(
+            "Fishing is optimized for 1080x1920 it will not work with other "
+            "resolutions."
+        )
+        self.assert_frame_and_input_delay_below_threshold()
 
-        # Debug Screenshots need to be disabled.
-        # IO will add a delay of anywhere between 50-300ms, generally speaking
-        self.disable_debug_screenshots = True
+        logging.warning(
+            "You have to go to fishing spots and start the fishing minigame yourself. "
+            "Just fish the first fish or fail on purpose before starting the "
+            "Fishing bot. This will not work for quest fishing spots."
+        )
 
         self._warmup_cache_for_all_fishing_templates()
-
-        if (
-            not self._passed_input_delay_check()
-            or not self._passed_screenshot_delay_check()
-        ):
-            return
 
         # TODO needs map navigation logic
         # the _fish function only works inside of the fishing minigame
@@ -72,7 +58,7 @@ class Fishing(AFKJourneyBase):
         # inside the fishing screen and not the overworld.
 
         if not self._i_am_in_the_fishing_screen():
-            logging.error("Not in Fishing screen")
+            logging.error("Not inside Fishing minigame.")
             return
 
         while self._i_am_in_the_fishing_screen():
@@ -243,50 +229,6 @@ class Fishing(AFKJourneyBase):
         if distance > DISTANCE_50:
             return self.hold(btn, duration=0.25, blocking=False, log=False)
         return thread
-
-    def _passed_screenshot_delay_check(self) -> bool:
-        start_time = time.time()
-        _ = self.get_screenshot()
-        total_time = (time.time() - start_time) * 1000
-        if total_time > MAX_SCREENSHOT_DELAY_IN_MS:
-            logging.error(
-                f"Screenshot delay of {int(total_time)} ms is too high, "
-                "fishing cannot work."
-            )
-            return False
-
-        if total_time > MAX_SCREENSHOT_DELAY_IN_MS:
-            logging.warning(
-                f"Screenshot delay of {int(total_time)} ms might be too high, "
-                "if you experiences issues please report them."
-            )
-        else:
-            logging.info(f"Screenshot delay of {int(total_time)} ms")
-        return True
-
-    def _passed_input_delay_check(self) -> bool:
-        total_time = 0.0
-        iterations = 10
-        for _ in range(iterations):
-            start_time = time.time()
-            self.tap(PointOutsideDisplay(), log=False)
-            total_time += (time.time() - start_time) * 1000
-        average_time = total_time / iterations
-        if average_time > MAX_AVG_INPUT_DELAY_IN_MS:
-            logging.error(
-                f"Average Input delay of {int(average_time)} ms is too high, "
-                "fishing cannot work."
-            )
-            return False
-
-        if average_time > MAX_AVG_INPUT_DELAY_CANDIDATE:
-            logging.warning(
-                f"Average Input delay of {int(average_time)} ms might be too high, "
-                "if you experiences issues please report them."
-            )
-        else:
-            logging.info(f"Average Input delay of {int(average_time)} ms")
-        return True
 
 
 def _find_fishing_colors_fast(img: np.ndarray) -> tuple[int | None, int | None]:
