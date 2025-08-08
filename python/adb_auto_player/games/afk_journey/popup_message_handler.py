@@ -147,12 +147,14 @@ legend_trial_messages = [
 ]
 
 HEAD_FROM_WORLD_TO_HOMESTEAD_MESSAGE = PopupMessage(
-    text="Heading to Homestead now. Continue?",
+    # Heading to the Homestead now. Continue?
+    text="Heading to Homestead now",
     # Default we don't want to enter homestead
     confirm_button_template="navigation/x.png",
 )
 HEAD_FROM_HOMESTEAD_TO_WORLD_MESSAGE = PopupMessage(
-    text="Heading to World now. Continue?",
+    # Heading to World now. Continue?
+    text="Heading to World now",
     # Default we don't want to enter homestead
     confirm_button_template="navigation/confirm.png",
 )
