@@ -49,6 +49,71 @@ class AdbDeviceWrapper:
         _check_output_for_error(output)
         return output
 
+    @adb_retry
+    def screenshot(self) -> str | bytes:
+        """Screenshot.
+
+        Returns:
+            str | bytes: Adb screencap response this can be a message too.
+        """
+        with self.d.shell("screencap -p", stream=True) as c:
+            return c.read_until_close(encoding=None)
+
+    @adb_retry
+    def tap(self, x: str, y: str) -> None:
+        """Tap.
+
+        Args:
+            x: x coordinate
+            y: y coordinate
+        """
+        with self.d.shell(
+            [
+                "input",
+                "tap",
+                x,
+                y,
+            ],
+            timeout=3,  # if the click didn't happen in 3 seconds it's never happening
+            stream=True,
+        ) as connection:
+            connection.read_until_close()
+
+    @adb_retry
+    def keyevent(self, key: str) -> None:
+        """Key event.
+
+        Args:
+            key: key code
+        """
+        with self.d.shell(["input", "key", key], stream=True) as connection:
+            connection.read_until_close()
+
+    @adb_retry
+    def swipe(self, sx: str, sy: str, ex: str, ey: str, duration: str) -> None:
+        """Swipe from sx, sy to ex, ey over duration ms.
+
+        Args:
+            sx: start X-coordinate.
+            sy: start Y-coordinate.
+            ex: end X-coordinate.
+            ey: end Y-coordinate.
+            duration: Swipe duration in milliseconds.
+        """
+        with self.d.shell(
+            [
+                "input",
+                "swipe",
+                sx,
+                sy,
+                ex,
+                ey,
+                duration,
+            ],
+            stream=True,
+        ) as connection:
+            connection.read_until_close()
+
     def shell_unsafe(
         self,
         cmdargs: str | list | tuple,

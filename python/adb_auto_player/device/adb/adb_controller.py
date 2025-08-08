@@ -106,8 +106,7 @@ class AdbController:
 
     def screenshot(self) -> str | bytes:
         """Take screenshot."""
-        with self.d.shell("screencap -p", stream=True) as c:
-            return c.read_until_close(encoding=None)
+        return self.d.screenshot()
 
     def stop_game(self, package_name: str) -> None:
         """Stop game."""
@@ -147,12 +146,7 @@ class AdbController:
         Args:
             coordinates (Coordinates): Point to click on.
         """
-        with self.d.shell(
-            f"input tap {coordinates.x} {coordinates.y}",
-            timeout=3,  # if the click didn't happen in 3 seconds it's never happening
-            stream=True,
-        ) as connection:
-            connection.read_until_close()
+        self.d.tap(str(coordinates.x), str(coordinates.y))
 
     def click(
         self,
@@ -163,13 +157,11 @@ class AdbController:
 
     def press_back_button(self) -> None:
         """Presses the back button."""
-        with self.d.shell("input keyevent 4", stream=True) as connection:
-            connection.read_until_close()
+        self.d.keyevent("4")
 
     def press_enter(self) -> None:
         """Press enter button."""
-        with self.d.shell("input keyevent 66", stream=True) as connection:
-            connection.read_until_close()
+        self.d.keyevent("6")
 
     def swipe(
         self,
@@ -182,24 +174,15 @@ class AdbController:
         Args:
             start_point: Start Point on the screen.
             end_point: End Point on the screen.
-            duration: Swipe duration. Defaults to 1.0.
+            duration: Swipe duration in seconds. Defaults to 1.0.
         """
-        with self.d.shell(
-            [
-                "input",
-                "swipe",
-                str(start_point.x),
-                str(start_point.y),
-                str(end_point.x),
-                str(end_point.y),
-                str(int(duration * 1000)),
-            ],
-            stream=True,
-        ) as connection:
-            connection.read_until_close()
-        # Lets the swipe complete before continuing, this will not wait for additional
-        # animation times
-        sleep(duration)
+        self.d.swipe(
+            str(start_point.x),
+            str(start_point.y),
+            str(end_point.x),
+            str(end_point.y),
+            str(int(duration * 1000)),
+        )
 
     def hold(
         self,
