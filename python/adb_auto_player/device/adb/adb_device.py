@@ -49,13 +49,6 @@ class AdbDeviceWrapper:
         _check_output_for_error(output)
         return output
 
-    def swipe(
-        self, sx: int, sy: int, ex: int, ey: int, duration: float = 1.0
-    ) -> AdbConnection | str | bytes:
-        """Swipe with retry."""
-        x1, y1, x2, y2 = map(str, [sx, sy, ex, ey])
-        return self.shell(["input", "swipe", x1, y1, x2, y2, str(int(duration * 1000))])
-
     def shell_unsafe(
         self,
         cmdargs: str | list | tuple,

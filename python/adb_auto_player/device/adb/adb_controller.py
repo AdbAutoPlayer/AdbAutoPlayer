@@ -186,13 +186,19 @@ class AdbController:
             duration: Swipe duration. Defaults to 1.0.
             sleep_duration: Sleep duration. Defaults to 2.0. No sleep if None
         """
-        self.d.swipe(
-            sx=start_point.x,
-            sy=start_point.y,
-            ex=end_point.x,
-            ey=end_point.y,
-            duration=duration,
-        )
+        with self.d.shell(
+            [
+                "input",
+                "swipe",
+                str(start_point.x),
+                str(start_point.y),
+                str(end_point.x),
+                str(end_point.y),
+                str(int(duration * 1000)),
+            ],
+            stream=True,
+        ) as connection:
+            connection.read_until_close()
         if sleep_duration is None:
             sleep_duration = 1 / 30
         sleep(sleep_duration)

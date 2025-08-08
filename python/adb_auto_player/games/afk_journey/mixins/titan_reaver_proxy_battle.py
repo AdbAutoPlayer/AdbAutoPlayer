@@ -81,12 +81,6 @@ class TitanReaverProxyBattleMixin(AssistMixin):
         """Execute proxy battle automation."""
         self.start_up()
 
-        if self._stream is None:
-            logging.warning(
-                "This feature is quite slow without Device Streaming. "
-                "You may miss proxy battle opportunities."
-            )
-
         logging.warning("@Czesito has quit the game, this is no longer supported.")
 
         stats = TitanReaverProxyBattleStats()
