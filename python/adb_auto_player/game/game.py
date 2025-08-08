@@ -313,7 +313,8 @@ class Game(ABC):
         blocking: bool = True,
         # Assuming 30 FPS, 1 Tap per Frame
         non_blocking_sleep_duration: float | None = 1 / 30,
-        log_message: str | None = "",
+        log_message: str | None = None,
+        log: bool = True,
     ) -> None:
         """Tap the screen on the given point.
 
@@ -324,10 +325,8 @@ class Game(ABC):
                 wait for ADBServer to confirm the tap has happened.
             non_blocking_sleep_duration (float, optional): Sleep time in seconds for
                 non-blocking taps, needed to not DoS the ADBServer.
-            log_message (str | None, optional): Controls logging behavior:
-                - None: No logging
-                - "": Default coordinate logging
-                - str: Custom message, appends coordinates automatically
+            log_message (str | None, optional): Custom Log message, default msg if None
+            log (bool, optional): Log the tap command.
         """
         original_point = coordinates
         final_point = coordinates
@@ -335,15 +334,21 @@ class Game(ABC):
         if scale:
             final_point = Point(coordinates.x, coordinates.y).scale(self._scale_factor)
 
-        log_message = self._build_tap_log_message(
-            original_point,
-            final_point,
-            log_message,
-        )
+        if log:
+            log_message = Game._build_tap_log_message(
+                original_point,
+                final_point,
+                log_message,
+            )
+        else:
+            log_message = None
 
         # Perform the tap
         if blocking:
-            self._click(final_point, log_message)
+            self._click(
+                final_point,
+                log_message,
+            )
         else:
             thread = threading.Thread(
                 target=self._click,
@@ -357,8 +362,8 @@ class Game(ABC):
             if non_blocking_sleep_duration is not None:
                 sleep(non_blocking_sleep_duration)
 
+    @staticmethod
     def _build_tap_log_message(
-        self,
         original_point: Coordinates,
         final_point: Coordinates,
         message: str | None = None,
@@ -384,7 +389,7 @@ class Game(ABC):
     ) -> None:
         """Internal click method - logging should typically be handled by the caller."""
         self.device.tap(coordinates)
-        if log_message:
+        if log_message is not None:
             logging.debug(log_message)
 
     def get_screenshot(self) -> np.ndarray:
@@ -955,30 +960,38 @@ class Game(ABC):
         )
 
     def hold(
-        self, coordinates: Coordinates, duration: float = 3.0, blocking: bool = True
+        self,
+        coordinates: Coordinates,
+        duration: float = 3.0,
+        blocking: bool = True,
+        log: bool = True,
     ) -> threading.Thread | None:
         """Holds a point on the screen.
 
         Args:
             coordinates (Point): Point on the screen.
             duration (float, optional): Hold duration. Defaults to 3.0.
-            blocking (bool): Whether the call should happen async.
+            blocking (bool, optional): Whether the call should happen async.
+            log (bool, optional): Log the hold command.
         """
-        logging.debug(
-            f"hold: ({coordinates.x}, {coordinates.y}) for {duration} seconds"
-        )
-
         point = Point(coordinates.x, coordinates.y).scale(self._scale_factor)
 
+        if log:
+            logging.debug(
+                f"hold: ({coordinates.x}, {coordinates.y}) for {duration} seconds"
+            )
+
         if blocking:
-            self.device.hold(coordinates=point, duration=duration)
+            self.device.hold(
+                coordinates=point,
+                duration=duration,
+            )
             return None
         thread = threading.Thread(
             target=self.device.hold,
             kwargs={
                 "coordinates": point,
                 "duration": duration,
-                "sleep_duration": None,
             },
             daemon=True,
         )

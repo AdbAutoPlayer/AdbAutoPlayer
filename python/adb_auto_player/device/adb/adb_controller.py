@@ -176,7 +176,6 @@ class AdbController:
         start_point: Coordinates,
         end_point: Coordinates,
         duration: float = 1.0,
-        sleep_duration: float | None = 2.0,
     ) -> None:
         """Swipes the screen.
 
@@ -184,7 +183,6 @@ class AdbController:
             start_point: Start Point on the screen.
             end_point: End Point on the screen.
             duration: Swipe duration. Defaults to 1.0.
-            sleep_duration: Sleep duration. Defaults to 2.0. No sleep if None
         """
         with self.d.shell(
             [
@@ -199,22 +197,20 @@ class AdbController:
             stream=True,
         ) as connection:
             connection.read_until_close()
-        if sleep_duration is None:
-            sleep_duration = 1 / 30
-        sleep(sleep_duration)
+        # Lets the swipe complete before continuing, this will not wait for additional
+        # animation times
+        sleep(duration)
 
     def hold(
         self,
         coordinates: Coordinates,
         duration: float = 1.0,
-        sleep_duration: float | None = 1 / 30,
     ) -> None:
         """Hold the screen on the given coordinates."""
         self.swipe(
             start_point=coordinates,
             end_point=coordinates,
             duration=duration,
-            sleep_duration=sleep_duration,
         )
 
     @property

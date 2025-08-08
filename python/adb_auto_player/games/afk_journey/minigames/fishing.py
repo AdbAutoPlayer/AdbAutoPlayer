@@ -190,7 +190,7 @@ class Fishing(AFKJourneyBase):
                     self.tap(
                         STRONG_PULL,
                         blocking=False,
-                        log_message=None,
+                        log=False,
                     )
 
             if count % check_book_at == 0:
@@ -230,16 +230,18 @@ class Fishing(AFKJourneyBase):
         thread: threading.Thread | None,
     ) -> threading.Thread | None:
         # TODO distance and duration could be adjusted
+        # Holds are not blocking so processing can continue
+        # Debug log disabled to reduce IO/Processing time
         if distance > DISTANCE_600:
-            return self.hold(btn, duration=1.75, blocking=False)
+            return self.hold(btn, duration=1.75, blocking=False, log=False)
         if distance > DISTANCE_400:
-            return self.hold(btn, duration=1.25, blocking=False)
+            return self.hold(btn, duration=1.25, blocking=False, log=False)
         if distance > DISTANCE_200:
-            return self.hold(btn, duration=0.75, blocking=False)
+            return self.hold(btn, duration=0.75, blocking=False, log=False)
         if distance > DISTANCE_100:
-            return self.hold(btn, duration=0.5, blocking=False)
+            return self.hold(btn, duration=0.5, blocking=False, log=False)
         if distance > DISTANCE_50:
-            return self.hold(btn, duration=0.25, blocking=False)
+            return self.hold(btn, duration=0.25, blocking=False, log=False)
         return thread
 
     def _passed_screenshot_delay_check(self) -> bool:
@@ -267,7 +269,7 @@ class Fishing(AFKJourneyBase):
         iterations = 10
         for _ in range(iterations):
             start_time = time.time()
-            self.tap(PointOutsideDisplay(), log_message=None)
+            self.tap(PointOutsideDisplay(), log=False)
             total_time += (time.time() - start_time) * 1000
         average_time = total_time / iterations
         if average_time > MAX_AVG_INPUT_DELAY_IN_MS:

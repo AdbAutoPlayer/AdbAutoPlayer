@@ -195,7 +195,6 @@ class TitanReaverProxyBattleMixin(AssistMixin):
     def _swipe_chat_down(self) -> None:
         """Swipe down the chat window."""
         self.swipe_down(1000, 800, 1500)
-        sleep(TitanReaverProxyBattleConstants.NAVIGATION_DELAY)
 
     def _join_proxy_battle(self, banner_location: Point) -> bool:
         """Join proxy battle.

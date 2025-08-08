@@ -92,7 +92,7 @@ class MatchingCards(AFKJourneyBase):
         logging.info("Starting Matching Cards ...")
         self.tap(
             Point(int(1080 / 2), int(1920 / 2)),
-            log_message=None,
+            log=False,
         )
         sleep(3)
 
@@ -111,7 +111,7 @@ class MatchingCards(AFKJourneyBase):
                 target,
                 threshold=ConfidenceValue("60%"),
             ):
-                self.tap(result.with_offset(cropped.offset), log_message=None)
+                self.tap(result.with_offset(cropped.offset), log=False)
                 last_match_time = time.time()
 
             if time.time() - last_match_time > five_seconds:
@@ -148,7 +148,7 @@ class MatchingCards(AFKJourneyBase):
         iterations = 10
         for _ in range(iterations):
             start_time = time.time()
-            self.tap(PointOutsideDisplay(), log_message=None)
+            self.tap(PointOutsideDisplay(), log=False)
             total_time += (time.time() - start_time) * 1000
         average_time = total_time / iterations
         if average_time > MAX_AVG_INPUT_DELAY_IN_MS:

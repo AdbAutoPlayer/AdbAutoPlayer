@@ -160,7 +160,6 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
                     "No listed hero found, scolling down " + str(scrolls) + "/5"
                 )
                 self.swipe_up(630, 1630, 1340, duration=2)
-                sleep(2)
                 scrolls += 1
             if scrolls > max_scrolls:
                 self.tap(Point(1000, 1625))
