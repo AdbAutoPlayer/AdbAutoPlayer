@@ -86,7 +86,7 @@ class AdbDeviceWrapper:
         Args:
             key: key code
         """
-        with self.d.shell(["input", "key", key], stream=True) as connection:
+        with self.d.shell(["input", "keyevent", key], stream=True) as connection:
             connection.read_until_close()
 
     @adb_retry
