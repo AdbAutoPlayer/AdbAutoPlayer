@@ -157,11 +157,11 @@ class AdbController:
 
     def press_back_button(self) -> None:
         """Presses the back button."""
-        self.d.keyevent("4")
+        self.d.keyevent("4")  # alternative 111
 
     def press_enter(self) -> None:
         """Press enter button."""
-        self.d.keyevent("6")
+        self.d.keyevent("66")  # alternative 108
 
     def swipe(
         self,
