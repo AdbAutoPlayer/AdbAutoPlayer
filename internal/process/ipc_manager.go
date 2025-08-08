@@ -177,7 +177,7 @@ func (pm *IPCManager) startOrResolveServer() error {
 
 	inUse, err := pm.checkPortInUse()
 	if err != nil {
-		logger.Get().Errorf("Failed to check if port %s:%d is in use: %v", host, port, err)
+		logger.Get().Errorf("Failed to check if port %s:%d is in use: %v\nTry running the app as administrator", host, port, err)
 		return fmt.Errorf("failed to check port availability: %w", err)
 	}
 
@@ -198,7 +198,7 @@ func (pm *IPCManager) startOrResolveServer() error {
 	}
 
 	if err = pm.startServer(); err != nil {
-		return fmt.Errorf("failed to start AutoPlayer Server on %s:%d: %v", host, port, err)
+		return fmt.Errorf("failed to start AutoPlayer Server on %s:%d: %v\nTry running the app as administrator or checking your firewall settings", host, port, err)
 
 	}
 
@@ -212,7 +212,7 @@ func (pm *IPCManager) startOrResolveServer() error {
 		case <-timeout:
 			killProcessTree(pm.serverProcess)
 			pm.serverProcess = nil
-			return fmt.Errorf("failed to start AutoPlayer Server on %s:%d: timeout waiting for health check", host, port)
+			return fmt.Errorf("failed to start AutoPlayer Server on %s:%d: timeout waiting for health check\nTry running the app as administrator or checking your firewall settings", host, port)
 		case <-ticker.C:
 			isValid, err2 := pm.healthCheck()
 			if isValid && err2 == nil {
