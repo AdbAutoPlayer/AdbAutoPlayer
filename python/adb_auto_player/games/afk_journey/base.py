@@ -23,7 +23,6 @@ from .afkjourneynavigation import AFKJourneyNavigation
 from .battle_state import BattleState, Mode
 from .config import Config
 from .gui_category import AFKJCategory
-from .popup_handler import AFKJourneyPopupHandler
 
 
 @register_game(
@@ -34,7 +33,7 @@ from .popup_handler import AFKJourneyPopupHandler
         categories=list(AFKJCategory),
     ),
 )
-class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
+class AFKJourneyBase(AFKJourneyNavigation, Game):
     """AFK Journey Base Class."""
 
     def __init__(self) -> None:
@@ -382,7 +381,7 @@ class AFKJourneyBase(AFKJourneyNavigation, AFKJourneyPopupHandler, Game):
         Returns:
             bool: True if confirmed, False if not.
         """
-        if self.handle_confirmation_popups():
+        if self.handle_popup_messages():
             return True
 
         # Legacy code keeping it as a fallback

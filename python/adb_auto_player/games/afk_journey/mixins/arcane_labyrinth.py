@@ -424,7 +424,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         if result is None:
             if self.arcane_skip_point is not None:
                 self._click_skip()
-            self.handle_confirmation_popups()
+            self.handle_popup_messages()
             difficulty = self.game_find_template_match(
                 template="arcane_labyrinth/difficulty.png",
                 threshold=ConfidenceValue("70%"),
@@ -468,7 +468,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         if self.arcane_skip_point:
             self.tap(self.arcane_skip_point, log_message="Tapped skip")
             sleep(1)
-            self.handle_confirmation_popups()
+            self.handle_popup_messages()
 
     def _click_best_gate(self, swords: Coordinates) -> None:
         """Click best gate."""

@@ -8,14 +8,15 @@ from adb_auto_player.exceptions import (
     GameNotRunningOrFrozenError,
     GameTimeoutError,
 )
-from adb_auto_player.game import Game
 from adb_auto_player.models import ConfidenceValue
-from adb_auto_player.models.geometry import Coordinates, Point
+from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import TemplateMatchResult
 
+from .popup_handler import AFKJourneyPopupHandler
 
-class AFKJourneyNavigation(Game, ABC):
+
+class AFKJourneyNavigation(AFKJourneyPopupHandler, ABC):
     # Timeouts
     NAVIGATION_TIMEOUT = 10.0
 
@@ -29,6 +30,7 @@ class AFKJourneyNavigation(Game, ABC):
     ) -> None:
         """Navigate to main default screen."""
         templates = [
+            "navigation/world.png",
             "popup/quick_purchase.png",
             "navigation/confirm.png",
             "navigation/notice.png",
@@ -65,37 +67,45 @@ class AFKJourneyNavigation(Game, ABC):
                 )
             attempts += 1
 
-            result = self.find_any_template(templates)
+            if self._navigate_to_default_state(templates):
+                break
 
-            if result is None:
-                self.press_back_button()
-                sleep(3)
-                continue
-
-            match result.template:
-                case "navigation/time_of_day.png":
-                    break
-                case "navigation/notice.png":
-                    # This is the Game Entry Screen
-                    self.tap(self.CENTER_POINT, scale=True)
-                    sleep(3)
-                case "navigation/confirm.png":
-                    self._handle_confirm_button(result)
-                case "navigation/dotdotdot.png" | "popup/quick_purchase.png":
-                    self.press_back_button()
-                    sleep(1)
-                case "arcane_labyrinth/select_a_crest.png":
-                    self.tap(Point(550, 1460))  # bottom crest
-                    sleep(1)
-                    self.tap(result)
-                    sleep(1)
-                case "arcane_labyrinth/back_arrow.png":
-                    self.tap(result)
-                    sleep(2)
-                case _:
-                    self.tap(result)
-                    sleep(1)
         sleep(2)
+
+    def _navigate_to_default_state(self, templates: list[str]) -> bool:
+        result = self.find_any_template(templates)
+
+        if result is None:
+            self.press_back_button()
+            sleep(3)
+            return False
+
+        match result.template:
+            case "navigation/time_of_day.png":
+                return True
+            case "navigation/notice.png":
+                # This is the Game Entry Screen
+                self.tap(self.CENTER_POINT, scale=True)
+                sleep(3)
+            case "navigation/confirm.png":
+                if not self.handle_popup_messages():
+                    self.tap(result)
+                    sleep(1)
+            case "navigation/dotdotdot.png" | "popup/quick_purchase.png":
+                self.press_back_button()
+                sleep(1)
+            case "arcane_labyrinth/select_a_crest.png":
+                self.tap(Point(550, 1460))  # bottom crest
+                sleep(1)
+                self.tap(result)
+                sleep(1)
+            case "arcane_labyrinth/back_arrow.png":
+                self.tap(result)
+                sleep(2)
+            case _:
+                self.tap(result)
+                sleep(1)
+        return False
 
     def _handle_restart(self, templates: list[str]) -> None:
         logging.warning("Trying to restart AFK Journey.")
@@ -112,26 +122,6 @@ class AFKJourneyNavigation(Game, ABC):
             attempts += 1
             self.tap(self.CENTER_POINT, scale=True)
             sleep(3)
-        sleep(1)
-
-    def _handle_confirm_button(self, coords: Coordinates) -> None:
-        if self.find_any_template(
-            templates=[
-                "navigation/exit_the_game.png",
-                "navigation/are_you_sure_you_want_to_exit_the_game.png",
-            ],
-            threshold=ConfidenceValue("75%"),
-        ):
-            x_btn = self.game_find_template_match(
-                "navigation/x.png",
-            )
-            if x_btn:
-                self.tap(x_btn)
-                sleep(1)
-                return
-            self.press_back_button()
-        else:
-            self.tap(coords)
         sleep(1)
 
     def navigate_to_resonating_hall(self) -> None:

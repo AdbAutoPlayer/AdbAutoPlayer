@@ -2,7 +2,7 @@ import logging
 import re
 import time
 from abc import ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 from adb_auto_player.exceptions import AutoPlayerWarningError
@@ -21,7 +21,7 @@ class PopupMessage:
     text: str
     # This will be clicked or held
     confirm_button_template: str = "navigation/confirm.png"
-    click_dont_remind_me: bool = False
+    has_dont_remind_me: bool = False
     hold_to_confirm: bool = False
     hold_duration_seconds: float = 5.0
     ignore: bool = False
@@ -34,27 +34,25 @@ season_talent_messages = [
         # You haven't activated any Season Faction Talent.
         # Do you want to start the battle anyway?
         text="You haven't activated any Season Faction Talent",
-        click_dont_remind_me=True,
+        has_dont_remind_me=True,
     ),
     PopupMessage(
         # No hero is placed on the Talent Buff Tile.
         # Do you want to start the battle anyways?
         text="No hero is placed on the Talent Buff Tile",
-        click_dont_remind_me=True,
+        has_dont_remind_me=True,
     ),
 ]
 
 general_battle_messages = [
     PopupMessage(
         text="Skip this battle?",
-        click_dont_remind_me=False,
     ),
     PopupMessage(
         # There are 2 different messages for this
         # "Your formation is incomplete. Begin battle anyway?"
         # "Your formation is incomplete. Turn on Auto Battle mode anyway? ..."
         text="Your formation is incomplete",
-        click_dont_remind_me=True,
     ),
 ]
 
@@ -71,14 +69,13 @@ arcane_labyrinth_messages = [
         # You won't receive any rewards for attempting this difficulty outside of
         # the event period. Do you still want to start your exploration?
         text="Do you still want to start your exploration?",
-        click_dont_remind_me=False,  # I think it does not have one
+        has_dont_remind_me=False,  # I think it does not have one
     ),
     PopupMessage(
         text="End the exploration",
         confirm_button_template="arcane_labyrinth/hold_to_exit.png",
         hold_to_confirm=True,
         hold_duration_seconds=5.0,
-        click_dont_remind_me=False,
     ),
 ]
 
@@ -88,7 +85,6 @@ duras_trials_messages = [
         # Keep challenging this stage?
         # Challenge Attempts: x
         text="Keep challenging this stage?",
-        click_dont_remind_me=False,
     ),
     PopupMessage(
         # Spend x to challenge this stage again?
@@ -106,7 +102,7 @@ duras_trials_messages = [
     ),
     PopupMessage(
         text="Blessed Heroes are not deployed",
-        click_dont_remind_me=True,
+        has_dont_remind_me=True,
     ),
 ]
 
@@ -117,15 +113,19 @@ misc_messages = [
         ignore=True,
     ),
     PopupMessage(
-        text="Are you sure you want to exit the game",
-        click_dont_remind_me=False,
-    ),
-    PopupMessage(
         # could just throw an exception here
         text="Daily Instant AFK attempt limit reached",
         # Daily Instant AFK attempt limit reached.
         # Available again after the cooldown ends.
         ignore=True,
+    ),
+    PopupMessage(
+        text="Are you sure you want to exit the game",
+        confirm_button_template="navigation/x.png",
+    ),
+    PopupMessage(
+        text="Exit the game",
+        confirm_button_template="navigation/x.png",
     ),
 ]
 
@@ -134,7 +134,6 @@ fishing_messages = [
         # You are currently fishing.
         # If you quit this fishing attempt will fail. Quit anyway?
         text="You are currently fishing",
-        click_dont_remind_me=False,
     ),
 ]
 
@@ -146,6 +145,17 @@ legend_trial_messages = [
     ),
 ]
 
+HEAD_FROM_WORLD_TO_HOMESTEAD_MESSAGE = PopupMessage(
+    text="Heading to Homestead now. Continue?",
+    # Default we don't want to enter homestead
+    confirm_button_template="navigation/x.png",
+)
+HEAD_FROM_HOMESTEAD_TO_WORLD_MESSAGE = PopupMessage(
+    text="Heading to World now. Continue?",
+    # Default we don't want to enter homestead
+    confirm_button_template="navigation/confirm.png",
+)
+
 # Combine all messages into one list
 popup_messages: list[PopupMessage] = (
     season_talent_messages
@@ -156,6 +166,10 @@ popup_messages: list[PopupMessage] = (
     + misc_messages
     + fishing_messages
     + legend_trial_messages
+    + [
+        HEAD_FROM_HOMESTEAD_TO_WORLD_MESSAGE,
+        HEAD_FROM_WORLD_TO_HOMESTEAD_MESSAGE,
+    ]
 )
 
 
@@ -167,37 +181,27 @@ class PopupPreprocessResult:
     dont_remind_me_checkbox: TemplateMatchResult | None = None
 
 
-def _find_matching_popup(
-    ocr_text: str, similarity_threshold: ConfidenceValue = ConfidenceValue("80%")
-) -> PopupMessage | None:
-    """Find matching popup message using fuzzy substring matching.
-
-    Args:
-        ocr_text: Text detected by OCR
-        similarity_threshold: Minimum similarity ratio for fuzzy matching
-
-    Returns:
-        PopupMessage or None if no match found
-    """
-    for popup in popup_messages:
-        if _popup_fuzzy_substring_search(ocr_text, popup, similarity_threshold):
-            return popup
-    return None
-
-
 class AFKJourneyPopupHandler(Game, ABC):
-    def handle_confirmation_popups(self) -> bool:
+    def handle_popup_messages(
+        self,
+        navigate_to_homestead: bool = False,
+    ) -> bool:
         """Handles multiple popups."""
         max_popups = 5
         count = 0
 
         result = False
-        while count < max_popups and self._handle_confirmation_popup():
+        while count < max_popups and self._handle_confirmation_popup(
+            navigate_to_homestead
+        ):
             count += 1
             result = True
         return result
 
-    def _handle_confirmation_popup(self) -> PopupMessage | None:
+    def _handle_confirmation_popup(
+        self,
+        navigate_to_homestead: bool = False,
+    ) -> PopupMessage | None:
         """Confirm popups.
 
         Returns:
@@ -222,7 +226,7 @@ class AFKJourneyPopupHandler(Game, ABC):
 
         matching_popup: PopupMessage | None = None
         for i, result in enumerate(ocr_results):
-            matching_popup = _find_matching_popup(result.text)
+            matching_popup = AFKJourneyPopupHandler._find_matching_popup(result.text)
             if matching_popup:
                 break
 
@@ -233,13 +237,25 @@ class AFKJourneyPopupHandler(Game, ABC):
             )
             return None
 
+        if navigate_to_homestead:
+            if matching_popup == HEAD_FROM_WORLD_TO_HOMESTEAD_MESSAGE:
+                matching_popup = replace(
+                    HEAD_FROM_WORLD_TO_HOMESTEAD_MESSAGE,
+                    confirm_button_template="navigation/confirm.png",
+                )
+            elif matching_popup == HEAD_FROM_HOMESTEAD_TO_WORLD_MESSAGE:
+                matching_popup = replace(
+                    HEAD_FROM_HOMESTEAD_TO_WORLD_MESSAGE,
+                    confirm_button_template="navigation/x.png",
+                )
+
         if matching_popup.exception_to_raise:
             raise matching_popup.exception_to_raise
 
         if matching_popup.ignore:
             return None
 
-        if matching_popup.click_dont_remind_me:
+        if matching_popup.has_dont_remind_me:
             if preprocess_result.dont_remind_me_checkbox:
                 self.tap(preprocess_result.dont_remind_me_checkbox)
                 time.sleep(1)
@@ -319,76 +335,44 @@ class AFKJourneyPopupHandler(Game, ABC):
             dont_remind_me_checkbox=checkbox,
         )
 
+    @staticmethod
+    def _find_matching_popup(
+        ocr_text: str, similarity_threshold: ConfidenceValue = ConfidenceValue("80%")
+    ) -> PopupMessage | None:
+        """Find matching popup message using fuzzy substring matching.
 
-def _popup_fuzzy_substring_search(
-    text: str,
-    popup: PopupMessage,
-    similarity_threshold: ConfidenceValue = ConfidenceValue("80%"),
-) -> bool:
-    pattern = popup.text
-    if popup.strip_numbers:
-        text = re.sub(r"\d+", "", text)
-        text = re.sub(r"\s+", " ", text)
-        text = text.strip()
+        Args:
+            ocr_text: Text detected by OCR
+            similarity_threshold: Minimum similarity ratio for fuzzy matching
 
-    if StringHelper.fuzzy_substring_match(
-        text,
-        pattern,
-        similarity_threshold,
-    ):
-        return True
-    return False
+        Returns:
+            PopupMessage or None if no match found
+        """
+        for popup in popup_messages:
+            if AFKJourneyPopupHandler._popup_fuzzy_substring_search(
+                ocr_text,
+                popup,
+                similarity_threshold,
+            ):
+                return popup
+        return None
 
+    @staticmethod
+    def _popup_fuzzy_substring_search(
+        text: str,
+        popup: PopupMessage,
+        similarity_threshold: ConfidenceValue = ConfidenceValue("80%"),
+    ) -> bool:
+        pattern = popup.text
+        if popup.strip_numbers:
+            text = re.sub(r"\d+", "", text)
+            text = re.sub(r"\s+", " ", text)
+            text = text.strip()
 
-if __name__ == "__main__":
-    """Test function to check popup message matching."""
-    # Test cases
-    test_strings = [
-        "Spend to challenge this stage apain?",  # OCR error: 'g' -> 'p'
-        "Spend to challenge this stage",
-        "Spend 4000 to challenge this stage",
-        "Are you sure you want to exit the gane",  # OCR error: 'm' -> 'n'
-        "Your formation is imcomplete.",  # OCR error: 'n' -> 'm'
-        "Skip this batlle?",  # OCR error: 't' -> 'l'
-        "Unknown popup message",  # Should not match
-    ]
-
-    print("Testing popup message matching with fuzzy logic:")
-    print("=" * 60)
-
-    for test_string in test_strings:
-        matching_popup_message = _find_matching_popup(
-            test_string,
-        )
-
-        print(f"Input: '{test_string}'")
-        if matching_popup_message:
-            print(f"  ✓ Matched: '{matching_popup_message.text}'")
-            print(f"  Ignore: {matching_popup_message.ignore}")
-            print(
-                "  Click 'Don't remind me': "
-                f"{matching_popup_message.click_dont_remind_me}"
-            )
-        else:
-            print("  ✗ No match found")
-        print()
-
-    # Interactive testing
-    print("Interactive testing (press Enter with empty input to exit):")
-    print("-" * 50)
-    while True:
-        user_input = input("Enter OCR text to test: ").strip()
-        if not user_input:
-            break
-
-        matching_popup_message = _find_matching_popup(user_input)
-        if matching_popup_message:
-            print(f"  ✓ Matched: '{matching_popup_message.text}'")
-            print(f"  Ignore: {matching_popup_message.ignore}")
-            print(
-                "  Click 'Don't remind me': "
-                f"{matching_popup_message.click_dont_remind_me}"
-            )
-        else:
-            print("  ✗ No match found")
-        print()
+        if StringHelper.fuzzy_substring_match(
+            text,
+            pattern,
+            similarity_threshold,
+        ):
+            return True
+        return False
