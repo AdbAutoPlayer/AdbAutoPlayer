@@ -201,8 +201,8 @@ class AFKJourneyBase(Navigation, Game):
                         right=0.5,
                     ),
                     threshold=ConfidenceValue("80%"),
-                    delay=0.5,
-                    timeout=1,
+                    delay=0.3,
+                    timeout=1.5,
                 )
                 logging.info("Manual formation found, skipping.")
                 return True

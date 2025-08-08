@@ -120,7 +120,8 @@ misc_messages = [
         ignore=True,
     ),
     PopupMessage(
-        text="Are you sure you want to exit the game",
+        # Are you sure you want to exit the game?
+        text="Are you sure you want to exit the",
         confirm_button_template="navigation/x.png",
     ),
     PopupMessage(
