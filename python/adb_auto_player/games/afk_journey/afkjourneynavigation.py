@@ -25,7 +25,7 @@ class AFKJourneyNavigation(AFKJourneyPopupHandler, ABC):
     RESONATING_HALL_POINT = Point(x=620, y=1830)
     BATTLE_MODES_POINT = Point(x=460, y=1830)
 
-    def navigate_to_default_state(
+    def navigate_to_world(
         self,
     ) -> None:
         """Navigate to main default screen."""
@@ -154,7 +154,7 @@ class AFKJourneyNavigation(AFKJourneyPopupHandler, ABC):
             if i_am_in_resonating_hall():
                 return
 
-        self.navigate_to_default_state()
+        self.navigate_to_world()
         max_click_count = 3
         click_count = 0
 
@@ -247,7 +247,7 @@ class AFKJourneyNavigation(AFKJourneyPopupHandler, ABC):
         attempt = 0
         max_attempts = 3
         while True:
-            self.navigate_to_default_state()
+            self.navigate_to_world()
             sleep(attempt)
             try:
                 self._navigate_to_battle_modes_screen()

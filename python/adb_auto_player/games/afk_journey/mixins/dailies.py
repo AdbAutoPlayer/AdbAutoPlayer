@@ -48,7 +48,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         """Complete daily chores."""
         self.start_up(device_streaming=False)
         do_arena: bool = self.get_config().dailies.arena_battle
-        self.navigate_to_default_state()
+        self.navigate_to_world()
 
         self.claim_daily_rewards()
         self.buy_emporium()
@@ -113,7 +113,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def buy_emporium(self) -> None:
         """Purchase single pull and optionally affinity items."""
         logging.info("Entering Mystical House...")
-        self.navigate_to_default_state()
+        self.navigate_to_world()
         self.tap(Point(310, 1840), scale=True)
 
         try:
@@ -345,7 +345,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def claim_hamburger(self) -> None:
         """Claim rewards from hamburger menu."""
-        self.navigate_to_default_state()
+        self.navigate_to_world()
 
         logging.info("Navigating to Hamburger.")
         self.tap(Point(990, 1840), scale=True)
@@ -501,7 +501,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def raise_hero_affinity(self) -> None:
         """Raise hero affinity with 3 clicks per day."""
-        self.navigate_to_default_state()
+        self.navigate_to_world()
         sleep(5)
 
         logging.debug("Open Resonating Hall.")
@@ -545,7 +545,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             return
 
         # Navigate to Resonating Hall explicitly.
-        self.navigate_to_default_state()
+        self.navigate_to_world()
         sleep(5)
         logging.debug("Open Resonating Hall.")
         self.tap(Point(620, 1830), scale=True)

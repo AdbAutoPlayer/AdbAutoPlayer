@@ -25,7 +25,7 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
     def attempt_sunlit(self) -> None:
         """Attempt to run Sunlit Showdown Battles."""
         self.start_up()
-        self.navigate_to_default_state()
+        self.navigate_to_world()
 
         logging.info("Attempting to run Sunlit Showdown!")
         logging.warning(

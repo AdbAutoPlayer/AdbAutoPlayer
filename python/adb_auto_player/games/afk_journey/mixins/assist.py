@@ -45,7 +45,7 @@ class AssistMixin(AFKJourneyBase, ABC):
 
     def _open_chat(self) -> None:
         logging.info("Opening Chat")
-        self.navigate_to_default_state()
+        self.navigate_to_world()
         self.device.press_enter()
         sleep(2)
 

@@ -53,7 +53,7 @@ class ArenaMixin(AFKJourneyBase):
     def _enter_arena(self) -> None:
         """Enter Arena."""
         logging.info("Entering Arena...")
-        self.navigate_to_default_state()
+        self.navigate_to_world()
         self.tap(Point(460, 1830))  # Battle Modes
         try:
             arena_mode = self.wait_for_template(

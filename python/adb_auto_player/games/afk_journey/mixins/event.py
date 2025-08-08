@@ -19,7 +19,7 @@ class EventMixin(AFKJourneyBase, ABC):
         self.start_up()
         logging.info("This claims rewards in Guild Chat (e.g. Happy Satchel)")
         logging.info("Opening chat")
-        self.navigate_to_default_state()
+        self.navigate_to_world()
         self.tap(Point(1010, 1080), scale=True)
         sleep(3)
         while True:

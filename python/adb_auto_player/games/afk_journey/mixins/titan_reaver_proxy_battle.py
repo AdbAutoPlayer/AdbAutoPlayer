@@ -108,7 +108,7 @@ class TitanReaverProxyBattleMixin(AssistMixin):
                         logging.error(
                             "Too many consecutive failures, resetting to default state"
                         )
-                        self.navigate_to_default_state()
+                        self.navigate_to_world()
                         stats.exception_count = 0
                     sleep(5)  # Wait longer after failure
 
