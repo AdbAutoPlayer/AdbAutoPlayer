@@ -28,7 +28,11 @@ class AFKJourneyNavigation(AFKJourneyPopupHandler, ABC):
     def navigate_to_world(
         self,
     ) -> None:
-        """Navigate to main default screen."""
+        """Navigate to world view. Previously default_state.
+
+        This is outside of homestead when your character is on the map.
+        With buttons: "Mystical House", "Battle Modes", ... visible.
+        """
         templates = [
             "navigation/world.png",
             "popup/quick_purchase.png",
