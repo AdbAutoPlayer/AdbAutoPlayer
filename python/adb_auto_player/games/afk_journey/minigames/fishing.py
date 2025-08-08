@@ -45,6 +45,7 @@ class Fishing(AFKJourneyBase):
         self.assert_frame_and_input_delay_below_threshold()
 
         logging.warning(
+            "!!!This is unfinished!!!"
             "You have to go to fishing spots and start the fishing minigame yourself. "
             "Just fish the first fish or fail on purpose before starting the "
             "Fishing bot. This will not work for quest fishing spots."
