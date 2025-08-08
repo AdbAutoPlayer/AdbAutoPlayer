@@ -177,8 +177,7 @@ func (pm *IPCManager) startOrResolveServer() error {
 
 	inUse, err := pm.checkPortInUse()
 	if err != nil {
-		logger.Get().Errorf("Failed to check if port %s:%d is in use: %v\nTry running the app as administrator", host, port, err)
-		return fmt.Errorf("failed to check port availability: %w", err)
+		return fmt.Errorf("failed to check if port %s:%d is in use: %v\nTry running the app as administrator", host, port, err)
 	}
 
 	if inUse {
