@@ -5,9 +5,6 @@ inputs:
     description: 'The tool to set up (go, node, uv-python, or all)'
     required: false
     default: 'all'
-  go-version:
-    description: 'Go version to install'
-    default: '1.24'
   wails-version:
     description: 'Wails version to install'
     default: 'v3.0.0-alpha.19'
@@ -27,14 +24,31 @@ runs:
       if: inputs.tool == 'all' || inputs.tool == 'go'
       uses: actions/setup-go@v5
       with:
-        go-version: ${{ inputs.go-version }}
+        go-version-file: go.mod
         cache: true
+
+    - name: Get Go build cache path
+      if: inputs.tool == 'all' || inputs.tool == 'go'
+      id: go-cache-paths
+      shell: bash
+      run: |
+        echo "go-cache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
+
+    - name: Cache Go build and module caches
+      if: inputs.tool == 'all' || inputs.tool == 'go'
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ steps.go-cache-paths.outputs.go-cache }}
+        key: ${{ runner.os }}-${{ runner.arch }}-go-build-cache-${{ hashFiles('go.mod', 'go.sum') }}
+        restore-keys: ${{ runner.os }}-${{ runner.arch }}-go-build-cache-
+
     - name: Install Wails3
-      if: inputs.tool == 'all' || inputs.tool == 'wails'
+      if: inputs.tool == 'all'
       run: go install -v github.com/wailsapp/wails/v3/cmd/wails3@${{ inputs.wails-version }}
       shell: bash
     - name: Setup Node
-      if: inputs.tool == 'all' || inputs.tool == 'node'
+      if: inputs.tool == 'all'
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
