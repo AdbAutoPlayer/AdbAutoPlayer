@@ -19,10 +19,10 @@ from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util import SummaryGenerator
 
-from .afkjourneynavigation import AFKJourneyNavigation
 from .battle_state import BattleState, Mode
 from .config import Config
 from .gui_category import AFKJCategory
+from .navigation import Navigation
 
 
 @register_game(
@@ -33,7 +33,7 @@ from .gui_category import AFKJCategory
         categories=list(AFKJCategory),
     ),
 )
-class AFKJourneyBase(AFKJourneyNavigation, Game):
+class AFKJourneyBase(Navigation, Game):
     """AFK Journey Base Class."""
 
     def __init__(self) -> None:

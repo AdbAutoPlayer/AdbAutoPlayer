@@ -7,11 +7,10 @@ from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models.decorators import GUIMetadata
-from adb_auto_player.models.geometry import Offset, Point
-from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.models.geometry import Point
 from adb_auto_player.util import SummaryGenerator
 
-from .assist import AssistMixin
+from ..base import AFKJourneyBase
 
 
 class TitanReaverProxyBattleConstants:
@@ -63,7 +62,7 @@ class TitanReaverProxyBattleStats:
                     )
 
 
-class TitanReaverProxyBattleMixin(AssistMixin):
+class TitanReaverProxyBattleMixin(AFKJourneyBase):
     """Proxy battle Mixin, provides automation for proxy battles.
 
     (currently for Titan Reaver only)
@@ -81,12 +80,12 @@ class TitanReaverProxyBattleMixin(AssistMixin):
         """Execute proxy battle automation."""
         self.start_up()
 
-        logging.warning("@Czesito has quit the game, this is no longer supported.")
+        logging.warning("Czesito has quit the game, this is no longer supported.")
 
         stats = TitanReaverProxyBattleStats()
 
         logging.info(
-            "Starting Proxy Battle automation (limit: "
+            "Starting Titan Reaver Proxy Battle automation (limit: "
             f"{self.get_config().titan_reaver_proxy_battles.proxy_battle_limit})"
         )
 
@@ -126,8 +125,7 @@ class TitanReaverProxyBattleMixin(AssistMixin):
         """
         try:
             # Step 1: Navigate to team chat
-            if not self._navigate_to_team_chat():
-                return False
+            self.navigate_to_team_up_chat()
 
             # Step 2: Find proxy battle banner
             banner_location = self._find_proxy_battle_banner()
@@ -145,33 +143,6 @@ class TitanReaverProxyBattleMixin(AssistMixin):
             logging.warning(f"Timeout during proxy battle: {e}")
             return False
 
-    def _navigate_to_team_chat(self) -> bool:
-        """Navigate to team chat.
-
-        Returns:
-            bool: Whether navigation was successful
-        """
-        # Check if already in team chat
-        if self.game_find_template_match("assist/label_team-up_chat.png"):
-            return True
-
-        world_chat_label = self.game_find_template_match(
-            "assist/label_world_chat.png",
-            crop_regions=CropRegions(bottom="50%", right="50%", left="10%"),
-        )
-
-        if not world_chat_label:
-            self._open_chat()
-            return False
-
-        # The left side chat navigation buttons are see-through so template matching
-        # does not work we can derive the button position based on the world chat label
-        self.tap(
-            world_chat_label.box.top_left + Offset(-70, 550),
-            log_message="Opening Team-Up chat",
-        )
-        return False
-
     def _find_proxy_battle_banner(self) -> Point | None:
         """Find proxy battle banner.
 
@@ -187,14 +158,10 @@ class TitanReaverProxyBattleMixin(AssistMixin):
 
         if banner is None:
             logging.info("No proxy battle banner found, swiping down to check for more")
-            self._swipe_chat_down()
+            self.swipe_down(1000, 800, 1500)
             return None
 
         return Point(banner.x, banner.y)
-
-    def _swipe_chat_down(self) -> None:
-        """Swipe down the chat window."""
-        self.swipe_down(1000, 800, 1500)
 
     def _join_proxy_battle(self, banner_location: Point) -> bool:
         """Join proxy battle.

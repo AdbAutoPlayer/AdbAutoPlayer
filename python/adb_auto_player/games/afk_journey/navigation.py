@@ -9,14 +9,14 @@ from adb_auto_player.exceptions import (
     GameTimeoutError,
 )
 from adb_auto_player.models import ConfidenceValue
-from adb_auto_player.models.geometry import Point
+from adb_auto_player.models.geometry import Offset, Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import TemplateMatchResult
 
-from .popup_handler import AFKJourneyPopupHandler
+from .popup_message_handler import PopupMessageHandler
 
 
-class AFKJourneyNavigation(AFKJourneyPopupHandler, ABC):
+class Navigation(PopupMessageHandler, ABC):
     # Timeouts
     NAVIGATION_TIMEOUT = 10.0
 
@@ -74,7 +74,8 @@ class AFKJourneyNavigation(AFKJourneyPopupHandler, ABC):
             if self._navigate_to_default_state(templates):
                 break
 
-        sleep(2)
+        if attempts > 1:
+            sleep(2)
 
     def _navigate_to_default_state(self, templates: list[str]) -> bool:
         result = self.find_any_template(templates)
@@ -374,3 +375,27 @@ class AFKJourneyNavigation(AFKJourneyPopupHandler, ABC):
             delay=1,
         )
         return
+
+    def navigate_to_world_chat(self) -> None:
+        if self.game_find_template_match("chat/label_world_chat.png"):
+            return
+
+        logging.info("Opening World Chat")
+        self.navigate_to_world()
+        self.device.press_enter()
+        sleep(2)
+
+    def navigate_to_team_up_chat(self) -> None:
+        if self.game_find_template_match("chat/label_team-up_chat.png"):
+            return
+
+        self.navigate_to_world_chat()
+        world_chat_label = self.wait_for_template(
+            "chat/label_world_chat.png",
+            crop_regions=CropRegions(bottom="50%", right="50%", left="10%"),
+            timeout=5,
+        )
+        self.tap(
+            world_chat_label.box.top_left + Offset(-70, 550),
+            log_message="Opening Team-Up chat",
+        )

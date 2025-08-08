@@ -181,7 +181,7 @@ class PopupPreprocessResult:
     dont_remind_me_checkbox: TemplateMatchResult | None = None
 
 
-class AFKJourneyPopupHandler(Game, ABC):
+class PopupMessageHandler(Game, ABC):
     def handle_popup_messages(
         self,
         navigate_to_homestead: bool = False,
@@ -226,7 +226,7 @@ class AFKJourneyPopupHandler(Game, ABC):
 
         matching_popup: PopupMessage | None = None
         for i, result in enumerate(ocr_results):
-            matching_popup = AFKJourneyPopupHandler._find_matching_popup(result.text)
+            matching_popup = PopupMessageHandler._find_matching_popup(result.text)
             if matching_popup:
                 break
 
@@ -349,7 +349,7 @@ class AFKJourneyPopupHandler(Game, ABC):
             PopupMessage or None if no match found
         """
         for popup in popup_messages:
-            if AFKJourneyPopupHandler._popup_fuzzy_substring_search(
+            if PopupMessageHandler._popup_fuzzy_substring_search(
                 ocr_text,
                 popup,
                 similarity_threshold,

@@ -1,7 +1,6 @@
 """AFK Journey Assist Mixin."""
 
 import logging
-from abc import ABC
 from time import sleep
 
 from adb_auto_player.decorators import register_command
@@ -14,7 +13,7 @@ from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import TemplateMatchResult
 
 
-class AssistMixin(AFKJourneyBase, ABC):
+class AssistMixin(AFKJourneyBase):
     """Assist Mixin."""
 
     @register_command(
@@ -43,12 +42,6 @@ class AssistMixin(AFKJourneyBase, ABC):
 
         logging.info("Finished: Synergy & CC")
 
-    def _open_chat(self) -> None:
-        logging.info("Opening Chat")
-        self.navigate_to_world()
-        self.device.press_enter()
-        sleep(2)
-
     def _find_profile_icon(self, world_chat_label: Box) -> TemplateMatchResult | None:
         crop_left = world_chat_label.top_left.x
         crop_top = world_chat_label.top_left.y + 990
@@ -66,11 +59,11 @@ class AssistMixin(AFKJourneyBase, ABC):
     def _find_synergy_or_corrupt_creature(self) -> bool:  # noqa: PLR0911 - TODO
         """Find Synergy or Corrupt Creature."""
         result = self.game_find_template_match(
-            "assist/label_world_chat.png",
+            "chat/label_world_chat.png",
             crop_regions=CropRegions(bottom="50%", right="50%", left="10%"),
         )
         if result is None:
-            self._open_chat()
+            self.navigate_to_world_chat()
             return False
 
         profile_icon = self.find_worst_match(
@@ -99,7 +92,7 @@ class AssistMixin(AFKJourneyBase, ABC):
         if result.template == "assist/chat_button.png":
             if (
                 self.game_find_template_match(
-                    template="assist/label_world_chat.png",
+                    template="chat/label_world_chat.png",
                 )
                 is None
             ):
@@ -144,7 +137,7 @@ class AssistMixin(AFKJourneyBase, ABC):
                     "assist/bell.png",
                     "guide/close.png",
                     "guide/next.png",
-                    "assist/label_world_chat.png",
+                    "chat/label_world_chat.png",
                     "navigation/time_of_day.png",
                 ],
                 timeout=self.BATTLE_TIMEOUT,
