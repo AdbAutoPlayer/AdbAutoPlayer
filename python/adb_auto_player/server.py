@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import json
 import logging
+import sys
 from contextvars import ContextVar
 from multiprocessing import Process, Queue
 
@@ -197,6 +198,42 @@ class FastAPIServer:
         self._setup_http_routes()
         self._setup_websocket_routes()
 
+    @staticmethod
+    async def _shutdown_server(error_message: str):
+        """Gracefully shut down the server due to critical error."""
+        logging.warning(
+            f"Critical error detected: {error_message}. Shutting down server."
+        )
+
+        websocket = current_websocket.get()
+        if websocket and websocket.client_state == WebSocketState.CONNECTED:
+            try:
+                await websocket.close(
+                    reason=f"Server shutting down due to: {error_message}"
+                )
+            except Exception as e:
+                logging.error(f"Error closing WebSocket during shutdown: {e}")
+
+        # Cancel all running tasks
+        tasks = [
+            task for task in asyncio.all_tasks() if task is not asyncio.current_task()
+        ]
+        for task in tasks:
+            task.cancel()
+            try:
+                await asyncio.wait_for(task, timeout=1.0)
+            except (asyncio.CancelledError, TimeoutError):
+                pass
+
+        # Stop the event loop and exit
+        loop = asyncio.get_running_loop()
+        loop.stop()
+        loop.run_until_complete(loop.shutdown_asyncgens())
+        loop.close()
+
+        logging.info("Server shutdown complete. Exiting process.")
+        sys.exit(1)
+
     def _setup_logging(self):
         """Setup logging handlers."""
         context_handler = ContextAwareHandler()
@@ -299,6 +336,10 @@ class FastAPIServer:
 
         except asyncio.CancelledError:
             raise
+        except PermissionError as e:
+            await self._shutdown_server(f"PermissionError: {e}")
+        except FileNotFoundError as e:
+            await self._shutdown_server(f"FileNotFoundError: {e}")
         except Exception as e:
             logging.error(f"Error in command execution: {e}")
         finally:
@@ -460,6 +501,10 @@ class FastAPIServer:
                 raise HTTPException(
                     status_code=404, detail=f"Unrecognized command: {request.command}"
                 )
+            except PermissionError as e:
+                await self._shutdown_server(f"PermissionError: {e}")
+            except FileNotFoundError as e:
+                await self._shutdown_server(f"FileNotFoundError: {e}")
             except Exception:
                 return LogMessageListResponse(messages=handler.get_messages())
             raise HTTPException(
