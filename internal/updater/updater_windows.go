@@ -5,6 +5,7 @@ package updater
 import (
 	"adb-auto-player/internal/app"
 	"adb-auto-player/internal/logger"
+	ipcprocess "adb-auto-player/internal/process"
 	"archive/zip"
 	"fmt"
 	"github.com/Masterminds/semver"
@@ -208,6 +209,9 @@ func (u *UpdateManager) applyUpdate(extractDir string) error {
 	}
 
 	currentDir := filepath.Dir(currentExe)
+
+	// Shutting down IPC Service again just in case.
+	ipcprocess.GetService().Shutdown()
 
 	// Kill specified processes (but not ourselves)
 	if err = u.killProcesses(); err != nil {
