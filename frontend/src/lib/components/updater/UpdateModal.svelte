@@ -80,12 +80,23 @@
           class="border-surface-200-700 mt-4 flex justify-end gap-2 border-t pt-4"
         >
           {#if updateInfo}
-            <button
-              class="btn preset-filled-primary-100-900 hover:preset-filled-primary-500"
-              onclick={onStartUpdate}
-            >
-              Update Now
-            </button>
+            {#if updateInfo.redirectToGitHub}
+              <a
+                class="btn preset-filled-primary-100-900 hover:preset-filled-primary-500"
+                href={updateInfo.releaseURL}
+                target="_blank"
+                draggable="false"
+              >
+                Download on GitHub
+              </a>
+            {:else}
+              <button
+                class="btn preset-filled-primary-100-900 hover:preset-filled-primary-500"
+                onclick={onStartUpdate}
+              >
+                Update Now
+              </button>
+            {/if}
           {/if}
 
           <button

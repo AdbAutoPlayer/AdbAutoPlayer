@@ -24,6 +24,7 @@
     autoUpdate: false,
     isInitialUpdateCheck: false,
     disabled: false,
+    redirectToGitHub: false,
   });
 
   let updateInfo: UpdateInfo | null = $state(null);

@@ -8,8 +8,6 @@ import (
 	ipcprocess "adb-auto-player/internal/process"
 	"archive/zip"
 	"fmt"
-	"github.com/Masterminds/semver"
-	"github.com/google/go-github/v72/github"
 	"github.com/shirou/gopsutil/process"
 	"io"
 	"os"
@@ -19,90 +17,6 @@ import (
 	"syscall"
 	"time"
 )
-
-func (u *UpdateManager) CheckForUpdates(autoUpdate bool, checkPrerelease bool) (UpdateInfo, error) {
-	if u.isDev {
-		/* UI Testing
-		return UpdateInfo{
-			Available:   true,
-			Version:     "1.0.0",
-			DownloadURL: "example.com",
-			Size:        1,
-			AutoUpdate:  false,
-		}, nil
-		*/
-		return UpdateInfo{Available: false}, nil
-	}
-
-	currentVer, err := semver.NewVersion(u.currentVersion)
-	if err != nil {
-		return UpdateInfo{}, fmt.Errorf("failed to parse current version: %w", err)
-	}
-
-	latestRelease, err := u.GetLatestRelease(currentVer.Prerelease() != "" || checkPrerelease)
-	if err != nil {
-		return UpdateInfo{}, err
-	}
-
-	if latestRelease == nil || latestRelease.TagName == nil {
-		return UpdateInfo{Available: false}, nil
-	}
-
-	u.latestRelease = latestRelease
-	latestVer, err := semver.NewVersion(*latestRelease.TagName)
-	if err != nil {
-		return UpdateInfo{}, fmt.Errorf("error parsing latest Version: %w", err)
-	}
-
-	if !latestVer.GreaterThan(currentVer) {
-		return UpdateInfo{Available: false}, nil
-	}
-
-	// Get releases between current and latest for changelog
-	releasesBetween, err := u.getReleasesBetweenTags(u.currentVersion, *latestRelease.TagName)
-	if err != nil {
-		return UpdateInfo{}, fmt.Errorf("failed to get releases between versions: %w", err)
-	}
-	u.releasesBetween = releasesBetween
-
-	windowsAsset := findWindowsAsset(latestRelease.Assets)
-	if windowsAsset != nil && windowsAsset.BrowserDownloadURL != nil {
-		size := int64(0)
-		if windowsAsset.Size != nil {
-			size = int64(*windowsAsset.Size)
-		}
-
-		return UpdateInfo{
-			Available:   true,
-			Version:     *latestRelease.TagName,
-			DownloadURL: *windowsAsset.BrowserDownloadURL,
-			Size:        size,
-			AutoUpdate:  autoUpdate,
-		}, nil
-	}
-
-	return UpdateInfo{Available: false}, nil
-}
-
-func findWindowsAsset(assets []*github.ReleaseAsset) *github.ReleaseAsset {
-	for _, asset := range assets {
-		if asset.Name == nil {
-			continue
-		}
-
-		name := strings.ToLower(*asset.Name)
-		if strings.Contains(name, "windows") {
-			return asset
-		}
-	}
-
-	// Fallback to first asset if available
-	if len(assets) > 0 {
-		return assets[0]
-	}
-
-	return nil
-}
 
 func (u *UpdateManager) DownloadAndApplyUpdate(downloadURL string) error {
 	// Create temp directory for download
