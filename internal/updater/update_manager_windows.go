@@ -8,7 +8,6 @@ import (
 	ipcprocess "adb-auto-player/internal/process"
 	"archive/zip"
 	"fmt"
-	"github.com/google/go-github/v72/github"
 	"github.com/shirou/gopsutil/process"
 	"io"
 	"os"
