@@ -74,7 +74,7 @@ func NewIPCManager(isDev bool, pythonBinaryPath string) *IPCManager {
 // sendGET sends a GET request to the specified endpoint.
 func (pm *IPCManager) sendGET(endpoint string) (*http.Response, error) {
 	client := &http.Client{
-		Timeout: 2 * time.Second,
+		Timeout: 15 * time.Second,
 	}
 
 	serverUrl := fmt.Sprintf(
@@ -203,7 +203,7 @@ func (pm *IPCManager) startOrResolveServer() error {
 
 	// Wait for the server to respond to /health endpoint
 	timeout := time.After(30 * time.Second)
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -559,7 +559,7 @@ func (pm *IPCManager) POSTCommand(args []string) ([]ipc.LogMessage, error) {
 // sendPOST sends a POST request to the server.
 func (pm *IPCManager) sendPOST(endpoint string, requestBody interface{}) ([]byte, error) {
 	client := &http.Client{
-		Timeout: 30 * time.Second,
+		Timeout: 60 * time.Second,
 	}
 
 	body, err := json.Marshal(requestBody)
@@ -576,7 +576,7 @@ func (pm *IPCManager) sendPOST(endpoint string, requestBody interface{}) ([]byte
 
 	resp, err := client.Post(serverUrl, "application/json", bytes.NewBuffer(body))
 	if err != nil {
-		return nil, fmt.Errorf("failed to send POST request to %s: %w", endpoint, err)
+		return nil, fmt.Errorf("failed to send Request to Server %s: %w", endpoint, err)
 	}
 	defer func() {
 		if err = resp.Body.Close(); err != nil {
