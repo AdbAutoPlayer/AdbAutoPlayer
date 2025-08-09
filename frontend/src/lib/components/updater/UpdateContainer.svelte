@@ -57,6 +57,7 @@
 
     $pollRunningGame = false;
 
+    Events.OffAll();
     updateState.isDownloading = true;
     updateState.downloadProgress = 0;
 
