@@ -111,7 +111,8 @@ class SeasonLegendTrial(AFKJourneyBase):
                     templates=[
                         "next.png",
                         "legend_trials/top_floor_reached.png",
-                    ]
+                    ],
+                    threshold=ConfidenceValue("70%"),
                 )
                 count += 1
                 if self.battle_state.section_header:
