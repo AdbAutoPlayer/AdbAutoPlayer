@@ -1,5 +1,3 @@
-//go:build windows
-
 package updater
 
 import (
@@ -266,10 +264,13 @@ func TestCheckForUpdates_SetsReleasesBetween(t *testing.T) {
 
 // Helper function to create a release with assets that have download URLs and sizes
 func createReleaseWithAsset(tagName, body string, assetNames []string, assetSizes []int, prerelease bool) *github.RepositoryRelease {
+	htmlURL := "https://github.com/AdbAutoPlayer/AdbAutoPlayer/releases/tag/" + tagName
+
 	release := &github.RepositoryRelease{
 		TagName:    &tagName,
 		Body:       &body,
 		Prerelease: &prerelease,
+		HTMLURL:    &htmlURL,
 	}
 
 	for i, assetName := range assetNames {

@@ -61,6 +61,13 @@ export class UpdateInfo {
              */
             this["version"] = "";
         }
+        if (!("releaseURL" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["releaseURL"] = "";
+        }
         if (!("downloadURL" in $$source)) {
             /**
              * @member
@@ -88,6 +95,13 @@ export class UpdateInfo {
              * @type {boolean}
              */
             this["disabled"] = false;
+        }
+        if (!("redirectToGitHub" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["redirectToGitHub"] = false;
         }
 
         Object.assign(this, $$source);

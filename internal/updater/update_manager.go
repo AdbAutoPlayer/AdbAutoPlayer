@@ -10,16 +10,19 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
 )
 
 type UpdateInfo struct {
-	Available   bool   `json:"available"`
-	Version     string `json:"version"`
-	DownloadURL string `json:"downloadURL"`
-	Size        int64  `json:"size"`
-	AutoUpdate  bool   `json:"autoUpdate"`
-	Disabled    bool   `json:"disabled"`
+	Available        bool   `json:"available"`
+	Version          string `json:"version"`
+	ReleaseURL       string `json:"releaseURL"`
+	DownloadURL      string `json:"downloadURL"`
+	Size             int64  `json:"size"`
+	AutoUpdate       bool   `json:"autoUpdate"`
+	Disabled         bool   `json:"disabled"`
+	RedirectToGitHub bool   `json:"redirectToGitHub"`
 }
 
 type Changelog struct {
@@ -48,6 +51,98 @@ func NewUpdateManager(currentVersion string, isDev bool) UpdateManager {
 		owner:           "AdbAutoPlayer",
 		repo:            "AdbAutoPlayer",
 	}
+}
+
+func (u *UpdateManager) CheckForUpdates(autoUpdate bool, checkPrerelease bool) (UpdateInfo, error) {
+	if u.isDev {
+		/* UI Testing
+		return UpdateInfo{
+			Available:   true,
+			Version:     "1.0.0",
+			DownloadURL: "example.com",
+			Size:        1,
+			AutoUpdate:  false,
+		}, nil
+		*/
+		return UpdateInfo{Available: false}, nil
+	}
+
+	currentVer, err := semver.NewVersion(u.currentVersion)
+	if err != nil {
+		return UpdateInfo{}, fmt.Errorf("failed to parse current version: %w", err)
+	}
+
+	latestRelease, err := u.GetLatestRelease(currentVer.Prerelease() != "" || checkPrerelease)
+	if err != nil {
+		return UpdateInfo{}, err
+	}
+
+	if latestRelease == nil || latestRelease.TagName == nil {
+		return UpdateInfo{Available: false}, nil
+	}
+
+	u.latestRelease = latestRelease
+	latestVer, err := semver.NewVersion(*latestRelease.TagName)
+	if err != nil {
+		return UpdateInfo{}, fmt.Errorf("error parsing latest Version: %w", err)
+	}
+
+	if !latestVer.GreaterThan(currentVer) {
+		return UpdateInfo{Available: false}, nil
+	}
+
+	// Get releases between current and latest for changelog
+	releasesBetween, err := u.getReleasesBetweenTags(u.currentVersion, *latestRelease.TagName)
+	if err != nil {
+		return UpdateInfo{}, fmt.Errorf("failed to get releases between versions: %w", err)
+	}
+	u.releasesBetween = releasesBetween
+
+	asset := findAsset(latestRelease.Assets)
+	if asset != nil && asset.BrowserDownloadURL != nil {
+		size := int64(0)
+		if asset.Size != nil {
+			size = int64(*asset.Size)
+		}
+		return UpdateInfo{
+			Available:        true,
+			Version:          *latestRelease.TagName,
+			ReleaseURL:       *latestRelease.HTMLURL,
+			DownloadURL:      *asset.BrowserDownloadURL,
+			Size:             size,
+			AutoUpdate:       autoUpdate,
+			RedirectToGitHub: runtime.GOOS != "windows",
+		}, nil
+	}
+
+	return UpdateInfo{Available: false}, nil
+}
+
+func findAsset(assets []*github.ReleaseAsset) *github.ReleaseAsset {
+	for _, asset := range assets {
+		if asset.Name == nil {
+			continue
+		}
+
+		name := strings.ToLower(*asset.Name)
+		if runtime.GOOS == "windows" {
+			if strings.Contains(name, "windows") {
+				return asset
+			}
+		} else {
+			// Technically not correct for other unix platforms but since we don't build for them, it is whatever.
+			if strings.Contains(name, "macos") {
+				return asset
+			}
+		}
+	}
+
+	// Fallback to first asset if available
+	if len(assets) > 0 {
+		return assets[0]
+	}
+
+	return nil
 }
 
 func (u *UpdateManager) SetProgressCallback(callback func(float64)) {
