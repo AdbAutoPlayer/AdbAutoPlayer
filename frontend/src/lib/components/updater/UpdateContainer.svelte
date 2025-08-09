@@ -37,8 +37,8 @@
       const info = await CheckForUpdates();
       if (info.disabled) {
         updateState.disabled = true;
-      }
-      if (info.available) {
+        clearInterval(updateCheckInterval);
+      } else if (info.available) {
         updateState.isInitialUpdateCheck = true;
         await setAvailableUpdateInfo(info);
         updateState.autoUpdate = info.autoUpdate;
