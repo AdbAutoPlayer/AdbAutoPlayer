@@ -7,7 +7,6 @@ import (
 	"adb-auto-player/internal/process"
 	"adb-auto-player/internal/settings"
 	"github.com/wailsapp/wails/v3/pkg/application"
-	"runtime"
 )
 
 type UpdateService struct {
@@ -23,11 +22,6 @@ func NewUpdateService(currentVersion string, isDev bool) *UpdateService {
 func (u *UpdateService) CheckForUpdates() (UpdateInfo, error) {
 	if u.updateManager.isDev {
 		logger.Get().Debugf("Updater disabled in dev.")
-		return UpdateInfo{Disabled: true}, nil
-	}
-
-	if runtime.GOOS != "windows" {
-		logger.Get().Warningf("Updater disabled for non-Windows platforms")
 		return UpdateInfo{Disabled: true}, nil
 	}
 

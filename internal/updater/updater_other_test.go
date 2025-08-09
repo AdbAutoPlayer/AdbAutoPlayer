@@ -52,23 +52,6 @@ func TestUpdateManager_DownloadAndApplyUpdate_NonWindows(t *testing.T) {
 	}
 }
 
-// Test that the methods exist and have the correct signatures
-func TestUpdateManager_MethodSignatures_NonWindows(t *testing.T) {
-	um := &UpdateManager{}
-
-	// Test CheckForUpdates signature
-	_, err := um.CheckForUpdates(false, false)
-	if err != nil {
-		t.Error("CheckForUpdates should not return an error just log an error")
-	}
-
-	// Test DownloadAndApplyUpdate signature
-	err = um.DownloadAndApplyUpdate("test-url")
-	if err == nil {
-		t.Error("DownloadAndApplyUpdate should return an error on non-Windows platforms")
-	}
-}
-
 // Benchmark tests to ensure the stub implementations are fast
 func BenchmarkUpdateManager_CheckForUpdates_Dev_NonWindows(b *testing.B) {
 	um := &UpdateManager{isDev: true}

@@ -24,6 +24,7 @@
     autoUpdate: false,
     isInitialUpdateCheck: false,
     disabled: false,
+    redirectToGitHub: false,
   });
 
   let updateInfo: UpdateInfo | null = $state(null);
@@ -36,8 +37,8 @@
       const info = await CheckForUpdates();
       if (info.disabled) {
         updateState.disabled = true;
-        clearInterval(updateCheckInterval);
-      } else if (info.available) {
+      }
+      if (info.available) {
         updateState.isInitialUpdateCheck = true;
         await setAvailableUpdateInfo(info);
         updateState.autoUpdate = info.autoUpdate;
