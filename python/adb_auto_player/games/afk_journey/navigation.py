@@ -304,7 +304,7 @@ class Navigation(PopupMessageHandler, ABC):
     ) -> TemplateMatchResult:
         if not self.game_find_template_match(template):
             self.swipe_up(sy=1350, ey=500)
-            sleep(2)
+            sleep(3)
 
         return self.wait_for_template(
             template=template,
@@ -372,7 +372,6 @@ class Navigation(PopupMessageHandler, ABC):
                 "arcane_labyrinth/heroes_icon.png",
             ],
             threshold=ConfidenceValue("70%"),
-            timeout=27,  # I imagine this animation can take really long for some people
             delay=1,
         )
         return
