@@ -279,11 +279,11 @@ class Navigation(PopupMessageHandler, ABC):
             return
 
         self.navigate_to_battle_modes_screen()
-        coords = self._find_on_battle_modes(
+        result = self._find_on_battle_modes(
             template="battle_modes/duras_trials.png",
             timeout_message="Dura's Trial not found.",
         )
-        self.tap(coords)
+        self._tap_till_template_disappears(result.template)
         sleep(1)
 
         # popups
@@ -304,6 +304,7 @@ class Navigation(PopupMessageHandler, ABC):
     ) -> TemplateMatchResult:
         if not self.game_find_template_match(template):
             self.swipe_up(sy=1350, ey=500)
+            sleep(2)
 
         return self.wait_for_template(
             template=template,
@@ -316,12 +317,12 @@ class Navigation(PopupMessageHandler, ABC):
         logging.info("Navigating to Legend Trials tower selection")
         self.navigate_to_battle_modes_screen()
 
-        coords = self._find_on_battle_modes(
+        result = self._find_on_battle_modes(
             template="battle_modes/legend_trial.png",
             timeout_message="Could not find Legend Trial Label",
         )
 
-        self.tap(coords)
+        self._tap_till_template_disappears(result.template)
         self.wait_for_template(
             template="legend_trials/s_header.png",
             crop_regions=CropRegions(right=0.8, bottom=0.8),
@@ -355,12 +356,12 @@ class Navigation(PopupMessageHandler, ABC):
             return
 
         self.navigate_to_battle_modes_screen()
-        coords = self._find_on_battle_modes(
+        result = self._find_on_battle_modes(
             template="battle_modes/arcane_labyrinth.png",
             timeout_message="Could not find Arcane Labyrinth Label",
         )
 
-        self.tap(coords)
+        self._tap_till_template_disappears(result.template)
         sleep(3)
         _ = self.wait_for_any_template(
             templates=[

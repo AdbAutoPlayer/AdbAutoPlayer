@@ -141,7 +141,6 @@ fishing_messages = [
 legend_trial_messages = [
     PopupMessage(
         text="Legend Trial has been refreshed",
-        ignore=True,
         exception_to_raise=AutoPlayerWarningError("Legend Trial has been refreshed."),
     ),
 ]
