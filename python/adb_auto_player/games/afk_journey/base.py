@@ -172,7 +172,7 @@ class AFKJourneyBase(Navigation, Game):
                 )
                 start_image = self.get_screenshot()
                 self.tap(formation_next)
-                sleep(5.0 / 30.0)
+                sleep(15.0 / 30.0)
                 self.wait_for_roi_change(
                     start_image=start_image,
                     crop_regions=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
