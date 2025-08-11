@@ -11,6 +11,7 @@ from adb_auto_player.image_manipulation import Color, ColorFormat
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.models.ocr import OCRResult
 from adb_auto_player.models.template_matching import MatchMode, TemplateMatchResult
 from adb_auto_player.ocr import PSM, TesseractBackend, TesseractConfig
 from adb_auto_player.util import StringHelper
@@ -26,7 +27,8 @@ class PopupMessage:
     hold_duration_seconds: float = 5.0
     ignore: bool = False
     strip_numbers: bool = False
-    exception_to_raise: Exception | None = None
+    raise_exception_before_confirming: Exception | None = None
+    raise_exception_after_confirming: Exception | None = None
 
 
 season_talent_messages = [
@@ -96,7 +98,7 @@ duras_trials_messages = [
     PopupMessage(
         # Multiple attempts made. Please wait for the reset.
         text="Please wait for the reset",
-        exception_to_raise=AutoPlayerWarningError(
+        raise_exception_before_confirming=AutoPlayerWarningError(
             "All attempts used, have to wait for reset."
         ),
     ),
@@ -141,7 +143,9 @@ fishing_messages = [
 legend_trial_messages = [
     PopupMessage(
         text="Legend Trial has been refreshed",
-        exception_to_raise=AutoPlayerWarningError("Legend Trial has been refreshed."),
+        raise_exception_after_confirming=AutoPlayerWarningError(
+            "Legend Trial has been refreshed."
+        ),
     ),
 ]
 
@@ -177,6 +181,7 @@ popup_messages: list[PopupMessage] = (
 
 @dataclass(frozen=True)
 class PopupPreprocessResult:
+    original_image: np.ndarray
     cropped_image: np.ndarray
     crop_offset: Point
     button: TemplateMatchResult
@@ -200,6 +205,19 @@ class PopupMessageHandler(Game, ABC):
             result = True
         return result
 
+    def _get_popup_message_from_ocr_results(
+        self, ocr_results: list[OCRResult]
+    ) -> PopupMessage | None:
+        for i, result in enumerate(ocr_results):
+            if matching_popup := PopupMessageHandler._find_matching_popup(result.text):
+                return matching_popup
+
+        logging.warning(
+            "Unknown popup detected, "
+            f"please post on Discord so it can be added: {ocr_results}"
+        )
+        return None
+
     def _handle_confirmation_popup(
         self,
         navigate_to_homestead: bool = False,
@@ -209,13 +227,12 @@ class PopupMessageHandler(Game, ABC):
         Returns:
             bool: True if confirmed, False if not.
         """
-        # PSM 6 - Single Block of Text works best here.
-        ocr = TesseractBackend(config=TesseractConfig(psm=PSM.SINGLE_BLOCK))
-        image = self.get_screenshot()
-        preprocess_result = self._preprocess_for_popup(image)
+        preprocess_result = self._preprocess_screenshot_for_popup()
         if not preprocess_result:
             return None
 
+        # PSM 6 - Single Block of Text works best here.
+        ocr = TesseractBackend(config=TesseractConfig(psm=PSM.SINGLE_BLOCK))
         ocr_results = ocr.detect_text_blocks(
             image=preprocess_result.cropped_image, min_confidence=ConfidenceValue("80%")
         )
@@ -226,17 +243,8 @@ class PopupMessageHandler(Game, ABC):
             result.with_offset(preprocess_result.crop_offset) for result in ocr_results
         ]
 
-        matching_popup: PopupMessage | None = None
-        for i, result in enumerate(ocr_results):
-            matching_popup = PopupMessageHandler._find_matching_popup(result.text)
-            if matching_popup:
-                break
-
+        matching_popup = self._get_popup_message_from_ocr_results(ocr_results)
         if not matching_popup:
-            logging.warning(
-                "Unknown popup detected, "
-                f"please post on Discord so it can be added: {ocr_results}"
-            )
             return None
 
         if navigate_to_homestead:
@@ -251,8 +259,8 @@ class PopupMessageHandler(Game, ABC):
                     confirm_button_template="navigation/x.png",
                 )
 
-        if matching_popup.exception_to_raise:
-            raise matching_popup.exception_to_raise
+        if matching_popup.raise_exception_before_confirming:
+            raise matching_popup.raise_exception_before_confirming
 
         if matching_popup.ignore:
             return None
@@ -264,24 +272,27 @@ class PopupMessageHandler(Game, ABC):
             else:
                 logging.warning("Don't remind me checkbox expected but not found.")
 
-        return self._handled_popup_button(
+        popup_message = self._handle_popup_button(
             preprocess_result,
             matching_popup,
-            image,
         )
 
-    def _handled_popup_button(
+        if matching_popup.raise_exception_after_confirming:
+            raise matching_popup.raise_exception_after_confirming
+
+        return popup_message
+
+    def _handle_popup_button(
         self,
         result: PopupPreprocessResult,
         popup: PopupMessage,
-        image: np.ndarray,
     ) -> PopupMessage | None:
         if result.button.template == popup.confirm_button_template:
             button: TemplateMatchResult | None = result.button
         else:
             button = self.game_find_template_match(
                 template=popup.confirm_button_template,
-                screenshot=image,
+                screenshot=result.original_image,
             )
 
         if not button:
@@ -294,7 +305,8 @@ class PopupMessageHandler(Game, ABC):
         time.sleep(3)
         return popup
 
-    def _preprocess_for_popup(self, image: np.ndarray) -> PopupPreprocessResult | None:
+    def _preprocess_screenshot_for_popup(self) -> PopupPreprocessResult | None:
+        image = self.get_screenshot()
         height, width = image.shape[:2]
 
         height_5_percent = int(0.05 * height)
@@ -331,6 +343,7 @@ class PopupMessageHandler(Game, ABC):
         image = Color.to_grayscale(image, ColorFormat.BGR)
 
         return PopupPreprocessResult(
+            original_image=image,
             cropped_image=image,
             crop_offset=Point(0, crop_top),  # No left crop applied, only top,
             button=button,
