@@ -12,6 +12,7 @@ from pathlib import Path
 from time import sleep, time
 from typing import Literal, TypeVar
 
+import cv2
 import numpy as np
 from adb_auto_player.device.adb import AdbController, DeviceStream
 from adb_auto_player.exceptions import (
@@ -1159,6 +1160,20 @@ class Game(ABC):
         if isinstance(error, KeyboardInterrupt):
             raise KeyboardInterrupt
 
+        if isinstance(error, cv2.error):
+            if self._stream:
+                logging.error(
+                    "CV2 error attempting to clear caches and stopping device "
+                    f"streaming, original error message: {error}"
+                )
+                self._stream.stop()
+            else:
+                logging.error(
+                    "CV2 error attempting to clear caches, original error message: "
+                    f"{error}"
+                )
+            IO.clear_cache()
+            return
         if isinstance(error, AutoPlayerUnrecoverableError):
             logging.error(
                 f"Task '{task}' failed with critical error: {error}, exiting..."

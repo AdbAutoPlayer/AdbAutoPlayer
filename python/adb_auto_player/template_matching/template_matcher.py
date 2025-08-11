@@ -1,5 +1,7 @@
 """ADB Auto Player Template Matching Module."""
 
+import logging
+
 import cv2
 import numpy as np
 from adb_auto_player.image_manipulation import Color
@@ -37,6 +39,31 @@ class TemplateMatcher:
 
         result = cv2.matchTemplate(base_cv, template_cv, method=cv2.TM_CCOEFF_NORMED)
         return bool(np.max(result) >= threshold.cv2_format)
+
+    def _match_template(
+        self,
+        image: cv2.typing.MatLike,
+        templ: cv2.typing.MatLike,
+        method: int,
+        result: cv2.typing.MatLike | None = ...,
+        mask: cv2.typing.MatLike | None = ...,
+    ) -> cv2.typing.MatLike:
+        try:
+            return cv2.matchTemplate(
+                image=image,
+                templ=templ,
+                method=method,
+                result=result,
+                mask=mask,
+            )
+        except cv2.error as e:
+            logging.error(
+                "CV2 Error detected please send cv2error_base.png and "
+                "cv2error_template.png from the debug dir to Yules for investigation"
+            )
+            cv2.imwrite("debug/cv2error_base.png", image)
+            cv2.imwrite("debug/cv2error_template.png", templ)
+            raise e
 
     @staticmethod
     def find_template_match(
