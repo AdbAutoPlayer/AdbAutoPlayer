@@ -5,7 +5,6 @@ from time import sleep
 
 from adb_auto_player.decorators import register_command, register_custom_routine_choice
 from adb_auto_player.exceptions import (
-    AutoPlayerError,
     AutoPlayerWarningError,
 )
 from adb_auto_player.models.decorators import GUIMetadata
@@ -60,9 +59,6 @@ class AFKStagesMixin(AFKJourneyBase):
             self._start_afk_stage()
         except AutoPlayerWarningError as e:
             logging.warning(f"{e}")
-            return
-        except AutoPlayerError as e:
-            logging.error(f"{e}")
             return
         return
 
