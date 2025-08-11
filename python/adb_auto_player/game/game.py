@@ -452,6 +452,14 @@ class Game(ABC):
             return
         self.device.start_game(self.package_name)
 
+    def restart_game(self):
+        """Restart the Game.
+
+        Calls force_stop_game() and start_game().
+        """
+        self.force_stop_game()
+        self.start_game()
+
     def wait_for_roi_change(
         self,
         start_image: np.ndarray,
@@ -1111,9 +1119,26 @@ class Game(ABC):
         raise AttributeError(f"Configuration has no attribute '{name}'")
 
     def _execute_custom_routine(self, config: MyCustomRoutineConfig) -> None:
-        self._execute_tasks(config.tasks)
+        game_commands = self._get_game_commands()
+        if not game_commands:
+            logging.error("Failed to load Custom Routine Tasks.")
+            return
+
+        custom_routines: dict[str, CustomRoutineEntry] = {}
+        for task in config.tasks:
+            routine = self._get_custom_routine_for_task(task, game_commands)
+            if not routine:
+                logging.error(f"Task '{task}' not found")
+            else:
+                custom_routines[task] = routine
+
+        if not custom_routines:
+            logging.error("No Tasks found")
+            return
+
+        self._execute_tasks(custom_routines)
         while config.repeat:
-            self._execute_tasks(config.tasks)
+            self._execute_tasks(custom_routines)
 
     def _get_game_commands(self) -> dict[str, CustomRoutineEntry] | None:
         commands = CUSTOM_ROUTINE_REGISTRY
@@ -1135,23 +1160,20 @@ class Game(ABC):
                 break
         return custom_routine
 
-    def _execute_tasks(self, tasks: list[str]) -> None:
-        game_commands = self._get_game_commands()
-        if not game_commands:
-            logging.error("Failed to load Custom Routine.")
-            return
+    def _execute_tasks(self, tasks: dict[str, CustomRoutineEntry]) -> None:
+        all_tasks_failed = True
 
-        for task in tasks:
-            custom_routine = self._get_custom_routine_for_task(task, game_commands)
-            if not custom_routine:
-                logging.error(f"Task '{task}' not found")
-                continue
+        for task, routine in tasks.items():
             error = Execute.function(
-                callable_function=custom_routine.func,
-                kwargs=custom_routine.kwargs,
+                callable_function=routine.func,
+                kwargs=routine.kwargs,
             )
             self._handle_task_error(task, error)
-        return
+            if not error:
+                all_tasks_failed = False
+
+        if all_tasks_failed:
+            self.restart_game()
 
     def _handle_task_error(self, task: str, error: Exception | None) -> None:
         if not error:
@@ -1185,8 +1207,7 @@ class Game(ABC):
                 f"Task '{task}' failed because the game crashed or is frozen, "
                 "attempting to restart it."
             )
-            self.force_stop_game()
-            self.start_game()
+            self.restart_game()
             return
 
         if isinstance(error, AutoPlayerError):
