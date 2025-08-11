@@ -164,8 +164,7 @@ class Navigation(PopupMessageHandler, ABC):
 
     def _handle_restart(self, templates: list[str]) -> None:
         logging.warning("Trying to restart AFK Journey.")
-        self.force_stop_game()
-        self.start_game()
+        self.restart_game()
         # if your game needs more than 6 minutes to start there is no helping yourself
         max_attempts = 120
         attempts = 0
