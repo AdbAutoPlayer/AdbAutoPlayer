@@ -37,24 +37,22 @@ class TemplateMatcher:
             grayscale=grayscale,
         )
 
-        result = cv2.matchTemplate(base_cv, template_cv, method=cv2.TM_CCOEFF_NORMED)
+        result = TemplateMatcher._match_template(
+            base_cv, template_cv, method=cv2.TM_CCOEFF_NORMED
+        )
         return bool(np.max(result) >= threshold.cv2_format)
 
+    @staticmethod
     def _match_template(
-        self,
         image: cv2.typing.MatLike,
         templ: cv2.typing.MatLike,
         method: int,
-        result: cv2.typing.MatLike | None = ...,
-        mask: cv2.typing.MatLike | None = ...,
     ) -> cv2.typing.MatLike:
         try:
             return cv2.matchTemplate(
                 image=image,
                 templ=templ,
                 method=method,
-                result=result,
-                mask=mask,
             )
         except cv2.error as e:
             logging.error(
@@ -93,7 +91,9 @@ class TemplateMatcher:
 
         template_height, template_width = template_cv.shape[:2]
 
-        result = cv2.matchTemplate(base_cv, template_cv, cv2.TM_CCOEFF_NORMED)
+        result = TemplateMatcher._match_template(
+            base_cv, template_cv, cv2.TM_CCOEFF_NORMED
+        )
         if match_mode == MatchMode.BEST:
             _, max_val, _, max_loc = cv2.minMaxLoc(result)
             if max_val >= threshold.cv2_format:
@@ -164,7 +164,9 @@ class TemplateMatcher:
 
         template_height, template_width = template_cv.shape[:2]
 
-        result = cv2.matchTemplate(base_cv, template_cv, cv2.TM_CCOEFF_NORMED)
+        result = TemplateMatcher._match_template(
+            base_cv, template_cv, cv2.TM_CCOEFF_NORMED
+        )
         match_locations = np.where(result >= threshold.cv2_format)
 
         top_left_points_with_scores = [
@@ -219,7 +221,7 @@ class TemplateMatcher:
 
         # Create a difference map using OpenCV's matchTemplate with TM_SQDIFF
         # TM_SQDIFF gives higher values for worse matches (sum of squared differences)
-        diff_map = cv2.matchTemplate(base_cv, template_cv, cv2.TM_SQDIFF)
+        diff_map = TemplateMatcher._match_template(base_cv, template_cv, cv2.TM_SQDIFF)
 
         # Find the location with the maximum difference (worst match)
         _, max_val, _, max_diff_loc = cv2.minMaxLoc(diff_map)

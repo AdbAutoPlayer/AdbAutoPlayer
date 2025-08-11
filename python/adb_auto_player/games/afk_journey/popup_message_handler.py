@@ -306,7 +306,8 @@ class PopupMessageHandler(Game, ABC):
         return popup
 
     def _preprocess_screenshot_for_popup(self) -> PopupPreprocessResult | None:
-        image = self.get_screenshot()
+        screenshot = self.get_screenshot()
+        image = screenshot.copy()
         height, width = image.shape[:2]
 
         height_5_percent = int(0.05 * height)
@@ -343,7 +344,7 @@ class PopupMessageHandler(Game, ABC):
         image = Color.to_grayscale(image, ColorFormat.BGR)
 
         return PopupPreprocessResult(
-            original_image=image,
+            original_image=screenshot,
             cropped_image=image,
             crop_offset=Point(0, crop_top),  # No left crop applied, only top,
             button=button,
