@@ -58,10 +58,10 @@ class Navigation(PopupMessageHandler, ABC):
         while True:
             if not self.is_game_running():
                 logging.error("Game not running.")
-                self._handle_restart(self._get_overview_navigation_templates())
+                self._handle_restart(Navigation._get_overview_navigation_templates())
             elif attempts >= restart_attempts and not restart_attempted:
                 logging.warning("Failed to navigate to default state.")
-                self._handle_restart(self._get_overview_navigation_templates())
+                self._handle_restart(Navigation._get_overview_navigation_templates())
                 restart_attempted = True
             elif attempts >= max_attempts:
                 raise GameNotRunningOrFrozenError(
@@ -77,8 +77,10 @@ class Navigation(PopupMessageHandler, ABC):
             sleep(2)
         return overview
 
-    def _get_overview_navigation_templates(self) -> list[str]:
+    @staticmethod
+    def _get_overview_navigation_templates() -> list[str]:
         return [
+            "navigation/homestead/leave.png",
             "navigation/homestead/homestead_enter.png",
             "navigation/homestead/world.png",
             "popup/quick_purchase.png",
@@ -100,7 +102,7 @@ class Navigation(PopupMessageHandler, ABC):
     def _handle_overview_navigation(
         self, overview: Overview = Overview.WORLD
     ) -> Overview | None:
-        result = self.find_any_template(self._get_overview_navigation_templates())
+        result = self.find_any_template(Navigation._get_overview_navigation_templates())
 
         if result is None:
             self.press_back_button()
