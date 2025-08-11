@@ -1,5 +1,6 @@
 import logging
 from abc import ABC
+from enum import StrEnum, auto
 from time import sleep
 
 from adb_auto_player.exceptions import (
@@ -16,25 +17,72 @@ from adb_auto_player.models.template_matching import TemplateMatchResult
 from .popup_message_handler import PopupMessageHandler
 
 
+class Overview(StrEnum):
+    """Top-level game view showing your character with menu at the bottom."""
+
+    WORLD = auto()
+    HOMESTEAD = auto()
+    CURRENT = auto()  # whichever overview you end up in
+
+
 class Navigation(PopupMessageHandler, ABC):
     # Timeouts
     NAVIGATION_TIMEOUT = 10.0
 
-    # Points
+    # Points (these are the same for World and Homestead overview)
     CENTER_POINT = Point(x=1080 // 2, y=1920 // 2)
     RESONATING_HALL_POINT = Point(x=620, y=1830)
     BATTLE_MODES_POINT = Point(x=460, y=1830)
 
-    def navigate_to_world(
-        self,
-    ) -> None:
+    def navigate_to_world(self) -> None:
         """Navigate to world view. Previously default_state.
 
         This is outside of homestead when your character is on the map.
         With buttons: "Mystical House", "Battle Modes", ... visible.
         """
-        templates = [
-            "navigation/world.png",
+        self._navigate_to_overview(destination=Overview.WORLD)
+
+    def navigate_to_homestead(self):
+        self._navigate_to_overview(destination=Overview.HOMESTEAD)
+
+    def navigate_to_current_overview(self) -> Overview:
+        return self._navigate_to_overview(destination=Overview.CURRENT)
+
+    def _navigate_to_overview(self, destination: Overview = Overview.WORLD) -> Overview:
+        max_attempts = 40
+        restart_attempts = 20
+        attempts = 0
+
+        restart_attempted = False
+
+        while True:
+            if not self.is_game_running():
+                logging.error("Game not running.")
+                self._handle_restart(Navigation._get_overview_navigation_templates())
+            elif attempts >= restart_attempts and not restart_attempted:
+                logging.warning("Failed to navigate to default state.")
+                self._handle_restart(Navigation._get_overview_navigation_templates())
+                restart_attempted = True
+            elif attempts >= max_attempts:
+                raise GameNotRunningOrFrozenError(
+                    "Failed to navigate to default state."
+                )
+            attempts += 1
+
+            overview = self._handle_overview_navigation(destination)
+            if overview is not None:
+                break
+
+        if attempts > 1:
+            sleep(2)
+        return overview
+
+    @staticmethod
+    def _get_overview_navigation_templates() -> list[str]:
+        return [
+            "navigation/homestead/leave.png",
+            "navigation/homestead/homestead_enter.png",
+            "navigation/homestead/world.png",
             "popup/quick_purchase.png",
             "navigation/confirm.png",
             "navigation/notice.png",
@@ -51,51 +99,29 @@ class Navigation(PopupMessageHandler, ABC):
             "navigation/resonating_hall_back.png",
         ]
 
-        max_attempts = 40
-        restart_attempts = 20
-        attempts = 0
-
-        restart_attempted = False
-
-        while True:
-            if not self.is_game_running():
-                logging.error("Game not running.")
-                self._handle_restart(templates)
-            elif attempts >= restart_attempts and not restart_attempted:
-                logging.warning("Failed to navigate to default state.")
-                self._handle_restart(templates)
-                restart_attempted = True
-            elif attempts >= max_attempts:
-                raise GameNotRunningOrFrozenError(
-                    "Failed to navigate to default state."
-                )
-            attempts += 1
-
-            if self._navigate_to_default_state(templates):
-                break
-
-        if attempts > 1:
-            sleep(2)
-
-    def _navigate_to_default_state(self, templates: list[str]) -> bool:
-        result = self.find_any_template(templates)
+    def _handle_overview_navigation(
+        self, overview: Overview = Overview.WORLD
+    ) -> Overview | None:
+        result = self.find_any_template(Navigation._get_overview_navigation_templates())
 
         if result is None:
             self.press_back_button()
             sleep(3)
-            return False
+            return None
 
         match result.template:
+            case "navigation/homestead/homestead_enter.png":
+                return self._handle_homestead_enter(result, overview)
+            case "navigation/homestead/world.png":
+                return self._handle_homestead_world(result, overview)
             case "navigation/time_of_day.png":
-                return True
+                return Overview.WORLD
             case "navigation/notice.png":
                 # This is the Game Entry Screen
                 self.tap(self.CENTER_POINT, scale=True)
                 sleep(3)
             case "navigation/confirm.png":
-                if not self.handle_popup_messages():
-                    self.tap(result)
-                    sleep(1)
+                self._handle_navigation_confirm(result)
             case "navigation/dotdotdot.png" | "popup/quick_purchase.png":
                 self.press_back_button()
                 sleep(1)
@@ -104,13 +130,37 @@ class Navigation(PopupMessageHandler, ABC):
                 sleep(1)
                 self.tap(result)
                 sleep(1)
-            case "arcane_labyrinth/back_arrow.png":
-                self.tap(result)
-                sleep(2)
             case _:
                 self.tap(result)
-                sleep(1)
-        return False
+                sleep(2)
+        return None
+
+    def _handle_homestead_world(
+        self,
+        result: TemplateMatchResult,
+        overview: Overview,
+    ) -> Overview | None:
+        if overview != Overview.WORLD:
+            return Overview.HOMESTEAD
+        self.tap(result)
+        sleep(1)
+        return None
+
+    def _handle_homestead_enter(
+        self,
+        result: TemplateMatchResult,
+        overview: Overview,
+    ) -> Overview | None:
+        if overview != Overview.HOMESTEAD:
+            return Overview.WORLD
+        self.tap(result)
+        sleep(1)
+        return None
+
+    def _handle_navigation_confirm(self, result: TemplateMatchResult) -> None:
+        if not self.handle_popup_messages():
+            self.tap(result)
+            sleep(1)
 
     def _handle_restart(self, templates: list[str]) -> None:
         logging.warning("Trying to restart AFK Journey.")
@@ -159,7 +209,7 @@ class Navigation(PopupMessageHandler, ABC):
             if i_am_in_resonating_hall():
                 return
 
-        self.navigate_to_world()
+        self.navigate_to_current_overview()
         max_click_count = 3
         click_count = 0
 
@@ -173,7 +223,7 @@ class Navigation(PopupMessageHandler, ABC):
                     raise last_error
                 raise AutoPlayerError("Failed to navigate to Resonating Hall.")
             try:
-                while self._can_see_time_of_day_button():
+                while self._is_in_overview():
                     self.tap(self.RESONATING_HALL_POINT, scale=True)
                     sleep(3)
                     click_count += 1
@@ -196,10 +246,14 @@ class Navigation(PopupMessageHandler, ABC):
         sleep(1)
         return
 
-    def _can_see_time_of_day_button(self) -> bool:
+    def _is_in_overview(self) -> bool:
         return (
-            self.game_find_template_match(
-                "navigation/time_of_day.png",
+            self.find_any_template(
+                templates=[
+                    "navigation/homestead/homestead_enter.png",
+                    "navigation/homestead/world.png",
+                    "navigation/time_of_day.png",
+                ],
                 crop_regions=CropRegions(left=0.6, bottom=0.6),
             )
             is not None
@@ -252,7 +306,7 @@ class Navigation(PopupMessageHandler, ABC):
         attempt = 0
         max_attempts = 3
         while True:
-            self.navigate_to_world()
+            _ = self.navigate_to_current_overview()
             sleep(attempt)
             try:
                 self._navigate_to_battle_modes_screen()
@@ -279,7 +333,7 @@ class Navigation(PopupMessageHandler, ABC):
             return
 
         self.navigate_to_battle_modes_screen()
-        result = self._find_on_battle_modes(
+        result = self._find_in_battle_modes(
             template="battle_modes/duras_trials.png",
             timeout_message="Dura's Trial not found.",
         )
@@ -299,7 +353,7 @@ class Navigation(PopupMessageHandler, ABC):
         sleep(1)
         return
 
-    def _find_on_battle_modes(
+    def _find_in_battle_modes(
         self, template: str, timeout_message: str
     ) -> TemplateMatchResult:
         if not self.game_find_template_match(template):
@@ -317,7 +371,7 @@ class Navigation(PopupMessageHandler, ABC):
         logging.info("Navigating to Legend Trials tower selection")
         self.navigate_to_battle_modes_screen()
 
-        result = self._find_on_battle_modes(
+        result = self._find_in_battle_modes(
             template="battle_modes/legend_trial.png",
             timeout_message="Could not find Legend Trial Label",
         )
@@ -356,7 +410,7 @@ class Navigation(PopupMessageHandler, ABC):
             return
 
         self.navigate_to_battle_modes_screen()
-        result = self._find_on_battle_modes(
+        result = self._find_in_battle_modes(
             template="battle_modes/arcane_labyrinth.png",
             timeout_message="Could not find Arcane Labyrinth Label",
         )
@@ -381,7 +435,7 @@ class Navigation(PopupMessageHandler, ABC):
             return
 
         logging.info("Opening World Chat")
-        self.navigate_to_world()
+        self.navigate_to_current_overview()
         self.device.press_enter()
         sleep(2)
 

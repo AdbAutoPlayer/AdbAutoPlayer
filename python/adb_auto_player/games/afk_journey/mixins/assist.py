@@ -139,6 +139,8 @@ class AssistMixin(AFKJourneyBase):
                     "guide/next.png",
                     "chat/label_world_chat.png",
                     "navigation/time_of_day.png",
+                    "navigation/homestead/homestead_enter.png",
+                    "navigation/homestead/world.png",
                 ],
                 timeout=self.BATTLE_TIMEOUT,
             )
