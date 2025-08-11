@@ -29,7 +29,7 @@ class TestLoadImage:
     def test_load_image_cache_hit(self, mock_imdecode):
         img = synthetic_image()
         path = Path("cached.png")
-        key = f"{path}_1.0_grayscale=False"
+        key = f"{path}_1.0_grayscale=0"
         template_cache[key] = img
 
         result = IO.load_image(path)
