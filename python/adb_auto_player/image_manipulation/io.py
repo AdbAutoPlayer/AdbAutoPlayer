@@ -39,11 +39,15 @@ class IO:
         if image_path.suffix == "":
             image_path = image_path.with_suffix(".png")
 
-        cache_key = f"{image_path}_{image_scale_factor}_grayscale={grayscale}"
+        cache_key = f"{image_path}_{image_scale_factor}_grayscale={int(grayscale)}"
         if cache_key in template_cache:
             return template_cache[cache_key]
 
-        image = cv2.imdecode(np.fromfile(image_path, dtype=np.uint8), cv2.IMREAD_COLOR)
+        image: np.ndarray = cv2.imdecode(
+            np.fromfile(image_path, dtype=np.uint8),
+            cv2.IMREAD_COLOR,
+        )
+
         if image is None:
             raise FileNotFoundError(f"Failed to load image from path: {image_path}")
 
@@ -58,7 +62,7 @@ class IO:
             image = Color.to_grayscale(image)
 
         template_cache[cache_key] = image
-        return image
+        return image.copy()
 
     @staticmethod
     def get_bgr_np_array_from_png_bytes(image_data: bytes) -> np.ndarray:
@@ -79,3 +83,8 @@ class IO:
         if img is None:
             raise ValueError("Failed to decode screenshot image data")
         return img
+
+    @staticmethod
+    def clear_cache() -> None:
+        """Clears the template_cache dictionary."""
+        template_cache.clear()
