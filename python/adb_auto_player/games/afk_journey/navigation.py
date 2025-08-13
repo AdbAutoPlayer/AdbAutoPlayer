@@ -398,6 +398,7 @@ class Navigation(PopupMessageHandler, ABC):
                     "arcane_labyrinth/quit.png",
                 ],
                 crop_regions=CropRegions(top=0.8),
+                threshold=ConfidenceValue("70%"),
             )
 
             if match is not None:

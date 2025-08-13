@@ -60,7 +60,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         if keys:
             self._add_keys_farmed(keys)
 
-    def _quit(self) -> None:
+    def _restart_arcane_labyrinth(self) -> None:
         logging.info("Restarting Arcane Labyrinth")
         max_count = 30
         count = 0
@@ -148,7 +148,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             except AutoPlayerError as e:
                 logging.error(f"{e}")
                 try:
-                    self._quit()
+                    self._restart_arcane_labyrinth()
                 except GameTimeoutError:
                     logging.error(f"{e}")
                 continue
@@ -514,8 +514,9 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     "arcane_labyrinth/move_forward.png",
                     "arcane_labyrinth/select_a_crest.png",
                 ],
-                crop_regions=CropRegions(top=0.8),
-                timeout=self.MIN_TIMEOUT,
+                crop_regions=CropRegions(top=0.7),
+                threshold=ConfidenceValue("70%"),
+                timeout=20,
             )
 
             sleep(1)
@@ -524,7 +525,8 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     "arcane_labyrinth/move_forward.png",
                     "arcane_labyrinth/select_a_crest.png",
                 ],
-                crop_regions=CropRegions(top=0.8),
+                crop_regions=CropRegions(top=0.7),
+                threshold=ConfidenceValue("70%"),
             )
             if result is None:
                 break
@@ -554,7 +556,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     purchase_count += 1
                     logging.info(f"Purchase #{purchase_count}")
                     self.tap(purchase)
-                    sleep(0.5)
+                    sleep(2)
                     continue
                 case "arcane_labyrinth/select_a_crest.png":
                     self._select_a_crest()
