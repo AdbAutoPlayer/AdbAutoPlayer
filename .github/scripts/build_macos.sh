@@ -4,7 +4,7 @@
 set -e
 
 # Default version if not provided
-VERSION="${1:-0.0.0}"
+VERSION="${VERSION:-0.0.0}"
 
 echo "Checking for required tools..."
 if ! command -v uv >/dev/null 2>&1; then
@@ -29,10 +29,9 @@ rm -rf "$WORKSPACE/AdbAutoPlayer.app"
 echo "Workspace: $WORKSPACE"
 
 echo "Running Wails3 Task build..."
-export VERSION="$VERSION"
-export PRODUCTION="true"
+
 # this creates $WORKSPACE/bin/AdbAutoPlayer.app
-wails3 task package
+VERSION="$VERSION" PRODUCTION="true" wails3 task package
 
 
 if [ "${SKIP_NUITKA:-false}" = "false" ]; then
