@@ -13,11 +13,10 @@ an instance context or special error processing.
 """
 
 import inspect
-import logging
 import sys
 from collections.abc import Callable
 
-from adb_auto_player.exceptions import GenericAdbError, GenericAdbUnrecoverableError
+from adb_auto_player.exceptions import GenericAdbUnrecoverableError
 from adb_auto_player.models.commands import Command
 
 from .summary_generator import SummaryGenerator
@@ -93,17 +92,12 @@ class Execute:
             if summary is not None:
                 print(summary)
             sys.exit(0)
-        except (GenericAdbError, GenericAdbUnrecoverableError) as e:
+        except Exception as e:
             if "java.lang.SecurityException" in str(e):
-                logging.error(
+                return GenericAdbUnrecoverableError(
                     "Missing permissions, check if your device has settings, such as: "
                     '"USB debugging (Security settings)" and enable them.'
                 )
-            else:
-                logging.error(f"{e}", exc_info=True)
-            return e
-        except Exception as e:
-            logging.error(f"{e}", exc_info=True)
             return e
         return None
 
