@@ -13,7 +13,7 @@
 		"prettier-write": "prettier --write \"**/*.{ts,js,svelte}\""
 	},
 	"devDependencies": {
-		"@skeletonlabs/skeleton": "^3.1.7",
+		"@skeletonlabs/skeleton": "^3.2.0",
 		"@skeletonlabs/skeleton-svelte": "^1.4.0",
 		"@sveltejs/adapter-static": "^3.0.9",
 		"@sveltejs/kit": "^2.36.2",
