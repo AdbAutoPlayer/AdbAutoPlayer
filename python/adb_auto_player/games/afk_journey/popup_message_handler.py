@@ -98,7 +98,7 @@ duras_trials_messages = [
     PopupMessage(
         # Multiple attempts made. Please wait for the reset.
         text="Please wait for the reset",
-        raise_exception_before_confirming=AutoPlayerWarningError(
+        raise_exception_after_confirming=AutoPlayerWarningError(
             "All attempts used, have to wait for reset."
         ),
     ),
