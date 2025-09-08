@@ -33,7 +33,7 @@
 		"@tailwindcss/vite": "^4.1.13",
 		"@wailsio/runtime": "latest",
 		"marked": "^16.2.1",
-		"posthog-js": "^1.260.3",
+		"posthog-js": "^1.261.8",
 		"tailwindcss": "^4.1.13"
 	}
 }
