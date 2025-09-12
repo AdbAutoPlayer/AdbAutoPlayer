@@ -143,7 +143,7 @@ class Navigation(PopupMessageHandler, ABC):
         if overview != Overview.WORLD:
             return Overview.HOMESTEAD
         self.tap(result)
-        sleep(1)
+        sleep(5)
         return None
 
     def _handle_homestead_enter(
@@ -154,7 +154,7 @@ class Navigation(PopupMessageHandler, ABC):
         if overview != Overview.HOMESTEAD:
             return Overview.WORLD
         self.tap(result)
-        sleep(1)
+        sleep(5)
         return None
 
     def _handle_navigation_confirm(self, result: TemplateMatchResult) -> None:
