@@ -117,8 +117,7 @@ ___
 
 ## 🚧 In Progress
 
-- **GFL2 Daily Automation** - @valextr
-- **Backend Refactor (Second Pass)** - @valextr
+- **AFKJ Manual Stage Agent** - @valextr
 
 ---
 
