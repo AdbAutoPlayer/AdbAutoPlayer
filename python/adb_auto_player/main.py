@@ -1,5 +1,6 @@
 """Main module."""
 
+import logging
 import sys
 from functools import lru_cache
 
@@ -60,6 +61,7 @@ def main() -> None:
 
     e = Execute.find_command_and_execute(args.command, _get_commands())
     if isinstance(e, BaseException):
+        logging.error(e, exc_info=True)
         sys.exit(1)
     sys.exit(0)
 
