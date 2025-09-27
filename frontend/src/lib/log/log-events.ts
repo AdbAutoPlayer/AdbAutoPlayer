@@ -35,10 +35,7 @@ export function logError(message: string) {
 }
 
 function emit(message: LogMessage) {
-  Events.Emit({
-    name: EventNames.LOG_MESSAGE,
-    data: message,
-  }).catch((err) => {
+  Events.Emit(EventNames.LOG_MESSAGE, message).catch((err) => {
     reportError(err);
   });
 }
