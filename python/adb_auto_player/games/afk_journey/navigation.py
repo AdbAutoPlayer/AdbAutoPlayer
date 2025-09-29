@@ -319,12 +319,12 @@ class Navigation(PopupMessageHandler, ABC):
         sleep(1)
 
     def navigate_to_duras_trials_screen(self) -> None:
-        logging.info("Navigating to Dura's Trial select")
+        logging.info("Navigating to Dura's Trials select")
 
         def stop_condition() -> bool:
             match = self.game_find_template_match(
-                template="duras_trials/featured_heroes.png",
-                crop_regions=CropRegions(left=0.7, bottom=0.8),
+                template="duras_trials/socketed_charms_overview.png",
+                crop_regions=CropRegions(left=0.8, bottom=0.7),
             )
             return match is not None
 
@@ -334,7 +334,7 @@ class Navigation(PopupMessageHandler, ABC):
         self.navigate_to_battle_modes_screen()
         result = self._find_in_battle_modes(
             template="battle_modes/duras_trials.png",
-            timeout_message="Dura's Trial not found.",
+            timeout_message="Dura's Trials not found.",
         )
         self._tap_till_template_disappears(result.template)
         sleep(1)
@@ -345,7 +345,7 @@ class Navigation(PopupMessageHandler, ABC):
         self.tap(self.CENTER_POINT, scale=True)
 
         self.wait_for_template(
-            template="duras_trials/featured_heroes.png",
+            template="duras_trials/socketed_charms_overview.png",
             crop_regions=CropRegions(left=0.7, bottom=0.8),
             timeout=self.NAVIGATION_TIMEOUT,
         )
