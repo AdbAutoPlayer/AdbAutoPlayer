@@ -59,10 +59,11 @@ def main() -> None:
     setup_logging(args.output, ArgparseHelper.get_log_level_from_args(args))
     DevHelper.log_is_main_up_to_date()
 
-    if e := Execute.find_command_and_execute(args.command, _get_commands()):
+    e = Execute.find_command_and_execute(args.command, _get_commands())
+    if isinstance(e, BaseException):
         logging.error(e, exc_info=True)
-        sys.exit(0)
-    sys.exit(1)
+        sys.exit(1)
+    sys.exit(0)
 
 
 if __name__ == "__main__":

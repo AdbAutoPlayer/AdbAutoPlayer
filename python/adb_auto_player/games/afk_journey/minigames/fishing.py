@@ -64,6 +64,7 @@ class Fishing(AFKJourneyBase):
 
         while self._i_am_in_the_fishing_screen():
             self._fish()
+        return
 
     def _warmup_cache_for_all_fishing_templates(self):
         templates = [
@@ -78,24 +79,40 @@ class Fishing(AFKJourneyBase):
         for template in templates:
             _ = self._load_image(template)
 
-    def _i_am_in_the_fishing_screen(self, is_quest_fishing_spot: bool = True) -> bool:
+    def _i_am_in_the_fishing_screen(self, is_quest_fishing_spot: bool = False) -> bool:
+        general_templates = [
+            "fishing/hook_fish",
+            "fishing/hook_fish_big",
+            "fishing/fishing_rod",
+            "fishing/fishing_rod_big",
+        ]
+
+        fish_caught_templates = [
+            "fishing/fishing_level",
+            "fishing/fishing_level_big",
+            "fishing/fishing_level_info_button",
+            "fishing/silver_medal",
+            "fishing/silver_medal2",
+            "fishing/gold_medal",
+            "fishing/gold_medal2",
+        ]
         try:
-            _ = self.wait_for_any_template(
-                [
-                    "fishing/hook_fish",
-                    "fishing/hook_fish_big",
-                    "fishing/fishing_rod",
-                    "fishing/fishing_rod_big",
-                ],
+            result = self.wait_for_any_template(
+                templates=fish_caught_templates + general_templates,
                 timeout=self.MIN_TIMEOUT,
                 threshold=ConfidenceValue("70%"),
+                ensure_order=True,
                 crop_regions=CropRegions(
-                    top="50%",
-                    bottom="10%",
-                    left="30%",
-                    right="30%",
+                    bottom="20%",
                 ),
             )
+
+            if result.template in fish_caught_templates:
+                self.press_back_button()
+                # There are a lot of animations, lower sleep could lead to exiting
+                sleep(5)
+                return self._i_am_in_the_fishing_screen(is_quest_fishing_spot)
+
         except GameTimeoutError:
             return False
 
@@ -112,9 +129,6 @@ class Fishing(AFKJourneyBase):
         return True
 
     def _fish(self) -> None:
-        if not self._i_am_in_the_fishing_screen():
-            return
-
         btn = self.wait_for_any_template(
             [
                 "fishing/hook_fish",
