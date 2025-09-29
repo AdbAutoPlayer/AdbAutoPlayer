@@ -4,13 +4,12 @@ from enum import StrEnum
 
 class Mode(StrEnum):
     DURAS_TRIALS = "Dura's Trials"
-    DURAS_NIGHTMARE_TRIALS = "Dura's Nightmare Trials"
     AFK_STAGES = "AFK Stages"
     SEASON_TALENT_STAGES = "Season Talent Stages"
     LEGEND_TRIALS = "Season Legend Trial"
 
     def is_duras(self) -> bool:
-        return self in {Mode.DURAS_TRIALS, Mode.DURAS_NIGHTMARE_TRIALS}
+        return self in {Mode.DURAS_TRIALS}
 
     def is_afk_stages(self) -> bool:
         return self in {Mode.AFK_STAGES, Mode.SEASON_TALENT_STAGES}
