@@ -319,7 +319,7 @@ class Navigation(PopupMessageHandler, ABC):
         sleep(1)
 
     def navigate_to_duras_trials_screen(self) -> None:
-        logging.info("Navigating to Dura's Trial select")
+        logging.info("Navigating to Dura's Trials select")
 
         def stop_condition() -> bool:
             match = self.game_find_template_match(
@@ -334,7 +334,7 @@ class Navigation(PopupMessageHandler, ABC):
         self.navigate_to_battle_modes_screen()
         result = self._find_in_battle_modes(
             template="battle_modes/duras_trials.png",
-            timeout_message="Dura's Trial not found.",
+            timeout_message="Dura's Trials not found.",
         )
         self._tap_till_template_disappears(result.template)
         sleep(1)

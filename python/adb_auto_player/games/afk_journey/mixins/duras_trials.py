@@ -75,7 +75,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             dura_state_result = self._dura_resolve_state()
             match dura_state_result.template:
                 case "duras_trials/sweep.png":
-                    logging.info("Dura's Trial already cleared")
+                    logging.info("Dura's Trials already cleared")
                     return False
                 case "duras_trials/battle.png":
                     self.tap(dura_state_result)
@@ -111,7 +111,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
                 sleep(3)
                 return False  # Continue battle loop
             else:
-                logging.info("Dura's Trial completed")
+                logging.info("Dura's Trials completed")
                 return True  # End loop
 
         while True:
@@ -125,5 +125,5 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
                     return
                 continue
 
-            logging.info("Dura's Trial failed")
+            logging.info("Dura's Trials failed")
             return
