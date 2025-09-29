@@ -91,6 +91,10 @@ class Fishing(AFKJourneyBase):
             "fishing/fishing_level",
             "fishing/fishing_level_big",
             "fishing/fishing_level_info_button",
+            "fishing/silver_medal",
+            "fishing/silver_medal2",
+            "fishing/gold_medal",
+            "fishing/gold_medal2",
         ]
         try:
             result = self.wait_for_any_template(
@@ -105,7 +109,8 @@ class Fishing(AFKJourneyBase):
 
             if result.template in fish_caught_templates:
                 self.press_back_button()
-                sleep(2)
+                # There are a lot of animations, lower sleep could lead to exiting
+                sleep(5)
                 return self._i_am_in_the_fishing_screen(is_quest_fishing_spot)
 
         except GameTimeoutError:
