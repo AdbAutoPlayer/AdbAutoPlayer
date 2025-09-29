@@ -37,6 +37,8 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
         self.battle_state.mode = Mode.DURAS_TRIALS
         self.navigate_to_duras_trials_screen()
 
+        # TODO remove the whole logic to check for available trials
+
         rate_up_banners = self.find_all_template_matches(
             template="duras_trials/rate_up.png",
             grayscale=True,

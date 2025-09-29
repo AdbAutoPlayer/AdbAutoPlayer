@@ -323,8 +323,8 @@ class Navigation(PopupMessageHandler, ABC):
 
         def stop_condition() -> bool:
             match = self.game_find_template_match(
-                template="duras_trials/featured_heroes.png",
-                crop_regions=CropRegions(left=0.7, bottom=0.8),
+                template="duras_trials/socketed_charms_overview.png",
+                crop_regions=CropRegions(left=0.8, bottom=0.7),
             )
             return match is not None
 
@@ -345,7 +345,7 @@ class Navigation(PopupMessageHandler, ABC):
         self.tap(self.CENTER_POINT, scale=True)
 
         self.wait_for_template(
-            template="duras_trials/featured_heroes.png",
+            template="duras_trials/socketed_charms_overview.png",
             crop_regions=CropRegions(left=0.7, bottom=0.8),
             timeout=self.NAVIGATION_TIMEOUT,
         )
