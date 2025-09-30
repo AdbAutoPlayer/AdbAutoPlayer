@@ -94,7 +94,9 @@ class AFKJourneyBase(Navigation, Game):
                 return getattr(self.get_config().afk_stages, attribute)
 
     def _handle_battle_screen(
-        self, use_suggested_formations: bool = True, skip_manual: bool = False
+        self,
+        use_suggested_formations: bool = True,
+        skip_manual: bool = False,
     ) -> bool:
         """Handles logic for battle screen.
 
@@ -123,6 +125,17 @@ class AFKJourneyBase(Navigation, Game):
 
         while self.battle_state.formation_num < formations:
             self.battle_state.formation_num += 1
+
+            if self.battle_state.mode == Mode.DURAS_TRIALS:
+                try:
+                    _ = self.wait_for_template(
+                        "duras_trials/socketed_charms_overview",
+                        timeout=5,
+                    )
+                    self._tap_till_template_disappears("duras_trials/battle")
+                    sleep(2)
+                except GameTimeoutError:
+                    pass
 
             if (
                 use_suggested_formations

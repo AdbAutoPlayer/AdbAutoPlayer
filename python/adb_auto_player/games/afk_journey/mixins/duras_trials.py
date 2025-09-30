@@ -79,6 +79,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
                     return False
                 case "duras_trials/battle.png":
                     self.tap(dura_state_result)
+                    sleep(2)
                 case "battle/records.png":
                     # No action needed.
                     pass
