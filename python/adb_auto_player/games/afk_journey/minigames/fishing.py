@@ -63,7 +63,7 @@ class Fishing(AFKJourneyBase):
             return
 
         while self._i_am_in_the_fishing_screen():
-            self._fish()
+            self._start_fishing()
         return
 
     def _warmup_cache_for_all_fishing_templates(self):
@@ -108,9 +108,10 @@ class Fishing(AFKJourneyBase):
             )
 
             if result.template in fish_caught_templates:
-                self.press_back_button()
-                # There are a lot of animations, lower sleep could lead to exiting
-                sleep(5)
+                # Originally tried with back button but can lead to exiting minigame
+                # clicking somewhere at the bottom-ish of the screen seems safer
+                self.tap(Point(500, 1700))
+                sleep(2)
                 return self._i_am_in_the_fishing_screen(is_quest_fishing_spot)
 
         except GameTimeoutError:
@@ -128,7 +129,7 @@ class Fishing(AFKJourneyBase):
             )
         return True
 
-    def _fish(self) -> None:
+    def _start_fishing(self) -> None:
         btn = self.wait_for_any_template(
             [
                 "fishing/hook_fish",
@@ -176,53 +177,60 @@ class Fishing(AFKJourneyBase):
             logging.info("Small fish caught.")
             return
 
-        # Fishing Loop
+        self._fishing(btn)
+        return
+
+    def _fishing(self, btn: Coordinates) -> None:
         check_book_at = 20
         click_strong_pull_at = 10
         count = 0
         thread = None
-        while True:
-            count += 1
-            screenshot = self.get_screenshot()
 
-            if count % click_strong_pull_at == 0:
+        try:
+            while True:
+                count += 1
+                screenshot = self.get_screenshot()
+
+                if count % click_strong_pull_at == 0:
+                    if not thread or not thread.is_alive():
+                        # don't log this its clicking like 5 million times
+                        self.tap(
+                            STRONG_PULL,
+                            blocking=False,
+                            log=False,
+                        )
+
+                if count % check_book_at == 0:
+                    # TODO for quest fishing spot book does not exist,
+                    # maybe check for dialogue buttons or the sun/moon time switch
+                    if self.game_find_template_match(
+                        "fishing/book.png",
+                        crop_regions=CropRegions(left=0.9, bottom=0.9),
+                        screenshot=screenshot,
+                        threshold=ConfidenceValue("70%"),
+                    ):
+                        logging.info("Fishing done")
+                        # TODO Not sure how to detect a catch or loss here.
+                        # Might have to OCR the remaining attempts?
+                        break
+
                 if not thread or not thread.is_alive():
-                    # don't log this its clicking like 5 million times
-                    self.tap(
-                        STRONG_PULL,
-                        blocking=False,
-                        log=False,
+                    cropped = Cropping.crop(
+                        screenshot,
+                        CropRegions(left=0.1, right=0.1, top="980px", bottom="740px"),
                     )
-
-            if count % check_book_at == 0:
-                # TODO for quest fishing spot book does not exist,
-                # Would have to check for dialogue buttons or the sun/moon time switch
-                if self.game_find_template_match(
-                    "fishing/book.png",
-                    crop_regions=CropRegions(left=0.9, bottom=0.9),
-                    screenshot=screenshot,
-                    threshold=ConfidenceValue("70%"),
-                ):
-                    logging.info("Fishing done")
-                    # TODO Not sure how to detect a catch or loss here.
-                    # Might have to OCR the remaining attempts?
-                    break
-
-            if not thread or not thread.is_alive():
-                cropped = Cropping.crop(
-                    screenshot,
-                    CropRegions(left=0.1, right=0.1, top="980px", bottom="740px"),
-                )
-                top, middle = _find_fishing_colors_fast(cropped.image)
-                if top and middle and top > middle:
-                    thread = self._handle_hold_for_distance(
-                        btn=btn,
-                        distance=(top - middle),
-                        thread=thread,
-                    )
-            # Without this CPU usage will go insane
-            sleep(FISHING_DELAY)
-        return
+                    top, middle = _find_fishing_colors_fast(cropped.image)
+                    if top and middle and top > middle:
+                        thread = self._handle_hold_for_distance(
+                            btn=btn,
+                            distance=(top - middle),
+                            thread=thread,
+                        )
+                # Without this CPU usage will go insane
+                sleep(FISHING_DELAY)
+        finally:
+            if thread and thread.is_alive():
+                thread.join()
 
     def _handle_hold_for_distance(
         self,
