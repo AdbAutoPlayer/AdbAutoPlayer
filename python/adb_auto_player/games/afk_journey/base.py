@@ -130,10 +130,9 @@ class AFKJourneyBase(Navigation, Game):
                 try:
                     _ = self.wait_for_template(
                         "duras_trials/socketed_charms_overview",
-                        timeout=5,
+                        timeout=self.FAST_TIMEOUT,
                     )
                     self._tap_till_template_disappears("duras_trials/battle")
-                    sleep(2)
                 except GameTimeoutError:
                     pass
 
