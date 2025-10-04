@@ -14,14 +14,14 @@ class GameGUIOptions:
     game_title: str
     menu_options: list[MenuOption]
     categories: list[str]
-    config_path: str | None = None
+    settings_file: str | None = None
     constraints: dict[str, dict[str, ConstraintType]] | None = None
 
     def to_dict(self):
         """Convert to dict for JSON serialization."""
         return {
             "game_title": self.game_title,
-            "config_path": self.config_path,
+            "settings_file": self.settings_file,
             "menu_options": [option.to_dict() for option in self.menu_options],
             "categories": self.categories,
             "constraints": add_order_key(self.constraints),

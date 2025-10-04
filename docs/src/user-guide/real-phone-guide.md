@@ -6,7 +6,7 @@ A comprehensive guide to enable USB debugging on popular Android phone brands fo
 
 ## Table of Contents
 
-- [AdbAutoPlayer Configuration](#adbautoplayer-configuration)
+- [AdbAutoPlayer Settings](#adbautoplayer-settings)
 - [Important Considerations](#important-considerations)
 - [Prerequisites](#prerequisites)
 - [Universal Steps](#universal-steps)
@@ -25,7 +25,7 @@ A comprehensive guide to enable USB debugging on popular Android phone brands fo
 
 ---
 
-## AdbAutoPlayer Configuration
+## AdbAutoPlayer Settings
 
 ![device-config.png](../images/real-phone/device-config.png)
 

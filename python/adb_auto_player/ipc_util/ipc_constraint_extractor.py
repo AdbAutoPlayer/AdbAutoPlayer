@@ -159,7 +159,7 @@ class IPCConstraintExtractor:
                 )
             case "array":
                 raise ValueError(
-                    "array config properties need to define "
+                    "array Settings properties need to define "
                     "json_schema_extra.constraint_type"
                 )
             case "string":

@@ -1,9 +1,9 @@
-"""AFK Journey Config Module."""
+"""AFK Journey Settings Module."""
 
 from enum import StrEnum, auto
 from typing import Annotated
 
-from adb_auto_player.models.pydantic import GameConfig, MyCustomRoutineConfig
+from adb_auto_player.models.pydantic import GameSettings, MyCustomRoutineSettings
 from pydantic import BaseModel, Field
 
 from .heroes import HeroesEnum
@@ -27,8 +27,8 @@ class TowerEnum(StrEnum):
 
 
 # Models
-class GeneralConfig(BaseModel):
-    """General config model."""
+class GeneralSettings(BaseModel):
+    """General Settings model."""
 
     assist_limit: PositiveInt = Field(default=20, alias="Assist Limit")
     excluded_heroes: list[HeroesEnum] = Field(
@@ -41,8 +41,8 @@ class GeneralConfig(BaseModel):
     )
 
 
-class CommonBattleModeConfig(BaseModel):
-    """Common config shared across battle modes."""
+class CommonBattleModeSettings(BaseModel):
+    """Common Settings shared across battle modes."""
 
     attempts: PositiveInt = Field(default=5, alias="Attempts")
     formations: FormationsInt = Field(default=7, alias="Formations")
@@ -54,20 +54,20 @@ class CommonBattleModeConfig(BaseModel):
     spend_gold: bool = Field(default=False, alias="Spend Gold")
 
 
-class BattleAllowsManualConfig(CommonBattleModeConfig):
+class BattleAllowsManualSettings(CommonBattleModeSettings):
     """Battle modes that allow manual battles."""
 
     skip_manual_formations: bool = Field(default=False, alias="Skip Manual Formations")
 
 
-class AFKStagesConfig(BattleAllowsManualConfig):
-    """AFK Stages config model."""
+class AFKStagesSettings(BattleAllowsManualSettings):
+    """AFK Stages Settings model."""
 
     pass
 
 
-class DurasTrialsConfig(CommonBattleModeConfig):
-    """Dura's Trials config model."""
+class DurasTrialsSettings(CommonBattleModeSettings):
+    """Dura's Trials Settings model."""
 
     pass
 
@@ -75,8 +75,8 @@ class DurasTrialsConfig(CommonBattleModeConfig):
 DEFAULT_TOWERS = list(TowerEnum.__members__.values())
 
 
-class LegendTrialsConfig(BattleAllowsManualConfig):
-    """Legend Trials config model."""
+class LegendTrialsSettings(BattleAllowsManualSettings):
+    """Legend Trials Settings model."""
 
     towers: list[TowerEnum] = Field(
         default_factory=lambda: DEFAULT_TOWERS,
@@ -89,21 +89,21 @@ class LegendTrialsConfig(BattleAllowsManualConfig):
     )
 
 
-class ArcaneLabyrinthConfig(BaseModel):
-    """Arcane Labyrinth config model."""
+class ArcaneLabyrinthSettings(BaseModel):
+    """Arcane Labyrinth Settings model."""
 
     difficulty: int = Field(ge=1, le=15, default=13, alias="Difficulty")
     key_quota: int = Field(ge=1, le=9999, default=2700, alias="Key Quota")
 
 
-class DreamRealmConfig(BaseModel):
-    """Dream Realm config model."""
+class DreamRealmSettings(BaseModel):
+    """Dream Realm Settings model."""
 
     spend_gold: bool = Field(default=False, alias="Spend Gold")
 
 
-class DailiesConfig(BaseModel):
-    """Dailies config model."""
+class DailiesSettings(BaseModel):
+    """Dailies Settings model."""
 
     buy_discount_affinity: bool = Field(default=True, alias="Buy Discount Affinity")
     buy_all_affinity: bool = Field(default=False, alias="Buy All Affinity")
@@ -113,30 +113,30 @@ class DailiesConfig(BaseModel):
     essence_buy_count: int = Field(default=1, ge=1, le=4, alias="Essence Buy Count")
 
 
-class ClaimAFKRewardsConfig(BaseModel):
+class ClaimAFKRewardsSettings(BaseModel):
     claim_stage_rewards: bool = Field(default=False, alias="Claim Stage Rewards")
 
 
-class TitanReaverProxyBattlesConfig(BaseModel):
+class TitanReaverProxyBattlesSettings(BaseModel):
     proxy_battle_limit: PositiveInt = Field(
         default=50, alias="Titan Reaver Proxy Battle Limit"
     )
 
 
-class Config(GameConfig):
-    """Config model."""
+class Settings(GameSettings):
+    """Settings model."""
 
-    general: GeneralConfig = Field(alias="General")
-    dailies: DailiesConfig = Field(alias="Dailies")
-    afk_stages: AFKStagesConfig = Field(alias="AFK Stages")
-    duras_trials: DurasTrialsConfig = Field(alias="Dura's Trials")
-    legend_trials: LegendTrialsConfig = Field(alias="Legend Trial")
-    arcane_labyrinth: ArcaneLabyrinthConfig = Field(alias="Arcane Labyrinth")
-    dream_realm: DreamRealmConfig = Field(alias="Dream Realm")
-    claim_afk_rewards: ClaimAFKRewardsConfig = Field(alias="Claim AFK Rewards")
-    titan_reaver_proxy_battles: TitanReaverProxyBattlesConfig = Field(
+    general: GeneralSettings = Field(alias="General")
+    dailies: DailiesSettings = Field(alias="Dailies")
+    afk_stages: AFKStagesSettings = Field(alias="AFK Stages")
+    duras_trials: DurasTrialsSettings = Field(alias="Dura's Trials")
+    legend_trials: LegendTrialsSettings = Field(alias="Legend Trial")
+    arcane_labyrinth: ArcaneLabyrinthSettings = Field(alias="Arcane Labyrinth")
+    dream_realm: DreamRealmSettings = Field(alias="Dream Realm")
+    claim_afk_rewards: ClaimAFKRewardsSettings = Field(alias="Claim AFK Rewards")
+    titan_reaver_proxy_battles: TitanReaverProxyBattlesSettings = Field(
         alias="Titan Reaver Proxy Battles"
     )
-    custom_routine_one: MyCustomRoutineConfig = Field(alias="Custom Routine 1")
-    custom_routine_two: MyCustomRoutineConfig = Field(alias="Custom Routine 2")
-    custom_routine_three: MyCustomRoutineConfig = Field(alias="Custom Routine 3")
+    custom_routine_one: MyCustomRoutineSettings = Field(alias="Custom Routine 1")
+    custom_routine_two: MyCustomRoutineSettings = Field(alias="Custom Routine 2")
+    custom_routine_three: MyCustomRoutineSettings = Field(alias="Custom Routine 3")

@@ -1,4 +1,4 @@
-"""Base configuration functionality for all game configs."""
+"""Base Settings functionality for all game Settings."""
 
 import logging
 import tomllib
@@ -9,18 +9,18 @@ from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
 
-class GameConfig(BaseModel):
-    """Base configuration class with shared functionality."""
+class GameSettings(BaseModel):
+    """Base Settings class with shared functionality."""
 
     @classmethod
     def from_toml(cls, file_path: Path):
-        """Create a Config instance from a TOML file.
+        """Create a GameSettings instance from a TOML file.
 
         Args:
             file_path (Path): Path to the TOML file.
 
         Returns:
-            An instance of the Config class initialized with data from the TOML file.
+            An instance of GameSettings class initialized with data from the TOML file.
         """
         toml_data = {}
         if file_path.exists():
@@ -29,10 +29,10 @@ class GameConfig(BaseModel):
                     toml_data = tomllib.load(f)
             except Exception as e:
                 logging.error(
-                    f"Error reading config file: {e} - using default config values"
+                    f"Error reading Settings: {e} - using default GameSettings"
                 )
         else:
-            logging.debug("Using default config values")
+            logging.debug("Using default GameSettings")
 
         default_data = {}
         for field in cls.model_fields.values():

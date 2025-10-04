@@ -21,9 +21,8 @@ import (
 )
 
 type GamesService struct {
-	mu                     sync.Mutex
-	gameGUI                *ipc.GameGUI
-	lastOpenGameConfigPath string
+	mu      sync.Mutex
+	gameGUI *ipc.GameGUI
 }
 
 func (g *GamesService) GetGameGUI() (*ipc.GameGUI, error) {
@@ -207,7 +206,7 @@ func (g *GamesService) setPythonBinaryPath() error {
 }
 
 func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interface{}, error) {
-	var gameConfig interface{}
+	var gameSettings interface{}
 	var err error
 
 	workingDir, err := os.Getwd()
@@ -217,19 +216,14 @@ func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interfa
 	}
 
 	paths := []string{
-		filepath.Join(workingDir, "games", game.ConfigPath),                        // Windows .exe
-		filepath.Join(workingDir, "python/adb_auto_player/games", game.ConfigPath), // Dev
-		filepath.Join(workingDir, "../Resources/games", game.ConfigPath),           // MacOS .app Bundle
+		filepath.Join(workingDir, "games", game.SettingsFile),                        // Windows .exe
+		filepath.Join(workingDir, "python/adb_auto_player/games", game.SettingsFile), // Dev
+		filepath.Join(workingDir, "../Resources/games", game.SettingsFile),           // MacOS .app Bundle
 	}
-	configPath := path.GetFirstPathThatExists(paths)
+	settingsFile := path.GetFirstPathThatExists(paths)
 
 	g.mu.Lock()
-	if configPath == "" {
-		if stdruntime.GOOS == "darwin" {
-			g.lastOpenGameConfigPath = filepath.Join(workingDir, "../Resources/games", game.ConfigPath)
-		} else {
-			g.lastOpenGameConfigPath = filepath.Join(workingDir, "games", game.ConfigPath)
-		}
+	if settingsFile == "" {
 		g.mu.Unlock()
 		response := map[string]interface{}{
 			"settings":    map[string]interface{}{},
@@ -239,16 +233,15 @@ func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interfa
 		return response, nil
 	}
 
-	g.lastOpenGameConfigPath = configPath
 	g.mu.Unlock()
 
-	gameConfig, err = settings.LoadTOML[map[string]interface{}](configPath)
+	gameSettings, err = settings.LoadTOML[map[string]interface{}](settingsFile)
 	if err != nil {
 		return nil, err
 	}
 
 	response := map[string]interface{}{
-		"settings":    gameConfig,
+		"settings":    gameSettings,
 		"constraints": game.Constraints,
 	}
 	return response, nil
@@ -259,16 +252,10 @@ func (g *GamesService) SaveGameSettings(gameSettings map[string]interface{}) (*i
 	defer app.Emit(event_names.GameSettingsUpdated)
 	defer g.mu.Unlock()
 
-	if g.lastOpenGameConfigPath == "" || nil == g.gameGUI {
-		return nil, errors.New("cannot save game settings: no game settings found")
-	}
-
-	if err := settings.SaveTOML[map[string]interface{}](g.lastOpenGameConfigPath, &gameSettings); err != nil {
+	if err := settings.SaveTOML[map[string]interface{}](g.gameGUI.SettingsFile, &gameSettings); err != nil {
 		return nil, err
 	}
 	logger.Get().Infof("Saving Game Settings")
-
-	g.lastOpenGameConfigPath = ""
 
 	displayNames := make(map[string]string)
 	for key, value := range gameSettings {

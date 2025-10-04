@@ -1,4 +1,4 @@
-"""ADB Auto Player Config Loader Module."""
+"""ADB Auto Player Settings Loader Module."""
 
 import logging
 from functools import lru_cache
@@ -6,11 +6,13 @@ from pathlib import Path
 
 from adb_auto_player.decorators import register_cache
 from adb_auto_player.models.decorators import CacheGroup
-from adb_auto_player.models.pydantic.general_settings import GeneralSettings
+from adb_auto_player.models.pydantic.adb_auto_player_settings import (
+    AdbAutoPlayerSettings,
+)
 
 
-class ConfigLoader:
-    """Utility class for resolving and caching important configuration paths."""
+class SettingsLoader:
+    """Utility class for resolving and caching important settings paths."""
 
     @staticmethod
     @lru_cache(maxsize=1)
@@ -33,7 +35,7 @@ class ConfigLoader:
     @lru_cache(maxsize=1)
     def games_dir() -> Path:
         """Determine and return the games directory."""
-        working_dir = ConfigLoader.working_dir()
+        working_dir = SettingsLoader.working_dir()
         candidates: list[Path] = [
             working_dir / "games",  # Windows GUI .exe, PyCharm
             working_dir.parent / "games",  # Windows CLI .exe
@@ -48,23 +50,29 @@ class ConfigLoader:
     @lru_cache(maxsize=1)
     def binaries_dir() -> Path:
         """Return the binaries directory."""
-        return ConfigLoader.games_dir().parent / "binaries"
+        return SettingsLoader.games_dir().parent / "binaries"
 
     @staticmethod
-    @register_cache(CacheGroup.GENERAL_SETTINGS)
+    @register_cache(CacheGroup.ADB_AUTO_PLAYER_SETTINGS)
     @lru_cache(maxsize=1)
-    def general_settings() -> GeneralSettings:
-        """Locate and load the general settings config.toml file."""
-        working_dir = ConfigLoader.working_dir()
+    def adb_auto_player_settings() -> AdbAutoPlayerSettings:
+        """Locate and load the general settings AdbAutoPlayer.toml file."""
+        working_dir = SettingsLoader.working_dir()
+
+        adb_auto_player_toml_rel_path = Path("settings") / "AdbAutoPlayer.toml"
+
+        # is_frozen: bool = hasattr(sys, "frozen") or "__compiled__" in globals()
+
         candidates: list[Path] = [
-            working_dir / "config.toml",  #  Windows GUI .exe, macOS .app Bundle
-            working_dir.parent / "config.toml",  # Windows CLI .exe
-            working_dir.parent / "config" / "config.toml",  # uv
-            working_dir.parent.parent / "config" / "config.toml",  # PyCharm
+            working_dir
+            / adb_auto_player_toml_rel_path,  #  Windows GUI .exe, macOS .app Bundle
+            working_dir.parent / adb_auto_player_toml_rel_path,  # Windows CLI .exe, uv
+            working_dir.parent.parent
+            / adb_auto_player_toml_rel_path,  # PyCharm run config
         ]
 
-        config_toml_path: Path = next(
+        adb_auto_player_toml_path: Path = next(
             (c for c in candidates if c.exists()), candidates[0]
         )
-        logging.debug(f"Python config.toml path: {config_toml_path}")
-        return GeneralSettings.from_toml(config_toml_path)
+        logging.debug(f"Python AdbAutoPlayer.toml path: {adb_auto_player_toml_path}")
+        return AdbAutoPlayerSettings.from_toml(adb_auto_player_toml_path)

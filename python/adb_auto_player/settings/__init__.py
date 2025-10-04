@@ -1,7 +1,7 @@
 """Settings."""
 
-from .config_loader import ConfigLoader
+from .settings_loader import SettingsLoader
 
 __all__ = [
-    "ConfigLoader",
+    "SettingsLoader",
 ]

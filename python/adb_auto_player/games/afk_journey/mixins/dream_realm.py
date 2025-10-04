@@ -30,7 +30,7 @@ class DreamRealmMixin(AFKJourneyBase):
     def run_dream_realm(self, daily: bool = False) -> None:
         """Use Dream Realm attempts."""
         self.start_up(device_streaming=False)
-        paid_attempts: bool = self.get_config().dream_realm.spend_gold
+        paid_attempts: bool = self.get_settings().dream_realm.spend_gold
 
         try:
             self._enter_dr()

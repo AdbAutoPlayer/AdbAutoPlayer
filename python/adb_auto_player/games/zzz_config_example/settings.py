@@ -1,9 +1,9 @@
-"""Play Store Config Module."""
+"""Play Store Settings Module."""
 
 from enum import StrEnum, auto
 from typing import Annotated
 
-from adb_auto_player.models.pydantic import GameConfig
+from adb_auto_player.models.pydantic import GameSettings
 from pydantic import BaseModel, Field
 
 # Type constraints
@@ -11,7 +11,7 @@ PositiveInt = Annotated[int, Field(ge=1, le=999)]
 
 
 # Models
-class SectionNumbersConfig(BaseModel):
+class SectionNumbersSettings(BaseModel):
     """For Testing GUI."""
 
     integer_number: PositiveInt = Field(default=119, alias="Integer")
@@ -26,7 +26,7 @@ class SectionNumbersConfig(BaseModel):
     )
 
 
-class SectionTextConfig(BaseModel):
+class SectionTextSettings(BaseModel):
     """For Testing GUI."""
 
     regex_start_with_a: str = Field(
@@ -53,7 +53,7 @@ class TestEnum(StrEnum):
 
 
 class SectionSelectAndChoice(BaseModel):
-    """Section Select and Choice config model."""
+    """Section Select and Choice Settings model."""
 
     checkbox: bool = Field(default=True, alias="Checkbox")
     multicheckbox_alpha: list[TestEnum] = Field(
@@ -73,9 +73,9 @@ class SectionSelectAndChoice(BaseModel):
     )
 
 
-class Config(GameConfig):
-    """Play Store config model."""
+class Settings(GameSettings):
+    """Play Store Settings model."""
 
-    section_numbers: SectionNumbersConfig = Field(alias="Numbers")
-    section_text: SectionTextConfig = Field(alias="Text")
+    section_numbers: SectionNumbersSettings = Field(alias="Numbers")
+    section_text: SectionTextSettings = Field(alias="Text")
     section_select: SectionSelectAndChoice = Field(alias="Select and Choice")

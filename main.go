@@ -97,7 +97,7 @@ func initializeEventHandlers(app *application.App) {
 	app.Event.On(event_names.ServerAddressChanged, func(event *application.CustomEvent) {
 		process.GetService().Shutdown()
 	})
-	app.Event.On(event_names.GeneralSettingsUpdated, func(event *application.CustomEvent) {
+	app.Event.On(event_names.AdbAutoPlayerSettingsUpdated, func(event *application.CustomEvent) {
 		process.GetService().InitializeManager()
 		_, _ = process.GetService().SendPOST("/general-settings-updated", nil)
 	})

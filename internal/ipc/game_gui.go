@@ -9,9 +9,9 @@ type MenuOption struct {
 }
 
 type GameGUI struct {
-	GameTitle   string                 `json:"game_title"`
-	ConfigPath  string                 `json:"config_path"`
-	MenuOptions []MenuOption           `json:"menu_options"`
-	Categories  []string               `json:"categories,omitempty"`
-	Constraints map[string]interface{} `json:"constraints"`
+	GameTitle    string                 `json:"game_title"`
+	SettingsFile string                 `json:"settings_file"`
+	MenuOptions  []MenuOption           `json:"menu_options"`
+	Categories   []string               `json:"categories,omitempty"`
+	Constraints  map[string]interface{} `json:"constraints"`
 }
