@@ -113,17 +113,12 @@ func TestResolveAdbAutoPlayerSettingsPath(t *testing.T) {
 		t.Error("Expected non-empty path")
 	}
 
-	// Should return the first fallback path if no files exist
-	expectedFallback := "settings/"
-	if path == expectedFallback {
-		// This is expected when no Settings files exist
-		return
-	}
-
-	// If it's not the fallback, it should be one of the predefined paths
+	home, _ := os.UserHomeDir()
+	macPath := filepath.Join(home, "Library/Application Support/AdbAutoPlayer/settings/")
 	validPaths := []string{
 		"settings/",
 		"../../settings/",
+		macPath,
 	}
 
 	isValid := false
