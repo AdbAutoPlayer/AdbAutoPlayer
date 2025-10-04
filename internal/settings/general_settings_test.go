@@ -1,13 +1,14 @@
 package settings
 
 import (
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLoadConfig(t *testing.T) {
-	mainConfig, err := LoadTOML[GeneralSettings]("../../config/config.toml")
+	mainConfig, err := LoadTOML[GeneralSettings]("../../settings/AdbAutoPlayer.toml")
 	if err != nil {
 		t.Errorf("[Error LoadTOML()] %v", err)
 		return

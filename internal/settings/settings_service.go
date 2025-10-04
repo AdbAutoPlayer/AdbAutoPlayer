@@ -6,9 +6,10 @@ import (
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/logger"
 	"adb-auto-player/internal/path"
-	"github.com/wailsapp/wails/v3/pkg/application"
 	"runtime"
 	"sync"
+
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 var (
@@ -112,9 +113,8 @@ func loadGeneralSettingsOrDefault(tomlPath *string) GeneralSettings {
 
 func resolveGeneralSettingsPath() string {
 	paths := []string{
-		"config.toml",              // distributed
-		"config/config.toml",       // dev
-		"../../config/config.toml", // macOS dev no not a joke
+		"settings/AdbAutoPlayer.toml",       // dev,Windows
+		"../../settings/AdbAutoPlayer.toml", // macOS .app Bundle
 	}
 
 	settingsPath := path.GetFirstPathThatExists(paths)

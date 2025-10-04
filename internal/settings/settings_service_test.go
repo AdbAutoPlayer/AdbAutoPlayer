@@ -114,7 +114,7 @@ func TestResolveGeneralSettingsPath(t *testing.T) {
 	}
 
 	// Should return the first fallback path if no files exist
-	expectedFallback := "config.toml"
+	expectedFallback := "settings/AdbAutoPlayer.toml"
 	if path == expectedFallback {
 		// This is expected when no config files exist
 		return
@@ -122,9 +122,8 @@ func TestResolveGeneralSettingsPath(t *testing.T) {
 
 	// If it's not the fallback, it should be one of the predefined paths
 	validPaths := []string{
-		"config.toml",
-		"config/config.toml",
-		"../../config/config.toml",
+		"settings/AdbAutoPlayer.toml",
+		"../../settings/AdbAutoPlayer.toml",
 	}
 
 	isValid := false
