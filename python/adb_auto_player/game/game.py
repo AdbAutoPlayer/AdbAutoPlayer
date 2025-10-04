@@ -37,10 +37,10 @@ from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.pydantic import MyCustomRoutineSettings
 from adb_auto_player.models.registries import CustomRoutineEntry
 from adb_auto_player.models.template_matching import MatchMode, TemplateMatchResult
-from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY
+from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY, GAME_REGISTRY
 from adb_auto_player.settings import SettingsLoader
 from adb_auto_player.template_matching import TemplateMatcher
-from adb_auto_player.util import Execute, StringHelper
+from adb_auto_player.util import Execute
 from PIL import Image
 from pydantic import BaseModel
 
@@ -1087,16 +1087,17 @@ class Game(ABC):
             raise ValueError("No module found after 'games' in module path")
 
     def _get_settings_file_path(self) -> Path:
-        if self._settings_file_path is None:
-            module = self._get_game_module()
+        if self._settings_file_path:
+            return self._settings_file_path
 
-            self._settings_file_path = (
-                SettingsLoader.games_dir()
-                / module
-                / (StringHelper.snake_to_pascal(module) + ".toml")
-            )
-            logging.debug(f"{module} Settings path: {self._settings_file_path}")
+        settings_file: str | None = None
+        for module, game in GAME_REGISTRY.items():
+            if module == self._get_game_module():
+                settings_file = game.settings_file
 
+        if settings_file is None:
+            raise AutoPlayerUnrecoverableError("Game does not have any Settings")
+        self._settings_file_path = SettingsLoader.settings_dir() / settings_file
         return self._settings_file_path
 
     def get_template_dir_path(self) -> Path:

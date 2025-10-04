@@ -6,6 +6,8 @@ import (
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/logger"
 	"adb-auto-player/internal/path"
+	"os"
+	"path/filepath"
 	"runtime"
 	"sync"
 
@@ -65,7 +67,7 @@ func (s *SettingsService) GetAdbAutoPlayerSettingsForm() map[string]interface{} 
 func (s *SettingsService) SaveAdbAutoPlayerSettings(settings AdbAutoPlayerSettings) error {
 	s.mu.Lock()
 
-	settingsFile := *s.settingsDirPath + "AdbAutoPlayer.toml"
+	settingsFile := filepath.Join(*s.settingsDirPath, "AdbAutoPlayer.toml")
 
 	if err := SaveTOML[AdbAutoPlayerSettings](settingsFile, &settings); err != nil {
 		s.mu.Unlock()
@@ -110,7 +112,7 @@ func loadAdbAutoPlayerSettingsOrDefault(settingsDirPath *string) AdbAutoPlayerSe
 	generalSettings := NewSettings()
 
 	if settingsDirPath != nil {
-		settingsFile := *settingsDirPath + "AdbAutoPlayer.toml"
+		settingsFile := filepath.Join(*settingsDirPath, "AdbAutoPlayer.toml")
 		loadedSettings, err := LoadSettings(settingsFile)
 		if err != nil {
 			app.Error(err.Error())
@@ -125,8 +127,13 @@ func loadAdbAutoPlayerSettingsOrDefault(settingsDirPath *string) AdbAutoPlayerSe
 
 func resolveSettingsDirPath() string {
 	paths := []string{
-		"settings/",       // dev, Windows
-		"../../settings/", // macOS .app Bundle
+		"settings/", // dev, Windows
+	}
+
+	if runtime.GOOS == "darwin" {
+		home, _ := os.UserHomeDir()
+		macPath := filepath.Join(home, "Library/Application Support/AdbAutoPlayer/settings/")
+		paths = append([]string{macPath}, paths...)
 	}
 
 	settingsPath := path.GetFirstPathThatExists(paths)

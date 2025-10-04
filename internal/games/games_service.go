@@ -208,23 +208,22 @@ func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interfa
 	var gameSettings interface{}
 	var err error
 
-	settingsFilePath := settings.GetService().GetSettingsDirPath() + g.gameGUI.SettingsFile
-
-	g.mu.Lock()
-	if settingsFilePath == "" {
-		g.mu.Unlock()
-		response := map[string]interface{}{
-			"settings":    map[string]interface{}{},
-			"constraints": game.Constraints,
-		}
-
-		return response, nil
+	if g.gameGUI.SettingsFile == "" {
+		return nil, errors.New(game.GameTitle + " does not have any settings")
 	}
 
-	g.mu.Unlock()
-
+	settingsFilePath := filepath.Join(settings.GetService().GetSettingsDirPath(), g.gameGUI.SettingsFile)
+	logger.Get().Debugf("Loading game settings file: %s", settingsFilePath)
 	gameSettings, err = settings.LoadTOML[map[string]interface{}](settingsFilePath)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			response := map[string]interface{}{
+				"settings":    map[string]interface{}{},
+				"constraints": game.Constraints,
+			}
+			return response, nil
+		}
+
 		return nil, err
 	}
 
@@ -240,7 +239,8 @@ func (g *GamesService) SaveGameSettings(gameSettings map[string]interface{}) (*i
 	defer app.Emit(event_names.GameSettingsUpdated)
 	defer g.mu.Unlock()
 
-	settingsFilePath := settings.GetService().GetSettingsDirPath() + g.gameGUI.SettingsFile
+	settingsFilePath := filepath.Join(settings.GetService().GetSettingsDirPath(), g.gameGUI.SettingsFile)
+	logger.Get().Debugf("Saving game settings file: %s", settingsFilePath)
 	if err := settings.SaveTOML[map[string]interface{}](settingsFilePath, &gameSettings); err != nil {
 		return nil, err
 	}

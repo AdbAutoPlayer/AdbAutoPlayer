@@ -1,6 +1,7 @@
 """Play Store Main Module."""
 
 import logging
+import pprint
 
 from adb_auto_player.decorators import (
     register_command,
@@ -29,10 +30,10 @@ class PlayStore(Game):
         ]
 
     @register_command(
-        gui=GUIMetadata(label="Label", category="Category", tooltip="Tooltip")
+        gui=GUIMetadata(label="Log Settings", category="Category", tooltip="Tooltip")
     )
     def _test_gui(self) -> None:
-        logging.info("GUI")
+        logging.info(f"{pprint.pformat(self.get_settings())}")
 
     @register_command()
     def _test_cli(self) -> None:
@@ -43,8 +44,7 @@ class PlayStore(Game):
         logging.info("CUSTOM ROUTINE")
 
     def get_settings(self) -> BaseModel:
-        """Not Implemented."""
-        raise NotImplementedError()
+        return self._load_settings()
 
     def _load_settings(self):
-        raise NotImplementedError()
+        return Settings.from_toml(self._get_settings_file_path())

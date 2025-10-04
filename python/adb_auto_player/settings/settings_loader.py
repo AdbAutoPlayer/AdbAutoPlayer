@@ -1,6 +1,7 @@
 """ADB Auto Player Settings Loader Module."""
 
 import logging
+import platform
 from functools import lru_cache
 from pathlib import Path
 
@@ -53,22 +54,33 @@ class SettingsLoader:
         return SettingsLoader.games_dir().parent / "binaries"
 
     @staticmethod
+    @lru_cache(maxsize=1)
+    def settings_dir() -> Path:
+        """Return the settings directory."""
+        working_dir = SettingsLoader.working_dir()
+
+        settings_path = Path("settings")
+
+        candidates: list[Path] = [
+            working_dir / settings_path,  #  Windows GUI .exe
+            working_dir.parent / settings_path,  # Windows CLI .exe, uv
+            working_dir.parent.parent / settings_path,  # PyCharm run config
+        ]
+
+        # macOS-specific path
+        if platform.system() == "Darwin":
+            mac_settings = Path("~/Library/Application Support/AdbAutoPlayer/settings")
+            candidates.insert(0, mac_settings.expanduser())
+
+        resolved_path: Path = next((c for c in candidates if c.exists()), candidates[0])
+
+        return resolved_path
+
+    @staticmethod
     @register_cache(CacheGroup.ADB_AUTO_PLAYER_SETTINGS)
     @lru_cache(maxsize=1)
     def adb_auto_player_settings() -> AdbAutoPlayerSettings:
         """Locate and load the general settings AdbAutoPlayer.toml file."""
-        working_dir = SettingsLoader.working_dir()
-
-        toml_rel_path = Path("settings") / "AdbAutoPlayer.toml"
-
-        candidates: list[Path] = [
-            working_dir / toml_rel_path,  #  Windows GUI .exe, macOS .app Bundle
-            working_dir.parent / toml_rel_path,  # Windows CLI .exe, uv
-            working_dir.parent.parent / toml_rel_path,  # PyCharm run config
-        ]
-
-        adb_auto_player_toml_path: Path = next(
-            (c for c in candidates if c.exists()), candidates[0]
-        )
-        logging.debug(f"Python AdbAutoPlayer.toml path: {adb_auto_player_toml_path}")
-        return AdbAutoPlayerSettings.from_toml(adb_auto_player_toml_path)
+        settings_file_path = SettingsLoader.settings_dir() / "AdbAutoPlayer.toml"
+        logging.debug(f"Python AdbAutoPlayer.toml path: {settings_file_path}")
+        return AdbAutoPlayerSettings.from_toml(settings_file_path)
