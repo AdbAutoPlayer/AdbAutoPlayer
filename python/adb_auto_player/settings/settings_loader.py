@@ -59,16 +59,12 @@ class SettingsLoader:
         """Locate and load the general settings AdbAutoPlayer.toml file."""
         working_dir = SettingsLoader.working_dir()
 
-        adb_auto_player_toml_rel_path = Path("settings") / "AdbAutoPlayer.toml"
-
-        # is_frozen: bool = hasattr(sys, "frozen") or "__compiled__" in globals()
+        toml_rel_path = Path("settings") / "AdbAutoPlayer.toml"
 
         candidates: list[Path] = [
-            working_dir
-            / adb_auto_player_toml_rel_path,  #  Windows GUI .exe, macOS .app Bundle
-            working_dir.parent / adb_auto_player_toml_rel_path,  # Windows CLI .exe, uv
-            working_dir.parent.parent
-            / adb_auto_player_toml_rel_path,  # PyCharm run config
+            working_dir / toml_rel_path,  #  Windows GUI .exe, macOS .app Bundle
+            working_dir.parent / toml_rel_path,  # Windows CLI .exe, uv
+            working_dir.parent.parent / toml_rel_path,  # PyCharm run config
         ]
 
         adb_auto_player_toml_path: Path = next(

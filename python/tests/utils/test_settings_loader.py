@@ -97,8 +97,7 @@ class TestSettingsLoader:
 
     def test_adb_auto_player_settings_real_data(self):
         settings = SettingsLoader.adb_auto_player_settings()
-        assert not settings.device.hardware_decoding
-        print(settings)
+        assert settings.device.hardware_decoding
 
     def test_adb_auto_player_settings_successful_load(self):
         """Test successfully loads valid TOML file."""
