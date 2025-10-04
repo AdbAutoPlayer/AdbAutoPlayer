@@ -23,7 +23,6 @@ ignore:
   - "app*.go"
   - "internal/processmanager.go"
   - "internal/ipc"
-  - "internal/config"
 
 
 flags:

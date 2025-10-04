@@ -8,15 +8,15 @@ from adb_auto_player.decorators import (
     register_game,
 )
 from adb_auto_player.game import Game
-from adb_auto_player.games.zzz_config_example.config import Config
+from adb_auto_player.games.zzz_config_example.settings import Settings
 from adb_auto_player.models.decorators import GameGUIMetadata, GUIMetadata
 from pydantic import BaseModel
 
 
 @register_game(
     name="Google Play",
-    config_file_path="zzz_config_example/ZzzConfigExample.toml",
-    gui_metadata=GameGUIMetadata(config_class=Config),
+    settings_file="ZzzConfigExample.toml",
+    gui_metadata=GameGUIMetadata(settings_class=Settings),
 )
 class PlayStore(Game):
     """Just for GUI testing."""
@@ -42,9 +42,9 @@ class PlayStore(Game):
     def _test_custom_routine(self) -> None:
         logging.info("CUSTOM ROUTINE")
 
-    def get_config(self) -> BaseModel:
+    def get_settings(self) -> BaseModel:
         """Not Implemented."""
         raise NotImplementedError()
 
-    def _load_config(self):
+    def _load_settings(self):
         raise NotImplementedError()

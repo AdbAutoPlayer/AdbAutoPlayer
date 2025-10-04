@@ -7,10 +7,10 @@
   import { showErrorToast } from "$lib/toast/toast-error";
   import { t } from "$lib/i18n/i18n";
   import {
-    GetGeneralSettingsForm,
-    SaveGeneralSettings,
+    GetAdbAutoPlayerSettingsForm,
+    SaveAdbAutoPlayerSettings,
   } from "@wails/settings/settingsservice";
-  import { GeneralSettings } from "@wails/settings";
+  import { AdbAutoPlayerSettings } from "@wails/settings";
   import {
     Debug,
     GetGameGUI,
@@ -32,11 +32,11 @@
 
   let activeGame: GameGUI | null = $state(null);
 
-  let openFormIsGeneralSettings: boolean = $state(false);
+  let openFormIsAdbAutoPlayerSettings: boolean = $state(false);
 
   let settingsSaveCallback: (settings: object) => void = $derived.by(() => {
-    if (openFormIsGeneralSettings) {
-      return onGeneralSettingsSave;
+    if (openFormIsAdbAutoPlayerSettings) {
+      return onAdbAutoPlayerSettingsSave;
     }
 
     return onGameSettingsSave;
@@ -46,7 +46,7 @@
   let defaultButtons: MenuButton[] = $derived.by(() => {
     return [
       {
-        callback: () => openGeneralSettingsForm(),
+        callback: () => openAdbAutoPlayerSettingsForm(),
         isProcessRunning: false,
         option: MenuOption.createFrom({
           label: "General Settings",
@@ -86,7 +86,7 @@
         })),
       );
 
-      if (activeGame.config_path) {
+      if (activeGame.settings_file) {
         menuButtons.push({
           callback: () => openGameSettingsForm(activeGame),
           isProcessRunning: false,
@@ -179,12 +179,12 @@
     updateStateTimeout = setTimeout(updateStateHandler, 1000);
   }
 
-  async function onGeneralSettingsSave(settings: object) {
+  async function onAdbAutoPlayerSettingsSave(settings: object) {
     clearTimeout(updateStateTimeout);
-    const settingsForm = GeneralSettings.createFrom(settings);
+    const settingsForm = AdbAutoPlayerSettings.createFrom(settings);
 
     try {
-      await SaveGeneralSettings(settingsForm);
+      await SaveAdbAutoPlayerSettings(settingsForm);
     } catch (error) {
       showErrorToast(error, { title: "Failed to Save General Settings" });
     }
@@ -218,7 +218,7 @@
 
     $pollRunningGame = false;
 
-    openFormIsGeneralSettings = false;
+    openFormIsAdbAutoPlayerSettings = false;
     try {
       const result = await GetGameSettingsForm(game);
       settingsFormSettings = result.settings;
@@ -233,11 +233,11 @@
     }
   }
 
-  async function openGeneralSettingsForm() {
-    openFormIsGeneralSettings = true;
+  async function openAdbAutoPlayerSettingsForm() {
+    openFormIsAdbAutoPlayerSettings = true;
     $pollRunningGame = false;
     try {
-      const result = await GetGeneralSettingsForm();
+      const result = await GetAdbAutoPlayerSettingsForm();
       settingsFormSettings = result.settings;
       settingsFormConstraints = sortObjectByOrder(result.constraints);
       showSettingsForm = true;
@@ -279,15 +279,15 @@
       EventNames.GAME_SETTINGS_UPDATED,
       enablePolling,
     );
-    const unsubGeneralSettingsUpdated = Events.On(
-      EventNames.GENERAL_SETTINGS_UPDATED,
+    const unsubAdbAutoPlayerSettingsUpdated = Events.On(
+      EventNames.ADB_AUTO_PLAYER_SETTINGS_UPDATED,
       enablePolling,
     );
 
     return () => {
       unsubTaskStoped();
       unsubGameSettingsUpdated();
-      unsubGeneralSettingsUpdated();
+      unsubAdbAutoPlayerSettingsUpdated();
     };
   });
 

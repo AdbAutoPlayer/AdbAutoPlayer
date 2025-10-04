@@ -25,7 +25,7 @@ class AdbDeviceWrapper:
 
     @staticmethod
     def create_from_settings() -> "AdbDeviceWrapper":
-        """Create a new AdbDeviceWrapper instance from General Settings."""
+        """Create a new AdbDeviceWrapper instance from AdbAutoPlayer Settings."""
         return AdbDeviceWrapper(d=AdbClientHelper.resolve_adb_device())
 
     @adb_retry

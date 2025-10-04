@@ -11,11 +11,11 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 import * as $models from "./models.js";
 
 /**
- * GetGeneralSettings returns the current general settings
- * @returns {$CancellablePromise<$models.GeneralSettings>}
+ * GetAdbAutoPlayerSettings returns the current general settings
+ * @returns {$CancellablePromise<$models.AdbAutoPlayerSettings>}
  */
-export function GetGeneralSettings() {
-    return $Call.ByID(3364062565).then(/** @type {($result: any) => any} */(($result) => {
+export function GetAdbAutoPlayerSettings() {
+    return $Call.ByID(428526674).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType0($result);
     }));
 }
@@ -23,30 +23,37 @@ export function GetGeneralSettings() {
 /**
  * @returns {$CancellablePromise<{ [_: string]: any }>}
  */
-export function GetGeneralSettingsForm() {
-    return $Call.ByID(455517895).then(/** @type {($result: any) => any} */(($result) => {
+export function GetAdbAutoPlayerSettingsForm() {
+    return $Call.ByID(931154948).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
 
 /**
- * LoadGeneralSettings reloads the general settings
- * @returns {$CancellablePromise<$models.GeneralSettings>}
+ * @returns {$CancellablePromise<string>}
  */
-export function LoadGeneralSettings() {
-    return $Call.ByID(4257029565).then(/** @type {($result: any) => any} */(($result) => {
+export function GetSettingsDirPath() {
+    return $Call.ByID(3505840555);
+}
+
+/**
+ * LoadSettings reloads the general settings
+ * @returns {$CancellablePromise<$models.AdbAutoPlayerSettings>}
+ */
+export function LoadAdbAutoPlayerSettings() {
+    return $Call.ByID(2237809018).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType0($result);
     }));
 }
 
 /**
- * @param {$models.GeneralSettings} settings
+ * @param {$models.AdbAutoPlayerSettings} settings
  * @returns {$CancellablePromise<void>}
  */
-export function SaveGeneralSettings(settings) {
-    return $Call.ByID(31465946, settings);
+export function SaveAdbAutoPlayerSettings(settings) {
+    return $Call.ByID(601590237, settings);
 }
 
 // Private type creation functions
-const $$createType0 = $models.GeneralSettings.createFrom;
+const $$createType0 = $models.AdbAutoPlayerSettings.createFrom;
 const $$createType1 = $Create.Map($Create.Any, $Create.Any);

@@ -8,9 +8,9 @@ export {
 };
 
 export {
+    AdbAutoPlayerSettings,
     AdvancedSettings,
     DeviceSettings,
-    GeneralSettings,
     LoggingSettings,
     UISettings,
     UpdateSettings

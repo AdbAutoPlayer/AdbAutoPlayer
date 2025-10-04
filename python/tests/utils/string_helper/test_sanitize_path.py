@@ -22,9 +22,9 @@ class TestSanitizePath(unittest.TestCase):
     def test_windows_path_double_backslash(self, mock_expanduser: MagicMock) -> None:
         """Test Windows path with double backslash."""
         log = f"No such file or directory: '{mock_expanduser.return_value}"
-        r"\\GolandProjects\\AdbAutoPlayer\\python\\config.toml"
+        r"\\GolandProjects\\AdbAutoPlayer\\python\\AdbAutoPlayer.toml"
         expected = r"No such file or directory: 'C:\\Users\\$env:USERNAME"
-        r"\\GolandProjects\\AdbAutoPlayer\\python\\config.toml"
+        r"\\GolandProjects\\AdbAutoPlayer\\python\\AdbAutoPlayer.toml"
         self.assertEqual(
             expected, adb_auto_player.util.string_helper.StringHelper.sanitize_path(log)
         )

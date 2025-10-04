@@ -1,10 +1,10 @@
-"""Module for MyCustomRoutineConfig."""
+"""Module for MyCustomRoutineSettings."""
 
 from pydantic import BaseModel, Field
 
 
-class MyCustomRoutineConfig(BaseModel):
-    """My Custom Routine config model."""
+class MyCustomRoutineSettings(BaseModel):
+    """My Custom Routine settings model."""
 
     display_name: str = Field(default="", alias="Display Name")
     repeat: bool = Field(

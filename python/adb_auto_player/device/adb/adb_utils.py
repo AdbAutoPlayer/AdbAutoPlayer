@@ -8,7 +8,7 @@ from pathlib import Path
 import adbutils
 from adb_auto_player.decorators import register_cache
 from adb_auto_player.models.decorators import CacheGroup
-from adb_auto_player.settings import ConfigLoader
+from adb_auto_player.settings import SettingsLoader
 
 
 @register_cache(CacheGroup.ADB)
@@ -26,8 +26,8 @@ def _set_adb_path() -> None:
 
         if not adb_env_path or not os.path.isfile(adb_env_path):
             candidates: list[Path] = [
-                ConfigLoader.binaries_dir() / "adb.exe",
-                ConfigLoader.binaries_dir() / "windows" / "adb.exe",
+                SettingsLoader.binaries_dir() / "adb.exe",
+                SettingsLoader.binaries_dir() / "windows" / "adb.exe",
             ]
             adb_env_path = str(
                 next((c for c in candidates if c.exists()), candidates[0])

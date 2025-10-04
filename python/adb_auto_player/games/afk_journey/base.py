@@ -20,16 +20,16 @@ from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util import SummaryGenerator
 
 from .battle_state import BattleState, Mode
-from .config import Config
 from .gui_category import AFKJCategory
 from .navigation import Navigation
+from .settings import Settings
 
 
 @register_game(
     name="AFK Journey",
-    config_file_path="afk_journey/AFKJourney.toml",
+    settings_file="AFKJourney.toml",
     gui_metadata=GameGUIMetadata(
-        config_class=Config,
+        settings_class=Settings,
         categories=list(AFKJCategory),
     ),
 )
@@ -64,34 +64,34 @@ class AFKJourneyBase(Navigation, Game):
 
     @register_cache(CacheGroup.GAME_SETTINGS)
     @lru_cache(maxsize=1)
-    def _load_config(self) -> Config:
-        """Load config TOML."""
-        self.config = Config.from_toml(self._get_config_file_path())
-        return self.config
+    def _load_settings(self) -> Settings:
+        """Load Settings TOML."""
+        self.settings = Settings.from_toml(self._get_settings_file_path())
+        return self.settings
 
-    def get_config(self) -> Config:
-        """Get config."""
-        if self.config is None:
-            return self._load_config()
-        return self.config
+    def get_settings(self) -> Settings:
+        """Get Settings."""
+        if self.settings is None:
+            return self._load_settings()
+        return self.settings
 
-    def _get_config_attribute_from_mode(self, attribute: str) -> Any:
-        """Retrieve a configuration attribute based on the current game mode.
+    def _get_settings_for_mode(self, attribute: str) -> Any:
+        """Retrieve Settings based on the current game mode.
 
         Args:
-            attribute (str): The name of the configuration attribute to retrieve.
+            attribute (str): The name of the Settings attribute to retrieve.
 
         Returns:
-            The value of the specified attribute from the configuration corresponding
+            The value of the specified attribute from the Settings corresponding
             to the current game mode.
         """
         match self.battle_state.mode:
             case Mode.DURAS_TRIALS:
-                return getattr(self.get_config().duras_trials, attribute)
+                return getattr(self.get_settings().duras_trials, attribute)
             case Mode.LEGEND_TRIALS:
-                return getattr(self.get_config().legend_trials, attribute)
+                return getattr(self.get_settings().legend_trials, attribute)
             case _:
-                return getattr(self.get_config().afk_stages, attribute)
+                return getattr(self.get_settings().afk_stages, attribute)
 
     def _handle_battle_screen(
         self,
@@ -107,13 +107,13 @@ class AFKJourneyBase(Navigation, Game):
         Returns:
             True if the battle was won, False otherwise.
         """
-        formations = self._get_config_attribute_from_mode("formations")
+        formations = self._get_settings_for_mode("formations")
 
         self.battle_state.formation_num = 0
         if not use_suggested_formations:
             formations = 1
 
-        if self._get_config_attribute_from_mode(
+        if self._get_settings_for_mode(
             "use_current_formation_before_suggested_formation"
         ):
             logging.info("Battle using current Formation.")
@@ -303,7 +303,7 @@ class AFKJourneyBase(Navigation, Game):
         """
         excluded_heroes_dict: dict[str, str] = {
             f"heroes/{re.sub(r'[\s&]', '', name.value.lower())}.png": name.value
-            for name in self.get_config().general.excluded_heroes
+            for name in self.get_settings().general.excluded_heroes
         }
 
         if not excluded_heroes_dict:
@@ -345,7 +345,7 @@ class AFKJourneyBase(Navigation, Game):
         Returns:
             bool: True if battle started, False otherwise.
         """
-        spend_gold: str = self._get_config_attribute_from_mode("spend_gold")
+        spend_gold: str = self._get_settings_for_mode("spend_gold")
 
         result = self.wait_for_any_template(
             templates=[
@@ -460,7 +460,7 @@ class AFKJourneyBase(Navigation, Game):
             bool: True if the battle was successful, False if not.
         """
         logging.debug("_handle_single_stage")
-        attempts = self._get_config_attribute_from_mode("attempts")
+        attempts = self._get_settings_for_mode("attempts")
         count = 0
         result: bool | None = None
 

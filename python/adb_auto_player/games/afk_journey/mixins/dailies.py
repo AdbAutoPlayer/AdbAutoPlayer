@@ -47,7 +47,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def run_dailies(self) -> None:
         """Complete daily chores."""
         self.start_up(device_streaming=False)
-        do_arena: bool = self.get_config().dailies.arena_battle
+        do_arena: bool = self.get_settings().dailies.arena_battle
         self.navigate_to_world()
 
         self.claim_daily_rewards()
@@ -58,7 +58,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         self.claim_hamburger()
         self.raise_hero_affinity()
         self.swap_essences()
-        if self.get_config().legend_trials.towers:
+        if self.get_settings().legend_trials.towers:
             SeasonLegendTrial().push_legend_trials()  # type: ignore[abstract]
         AFKStagesMixin().push_afk_stages(season=True)  # type: ignore[abstract]
 
@@ -178,8 +178,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def _buy_affinity_items(self) -> None:
         """Buy affinity items."""
-        buy_discount: bool = self.get_config().dailies.buy_discount_affinity
-        buy_all: bool = self.get_config().dailies.buy_all_affinity
+        buy_discount: bool = self.get_settings().dailies.buy_discount_affinity
+        buy_all: bool = self.get_settings().dailies.buy_all_affinity
 
         if not buy_discount and not buy_all:
             logging.info("Affinity item purchasing disabled. Skipping.")
@@ -236,8 +236,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def _buy_bound_essence(self) -> None:
         """Buy character bound temporal essences."""
-        buy_essences: bool = self.get_config().dailies.buy_essences
-        essence_buy_count: int = self.get_config().dailies.essence_buy_count
+        buy_essences: bool = self.get_settings().dailies.buy_essences
+        essence_buy_count: int = self.get_settings().dailies.essence_buy_count
 
         if not buy_essences:
             logging.info("Bound Essence purchasing disabled. Skipping.")
@@ -285,7 +285,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def single_pull(self) -> None:
         """Complete a single pull."""
-        do_single: bool = self.get_config().dailies.single_pull
+        do_single: bool = self.get_settings().dailies.single_pull
 
         if not do_single:
             logging.info("Single pull disabled. Skipping.")
@@ -536,7 +536,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
     def swap_essences(self) -> None:
         """Swap purchased essences."""
-        if not self.get_config().dailies.buy_essences:
+        if not self.get_settings().dailies.buy_essences:
             logging.debug("Essence purchasing disabled. Skipping swap.")
             return
 

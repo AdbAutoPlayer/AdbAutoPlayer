@@ -86,13 +86,13 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase):
 
         logging.info(
             "Starting Titan Reaver Proxy Battle automation (limit: "
-            f"{self.get_config().titan_reaver_proxy_battles.proxy_battle_limit})"
+            f"{self.get_settings().titan_reaver_proxy_battles.proxy_battle_limit})"
         )
 
         try:
             while (
                 stats.battles_completed
-                < self.get_config().titan_reaver_proxy_battles.proxy_battle_limit
+                < self.get_settings().titan_reaver_proxy_battles.proxy_battle_limit
             ):
                 if self._execute_single_proxy_battle():
                     stats.battles_completed += 1

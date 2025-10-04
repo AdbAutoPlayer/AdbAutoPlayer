@@ -67,7 +67,7 @@ cp -r "$WORKSPACE/python/main.dist/"* "$BINARIES_DIR/"
 
 # Copy game assets, excluding .py, .toml, directories starting with _, and mixins directories
 GAMES_SOURCE="$WORKSPACE/python/adb_auto_player/games"
-find "$GAMES_SOURCE" -type f -not -name "*.py" -not -name "*.toml" -not -path "*/_*" -not -path "*/mixins/*" | while read -r item; do
+find "$GAMES_SOURCE" -type f -not -name "*.py" -not -path "*/_*" -not -path "*/mixins/*" | while read -r item; do
     DEST_PATH="${item/$GAMES_SOURCE/$GAMES_DIR}"
     mkdir -p "$(dirname "$DEST_PATH")"
     cp "$item" "$DEST_PATH"

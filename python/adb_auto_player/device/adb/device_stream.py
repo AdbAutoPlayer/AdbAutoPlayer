@@ -9,7 +9,7 @@ from functools import lru_cache
 import av
 import numpy as np
 from adb_auto_player.exceptions import AutoPlayerWarningError
-from adb_auto_player.settings import ConfigLoader
+from adb_auto_player.settings import SettingsLoader
 from adbutils import AdbConnection
 from av.codec.codec import UnknownCodecError
 from av.codec.context import CodecContext
@@ -58,7 +58,7 @@ def _get_best_decoder(hardware_decoding: bool) -> str:
 def _get_codec_context() -> CodecContext:
     """Get codec context using cached decoder selection."""
     decoder_name = _get_best_decoder(
-        ConfigLoader.general_settings().device.hardware_decoding
+        SettingsLoader.adb_auto_player_settings().device.hardware_decoding
     )
     return CodecContext.create(decoder_name, "r")
 
@@ -92,7 +92,7 @@ class DeviceStream:
             )
 
         if fps is None:
-            fps = ConfigLoader.general_settings().advanced.streaming_fps
+            fps = SettingsLoader.adb_auto_player_settings().advanced.streaming_fps
 
         self.codec = _get_codec_context()
         self.controller = controller

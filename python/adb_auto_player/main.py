@@ -11,7 +11,7 @@ from adb_auto_player.log import setup_logging
 from adb_auto_player.models.commands import Command
 from adb_auto_player.registries import COMMAND_REGISTRY, GAME_REGISTRY
 from adb_auto_player.server import create_fastapi_server
-from adb_auto_player.settings import ConfigLoader
+from adb_auto_player.settings import SettingsLoader
 from adb_auto_player.util import DevHelper, Execute
 
 
@@ -45,7 +45,7 @@ def main() -> None:
     args = parser.parse_args()
     if args.server:
         app = create_fastapi_server(_get_commands())
-        advanced_settings = ConfigLoader.general_settings().advanced
+        advanced_settings = SettingsLoader.adb_auto_player_settings().advanced
         uvicorn.run(
             app,
             host=advanced_settings.auto_player_host,

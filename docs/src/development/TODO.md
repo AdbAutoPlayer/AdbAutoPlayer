@@ -51,9 +51,9 @@ ___
 
 ## 🖥️ Frontend Development
 
-### Global Hotkey Config Component
-Create a Svelte Component to edit a single Global Hotkey in the config.  
-You can decide what format it should be stored in, in the config too. 
+### Global Hotkey Settings Component
+Create a Svelte Component to edit a single Global Hotkey in the Settings.  
+You can decide what format it should be stored in, in the Settings too. 
 
 ---
 
@@ -72,7 +72,7 @@ You can decide what format it should be stored in, in the config too.
 **Guide Requirements:**
 - Default device ID setup
 - ADB enabling steps
-- Recommended configuration
+- Recommended Settings
 - Multi-instance device identification
 
 ___
@@ -110,7 +110,7 @@ ___
 **Scope:**
 - Complete feature catalog
 - Usage instructions
-- Configuration options
+- Settings options
 - Visual examples
 
 ---

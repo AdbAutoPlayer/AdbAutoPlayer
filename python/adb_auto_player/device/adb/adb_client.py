@@ -5,7 +5,7 @@ from logging import DEBUG, WARNING
 from adb_auto_player.decorators import register_cache
 from adb_auto_player.exceptions import GenericAdbError, GenericAdbUnrecoverableError
 from adb_auto_player.models.decorators import CacheGroup
-from adb_auto_player.settings import ConfigLoader
+from adb_auto_player.settings import SettingsLoader
 from adbutils import AdbClient, AdbDevice, AdbError
 from adbutils._proto import AdbDeviceInfo
 
@@ -27,7 +27,7 @@ class AdbClientHelper:
     def get_adb_client() -> AdbClient:
         """Return AdbClient instance."""
         _set_adb_path()
-        advanced_settings = ConfigLoader.general_settings().advanced
+        advanced_settings = SettingsLoader.adb_auto_player_settings().advanced
         client = AdbClient(
             host=advanced_settings.adb_host,
             port=advanced_settings.adb_port,
@@ -127,7 +127,7 @@ def _get_devices(client: AdbClient) -> list[AdbDeviceInfo]:
     except Exception as e:
         logging.debug(f"client.list exception: {e}")
         raise GenericAdbUnrecoverableError(
-            "Failed to connect to AdbClient; check the General Settings and "
+            "Failed to connect to AdbClient; check the AdbAutoPlayer Settings and "
             "https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/emulator-settings.html"
         )
 
@@ -146,7 +146,7 @@ def _resolve_device(
     Returns:
         AdbDevice: Connected device instance.
     """
-    device_id = ConfigLoader.general_settings().device.id
+    device_id = SettingsLoader.adb_auto_player_settings().device.id
     device: AdbDevice | None = _connect_to_device(client, device_id)
     devices: list[AdbDeviceInfo] = _get_devices(client)
 

@@ -26,7 +26,7 @@ func GetService() *NotificationService {
 }
 
 func (n *NotificationService) SendNotification(title string, body string) string {
-	if runtime.GOOS != "windows" || !settings.GetService().GetGeneralSettings().UI.NotificationsEnabled {
+	if runtime.GOOS != "windows" || !settings.GetService().GetAdbAutoPlayerSettings().UI.NotificationsEnabled {
 		return ""
 	}
 	service := notifications.New()

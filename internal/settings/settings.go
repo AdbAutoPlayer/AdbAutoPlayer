@@ -2,11 +2,12 @@ package settings
 
 import (
 	"adb-auto-player/internal/ipc"
-	"github.com/pelletier/go-toml/v2"
 	"os"
+
+	"github.com/pelletier/go-toml/v2"
 )
 
-type GeneralSettings struct {
+type AdbAutoPlayerSettings struct {
 	Advanced AdvancedSettings `toml:"advanced" json:"Advanced"`
 	Device   DeviceSettings   `toml:"device"`
 	Update   UpdateSettings   `toml:"update"`
@@ -47,8 +48,8 @@ type UISettings struct {
 	NotificationsEnabled bool   `toml:"notifications_enabled" json:"Enable Notifications"`
 }
 
-func NewGeneralSettings() GeneralSettings {
-	return GeneralSettings{
+func NewSettings() AdbAutoPlayerSettings {
+	return AdbAutoPlayerSettings{
 		Advanced: AdvancedSettings{
 			ADBHost:        "127.0.0.1",
 			ADBPort:        5037,
@@ -80,22 +81,22 @@ func NewGeneralSettings() GeneralSettings {
 	}
 }
 
-func LoadGeneralSettings(filePath string) (*GeneralSettings, error) {
-	defaultConfig := NewGeneralSettings()
+func LoadSettings(filePath string) (*AdbAutoPlayerSettings, error) {
+	defaultSettings := NewSettings()
 
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return &defaultConfig, nil
+			return &defaultSettings, nil
 		}
 		return nil, err
 	}
 
-	config := defaultConfig
+	settings := defaultSettings
 
-	if err = toml.Unmarshal(data, &config); err != nil {
+	if err = toml.Unmarshal(data, &settings); err != nil {
 		return nil, err
 	}
 
-	return &config, nil
+	return &settings, nil
 }

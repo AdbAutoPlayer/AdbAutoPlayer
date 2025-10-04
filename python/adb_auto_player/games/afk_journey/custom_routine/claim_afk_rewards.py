@@ -24,7 +24,7 @@ class ClaimAFKRewards(AFKJourneyBase):
         sleep(1)
         # Make sure the Popup doesn't block collecting AFK Rewards
         self.tap(Point(x=550, y=1080), scale=True, log=False)
-        if self.get_config().claim_afk_rewards:
+        if self.get_settings().claim_afk_rewards:
             for _ in range(3):
                 self.tap(Point(x=770, y=500), scale=True, log=False)
                 self.tap(Point(x=770, y=500), scale=True, log=False)

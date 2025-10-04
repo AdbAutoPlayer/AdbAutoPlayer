@@ -1,4 +1,4 @@
-"""Pydantic config validation errors."""
+"""Pydantic Settings validation errors."""
 
 
 class InvalidBoundaryError(ValueError):
@@ -11,7 +11,7 @@ class InvalidBoundaryError(ValueError):
 
 
 class MissingBoundaryValueError(ValueError):
-    """Raised when a number config is missing its min or max boundary.
+    """Raised when a number setting is missing its min or max boundary.
 
     This means you have to set ge or gt and le or lt in the Pydantic Field schema.
     """
@@ -20,18 +20,18 @@ class MissingBoundaryValueError(ValueError):
 
 
 class MissingDefaultValueError(ValueError):
-    """Raised when a config field is missing a default value."""
+    """Raised when a setting field is missing a default value."""
 
     pass
 
 
 class InvalidDefaultValueError(ValueError):
-    """Raised when a config field default value is invalid."""
+    """Raised when a setting field default value is invalid."""
 
     pass
 
 
 class RegexMissingTitleError(ValueError):
-    """Raised when a config field defines regex without title."""
+    """Raised when a setting field defines regex without title."""
 
     pass

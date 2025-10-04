@@ -38,7 +38,7 @@ func (s *IPCService) SetPythonBinaryPath(pythonBinaryPath string) {
 	s.InitializeManager()
 }
 
-// InitializeManager will be called when Service is initialized or GeneralSettings gets updated.
+// InitializeManager will be called when Service is initialized or AdbAutoPlayerSettings gets updated.
 func (s *IPCService) InitializeManager() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
