@@ -18,18 +18,18 @@ var (
 )
 
 type SettingsService struct {
-	adbAutoPlayerSettings     AdbAutoPlayerSettings
-	adbAutoPlayerSettingsPath *string
-	mu                        sync.RWMutex
+	adbAutoPlayerSettings AdbAutoPlayerSettings
+	settingsDirPath       *string
+	mu                    sync.RWMutex
 }
 
 // GetService returns the singleton instance of SettingsService
 func GetService() *SettingsService {
-	adbAutoPlayerSettingsPath := resolveAdbAutoPlayerSettingsPath()
+	SettingsDirPath := resolveSettingsDirPath()
 	once.Do(func() {
 		instance = &SettingsService{
-			adbAutoPlayerSettingsPath: &adbAutoPlayerSettingsPath,
-			adbAutoPlayerSettings:     loadAdbAutoPlayerSettingsOrDefault(&adbAutoPlayerSettingsPath),
+			settingsDirPath:       &SettingsDirPath,
+			adbAutoPlayerSettings: loadAdbAutoPlayerSettingsOrDefault(&SettingsDirPath),
 		}
 	})
 	return instance
@@ -38,7 +38,7 @@ func GetService() *SettingsService {
 // LoadSettings reloads the general settings
 func (s *SettingsService) LoadAdbAutoPlayerSettings() AdbAutoPlayerSettings {
 	s.mu.Lock()
-	generalSettings := loadAdbAutoPlayerSettingsOrDefault(s.adbAutoPlayerSettingsPath)
+	generalSettings := loadAdbAutoPlayerSettingsOrDefault(s.settingsDirPath)
 	s.adbAutoPlayerSettings = generalSettings
 	s.mu.Unlock()
 	updateLogLevel(generalSettings.Logging.Level)
@@ -64,7 +64,10 @@ func (s *SettingsService) GetAdbAutoPlayerSettingsForm() map[string]interface{} 
 
 func (s *SettingsService) SaveAdbAutoPlayerSettings(settings AdbAutoPlayerSettings) error {
 	s.mu.Lock()
-	if err := SaveTOML[AdbAutoPlayerSettings](*s.adbAutoPlayerSettingsPath, &settings); err != nil {
+
+	settingsFile := *s.settingsDirPath + "AdbAutoPlayer.toml"
+
+	if err := SaveTOML[AdbAutoPlayerSettings](settingsFile, &settings); err != nil {
 		s.mu.Unlock()
 		app.Error(err.Error())
 		return err
@@ -91,15 +94,24 @@ func (s *SettingsService) SaveAdbAutoPlayerSettings(settings AdbAutoPlayerSettin
 	return nil
 }
 
+func (s *SettingsService) GetSettingsDirPath() string {
+	if nil != s.settingsDirPath {
+		return *s.settingsDirPath
+	}
+
+	return resolveSettingsDirPath()
+}
+
 func updateLogLevel(logLevel string) {
 	logger.Get().SetLogLevelFromString(logLevel)
 }
 
-func loadAdbAutoPlayerSettingsOrDefault(tomlPath *string) AdbAutoPlayerSettings {
+func loadAdbAutoPlayerSettingsOrDefault(settingsDirPath *string) AdbAutoPlayerSettings {
 	generalSettings := NewSettings()
 
-	if tomlPath != nil {
-		loadedSettings, err := LoadSettings(*tomlPath)
+	if settingsDirPath != nil {
+		settingsFile := *settingsDirPath + "AdbAutoPlayer.toml"
+		loadedSettings, err := LoadSettings(settingsFile)
 		if err != nil {
 			app.Error(err.Error())
 		} else {
@@ -111,10 +123,10 @@ func loadAdbAutoPlayerSettingsOrDefault(tomlPath *string) AdbAutoPlayerSettings 
 	return generalSettings
 }
 
-func resolveAdbAutoPlayerSettingsPath() string {
+func resolveSettingsDirPath() string {
 	paths := []string{
-		"settings/AdbAutoPlayer.toml",       // dev, Windows
-		"../../settings/AdbAutoPlayer.toml", // macOS .app Bundle
+		"settings/",       // dev, Windows
+		"../../settings/", // macOS .app Bundle
 	}
 
 	settingsPath := path.GetFirstPathThatExists(paths)

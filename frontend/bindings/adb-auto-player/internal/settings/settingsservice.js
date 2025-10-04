@@ -30,6 +30,13 @@ export function GetAdbAutoPlayerSettingsForm() {
 }
 
 /**
+ * @returns {$CancellablePromise<string>}
+ */
+export function GetSettingsDirPath() {
+    return $Call.ByID(3505840555);
+}
+
+/**
  * LoadSettings reloads the general settings
  * @returns {$CancellablePromise<$models.AdbAutoPlayerSettings>}
  */

@@ -5,7 +5,6 @@ import (
 	"adb-auto-player/internal/event_names"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/logger"
-	"adb-auto-player/internal/path"
 	"adb-auto-player/internal/process"
 	"adb-auto-player/internal/settings"
 	"archive/zip"
@@ -209,21 +208,10 @@ func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interfa
 	var gameSettings interface{}
 	var err error
 
-	workingDir, err := os.Getwd()
-	if err != nil {
-		logger.Get().Errorf("Failed to get current working directory: %v", err)
-		return nil, err
-	}
-
-	paths := []string{
-		filepath.Join(workingDir, "games", game.SettingsFile),                        // Windows .exe
-		filepath.Join(workingDir, "python/adb_auto_player/games", game.SettingsFile), // Dev
-		filepath.Join(workingDir, "../Resources/games", game.SettingsFile),           // MacOS .app Bundle
-	}
-	settingsFile := path.GetFirstPathThatExists(paths)
+	settingsFilePath := settings.GetService().GetSettingsDirPath() + g.gameGUI.SettingsFile
 
 	g.mu.Lock()
-	if settingsFile == "" {
+	if settingsFilePath == "" {
 		g.mu.Unlock()
 		response := map[string]interface{}{
 			"settings":    map[string]interface{}{},
@@ -235,7 +223,7 @@ func (g *GamesService) GetGameSettingsForm(game ipc.GameGUI) (map[string]interfa
 
 	g.mu.Unlock()
 
-	gameSettings, err = settings.LoadTOML[map[string]interface{}](settingsFile)
+	gameSettings, err = settings.LoadTOML[map[string]interface{}](settingsFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +240,8 @@ func (g *GamesService) SaveGameSettings(gameSettings map[string]interface{}) (*i
 	defer app.Emit(event_names.GameSettingsUpdated)
 	defer g.mu.Unlock()
 
-	if err := settings.SaveTOML[map[string]interface{}](g.gameGUI.SettingsFile, &gameSettings); err != nil {
+	settingsFilePath := settings.GetService().GetSettingsDirPath() + g.gameGUI.SettingsFile
+	if err := settings.SaveTOML[map[string]interface{}](settingsFilePath, &gameSettings); err != nil {
 		return nil, err
 	}
 	logger.Get().Infof("Saving Game Settings")

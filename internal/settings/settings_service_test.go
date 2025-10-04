@@ -74,8 +74,8 @@ func TestSettingsService_SaveAdbAutoPlayerSettings_WithTempFile(t *testing.T) {
 
 	// Create a service instance with a specific path
 	service := &SettingsService{
-		adbAutoPlayerSettingsPath: &tempFile,
-		adbAutoPlayerSettings:     NewSettings(),
+		settingsDirPath:       &tempFile,
+		adbAutoPlayerSettings: NewSettings(),
 	}
 
 	// Create test settings
@@ -106,7 +106,7 @@ func TestSettingsService_SaveAdbAutoPlayerSettings_WithTempFile(t *testing.T) {
 
 func TestResolveAdbAutoPlayerSettingsPath(t *testing.T) {
 	// Test the path resolution logic
-	path := resolveAdbAutoPlayerSettingsPath()
+	path := resolveSettingsDirPath()
 
 	// Should return a non-empty string
 	if path == "" {
@@ -114,7 +114,7 @@ func TestResolveAdbAutoPlayerSettingsPath(t *testing.T) {
 	}
 
 	// Should return the first fallback path if no files exist
-	expectedFallback := "settings/AdbAutoPlayer.toml"
+	expectedFallback := "settings/"
 	if path == expectedFallback {
 		// This is expected when no Settings files exist
 		return
@@ -122,8 +122,8 @@ func TestResolveAdbAutoPlayerSettingsPath(t *testing.T) {
 
 	// If it's not the fallback, it should be one of the predefined paths
 	validPaths := []string{
-		"settings/AdbAutoPlayer.toml",
-		"../../settings/AdbAutoPlayer.toml",
+		"settings/",
+		"../../settings/",
 	}
 
 	isValid := false
@@ -225,8 +225,8 @@ func TestSettingsService_Integration(t *testing.T) {
 
 	// Manually create service instance with temp path
 	service := &SettingsService{
-		adbAutoPlayerSettingsPath: &tempFile,
-		adbAutoPlayerSettings:     initialSettings,
+		settingsDirPath:       &tempFile,
+		adbAutoPlayerSettings: initialSettings,
 	}
 
 	// Save settings
