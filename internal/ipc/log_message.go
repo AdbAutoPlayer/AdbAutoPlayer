@@ -1,6 +1,7 @@
 package ipc
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -37,4 +38,8 @@ func NewLogMessage(
 		LineNumber:   nil,
 		HTMLClass:    nil,
 	}
+}
+
+func NewLogMessagef(level LogLevel, format string, a ...any) LogMessage {
+	return NewLogMessage(level, fmt.Sprintf(format, a...))
 }

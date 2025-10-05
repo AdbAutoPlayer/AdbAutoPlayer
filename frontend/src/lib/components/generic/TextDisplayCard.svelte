@@ -2,38 +2,48 @@
   import IconX from "$lib/components/icons/feather/IconX.svelte";
   import IconArrowDown from "$lib/components/icons/feather/IconArrowDown.svelte";
   import IconArrowUp from "$lib/components/icons/feather/IconArrowUp.svelte";
-  import { Events } from "@wailsio/runtime";
-  import { EventNames } from "$lib/log/eventNames";
-  import { Instant } from "@js-joda/core";
+  import type { TextDisplayCardItem } from "$lib/log/logHelper";
 
-  type LogEntry = {
-    message: string;
-    timestamp: Instant;
-    html_class: string;
+  type TextDisplayCardProps = {
+    entries?: TextDisplayCardItem[];
+    maxEntries?: number;
+    enableSearch?: boolean;
   };
 
-  let logs: LogEntry[] = $state([]);
+  let {
+    entries = $bindable([]),
+    maxEntries = 1000,
+    enableSearch = true,
+  }: TextDisplayCardProps = $props();
+
   let searchTerm: string = $state("");
   let searchVisible: boolean = $state(false);
   let currentMatchIndex: number = $state(-1);
   let searchInput: HTMLInputElement | null = $state(null);
+  let logContainer: HTMLDivElement;
 
-  const maxLogEntries = 1000;
-
-  function formatMessage(message: string): string {
-    const urlRegex = /(https?:\/\/[^\s'"]+)/g;
-    return message
-      .replace(urlRegex, '<a class="anchor" href="$1" target="_blank">$1</a>')
-      .replace(/\r?\n/g, "<br>");
+  // Public API methods
+  export function appendEntry(entry: TextDisplayCardItem) {
+    insertEntry(entry);
+    if (entries.length > maxEntries) {
+      entries.shift();
+    }
   }
 
-  function getLogClass(message: string): string {
-    if (message.includes("[DEBUG]")) return "text-primary-500";
-    if (message.includes("[INFO]")) return "text-success-500";
-    if (message.includes("[WARNING]")) return "text-warning-500";
-    if (message.includes("[ERROR]")) return "text-error-500";
-    if (message.includes("[FATAL]")) return "text-error-950";
-    return "text-primary-50";
+  export function slice(start: number, end?: number) {
+    entries = entries.slice(start, end);
+  }
+
+  export function clear() {
+    entries = [];
+  }
+
+  function insertEntry(entry: TextDisplayCardItem) {
+    let i = entries.length - 1;
+    while (i >= 0 && entries[i].timestamp.isAfter(entry.timestamp)) {
+      i--;
+    }
+    entries.splice(i + 1, 0, entry);
   }
 
   function highlightText(
@@ -51,9 +61,8 @@
     let matchCounter = 0;
     let cumulativeMatchIndex = 0;
 
-    // Calculate the starting match index for this log entry
     for (let i = 0; i < logIndex; i++) {
-      const matches = logs[i].message.match(regex);
+      const matches = entries[i].message.match(regex);
       if (matches) {
         cumulativeMatchIndex += matches.length;
       }
@@ -72,7 +81,6 @@
     });
   }
 
-  // Recalculate total match count across all logs
   const totalMatchCount = $derived.by(() => {
     if (!searchTerm) return 0;
 
@@ -82,8 +90,8 @@
       "gi",
     );
 
-    logs.forEach((log) => {
-      const matches = log.message.match(regex);
+    entries.forEach((entry) => {
+      const matches = entry.message.match(regex);
       if (matches) {
         total += matches.length;
       }
@@ -103,7 +111,8 @@
   }
 
   function handleKeydown(event: KeyboardEvent) {
-    // Ctrl+F to open search
+    if (!enableSearch) return;
+
     if (event.ctrlKey && event.key === "f") {
       event.preventDefault();
       toggleSearch();
@@ -143,84 +152,20 @@
     currentMatchIndex = -1;
   }
 
-  Events.On(EventNames.WRITE_SUMMARY_TO_LOG, (ev) => {
-    const summary = ev.data;
-    if (!summary) {
-      return;
-    }
-    addSummaryMessageToLog(ev.data);
-  });
-
-  function addSummaryMessageToLog(summary: { summary_message: string }) {
-    const summaryMessage = formatMessage(summary.summary_message);
-    if ("" === summaryMessage) {
-      return;
-    }
-    insertLogEntry({
-      message: summaryMessage,
-      timestamp: Instant.now(),
-      html_class: "whitespace-pre-wrap text-success-950",
-    });
-  }
-
-  Events.On(EventNames.LOG_MESSAGE, (ev) => {
-    const logMessage: LogMessage = ev.data;
-    let message = "";
-    if (logMessage.level === "DEBUG") {
-      const parts = [];
-      if (logMessage.source_file) parts.push(logMessage.source_file);
-      if (logMessage.function_name) parts.push(logMessage.function_name);
-      if (logMessage.line_number) parts.push(String(logMessage.line_number));
-      const debugInfo = parts.length > 0 ? ` (${parts.join("::")})` : "";
-
-      message = `[${logMessage.level}]${debugInfo} ${formatMessage(logMessage.message)}`;
-    } else {
-      message = `[${logMessage.level}] ${formatMessage(logMessage.message)}`;
-    }
-
-    if (logs.length >= maxLogEntries) {
-      logs.shift();
-    }
-    insertLogEntry({
-      message,
-      timestamp: Instant.parse(logMessage.timestamp),
-      html_class: logMessage.html_class ?? getLogClass(message),
-    });
-  });
-
-  Events.On(EventNames.ADB_AUTO_PLAYER_SETTINGS_UPDATED, () => {
-    logs = logs.slice(0, 1);
-  });
-
-  function insertLogEntry(entry: LogEntry) {
-    let i = logs.length - 1;
-
-    while (i >= 0 && logs[i].timestamp.isAfter(entry.timestamp)) {
-      i--;
-    }
-
-    logs.splice(i + 1, 0, entry);
-  }
-
-  let logContainer: HTMLDivElement;
-
   $effect(() => {
-    if (logContainer && logs.length > 0 && !searchTerm) {
+    if (logContainer && entries.length > 0 && !searchTerm) {
       logContainer.scrollTop = logContainer.scrollHeight;
     }
   });
 
-  // Reset search when logs change significantly
   $effect(() => {
     if (searchTerm && currentMatchIndex >= totalMatchCount) {
       currentMatchIndex = totalMatchCount > 0 ? 0 : -1;
     }
   });
 
-  // Auto-scroll to current match when currentMatchIndex changes
   $effect(() => {
     if (searchTerm && currentMatchIndex >= 0 && totalMatchCount > 0) {
-      // Small delay to ensure DOM is updated with new highlights
       setTimeout(() => scrollToMatch(), 50);
     }
   });
@@ -232,15 +177,14 @@
   <div
     class="relative h-full flex-grow flex-col card bg-surface-100-900/50 p-4"
   >
-    <!-- Search Bar -->
-    {#if searchVisible}
+    {#if enableSearch && searchVisible}
       <div
         class="absolute top-2 right-2 z-10 flex items-center gap-2 rounded-lg border border-surface-300-700 bg-surface-200-800 p-2 shadow-lg"
       >
         <input
           bind:this={searchInput}
           bind:value={searchTerm}
-          placeholder="Search logs..."
+          placeholder="Search..."
           class="w-48 border-none bg-transparent text-sm text-surface-900-100 outline-none"
           oninput={() => (currentMatchIndex = searchTerm ? 0 : -1)}
         />
@@ -252,7 +196,6 @@
               : "0/0"}
           </div>
 
-          <!-- Navigation buttons -->
           <button
             class="hover:bg-surface-300-600 no-select rounded px-2 py-1 text-xs"
             disabled={totalMatchCount === 0}
@@ -301,7 +244,7 @@
       class="h-full flex-grow overflow-y-scroll font-mono break-words whitespace-normal select-text"
       bind:this={logContainer}
     >
-      {#each logs as { message, html_class }, index}
+      {#each entries as { message, html_class }, index}
         <div class={html_class}>
           {@html searchTerm
             ? highlightText(message, searchTerm, index)

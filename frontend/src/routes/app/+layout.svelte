@@ -1,7 +1,7 @@
 <script lang="ts">
   import LogoSticky from "$lib/components/sticky/LogoSticky.svelte";
   import DocumentationIconSticky from "$lib/components/sticky/DocumentationIconSticky.svelte";
-  import LogDisplayCard from "$lib/components/log/LogDisplayCard.svelte";
+  import ActiveLogDisplayCard from "$lib/components/log/ActiveLogDisplayCard.svelte";
   import { onMount } from "svelte";
   import UpdateContainer from "$lib/components/updater/UpdateContainer.svelte";
   import { Toaster } from "@skeletonlabs/skeleton-svelte";
@@ -28,5 +28,5 @@
   <main class="w-full pt-2 pr-4 pb-4 pl-4">
     {@render children()}
   </main>
-  <LogDisplayCard />
+  <ActiveLogDisplayCard />
 </div>
