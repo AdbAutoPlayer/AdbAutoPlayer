@@ -49,7 +49,7 @@
         callback: () => openAdbAutoPlayerSettingsForm(),
         isProcessRunning: false,
         option: MenuOption.createFrom({
-          label: "General Settings",
+          label: "AdbAutoPlayer Settings",
           category: "Settings, Phone & Debug",
           tooltip:
             "Global settings-form that apply to the app as a whole, not specific to any game.",
@@ -186,7 +186,7 @@
     try {
       await SaveAdbAutoPlayerSettings(settingsForm);
     } catch (error) {
-      showErrorToast(error, { title: "Failed to Save General Settings" });
+      showErrorToast(error, { title: "Failed to Save AdbAutoPlayer Settings" });
     }
 
     updateStateTimeout = setTimeout(updateStateHandler, 1000);
@@ -243,7 +243,7 @@
       showSettingsForm = true;
     } catch (error) {
       showErrorToast(error, {
-        title: "Failed to create General Settings Form",
+        title: "Failed to create AdbAutoPlayer Settings Form",
       });
       $pollRunningGame = true;
     }
