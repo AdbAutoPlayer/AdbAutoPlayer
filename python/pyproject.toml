@@ -23,6 +23,7 @@ dependencies = [
 
 [project.scripts]
 adb-auto-player = "adb_auto_player.main:main"
+log-to-text = "adb_auto_player.scripts.log_file_to_text:main"
 
 [dependency-groups]
 dev = [
