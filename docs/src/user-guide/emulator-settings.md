@@ -13,7 +13,7 @@
 - **Display**:
   - **Resolution Setting**: Select **Mobile Mode (1080 × 1920)**.
 
-### AdbAutoPlayer General Settings
+### AdbAutoPlayer Settings
 
 Device ID: `127.0.0.1:7555`
 
@@ -40,7 +40,7 @@ Device ID: `127.0.0.1:7555`
 - **Others**:
     - **ADB Debugging**: Enable **Local Connection**.
 
-### AdbAutoPlayer General Settings
+### AdbAutoPlayer Settings
 Device ID: `emulator-5554`
 
 ---
