@@ -29,9 +29,9 @@ class AFKStagesMixin(AFKJourneyBase):
         kwargs={"season": False},
     )
     @register_command(
-        name="SeasonTalentStages",
+        name="SeasonAFKStages",
         gui=GUIMetadata(
-            label="Season Talent Stages",
+            label="Season AFK Stages",
             category=AFKJCategory.GAME_MODES,
         ),
         kwargs={"season": True},
@@ -41,7 +41,7 @@ class AFKStagesMixin(AFKJourneyBase):
         kwargs={"season": False},
     )
     @register_custom_routine_choice(
-        label="Season Talent Stages",
+        label="Season AFK Stages",
         kwargs={"season": True},
     )
     def push_afk_stages(self, season: bool) -> None:
@@ -51,9 +51,7 @@ class AFKStagesMixin(AFKJourneyBase):
             season: Push Season Stage if True otherwise push regular AFK Stages
         """
         self.start_up()
-        self.battle_state.mode = (
-            Mode.SEASON_TALENT_STAGES if season else Mode.AFK_STAGES
-        )
+        self.battle_state.mode = Mode.SEASON_AFK_STAGES if season else Mode.AFK_STAGES
 
         try:
             self._start_afk_stage()
@@ -80,11 +78,11 @@ class AFKStagesMixin(AFKJourneyBase):
 
     def _select_afk_stage(self) -> None:
         """Selects an AFK stage template."""
-        if self.battle_state.mode == Mode.SEASON_TALENT_STAGES:
+        if self.battle_state.mode == Mode.SEASON_AFK_STAGES:
             self.tap(
                 Point(x=300, y=1610),
                 scale=True,
-                log_message="Clicking Talent Trials button",
+                log_message="Clicking Season AFK Stages button",
             )
         else:
             self.tap(
@@ -101,15 +99,14 @@ class AFKStagesMixin(AFKJourneyBase):
 
     def check_stages_are_available(self) -> None:
         if (
-            self.battle_state.mode == Mode.SEASON_TALENT_STAGES
+            self.battle_state.mode == Mode.SEASON_AFK_STAGES
             and self.game_find_template_match(
                 "afk_stages/battle_large.png",
                 crop_regions=CropRegions(left=0.3, right=0.3, top=0.5),
             )
         ):
             raise AutoPlayerWarningError(
-                "Season Talent Stages not available are they already cleared? "
-                "Exiting..."
+                "Season AFK Stages not available are they already cleared? Exiting..."
             )
         if self.battle_state.mode == Mode.AFK_STAGES and self.game_find_template_match(
             "afk_stages/talent_trials_large.png",
