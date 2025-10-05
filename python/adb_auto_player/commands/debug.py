@@ -1,9 +1,11 @@
 """Debug Commands."""
 
 import logging
+import platform
 import pprint
 import time
 
+import psutil
 from adb_auto_player.decorators import register_command
 from adb_auto_player.device.adb import AdbClientHelper, AdbController
 from adb_auto_player.models.geometry import PointOutsideDisplay
@@ -18,6 +20,7 @@ from adbutils import AdbClient
 def _log_debug() -> None:
     logging.getLogger().setLevel(logging.DEBUG)
     logging.info("--- Debug Info Start ---")
+    _log_hardware_info()
     _log_adb_auto_player_settings()
     if not _get_and_log_adb_client():
         logging.warning("ADB client could not be initialized.")
@@ -40,6 +43,15 @@ def _log_debug() -> None:
 
     logging.info("--- Debug Info End ---")
     return
+
+
+def _log_hardware_info() -> None:
+    logging.info("--- Hardware Info Start ---")
+    logging.info(f"OS: {platform.platform()}")
+    logging.info(f"Processor: {platform.processor()}")
+    logging.info(f"CPU count: {psutil.cpu_count()}")
+    logging.info(f"Memory: {round(psutil.virtual_memory().total / (1024**3), 2)}")
+    logging.info("--- Hardware Info End ---")
 
 
 def _log_adb_auto_player_settings() -> None:
