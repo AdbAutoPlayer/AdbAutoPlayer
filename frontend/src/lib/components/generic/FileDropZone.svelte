@@ -5,7 +5,7 @@
 </script>
 
 <div
-  class="mx-auto flex flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed p-8 text-center text-surface-700 hover:border-surface-900"
+  class="mx-auto flex w-full flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed p-8 text-center text-surface-700 hover:border-surface-900"
   data-wails-dropzone
 >
   <FilePlus size={48} />
