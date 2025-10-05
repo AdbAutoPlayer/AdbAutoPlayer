@@ -138,7 +138,7 @@ class IPCModelConverter:
 
         try:
             settings = game_metadata.gui_metadata.settings_class.from_toml(
-                SettingsLoader.games_dir() / game_metadata.settings_file
+                SettingsLoader.settings_dir() / game_metadata.settings_file
             )
         except Exception:
             return None
