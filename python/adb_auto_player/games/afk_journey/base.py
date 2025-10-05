@@ -409,7 +409,7 @@ class AFKJourneyBase(Navigation, Game):
 
     def _get_battle_over_templates(self) -> list[str]:
         match self.battle_state.mode:
-            case Mode.AFK_STAGES | Mode.SEASON_TALENT_STAGES:
+            case Mode.AFK_STAGES | Mode.SEASON_AFK_STAGES:
                 return [
                     "next.png",
                     "battle/victory_rewards.png",
