@@ -7,6 +7,7 @@ class HeroesEnum(StrEnum):
     def _generate_next_value_(name, start, count, last_values):  # noqa: N805
         return name.replace("_and_", " & ").replace("_", " ")
 
+    Aliceth = auto()
     Alsa = auto()
     Antandra = auto()
     Arden = auto()
@@ -64,7 +65,9 @@ class HeroesEnum(StrEnum):
     Pandora = auto()
     Pang = auto()
     Parisa = auto()
+    Perseus = auto()
     Phraesto = auto()
+    Ravion = auto()
     Reinier = auto()
     Rhys = auto()
     Rowan = auto()
@@ -92,3 +95,5 @@ class HeroesEnum(StrEnum):
     Velara = auto()
     Viperian = auto()
     Walker = auto()
+    Zandrok = auto()
+    Zanie = auto()
