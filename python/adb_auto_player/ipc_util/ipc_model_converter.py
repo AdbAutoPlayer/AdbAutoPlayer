@@ -6,7 +6,7 @@ from adb_auto_player.ipc import GameGUIOptions, MenuOption
 from adb_auto_player.models.commands import MenuItem
 from adb_auto_player.models.registries import GameMetadata
 from adb_auto_player.registries import COMMAND_REGISTRY
-from adb_auto_player.settings import ConfigLoader
+from adb_auto_player.settings import SettingsLoader
 
 from .ipc_constraint_extractor import IPCConstraintExtractor
 
@@ -28,7 +28,7 @@ class IPCModelConverter:
         return MenuOption(
             label=label,
             args=menu_item.args or [],
-            custom_label=IPCModelConverter._resolve_label_from_config(
+            custom_label=IPCModelConverter._resolve_label_from_settings(
                 menu_item,
                 game_metadata,
             ),
@@ -52,9 +52,7 @@ class IPCModelConverter:
 
         return GameGUIOptions(
             game_title=game.name,
-            config_path=(
-                game.config_file_path.as_posix() if game.config_file_path else None
-            ),
+            settings_file=game.settings_file,
             menu_options=menu_options,
             categories=list(categories),
             constraints=constraints,
@@ -119,37 +117,37 @@ class IPCModelConverter:
     @staticmethod
     def _extract_constraints_from_game(game: GameMetadata) -> dict | None:
         """Extract constraints from game metadata."""
-        if game.gui_metadata and game.gui_metadata.config_class:
+        if game.gui_metadata and game.gui_metadata.settings_class:
             return IPCConstraintExtractor.get_constraints_from_model(
-                game.gui_metadata.config_class
+                game.gui_metadata.settings_class
             )
         return None
 
     @staticmethod
-    def _resolve_label_from_config(
+    def _resolve_label_from_settings(
         menu_item: MenuItem,
         game_metadata: GameMetadata,
     ) -> str | None:
         if (
-            not menu_item.label_from_config
-            or not game_metadata.config_file_path
+            not menu_item.label_from_settings
+            or not game_metadata.settings_file
             or not game_metadata.gui_metadata
-            or not game_metadata.gui_metadata.config_class
+            or not game_metadata.gui_metadata.settings_class
         ):
             return None
 
         try:
-            config = game_metadata.gui_metadata.config_class.from_toml(
-                ConfigLoader.games_dir() / game_metadata.config_file_path
+            settings = game_metadata.gui_metadata.settings_class.from_toml(
+                SettingsLoader.settings_dir() / game_metadata.settings_file
             )
         except Exception:
             return None
 
-        if not config:
+        if not settings:
             return None
 
-        path_parts = menu_item.label_from_config.split(".")
-        current = config
+        path_parts = menu_item.label_from_settings.split(".")
+        current = settings
 
         try:
             for part in path_parts:

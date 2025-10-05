@@ -79,8 +79,8 @@ func (pm *IPCManager) sendGET(endpoint string) (*http.Response, error) {
 
 	serverUrl := fmt.Sprintf(
 		"http://%s:%d%s",
-		settings.GetService().GetGeneralSettings().Advanced.AutoPlayerHost,
-		settings.GetService().GetGeneralSettings().Advanced.AutoPlayerPort,
+		settings.GetService().GetAdbAutoPlayerSettings().Advanced.AutoPlayerHost,
+		settings.GetService().GetAdbAutoPlayerSettings().Advanced.AutoPlayerPort,
 		endpoint,
 	)
 
@@ -127,8 +127,8 @@ func (pm *IPCManager) healthCheck() (bool, error) {
 
 // checkPortInUse checks if the specified host and port are already in use.
 func (pm *IPCManager) checkPortInUse() (bool, error) {
-	host := settings.GetService().GetGeneralSettings().Advanced.AutoPlayerHost
-	port := settings.GetService().GetGeneralSettings().Advanced.AutoPlayerPort
+	host := settings.GetService().GetAdbAutoPlayerSettings().Advanced.AutoPlayerHost
+	port := settings.GetService().GetAdbAutoPlayerSettings().Advanced.AutoPlayerPort
 	addr := fmt.Sprintf("%s:%d", host, port)
 
 	listener, err := net.Listen("tcp", addr)
@@ -168,8 +168,8 @@ func (pm *IPCManager) startServer() error {
 func (pm *IPCManager) startOrResolveServer() error {
 	pm.serverMutex.Lock()
 	defer pm.serverMutex.Unlock()
-	host := settings.GetService().GetGeneralSettings().Advanced.AutoPlayerHost
-	port := settings.GetService().GetGeneralSettings().Advanced.AutoPlayerPort
+	host := settings.GetService().GetAdbAutoPlayerSettings().Advanced.AutoPlayerHost
+	port := settings.GetService().GetAdbAutoPlayerSettings().Advanced.AutoPlayerPort
 
 	if pm.isServerRunning() {
 		return nil
@@ -265,8 +265,8 @@ func (pm *IPCManager) connectWebSocket() error {
 		return nil
 	}
 
-	host := settings.GetService().GetGeneralSettings().Advanced.AutoPlayerHost
-	port := settings.GetService().GetGeneralSettings().Advanced.AutoPlayerPort
+	host := settings.GetService().GetAdbAutoPlayerSettings().Advanced.AutoPlayerHost
+	port := settings.GetService().GetAdbAutoPlayerSettings().Advanced.AutoPlayerPort
 
 	u := url.URL{
 		Scheme: "ws",
@@ -345,7 +345,7 @@ func (pm *IPCManager) handleLogMessage(logMessage ipc.LogMessage) {
 
 // setupLogFile creates a log file for the current command execution.
 func (pm *IPCManager) setupLogFile(args []string) error {
-	if settings.GetService().GetGeneralSettings().Logging.TaskLogLimit <= 0 {
+	if settings.GetService().GetAdbAutoPlayerSettings().Logging.TaskLogLimit <= 0 {
 		return nil
 	}
 
@@ -370,16 +370,16 @@ func (pm *IPCManager) setupLogFile(args []string) error {
 	pm.logFile = logFile
 
 	// Clean up old log files if needed
-	if settings.GetService().GetGeneralSettings().Logging.TaskLogLimit > 0 {
+	if settings.GetService().GetAdbAutoPlayerSettings().Logging.TaskLogLimit > 0 {
 		files, err2 := filepath.Glob(filepath.Join(debugDir, "*.log"))
-		if err2 == nil && len(files) > settings.GetService().GetGeneralSettings().Logging.TaskLogLimit {
+		if err2 == nil && len(files) > settings.GetService().GetAdbAutoPlayerSettings().Logging.TaskLogLimit {
 			sort.Slice(files, func(i, j int) bool {
 				infoI, _ := os.Stat(files[i])
 				infoJ, _ := os.Stat(files[j])
 				return infoI.ModTime().Before(infoJ.ModTime())
 			})
 
-			filesToDelete := len(files) - settings.GetService().GetGeneralSettings().Logging.TaskLogLimit
+			filesToDelete := len(files) - settings.GetService().GetAdbAutoPlayerSettings().Logging.TaskLogLimit
 			for i := 0; i < filesToDelete; i++ {
 				if err = os.Remove(files[i]); err != nil {
 					logger.Get().Debugf("Failed to delete old log file %s: %v", files[i], err)
@@ -569,8 +569,8 @@ func (pm *IPCManager) sendPOST(endpoint string, requestBody interface{}) ([]byte
 
 	serverUrl := fmt.Sprintf(
 		"http://%s:%d%s",
-		settings.GetService().GetGeneralSettings().Advanced.AutoPlayerHost,
-		settings.GetService().GetGeneralSettings().Advanced.AutoPlayerPort,
+		settings.GetService().GetAdbAutoPlayerSettings().Advanced.AutoPlayerHost,
+		settings.GetService().GetAdbAutoPlayerSettings().Advanced.AutoPlayerPort,
 		endpoint,
 	)
 

@@ -34,13 +34,13 @@ from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.device import DisplayInfo, Orientation
 from adb_auto_player.models.geometry import Coordinates, Point, PointOutsideDisplay
 from adb_auto_player.models.image_manipulation import CropRegions
-from adb_auto_player.models.pydantic import MyCustomRoutineConfig
+from adb_auto_player.models.pydantic import MyCustomRoutineSettings
 from adb_auto_player.models.registries import CustomRoutineEntry
 from adb_auto_player.models.template_matching import MatchMode, TemplateMatchResult
-from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY
-from adb_auto_player.settings import ConfigLoader
+from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY, GAME_REGISTRY
+from adb_auto_player.settings import SettingsLoader
 from adb_auto_player.template_matching import TemplateMatcher
-from adb_auto_player.util import Execute, StringHelper
+from adb_auto_player.util import Execute
 from PIL import Image
 from pydantic import BaseModel
 
@@ -77,7 +77,7 @@ class Game(ABC):
 
     def __init__(self) -> None:
         """Initialize a game."""
-        self.config: BaseModel | None = None
+        self.settings: BaseModel | None = None
         self.default_threshold: ConfidenceValue = ConfidenceValue("90%")
         self.disable_debug_screenshots: bool = False
 
@@ -87,7 +87,7 @@ class Game(ABC):
         self.supports_portrait: bool = False
         self.supported_resolutions: list[str] = ["1080x1920"]
 
-        self._config_file_path: Path | None = None
+        self._settings_file_path: Path | None = None
         self._debug_screenshot_counter: int = 0
         self._device: AdbController | None = None
         self._scale_factor: float | None = None
@@ -95,13 +95,13 @@ class Game(ABC):
         self._template_dir_path: Path | None = None
 
     @abstractmethod
-    def _load_config(self):
-        """Required method to load the game configuration."""
+    def _load_settings(self):
+        """Required method to load the game settings."""
         ...
 
     @abstractmethod
-    def get_config(self) -> BaseModel:
-        """Required method to return the game configuration."""
+    def get_settings(self) -> BaseModel:
+        """Required method to return the game settings."""
         ...
 
     @property
@@ -213,8 +213,10 @@ class Game(ABC):
             return
 
         if device_streaming:
-            if not ConfigLoader.general_settings().device.streaming:
-                logging.warning("Device Streaming is disabled in General Settings")
+            if not SettingsLoader.adb_auto_player_settings().device.streaming:
+                logging.warning(
+                    "Device Streaming is disabled in AdbAutoPlayer Settings"
+                )
                 return
 
             self.start_stream()
@@ -224,7 +226,7 @@ class Game(ABC):
         return
 
     def _set_device_resolution(self):
-        if not ConfigLoader.general_settings().device.use_wm_resize:
+        if not SettingsLoader.adb_auto_player_settings().device.use_wm_resize:
             return
 
         suggested_resolution: str | None = next(
@@ -1048,7 +1050,7 @@ class Game(ABC):
         if self.disable_debug_screenshots:
             return
         debug_screenshot_save_num = (
-            ConfigLoader.general_settings().logging.debug_save_screenshots
+            SettingsLoader.adb_auto_player_settings().logging.debug_save_screenshots
         )
 
         if debug_screenshot_save_num <= 0 or screenshot is None:
@@ -1084,48 +1086,49 @@ class Game(ABC):
         except IndexError:
             raise ValueError("No module found after 'games' in module path")
 
-    def _get_config_file_path(self) -> Path:
-        if self._config_file_path is None:
-            module = self._get_game_module()
+    def _get_settings_file_path(self) -> Path:
+        if self._settings_file_path:
+            return self._settings_file_path
 
-            self._config_file_path = (
-                ConfigLoader.games_dir()
-                / module
-                / (StringHelper.snake_to_pascal(module) + ".toml")
-            )
-            logging.debug(f"{module} config path: {self._config_file_path}")
+        settings_file: str | None = None
+        for module, game in GAME_REGISTRY.items():
+            if module == self._get_game_module():
+                settings_file = game.settings_file
 
-        return self._config_file_path
+        if settings_file is None:
+            raise AutoPlayerUnrecoverableError("Game does not have any Settings")
+        self._settings_file_path = SettingsLoader.settings_dir() / settings_file
+        return self._settings_file_path
 
     def get_template_dir_path(self) -> Path:
         """Retrieve path to images."""
         if self._template_dir_path is None:
             module = self._get_game_module()
 
-            self._template_dir_path = ConfigLoader.games_dir() / module / "templates"
+            self._template_dir_path = SettingsLoader.games_dir() / module / "templates"
             logging.debug(f"{module} template path: {self._template_dir_path}")
 
         return self._template_dir_path
 
-    def _get_custom_routine_config(self, name: str) -> MyCustomRoutineConfig:
-        if hasattr(self.get_config(), name):
-            attribute = getattr(self.get_config(), name)
-            if isinstance(attribute, MyCustomRoutineConfig):
+    def _get_custom_routine_settings(self, name: str) -> MyCustomRoutineSettings:
+        if hasattr(self.get_settings(), name):
+            attribute = getattr(self.get_settings(), name)
+            if isinstance(attribute, MyCustomRoutineSettings):
                 return attribute
             else:
                 raise ValueError(
-                    f"Attribute '{name}' exists but is not a TaskListConfig"
+                    f"Attribute '{name}' exists but is not MyCustomRoutineSettings"
                 )
-        raise AttributeError(f"Configuration has no attribute '{name}'")
+        raise AttributeError(f"Settings has no attribute '{name}'")
 
-    def _execute_custom_routine(self, config: MyCustomRoutineConfig) -> None:
+    def _execute_custom_routine(self, settings: MyCustomRoutineSettings) -> None:
         game_commands = self._get_game_commands()
         if not game_commands:
             logging.error("Failed to load Custom Routine Tasks.")
             return
 
         custom_routines: dict[str, CustomRoutineEntry] = {}
-        for task in config.tasks:
+        for task in settings.tasks:
             routine = self._get_custom_routine_for_task(task, game_commands)
             if not routine:
                 logging.error(f"Task '{task}' not found")
@@ -1137,7 +1140,7 @@ class Game(ABC):
             return
 
         self._execute_tasks(custom_routines)
-        while config.repeat:
+        while settings.repeat:
             self._execute_tasks(custom_routines)
 
     def _get_game_commands(self) -> dict[str, CustomRoutineEntry] | None:

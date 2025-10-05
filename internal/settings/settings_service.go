@@ -6,9 +6,12 @@ import (
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/logger"
 	"adb-auto-player/internal/path"
-	"github.com/wailsapp/wails/v3/pkg/application"
+	"os"
+	"path/filepath"
 	"runtime"
 	"sync"
+
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 var (
@@ -17,65 +20,68 @@ var (
 )
 
 type SettingsService struct {
-	generalSettings     GeneralSettings
-	generalSettingsPath *string
-	mu                  sync.RWMutex
+	adbAutoPlayerSettings AdbAutoPlayerSettings
+	settingsDirPath       *string
+	mu                    sync.RWMutex
 }
 
 // GetService returns the singleton instance of SettingsService
 func GetService() *SettingsService {
-	generalSettingsPath := resolveGeneralSettingsPath()
+	SettingsDirPath := resolveSettingsDirPath()
 	once.Do(func() {
 		instance = &SettingsService{
-			generalSettingsPath: &generalSettingsPath,
-			generalSettings:     loadGeneralSettingsOrDefault(&generalSettingsPath),
+			settingsDirPath:       &SettingsDirPath,
+			adbAutoPlayerSettings: loadAdbAutoPlayerSettingsOrDefault(&SettingsDirPath),
 		}
 	})
 	return instance
 }
 
-// LoadGeneralSettings reloads the general settings
-func (s *SettingsService) LoadGeneralSettings() GeneralSettings {
+// LoadSettings reloads the general settings
+func (s *SettingsService) LoadAdbAutoPlayerSettings() AdbAutoPlayerSettings {
 	s.mu.Lock()
-	generalSettings := loadGeneralSettingsOrDefault(s.generalSettingsPath)
-	s.generalSettings = generalSettings
+	generalSettings := loadAdbAutoPlayerSettingsOrDefault(s.settingsDirPath)
+	s.adbAutoPlayerSettings = generalSettings
 	s.mu.Unlock()
 	updateLogLevel(generalSettings.Logging.Level)
 	return generalSettings
 }
 
-// GetGeneralSettings returns the current general settings
-func (s *SettingsService) GetGeneralSettings() GeneralSettings {
+// GetAdbAutoPlayerSettings returns the current general settings
+func (s *SettingsService) GetAdbAutoPlayerSettings() AdbAutoPlayerSettings {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.generalSettings
+	return s.adbAutoPlayerSettings
 }
 
-func (s *SettingsService) GetGeneralSettingsForm() map[string]interface{} {
-	generalSettings := s.LoadGeneralSettings()
+func (s *SettingsService) GetAdbAutoPlayerSettingsForm() map[string]interface{} {
+	generalSettings := s.LoadAdbAutoPlayerSettings()
 
 	response := map[string]interface{}{
 		"settings":    generalSettings,
-		"constraints": ipc.GetMainConfigConstraints(),
+		"constraints": ipc.GetAdbAutoPlayerSettingsConstraints(),
 	}
 	return response
 }
 
-func (s *SettingsService) SaveGeneralSettings(settings GeneralSettings) error {
+func (s *SettingsService) SaveAdbAutoPlayerSettings(settings AdbAutoPlayerSettings) error {
 	s.mu.Lock()
-	if err := SaveTOML[GeneralSettings](*s.generalSettingsPath, &settings); err != nil {
+
+	settingsFile := filepath.Join(*s.settingsDirPath, "AdbAutoPlayer.toml")
+
+	if err := SaveTOML[AdbAutoPlayerSettings](settingsFile, &settings); err != nil {
 		s.mu.Unlock()
 		app.Error(err.Error())
 		return err
 	}
 
-	old := s.generalSettings.Advanced
+	old := s.adbAutoPlayerSettings.Advanced
 	if old.AutoPlayerHost != settings.Advanced.AutoPlayerHost || old.AutoPlayerPort != settings.Advanced.AutoPlayerPort {
 		app.Emit(event_names.ServerAddressChanged)
 	}
 
-	s.generalSettings = settings
-	updateLogLevel(s.generalSettings.Logging.Level)
+	s.adbAutoPlayerSettings = settings
+	updateLogLevel(s.adbAutoPlayerSettings.Logging.Level)
 	s.mu.Unlock()
 
 	if settings.UI.NotificationsEnabled && runtime.GOOS != "windows" {
@@ -85,20 +91,29 @@ func (s *SettingsService) SaveGeneralSettings(settings GeneralSettings) error {
 		logger.Get().Warningf("Setting: 'Close button should minimize the window' only works on Windows")
 	}
 
-	app.EmitEvent(&application.CustomEvent{Name: event_names.GeneralSettingsUpdated, Data: settings})
+	app.EmitEvent(&application.CustomEvent{Name: event_names.AdbAutoPlayerSettingsUpdated, Data: settings})
 	logger.Get().Infof("Saved General Settings")
 	return nil
+}
+
+func (s *SettingsService) GetSettingsDirPath() string {
+	if nil != s.settingsDirPath {
+		return *s.settingsDirPath
+	}
+
+	return resolveSettingsDirPath()
 }
 
 func updateLogLevel(logLevel string) {
 	logger.Get().SetLogLevelFromString(logLevel)
 }
 
-func loadGeneralSettingsOrDefault(tomlPath *string) GeneralSettings {
-	generalSettings := NewGeneralSettings()
+func loadAdbAutoPlayerSettingsOrDefault(settingsDirPath *string) AdbAutoPlayerSettings {
+	generalSettings := NewSettings()
 
-	if tomlPath != nil {
-		loadedSettings, err := LoadGeneralSettings(*tomlPath)
+	if settingsDirPath != nil {
+		settingsFile := filepath.Join(*settingsDirPath, "AdbAutoPlayer.toml")
+		loadedSettings, err := LoadSettings(settingsFile)
 		if err != nil {
 			app.Error(err.Error())
 		} else {
@@ -110,11 +125,15 @@ func loadGeneralSettingsOrDefault(tomlPath *string) GeneralSettings {
 	return generalSettings
 }
 
-func resolveGeneralSettingsPath() string {
+func resolveSettingsDirPath() string {
 	paths := []string{
-		"config.toml",              // distributed
-		"config/config.toml",       // dev
-		"../../config/config.toml", // macOS dev no not a joke
+		"settings/", // dev, Windows
+	}
+
+	if runtime.GOOS == "darwin" {
+		home, _ := os.UserHomeDir()
+		macPath := filepath.Join(home, "Library/Application Support/AdbAutoPlayer/settings/")
+		paths = append([]string{macPath}, paths...)
 	}
 
 	settingsPath := path.GetFirstPathThatExists(paths)

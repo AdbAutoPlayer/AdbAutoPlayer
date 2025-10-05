@@ -25,7 +25,7 @@ func (u *UpdateService) CheckForUpdates() (UpdateInfo, error) {
 		return UpdateInfo{Disabled: true}, nil
 	}
 
-	updateSettings := settings.GetService().GetGeneralSettings().Update
+	updateSettings := settings.GetService().GetAdbAutoPlayerSettings().Update
 
 	return u.updateManager.CheckForUpdates(updateSettings.AutoUpdate, updateSettings.EnableAlphaUpdates)
 }

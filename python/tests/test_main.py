@@ -15,14 +15,14 @@ class TestMain(unittest.TestCase):
 
         This test verifies that the get_gui_games_menu function returns a JSON string
         containing the expected game menu details for the GUI. It checks that the
-        JSON string includes the game title, config path, menu options, and specific
+        JSON string includes the game title, settings file, menu options, and specific
         constraints. It also ensures that the print function is not called, indicating
         no output to the console during the function's execution.
         """
         menu_json_string = get_game_menu_string("AFK Journey")
         self.assertIn('"game_title": "AFK Journey"', menu_json_string)
         self.assertIn(
-            '"config_path": "afk_journey/AFKJourney.toml"',
+            '"settings_file": "AFKJourney.toml"',
             menu_json_string,
         )
         # check Menu Buttons are sent

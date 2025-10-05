@@ -188,7 +188,7 @@
     });
   });
 
-  Events.On(EventNames.GENERAL_SETTINGS_UPDATED, () => {
+  Events.On(EventNames.ADB_AUTO_PLAYER_SETTINGS_UPDATED, () => {
     logs = logs.slice(0, 1);
   });
 

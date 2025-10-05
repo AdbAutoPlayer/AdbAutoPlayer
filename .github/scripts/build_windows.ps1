@@ -74,8 +74,7 @@ $GamesSource = Join-Path $Workspace "python/adb_auto_player/games"
 $Items = Get-ChildItem -Path $GamesSource -Recurse | Where-Object {
     -not ($_.FullName -match '\\_') -and      # Exclude directories starting with "_"
     -not ($_.FullName -match '\\mixins($|\\)') -and  # Exclude directories named "mixins"
-    -not ($_.Extension -eq '.py') -and        # Exclude .py files
-    -not ($_.Extension -eq '.toml')           # Exclude .toml files
+    -not ($_.Extension -eq '.py')  # Exclude .py files
 }
 
 foreach ($Item in $Items) {

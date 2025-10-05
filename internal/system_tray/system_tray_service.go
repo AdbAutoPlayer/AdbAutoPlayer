@@ -104,7 +104,7 @@ func buildSystemTray(wailsApp *application.App, appWindow *application.WebviewWi
 
 	appWindow.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
 		e.Cancel()
-		if settings.GetService().GetGeneralSettings().UI.CloseShouldMinimize {
+		if settings.GetService().GetAdbAutoPlayerSettings().UI.CloseShouldMinimize {
 			appWindow.Hide()
 			return
 		}

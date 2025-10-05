@@ -22,10 +22,10 @@ class GuitarGirl(Game):
         self.supports_portrait = True
         self.package_name = "com.neowiz.game.guitargirl"
 
-    def get_config(self) -> BaseModel:
+    def get_settings(self) -> BaseModel:
         raise NotImplementedError()
 
-    def _load_config(self):
+    def _load_settings(self):
         raise NotImplementedError()
 
     @register_command(gui=GUIMetadata(label="Busk"))

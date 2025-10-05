@@ -6,6 +6,82 @@
 // @ts-ignore: Unused imports
 import { Create as $Create } from "@wailsio/runtime";
 
+export class AdbAutoPlayerSettings {
+    /**
+     * Creates a new AdbAutoPlayerSettings instance.
+     * @param {Partial<AdbAutoPlayerSettings>} [$$source = {}] - The source object to create the AdbAutoPlayerSettings.
+     */
+    constructor($$source = {}) {
+        if (!("Advanced" in $$source)) {
+            /**
+             * @member
+             * @type {AdvancedSettings}
+             */
+            this["Advanced"] = (new AdvancedSettings());
+        }
+        if (!("Device" in $$source)) {
+            /**
+             * @member
+             * @type {DeviceSettings}
+             */
+            this["Device"] = (new DeviceSettings());
+        }
+        if (!("Update" in $$source)) {
+            /**
+             * @member
+             * @type {UpdateSettings}
+             */
+            this["Update"] = (new UpdateSettings());
+        }
+        if (!("Logging" in $$source)) {
+            /**
+             * @member
+             * @type {LoggingSettings}
+             */
+            this["Logging"] = (new LoggingSettings());
+        }
+        if (!("User Interface" in $$source)) {
+            /**
+             * @member
+             * @type {UISettings}
+             */
+            this["User Interface"] = (new UISettings());
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new AdbAutoPlayerSettings instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {AdbAutoPlayerSettings}
+     */
+    static createFrom($$source = {}) {
+        const $$createField0_0 = $$createType0;
+        const $$createField1_0 = $$createType1;
+        const $$createField2_0 = $$createType2;
+        const $$createField3_0 = $$createType3;
+        const $$createField4_0 = $$createType4;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("Advanced" in $$parsedSource) {
+            $$parsedSource["Advanced"] = $$createField0_0($$parsedSource["Advanced"]);
+        }
+        if ("Device" in $$parsedSource) {
+            $$parsedSource["Device"] = $$createField1_0($$parsedSource["Device"]);
+        }
+        if ("Update" in $$parsedSource) {
+            $$parsedSource["Update"] = $$createField2_0($$parsedSource["Update"]);
+        }
+        if ("Logging" in $$parsedSource) {
+            $$parsedSource["Logging"] = $$createField3_0($$parsedSource["Logging"]);
+        }
+        if ("User Interface" in $$parsedSource) {
+            $$parsedSource["User Interface"] = $$createField4_0($$parsedSource["User Interface"]);
+        }
+        return new AdbAutoPlayerSettings(/** @type {Partial<AdbAutoPlayerSettings>} */($$parsedSource));
+    }
+}
+
 export class AdvancedSettings {
     /**
      * Creates a new AdvancedSettings instance.
@@ -108,82 +184,6 @@ export class DeviceSettings {
     static createFrom($$source = {}) {
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         return new DeviceSettings(/** @type {Partial<DeviceSettings>} */($$parsedSource));
-    }
-}
-
-export class GeneralSettings {
-    /**
-     * Creates a new GeneralSettings instance.
-     * @param {Partial<GeneralSettings>} [$$source = {}] - The source object to create the GeneralSettings.
-     */
-    constructor($$source = {}) {
-        if (!("Advanced" in $$source)) {
-            /**
-             * @member
-             * @type {AdvancedSettings}
-             */
-            this["Advanced"] = (new AdvancedSettings());
-        }
-        if (!("Device" in $$source)) {
-            /**
-             * @member
-             * @type {DeviceSettings}
-             */
-            this["Device"] = (new DeviceSettings());
-        }
-        if (!("Update" in $$source)) {
-            /**
-             * @member
-             * @type {UpdateSettings}
-             */
-            this["Update"] = (new UpdateSettings());
-        }
-        if (!("Logging" in $$source)) {
-            /**
-             * @member
-             * @type {LoggingSettings}
-             */
-            this["Logging"] = (new LoggingSettings());
-        }
-        if (!("User Interface" in $$source)) {
-            /**
-             * @member
-             * @type {UISettings}
-             */
-            this["User Interface"] = (new UISettings());
-        }
-
-        Object.assign(this, $$source);
-    }
-
-    /**
-     * Creates a new GeneralSettings instance from a string or object.
-     * @param {any} [$$source = {}]
-     * @returns {GeneralSettings}
-     */
-    static createFrom($$source = {}) {
-        const $$createField0_0 = $$createType0;
-        const $$createField1_0 = $$createType1;
-        const $$createField2_0 = $$createType2;
-        const $$createField3_0 = $$createType3;
-        const $$createField4_0 = $$createType4;
-        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
-        if ("Advanced" in $$parsedSource) {
-            $$parsedSource["Advanced"] = $$createField0_0($$parsedSource["Advanced"]);
-        }
-        if ("Device" in $$parsedSource) {
-            $$parsedSource["Device"] = $$createField1_0($$parsedSource["Device"]);
-        }
-        if ("Update" in $$parsedSource) {
-            $$parsedSource["Update"] = $$createField2_0($$parsedSource["Update"]);
-        }
-        if ("Logging" in $$parsedSource) {
-            $$parsedSource["Logging"] = $$createField3_0($$parsedSource["Logging"]);
-        }
-        if ("User Interface" in $$parsedSource) {
-            $$parsedSource["User Interface"] = $$createField4_0($$parsedSource["User Interface"]);
-        }
-        return new GeneralSettings(/** @type {Partial<GeneralSettings>} */($$parsedSource));
     }
 }
 
