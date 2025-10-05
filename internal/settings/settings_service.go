@@ -47,7 +47,6 @@ func (s *SettingsService) LoadAdbAutoPlayerSettings() AdbAutoPlayerSettings {
 	return generalSettings
 }
 
-// GetAdbAutoPlayerSettings returns the current general settings
 func (s *SettingsService) GetAdbAutoPlayerSettings() AdbAutoPlayerSettings {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

@@ -11,7 +11,6 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 import * as $models from "./models.js";
 
 /**
- * GetAdbAutoPlayerSettings returns the current general settings
  * @returns {$CancellablePromise<$models.AdbAutoPlayerSettings>}
  */
 export function GetAdbAutoPlayerSettings() {
