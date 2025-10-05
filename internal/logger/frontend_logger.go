@@ -5,10 +5,10 @@ import (
 	"adb-auto-player/internal/event_names"
 	"adb-auto-player/internal/ipc"
 	"adb-auto-player/internal/path"
-	"fmt"
-	"github.com/wailsapp/wails/v3/pkg/application"
 	"sync"
 	"sync/atomic"
+
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 type FrontendLogger struct {
@@ -66,7 +66,7 @@ func (l *FrontendLogger) buildLogMessage(level ipc.LogLevel, format string, a ..
 	if !l.shouldLog(level) {
 		return
 	}
-	l.logMessage(ipc.NewLogMessage(level, fmt.Sprintf(format, a...)))
+	l.logMessage(ipc.NewLogMessagef(level, format, a...))
 }
 
 func (l *FrontendLogger) SetLogLevelFromString(logLevel string) {

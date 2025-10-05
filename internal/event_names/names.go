@@ -9,4 +9,6 @@ const (
 	WindowIsVisible              = "window-is-visible"
 	TaskStopped                  = "task-stopped"
 	GameSettingsUpdated          = "game-settings-updated"
+	LogReaderMessage             = "log-reader-message"
+	LogReaderClear               = "log-reader-clear"
 )

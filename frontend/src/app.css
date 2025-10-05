@@ -32,3 +32,8 @@
 :root {
   color-scheme: dark;
 }
+
+/* not used but leaving it here */
+.wails-window-draggable {
+  --wails-draggable: drag;
+}

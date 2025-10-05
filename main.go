@@ -4,6 +4,7 @@ import (
 	"adb-auto-player/internal/event_names"
 	"adb-auto-player/internal/games"
 	"adb-auto-player/internal/hotkeys"
+	"adb-auto-player/internal/log_reader"
 	"adb-auto-player/internal/notifications"
 	"adb-auto-player/internal/path"
 	"adb-auto-player/internal/process"
@@ -11,9 +12,10 @@ import (
 	"adb-auto-player/internal/system_tray"
 	"adb-auto-player/internal/updater"
 	"embed"
-	"github.com/wailsapp/wails/v3/pkg/application"
 	"log"
 	"log/slog"
+
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 //go:embed all:frontend/dist
@@ -45,6 +47,7 @@ func main() {
 			application.NewService(updater.NewUpdateService(Version, isDev)),
 			application.NewService(&games.GamesService{}),
 			application.NewService(notifications.GetService()),
+			application.NewService(log_reader.NewLogReaderService()),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
