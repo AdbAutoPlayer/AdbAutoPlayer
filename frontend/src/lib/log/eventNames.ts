@@ -7,4 +7,6 @@ export const EventNames = {
   WINDOW_HIDDEN: "window-hidden",
   TASK_STOPPED: "task-stopped",
   GAME_SETTINGS_UPDATED: "game-settings-updated",
+  LOG_READER_MESSAGE: "log-reader-message",
+  LOG_READER_CLEAR: "log-reader-clear",
 };

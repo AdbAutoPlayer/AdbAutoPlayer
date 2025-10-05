@@ -25,6 +25,7 @@
   import { Events } from "@wailsio/runtime";
   import { EventNames } from "$lib/log/eventNames";
   import { resetScrollOnStateChange } from "$lib/attachments/resetScrollOnStateChange";
+  import { OpenLogReaderWindow } from "@wails/log_reader/logreaderservice";
 
   let showSettingsForm: boolean = $state(false);
   let settingsFormSettings: Record<string, any> = $state({});
@@ -60,6 +61,15 @@
         isProcessRunning: "Show Debug info" === activeButtonLabel,
         option: MenuOption.createFrom({
           label: "Show Debug info",
+          category: "Settings, Phone & Debug",
+        }),
+      },
+      {
+        callback: () => OpenLogReaderWindow(),
+        isProcessRunning: false,
+        alwaysEnabled: true,
+        option: MenuOption.createFrom({
+          label: "Log Reader",
           category: "Settings, Phone & Debug",
         }),
       },
@@ -274,21 +284,13 @@
       activeButtonLabel = null;
     }
 
-    const unsubTaskStoped = Events.On(EventNames.TASK_STOPPED, enablePolling);
-    const unsubGameSettingsUpdated = Events.On(
-      EventNames.GAME_SETTINGS_UPDATED,
-      enablePolling,
-    );
-    const unsubAdbAutoPlayerSettingsUpdated = Events.On(
-      EventNames.ADB_AUTO_PLAYER_SETTINGS_UPDATED,
-      enablePolling,
-    );
+    const unsubscribers = [
+      Events.On(EventNames.TASK_STOPPED, enablePolling),
+      Events.On(EventNames.GAME_SETTINGS_UPDATED, enablePolling),
+      Events.On(EventNames.ADB_AUTO_PLAYER_SETTINGS_UPDATED, enablePolling),
+    ];
 
-    return () => {
-      unsubTaskStoped();
-      unsubGameSettingsUpdated();
-      unsubAdbAutoPlayerSettingsUpdated();
-    };
+    return () => unsubscribers.forEach((unsub) => unsub());
   });
 
   onMount(() => {
