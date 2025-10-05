@@ -42,22 +42,22 @@ class LoggingSettings(BaseModel):
     action_log_limit: NonNegativeInt = Field(5)
 
 
-class GeneralSettings(BaseModel):
-    """General settings model."""
+class AdbAutoPlayerSettings(BaseModel):
+    """AdbAutoPlayer settings model."""
 
     advanced: AdvancedSettings = Field(..., alias="advanced")
     device: DeviceSettings = Field(..., alias="device")
     logging: LoggingSettings = Field(..., alias="logging")
 
     @classmethod
-    def from_toml(cls, file_path: Path) -> "GeneralSettings":
-        """Create GeneralSettings from a TOML file.
+    def from_toml(cls, file_path: Path) -> "AdbAutoPlayerSettings":
+        """Create AdbAutoPlayer Settings from a TOML file.
 
         Args:
             file_path (Path): Path to the TOML file.
 
         Returns:
-            GeneralSettings
+            AdbAutoPlayerSettings
         """
         toml_data = {}
         if file_path.exists():
@@ -66,10 +66,11 @@ class GeneralSettings(BaseModel):
                     toml_data = tomllib.load(f)
             except Exception as e:
                 logging.error(
-                    f"Error reading General Settings file: {e} - using default values"
+                    "Error reading AdbAutoPlayer Settings file: "
+                    f"{e} - using default values"
                 )
         else:
-            logging.debug("Using default General Settings values")
+            logging.debug("Using default AdbAutoPlayer Settings")
 
         default_data = {}
         for field in cls.model_fields.values():

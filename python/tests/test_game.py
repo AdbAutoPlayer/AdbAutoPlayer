@@ -17,8 +17,8 @@ from pydantic import BaseModel
 TEST_DATA_DIR: Path = Path(__file__).parent / "data"
 
 
-class MockConfig(BaseModel):
-    """Mock Config class."""
+class MockSettings(BaseModel):
+    """Mock Settings class."""
 
     pass
 
@@ -30,13 +30,13 @@ class MockGame(Game):
         """Mocked method."""
         return TEST_DATA_DIR
 
-    def _load_config(self) -> None:
+    def _load_settings(self) -> None:
         """Mocked method."""
         pass
 
-    def get_config(self) -> BaseModel:
+    def get_settings(self) -> BaseModel:
         """Mocked method."""
-        return MockConfig()
+        return MockSettings()
 
     @property
     def scale_factor(self) -> float:

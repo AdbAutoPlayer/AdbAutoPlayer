@@ -1,7 +1,6 @@
 """Tests for IPCModelConverter."""
 
 from enum import StrEnum
-from pathlib import Path
 from unittest.mock import patch
 
 from adb_auto_player.ipc_util import IPCModelConverter
@@ -64,7 +63,7 @@ class TestIPCModelConverter:
         assert result is not None
         assert result.args == []
 
-    @patch.object(IPCModelConverter, "_resolve_label_from_config")
+    @patch.object(IPCModelConverter, "_resolve_label_from_settings")
     def test_convert_menu_item_to_menu_option_with_translation(self, mock_resolve):
         """Test conversion with customizable label."""
         mock_resolve.return_value = "Custom Label"
@@ -111,51 +110,61 @@ class TestIPCModelConverter:
     @patch.object(IPCModelConverter, "_build_menu_options")
     @patch.object(IPCModelConverter, "_extract_categories_from_menu_options")
     @patch.object(IPCModelConverter, "_extract_constraints_from_game")
-    def test_convert_game_to_gui_options_no_config_path(
+    def test_convert_game_to_gui_options_no_settings_file(
         self,
         mock_extract_constraints,
         mock_extract_menu_categories,
         mock_build_menu,
         mock_extract_game_categories,
     ):
-        """Test conversion with no config file path."""
+        """Test conversion with no Settings file."""
         # Setup mocks
         mock_extract_game_categories.return_value = list()
         mock_build_menu.return_value = []
         mock_extract_menu_categories.return_value = list()
         mock_extract_constraints.return_value = None
 
-        game = GameMetadata(name="Test Game", config_file_path=None)
+        game = GameMetadata(name="Test Game", settings_file=None)
 
         result = IPCModelConverter.convert_game_to_gui_options("TestModule", game)
 
-        assert result.config_path is None
+        assert result.settings_file is None
 
-    def test_resolve_label_from_config_no_label_from_config(self):
-        """Test label resolution when no label_from_config is set."""
+    def test_resolve_label_from_settings_no_label_from_settings(self):
+        """Test label resolution when no label_from_settings is set."""
         menu_item = MenuItem(label="Original Label")
         game_metadata = GameMetadata(name="Test Game")
 
-        result = IPCModelConverter._resolve_label_from_config(menu_item, game_metadata)
-
-        assert result is None
-
-    def test_resolve_label_from_config_no_config_file_path(self):
-        """Test label resolution when no config file path is set."""
-        menu_item = MenuItem(label="Original Label", label_from_config="section.label")
-        game_metadata = GameMetadata(name="Test Game", config_file_path=None)
-
-        result = IPCModelConverter._resolve_label_from_config(menu_item, game_metadata)
-
-        assert result is None
-
-    def test_resolve_label_from_config_no_gui_metadata(self):
-        """Test label resolution when no GUI metadata is present."""
-        menu_item = MenuItem(label="Original Label", label_from_config="section.label")
-        game_metadata = GameMetadata(
-            name="Test Game", config_file_path=Path("test.toml"), gui_metadata=None
+        result = IPCModelConverter._resolve_label_from_settings(
+            menu_item, game_metadata
         )
 
-        result = IPCModelConverter._resolve_label_from_config(menu_item, game_metadata)
+        assert result is None
+
+    def test_resolve_label_from_settings_no_settings_file_path(self):
+        """Test label resolution when no Settings file path is set."""
+        menu_item = MenuItem(
+            label="Original Label", label_from_settings="section.label"
+        )
+        game_metadata = GameMetadata(name="Test Game", settings_file=None)
+
+        result = IPCModelConverter._resolve_label_from_settings(
+            menu_item, game_metadata
+        )
+
+        assert result is None
+
+    def test_resolve_label_from_settings_no_gui_metadata(self):
+        """Test label resolution when no GUI metadata is present."""
+        menu_item = MenuItem(
+            label="Original Label", label_from_settings="section.label"
+        )
+        game_metadata = GameMetadata(
+            name="Test Game", settings_file="test.toml", gui_metadata=None
+        )
+
+        result = IPCModelConverter._resolve_label_from_settings(
+            menu_item, game_metadata
+        )
 
         assert result is None

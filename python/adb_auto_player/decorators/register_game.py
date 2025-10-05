@@ -1,6 +1,6 @@
 """Provides a registry mechanism for Games.
 
-It defines data structures to describe game configuration and GUI display
+It defines data structures to describe game Settings and GUI display
 metadata, as well as a decorator `@register_game` that associates game
 classes with their metadata and stores them in a central registry.
 
@@ -19,7 +19,6 @@ Functions:
 
 """
 
-from pathlib import Path
 from types import FunctionType
 
 from adb_auto_player.models.registries import GameGUIMetadata, GameMetadata
@@ -29,14 +28,14 @@ from adb_auto_player.util import StringHelper
 
 def register_game(
     name: str,
-    config_file_path: Path | str | None = None,
+    settings_file: str | None = None,
     gui_metadata: GameGUIMetadata | None = None,
 ):
     """Decorator to register a game class in the GAME_REGISTRY.
 
     Args:
         name (str): Name of the game.
-        config_file_path (Path | str | None): Path to the game's configuration file.
+        settings_file (str | None): Settings file name.
         gui_metadata (GameGUIMetadata | None): Metadata for GUI configuration.
 
     Raises:
@@ -49,13 +48,8 @@ def register_game(
 
         module_key = StringHelper.get_game_module(cls.__module__)
 
-        if isinstance(config_file_path, str):
-            path_obj = Path(config_file_path)
-        else:
-            path_obj = config_file_path
-
         metadata = GameMetadata(
-            name=name, config_file_path=path_obj, gui_metadata=gui_metadata
+            name=name, settings_file=settings_file, gui_metadata=gui_metadata
         )
         GAME_REGISTRY[module_key] = metadata
         return cls

@@ -9,17 +9,20 @@
   import { setupExternalLinkHandler } from "$lib/utils/external-links";
   import { Events } from "@wailsio/runtime";
   import { EventNames } from "$lib/log/eventNames";
-  import { GeneralSettings } from "@wails/settings";
+  import { AdbAutoPlayerSettings } from "@wails/settings";
 
   let { children } = $props();
 
   onMount(() => {
     applyUISettingsFromFile();
 
-    const unsubscribe = Events.On(EventNames.GENERAL_SETTINGS_UPDATED, (ev) => {
-      const generalSettings = ev.data as GeneralSettings;
-      applyUISettings(generalSettings["User Interface"]);
-    });
+    const unsubscribe = Events.On(
+      EventNames.ADB_AUTO_PLAYER_SETTINGS_UPDATED,
+      (ev) => {
+        const adbAutoPlayerSettings = ev.data as AdbAutoPlayerSettings;
+        applyUISettings(adbAutoPlayerSettings["User Interface"]);
+      },
+    );
 
     return () => {
       unsubscribe();

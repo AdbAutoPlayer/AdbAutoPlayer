@@ -517,9 +517,9 @@ class FastAPIServer:
             return OKResponse(detail="ADB Auto Player Server")
 
         @self.app.post("/general-settings-updated", response_model=OKResponse)
-        async def general_settings_updated():
-            """Handle general settings update."""
-            self._clear_cache(CacheGroup.GENERAL_SETTINGS)
+        async def adb_auto_player_settings_updated():
+            """Handle AdbAutoPlayer settings update."""
+            self._clear_cache(CacheGroup.ADB_AUTO_PLAYER_SETTINGS)
             self._clear_cache(CacheGroup.GAME_SETTINGS)
             self._clear_cache(CacheGroup.ADB)
             return OKResponse()

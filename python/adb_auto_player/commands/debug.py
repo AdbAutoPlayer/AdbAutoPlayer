@@ -7,7 +7,7 @@ import time
 from adb_auto_player.decorators import register_command
 from adb_auto_player.device.adb import AdbClientHelper, AdbController
 from adb_auto_player.models.geometry import PointOutsideDisplay
-from adb_auto_player.settings import ConfigLoader
+from adb_auto_player.settings import SettingsLoader
 from adbutils import AdbClient
 
 
@@ -18,7 +18,7 @@ from adbutils import AdbClient
 def _log_debug() -> None:
     logging.getLogger().setLevel(logging.DEBUG)
     logging.info("--- Debug Info Start ---")
-    _log_main_config()
+    _log_adb_auto_player_settings()
     if not _get_and_log_adb_client():
         logging.warning("ADB client could not be initialized.")
         logging.info("--- Debug Info End ---")
@@ -42,9 +42,9 @@ def _log_debug() -> None:
     return
 
 
-def _log_main_config() -> None:
-    logging.info("--- General Settings ---")
-    logging.info(f"{pprint.pformat(ConfigLoader.general_settings())}")
+def _log_adb_auto_player_settings() -> None:
+    logging.info("--- AdbAutoPlayer Settings ---")
+    logging.info(f"{pprint.pformat(SettingsLoader.adb_auto_player_settings())}")
 
 
 def _get_and_log_adb_client() -> AdbClient | None:

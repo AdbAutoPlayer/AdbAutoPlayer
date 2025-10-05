@@ -1,6 +1,7 @@
 """Play Store Main Module."""
 
 import logging
+import pprint
 
 from adb_auto_player.decorators import (
     register_command,
@@ -8,15 +9,15 @@ from adb_auto_player.decorators import (
     register_game,
 )
 from adb_auto_player.game import Game
-from adb_auto_player.games.zzz_config_example.config import Config
+from adb_auto_player.games.zzz_config_example.settings import Settings
 from adb_auto_player.models.decorators import GameGUIMetadata, GUIMetadata
 from pydantic import BaseModel
 
 
 @register_game(
     name="Google Play",
-    config_file_path="zzz_config_example/ZzzConfigExample.toml",
-    gui_metadata=GameGUIMetadata(config_class=Config),
+    settings_file="ZzzConfigExample.toml",
+    gui_metadata=GameGUIMetadata(settings_class=Settings),
 )
 class PlayStore(Game):
     """Just for GUI testing."""
@@ -29,10 +30,10 @@ class PlayStore(Game):
         ]
 
     @register_command(
-        gui=GUIMetadata(label="Label", category="Category", tooltip="Tooltip")
+        gui=GUIMetadata(label="Log Settings", category="Category", tooltip="Tooltip")
     )
     def _test_gui(self) -> None:
-        logging.info("GUI")
+        logging.info(f"{pprint.pformat(self.get_settings())}")
 
     @register_command()
     def _test_cli(self) -> None:
@@ -42,9 +43,8 @@ class PlayStore(Game):
     def _test_custom_routine(self) -> None:
         logging.info("CUSTOM ROUTINE")
 
-    def get_config(self) -> BaseModel:
-        """Not Implemented."""
-        raise NotImplementedError()
+    def get_settings(self) -> BaseModel:
+        return self._load_settings()
 
-    def _load_config(self):
-        raise NotImplementedError()
+    def _load_settings(self):
+        return Settings.from_toml(self._get_settings_file_path())

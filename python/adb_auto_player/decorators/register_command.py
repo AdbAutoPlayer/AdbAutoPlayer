@@ -69,7 +69,7 @@ def register_command(
                 category_value = gui.category.value
             menu_item = MenuItem(
                 label=gui.label,
-                label_from_config=gui.label_from_config,
+                label_from_settings=gui.label_from_settings,
                 category=category_value,
                 tooltip=gui.tooltip,
             )

@@ -13,7 +13,7 @@ import pytesseract
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box, Point
 from adb_auto_player.models.ocr import OCRResult
-from adb_auto_player.settings import ConfigLoader
+from adb_auto_player.settings import SettingsLoader
 
 from .tesseract_config import TesseractConfig
 from .tesseract_lang import Lang
@@ -87,8 +87,8 @@ def _initialize_tesseract() -> None:
             raise RuntimeError(f"Tesseract not found in PATH: {e}")
 
         fallback_paths = [
-            ConfigLoader.binaries_dir() / "tesseract" / "tesseract.exe",
-            ConfigLoader.binaries_dir() / "windows" / "tesseract" / "tesseract.exe",
+            SettingsLoader.binaries_dir() / "tesseract" / "tesseract.exe",
+            SettingsLoader.binaries_dir() / "windows" / "tesseract" / "tesseract.exe",
         ]
 
         for fallback_path in fallback_paths:

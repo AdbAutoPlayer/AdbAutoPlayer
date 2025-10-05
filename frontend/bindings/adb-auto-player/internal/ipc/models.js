@@ -19,12 +19,12 @@ export class GameGUI {
              */
             this["game_title"] = "";
         }
-        if (!("config_path" in $$source)) {
+        if (!("settings_file" in $$source)) {
             /**
              * @member
              * @type {string}
              */
-            this["config_path"] = "";
+            this["settings_file"] = "";
         }
         if (!("menu_options" in $$source)) {
             /**
