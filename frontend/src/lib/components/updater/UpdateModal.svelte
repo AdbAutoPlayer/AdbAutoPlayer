@@ -30,7 +30,7 @@
     <div class="flex h-full flex-col">
       <h2 class="mb-4 text-center h2 text-2xl">
         {#if isDownloading}
-          Downloading Update... {Math.round(downloadProgress)}%
+          Downloading Update...
         {:else}
           Update Available: {updateInfo?.version || ""}
         {/if}
