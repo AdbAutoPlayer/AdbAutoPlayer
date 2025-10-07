@@ -2,7 +2,6 @@
 
 import logging
 import os
-import platform
 import subprocess
 from enum import IntEnum
 from functools import lru_cache
@@ -10,10 +9,11 @@ from typing import Any
 
 import numpy as np
 import pytesseract
+from adb_auto_player.file_loader import SettingsLoader
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box, Point
 from adb_auto_player.models.ocr import OCRResult
-from adb_auto_player.settings import SettingsLoader
+from adb_auto_player.util.runtime import RuntimeInfo
 
 from .tesseract_config import TesseractConfig
 from .tesseract_lang import Lang
@@ -51,7 +51,7 @@ def _patch_subprocess_popen():
 
     class SilentPopen(_original_popen):
         def __init__(self, args, *popenargs, **kwargs):
-            if platform.system() == "Windows":
+            if RuntimeInfo.is_windows():
                 # Check if the command is tesseract
                 cmd = args
                 if isinstance(cmd, list):
@@ -78,12 +78,12 @@ def _initialize_tesseract() -> None:
     try:
         pytesseract.get_tesseract_version()
     except pytesseract.TesseractNotFoundError as e:
-        if platform.system() == "Darwin":
+        if RuntimeInfo.is_mac():
             raise RuntimeError(
                 "Tesseract not found, try installing: "
                 "https://formulae.brew.sh/formula/tesseract"
             )
-        if platform.system() != "Windows":
+        if not RuntimeInfo.is_windows():
             raise RuntimeError(f"Tesseract not found in PATH: {e}")
 
         fallback_paths = [

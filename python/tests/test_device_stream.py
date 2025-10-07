@@ -106,12 +106,12 @@ class TestDeviceStream(unittest.TestCase):
     def test_emulator_detection_on_arm_mac(self):
         """Test emulator detection prevents streaming on ARM Mac."""
         with patch(
-            "adb_auto_player.device.adb.device_stream.platform.system",
-            return_value="Darwin",
+            "adb_auto_player.device.adb.device_stream.RuntimeInfo.is_mac",
+            return_value=True,
         ):
             with patch(
-                "adb_auto_player.device.adb.device_stream.platform.machine",
-                return_value="arm64",
+                "adb_auto_player.device.adb.device_stream.RuntimeInfo.is_arm",
+                return_value=True,
             ):
                 self.mock_device.is_controlling_emulator = True
                 with self.assertRaises(StreamingNotSupportedError):

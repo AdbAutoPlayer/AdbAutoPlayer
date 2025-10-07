@@ -1,7 +1,6 @@
 """ADB Auto Player Settings Loader Module."""
 
 import logging
-import platform
 from functools import lru_cache
 from pathlib import Path
 
@@ -10,6 +9,7 @@ from adb_auto_player.models.decorators import CacheGroup
 from adb_auto_player.models.pydantic.adb_auto_player_settings import (
     AdbAutoPlayerSettings,
 )
+from adb_auto_player.util.runtime import RuntimeInfo
 
 
 class SettingsLoader:
@@ -64,11 +64,14 @@ class SettingsLoader:
         candidates: list[Path] = [
             working_dir / settings_path,  #  Windows GUI .exe
             working_dir.parent / settings_path,  # Windows CLI .exe, uv
-            working_dir.parent.parent / settings_path,  # PyCharm run config
         ]
 
+        if not RuntimeInfo.is_frozen():
+            pycharm_run_context = working_dir.parent.parent / settings_path
+            candidates.append(pycharm_run_context)
+
         # macOS-specific path
-        if platform.system() == "Darwin":
+        if RuntimeInfo.is_mac():
             mac_settings = Path("~/Library/Application Support/AdbAutoPlayer/settings")
             candidates.insert(0, mac_settings.expanduser())
 
