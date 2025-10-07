@@ -7,8 +7,8 @@ from pathlib import Path
 
 import adbutils
 from adb_auto_player.decorators import register_cache
+from adb_auto_player.file_loader import SettingsLoader
 from adb_auto_player.models.decorators import CacheGroup
-from adb_auto_player.settings import SettingsLoader
 
 
 @register_cache(CacheGroup.ADB)

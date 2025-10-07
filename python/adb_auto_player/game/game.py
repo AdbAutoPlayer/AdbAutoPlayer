@@ -25,6 +25,7 @@ from adb_auto_player.exceptions import (
     GenericAdbUnrecoverableError,
     UnsupportedResolutionError,
 )
+from adb_auto_player.file_loader import SettingsLoader
 from adb_auto_player.image_manipulation import (
     IO,
     Color,
@@ -38,7 +39,6 @@ from adb_auto_player.models.pydantic import MyCustomRoutineSettings
 from adb_auto_player.models.registries import CustomRoutineEntry
 from adb_auto_player.models.template_matching import MatchMode, TemplateMatchResult
 from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY, GAME_REGISTRY
-from adb_auto_player.settings import SettingsLoader
 from adb_auto_player.template_matching import TemplateMatcher
 from adb_auto_player.util import Execute
 from PIL import Image
@@ -1094,6 +1094,7 @@ class Game(ABC):
         for module, game in GAME_REGISTRY.items():
             if module == self._get_game_module():
                 settings_file = game.settings_file
+                break
 
         if settings_file is None:
             raise AutoPlayerUnrecoverableError("Game does not have any Settings")
