@@ -7,11 +7,11 @@ from functools import lru_cache
 import uvicorn
 from adb_auto_player import commands, games
 from adb_auto_player.cli import ArgparseHelper
+from adb_auto_player.file_loader import SettingsLoader
 from adb_auto_player.log import setup_logging
 from adb_auto_player.models.commands import Command
 from adb_auto_player.registries import COMMAND_REGISTRY, GAME_REGISTRY
 from adb_auto_player.server import create_fastapi_server
-from adb_auto_player.settings import SettingsLoader
 from adb_auto_player.util import DevHelper, Execute
 
 

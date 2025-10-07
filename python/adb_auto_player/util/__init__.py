@@ -10,6 +10,7 @@ Util modules should aim to not have dependencies on internal packages besides
 from .dev_helper import DevHelper
 from .execute import Execute
 from .log_message_factory import LogMessageFactory
+from .runtime import RuntimeInfo
 from .string_helper import StringHelper
 from .summary_generator import SummaryGenerator
 from .traceback_helper import TracebackHelper
@@ -19,6 +20,7 @@ __all__ = [
     "DevHelper",
     "Execute",
     "LogMessageFactory",
+    "RuntimeInfo",
     "StringHelper",
     "SummaryGenerator",
     "TracebackHelper",

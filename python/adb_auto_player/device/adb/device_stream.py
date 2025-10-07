@@ -1,7 +1,6 @@
 """ADB Auto Player Device Stream Module."""
 
 import logging
-import platform
 import threading
 import time
 from functools import lru_cache
@@ -9,7 +8,8 @@ from functools import lru_cache
 import av
 import numpy as np
 from adb_auto_player.exceptions import AutoPlayerWarningError
-from adb_auto_player.settings import SettingsLoader
+from adb_auto_player.file_loader import SettingsLoader
+from adb_auto_player.util.runtime import RuntimeInfo
 from adbutils import AdbConnection
 from av.codec.codec import UnknownCodecError
 from av.codec.context import CodecContext
@@ -82,9 +82,7 @@ class DeviceStream:
         Raises:
             StreamingNotSupportedError
         """
-        is_arm_mac = platform.system() == "Darwin" and platform.machine().startswith(
-            ("arm", "aarch")
-        )
+        is_arm_mac = RuntimeInfo.is_mac() and RuntimeInfo.is_arm()
         if is_arm_mac and controller.is_controlling_emulator:
             raise StreamingNotSupportedError(
                 "Emulators running on macOS do not support Device Streaming "

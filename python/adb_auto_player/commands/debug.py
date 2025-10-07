@@ -1,15 +1,14 @@
 """Debug Commands."""
 
 import logging
-import platform
 import pprint
 import time
 
-import psutil
 from adb_auto_player.decorators import register_command
 from adb_auto_player.device.adb import AdbClientHelper, AdbController
+from adb_auto_player.file_loader import SettingsLoader
 from adb_auto_player.models.geometry import PointOutsideDisplay
-from adb_auto_player.settings import SettingsLoader
+from adb_auto_player.util import RuntimeInfo
 from adbutils import AdbClient
 
 
@@ -47,10 +46,10 @@ def _log_debug() -> None:
 
 def _log_hardware_info() -> None:
     logging.info("--- Hardware Info Start ---")
-    logging.info(f"OS: {platform.platform()}")
-    logging.info(f"Processor: {platform.processor()}")
-    logging.info(f"CPU count: {psutil.cpu_count()}")
-    logging.info(f"Memory: {round(psutil.virtual_memory().total / (1024**3), 2)}")
+    logging.info(f"OS: {RuntimeInfo.platform()}")
+    logging.info(f"Processor: {RuntimeInfo.processor()}")
+    logging.info(f"CPU count: {RuntimeInfo.cpu_count()}")
+    logging.info(f"Memory in GB: {RuntimeInfo.memory_in_gb()}")
     logging.info("--- Hardware Info End ---")
 
 

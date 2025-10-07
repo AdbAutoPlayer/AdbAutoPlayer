@@ -5,10 +5,10 @@ import tomllib
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
+from adb_auto_player.file_loader import SettingsLoader
 from adb_auto_player.models.pydantic.adb_auto_player_settings import (
     AdbAutoPlayerSettings,
 )
-from adb_auto_player.settings import SettingsLoader
 
 
 class TestSettingsLoader:

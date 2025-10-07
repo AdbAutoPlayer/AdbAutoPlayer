@@ -4,8 +4,8 @@ from logging import DEBUG, WARNING
 
 from adb_auto_player.decorators import register_cache
 from adb_auto_player.exceptions import GenericAdbError, GenericAdbUnrecoverableError
+from adb_auto_player.file_loader import SettingsLoader
 from adb_auto_player.models.decorators import CacheGroup
-from adb_auto_player.settings import SettingsLoader
 from adbutils import AdbClient, AdbDevice, AdbError
 from adbutils._proto import AdbDeviceInfo
 
