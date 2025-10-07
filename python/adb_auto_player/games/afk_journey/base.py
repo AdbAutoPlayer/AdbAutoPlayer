@@ -411,6 +411,8 @@ class AFKJourneyBase(Navigation, Game):
         return False
 
     def _get_battle_over_templates(self) -> list[str]:
+        # TODO possibly refactor this to have a map of template and actions
+        # to perform when the template is encountered
         match self.battle_state.mode:
             case Mode.AFK_STAGES | Mode.SEASON_AFK_STAGES:
                 return [
