@@ -49,7 +49,7 @@ def _log_hardware_info() -> None:
     logging.info(f"OS: {RuntimeInfo.platform()}")
     logging.info(f"Processor: {RuntimeInfo.processor()}")
     logging.info(f"CPU count: {RuntimeInfo.cpu_count()}")
-    logging.info(f"Memory in GB: {RuntimeInfo.memory_in_gb()}")
+    logging.info(f"Memory: {RuntimeInfo.memory_in_gb()} GB")
     logging.info("--- Hardware Info End ---")
 
 
