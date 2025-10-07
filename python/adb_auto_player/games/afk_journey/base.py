@@ -93,6 +93,16 @@ class AFKJourneyBase(Navigation, Game):
             case _:
                 return getattr(self.get_settings().afk_stages, attribute)
 
+    def _re_enter_battle_for_duras(self):
+        try:
+            _ = self.wait_for_template(
+                "duras_trials/socketed_charms_overview",
+                timeout=self.FAST_TIMEOUT,
+            )
+            self._tap_till_template_disappears("duras_trials/battle")
+        except GameTimeoutError:
+            pass
+
     def _handle_battle_screen(
         self,
         use_suggested_formations: bool = True,
@@ -127,14 +137,7 @@ class AFKJourneyBase(Navigation, Game):
             self.battle_state.formation_num += 1
 
             if self.battle_state.mode == Mode.DURAS_TRIALS:
-                try:
-                    _ = self.wait_for_template(
-                        "duras_trials/socketed_charms_overview",
-                        timeout=self.FAST_TIMEOUT,
-                    )
-                    self._tap_till_template_disappears("duras_trials/battle")
-                except GameTimeoutError:
-                    pass
+                self._re_enter_battle_for_duras()
 
             if (
                 use_suggested_formations
@@ -461,78 +464,90 @@ class AFKJourneyBase(Navigation, Game):
         """
         logging.debug("_handle_single_stage")
         attempts = self._get_settings_for_mode("attempts")
-        count = 0
-        result: bool | None = None
+        attempt = 0
 
-        while count < attempts:
-            count += 1
-            logging.info(f"Starting Battle #{count}")
+        while attempt < attempts:
+            attempt += 1
+            logging.info(f"Starting Battle #{attempt}")
             if not self._start_battle():
-                result = False
                 break
 
             if self.battle_state.section_header:
                 SummaryGenerator.increment(self.battle_state.section_header, "Battles")
 
-            match = self.wait_for_any_template(
-                templates=self._get_battle_over_templates(),
-                timeout=self.BATTLE_TIMEOUT,
-                crop_regions=CropRegions(top=0.4),
-                delay=1.0,
-                timeout_message=self.BATTLE_TIMEOUT_ERROR_MESSAGE,
-            )
+            result = self._is_battle_outcome_successful(attempt)
+            if result is None:
+                return False
 
-            match match.template:
-                case "duras_trials/no_next.png":
-                    self.press_back_button()
-                    result = True
-                    break
+            if result:
+                return True
 
-                case "battle/victory_rewards.png":
-                    self.tap(Point(x=550, y=1800), scale=True)
-                    result = True
-                    break
+        return False
 
-                case "battle/power_up.png":
-                    self.tap(Point(x=550, y=1800), scale=True)
-                    result = False
-                    break
+    def _is_battle_outcome_successful(self, attempt: int) -> bool | None:
+        """Whether the battle was successful.
 
-                case "navigation/confirm.png":
-                    logging.error(
-                        "Network Error or Battle data differs between client and server"
+        None is for unclear scenarios, None cases should be replaced by Exceptions.
+        """
+        match = self.wait_for_any_template(
+            templates=self._get_battle_over_templates(),
+            timeout=self.BATTLE_TIMEOUT,
+            crop_regions=CropRegions(top=0.4),
+            delay=1.0,
+            timeout_message=self.BATTLE_TIMEOUT_ERROR_MESSAGE,
+        )
+
+        result = None
+        match match.template:
+            case "duras_trials/no_next.png":
+                self.press_back_button()
+                result = True
+
+            case "battle/victory_rewards.png":
+                self.tap(Point(x=550, y=1800), scale=True)
+                result = True
+
+            case "battle/power_up.png":
+                if self.battle_state.mode == Mode.DURAS_TRIALS:
+                    self.tap(
+                        Point(x=550, y=1800),
+                        scale=True,
+                        log_message=f"Lost Battle #{attempt}, retrying",
                     )
-                    self.tap(match)
                     sleep(3)
+                    self._re_enter_battle_for_duras()
                     result = False
-                    break
+                else:
+                    # TODO should probably just throw an Exception
+                    # I have no idea what this case is used for
+                    # should leave comments in the future
+                    self.tap(Point(x=550, y=1800), scale=True)
 
-                case (
-                    "next.png"
-                    | "duras_trials/first_clear_bottom_half.png"
-                    | "duras_trials/end_sunrise.png"
-                ):
-                    result = True
-                    break
+            case "navigation/confirm.png":
+                # TODO should probably just throw an Exception
+                logging.error(
+                    "Network Error or Battle data differs between client and server"
+                )
+                self.tap(match)
+                sleep(3)
 
-                case "retry.png":
-                    self.tap(match, log_message=f"Lost Battle #{count}, retrying")
-                    # Do not break so the loop continues
+            case (
+                "next.png"
+                | "duras_trials/first_clear_bottom_half.png"
+                | "duras_trials/end_sunrise.png"
+            ):
+                result = True
 
-                case "battle/result.png":
-                    self.tap(Point(x=950, y=1800), scale=True)
-                    result = True
-                    break
+            case "retry.png":
+                self.tap(match, log_message=f"Lost Battle #{attempt}, retrying")
+                result = False
 
-                case (
-                    "afk_stages/tap_to_close.png" | "legend_trials/available_after.png"
-                ):
-                    raise AutoPlayerWarningError("Final Stage reached, exiting...")
+            case "battle/result.png":
+                self.tap(Point(x=950, y=1800), scale=True)
+                result = True
 
-        # If no branch set result, default to False.
-        if result is None:
-            result = False
-
+            case "afk_stages/tap_to_close.png" | "legend_trials/available_after.png":
+                raise AutoPlayerWarningError("Final Stage reached, exiting...")
         return result
 
     def _handle_guide_popup(
