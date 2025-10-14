@@ -15,6 +15,7 @@ an instance context or special error processing.
 import inspect
 import sys
 from collections.abc import Callable
+from typing import cast
 
 from adb_auto_player.exceptions import GenericAdbUnrecoverableError
 from adb_auto_player.models.commands import Command
@@ -73,7 +74,8 @@ class Execute:
 
             if needs_instance:
                 # Derive class and bind instance as before
-                cls_name = callable_function.__qualname__.split(".")[0]
+                qual_name = cast(str, getattr(callable_function, "__qualname__", None))
+                cls_name: str = qual_name.split(".")[0]
                 mod = sys.modules[callable_function.__module__]
                 cls = getattr(mod, cls_name)
                 instance = cls()

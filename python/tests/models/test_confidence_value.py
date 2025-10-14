@@ -189,11 +189,11 @@ class TestConfidenceValue(unittest.TestCase):
 
         # Invalid types
         with self.assertRaises(ValueError):
-            ConfidenceValue(None)
+            ConfidenceValue(None)  # type: ignore[invalid-argument-type]
         with self.assertRaises(ValueError):
-            ConfidenceValue([80])
+            ConfidenceValue([80])  # type: ignore[invalid-argument-type]
         with self.assertRaises(ValueError):
-            ConfidenceValue({"value": 80})
+            ConfidenceValue({"value": 80})  # type: ignore[invalid-argument-type]
 
     def test_error_messages(self):
         """Test that error messages are informative."""
@@ -222,7 +222,7 @@ class TestConfidenceValue(unittest.TestCase):
 
         # Test unsupported type
         with self.assertRaisesRegex(ValueError, "Unsupported ConfidenceValue type"):
-            ConfidenceValue(None)
+            ConfidenceValue(None)  # type: ignore[invalid-argument-type]
 
     def test_whitespace_handling(self):
         """Test various whitespace scenarios."""

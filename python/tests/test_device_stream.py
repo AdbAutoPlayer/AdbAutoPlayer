@@ -1,11 +1,14 @@
 import io
 import time
 import unittest
+from typing import cast
 from unittest.mock import Mock, patch
 
 import av
 import numpy as np
 from adb_auto_player.device.adb import DeviceStream, StreamingNotSupportedError
+from av.container.output import OutputContainer
+from av.video.stream import VideoStream
 
 
 class MockAdbConnection:
@@ -28,42 +31,6 @@ class MockAdbConnection:
     def close(self):
         """Close the connection."""
         self.closed = True
-
-
-def create_test_h264_video() -> bytes:
-    """Create a small test H.264 video stream."""
-    # Create a simple 320x240 test video with a few frames
-    output_buffer = io.BytesIO()
-
-    # Create container
-    container = av.open(output_buffer, "w", format="h264")
-
-    # Add video stream
-    stream = container.add_stream("h264", rate=5)
-    stream.width = 320
-    stream.height = 240
-    stream.pix_fmt = "yuv420p"
-
-    # Generate a few test frames
-    for i in range(5):  # 10 frames
-        # Create a simple gradient pattern that changes per frame
-        frame = av.VideoFrame.from_ndarray(
-            np.full((240, 320, 3), fill_value=i * 25, dtype=np.uint8), format="rgb24"
-        )
-        frame = frame.reformat(format="yuv420p")
-
-        # Encode frame
-        packets = stream.encode(frame)
-        for packet in packets:
-            container.mux(packet)
-
-    # Flush encoder
-    packets = stream.encode()
-    for packet in packets:
-        container.mux(packet)
-
-    container.close()
-    return output_buffer.getvalue()
 
 
 class TestDeviceStream(unittest.TestCase):
@@ -183,9 +150,9 @@ class TestIntegrationWithRealDecoding(unittest.TestCase):
     ) -> bytes:
         """Create test video with specific dimensions."""
         output_buffer = io.BytesIO()
-        container = av.open(output_buffer, "w", format="h264")
+        container: OutputContainer = av.open(output_buffer, "w", format="h264")
 
-        stream = container.add_stream("h264", rate=5)
+        stream: VideoStream = cast(VideoStream, container.add_stream("h264", rate=5))
         stream.width = width
         stream.height = height
         stream.pix_fmt = "yuv420p"

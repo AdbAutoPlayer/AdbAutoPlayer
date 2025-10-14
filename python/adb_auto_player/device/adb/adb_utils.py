@@ -5,10 +5,10 @@ import sys
 from functools import lru_cache
 from pathlib import Path
 
-import adbutils
 from adb_auto_player.decorators import register_cache
 from adb_auto_player.file_loader import SettingsLoader
 from adb_auto_player.models.decorators import CacheGroup
+from adbutils import _utils
 
 
 @register_cache(CacheGroup.ADB)
@@ -63,4 +63,4 @@ def _set_adb_path() -> None:
             raise FileNotFoundError("adb not found in system PATH")
         os.environ["ADBUTILS_ADB_PATH"] = adb_path
 
-    logging.debug(f"ADBUTILS_ADB_PATH: {adbutils._utils.adb_path()}")
+    logging.debug(f"ADBUTILS_ADB_PATH: {_utils.adb_path()}")
