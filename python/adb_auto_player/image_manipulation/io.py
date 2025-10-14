@@ -43,7 +43,7 @@ class IO:
         if cache_key in template_cache:
             return template_cache[cache_key]
 
-        image: np.ndarray = cv2.imdecode(
+        image: np.ndarray | None = cv2.imdecode(
             np.fromfile(image_path, dtype=np.uint8),
             cv2.IMREAD_COLOR,
         )

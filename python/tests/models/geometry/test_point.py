@@ -74,4 +74,4 @@ class TestPoint(unittest.TestCase):
         self.assertEqual(p.x, 20)
         self.assertEqual(p.y, 40)
         with self.assertRaises(TypeError):
-            p + 1
+            p + 1  # type: ignore[unsupported-operator]

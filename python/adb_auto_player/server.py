@@ -25,12 +25,10 @@ from pydantic import BaseModel
 from starlette.requests import Request
 from starlette.websockets import WebSocketState
 
-current_websocket: ContextVar[WebSocket | None] = ContextVar(
-    "current_websocket", default=None
-)
+current_websocket: ContextVar[WebSocket | None] = ContextVar("current_websocket")
 
 current_request_handler: ContextVar[MemoryLogHandler | None] = ContextVar(
-    "current_request_handler", default=None
+    "current_request_handler"
 )
 
 
@@ -534,8 +532,8 @@ class FastAPIServer:
     def _clear_cache(group: CacheGroup) -> None:
         """Clear cache for a specific group."""
         for func in LRU_CACHE_REGISTRY.get(group, []):
-            if hasattr(func, "cache_clear"):
-                func.cache_clear()
+            if cache_clear := getattr(func, "clear_cache", None):
+                cache_clear()
 
 
 def create_fastapi_server(commands: dict[str, list[Command]]) -> FastAPI:

@@ -34,7 +34,7 @@ def adb_retry(func: Callable) -> Callable:
             )
 
         last_exception = None
-
+        func_name = getattr(func, "__name__", repr(func))
         # First 2 attempts
         for attempt in range(2):
             try:
@@ -43,12 +43,12 @@ def adb_retry(func: Callable) -> Callable:
                 raise e
             except Exception as e:
                 last_exception = e
-                logging.debug(f"{func.__name__} attempt {attempt + 1} failed: {e}")
+                logging.debug(f"{func_name} attempt {attempt + 1} failed: {e}")
                 if attempt < 1:
                     time.sleep(1)
 
         logging.debug(
-            f"{func.__name__} initial attempts failed, "
+            f"{func_name} initial attempts failed, "
             "attempting to restart ADB server and recreate device"
         )
         _restart_adb_server()
@@ -69,9 +69,7 @@ def adb_retry(func: Callable) -> Callable:
                 raise e
             except Exception as e:
                 last_exception = e
-                logging.debug(
-                    f"{func.__name__} final attempt {attempt + 1} failed: {e}"
-                )
+                logging.debug(f"{func_name} final attempt {attempt + 1} failed: {e}")
                 if attempt < 1:  # Don't sleep on the last attempt
                     time.sleep(1)
 

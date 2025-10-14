@@ -7,21 +7,6 @@ from adb_auto_player.util import LogMessageFactory
 from adb_auto_player.util.traceback_helper import SourceInfo
 
 
-# Mock classes for testing
-class MockLogRecord:
-    def __init__(self, levelno, msg, pathname, func, lineno):
-        self.levelno = levelno
-        self.msg = msg
-        self.pathname = pathname
-        self.funcName = func
-        self.lineno = lineno
-        self.module = "test_file"
-        self.exc_info = None
-
-    def getMessage(self):  # noqa: N802
-        return self.msg
-
-
 class TestCreateLogMessage:
     """Test suite for create_log_message function."""
 
@@ -33,12 +18,15 @@ class TestCreateLogMessage:
 
     def test_create_debug_log_message(self, mock_source_info):
         """Test creating a DEBUG level log message."""
-        record = MockLogRecord(
-            levelno=logging.DEBUG,
-            msg="Debug message",
+        record = logging.LogRecord(
+            name="test",
+            level=logging.DEBUG,
             pathname="/path/to/test_file.py",
-            func="test_function",
             lineno=42,
+            msg="Debug message",
+            args=(),
+            exc_info=None,
+            func="test_function",
         )
 
         with patch(
@@ -56,12 +44,15 @@ class TestCreateLogMessage:
 
     def test_create_info_log_message(self, mock_source_info):
         """Test creating an INFO level log message."""
-        record = MockLogRecord(
-            levelno=logging.INFO,
-            msg="Info message",
+        record = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
             pathname="/path/to/test_file.py",
-            func="test_function",
             lineno=42,
+            msg="Info message",
+            args=(),
+            exc_info=None,
+            func="test_function",
         )
 
         with patch(
@@ -74,12 +65,15 @@ class TestCreateLogMessage:
 
     def test_create_warning_log_message(self, mock_source_info):
         """Test creating a WARNING level log message."""
-        record = MockLogRecord(
-            levelno=logging.WARNING,
-            msg="Warning message",
+        record = logging.LogRecord(
+            name="test",
+            level=logging.WARNING,
             pathname="/path/to/test_file.py",
-            func="test_function",
             lineno=42,
+            msg="Warning message",
+            args=(),
+            exc_info=None,
+            func="test_function",
         )
 
         with patch(
@@ -92,12 +86,15 @@ class TestCreateLogMessage:
 
     def test_create_error_log_message(self, mock_source_info):
         """Test creating an ERROR level log message."""
-        record = MockLogRecord(
-            levelno=logging.ERROR,
-            msg="Error message",
+        record = logging.LogRecord(
+            name="test",
+            level=logging.ERROR,
             pathname="/path/to/test_file.py",
-            func="test_function",
             lineno=42,
+            msg="Error message",
+            args=(),
+            exc_info=None,
+            func="test_function",
         )
 
         with patch(
@@ -110,12 +107,15 @@ class TestCreateLogMessage:
 
     def test_create_critical_log_message(self, mock_source_info):
         """Test creating a CRITICAL/FATAL level log message."""
-        record = MockLogRecord(
-            levelno=logging.CRITICAL,
-            msg="Critical message",
+        record = logging.LogRecord(
+            name="test",
+            level=logging.CRITICAL,
             pathname="/path/to/test_file.py",
-            func="test_function",
             lineno=42,
+            msg="Critical message",
+            args=(),
+            exc_info=None,
+            func="test_function",
         )
 
         with patch(
@@ -128,12 +128,15 @@ class TestCreateLogMessage:
 
     def test_create_log_message_with_custom_message(self, mock_source_info):
         """Test creating a log message with custom message."""
-        record = MockLogRecord(
-            levelno=logging.INFO,
-            msg="Original message",
+        record = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
             pathname="/path/to/test_file.py",
-            func="test_function",
             lineno=42,
+            msg="Original message",
+            args=(),
+            exc_info=None,
+            func="test_function",
         )
 
         with patch(
@@ -148,12 +151,15 @@ class TestCreateLogMessage:
 
     def test_create_log_message_with_html_class(self, mock_source_info):
         """Test creating a log message with HTML class."""
-        record = MockLogRecord(
-            levelno=logging.INFO,
-            msg="Message with class",
+        record = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
             pathname="/path/to/test_file.py",
-            func="test_function",
             lineno=42,
+            msg="Message with class",
+            args=(),
+            exc_info=None,
+            func="test_function",
         )
 
         with patch(
@@ -166,12 +172,15 @@ class TestCreateLogMessage:
 
     def test_create_log_message_with_unknown_level(self, mock_source_info):
         """Test creating a log message with unknown log level."""
-        record = MockLogRecord(
-            levelno=999,  # Unknown level
-            msg="Unknown level message",
+        record = logging.LogRecord(
+            name="test",
+            level=999,
             pathname="/path/to/test_file.py",
-            func="test_function",
             lineno=42,
+            msg="Unknown level message",
+            args=(),
+            exc_info=None,
+            func="test_function",
         )
 
         with patch(
