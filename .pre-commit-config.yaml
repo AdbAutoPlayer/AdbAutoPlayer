@@ -48,7 +48,7 @@ repos:
         name: ty-check
         language: system
         types: [ python ]
-        entry: uvx ty check .
+        entry: uvx ty check
         args: [--project, python]
 
   # uv

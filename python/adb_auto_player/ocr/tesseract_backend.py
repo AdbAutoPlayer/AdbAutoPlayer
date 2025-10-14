@@ -60,7 +60,7 @@ def _patch_subprocess_popen():
                     first = cmd
                 first_str = str(first)
                 if "tesseract" in first_str.lower():
-                    kwargs.setdefault("creationflags", subprocess.CREATE_NO_WINDOW)
+                    kwargs.setdefault("creationflags", subprocess.CREATE_NO_WINDOW)  # type: ignore[unresolved-attribute]
             super().__init__(args, *popenargs, **kwargs)
 
     # we are overwriting Popen on purpose so it does not open a terminal window
