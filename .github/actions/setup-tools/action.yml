@@ -63,5 +63,7 @@ runs:
 
     - name: Set up Python
       if: inputs.tool == 'all' || inputs.tool == 'uv-python'
-      run: uv python install ${{ inputs.python-version }}
+      run: |
+        uv python install ${{ inputs.python-version }}
+        uv sync
       shell: bash
