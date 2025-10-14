@@ -37,11 +37,6 @@ class Fishing(AFKJourneyBase):
     )
     def fishing(self) -> None:
         self.start_up(device_streaming=True)
-
-        self.assert_no_scaling(
-            "Fishing is optimized for 1080x1920 it will not work with other "
-            "resolutions."
-        )
         self.assert_frame_and_input_delay_below_threshold()
 
         logging.warning(

@@ -19,8 +19,8 @@ class GuitarGirl(Game):
     def __init__(self) -> None:
         """Initialize AFKJourneyBase."""
         super().__init__()
-        self.supports_portrait = True
-        self.package_name = "com.neowiz.game.guitargirl"
+        self.base_resolution = "1080x1920"
+        self.package_name_prefixes = ["com.neowiz.game.guitargirl"]
 
     def get_settings(self) -> BaseModel:
         raise NotImplementedError()

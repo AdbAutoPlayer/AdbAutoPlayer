@@ -67,12 +67,12 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def claim_daily_rewards(self) -> None:
         """Claim daily AFK rewards."""
         logging.debug("Open AFK Progress.")
-        self.tap(Point(90, 1830), scale=True)
+        self.tap(Point(90, 1830))
         sleep(4)
 
         logging.info("Claim AFK rewards twice for battle pass.")
         for _ in range(4):
-            self.tap(Point(520, 1420), scale=True)
+            self.tap(Point(520, 1420))
             sleep(self.FAST_TIMEOUT)
 
         logging.info("Looking for free hourglasses.")
@@ -105,7 +105,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         self._click_confirm_on_popup()
 
-        self.tap(Point(520, 1750), scale=True)
+        self.tap(Point(520, 1750))
         return True
 
     ############################# Mystical House ##############################
@@ -114,7 +114,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         """Purchase single pull and optionally affinity items."""
         logging.info("Entering Mystical House...")
         self.navigate_to_world()
-        self.tap(Point(310, 1840), scale=True)
+        self.tap(Point(310, 1840))
 
         try:
             logging.debug("Opening Emporium.")
@@ -174,7 +174,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         self._click_confirm_on_popup()
         sleep(1)
-        self.tap(Point(550, 100), scale=True)  # Close purchased window
+        self.tap(Point(550, 100))  # Close purchased window
 
     def _buy_affinity_items(self) -> None:
         """Buy affinity items."""
@@ -208,9 +208,9 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.info("Attempting to buy the discount affinity item.")
             self.tap(discount_affinity)
             sleep(1)
-            self.tap(Point(600, 1780), scale=True)  # Purchase
+            self.tap(Point(600, 1780))  # Purchase
             sleep(1)
-            self.tap(Point(550, 100), scale=True)  # Close purchased window
+            self.tap(Point(550, 100))  # Close purchased window
             sleep(1)
         else:
             # TODO: Unreachable. Template matches even when it's grayed out (sold out).
@@ -229,9 +229,9 @@ class DailiesMixin(AFKJourneyBase, ABC):
         for affinity_item in other_affinity_items:
             self.tap(affinity_item)
             sleep(1)
-            self.tap(Point(600, 1780), scale=True)  # Purchase
+            self.tap(Point(600, 1780))  # Purchase
             sleep(1)
-            self.tap(Point(550, 100), scale=True)  # Close purchased window
+            self.tap(Point(550, 100))  # Close purchased window
             sleep(1)
 
     def _buy_bound_essence(self) -> None:
@@ -276,9 +276,9 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.info(f"Buying essence {i + 1}.")
             self.tap(essence)
             sleep(1)
-            self.tap(Point(600, 1780), scale=True)  # Purchase
+            self.tap(Point(600, 1780))  # Purchase
             sleep(1)
-            self.tap(Point(550, 100), scale=True)  # Close purchased window
+            self.tap(Point(550, 100))  # Close purchased window
             sleep(1)
 
             self.perform_essence_swap = True
@@ -348,7 +348,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         self.navigate_to_world()
 
         logging.info("Navigating to Hamburger.")
-        self.tap(Point(990, 1840), scale=True)
+        self.tap(Point(990, 1840))
         sleep(1)
 
         self._claim_friend_rewards()
@@ -505,11 +505,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
         sleep(5)
 
         logging.debug("Open Resonating Hall.")
-        self.tap(Point(620, 1830), scale=True)
+        self.tap(Point(620, 1830))
         sleep(5)
 
         logging.info("Begin raising hero affinity.")
-        self.tap(Point(130, 1040), scale=True)
+        self.tap(Point(130, 1040))
         sleep(5)
 
         while not self.game_find_template_match("dailies/resonating_hall/chippy.png"):
@@ -526,12 +526,12 @@ class DailiesMixin(AFKJourneyBase, ABC):
         for _ in range(3):
             # NOTE: Sometimes spam click works and other times not.
             # So we go with the safe route of click then back.
-            self.tap(Point(540, 840), scale=True)
+            self.tap(Point(540, 840))
             sleep(0.5)
-            self.tap(back_button, scale=True)
+            self.tap(back_button)
             sleep(0.5)
 
-        self.tap(Point(995, 1090), scale=True)  # Next hero
+        self.tap(Point(995, 1090))  # Next hero
         sleep(1)
 
     def swap_essences(self) -> None:
@@ -548,7 +548,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         self.navigate_to_world()
         sleep(5)
         logging.debug("Open Resonating Hall.")
-        self.tap(Point(620, 1830), scale=True)
+        self.tap(Point(620, 1830))
         sleep(5)
 
         logging.info("Begin swapping essences...")
@@ -603,7 +603,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             return False
 
         logging.debug("Closing swapped results window.")
-        self.tap(Point(550, 200), scale=True)
+        self.tap(Point(550, 200))
         sleep(self.FAST_TIMEOUT)
 
         logging.debug("Leave weapon and hero view.")
