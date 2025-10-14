@@ -41,14 +41,15 @@ repos:
         args: [ --fix ]
       - id: ruff-format
         files: python/
-
   - repo: local
     hooks:
       - id: ty
+        files: python/
         name: ty-check
         language: system
         types: [ python ]
         entry: uvx ty check .
+        args: [--project, python]
 
   # uv
   - repo: https://github.com/astral-sh/uv-pre-commit
