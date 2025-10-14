@@ -1,4 +1,4 @@
-name: Run - pre-commit
+name: pre-commit
 permissions:
   contents: read
 on:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   pre-commit:
-    name: pre-commit hooks
+    name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
