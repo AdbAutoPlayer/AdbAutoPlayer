@@ -45,10 +45,6 @@ class MatchingCards(AFKJourneyBase):
         """
         self.start_up(device_streaming=True)
 
-        self.assert_no_scaling(
-            "Matching Cards is optimized for 1080x1920 it will not work with other "
-            "resolutions."
-        )
         self.assert_frame_and_input_delay_below_threshold()
 
         self.wait_for_any_template(

@@ -40,7 +40,8 @@ class AFKJourneyBase(Navigation, Game):
         """Initialize AFKJourneyBase."""
         super().__init__()
         self.supports_portrait = True
-        self.package_name_substrings = [
+        self.base_resolution: str = "1080x1920"
+        self.package_name_prefixes = [
             "com.farlightgames.igame.gp",
         ]
 
@@ -362,7 +363,6 @@ class AFKJourneyBase(Navigation, Game):
         try:
             self._tap_coordinates_till_template_disappears(
                 coordinates=Point(x=850, y=1780),
-                scale=True,
                 template=result.template,
             )
         except GameActionFailedError:
@@ -506,14 +506,13 @@ class AFKJourneyBase(Navigation, Game):
                 result = True
 
             case "battle/victory_rewards.png":
-                self.tap(Point(x=550, y=1800), scale=True)
+                self.tap(Point(x=550, y=1800))
                 result = True
 
             case "battle/power_up.png":
                 if self.battle_state.mode == Mode.DURAS_TRIALS:
                     self.tap(
                         Point(x=550, y=1800),
-                        scale=True,
                         log_message=f"Lost Battle #{attempt}, retrying",
                     )
                     sleep(3)
@@ -523,7 +522,7 @@ class AFKJourneyBase(Navigation, Game):
                     # TODO should probably just throw an Exception
                     # I have no idea what this case is used for
                     # should leave comments in the future
-                    self.tap(Point(x=550, y=1800), scale=True)
+                    self.tap(Point(x=550, y=1800))
 
             case "navigation/confirm.png":
                 # TODO should probably just throw an Exception
@@ -545,7 +544,7 @@ class AFKJourneyBase(Navigation, Game):
                 result = False
 
             case "battle/result.png":
-                self.tap(Point(x=950, y=1800), scale=True)
+                self.tap(Point(x=950, y=1800))
                 result = True
 
             case "afk_stages/tap_to_close.png" | "legend_trials/available_after.png":

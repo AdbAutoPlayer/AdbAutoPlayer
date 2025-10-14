@@ -81,13 +81,11 @@ class AFKStagesMixin(AFKJourneyBase):
         if self.battle_state.mode == Mode.SEASON_AFK_STAGES:
             self.tap(
                 Point(x=300, y=1610),
-                scale=True,
                 log_message="Clicking Season AFK Stages button",
             )
         else:
             self.tap(
                 Point(x=800, y=1610),
-                scale=True,
                 log_message="Clicking Battle button",
             )
         sleep(2)

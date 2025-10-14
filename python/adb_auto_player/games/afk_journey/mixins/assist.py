@@ -97,7 +97,7 @@ class AssistMixin(AFKJourneyBase):
                 is None
             ):
                 # Back button does not always close profile/chat windows
-                self.tap(Point(550, 100), scale=True)
+                self.tap(Point(550, 100))
                 sleep(1)
             return False
         self.tap(result)
@@ -155,7 +155,7 @@ class AssistMixin(AFKJourneyBase):
 
         # click first 5 heroes in row 1 and 2
         for x in [110, 290, 470, 630, 800]:
-            self.tap(Point(x, 1300), scale=True)
+            self.tap(Point(x, 1300))
             sleep(0.5)
         while True:
             cc_ready = self.game_find_template_match(
@@ -184,8 +184,8 @@ class AssistMixin(AFKJourneyBase):
             return False
         self.tap(go)
         sleep(3)
-        self.tap(Point(130, 900), scale=True)
+        self.tap(Point(130, 900))
         sleep(1)
-        self.tap(Point(630, 1800), scale=True)
+        self.tap(Point(630, 1800))
         logging.info("Synergy complete")
         return True

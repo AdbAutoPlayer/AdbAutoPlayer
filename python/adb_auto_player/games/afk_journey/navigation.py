@@ -118,7 +118,7 @@ class Navigation(PopupMessageHandler, ABC):
                 return Overview.WORLD
             case "navigation/notice.png":
                 # This is the Game Entry Screen
-                self.tap(self.CENTER_POINT, scale=True)
+                self.tap(self.CENTER_POINT)
                 sleep(3)
             case "navigation/confirm.png":
                 self._handle_navigation_confirm(result)
@@ -174,7 +174,7 @@ class Navigation(PopupMessageHandler, ABC):
                     "Failed to navigate to default state."
                 )
             attempts += 1
-            self.tap(self.CENTER_POINT, scale=True)
+            self.tap(self.CENTER_POINT)
             sleep(3)
         sleep(1)
 
@@ -223,7 +223,7 @@ class Navigation(PopupMessageHandler, ABC):
                 raise AutoPlayerError("Failed to navigate to Resonating Hall.")
             try:
                 while self._is_in_overview():
-                    self.tap(self.RESONATING_HALL_POINT, scale=True)
+                    self.tap(self.RESONATING_HALL_POINT)
                     sleep(3)
                     click_count += 1
                     if click_count > max_click_count:
@@ -271,11 +271,11 @@ class Navigation(PopupMessageHandler, ABC):
             crop_regions=CropRegions(left=0.3, right=0.3, top=0.9),
             timeout=self.NAVIGATION_TIMEOUT,
         )
-        self.tap(Point(x=550, y=1080), scale=True)  # click rewards popup
+        self.tap(Point(x=550, y=1080))  # click rewards popup
         sleep(1)
 
     def _navigate_to_battle_modes_screen(self) -> None:
-        self.tap(self.BATTLE_MODES_POINT, scale=True)
+        self.tap(self.BATTLE_MODES_POINT)
         result = self.wait_for_any_template(
             templates=[
                 "battle_modes/afk_stage.png",
@@ -340,9 +340,9 @@ class Navigation(PopupMessageHandler, ABC):
         sleep(1)
 
         # popups
-        self.tap(self.CENTER_POINT, scale=True)
-        self.tap(self.CENTER_POINT, scale=True)
-        self.tap(self.CENTER_POINT, scale=True)
+        self.tap(self.CENTER_POINT)
+        self.tap(self.CENTER_POINT)
+        self.tap(self.CENTER_POINT)
 
         self.wait_for_template(
             template="duras_trials/socketed_charms_overview.png",

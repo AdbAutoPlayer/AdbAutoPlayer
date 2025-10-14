@@ -70,10 +70,7 @@ def _get_game_from_package_name(package_name: str | None) -> str | None:
     if not package_name:
         return None
     for game_object in _get_games():
-        if (
-            any(pn in package_name for pn in game_object.package_name_substrings)
-            or game_object.package_name == package_name
-        ):
+        if any(pn in package_name for pn in game_object.package_name_prefixes):
             for module, game in GAME_REGISTRY.items():
                 if module in game_object.__module__:
                     return game.name
