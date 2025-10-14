@@ -35,7 +35,7 @@ class AdbDeviceWrapper:
         stream: bool = False,
         timeout: float | None = default_socket_timeout,
         encoding: str | None = "utf-8",
-        rstrip=True,
+        rstrip: bool = True,
     ) -> AdbConnection | str | bytes:
         """Shell with retry."""
         output = self.d.shell(
@@ -120,7 +120,7 @@ class AdbDeviceWrapper:
         stream: bool = False,
         timeout: float | None = default_socket_timeout,
         encoding: str | None = "utf-8",
-        rstrip=True,
+        rstrip: bool = True,
     ) -> AdbConnection | str | bytes:
         """Shell without retry.
 
