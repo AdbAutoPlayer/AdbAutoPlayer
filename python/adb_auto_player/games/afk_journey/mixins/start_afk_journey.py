@@ -17,6 +17,4 @@ class StartAFKJourney(AFKJourneyBase):
         # but what do you do when both are installed?
 
         # vn com.farlightgames.igame.gp.vn
-        self.package_name = "com.farlightgames.igame.gp"  # global
-        self.start_up(device_streaming=False)
-        self.start_game()
+        self.device.start_game("com.farlightgames.igame.gp")

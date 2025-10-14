@@ -97,7 +97,7 @@ class QuestMixin(AFKJourneyBase, ABC):
         )
         if result2 is not None:
             logging.info("Clicking button: " + result2.template)
-            self.tap(result2, scale=True)
+            self.tap(result2)
             sleep(
                 1
             )  # allows time for update before checking again if a popup is triggered

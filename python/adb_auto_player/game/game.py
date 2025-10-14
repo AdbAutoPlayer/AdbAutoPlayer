@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum, auto
+from functools import lru_cache
 from pathlib import Path
 from time import sleep, time
 from typing import Literal, TypeVar
@@ -81,16 +82,16 @@ class Game(ABC):
         self.default_threshold: ConfidenceValue = ConfidenceValue("90%")
         self.disable_debug_screenshots: bool = False
 
-        self.package_name_substrings: list[str] = []
-        self.package_name: str | None = None
-        self.supports_landscape: bool = False
-        self.supports_portrait: bool = False
-        self.supported_resolutions: list[str] = ["1080x1920"]
+        # e.g. AFK Journey
+        #   Global: com.farlightgames.igame.gp
+        #   Vietnam: com.farlightgames.igame.gp.vn
+        #   Global will cover both cases because it checks for the prefix
+        self.package_name_prefixes: list[str] = []
+        self.base_resolution: str = "1920x1080"  # Assuming landscape for most games
 
         self._settings_file_path: Path | None = None
         self._debug_screenshot_counter: int = 0
         self._device: AdbController | None = None
-        self._scale_factor: float | None = None
         self._stream: DeviceStream | None = None
         self._template_dir_path: Path | None = None
 
@@ -105,30 +106,28 @@ class Game(ABC):
         ...
 
     @property
-    def scale_factor(self) -> float:
-        """Get the scale factor of the current resolution relative to a reference.
+    def resolution_tuple(self) -> tuple[int, int]:
+        """Return the base resolution as a (width, height) tuple."""
+        try:
+            width, height = map(int, self.base_resolution.lower().split("x"))
+            return width, height
+        except ValueError:
+            raise ValueError(
+                f"Invalid resolution format: '{self.base_resolution}' "
+                "(expected 'WIDTHxHEIGHT')"
+            )
 
-        The reference resolution is (1080, 1920) and the scale factor is the width of
-        the current resolution divided by the width of the reference resolution.
+    @property
+    def expects_landscape(self) -> bool:
+        """Return True if the resolution is landscape (width >= height)."""
+        width, height = self.resolution_tuple
+        return width >= height
 
-        The scale factor is used to scale the coordinates of templates and is used by
-        `get_templates` to get the correct size of templates.
-
-        Returns:
-            float: Scale factor of the current resolution.
-        """
-        if self._scale_factor:
-            return self._scale_factor
-
-        resolution_str = self.supported_resolutions[0]
-        width, height = map(int, resolution_str.split("x"))
-        reference_resolution = (width, height)
-        if self.display_info.dimensions == reference_resolution:
-            self._scale_factor = 1.0
-        else:
-            self._scale_factor = self.display_info.width / reference_resolution[0]
-        logging.debug(f"scale_factor: {self._scale_factor}")
-        return self._scale_factor
+    @property
+    def expects_portrait(self) -> bool:
+        """Return True if the resolution is portrait (height > width)."""
+        width, height = self.resolution_tuple
+        return height > width
 
     @property
     def display_info(self) -> DisplayInfo:
@@ -193,9 +192,6 @@ class Game(ABC):
         if self.is_game_running():
             return
 
-        if not self.package_name:
-            raise GameNotRunningOrFrozenError("Game is not running, exiting...")
-
         logging.warning("Game is not running, trying to start the game.")
         self.start_game()
         if not self.is_game_running():
@@ -229,30 +225,9 @@ class Game(ABC):
         if not SettingsLoader.adb_auto_player_settings().device.use_wm_resize:
             return
 
-        suggested_resolution: str | None = next(
-            (res for res in self.supported_resolutions if "x" in res), None
-        )
-        if (
-            suggested_resolution
-            and suggested_resolution != self.display_info.resolution
-        ):
-            self.device.set_display_size(suggested_resolution)
+        if self.base_resolution != self.display_info.resolution:
+            self.device.set_display_size(self.base_resolution)
         return
-
-    def _is_supported_resolution(self) -> bool:
-        """Return True if the resolution is supported."""
-        width = self.display_info.width
-        height = self.display_info.height
-        for supported_resolution in self.supported_resolutions:
-            if "x" in supported_resolution:
-                res_width, res_height = map(int, supported_resolution.split("x"))
-                if res_width == width and res_height == height:
-                    return True
-            elif ":" in supported_resolution:
-                aspect_width, aspect_height = map(int, supported_resolution.split(":"))
-                if width * aspect_height == height * aspect_width:
-                    return True
-        return False
 
     def _check_requirements(self) -> None:
         """Validates Device properties such as resolution and orientation.
@@ -260,15 +235,13 @@ class Game(ABC):
         Raises:
              UnsupportedResolutionException: Device resolution is not supported.
         """
-        if not self._is_supported_resolution():
+        if not self.base_resolution == self.display_info.resolution:
             raise UnsupportedResolutionError(
-                "This bot only supports these resolutions: "
-                f"{', '.join(self.supported_resolutions)}"
+                f"This bot only supports: {self.base_resolution} resolution"
             )
 
         if (
-            self.supports_portrait
-            and not self.supports_landscape
+            self.expects_portrait
             and self.display_info.orientation == Orientation.LANDSCAPE
         ):
             raise UnsupportedResolutionError(
@@ -278,8 +251,7 @@ class Game(ABC):
             )
 
         if (
-            self.supports_landscape
-            and not self.supports_portrait
+            self.expects_landscape
             and self.display_info.orientation == Orientation.PORTRAIT
         ):
             raise UnsupportedResolutionError(
@@ -312,7 +284,7 @@ class Game(ABC):
     def tap(
         self,
         coordinates: Coordinates,
-        scale: bool = False,
+        scale: bool = False,  # TODO remove later
         blocking: bool = True,
         # Assuming 30 FPS, 1 Tap per Frame
         non_blocking_sleep_duration: float | None = 1 / 30,
@@ -323,7 +295,7 @@ class Game(ABC):
 
         Args:
             coordinates (Coordinates): Point to click on.
-            scale (bool, optional): Whether to scale the coordinates.
+            scale (bool, optional): Deprecated it does nothing.
             blocking (bool, optional): Whether to block the process and
                 wait for ADBServer to confirm the tap has happened.
             non_blocking_sleep_duration (float, optional): Sleep time in seconds for
@@ -331,32 +303,25 @@ class Game(ABC):
             log_message (str | None, optional): Custom Log message, default msg if None
             log (bool, optional): Log the tap command.
         """
-        original_point = coordinates
-        final_point = coordinates
-
-        if scale:
-            final_point = Point(coordinates.x, coordinates.y).scale(self._scale_factor)
+        if log_message is None:
+            log_message = "Tapped"
 
         if log:
-            log_message = Game._build_tap_log_message(
-                original_point,
-                final_point,
-                log_message,
-            )
+            log_message = log_message + f": {coordinates}"
         else:
             log_message = None
 
         # Perform the tap
         if blocking:
             self._click(
-                final_point,
+                coordinates,
                 log_message,
             )
         else:
             thread = threading.Thread(
                 target=self._click,
                 args=(
-                    final_point,
+                    coordinates,
                     log_message,
                 ),
                 daemon=True,
@@ -364,26 +329,6 @@ class Game(ABC):
             thread.start()
             if non_blocking_sleep_duration is not None:
                 sleep(non_blocking_sleep_duration)
-
-    @staticmethod
-    def _build_tap_log_message(
-        original_point: Coordinates,
-        final_point: Coordinates,
-        message: str | None = None,
-    ) -> str | None:
-        """Log the tap with all relevant information in a single entry."""
-        if message is None:
-            return None
-
-        coords_info = (
-            f"{original_point} (scaled to {final_point})"
-            if original_point != final_point
-            else str(final_point)
-        )
-
-        if message:
-            return f"{message}: {coords_info}"
-        return f"Tapped: {coords_info}"
 
     def _click(
         self,
@@ -434,15 +379,15 @@ class Game(ABC):
 
     def is_game_running(self) -> bool:
         """Check if Game is still running."""
-        package_name = self.device.get_running_app()
-        if package_name is None:
-            return False
+        return self.package_name is not None
 
-        if any(pn in package_name for pn in self.package_name_substrings):
-            self.package_name = package_name
-            return True
-
-        return package_name == self.package_name
+    @property
+    def package_name(self) -> str | None:
+        """Returns package name if game is running."""
+        if app := self.device.get_running_app():
+            if any(pn in app for pn in self.package_name_prefixes):
+                return app
+        return None
 
     def start_game(self) -> None:
         """Start the Game.
@@ -581,7 +526,6 @@ class Game(ABC):
     ) -> np.ndarray:
         return IO.load_image(
             image_path=self.get_template_dir_path() / template,
-            image_scale_factor=self.scale_factor,
             grayscale=grayscale,
         )
 
@@ -965,8 +909,8 @@ class Game(ABC):
 
         logging.debug(f"swipe_{direction} - from ({sx}, {sy}) to ({ex}, {ey})")
         self.device.swipe(
-            Point(sx, sy).scale(self._scale_factor),
-            Point(ex, ey).scale(self._scale_factor),
+            Point(sx, sy),
+            Point(ex, ey),
             duration=params.duration,
         )
 
@@ -985,7 +929,7 @@ class Game(ABC):
             blocking (bool, optional): Whether the call should happen async.
             log (bool, optional): Log the hold command.
         """
-        point = Point(coordinates.x, coordinates.y).scale(self._scale_factor)
+        point = Point(coordinates.x, coordinates.y)
 
         if log:
             logging.debug(
@@ -1273,7 +1217,7 @@ class Game(ABC):
         threshold: ConfidenceValue | None = None,
         grayscale: bool = False,
         crop_regions: CropRegions | None = None,
-        scale: bool = False,
+        scale: bool = False,  # TODO remove later
         delay: float = 10.0,
     ) -> None:
         max_tap_count = 3
@@ -1293,28 +1237,12 @@ class Game(ABC):
                 )
                 raise GameActionFailedError(message)
             if time_since_last_tap >= delay:
-                self.tap(coordinates, scale=scale)
+                self.tap(coordinates)
                 tap_count += 1
                 time_since_last_tap -= delay  # preserve overflow - more accurate timing
 
             sleep(0.5)
             time_since_last_tap += 0.5
-
-    def assert_no_scaling(self, message: str | None) -> None:
-        """Assert no scaling is required.
-
-        This is meant for bots where exact pixel offsets are used or scaling breaks
-        logic.
-
-        Raises:
-            AutoPlayerUnrecoverableError: if scaling is required.
-        """
-        if self.scale_factor != 1.0:
-            raise AutoPlayerUnrecoverableError(
-                message
-                if message
-                else f"Bot will only work with: {self.supported_resolutions[0]}"
-            )
 
     def assert_frame_and_input_delay_below_threshold(
         self,
@@ -1359,3 +1287,15 @@ class Game(ABC):
                 f"{max_input_delay} ms exiting..."
             )
         logging.info(f"Average input delay: {int(average_time)} ms")
+
+    @lru_cache
+    def get_templates_from_dir(self, subdir: str) -> list[str]:
+        """Return a list of all files inside a given template subdirectory.
+
+        returns relative paths (e.g. 'power_saving_mode/1.png').
+        """
+        template_dir = self.get_template_dir_path() / subdir
+
+        return [
+            f"{subdir}/{path.name}" for path in template_dir.iterdir() if path.is_file()
+        ]
