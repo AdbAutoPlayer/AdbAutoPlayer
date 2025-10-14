@@ -1,4 +1,4 @@
-name: Run - pre-commit
+name: pre-commit
 permissions:
   contents: read
 on:
@@ -10,13 +10,17 @@ on:
 
 jobs:
   pre-commit:
-    name: pre-commit hooks
-    runs-on: ubuntu-latest
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Install system dependencies
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get -yq update
           sudo apt-get -yq install libgtk-3-0 libwebkit2gtk-4.1-dev gcc-aarch64-linux-gnu
@@ -24,7 +28,6 @@ jobs:
       - name: Setup Go, Wails, Node, uv, Python
         uses: ./.github/actions/setup-tools
 
-      # for Frontend checks
       - name: npm install
         run: |
           cd frontend

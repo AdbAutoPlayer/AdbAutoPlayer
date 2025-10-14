@@ -51,7 +51,10 @@ class TestColor:
     def test_to_grayscale_unsupported_color_format(self):
         color_img = np.zeros((5, 5, 3), dtype=np.uint8)
         with pytest.raises(ValueError):
-            Color.to_grayscale(color_img, color_format="XYZ")  # invalid enum value
+            Color.to_grayscale(
+                color_img,
+                color_format="XYZ",  # type: ignore[invalid-argument-type]
+            )
 
     def test_to_rgb_valid_and_invalid(self):
         bgr_img = np.zeros((5, 5, 3), dtype=np.uint8)

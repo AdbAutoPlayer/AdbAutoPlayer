@@ -6,6 +6,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+from adb_auto_player.image_manipulation import IO
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.ocr import PSM, TesseractBackend, TesseractConfig
 
@@ -23,7 +24,7 @@ class TestTesseractBackendAFKJPopup(unittest.TestCase):
             np.ndarray: Test image
         """
         path = Path(__file__).parent / "data" / filename
-        return cv2.imread(path.as_posix())
+        return IO.load_image(path)
 
     def test_handle_checkbox_popup_no_preprocessing(self):
         tesseract_backend = TesseractBackend(

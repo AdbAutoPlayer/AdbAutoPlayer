@@ -8,12 +8,12 @@ from functools import lru_cache
 from typing import Any
 
 import numpy as np
-import pytesseract
 from adb_auto_player.file_loader import SettingsLoader
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box, Point
 from adb_auto_player.models.ocr import OCRResult
 from adb_auto_player.util.runtime import RuntimeInfo
+from pytesseract import pytesseract
 
 from .tesseract_config import TesseractConfig
 from .tesseract_lang import Lang
@@ -60,10 +60,11 @@ def _patch_subprocess_popen():
                     first = cmd
                 first_str = str(first)
                 if "tesseract" in first_str.lower():
-                    kwargs.setdefault("creationflags", subprocess.CREATE_NO_WINDOW)
+                    kwargs.setdefault("creationflags", subprocess.CREATE_NO_WINDOW)  # type: ignore[unresolved-attribute]
             super().__init__(args, *popenargs, **kwargs)
 
-    subprocess.Popen = SilentPopen
+    # we are overwriting Popen on purpose so it does not open a terminal window
+    subprocess.Popen = SilentPopen  # type: ignore[invalid-assignment]
 
 
 @lru_cache(maxsize=1)
@@ -95,15 +96,14 @@ def _initialize_tesseract() -> None:
             if not os.path.isfile(fallback_path):
                 continue
 
-            pytesseract.pytesseract.tesseract_cmd = fallback_path
+            pytesseract.tesseract_cmd = fallback_path
             break
         try:
             pytesseract.get_tesseract_version()
             return None
         except Exception as e:
             raise RuntimeError(
-                "Tesseract fallback at "
-                f"{pytesseract.pytesseract.tesseract_cmd} failed: {e}"
+                f"Tesseract fallback at {pytesseract.tesseract_cmd} failed: {e}"
             )
     except Exception as e:
         raise e

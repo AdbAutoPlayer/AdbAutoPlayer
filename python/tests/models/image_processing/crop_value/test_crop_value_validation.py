@@ -71,7 +71,7 @@ class TestCropValueValidation:
     def test_unsupported_type_error(self):
         """Test that unsupported types raise ValueError."""
         with pytest.raises(ValueError, match="Unsupported crop value type"):
-            CropValue([1, 2, 3])
+            CropValue([1, 2, 3])  # type: ignore[invalid-argument-type]
 
         with pytest.raises(ValueError, match="Unsupported crop value type"):
-            CropValue({"value": 10})
+            CropValue({"value": 10})  # type: ignore[invalid-argument-type]

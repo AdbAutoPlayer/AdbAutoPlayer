@@ -2,6 +2,7 @@
 
 import math
 from dataclasses import dataclass
+from typing import SupportsIndex
 
 import numpy as np
 from adb_auto_player.util import TypeHelper
@@ -13,15 +14,15 @@ from .coordinates import Coordinates
 class Point(Coordinates):
     """A point in 2D space with non-negative integer coordinates."""
 
-    def __init__(self, x: int, y: int):
+    def __init__(self, x: SupportsIndex, y: SupportsIndex):
         """Initialize point with x, y-coordinates."""
-        if x < 0 or y < 0:
+        self._x = int(x)
+        self._y = int(y)
+        if self._x < 0 or self._y < 0:
             raise ValueError(
                 f"Invalid Point coordinates: x={x}, y={y}. "
                 f"Both values must be non-negative."
             )
-        self._x = x
-        self._y = y
 
     def __post_init__(self):
         """Validate that coordinates are non-negative."""

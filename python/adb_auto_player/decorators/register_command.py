@@ -52,7 +52,8 @@ def register_command(
         if module_key not in COMMAND_REGISTRY:
             COMMAND_REGISTRY[module_key] = {}
 
-        resolved_name = name or f"{module_key}.{func.__name__}"
+        func_name = getattr(func, "__name__", repr(func))
+        resolved_name = name or f"{module_key}.{func_name}"
 
         if any(char.isspace() for char in resolved_name):
             raise ValueError(
