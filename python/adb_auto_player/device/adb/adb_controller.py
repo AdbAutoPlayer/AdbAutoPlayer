@@ -1,4 +1,5 @@
 import logging
+import re
 from functools import lru_cache
 from time import sleep
 
@@ -207,6 +208,17 @@ class AdbController:
         logging.debug('getprop does not contain "Build" assuming Phone')
         return False
 
+    def get_input_device(self, name: str) -> str | None:
+        """Return /dev/input/eventX for a given input device name."""
+        content = _get_input_devices(self.d)
+        blocks = content.strip().split("\n\n")
+        for block in blocks:
+            if f'N: Name="{name}"' in block:
+                match = re.search(r"Handlers=.*?(event\d+)", block)
+                if match:
+                    return f"/dev/input/{match.group(1)}"
+        return None
+
 
 def _check_orientation(d: AdbDeviceWrapper) -> Orientation:
     """Check device orientation using multiple fallback methods.
@@ -269,3 +281,8 @@ def _check_orientation(d: AdbDeviceWrapper) -> Orientation:
         logging.debug(f"Display orientation check failed: {e}")
 
     raise GenericAdbUnrecoverableError("Unable to determine device orientation")
+
+
+def _get_input_devices(d: AdbDeviceWrapper) -> str:
+    """Return full /proc/bus/input/devices contents."""
+    return d.shell("cat /proc/bus/input/devices")
