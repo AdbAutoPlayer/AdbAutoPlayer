@@ -191,11 +191,17 @@ class AdbController:
         duration: float = 1.0,
     ) -> None:
         """Hold the screen on the given coordinates."""
-        self.swipe(
-            start_point=coordinates,
-            end_point=coordinates,
-            duration=duration,
-        )
+        self.hold_down(coordinates)
+        sleep(duration)
+        self.hold_release(coordinates)
+
+    def hold_down(self, coordinates: Coordinates) -> None:
+        """Press down at the given coordinates."""
+        self.d.shell(f"input motionevent DOWN {coordinates.as_adb_shell_str()}")
+
+    def hold_release(self, coordinates: Coordinates) -> None:
+        """Release touch at the given coordinates."""
+        self.d.shell(f"input motionevent UP {coordinates.as_adb_shell_str()}")
 
     @property
     @register_cache(CacheGroup.ADB)
