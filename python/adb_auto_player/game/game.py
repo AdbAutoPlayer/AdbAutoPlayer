@@ -141,6 +141,12 @@ class Game(ABC):
             self._device = AdbController()
         return self._device
 
+    @property
+    def center(self) -> Coordinates:
+        """Return center Point of display."""
+        width, height = self.resolution_tuple
+        return Point(width // 2, height // 2)
+
     def start_stream(self) -> None:
         """Start the device stream."""
         try:
