@@ -84,6 +84,8 @@ class Point(Coordinates):
         Raises:
             ValueError: If the resulting coordinates are negative.
         """
+        if not isinstance(other, Coordinates):
+            return NotImplemented
         new_x = self.x + other.x
         new_y = self.y + other.y
         if new_x < 0 or new_y < 0:
