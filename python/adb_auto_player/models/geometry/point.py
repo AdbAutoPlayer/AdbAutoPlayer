@@ -1,6 +1,5 @@
 """Point class for geometric operations."""
 
-import math
 from dataclasses import dataclass
 from typing import SupportsIndex
 
@@ -42,14 +41,6 @@ class Point(Coordinates):
         """Y-coordinate."""
         return self._y
 
-    def distance_to(self, other: Coordinates) -> float:
-        """Calculate Euclidean distance to another point."""
-        return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
-
-    def is_close_to(self, other: Coordinates, threshold: float) -> bool:
-        """Check if this point is within threshold distance of another point."""
-        return self.distance_to(other) < threshold
-
     @classmethod
     def from_numpy(cls, array: np.ndarray) -> "Point":
         """Create Point from numpy array."""
@@ -58,14 +49,6 @@ class Point(Coordinates):
         x = TypeHelper.to_int_if_needed(array[0])
         y = TypeHelper.to_int_if_needed(array[1])
         return cls(x, y)
-
-    def to_numpy(self) -> np.ndarray:
-        """Convert Point to numpy array of shape (2,) with dtype int."""
-        return np.array([self.x, self.y])
-
-    def to_tuple(self) -> tuple[int, int]:
-        """Convert to tuple (x,y) with dtype int."""
-        return self.x, self.y
 
     def scale(self, scale_factor: float | None) -> "Point":
         """Return a new Point with coordinates scaled by the given scale factor.
