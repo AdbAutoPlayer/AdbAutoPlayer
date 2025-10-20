@@ -175,9 +175,10 @@ class TemplateMatcher:
         ]
 
         if top_left_points_with_scores:
-            filtered_points = _suppress_close_matches(
-                [pt for pt, _ in top_left_points_with_scores], min_distance
-            )
+            top_left_points_with_scores.sort(key=lambda x: x[1], reverse=True)
+            points = [pt for pt, _ in top_left_points_with_scores]
+            filtered_points = _suppress_close_matches(points, min_distance)
+
             # Create a dict for quick confidence lookup
             score_lookup = {
                 (x, y): score for (x, y), score in top_left_points_with_scores
