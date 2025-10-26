@@ -15,6 +15,7 @@ from adb_auto_player.exceptions import (
 from adb_auto_player.game import Game
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import CacheGroup, GameGUIMetadata
+from adb_auto_player.models.device import Resolution
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util import SummaryGenerator
@@ -39,8 +40,7 @@ class AFKJourneyBase(Navigation, Game):
     def __init__(self) -> None:
         """Initialize AFKJourneyBase."""
         super().__init__()
-        self.supports_portrait = True
-        self.base_resolution: str = "1080x1920"
+        self.base_resolution: Resolution = Resolution.from_string("1080x1920")
         self.package_name_prefixes = [
             "com.farlightgames.igame.gp",
         ]
@@ -67,7 +67,7 @@ class AFKJourneyBase(Navigation, Game):
     @lru_cache(maxsize=1)
     def _load_settings(self) -> Settings:
         """Load Settings TOML."""
-        self.settings = Settings.from_toml(self._get_settings_file_path())
+        self.settings = Settings.from_toml(self.settings_file_path)
         return self.settings
 
     def get_settings(self) -> Settings:

@@ -6,7 +6,7 @@ from time import sleep
 from adb_auto_player.decorators import register_cache
 from adb_auto_player.exceptions import GameStartError, GenericAdbUnrecoverableError
 from adb_auto_player.models.decorators import CacheGroup
-from adb_auto_player.models.device import DisplayInfo, Orientation
+from adb_auto_player.models.device import DisplayInfo, Orientation, Resolution
 from adb_auto_player.models.geometry import Coordinates
 
 from .adb_device import AdbDeviceWrapper
@@ -29,6 +29,7 @@ class AdbController:
         """
         _ = self.d.shell(f"wm size {display_size}")
         logging.info(f"Set Display Size to {display_size} for Device: {self.d.serial}")
+        self.get_display_info.cache_clear()
 
     @register_cache(CacheGroup.ADB)
     @lru_cache(maxsize=1)
@@ -66,20 +67,9 @@ class AdbController:
                 f"Unable to determine screen resolution: {result}"
             )
 
-        try:
-            width_str, height_str = resolution_str.split("x")
-            width, height = int(width_str), int(height_str)
-        except (ValueError, AttributeError):
-            raise GenericAdbUnrecoverableError(
-                f"Invalid resolution format: {resolution_str}"
-            )
-
-        device_orientation = _check_orientation(self.d)
-
         return DisplayInfo(
-            width=width if Orientation.PORTRAIT == device_orientation else height,
-            height=height if Orientation.PORTRAIT == device_orientation else width,
-            orientation=device_orientation,
+            resolution=Resolution.from_string(resolution_str),
+            orientation=_check_orientation(self.d),
         )
 
     def get_running_app(self) -> str | None:

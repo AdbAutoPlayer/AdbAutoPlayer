@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum, auto
-from functools import lru_cache
+from functools import cached_property, lru_cache
 from pathlib import Path
 from time import sleep, time
 from typing import Literal, TypeVar
@@ -33,7 +33,7 @@ from adb_auto_player.image_manipulation import (
     Cropping,
 )
 from adb_auto_player.models import ConfidenceValue
-from adb_auto_player.models.device import DisplayInfo, Orientation
+from adb_auto_player.models.device import DisplayInfo, Orientation, Resolution
 from adb_auto_player.models.geometry import Coordinates, Point, PointOutsideDisplay
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.pydantic import MyCustomRoutineSettings
@@ -87,47 +87,16 @@ class Game(ABC):
         #   Vietnam: com.farlightgames.igame.gp.vn
         #   Global will cover both cases because it checks for the prefix
         self.package_name_prefixes: list[str] = []
-        self.base_resolution: str = "1920x1080"  # Assuming landscape for most games
-
-        self._settings_file_path: Path | None = None
+        # Assuming landscape for most games
+        self.base_resolution: Resolution = Resolution.from_string("1920x1080")
         self._debug_screenshot_counter: int = 0
         self._device: AdbController | None = None
         self._stream: DeviceStream | None = None
-        self._template_dir_path: Path | None = None
-
-    @abstractmethod
-    def _load_settings(self):
-        """Required method to load the game settings."""
-        ...
 
     @abstractmethod
     def get_settings(self) -> BaseModel:
         """Required method to return the game settings."""
         ...
-
-    @property
-    def resolution_tuple(self) -> tuple[int, int]:
-        """Return the base resolution as a (width, height) tuple."""
-        try:
-            width, height = map(int, self.base_resolution.lower().split("x"))
-            return width, height
-        except ValueError:
-            raise ValueError(
-                f"Invalid resolution format: '{self.base_resolution}' "
-                "(expected 'WIDTHxHEIGHT')"
-            )
-
-    @property
-    def expects_landscape(self) -> bool:
-        """Return True if the resolution is landscape (width >= height)."""
-        width, height = self.resolution_tuple
-        return width >= height
-
-    @property
-    def expects_portrait(self) -> bool:
-        """Return True if the resolution is portrait (height > width)."""
-        width, height = self.resolution_tuple
-        return height > width
 
     @property
     def display_info(self) -> DisplayInfo:
@@ -142,10 +111,9 @@ class Game(ABC):
         return self._device
 
     @property
-    def center(self) -> Coordinates:
+    def center(self) -> Point:
         """Return center Point of display."""
-        width, height = self.resolution_tuple
-        return Point(width // 2, height // 2)
+        return self.base_resolution.center
 
     def start_stream(self) -> None:
         """Start the device stream."""
@@ -205,34 +173,30 @@ class Game(ABC):
         return
 
     def _start_device_streaming(self, device_streaming: bool = True) -> None:
-        if self._stream and not device_streaming:
-            logging.debug("Stopping device streaming")
-            self._stream.stop()
+        if not device_streaming:
+            if self._stream:
+                logging.debug("Stopping device streaming")
+                self._stream.stop()
             return
 
         if self._stream:
             logging.debug("Device stream already started")
             return
 
-        if device_streaming:
-            if not SettingsLoader.adb_auto_player_settings().device.streaming:
-                logging.warning(
-                    "Device Streaming is disabled in AdbAutoPlayer Settings"
-                )
-                return
+        if not SettingsLoader.adb_auto_player_settings().device.streaming:
+            logging.warning("Device Streaming is disabled in AdbAutoPlayer Settings")
+            return
 
-            self.start_stream()
-            self._check_screenshot_matches_display_resolution(
-                device_streaming_check=True
-            )
+        self.start_stream()
+        self._check_screenshot_matches_display_resolution(device_streaming_check=True)
         return
 
     def _set_device_resolution(self):
         if not SettingsLoader.adb_auto_player_settings().device.use_wm_resize:
             return
 
-        if self.base_resolution != self.display_info.resolution:
-            self.device.set_display_size(self.base_resolution)
+        if not self.base_resolution == self.display_info.resolution:
+            self.device.set_display_size(str(self.base_resolution))
         return
 
     def _check_requirements(self) -> None:
@@ -247,7 +211,7 @@ class Game(ABC):
             )
 
         if (
-            self.expects_portrait
+            self.base_resolution.is_portrait
             and self.display_info.orientation == Orientation.LANDSCAPE
         ):
             raise UnsupportedResolutionError(
@@ -257,7 +221,7 @@ class Game(ABC):
             )
 
         if (
-            self.expects_landscape
+            self.base_resolution.is_landscape
             and self.display_info.orientation == Orientation.PORTRAIT
         ):
             raise UnsupportedResolutionError(
@@ -531,7 +495,7 @@ class Game(ABC):
         grayscale: bool = False,
     ) -> np.ndarray:
         return IO.load_image(
-            image_path=self.get_template_dir_path() / template,
+            image_path=self.template_dir / template,
             grayscale=grayscale,
         )
 
@@ -1036,10 +1000,9 @@ class Game(ABC):
         except IndexError:
             raise ValueError("No module found after 'games' in module path")
 
-    def _get_settings_file_path(self) -> Path:
-        if self._settings_file_path:
-            return self._settings_file_path
-
+    @property
+    def settings_file_path(self) -> Path:
+        """Path for settings file."""
         settings_file: str | None = None
         for module, game in GAME_REGISTRY.items():
             if module == self._get_game_module():
@@ -1048,18 +1011,15 @@ class Game(ABC):
 
         if settings_file is None:
             raise AutoPlayerUnrecoverableError("Game does not have any Settings")
-        self._settings_file_path = SettingsLoader.settings_dir() / settings_file
-        return self._settings_file_path
+        return SettingsLoader.settings_dir() / settings_file
 
-    def get_template_dir_path(self) -> Path:
+    @cached_property
+    def template_dir(self) -> Path:
         """Retrieve path to images."""
-        if self._template_dir_path is None:
-            module = self._get_game_module()
-
-            self._template_dir_path = SettingsLoader.games_dir() / module / "templates"
-            logging.debug(f"{module} template path: {self._template_dir_path}")
-
-        return self._template_dir_path
+        module = self._get_game_module()
+        template_dir = SettingsLoader.games_dir() / module / "templates"
+        logging.debug(f"{module} template path: {template_dir}")
+        return template_dir
 
     def _get_custom_routine_settings(self, name: str) -> MyCustomRoutineSettings:
         if hasattr(self.get_settings(), name):
@@ -1300,7 +1260,7 @@ class Game(ABC):
 
         returns relative paths (e.g. 'power_saving_mode/1.png').
         """
-        template_dir = self.get_template_dir_path() / subdir
+        template_dir = self.template_dir / subdir
 
         return [
             f"{subdir}/{path.name}" for path in template_dir.iterdir() if path.is_file()

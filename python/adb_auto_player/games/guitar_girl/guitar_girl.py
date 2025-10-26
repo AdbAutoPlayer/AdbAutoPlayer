@@ -6,6 +6,7 @@ from adb_auto_player.decorators import register_command, register_game
 from adb_auto_player.game import Game
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
+from adb_auto_player.models.device import Resolution
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util import SummaryGenerator
@@ -19,13 +20,10 @@ class GuitarGirl(Game):
     def __init__(self) -> None:
         """Initialize AFKJourneyBase."""
         super().__init__()
-        self.base_resolution = "1080x1920"
+        self.base_resolution: Resolution = Resolution.from_string("1080x1920")
         self.package_name_prefixes = ["com.neowiz.game.guitargirl"]
 
     def get_settings(self) -> BaseModel:
-        raise NotImplementedError()
-
-    def _load_settings(self):
         raise NotImplementedError()
 
     @register_command(gui=GUIMetadata(label="Busk"))
