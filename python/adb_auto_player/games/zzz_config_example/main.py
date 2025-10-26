@@ -44,7 +44,4 @@ class PlayStore(Game):
         logging.info("CUSTOM ROUTINE")
 
     def get_settings(self) -> BaseModel:
-        return self._load_settings()
-
-    def _load_settings(self):
-        return Settings.from_toml(self._get_settings_file_path())
+        return Settings.from_toml(self.settings_file_path)

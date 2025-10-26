@@ -9,7 +9,7 @@ from unittest.mock import DEFAULT, patch
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.game import Game
 from adb_auto_player.image_manipulation import IO
-from adb_auto_player.models.device import DisplayInfo, Orientation
+from adb_auto_player.models.device import DisplayInfo, Orientation, Resolution
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import TemplateMatchResult
 from pydantic import BaseModel
@@ -26,22 +26,14 @@ class MockSettings(BaseModel):
 class MockGame(Game):
     """Mock Game class."""
 
-    def get_template_dir_path(self) -> Path:
+    @property
+    def template_dir(self) -> Path:
         """Mocked method."""
         return TEST_DATA_DIR
-
-    def _load_settings(self) -> None:
-        """Mocked method."""
-        pass
 
     def get_settings(self) -> BaseModel:
         """Mocked method."""
         return MockSettings()
-
-    @property
-    def scale_factor(self) -> float:
-        """Mocked method."""
-        return 1.0
 
 
 class TestGame(unittest.TestCase):
@@ -139,12 +131,10 @@ class TestGame(unittest.TestCase):
     @patch.multiple(
         Game,
         get_screenshot=DEFAULT,
-        get_template_dir_path=DEFAULT,
         display_info=DEFAULT,
     )
     def test_template_matching_speed(
         self,
-        get_template_dir_path,
         get_screenshot,
         display_info,
     ) -> None:
@@ -169,9 +159,9 @@ class TestGame(unittest.TestCase):
         template_image = "template_match_template.png"
 
         get_screenshot.return_value = IO.load_image(base_image)
-        get_template_dir_path.return_value = TEST_DATA_DIR
         display_info.return_value = DisplayInfo(
-            width=1080, height=1920, orientation=Orientation.PORTRAIT
+            resolution=Resolution(width=1080, height=1920),
+            orientation=Orientation.PORTRAIT,
         )
 
         full_times = []

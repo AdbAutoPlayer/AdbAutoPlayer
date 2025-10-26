@@ -62,7 +62,7 @@ class IO:
             image = Color.to_grayscale(image)
 
         template_cache[cache_key] = image
-        return image.copy()
+        return image
 
     @staticmethod
     def get_bgr_np_array_from_png_bytes(image_data: bytes) -> np.ndarray:

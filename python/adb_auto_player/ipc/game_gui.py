@@ -24,7 +24,7 @@ class GameGUIOptions:
             "settings_file": self.settings_file,
             "menu_options": [option.to_dict() for option in self.menu_options],
             "categories": self.categories,
-            "constraints": add_order_key(self.constraints),
+            "constraints": add_order_key(self.constraints),  # type: ignore[invalid-argument-type]
         }
 
 

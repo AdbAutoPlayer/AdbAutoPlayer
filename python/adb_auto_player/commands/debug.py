@@ -93,7 +93,7 @@ def _test_input_delay(controller: AdbController) -> None:
 def _log_display_info(controller: AdbController) -> None:
     logging.info("--- Device Display ---")
     display_info = controller.get_display_info()
-    logging.info(f"Resolution: {display_info.width}x{display_info.height}")
+    logging.info(f"Resolution: {display_info.resolution}")
     logging.info(f"Orientation: {display_info.orientation}")
 
 
