@@ -13,6 +13,7 @@ from adb_auto_player.util.runtime import RuntimeInfo
 from adbutils import AdbConnection
 from av.codec.codec import UnknownCodecError
 from av.codec.context import CodecContext
+from av.video.codeccontext import VideoCodecContext
 
 from .adb_controller import AdbController
 
@@ -55,12 +56,12 @@ def _get_best_decoder(hardware_decoding: bool) -> str:
     )
 
 
-def _get_codec_context() -> CodecContext:
+def _get_codec_context() -> VideoCodecContext:
     """Get codec context using cached decoder selection."""
     decoder_name = _get_best_decoder(
         SettingsLoader.adb_auto_player_settings().device.hardware_decoding
     )
-    return CodecContext.create(decoder_name, "r")
+    return VideoCodecContext.create(decoder_name, "r")  # type: ignore[invalid-return-type]
 
 
 class StreamingNotSupportedError(AutoPlayerWarningError):
