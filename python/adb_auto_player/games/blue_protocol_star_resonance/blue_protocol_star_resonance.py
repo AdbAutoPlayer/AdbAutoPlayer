@@ -25,9 +25,6 @@ class BlueProtocolStarResonance(Game):
     def get_settings(self) -> BaseModel:
         raise RuntimeError("Not Implemented")
 
-    def _load_settings(self):
-        pass
-
     def close_power_savings(self) -> None:
         if result := self.find_any_template(
             self.get_templates_from_dir("power_saving_mode")
