@@ -26,6 +26,7 @@ class MockSettings(BaseModel):
 class MockGame(Game):
     """Mock Game class."""
 
+    @property
     def template_dir(self) -> Path:
         """Mocked method."""
         return TEST_DATA_DIR
