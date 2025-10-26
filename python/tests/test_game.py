@@ -135,12 +135,12 @@ class TestGame(unittest.TestCase):
     @patch.multiple(
         Game,
         get_screenshot=DEFAULT,
-        get_template_dir_path=DEFAULT,
+        template_dir=DEFAULT,
         display_info=DEFAULT,
     )
     def test_template_matching_speed(
         self,
-        get_template_dir_path,
+        template_dir,
         get_screenshot,
         display_info,
     ) -> None:
@@ -165,7 +165,7 @@ class TestGame(unittest.TestCase):
         template_image = "template_match_template.png"
 
         get_screenshot.return_value = IO.load_image(base_image)
-        get_template_dir_path.return_value = TEST_DATA_DIR
+        template_dir.return_value = TEST_DATA_DIR
         display_info.return_value = DisplayInfo(
             resolution=Resolution(width=1080, height=1920),
             orientation=Orientation.PORTRAIT,

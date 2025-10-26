@@ -94,11 +94,6 @@ class Game(ABC):
         self._stream: DeviceStream | None = None
 
     @abstractmethod
-    def _load_settings(self):
-        """Required method to load the game settings."""
-        ...
-
-    @abstractmethod
     def get_settings(self) -> BaseModel:
         """Required method to return the game settings."""
         ...
