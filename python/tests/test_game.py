@@ -35,11 +35,6 @@ class MockGame(Game):
         """Mocked method."""
         return MockSettings()
 
-    @property
-    def scale_factor(self) -> float:
-        """Mocked method."""
-        return 1.0
-
 
 class TestGame(unittest.TestCase):
     """Test Game class."""
