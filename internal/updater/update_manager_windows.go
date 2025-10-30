@@ -16,7 +16,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/shirou/gopsutil/process"
+	"github.com/shirou/gopsutil/v4/process"
 )
 
 func (u *UpdateManager) DownloadAndApplyUpdate(downloadURL string) error {

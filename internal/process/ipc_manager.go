@@ -9,7 +9,6 @@ import (
 	"adb-auto-player/internal/settings"
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -25,7 +24,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/shirou/gopsutil/process"
+	"github.com/shirou/gopsutil/v4/process"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -608,8 +607,9 @@ func (pm *IPCManager) Cleanup() {
 // Helper function to kill process tree (moved from original code)
 func killProcessTree(p *process.Process) {
 	children, err := p.Children()
-	if err != nil && !errors.Is(err, process.ErrorNoChildren) {
+	if err != nil {
 		logger.Get().Debugf("Failed to get children of process %d: %v", p.Pid, err)
+		return
 	}
 
 	for _, child := range children {
