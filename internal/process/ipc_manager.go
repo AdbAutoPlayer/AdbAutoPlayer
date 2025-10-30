@@ -11,9 +11,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"github.com/shirou/gopsutil/process"
-	"github.com/wailsapp/wails/v3/pkg/application"
 	"io"
 	"net"
 	"net/http"
@@ -21,10 +18,15 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gorilla/websocket"
+	"github.com/shirou/gopsutil/process"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 // IPCManager handles both server process management and WebSocket communication.
@@ -618,7 +620,17 @@ func killProcessTree(p *process.Process) {
 		if strings.Contains(err.Error(), "no such process") {
 			logger.Get().Debugf("Process %d already exited", p.Pid)
 		} else {
-			logger.Get().Errorf("Failed to kill process %d: %v", p.Pid, err)
+			errorMessage := fmt.Sprintf("Failed to kill process %d: %v", p.Pid, err)
+			if !strings.HasSuffix(errorMessage, ".") {
+				errorMessage += "."
+			}
+
+			taskManager := "Task Manager"
+			if runtime.GOOS == "darwin" {
+				taskManager = "Activity Monitor"
+			}
+			hintMessage := fmt.Sprintf("Try manually terminating all processes containing 'adb', 'AdbAutoPlayer' or 'adb_auto_player' using your system's %s", taskManager)
+			logger.Get().Errorf("%s\n%s", errorMessage, hintMessage)
 		}
 	}
 }

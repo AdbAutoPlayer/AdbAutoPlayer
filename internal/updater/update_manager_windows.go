@@ -8,7 +8,6 @@ import (
 	ipcprocess "adb-auto-player/internal/process"
 	"archive/zip"
 	"fmt"
-	"github.com/shirou/gopsutil/process"
 	"io"
 	"os"
 	"os/exec"
@@ -16,6 +15,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/shirou/gopsutil/process"
 )
 
 func (u *UpdateManager) DownloadAndApplyUpdate(downloadURL string) error {
@@ -128,9 +129,7 @@ func (u *UpdateManager) applyUpdate(extractDir string) error {
 	ipcprocess.GetService().Shutdown()
 
 	// Kill specified processes (but not ourselves)
-	if err = u.killProcesses(); err != nil {
-		logger.Get().Warningf("Failed to kill some processes: %v", err)
-	}
+	_ = u.killProcesses()
 
 	// Find the new executable in the extracted files
 	newExePath, err := u.findNewExecutable(extractDir)
@@ -214,7 +213,6 @@ func (u *UpdateManager) killProcesses() error {
 	for _, processName := range u.processesToKill {
 		if err := u.killProcessByName(processName); err != nil {
 			lastErr = err
-			logger.Get().Warningf("Failed to kill process %s: %v", processName, err)
 		}
 	}
 	// Wait for processes to be killed
@@ -292,7 +290,7 @@ func (u *UpdateManager) killProcessTree(proc *process.Process) error {
 
 	if err = proc.Kill(); err != nil {
 		lastErr = err
-		logger.Get().Errorf("Failed to kill process PID %d at %s: %v", proc.Pid, exe, err)
+		logger.Get().Errorf("Updater failed to kill process PID %d at %s: %v", proc.Pid, exe, err)
 	} else {
 		logger.Get().Infof("Killed process PID %d at %s", proc.Pid, exe)
 
