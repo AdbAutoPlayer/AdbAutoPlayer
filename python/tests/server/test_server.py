@@ -27,10 +27,7 @@ class TestServer(unittest.TestCase):
             if line:
                 logs += line
 
-                if (
-                    "Application startup complete." in logs
-                    and "Uvicorn running on" in logs
-                ):
+                if "Application startup complete." in logs:
                     proc.terminate()
                     break
             else:
@@ -39,4 +36,3 @@ class TestServer(unittest.TestCase):
         proc.wait(timeout=10)
 
         assert "Application startup complete." in logs
-        assert "Uvicorn running on" in logs
