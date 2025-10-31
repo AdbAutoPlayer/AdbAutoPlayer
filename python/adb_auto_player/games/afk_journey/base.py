@@ -264,6 +264,8 @@ class AFKJourneyBase(Navigation, Game):
         except (GameTimeoutError, GameActionFailedError) as e:
             raise AutoPlayerWarningError(e)
 
+        # UI is not interactable for some time fuck Lilith
+        sleep(2)
         start_count = 1
 
         while True:
