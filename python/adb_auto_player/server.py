@@ -25,10 +25,16 @@ from pydantic import BaseModel
 from starlette.requests import Request
 from starlette.websockets import WebSocketState
 
-current_websocket: ContextVar[WebSocket | None] = ContextVar("current_websocket")
+current_websocket: ContextVar[WebSocket | None] = ContextVar[WebSocket | None](
+    "current_websocket",
+    default=None,
+)
 
-current_request_handler: ContextVar[MemoryLogHandler | None] = ContextVar(
-    "current_request_handler"
+current_request_handler: ContextVar[MemoryLogHandler | None] = ContextVar[
+    MemoryLogHandler | None
+](
+    "current_request_handler",
+    default=None,
 )
 
 
