@@ -6,7 +6,7 @@ from pathlib import Path
 
 from adb_auto_player.decorators import register_cache
 from adb_auto_player.models.decorators import CacheGroup
-from adb_auto_player.models.pydantic.adb_auto_player_settings import (
+from adb_auto_player.models.pydantic import (
     AdbAutoPlayerSettings,
 )
 from adb_auto_player.util.runtime import RuntimeInfo
