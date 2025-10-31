@@ -135,8 +135,11 @@ jobs:
   publish:
     needs: [build-windows, build-macos]
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.event.release.tag_name, 'alpha')
-
+    if: >
+      github.event_name == 'release' &&
+      github.event.action == 'published' &&
+      !github.event.release.prerelease &&
+      !contains(github.event.release.tag_name, 'alpha')
     steps:
       - uses: actions/checkout@v4
 
