@@ -1,6 +1,6 @@
 ['AFK Stages']
 Attempts = 5
-Formations = 7
+Formations = 10
 'Skip Manual Formations' = true
 'Spend Gold' = true
 'Start with current Formation' = false

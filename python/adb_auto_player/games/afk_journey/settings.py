@@ -10,7 +10,7 @@ from .heroes import HeroesEnum
 
 # Type constraints
 PositiveInt = Annotated[int, Field(ge=1, le=999)]
-FormationsInt = Annotated[int, Field(ge=1, le=7)]
+FormationsInt = Annotated[int, Field(ge=1, le=10)]
 
 
 # Enums
@@ -45,7 +45,7 @@ class CommonBattleModeSettings(BaseModel):
     """Common Settings shared across battle modes."""
 
     attempts: PositiveInt = Field(default=5, alias="Attempts")
-    formations: FormationsInt = Field(default=7, alias="Formations")
+    formations: FormationsInt = Field(default=10, alias="Formations")
     use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
     use_current_formation_before_suggested_formation: bool = Field(
         default=True,

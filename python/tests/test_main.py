@@ -31,6 +31,6 @@ class TestMain(unittest.TestCase):
         self.assertIn("Elijah & Lailah", menu_json_string)
         self.assertIn("Granny Dahnie", menu_json_string)
         self.assertIn("Cecia", menu_json_string)
-        self.assertIn('"maximum": 7,', menu_json_string)
+        self.assertIn('"maximum": 10,', menu_json_string)
         # check print is called for ipc
         mock_print.assert_not_called()
