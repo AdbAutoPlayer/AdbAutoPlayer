@@ -63,18 +63,11 @@ class AFKJourneyBase(Navigation, Game):
         """Give the bot eyes."""
         self.open_eyes(device_streaming=device_streaming)
 
-    def _load_settings(self) -> Settings:
-        """Load Settings TOML."""
-        self.settings = Settings.from_toml(self.settings_file_path)
-        return self.settings
-
     @register_cache(CacheGroup.GAME_SETTINGS)
     @lru_cache(maxsize=1)
     def get_settings(self) -> Settings:
         """Get Settings."""
-        if self.settings is None:
-            return self._load_settings()
-        return self.settings
+        return Settings.from_toml(self.settings_file_path)
 
     def _get_settings_for_mode(self, attribute: str) -> Any:
         """Retrieve Settings based on the current game mode.
