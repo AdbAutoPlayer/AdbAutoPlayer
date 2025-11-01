@@ -4,7 +4,9 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 import sys
+from contextlib import asynccontextmanager
 from contextvars import ContextVar
 from multiprocessing import Process, Queue
 
@@ -17,6 +19,7 @@ from adb_auto_player.registries import LRU_CACHE_REGISTRY
 from adb_auto_player.util import (
     Execute,
     LogMessageFactory,
+    RuntimeInfo,
     StringHelper,
     SummaryGenerator,
 )
@@ -192,8 +195,32 @@ class FastAPIServer:
     def __init__(
         self,
         commands: dict[str, list[Command]],
+        standalone: bool = False,
     ):
-        self.app = FastAPI(title="ADB Auto Player Server")
+        @asynccontextmanager
+        async def lifespan(app: FastAPI):
+            parent_pid = os.getppid()
+
+            async def check_parent():
+                while True:
+                    try:
+                        os.kill(parent_pid, 0)
+                    except ProcessLookupError:
+                        print(f"Parent process {parent_pid} gone. Exiting.")
+                        sys.exit(0)
+                    await asyncio.sleep(1)
+
+            check_parent_task = asyncio.create_task(check_parent())
+            yield
+            check_parent_task.cancel()
+
+        if not standalone and RuntimeInfo.is_mac():
+            self.app = FastAPI(title="ADB Auto Player Server", lifespan=lifespan)
+        else:
+            self.app = FastAPI(
+                title="ADB Auto Player Server",
+            )
+
         self.commands = commands
         self.websocket_handler = WebSocketLogHandler()
 
@@ -545,4 +572,5 @@ class FastAPIServer:
 def create_fastapi_server(commands: dict[str, list[Command]]) -> FastAPI:
     """Create and configure FastAPI server."""
     server = FastAPIServer(commands)
+
     return server.app
