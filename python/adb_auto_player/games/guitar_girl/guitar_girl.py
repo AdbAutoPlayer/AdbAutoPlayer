@@ -10,7 +10,6 @@ from adb_auto_player.models.device import Resolution
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util import SummaryGenerator
-from pydantic import BaseModel
 
 
 @register_game(
@@ -23,8 +22,9 @@ class GuitarGirl(Game):
         self.base_resolution: Resolution = Resolution.from_string("1080x1920")
         self.package_name_prefixes = ["com.neowiz.game.guitargirl"]
 
-    def get_settings(self) -> BaseModel:
-        raise NotImplementedError()
+    @property
+    def settings(self):
+        raise RuntimeError("Not Implemented")
 
     @register_command(gui=GUIMetadata(label="Busk"))
     def busk(self) -> NoReturn:

@@ -8,7 +8,6 @@ from adb_auto_player.image_manipulation import Cropping
 from adb_auto_player.models.decorators import GameGUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
-from pydantic import BaseModel
 
 
 @register_game(
@@ -22,7 +21,8 @@ class BlueProtocolStarResonance(Game):
         super().__init__()
         self.supported_resolutions: list[str] = ["1920x1080"]
 
-    def get_settings(self) -> BaseModel:
+    @property
+    def settings(self):
         raise RuntimeError("Not Implemented")
 
     def close_power_savings(self) -> None:
