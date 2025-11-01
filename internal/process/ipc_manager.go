@@ -9,6 +9,7 @@ import (
 	"adb-auto-player/internal/settings"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -34,8 +35,7 @@ type IPCManager struct {
 	pythonBinaryPath string
 
 	// Server management
-	serverProcess                  *process.Process
-	serverRunningInSeparateProcess bool
+	serverProcess *process.Process
 
 	// WebSocket connection management
 	wsConn      *websocket.Conn
@@ -160,7 +160,6 @@ func (pm *IPCManager) startServer() error {
 		return fmt.Errorf("failed to create process handle: %w", err)
 	}
 	pm.serverProcess = proc
-	pm.serverRunningInSeparateProcess = false
 
 	return nil
 }
@@ -184,11 +183,8 @@ func (pm *IPCManager) startOrResolveServer() error {
 	if inUse {
 		isValid, err2 := pm.healthCheck()
 		if isValid && err2 == nil {
-			if !pm.serverRunningInSeparateProcess {
-				logger.Get().Infof("AutoPlayer Server found running on %s:%d", host, port)
-			}
-			pm.serverRunningInSeparateProcess = true
-			return nil
+			// TODO could also try to kill the server here.
+			return errors.New(buildTaskManagerHintErrorMessagef("AutoPlayer Server found running on %s:%d", host, port))
 		}
 		return fmt.Errorf(
 			"address %s:%d is used by another app, try changing the 'AutoPlayer Host' in General Settings - Advanced to any other number between 49152-65535",
@@ -225,11 +221,6 @@ func (pm *IPCManager) startOrResolveServer() error {
 
 // stopServer stops the FastAPI server process.
 func (pm *IPCManager) stopServer() {
-	if pm.serverRunningInSeparateProcess {
-		logger.Get().Debugf("Not stopping server as it's running in a separate process")
-		return
-	}
-
 	if pm.serverProcess == nil {
 		return
 	}
@@ -240,15 +231,6 @@ func (pm *IPCManager) stopServer() {
 
 // isServerRunning checks if the server process is running.
 func (pm *IPCManager) isServerRunning() bool {
-	if pm.serverRunningInSeparateProcess {
-		isValid, err := pm.healthCheck()
-		if isValid && err == nil {
-			return true
-		}
-		pm.serverRunningInSeparateProcess = false
-		return false
-	}
-
 	if pm.serverProcess == nil {
 		return false
 	}
@@ -620,17 +602,21 @@ func killProcessTree(p *process.Process) {
 		if strings.Contains(err.Error(), "no such process") {
 			logger.Get().Debugf("Process %d already exited", p.Pid)
 		} else {
-			errorMessage := fmt.Sprintf("Failed to kill process %d: %v", p.Pid, err)
-			if !strings.HasSuffix(errorMessage, ".") {
-				errorMessage += "."
-			}
-
-			taskManager := "Task Manager"
-			if runtime.GOOS == "darwin" {
-				taskManager = "Activity Monitor"
-			}
-			hintMessage := fmt.Sprintf("Try manually terminating all processes containing 'adb', 'AdbAutoPlayer' or 'adb_auto_player' using your system's %s", taskManager)
-			logger.Get().Errorf("%s\n%s", errorMessage, hintMessage)
+			logger.Get().Errorf("%s", buildTaskManagerHintErrorMessagef("Failed to kill process %d: %v", p.Pid, err))
 		}
 	}
+}
+
+func buildTaskManagerHintErrorMessagef(format string, a ...any) string {
+	errorMessage := fmt.Sprintf(format, a...)
+	if !strings.HasSuffix(errorMessage, ".") {
+		errorMessage += "."
+	}
+
+	taskManager := "Task Manager"
+	if runtime.GOOS == "darwin" {
+		taskManager = "Activity Monitor"
+	}
+	hintMessage := fmt.Sprintf("Try manually terminating all processes containing 'adb', 'AdbAutoPlayer' or 'adb_auto_player' using your system's %s", taskManager)
+	return fmt.Sprintf("%s\n%s", errorMessage, hintMessage)
 }
