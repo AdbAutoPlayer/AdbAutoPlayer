@@ -107,7 +107,7 @@ func (s *IPCService) SendPOST(endpoint string, requestBody interface{}) ([]byte,
 	return s.manager.sendPOST(endpoint, requestBody)
 }
 
-func getUVDevCommand(isDev bool, name string, args ...string) (*exec.Cmd, error) {
+func getServerStartCommand(isDev bool, name string, args ...string) (*exec.Cmd, error) {
 	if isDev {
 		if _, err := os.Stat(name); os.IsNotExist(err) {
 			return nil, fmt.Errorf("dev Python dir does not exist: %s", name)

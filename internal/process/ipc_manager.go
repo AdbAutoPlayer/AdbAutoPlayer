@@ -143,27 +143,6 @@ func (pm *IPCManager) checkPortInUse() (bool, error) {
 	return false, nil
 }
 
-// startServer starts the FastAPI server process.
-func (pm *IPCManager) startServer() error {
-	cmd, err := getUVDevCommand(pm.isDev, pm.pythonBinaryPath, "--server")
-	if err != nil {
-		return fmt.Errorf("failed to get server command: %w", err)
-	}
-
-	if err = cmd.Start(); err != nil {
-		return fmt.Errorf("failed to start server: %w", err)
-	}
-	logger.Get().Debugf("Started server with PID: %d", cmd.Process.Pid)
-
-	proc, err := process.NewProcess(int32(cmd.Process.Pid))
-	if err != nil {
-		return fmt.Errorf("failed to create process handle: %w", err)
-	}
-	pm.serverProcess = proc
-
-	return nil
-}
-
 // startOrResolveServer attempts to use an existing server or start a new one.
 func (pm *IPCManager) startOrResolveServer() error {
 	pm.serverMutex.Lock()

@@ -2,6 +2,7 @@ package notifications
 
 import (
 	"context"
+
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 )
