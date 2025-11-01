@@ -13,7 +13,7 @@ import (
 func (pm *IPCManager) startServer() error {
 	cmd, err := getServerStartCommand(pm.isDev, pm.pythonBinaryPath, "--server")
 	if err != nil {
-		return fmt.Errorf("failed to get server command: %w", err)
+		return fmt.Errorf("failed to get server start command: %w", err)
 	}
 
 	// Create Job Object so child dies with parent
