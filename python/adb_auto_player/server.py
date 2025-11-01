@@ -195,7 +195,6 @@ class FastAPIServer:
     def __init__(
         self,
         commands: dict[str, list[Command]],
-        standalone: bool = False,
     ):
         @asynccontextmanager
         async def lifespan(app: FastAPI):
@@ -214,7 +213,7 @@ class FastAPIServer:
             yield
             check_parent_task.cancel()
 
-        if not standalone and RuntimeInfo.is_mac():
+        if RuntimeInfo.is_mac():
             self.app = FastAPI(title="ADB Auto Player Server", lifespan=lifespan)
         else:
             self.app = FastAPI(
