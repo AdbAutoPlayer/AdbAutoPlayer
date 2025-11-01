@@ -92,9 +92,10 @@ class Game(ABC):
         self._device: AdbController | None = None
         self._stream: DeviceStream | None = None
 
+    @property
     @abstractmethod
-    def get_settings(self) -> BaseModel:
-        """Required method to return the game settings."""
+    def settings(self) -> BaseModel:
+        """Required property to return the game settings."""
         ...
 
     @property
@@ -1021,8 +1022,8 @@ class Game(ABC):
         return template_dir
 
     def _get_custom_routine_settings(self, name: str) -> MyCustomRoutineSettings:
-        if hasattr(self.get_settings(), name):
-            attribute = getattr(self.get_settings(), name)
+        if hasattr(self.settings, name):
+            attribute = getattr(self.settings, name)
             if isinstance(attribute, MyCustomRoutineSettings):
                 return attribute
             else:

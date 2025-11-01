@@ -120,7 +120,7 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
                 return
 
             if self._handle_battle_screen(
-                self.get_settings().duras_trials.use_suggested_formations,
+                self.settings.duras_trials.use_suggested_formations,
             ):
                 if handle_duras_post_battle():
                     return

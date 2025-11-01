@@ -33,7 +33,7 @@ class PlayStore(Game):
         gui=GUIMetadata(label="Log Settings", category="Category", tooltip="Tooltip")
     )
     def _test_gui(self) -> None:
-        logging.info(f"{pprint.pformat(self.get_settings())}")
+        logging.info(f"{pprint.pformat(self.settings)}")
 
     @register_command()
     def _test_cli(self) -> None:

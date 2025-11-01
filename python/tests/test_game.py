@@ -31,8 +31,8 @@ class MockGame(Game):
         """Mocked method."""
         return TEST_DATA_DIR
 
-    def get_settings(self) -> BaseModel:
-        """Mocked method."""
+    @property
+    def settings(self) -> BaseModel:
         return MockSettings()
 
 

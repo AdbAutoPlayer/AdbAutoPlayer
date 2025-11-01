@@ -35,7 +35,7 @@ class AssistMixin(AFKJourneyBase):
 
         logging.info("Searching Synergy & Corrupt Creature requests in World Chat")
         count: int = 0
-        while count < self.get_settings().general.assist_limit:
+        while count < self.settings.general.assist_limit:
             if self._find_synergy_or_corrupt_creature():
                 count += 1
                 logging.info(f"Assist #{count}")

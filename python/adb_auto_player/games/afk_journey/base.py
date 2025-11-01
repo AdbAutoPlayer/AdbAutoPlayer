@@ -63,9 +63,10 @@ class AFKJourneyBase(Navigation, Game):
         """Give the bot eyes."""
         self.open_eyes(device_streaming=device_streaming)
 
+    @property
     @register_cache(CacheGroup.GAME_SETTINGS)
     @lru_cache(maxsize=1)
-    def get_settings(self) -> Settings:
+    def settings(self) -> Settings:
         """Get Settings."""
         return Settings.from_toml(self.settings_file_path)
 
@@ -81,11 +82,11 @@ class AFKJourneyBase(Navigation, Game):
         """
         match self.battle_state.mode:
             case Mode.DURAS_TRIALS:
-                return getattr(self.get_settings().duras_trials, attribute)
+                return getattr(self.settings.duras_trials, attribute)
             case Mode.LEGEND_TRIALS:
-                return getattr(self.get_settings().legend_trials, attribute)
+                return getattr(self.settings.legend_trials, attribute)
             case _:
-                return getattr(self.get_settings().afk_stages, attribute)
+                return getattr(self.settings.afk_stages, attribute)
 
     def _re_enter_battle_for_duras(self):
         try:
@@ -302,7 +303,7 @@ class AFKJourneyBase(Navigation, Game):
         """
         excluded_heroes_dict: dict[str, str] = {
             f"heroes/{re.sub(r'[\s&]', '', name.value.lower())}.png": name.value
-            for name in self.get_settings().general.excluded_heroes
+            for name in self.settings.general.excluded_heroes
         }
 
         if not excluded_heroes_dict:

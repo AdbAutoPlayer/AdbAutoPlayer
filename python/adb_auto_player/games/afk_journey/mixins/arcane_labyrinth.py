@@ -56,7 +56,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             15: 25,
         }
 
-        keys = mapping.get(self.get_settings().arcane_labyrinth.difficulty, None)
+        keys = mapping.get(self.settings.arcane_labyrinth.difficulty, None)
         if keys:
             self._add_keys_farmed(keys)
 
@@ -131,7 +131,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             "make sure to set it up once and do a single battle before"
         )
         self.start_up()
-        key_quota: int = self.get_settings().arcane_labyrinth.key_quota
+        key_quota: int = self.settings.arcane_labyrinth.key_quota
         clear_count = 0
 
         while self.arcane_lucky_flip_keys < key_quota:
@@ -301,7 +301,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
     def _handle_enter_button(self) -> None:
         """Handle entering the labyrinth."""
-        difficulty: int = self.get_settings().arcane_labyrinth.difficulty
+        difficulty: int = self.settings.arcane_labyrinth.difficulty
         max_difficulty = 15
 
         if difficulty < max_difficulty and not self.game_find_template_match(
