@@ -34,14 +34,14 @@ Repeat = true
 'Buy Discount Affinity' = true
 'Buy Temporal Essences' = false
 'Essence Buy Count' = 1
-'Single Pull' = true
+'Single Pull' = false
 
 ['Dream Realm']
 'Spend Gold' = true
 
 ["Dura's Trials"]
 Attempts = 5
-Formations = 7
+Formations = 10
 'Spend Gold' = true
 'Start with current Formation' = false
 'Suggested Formations' = true
@@ -52,7 +52,7 @@ Formations = 7
 
 ['Legend Trial']
 Attempts = 5
-Formations = 7
+Formations = 10
 'Skip Manual Formations' = true
 'Spend Gold' = true
 'Start with current Formation' = false
