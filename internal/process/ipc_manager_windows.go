@@ -16,6 +16,7 @@ func (pm *IPCManager) startServer() error {
 		return fmt.Errorf("failed to get server command: %w", err)
 	}
 
+	// Create Job Object so child dies with parent
 	job, err := windows.CreateJobObject(nil, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create job object: %w", err)
@@ -31,19 +32,29 @@ func (pm *IPCManager) startServer() error {
 		return fmt.Errorf("failed to set job info: %w", jobErr)
 	}
 
-	// --- Start the FastAPI server ---
+	// Start the FastAPI server
 	if err = cmd.Start(); err != nil {
 		return fmt.Errorf("failed to start server: %w", err)
 	}
 	logger.Get().Debugf("Started server with PID: %d", cmd.Process.Pid)
 
-	// --- Attach child to the Job Object ---
-	handle := windows.Handle(cmd.Process.Pid)
-	if err = windows.AssignProcessToJobObject(job, handle); err != nil {
+	// Open process handle for AssignProcessToJobObject
+	const processAllAccess = windows.PROCESS_ALL_ACCESS
+	hProcess, err := windows.OpenProcess(processAllAccess, false, uint32(cmd.Process.Pid))
+	if err != nil {
+		return fmt.Errorf("failed to open process handle: %w", err)
+	}
+	defer func(handle windows.Handle) {
+		if err = windows.CloseHandle(handle); err != nil {
+			logger.Get().Errorf("failed to close handle: %v", err)
+		}
+	}(hProcess)
+
+	if err = windows.AssignProcessToJobObject(job, hProcess); err != nil {
 		return fmt.Errorf("failed to assign process to job: %w", err)
 	}
 
-	// --- Track the process ---
+	// Store the process info
 	proc, err := process.NewProcess(int32(cmd.Process.Pid))
 	if err != nil {
 		return fmt.Errorf("failed to create process handle: %w", err)
