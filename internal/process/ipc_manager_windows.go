@@ -42,22 +42,22 @@ func (pm *IPCManager) startServer() error {
 	const processAllAccess = windows.PROCESS_ALL_ACCESS
 	hProcess, err := windows.OpenProcess(processAllAccess, false, uint32(cmd.Process.Pid))
 	if err != nil {
-		return fmt.Errorf("failed to open process handle: %w", err)
+		return fmt.Errorf("failed to open server process handle: %w", err)
 	}
 	defer func(handle windows.Handle) {
 		if err = windows.CloseHandle(handle); err != nil {
-			logger.Get().Errorf("failed to close handle: %v", err)
+			logger.Get().Errorf("failed to close server process handle: %v", err)
 		}
 	}(hProcess)
 
 	if err = windows.AssignProcessToJobObject(job, hProcess); err != nil {
-		return fmt.Errorf("failed to assign process to job: %w", err)
+		return fmt.Errorf("failed to assign server process to job: %w", err)
 	}
 
 	// Store the process info
 	proc, err := process.NewProcess(int32(cmd.Process.Pid))
 	if err != nil {
-		return fmt.Errorf("failed to create process handle: %w", err)
+		return fmt.Errorf("failed to create server process handle: %w", err)
 	}
 	pm.serverProcess = proc
 
