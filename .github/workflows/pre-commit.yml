@@ -20,6 +20,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache apt packages
+        if: runner.os == 'Linux'
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt
+            /var/lib/apt/lists
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/pre-commit.yml') }}
+          restore-keys: ${{ runner.os }}-apt-
+
       - name: Install system dependencies
         if: runner.os == 'Linux'
         run: |
