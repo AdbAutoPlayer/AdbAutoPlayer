@@ -33,8 +33,8 @@ jobs:
       - name: Install system dependencies
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get -yq update
-          sudo apt-get -yq install libgtk-3-0 libwebkit2gtk-4.1-dev gcc-aarch64-linux-gnu
+          sudo apt-get -yq update || true
+          sudo apt-get -yq install --no-install-recommends libgtk-3-0 libwebkit2gtk-4.1-dev gcc-aarch64-linux-gnu
 
       - name: Setup Go, Wails, Node, uv, Python
         uses: ./.github/actions/setup-tools
