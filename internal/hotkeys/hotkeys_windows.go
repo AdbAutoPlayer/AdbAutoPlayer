@@ -1,11 +1,10 @@
-//go:build windows
-
 package hotkeys
 
 import (
 	"adb-auto-player/internal/process"
-	"golang.design/x/hotkey"
 	"strings"
+
+	"golang.design/x/hotkey"
 )
 
 func registerGlobalHotkeys() error {
