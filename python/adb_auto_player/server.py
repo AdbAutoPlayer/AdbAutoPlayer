@@ -538,7 +538,7 @@ class FastAPIServer:
     def _clear_cache(group: CacheGroup) -> None:
         """Clear cache for a specific group."""
         for func in LRU_CACHE_REGISTRY.get(group, []):
-            if cache_clear := getattr(func, "clear_cache", None):
+            if cache_clear := getattr(func, "cache_clear", None):
                 cache_clear()
 
 
