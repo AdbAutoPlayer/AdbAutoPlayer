@@ -78,7 +78,6 @@ class Game(ABC):
 
     def __init__(self) -> None:
         """Initialize a game."""
-        self.settings: BaseModel | None = None
         self.default_threshold: ConfidenceValue = ConfidenceValue("90%")
         self.disable_debug_screenshots: bool = False
 
