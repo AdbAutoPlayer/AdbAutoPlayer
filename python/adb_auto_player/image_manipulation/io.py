@@ -85,6 +85,6 @@ class IO:
         return img
 
     @staticmethod
-    def clear_cache() -> None:
+    def cache_clear() -> None:
         """Clears the template_cache dictionary."""
         template_cache.clear()
