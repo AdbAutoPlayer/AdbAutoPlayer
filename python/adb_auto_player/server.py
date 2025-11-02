@@ -549,19 +549,19 @@ class FastAPIServer:
         @self.app.post("/general-settings-updated", response_model=OKResponse)
         async def adb_auto_player_settings_updated():
             """Handle AdbAutoPlayer settings update."""
-            self._clear_cache(CacheGroup.ADB_AUTO_PLAYER_SETTINGS)
-            self._clear_cache(CacheGroup.GAME_SETTINGS)
-            self._clear_cache(CacheGroup.ADB)
+            self._cache_clear(CacheGroup.ADB_AUTO_PLAYER_SETTINGS)
+            self._cache_clear(CacheGroup.GAME_SETTINGS)
+            self._cache_clear(CacheGroup.ADB)
             return OKResponse()
 
         @self.app.post("/game-settings-updated", response_model=OKResponse)
         async def game_settings_updated():
             """Handle game settings update."""
-            self._clear_cache(CacheGroup.GAME_SETTINGS)
+            self._cache_clear(CacheGroup.GAME_SETTINGS)
             return OKResponse()
 
     @staticmethod
-    def _clear_cache(group: CacheGroup) -> None:
+    def _cache_clear(group: CacheGroup) -> None:
         """Clear cache for a specific group."""
         for func in LRU_CACHE_REGISTRY.get(group, []):
             if cache_clear := getattr(func, "cache_clear", None):

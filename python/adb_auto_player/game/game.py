@@ -1108,7 +1108,7 @@ class Game(ABC):
                     "CV2 error attempting to clear caches, original error message: "
                     f"{error}"
                 )
-            IO.clear_cache()
+            IO.cache_clear()
             return
         if isinstance(error, AutoPlayerUnrecoverableError):
             logging.error(
