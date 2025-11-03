@@ -52,8 +52,8 @@
           <!-- Update Complete Message -->
           <div class="py-8 text-center">
             <p class="text-lg text-success-500">
-              Update downloaded successfully! The application will restart
-              automatically.
+              Update downloaded successfully!<br />
+              The App will restart automatically.
             </p>
           </div>
         {/if}
