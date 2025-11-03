@@ -91,6 +91,7 @@ class Game(ABC):
         self._debug_screenshot_counter: int = 0
         self._device: AdbController | None = None
         self._stream: DeviceStream | None = None
+        self._target_package_name: str | None = None
 
     @property
     @abstractmethod
@@ -343,21 +344,21 @@ class Game(ABC):
 
     def force_stop_game(self):
         """Force stops the Game."""
-        if not self.package_name:
+        if not self._target_package_name:
             return
-        self.device.stop_game(self.package_name)
+        self.device.stop_game(self._target_package_name)
 
     def is_game_running(self) -> bool:
         """Check if Game is still running."""
-        return self.package_name is not None
-
-    @property
-    def package_name(self) -> str | None:
-        """Returns package name if game is running."""
         if app := self.device.get_running_app():
+            if self._target_package_name:
+                return app == self._target_package_name
+
             if any(pn in app for pn in self.package_name_prefixes):
-                return app
-        return None
+                self._target_package_name = app
+                return True
+
+        return False
 
     def start_game(self) -> None:
         """Start the Game.
@@ -365,9 +366,9 @@ class Game(ABC):
         Raises:
             GameStartError: Game cannot be started.
         """
-        if not self.package_name:
+        if not self._target_package_name:
             return
-        self.device.start_game(self.package_name)
+        self.device.start_game(self._target_package_name)
 
     def restart_game(self):
         """Restart the Game.
