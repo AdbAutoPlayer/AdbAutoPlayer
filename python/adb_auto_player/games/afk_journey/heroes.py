@@ -41,6 +41,7 @@ class HeroesEnum(StrEnum):
     Hugin = auto()
     Igor = auto()
     Indris = auto()
+    Isabelle = auto()
     Kafra = auto()
     Koko = auto()
     Korin = auto()
