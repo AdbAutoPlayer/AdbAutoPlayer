@@ -1,11 +1,10 @@
 import time
 
-from adb_auto_player.device.adb import AdbController
-from adb_auto_player.exceptions import AutoPlayerError
+from adb_auto_player.device.adb.adb_input_device import InputDevice
 from adb_auto_player.models.device import DPad, Stick
 
 
-class XiaomiJoystick:
+class XiaomiJoystick(InputDevice):
     """Class to interact with Xiaomi Joystick.
 
     Note:   it is very likely a generic Joystick Class can be made that derives
@@ -45,7 +44,11 @@ class XiaomiJoystick:
     Bumpers: ABS_RX (Left), ABS_RY (Right)
     """
 
-    NAME = "Xiaomi Joystick"
+    @property
+    def name(self) -> str:
+        """Name of the input device."""
+        return "Xiaomi Joystick"
+
     CENTER = 0
     ABS_MIN = -1000000
     ABS_MAX = 1000000
@@ -61,8 +64,6 @@ class XiaomiJoystick:
     # D-pad
     ABS_HAT0X = 16
     ABS_HAT0Y = 17
-
-    input_device: str
 
     class _Stick(Stick):
         """Stick implementation with 8-directional movement."""
@@ -163,42 +164,31 @@ class XiaomiJoystick:
             self._parent._move_hat(self._parent.ABS_HAT0X, 1, duration)
 
     def __init__(self) -> None:
-        input_device = AdbController().get_input_device(self.NAME)
-        if not input_device:
-            raise AutoPlayerError(f"Input device '{self.NAME}' cannot be initialized.")
-        self.input_device = input_device
+        super().__init__()
         self._left_stick = self._Stick(self, self.ABS_X, self.ABS_Y)
         self._right_stick = self._Stick(self, self.ABS_Z, self.ABS_RZ)
         self._dpad = self._DPad(self)
 
-    def _sendevent(self, ev_type: int, code: int, value: int) -> None:
-        AdbController().d.shell(
-            f"sendevent {self.input_device} {ev_type} {code} {value}"
-        )
-
-    def _ev_syn(self) -> None:
-        self._sendevent(0, 0, 0)  # EV_SYN
-
     def _move_stick(
         self, x_code: int, y_code: int, x_val: int, y_val: int, duration: float
     ) -> None:
-        self._sendevent(3, x_code, x_val)
-        self._sendevent(3, y_code, y_val)
-        self._ev_syn()
+        self.sendevent(3, x_code, x_val)
+        self.sendevent(3, y_code, y_val)
+        self.ev_syn()
         time.sleep(duration)
         # Return to center
-        self._sendevent(3, x_code, self.CENTER)
-        self._sendevent(3, y_code, self.CENTER)
-        self._ev_syn()
+        self.sendevent(3, x_code, self.CENTER)
+        self.sendevent(3, y_code, self.CENTER)
+        self.ev_syn()
 
     def _move_hat(self, axis_code: int, value: int, duration: float) -> None:
         """Move single D-pad axis."""
-        self._sendevent(3, axis_code, value)
-        self._ev_syn()
+        self.sendevent(3, axis_code, value)
+        self.ev_syn()
         time.sleep(duration)
         # return to center
-        self._sendevent(3, axis_code, 0)
-        self._ev_syn()
+        self.sendevent(3, axis_code, 0)
+        self.ev_syn()
 
     # ---------------- Sticks ----------------
     @property
