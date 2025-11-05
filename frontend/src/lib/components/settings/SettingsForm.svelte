@@ -20,6 +20,8 @@
 
   let isSaving = $state(false);
 
+  let formState: Record<string, Record<string, any>> = $state({});
+
   function initializeFormState() {
     const newFormState: Record<string, Record<string, any>> = {};
 
@@ -44,8 +46,7 @@
     formState = newFormState;
   }
 
-  let formState: Record<string, Record<string, any>> = $state({});
-
+  initializeFormState();
   const settingsSections: Array<{
     sectionKey: string;
     sectionSettings: ConstraintSection;
@@ -115,7 +116,6 @@
   }
 
   onMount(() => {
-    initializeFormState();
     setupRealTimeValidation();
   });
 </script>
@@ -125,8 +125,21 @@
     <Accordion multiple>
       {#each settingsSections as { sectionKey, sectionSettings }}
         <Accordion.Item value={sectionKey}>
-          {#snippet control()}<span class="h5">{$t(sectionKey)}</span>{/snippet}
-          {#snippet panel()}
+          <Accordion.ItemTrigger class="flex items-center justify-between">
+            <span class="px-2 py-1 h5">
+              {$t(sectionKey)}
+            </span>
+
+            <Accordion.ItemIndicator class="group">
+              <span class="hidden size-4 group-data-[state=open]:block">
+                -
+              </span>
+              <span class="block size-4 group-data-[state=open]:hidden">
+                +
+              </span>
+            </Accordion.ItemIndicator>
+          </Accordion.ItemTrigger>
+          <Accordion.ItemContent>
             <div class="p-4">
               {#each Object.entries(sectionSettings) as [key, value]}
                 <div class="mb-4">
@@ -209,7 +222,7 @@
                 </div>
               {/each}
             </div>
-          {/snippet}
+          </Accordion.ItemContent>
         </Accordion.Item>
         <hr class="hr" />
       {/each}

@@ -4,7 +4,7 @@
   import ActiveLogDisplayCard from "$lib/components/log/ActiveLogDisplayCard.svelte";
   import { onMount } from "svelte";
   import UpdateContainer from "$lib/components/updater/UpdateContainer.svelte";
-  import { Toaster } from "@skeletonlabs/skeleton-svelte";
+  import { Toast } from "@skeletonlabs/skeleton-svelte";
   import { toaster } from "$lib/toast/toaster-svelte";
   import { registerGlobalHotkeys } from "$lib/utils/settings";
   import { initPostHog } from "$lib/utils/posthog";
@@ -17,7 +17,21 @@
   });
 </script>
 
-<Toaster {toaster} stateError="preset-filled-error-100-900"></Toaster>
+<Toast.Group {toaster}>
+  {#snippet children(toast)}
+    <Toast {toast} class="data-[type=error]:preset-filled-error-100-900">
+      <Toast.Message>
+        <Toast.Title>
+          <span class="text-lg">{toast.title}</span>
+        </Toast.Title>
+        <Toast.Description>
+          <p>{toast.description}</p>
+        </Toast.Description>
+      </Toast.Message>
+      <Toast.CloseTrigger />
+    </Toast>
+  {/snippet}
+</Toast.Group>
 
 <div class="flex h-screen flex-col overflow-hidden">
   <div class="flex-none">
