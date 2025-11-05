@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "@skeletonlabs/skeleton";
-@import "@skeletonlabs/skeleton/optional/presets";
 @import "@skeletonlabs/skeleton/themes/catppuccin";
 @import "@skeletonlabs/skeleton/themes/cerberus";
 @import "@skeletonlabs/skeleton/themes/crimson";
@@ -22,10 +21,9 @@
 @import "@skeletonlabs/skeleton/themes/vintage";
 @import "@skeletonlabs/skeleton/themes/vox";
 @import "@skeletonlabs/skeleton/themes/wintry";
+@import "@skeletonlabs/skeleton-svelte";
 
-@plugin '@tailwindcss/forms';
-
-@source '../node_modules/@skeletonlabs/skeleton-svelte/dist';
+@plugin "@tailwindcss/forms";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
