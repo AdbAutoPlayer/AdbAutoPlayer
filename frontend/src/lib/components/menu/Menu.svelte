@@ -39,15 +39,27 @@
     <Accordion multiple>
       {#each categories as category}
         {#if categorizedButtons[category] && categorizedButtons[category].length > 0}
-          <Accordion.Item value={category} controlPadding="py-1 px-2">
-            {#snippet control()}<span class="h5">{$t(category)}</span>{/snippet}
-            {#snippet panel()}
+          <Accordion.Item value={category}>
+            <Accordion.ItemTrigger class="flex items-center justify-between">
+              <span class="px-2 py-1 h5">
+                {$t(category)}
+              </span>
+              <Accordion.ItemIndicator class="group">
+                <span class="hidden size-4 group-data-[state=open]:block">
+                  -
+                </span>
+                <span class="block size-4 group-data-[state=open]:hidden">
+                  +
+                </span>
+              </Accordion.ItemIndicator>
+            </Accordion.ItemTrigger>
+            <Accordion.ItemContent>
               <div class="flex flex-wrap justify-center gap-4">
                 {#each categorizedButtons[category] as menuButton}
                   <TooltipButton {menuButton} {disableActions} />
                 {/each}
               </div>
-            {/snippet}
+            </Accordion.ItemContent>
           </Accordion.Item>
           <hr class="hr" />
         {/if}

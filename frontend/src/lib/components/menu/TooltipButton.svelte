@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Tooltip } from "@skeletonlabs/skeleton-svelte";
+  import { Portal, Tooltip } from "@skeletonlabs/skeleton-svelte";
 
   import ActionButton from "./ActionButton.svelte";
   import type { MenuButton } from "$lib/settings-form/model";
@@ -27,22 +27,22 @@
       }
     }}
     positioning={{ placement: "top" }}
-    contentBase="card preset-filled-primary-500 p-4"
     openDelay={500}
     closeDelay={0}
-    arrow
   >
-    {#snippet trigger()}
+    <Tooltip.Trigger>
       <ActionButton
         disabled={!menuButton.alwaysEnabled && disableActions}
         {menuButton}
-      ></ActionButton>
-    {/snippet}
-    {#snippet content()}
-      <span class="select-none">
-        {$t(menuButton.option.tooltip || "")}
-      </span>
-    {/snippet}
+      />
+    </Tooltip.Trigger>
+    <Portal>
+      <Tooltip.Positioner>
+        <Tooltip.Content class="card preset-filled-primary-500 p-4 select-none">
+          {$t(menuButton.option.tooltip || "")}
+        </Tooltip.Content>
+      </Tooltip.Positioner>
+    </Portal>
   </Tooltip>
 {:else}
   <ActionButton
