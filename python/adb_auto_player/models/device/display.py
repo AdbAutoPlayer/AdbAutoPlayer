@@ -4,6 +4,13 @@ from enum import StrEnum
 from ..geometry import Point
 
 
+class Orientation(StrEnum):
+    """Device orientation enum."""
+
+    PORTRAIT = "portrait"
+    LANDSCAPE = "landscape"
+
+
 @dataclass(frozen=True)
 class Resolution:
     """Display Resolution dataclass."""
@@ -32,7 +39,7 @@ class Resolution:
     @property
     def is_landscape(self) -> bool:
         """Whether the resolution is landscape."""
-        return self.width >= self.height
+        return self.width > self.height
 
     @property
     def is_portrait(self) -> bool:
@@ -49,12 +56,19 @@ class Resolution:
         """Return center Point of display."""
         return Point(self.width // 2, self.height // 2)
 
+    @property
+    def is_square(self) -> bool:
+        """Whether the resolution is square."""
+        return self.width == self.height
 
-class Orientation(StrEnum):
-    """Device orientation enum."""
-
-    PORTRAIT = "portrait"
-    LANDSCAPE = "landscape"
+    @property
+    def orientation(self) -> Orientation | None:
+        """Return the resolution's orientation, or None if square."""
+        if self.width > self.height:
+            return Orientation.LANDSCAPE
+        elif self.height > self.width:
+            return Orientation.PORTRAIT
+        return None
 
 
 @dataclass(frozen=True)
@@ -66,12 +80,29 @@ class DisplayInfo:
     """
 
     resolution: Resolution
-    orientation: Orientation
+    orientation: Orientation | None
 
     @property
     def dimensions(self) -> tuple[int, int]:
         """Return device resolution tuple."""
-        return self.resolution.dimensions
+        return self.normalized_resolution.dimensions
+
+    @property
+    def normalized_resolution(self) -> Resolution:
+        """Return the resolution adjusted for the current orientation.
+
+        Devices report the raw physical size even when the actual display is rotated.
+        This normalizes width/height to match the current orientation.
+        """
+        res = self.resolution
+
+        if self.orientation == Orientation.LANDSCAPE and res.height > res.width:
+            return Resolution(width=res.height, height=res.width)
+
+        if self.orientation == Orientation.PORTRAIT and res.width > res.height:
+            return Resolution(width=res.height, height=res.width)
+
+        return res
 
     def __str__(self) -> str:
         """Return a string representation of the display info."""

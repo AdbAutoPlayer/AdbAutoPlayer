@@ -33,7 +33,7 @@ from adb_auto_player.image_manipulation import (
     Cropping,
 )
 from adb_auto_player.models import ConfidenceValue
-from adb_auto_player.models.device import DisplayInfo, Orientation, Resolution
+from adb_auto_player.models.device import DisplayInfo, Resolution
 from adb_auto_player.models.geometry import Coordinates, Point, PointOutsideDisplay
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.pydantic import MyCustomRoutineSettings
@@ -196,7 +196,7 @@ class Game(ABC):
         if not SettingsLoader.adb_auto_player_settings().device.use_wm_resize:
             return
 
-        if not self.base_resolution == self.display_info.resolution:
+        if not self.base_resolution == self.display_info.normalized_resolution:
             self.device.set_display_size(str(self.base_resolution))
         return
 
@@ -206,30 +206,28 @@ class Game(ABC):
         Raises:
              UnsupportedResolutionException: Device resolution is not supported.
         """
-        if not self.base_resolution == self.display_info.resolution:
-            raise UnsupportedResolutionError(
-                f"This bot only supports: {self.base_resolution} resolution"
-            )
+        current = self.display_info.normalized_resolution
+        base = self.base_resolution
+
+        if base == current:
+            return
+
+        msg = f"This bot only supports: {base} resolution, detected: {current}"
 
         if (
-            self.base_resolution.is_portrait
-            and self.display_info.orientation == Orientation.LANDSCAPE
+            base.orientation == self.display_info.orientation
+            or base.is_square
+            or current.is_square
         ):
-            raise UnsupportedResolutionError(
-                "This bot only works in Portrait mode: "
-                "https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/"
-                "troubleshoot.html#this-bot-only-works-in-portrait-mode"
-            )
+            raise UnsupportedResolutionError(msg)
 
-        if (
-            self.base_resolution.is_landscape
-            and self.display_info.orientation == Orientation.PORTRAIT
-        ):
-            raise UnsupportedResolutionError(
-                "This bot only works in Landscape mode: "
-                "https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/"
-                "troubleshoot.html#this-bot-only-works-in-portrait-mode"
-            )
+        orientation_hint = "Portrait" if base.is_portrait else "Landscape"
+
+        raise UnsupportedResolutionError(
+            f"{msg} and must be in {orientation_hint} orientation: "
+            "https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/"
+            "troubleshoot.html#this-bot-only-works-in-portrait-mode"
+        )
 
     def _check_screenshot_matches_display_resolution(
         self, device_streaming_check: bool = False
