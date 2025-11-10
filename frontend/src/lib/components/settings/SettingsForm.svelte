@@ -142,99 +142,84 @@
           <Accordion.ItemContent>
             <div class="p-4">
               {#each Object.entries(sectionSettings) as [key, value]}
-                {@const shouldShow =
-                  key !== "Turn off PC even if task ends with error" ||
-                  formState[sectionKey]["Turn off PC after task completes"]}
-                {#if shouldShow}
-                  <div
-                    class="mb-4 {key ===
-                    'Turn off PC even if task ends with error'
-                      ? 'ml-6'
-                      : ''}"
-                  >
-                    <div class="flex items-center justify-between">
-                      {#if !isConstraintOfType(value, "MyCustomRoutine") && !isConstraintOfType(value, "multicheckbox")}
-                        <label
-                          for="{sectionKey}-{key}"
-                          class="mr-3 w-40 text-right"
+                <div class="mb-4">
+                  <div class="flex items-center justify-between">
+                    {#if !isConstraintOfType(value, "MyCustomRoutine") && !isConstraintOfType(value, "multicheckbox")}
+                      <label
+                        for="{sectionKey}-{key}"
+                        class="mr-3 w-40 text-right"
+                      >
+                        {$t(key)}
+                      </label>
+                    {/if}
+                    <div class="flex flex-1 items-center">
+                      {#if getInputType(sectionKey, key) === "checkbox"}
+                        <input
+                          type="checkbox"
+                          id="{sectionKey}-{key}"
+                          bind:checked={formState[sectionKey][key]}
+                          class="checkbox"
+                        />
+                      {:else if isConstraintOfType(value, "number")}
+                        <input
+                          type="number"
+                          id="{sectionKey}-{key}"
+                          bind:value={formState[sectionKey][key]}
+                          min={value.minimum}
+                          max={value.maximum}
+                          step={value.step}
+                          class="input w-full"
+                        />
+                      {:else if isConstraintOfType(value, "multicheckbox")}
+                        <MultiCheckbox
+                          label={key}
+                          constraint={value}
+                          bind:value={formState[sectionKey][key]}
+                          name="{sectionKey}-{key}"
+                        />
+                      {:else if isConstraintOfType(value, "imagecheckbox")}
+                        <ImageCheckbox
+                          constraint={value}
+                          bind:value={formState[sectionKey][key]}
+                          name="{sectionKey}-{key}"
+                        />
+                      {:else if isConstraintOfType(value, "select")}
+                        <select
+                          id="{sectionKey}-{key}"
+                          bind:value={formState[sectionKey][key]}
+                          class="select w-full"
                         >
-                          {$t(key)}
-                        </label>
+                          {#each value.choices as option}
+                            <option value={option}>
+                              {option}
+                            </option>
+                          {/each}
+                        </select>
+                      {:else if isConstraintOfType(value, "text")}
+                        <input
+                          type="text"
+                          id="{sectionKey}-{key}"
+                          bind:value={formState[sectionKey][key]}
+                          class="input w-full"
+                          {...value.regex ? { pattern: value.regex } : {}}
+                          {...value.title ? { title: value.title } : {}}
+                        />
+                      {:else if isConstraintOfType(value, "MyCustomRoutine")}
+                        <MyCustomRoutine
+                          constraint={value}
+                          bind:value={formState[sectionKey][key]}
+                          name="{sectionKey}-{key}"
+                        />
+                      {:else}
+                        <p>
+                          {Array.isArray(value)
+                            ? "Value (array)"
+                            : (value?.type ?? "Value")} cannot be displayed
+                        </p>
                       {/if}
-                      <div class="flex flex-1 items-center">
-                        {#if getInputType(sectionKey, key) === "checkbox"}
-                          <input
-                            type="checkbox"
-                            id="{sectionKey}-{key}"
-                            bind:checked={formState[sectionKey][key]}
-                            class="checkbox"
-                            disabled={key ===
-                              "Turn off PC even if task ends with error" &&
-                              !formState[sectionKey][
-                                "Turn off PC after task completes"
-                              ]}
-                          />
-                        {:else if isConstraintOfType(value, "number")}
-                          <input
-                            type="number"
-                            id="{sectionKey}-{key}"
-                            bind:value={formState[sectionKey][key]}
-                            min={value.minimum}
-                            max={value.maximum}
-                            step={value.step}
-                            class="input w-full"
-                          />
-                        {:else if isConstraintOfType(value, "multicheckbox")}
-                          <MultiCheckbox
-                            label={key}
-                            constraint={value}
-                            bind:value={formState[sectionKey][key]}
-                            name="{sectionKey}-{key}"
-                          />
-                        {:else if isConstraintOfType(value, "imagecheckbox")}
-                          <ImageCheckbox
-                            constraint={value}
-                            bind:value={formState[sectionKey][key]}
-                            name="{sectionKey}-{key}"
-                          />
-                        {:else if isConstraintOfType(value, "select")}
-                          <select
-                            id="{sectionKey}-{key}"
-                            bind:value={formState[sectionKey][key]}
-                            class="select w-full"
-                          >
-                            {#each value.choices as option}
-                              <option value={option}>
-                                {option}
-                              </option>
-                            {/each}
-                          </select>
-                        {:else if isConstraintOfType(value, "text")}
-                          <input
-                            type="text"
-                            id="{sectionKey}-{key}"
-                            bind:value={formState[sectionKey][key]}
-                            class="input w-full"
-                            {...value.regex ? { pattern: value.regex } : {}}
-                            {...value.title ? { title: value.title } : {}}
-                          />
-                        {:else if isConstraintOfType(value, "MyCustomRoutine")}
-                          <MyCustomRoutine
-                            constraint={value}
-                            bind:value={formState[sectionKey][key]}
-                            name="{sectionKey}-{key}"
-                          />
-                        {:else}
-                          <p>
-                            {Array.isArray(value)
-                              ? "Value (array)"
-                              : (value?.type ?? "Value")} cannot be displayed
-                          </p>
-                        {/if}
-                      </div>
                     </div>
                   </div>
-                {/if}
+                </div>
               {/each}
             </div>
           </Accordion.ItemContent>

@@ -196,6 +196,10 @@ class FastAPIServer:
         self,
         commands: dict[str, list[Command]],
     ):
+        # Track if a task is currently running
+        self._task_running = False
+        self._task_running_lock = asyncio.Lock()
+
         @asynccontextmanager
         async def lifespan(app: FastAPI):
             parent_pid = os.getppid()
@@ -337,6 +341,10 @@ class FastAPIServer:
         message_queue: Queue = Queue()
 
         try:
+            # Mark task as running
+            async with self._task_running_lock:
+                self._task_running = True
+
             shutdown_event = asyncio.Event()
 
             process = Process(
@@ -373,6 +381,10 @@ class FastAPIServer:
         except Exception as e:
             logging.error(f"Error in command execution: {e}")
         finally:
+            # Mark task as not running
+            async with self._task_running_lock:
+                self._task_running = False
+
             await FastAPIServer._cleanup_process_and_tasks(
                 process,
                 log_reader_task,
@@ -545,6 +557,12 @@ class FastAPIServer:
         async def health_check():
             """Health check."""
             return OKResponse(detail="ADB Auto Player Server")
+
+        @self.app.get("/task-status")
+        async def task_status():
+            """Check if a task is currently running."""
+            async with self._task_running_lock:
+                return {"running": self._task_running}
 
         @self.app.post("/general-settings-updated", response_model=OKResponse)
         async def adb_auto_player_settings_updated():
