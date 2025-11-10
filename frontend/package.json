@@ -34,6 +34,6 @@
 		"@wailsio/runtime": "latest",
 		"marked": "^16.4.1",
 		"posthog-js": "^1.285.0",
-		"tailwindcss": "^4.1.16"
+		"tailwindcss": "^4.1.17"
 	}
 }
