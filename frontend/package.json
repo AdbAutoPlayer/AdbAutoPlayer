@@ -30,7 +30,7 @@
 	},
 	"dependencies": {
 		"@js-joda/core": "^5.6.5",
-		"@tailwindcss/vite": "^4.1.16",
+		"@tailwindcss/vite": "^4.1.17",
 		"@wailsio/runtime": "latest",
 		"marked": "^16.4.1",
 		"posthog-js": "^1.285.0",
