@@ -207,29 +207,62 @@ class AFKJourneyBase(Navigation, Game):
         if not use_suggested_formations:
             formations = 1
 
-        if self._get_settings_for_mode(
+        # Try current formation first if enabled
+        if self._try_current_formation(use_suggested_formations, only_manual):
+            return True
+
+        # Try suggested formations
+        return self._try_suggested_formations(
+            formations, use_suggested_formations, skip_manual, only_manual
+        )
+
+    def _try_current_formation(
+        self, use_suggested_formations: bool, only_manual: bool
+    ) -> bool:
+        """Try current formation before suggested formations.
+
+        Returns:
+            True if battle was won, False otherwise.
+        """
+        if not self._get_settings_for_mode(
             "use_current_formation_before_suggested_formation"
         ):
-            # For only_manual mode, skip current formation (it's not from records)
-            if not only_manual:
-                logging.info("Battle using current Formation.")
-                if self._handle_single_stage():
-                    return True
-            if not use_suggested_formations:
-                # With use_suggested_formations == False we do not want to run again
-                return False
+            return False
 
+        # For only_manual mode, skip current formation (it's not from records)
+        if only_manual:
+            return False
+
+        logging.info("Battle using current Formation.")
+        if self._handle_single_stage():
+            return True
+
+        if not use_suggested_formations:
+            # With use_suggested_formations == False we do not want to run again
+            return False
+
+        return False
+
+    def _try_suggested_formations(
+        self,
+        formations: int,
+        use_suggested_formations: bool,
+        skip_manual: bool,
+        only_manual: bool,
+    ) -> bool:
+        """Try suggested formations from records.
+
+        Returns:
+            True if battle was won, False otherwise.
+        """
         while self.battle_state.formation_num < formations:
             self.battle_state.formation_num += 1
 
             if self.battle_state.mode == Mode.DURAS_TRIALS:
                 self._re_enter_battle_for_duras()
 
-            if (
-                use_suggested_formations
-                and not self._copy_suggested_formation_from_records(
-                    formations, skip_manual, only_manual
-                )
+            if not self._try_copy_formation(
+                formations, use_suggested_formations, skip_manual, only_manual
             ):
                 continue
 
@@ -243,6 +276,30 @@ class AFKJourneyBase(Navigation, Game):
         if formations > 1:
             logging.info("Stopping Battle, tried all attempts for all Formations")
         return False
+
+    def _try_copy_formation(
+        self,
+        formations: int,
+        use_suggested_formations: bool,
+        skip_manual: bool,
+        only_manual: bool,
+    ) -> bool:
+        """Try to copy a formation from records.
+
+        Returns:
+            True if formation was copied successfully, False otherwise.
+        """
+        if not use_suggested_formations:
+            return True
+
+        try:
+            return self._copy_suggested_formation_from_records(
+                formations, skip_manual, only_manual
+            )
+        except AutoPlayerWarningError:
+            # No more formations available - this is normal, just break the loop
+            logging.info("No more formations available, ending this pass.")
+            return False
 
     def _copy_suggested_formation(
         self, formations: int = 1, start_count: int = 1
