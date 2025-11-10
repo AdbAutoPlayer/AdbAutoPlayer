@@ -25,3 +25,5 @@ theme = 'terminus'
 locale = 'en'
 close_should_minimize = false
 notifications_enabled = false
+turn_off_pc_after_complete = false
+turn_off_pc_even_on_error = false

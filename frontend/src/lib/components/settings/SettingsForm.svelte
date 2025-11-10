@@ -142,24 +142,27 @@
           <Accordion.ItemContent>
             <div class="p-4">
               {#each Object.entries(sectionSettings) as [key, value]}
-                <div class="mb-4">
-                  <div class="flex items-center justify-between">
-                    {#if !isConstraintOfType(value, "MyCustomRoutine") && !isConstraintOfType(value, "multicheckbox")}
-                      <label
-                        for="{sectionKey}-{key}"
-                        class="mr-3 w-40 text-right"
-                      >
-                        {$t(key)}
-                      </label>
-                    {/if}
-                    <div class="flex flex-1 items-center">
-                      {#if getInputType(sectionKey, key) === "checkbox"}
-                        <input
-                          type="checkbox"
-                          id="{sectionKey}-{key}"
-                          bind:checked={formState[sectionKey][key]}
-                          class="checkbox"
-                        />
+                {@const shouldShow = key !== "Turn off PC even if task ends with error" || formState[sectionKey]["Turn off PC after task completes"]}
+                {#if shouldShow}
+                  <div class="mb-4 {key === "Turn off PC even if task ends with error" ? "ml-6" : ""}">
+                    <div class="flex items-center justify-between">
+                      {#if !isConstraintOfType(value, "MyCustomRoutine") && !isConstraintOfType(value, "multicheckbox")}
+                        <label
+                          for="{sectionKey}-{key}"
+                          class="mr-3 w-40 text-right"
+                        >
+                          {$t(key)}
+                        </label>
+                      {/if}
+                      <div class="flex flex-1 items-center">
+                        {#if getInputType(sectionKey, key) === "checkbox"}
+                          <input
+                            type="checkbox"
+                            id="{sectionKey}-{key}"
+                            bind:checked={formState[sectionKey][key]}
+                            class="checkbox"
+                            disabled={key === "Turn off PC even if task ends with error" && !formState[sectionKey]["Turn off PC after task completes"]}
+                          />
                       {:else if isConstraintOfType(value, "number")}
                         <input
                           type="number"
@@ -220,6 +223,7 @@
                     </div>
                   </div>
                 </div>
+                {/if}
               {/each}
             </div>
           </Accordion.ItemContent>
