@@ -112,6 +112,96 @@ class AFKJourneyBase(Navigation, Game):
         Returns:
             True if the battle was won, False otherwise.
         """
+        # Get both settings directly
+        skip_manual_formations = self._get_settings_for_mode(
+            "skip_manual_formations")
+        run_manual_last = self._get_settings_for_mode(
+            "run_manual_formations_last")
+
+        # Case 1: skip_manual_formations is True -> skip manual entirely (one pass)
+        if skip_manual_formations:
+            return self._handle_battle_screen_pass(
+                use_suggested_formations=use_suggested_formations,
+                skip_manual=True,
+            )
+
+        # Case 2: skip_manual_formations is False AND run_manual_last is True -> two passes
+        if run_manual_last and use_suggested_formations:
+            # First pass: try ALL non-manual formations first (skip all manual)
+            logging.info("First pass: trying all non-manual formations first")
+            result = self._handle_battle_screen_pass(
+                use_suggested_formations=use_suggested_formations,
+                skip_manual=True,  # Skip all manual formations
+            )
+            if result:
+                return True
+
+            # Second pass: go through whole list again, try ONLY manual formations (skip all non-manual)
+            logging.info("Second pass: trying manual formations only")
+
+            # Navigate back to battle screen if needed
+            # After first pass fails, we might be on retry screen or somewhere else
+            # Wait for retry screen or check if we're on battle screen
+            try:
+                # Check if we're on retry screen
+                retry_button = self.wait_for_any_template(
+                    templates=["retry.png"],
+                    timeout=5.0,
+                    crop_regions=CropRegions(top=0.4),
+                )
+                if retry_button:
+                    self.tap(retry_button)
+                    sleep(2)
+            except GameTimeoutError:
+                # Not on retry screen, try to navigate back to battle screen
+                # Check if we're already on battle screen
+                try:
+                    _ = self.wait_for_template(
+                        template="battle/records.png",
+                        crop_regions=CropRegions(right=0.5, top=0.8),
+                        timeout=2.0,
+                    )
+                    # Already on battle screen
+                except GameTimeoutError:
+                    # Not on battle screen, press back to get there
+                    self.press_back_button()
+                    sleep(2)
+                    # Wait for battle screen to appear
+                    _ = self.wait_for_template(
+                        template="battle/records.png",
+                        crop_regions=CropRegions(right=0.5, top=0.8),
+                        timeout=10.0,
+                    )
+
+            self.battle_state.formation_num = 0  # Reset counter for second pass
+            return self._handle_battle_screen_pass(
+                use_suggested_formations=use_suggested_formations,
+                skip_manual=False,
+                only_manual=True,  # Only try manual formations, skip non-manual
+            )
+
+        # Case 3: Both are False -> normal behavior (try all formations in order)
+        return self._handle_battle_screen_pass(
+            use_suggested_formations=use_suggested_formations,
+            skip_manual=False,
+        )
+
+    def _handle_battle_screen_pass(
+        self,
+        use_suggested_formations: bool = True,
+        skip_manual: bool = False,
+        only_manual: bool = False,
+    ) -> bool:
+        """Handles a single pass through formations.
+
+        Args:
+            use_suggested_formations: if True copy formations from Records
+            skip_manual: Skip formations labeled as manual clear.
+            only_manual: Only try manual formations (skip non-manual).
+
+        Returns:
+            True if the battle was won, False otherwise.
+        """
         formations = self._get_settings_for_mode("formations")
 
         self.battle_state.formation_num = 0
@@ -119,11 +209,12 @@ class AFKJourneyBase(Navigation, Game):
             formations = 1
 
         if self._get_settings_for_mode(
-            "use_current_formation_before_suggested_formation"
-        ):
-            logging.info("Battle using current Formation.")
-            if self._handle_single_stage():
-                return True
+                "use_current_formation_before_suggested_formation"):
+            # For only_manual mode, skip current formation (it's not from records)
+            if not only_manual:
+                logging.info("Battle using current Formation.")
+                if self._handle_single_stage():
+                    return True
             if not use_suggested_formations:
                 # With use_suggested_formations == False we do not want to run again
                 return False
@@ -134,12 +225,9 @@ class AFKJourneyBase(Navigation, Game):
             if self.battle_state.mode == Mode.DURAS_TRIALS:
                 self._re_enter_battle_for_duras()
 
-            if (
-                use_suggested_formations
-                and not self._copy_suggested_formation_from_records(
-                    formations, skip_manual
-                )
-            ):
+            if (use_suggested_formations
+                    and not self._copy_suggested_formation_from_records(
+                        formations, skip_manual, only_manual)):
                 continue
 
             if self._handle_single_stage():
@@ -150,12 +238,13 @@ class AFKJourneyBase(Navigation, Game):
                 return False
 
         if formations > 1:
-            logging.info("Stopping Battle, tried all attempts for all Formations")
+            logging.info(
+                "Stopping Battle, tried all attempts for all Formations")
         return False
 
-    def _copy_suggested_formation(
-        self, formations: int = 1, start_count: int = 1
-    ) -> bool:
+    def _copy_suggested_formation(self,
+                                  formations: int = 1,
+                                  start_count: int = 1) -> bool:
         """Helper to copy suggested formations from records.
 
         Args:
@@ -176,21 +265,24 @@ class AFKJourneyBase(Navigation, Game):
                     "battle/formation_next.png",
                     crop_regions=CropRegions(left=0.8, top=0.5, bottom=0.4),
                     timeout=self.MIN_TIMEOUT,
-                    timeout_message=(
-                        f"Formation #{self.battle_state.formation_num} not found"
-                    ),
+                    timeout_message=
+                    (f"Formation #{self.battle_state.formation_num} not found"
+                     ),
                 )
                 start_image = self.get_screenshot()
                 self.tap(formation_next)
                 sleep(15.0 / 30.0)
                 self.wait_for_roi_change(
                     start_image=start_image,
-                    crop_regions=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
+                    crop_regions=CropRegions(left=0.2,
+                                             right=0.2,
+                                             top=0.15,
+                                             bottom=0.8),
                     threshold=ConfidenceValue("80%"),
                     timeout=self.MIN_TIMEOUT,
-                    timeout_message=(
-                        f"Formation #{self.battle_state.formation_num} not found"
-                    ),
+                    timeout_message=
+                    (f"Formation #{self.battle_state.formation_num} not found"
+                     ),
                 )
                 counter -= 1
         except GameTimeoutError as e:
@@ -229,9 +321,16 @@ class AFKJourneyBase(Navigation, Game):
         return False
 
     def _copy_suggested_formation_from_records(
-        self, formations: int = 1, skip_manual: bool = False
-    ) -> bool:
+            self,
+            formations: int = 1,
+            skip_manual: bool = False,
+            only_manual: bool = False) -> bool:
         """Copy suggested formations from records.
+
+        Args:
+            formations: Number of formations to try
+            skip_manual: Skip formations labeled as manual clear.
+            only_manual: Only try manual formations (skip non-manual).
 
         Returns:
             True if successful, False otherwise.
@@ -251,7 +350,10 @@ class AFKJourneyBase(Navigation, Game):
 
             _ = self.wait_for_template(
                 "battle/copy.png",
-                crop_regions=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
+                crop_regions=CropRegions(left=0.3,
+                                         right=0.1,
+                                         top=0.7,
+                                         bottom=0.1),
                 timeout=self.MIN_TIMEOUT,
                 timeout_message="No more formations available for this battle",
             )
@@ -266,6 +368,18 @@ class AFKJourneyBase(Navigation, Game):
             if not self._copy_suggested_formation(formations, start_count):
                 break
 
+            # Check if this formation should be skipped based on manual/non-manual
+            is_manual = self._is_manual_formation()
+
+            if only_manual and not is_manual:
+                # In only_manual mode, skip non-manual formations
+                logging.info(
+                    "Non-manual formation found, skipping (only trying manual)."
+                )
+                start_count = self.battle_state.formation_num
+                self.battle_state.formation_num += 1
+                continue
+
             if self._formation_should_be_skipped(skip_manual):
                 start_count = self.battle_state.formation_num
                 self.battle_state.formation_num += 1
@@ -273,19 +387,25 @@ class AFKJourneyBase(Navigation, Game):
 
             self._tap_till_template_disappears(
                 template="battle/copy.png",
-                crop_regions=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
+                crop_regions=CropRegions(left=0.3,
+                                         right=0.1,
+                                         top=0.7,
+                                         bottom=0.1),
                 threshold=ConfidenceValue("75%"),
-                sleep_duration=1.5,  # Tap animation can play without triggering the
+                sleep_duration=
+                1.5,  # Tap animation can play without triggering the
                 # button, this lets the animation play out before checking if the button
                 # is still there
             )
             if cancel := self.game_find_template_match(
-                template="cancel.png",
-                crop_regions=CropRegions(left=0.1, right=0.5, top=0.6, bottom=0.3),
+                    template="cancel.png",
+                    crop_regions=CropRegions(left=0.1,
+                                             right=0.5,
+                                             top=0.6,
+                                             bottom=0.3),
             ):
                 logging.warning(
-                    "Formation contains locked Artifacts or Heroes skipping"
-                )
+                    "Formation contains locked Artifacts or Heroes skipping")
                 self.tap(cancel)
                 start_count = self.battle_state.formation_num
                 self.battle_state.formation_num += 1
@@ -302,7 +422,8 @@ class AFKJourneyBase(Navigation, Game):
             str | None: Name of excluded hero
         """
         excluded_heroes_dict: dict[str, str] = {
-            f"heroes/{re.sub(r'[\s&]', '', name.value.lower())}.png": name.value
+            f"heroes/{re.sub(r'[\s&]', '', name.value.lower())}.png":
+            name.value
             for name in self.settings.general.excluded_heroes
         }
 
@@ -316,7 +437,8 @@ class AFKJourneyBase(Navigation, Game):
 
         return self._find_any_excluded_hero(filtered_dict)
 
-    def _find_any_excluded_hero(self, excluded_heroes: dict[str, str]) -> str | None:
+    def _find_any_excluded_hero(self,
+                                excluded_heroes: dict[str, str]) -> str | None:
         """Find excluded hero templates.
 
         Args:
@@ -328,9 +450,10 @@ class AFKJourneyBase(Navigation, Game):
         try:
             result = self.wait_for_any_template(
                 templates=list(excluded_heroes.keys()),
-                crop_regions=CropRegions(
-                    left="10%", right="30%", top="35%", bottom="40%"
-                ),
+                crop_regions=CropRegions(left="10%",
+                                         right="30%",
+                                         top="35%",
+                                         bottom="40%"),
                 threshold=ConfidenceValue("85%"),
                 timeout=1.0,
                 delay=0.5,
@@ -471,7 +594,8 @@ class AFKJourneyBase(Navigation, Game):
                 break
 
             if self.battle_state.section_header:
-                SummaryGenerator.increment(self.battle_state.section_header, "Battles")
+                SummaryGenerator.increment(self.battle_state.section_header,
+                                           "Battles")
 
             result = self._is_battle_outcome_successful(attempt)
             if result is None:
@@ -528,15 +652,14 @@ class AFKJourneyBase(Navigation, Game):
                 self.tap(match)
                 sleep(3)
 
-            case (
-                "next.png"
-                | "duras_trials/first_clear_bottom_half.png"
-                | "duras_trials/end_sunrise.png"
-            ):
+            case ("next.png"
+                  | "duras_trials/first_clear_bottom_half.png"
+                  | "duras_trials/end_sunrise.png"):
                 result = True
 
             case "retry.png":
-                self.tap(match, log_message=f"Lost Battle #{attempt}, retrying")
+                self.tap(match,
+                         log_message=f"Lost Battle #{attempt}, retrying")
                 result = False
 
             case "battle/result.png":
@@ -547,9 +670,7 @@ class AFKJourneyBase(Navigation, Game):
                 raise AutoPlayerWarningError("Final Stage reached, exiting...")
         return result
 
-    def _handle_guide_popup(
-        self,
-    ) -> None:
+    def _handle_guide_popup(self, ) -> None:
         """Close out of guide popups."""
         while True:
             result = self.find_any_template(
@@ -560,3 +681,27 @@ class AFKJourneyBase(Navigation, Game):
                 break
             self.tap(result)
             sleep(1)
+
+    def _is_manual_formation(self) -> bool:
+        """Check if current formation is manual.
+        
+        Returns:
+            True if formation is manual, False otherwise.
+        """
+        try:
+            _ = self.wait_for_any_template(
+                templates=[
+                    "battle/manual_battle.png",
+                    "battle/manual_battle_old1.png",
+                ],
+                crop_regions=CropRegions(
+                    top=0.5,
+                    right=0.5,
+                ),
+                threshold=ConfidenceValue("80%"),
+                delay=0.3,
+                timeout=1.5,
+            )
+            return True
+        except GameTimeoutError:
+            return False

@@ -8,7 +8,7 @@ streaming_fps = 30
 [device]
 ID = '127.0.0.1:7555'
 wm_size = false
-streaming = true
+streaming = false
 hardware_decoding = true
 
 [update]
