@@ -261,9 +261,16 @@ class AFKJourneyBase(Navigation, Game):
             if self.battle_state.mode == Mode.DURAS_TRIALS:
                 self._re_enter_battle_for_duras()
 
-            if not self._try_copy_formation(
+            copy_result = self._try_copy_formation(
                 formations, use_suggested_formations, skip_manual, only_manual
-            ):
+            )
+
+            # None means no more formations available, break the loop
+            if copy_result is None:
+                break
+
+            # False means formation was skipped, continue to next
+            if not copy_result:
                 continue
 
             if self._handle_single_stage():
@@ -283,11 +290,13 @@ class AFKJourneyBase(Navigation, Game):
         use_suggested_formations: bool,
         skip_manual: bool,
         only_manual: bool,
-    ) -> bool:
+    ) -> bool | None:
         """Try to copy a formation from records.
 
         Returns:
-            True if formation was copied successfully, False otherwise.
+            True if formation was copied successfully,
+            False if formation was skipped,
+            None if no more formations are available.
         """
         if not use_suggested_formations:
             return True
@@ -297,9 +306,9 @@ class AFKJourneyBase(Navigation, Game):
                 formations, skip_manual, only_manual
             )
         except AutoPlayerWarningError:
-            # No more formations available - this is normal, just break the loop
+            # No more formations available - this is normal, break the loop
             logging.info("No more formations available, ending this pass.")
-            return False
+            return None
 
     def _copy_suggested_formation(
         self, formations: int = 1, start_count: int = 1
