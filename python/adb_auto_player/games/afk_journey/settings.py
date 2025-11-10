@@ -46,8 +46,7 @@ class CommonBattleModeSettings(BaseModel):
 
     attempts: PositiveInt = Field(default=5, alias="Attempts")
     formations: FormationsInt = Field(default=10, alias="Formations")
-    use_suggested_formations: bool = Field(default=True,
-                                           alias="Suggested Formations")
+    use_suggested_formations: bool = Field(default=True, alias="Suggested Formations")
     use_current_formation_before_suggested_formation: bool = Field(
         default=True,
         alias="Start with current Formation",
@@ -58,10 +57,10 @@ class CommonBattleModeSettings(BaseModel):
 class BattleAllowsManualSettings(CommonBattleModeSettings):
     """Battle modes that allow manual battles."""
 
-    skip_manual_formations: bool = Field(default=False,
-                                         alias="Skip Manual Formations")
+    skip_manual_formations: bool = Field(default=False, alias="Skip Manual Formations")
     run_manual_formations_last: bool = Field(
-        default=False, alias="Run Manual Formations Last")
+        default=False, alias="Run Manual Formations Last"
+    )
 
 
 class AFKStagesSettings(BattleAllowsManualSettings):
@@ -109,26 +108,22 @@ class DreamRealmSettings(BaseModel):
 class DailiesSettings(BaseModel):
     """Dailies Settings model."""
 
-    buy_discount_affinity: bool = Field(default=True,
-                                        alias="Buy Discount Affinity")
+    buy_discount_affinity: bool = Field(default=True, alias="Buy Discount Affinity")
     buy_all_affinity: bool = Field(default=False, alias="Buy All Affinity")
     single_pull: bool = Field(default=False, alias="Single Pull")
     arena_battle: bool = Field(default=False, alias="Arena Battle")
     buy_essences: bool = Field(default=False, alias="Buy Temporal Essences")
-    essence_buy_count: int = Field(default=1,
-                                   ge=1,
-                                   le=4,
-                                   alias="Essence Buy Count")
+    essence_buy_count: int = Field(default=1, ge=1, le=4, alias="Essence Buy Count")
 
 
 class ClaimAFKRewardsSettings(BaseModel):
-    claim_stage_rewards: bool = Field(default=False,
-                                      alias="Claim Stage Rewards")
+    claim_stage_rewards: bool = Field(default=False, alias="Claim Stage Rewards")
 
 
 class TitanReaverProxyBattlesSettings(BaseModel):
     proxy_battle_limit: PositiveInt = Field(
-        default=50, alias="Titan Reaver Proxy Battle Limit")
+        default=50, alias="Titan Reaver Proxy Battle Limit"
+    )
 
 
 class Settings(GameSettings):
@@ -141,13 +136,10 @@ class Settings(GameSettings):
     legend_trials: LegendTrialsSettings = Field(alias="Legend Trial")
     arcane_labyrinth: ArcaneLabyrinthSettings = Field(alias="Arcane Labyrinth")
     dream_realm: DreamRealmSettings = Field(alias="Dream Realm")
-    claim_afk_rewards: ClaimAFKRewardsSettings = Field(
-        alias="Claim AFK Rewards")
+    claim_afk_rewards: ClaimAFKRewardsSettings = Field(alias="Claim AFK Rewards")
     titan_reaver_proxy_battles: TitanReaverProxyBattlesSettings = Field(
-        alias="Titan Reaver Proxy Battles")
-    custom_routine_one: MyCustomRoutineSettings = Field(
-        alias="Custom Routine 1")
-    custom_routine_two: MyCustomRoutineSettings = Field(
-        alias="Custom Routine 2")
-    custom_routine_three: MyCustomRoutineSettings = Field(
-        alias="Custom Routine 3")
+        alias="Titan Reaver Proxy Battles"
+    )
+    custom_routine_one: MyCustomRoutineSettings = Field(alias="Custom Routine 1")
+    custom_routine_two: MyCustomRoutineSettings = Field(alias="Custom Routine 2")
+    custom_routine_three: MyCustomRoutineSettings = Field(alias="Custom Routine 3")
