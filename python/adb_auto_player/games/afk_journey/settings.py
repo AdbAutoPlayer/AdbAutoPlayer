@@ -59,7 +59,7 @@ class BattleAllowsManualSettings(CommonBattleModeSettings):
 
     skip_manual_formations: bool = Field(default=False, alias="Skip Manual Formations")
     run_manual_formations_last: bool = Field(
-        default=False, alias="Run Manual Formations Last"
+        default=True, alias="Run Manual Formations Last"
     )
 
 
