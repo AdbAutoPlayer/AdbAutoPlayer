@@ -1,7 +1,8 @@
 ['AFK Stages']
 Attempts = 5
 Formations = 10
-'Skip Manual Formations' = true
+'Run Manual Formations Last' = true
+'Skip Manual Formations' = false
 'Spend Gold' = true
 'Start with current Formation' = false
 'Suggested Formations' = true
@@ -53,7 +54,8 @@ Formations = 10
 ['Legend Trial']
 Attempts = 5
 Formations = 10
-'Skip Manual Formations' = true
+'Run Manual Formations Last' = true
+'Skip Manual Formations' = false
 'Spend Gold' = true
 'Start with current Formation' = false
 'Suggested Formations' = true

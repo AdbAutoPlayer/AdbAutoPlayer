@@ -69,7 +69,6 @@ class AFKStagesMixin(AFKJourneyBase):
         self._select_afk_stage()
         while self._handle_battle_screen(
             self.settings.afk_stages.use_suggested_formations,
-            self.settings.afk_stages.skip_manual_formations,
         ):
             stages_pushed += 1
             logging.info(f"{self.battle_state.section_header} cleared: {stages_pushed}")

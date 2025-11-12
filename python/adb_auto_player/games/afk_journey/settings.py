@@ -58,6 +58,9 @@ class BattleAllowsManualSettings(CommonBattleModeSettings):
     """Battle modes that allow manual battles."""
 
     skip_manual_formations: bool = Field(default=False, alias="Skip Manual Formations")
+    run_manual_formations_last: bool = Field(
+        default=True, alias="Run Manual Formations Last"
+    )
 
 
 class AFKStagesSettings(BattleAllowsManualSettings):
