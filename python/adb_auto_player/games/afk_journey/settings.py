@@ -69,7 +69,7 @@ class AFKStagesSettings(BattleAllowsManualSettings):
     pass
 
 
-class DurasTrialsSettings(CommonBattleModeSettings):
+class DurasTrialsSettings(BattleAllowsManualSettings):
     """Dura's Trials Settings model."""
 
     pass
