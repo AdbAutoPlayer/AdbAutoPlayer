@@ -23,7 +23,7 @@
 		"prettier-plugin-svelte": "^3.4.0",
 		"prettier-plugin-tailwindcss": "^0.7.1",
 		"svelte": "^5.43.5",
-		"svelte-check": "^4.3.3",
+		"svelte-check": "^4.3.4",
 		"typescript": "^5.9.2",
 		"vite": "^7.1.12",
 		"vite-plugin-devtools-json": "^1.0.0"
