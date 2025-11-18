@@ -3,6 +3,7 @@ package process
 import (
 	"adb-auto-player/internal/logger"
 	"fmt"
+	"os/exec"
 	"unsafe"
 
 	"github.com/shirou/gopsutil/v4/process"
@@ -61,5 +62,16 @@ func (pm *IPCManager) startServer() error {
 	}
 	pm.serverProcess = proc
 
+	return nil
+}
+
+// shutdownSystem shuts down the Windows system.
+func shutdownSystem() error {
+	// Use shutdown command: /s = shutdown, /t 0 = no delay, /f = force close apps
+	cmd := exec.Command("shutdown", "/s", "/t", "0", "/f")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to shutdown system: %w", err)
+	}
+	logger.Get().Infof("System shutdown initiated")
 	return nil
 }

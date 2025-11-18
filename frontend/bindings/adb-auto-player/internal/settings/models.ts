@@ -166,6 +166,8 @@ export class UISettings {
     "Language": string;
     "Close button should minimize the window": boolean;
     "Enable Notifications": boolean;
+    "Turn off PC after task completes": boolean;
+    "Turn off PC even if task ends with error": boolean;
 
     /** Creates a new UISettings instance. */
     constructor($$source: Partial<UISettings> = {}) {
@@ -180,6 +182,12 @@ export class UISettings {
         }
         if (!("Enable Notifications" in $$source)) {
             this["Enable Notifications"] = false;
+        }
+        if (!("Turn off PC after task completes" in $$source)) {
+            this["Turn off PC after task completes"] = false;
+        }
+        if (!("Turn off PC even if task ends with error" in $$source)) {
+            this["Turn off PC even if task ends with error"] = false;
         }
 
         Object.assign(this, $$source);

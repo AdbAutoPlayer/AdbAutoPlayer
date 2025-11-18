@@ -132,11 +132,13 @@ func GetAdbAutoPlayerSettingsConstraints() map[string]interface{} {
 			}, "en"),
 			"Close button should minimize the window": NewCheckboxConstraint(false),
 			"Enable Notifications":                    NewCheckboxConstraint(false),
+			"Turn off PC after task completes":        NewCheckboxConstraint(false),
 			"Order": []string{
 				"Theme",
 				"Language",
 				"Close button should minimize the window",
 				"Enable Notifications",
+				"Turn off PC after task completes",
 			},
 		},
 		"Logging": map[string]interface{}{

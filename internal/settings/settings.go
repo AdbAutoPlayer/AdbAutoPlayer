@@ -42,10 +42,11 @@ type LoggingSettings struct {
 }
 
 type UISettings struct {
-	Theme                string `toml:"theme"`
-	Locale               string `toml:"locale" json:"Language"`
-	CloseShouldMinimize  bool   `toml:"close_should_minimize" json:"Close button should minimize the window"`
-	NotificationsEnabled bool   `toml:"notifications_enabled" json:"Enable Notifications"`
+	Theme                    string `toml:"theme"`
+	Locale                   string `toml:"locale" json:"Language"`
+	CloseShouldMinimize      bool   `toml:"close_should_minimize" json:"Close button should minimize the window"`
+	NotificationsEnabled     bool   `toml:"notifications_enabled" json:"Enable Notifications"`
+	TurnOffPCAfterComplete   bool   `toml:"turn_off_pc_after_complete" json:"Turn off PC after task completes"`
 }
 
 func NewSettings() AdbAutoPlayerSettings {
@@ -73,10 +74,11 @@ func NewSettings() AdbAutoPlayerSettings {
 			TaskLogLimit:         5,
 		},
 		UI: UISettings{
-			Theme:                "catppuccin",
-			Locale:               "en",
-			CloseShouldMinimize:  false,
-			NotificationsEnabled: false,
+			Theme:                  "catppuccin",
+			Locale:                 "en",
+			CloseShouldMinimize:    false,
+			NotificationsEnabled:   false,
+			TurnOffPCAfterComplete: false,
 		},
 	}
 }

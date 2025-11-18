@@ -42,8 +42,12 @@ type IPCManager struct {
 	wsConnected bool
 
 	sendNotificationWhenTaskEnds bool
-	summary                      *ipc.Summary
-	lastLogMessage               *ipc.LogMessage
+	// wasManuallyStopped is true when the task was stopped via StopTask()
+	// (either user-initiated via hotkey/button, or app cleanup/shutdown).
+	// In both cases, we don't want to shutdown the PC.
+	wasManuallyStopped bool
+	summary            *ipc.Summary
+	lastLogMessage     *ipc.LogMessage
 
 	websocketMutex sync.Mutex
 	serverMutex    sync.Mutex
@@ -395,6 +399,7 @@ func (pm *IPCManager) StartTask(args []string, notifyWhenTaskEnds bool, logLevel
 	}
 
 	pm.sendNotificationWhenTaskEnds = notifyWhenTaskEnds
+	pm.wasManuallyStopped = false
 	pm.summary = nil
 	pm.lastLogMessage = nil
 
@@ -412,6 +417,10 @@ func (pm *IPCManager) StartTask(args []string, notifyWhenTaskEnds bool, logLevel
 }
 
 // StopTask stops the current command execution.
+// This is called in two scenarios:
+// 1. User-initiated stop (hotkey, button click) - should prevent PC shutdown
+// 2. App cleanup/shutdown - should also prevent PC shutdown
+// In both cases, we set wasManuallyStopped = true to prevent PC shutdown.
 func (pm *IPCManager) StopTask() {
 	pm.websocketMutex.Lock()
 	defer pm.websocketMutex.Unlock()
@@ -421,6 +430,9 @@ func (pm *IPCManager) StopTask() {
 	}
 
 	pm.sendNotificationWhenTaskEnds = false
+	// Mark as stopped (prevents PC shutdown in taskEnded())
+	// This applies to both user-initiated stops and app cleanup
+	pm.wasManuallyStopped = true
 	stopRequest := WebSocketStopRequest{
 		Type: "stop",
 	}
@@ -472,9 +484,148 @@ func (pm *IPCManager) taskEnded() {
 	pm.taskEndedNotification()
 	pm.closeLogFile()
 
+	// Check if we should shutdown the PC after task completion
+	appSettings := settings.GetService().GetAdbAutoPlayerSettings()
+	if appSettings.UI.TurnOffPCAfterComplete {
+		// Read wasManuallyStopped with mutex protection
+		pm.websocketMutex.Lock()
+		wasManuallyStopped := pm.wasManuallyStopped
+		pm.websocketMutex.Unlock()
+
+		// Don't shutdown if task was manually stopped
+		if wasManuallyStopped {
+			logger.Get().Infof("Task was manually stopped. Skipping system shutdown.")
+		} else {
+			// WebSocket closed, but we need to verify the task process has actually finished.
+			// Poll the /task-status endpoint to confirm the task is no longer running.
+			go pm.waitForTaskCompletionAndShutdown()
+		}
+	}
+
+	pm.websocketMutex.Lock()
 	pm.summary = nil
 	pm.lastLogMessage = nil
 	pm.sendNotificationWhenTaskEnds = false
+	pm.wasManuallyStopped = false
+	pm.websocketMutex.Unlock()
+}
+
+// waitForTaskCompletionAndShutdown polls the /task-status endpoint to verify the task has finished,
+// then initiates system shutdown.
+func (pm *IPCManager) waitForTaskCompletionAndShutdown() {
+	// Poll interval and maximum wait time
+	const pollInterval = 1 * time.Second
+	const maxWaitTime = 5 * time.Minute // Maximum time to wait for task to finish
+	const stableDuration = 3 * time.Second // Task must be stopped for 3 seconds before shutdown
+
+	logger.Get().Infof("WebSocket closed. Polling server to verify task has completed...")
+
+	startTime := time.Now()
+	lastRunningTime := time.Now()
+	wasRunning := false
+
+	for time.Since(startTime) < maxWaitTime {
+		// Check if shutdown was cancelled (e.g., new task started or manual stop)
+		pm.websocketMutex.Lock()
+		wasManuallyStopped := pm.wasManuallyStopped
+		pm.websocketMutex.Unlock()
+
+		if wasManuallyStopped {
+			logger.Get().Infof("Shutdown cancelled (manual stop).")
+			return
+		}
+
+		// Check task status via HTTP endpoint
+		isRunning, err := pm.checkTaskStatus()
+		if err != nil {
+			logger.Get().Debugf("Failed to check task status: %v. Retrying...", err)
+			time.Sleep(pollInterval)
+			continue
+		}
+
+		if isRunning {
+			wasRunning = true
+			lastRunningTime = time.Now()
+			logger.Get().Debugf("Task is still running on server. Waiting...")
+		} else {
+			// Task is not running
+			if wasRunning {
+				// Task just stopped, reset the timer
+				lastRunningTime = time.Now()
+				wasRunning = false
+				logger.Get().Debugf("Task stopped on server. Verifying it stays stopped...")
+			} else {
+				// Task has been stopped for a while
+				timeSinceStopped := time.Since(lastRunningTime)
+				if timeSinceStopped >= stableDuration {
+					// Task has been stopped for stableDuration, it's safe to shutdown
+					logger.Get().Infof("Task has been stopped on server for %v. Initiating system shutdown...", stableDuration)
+					break
+				}
+			}
+		}
+
+		time.Sleep(pollInterval)
+	}
+
+	// Final check: make sure shutdown wasn't cancelled
+	pm.websocketMutex.Lock()
+	wasManuallyStopped := pm.wasManuallyStopped
+	pm.websocketMutex.Unlock()
+
+	if wasManuallyStopped {
+		logger.Get().Infof("Shutdown cancelled (manual stop).")
+		return
+	}
+
+	// Task has completed (process finished). Shutdown the system.
+	logger.Get().Infof("Task completed. Initiating system shutdown...")
+	// Give a small delay to allow logs to be written
+	time.Sleep(2 * time.Second)
+	if err := shutdownSystem(); err != nil {
+		logger.Get().Errorf("Failed to shutdown system: %v", err)
+	}
+}
+
+// checkTaskStatus checks if a task is currently running on the server.
+func (pm *IPCManager) checkTaskStatus() (bool, error) {
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	serverUrl := fmt.Sprintf(
+		"http://%s:%d/task-status",
+		settings.GetService().GetAdbAutoPlayerSettings().Advanced.AutoPlayerHost,
+		settings.GetService().GetAdbAutoPlayerSettings().Advanced.AutoPlayerPort,
+	)
+
+	resp, err := client.Get(serverUrl)
+	if err != nil {
+		return false, fmt.Errorf("failed to send GET request to /task-status: %w", err)
+	}
+	defer func() {
+		if err = resp.Body.Close(); err != nil {
+			logger.Get().Errorf("resp.Body.Close error: %v", err)
+		}
+	}()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return false, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("server returned non-OK status: %d, response: %s", resp.StatusCode, string(responseBody))
+	}
+
+	var status struct {
+		Running bool `json:"running"`
+	}
+	if err := json.Unmarshal(responseBody, &status); err != nil {
+		return false, fmt.Errorf("failed to unmarshal task status: %w", err)
+	}
+
+	return status.Running, nil
 }
 
 func (pm *IPCManager) taskEndedNotification() {
@@ -560,6 +711,8 @@ func (pm *IPCManager) sendPOST(endpoint string, requestBody interface{}) ([]byte
 
 // Cleanup gracefully shuts down the IPC manager.
 func (pm *IPCManager) Cleanup() {
+	// StopTask() will set wasManuallyStopped = true, preventing PC shutdown
+	// This is desired behavior: we don't want to shutdown PC when app is closing
 	pm.StopTask()
 	pm.stopServer()
 	pm.closeLogFile()

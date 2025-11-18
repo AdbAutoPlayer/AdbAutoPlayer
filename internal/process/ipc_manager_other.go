@@ -5,6 +5,8 @@ package process
 import (
 	"adb-auto-player/internal/logger"
 	"fmt"
+	"os/exec"
+	"runtime"
 
 	"github.com/shirou/gopsutil/v4/process"
 )
@@ -28,4 +30,38 @@ func (pm *IPCManager) startServer() error {
 	pm.serverProcess = proc
 
 	return nil
+}
+
+// shutdownSystem shuts down the system (macOS or Linux).
+func shutdownSystem() error {
+	if runtime.GOOS == "darwin" {
+		// macOS: Use osascript to shutdown (doesn't require sudo)
+		cmd := exec.Command("osascript", "-e", "tell app \"System Events\" to shut down")
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("failed to shutdown macOS system: %w", err)
+		}
+		logger.Get().Infof("System shutdown initiated")
+		return nil
+	}
+
+	// Linux: Try systemctl first (systemd), then fall back to shutdown/poweroff
+	// Note: These may require sudo privileges
+	commands := [][]string{
+		{"systemctl", "poweroff"},
+		{"shutdown", "-h", "now"},
+		{"poweroff"},
+	}
+
+	var lastErr error
+	for _, args := range commands {
+		cmd := exec.Command(args[0], args[1:]...)
+		if err := cmd.Run(); err != nil {
+			lastErr = err
+			continue
+		}
+		logger.Get().Infof("System shutdown initiated using: %s", args[0])
+		return nil
+	}
+
+	return fmt.Errorf("failed to shutdown Linux system: %w (note: this may require sudo privileges)", lastErr)
 }
