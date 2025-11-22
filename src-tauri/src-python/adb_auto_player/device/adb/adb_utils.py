@@ -25,7 +25,6 @@ def _set_adb_path() -> None:
         if not adb_env_path or not os.path.isfile(adb_env_path):
             candidates: list[Path] = [
                 SettingsLoader.binaries_dir() / "adb.exe",
-                SettingsLoader.binaries_dir() / "windows" / "adb.exe",
             ]
             adb_env_path = str(
                 next((c for c in candidates if c.exists()), candidates[0])

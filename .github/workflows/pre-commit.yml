@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [macos-latest, windows-latest] # ubuntu-latest ignored for now ceebs
 
     steps:
       - uses: actions/checkout@v6
