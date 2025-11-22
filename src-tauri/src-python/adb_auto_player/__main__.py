@@ -60,6 +60,7 @@ class ProfileContext(BaseModel):
 
 def tauri_profile_aware_command(func):
     """Combines @commands.command() and context handling.
+
     The decorated function should have `app_handle: AppHandle` as the first argument.
     """
 
@@ -187,8 +188,6 @@ async def start_task(
     app_handle: AppHandle,
     body: StartTaskBody,
 ) -> None:
-    global task_processes, task_listeners, task_labels
-
     if not manager:
         logging.error("No manager!")
         return
@@ -204,9 +203,7 @@ async def start_task(
         return
 
     log_queue = Queue()
-    listener = QueueListener(
-        log_queue, TauriQueueHandler(app_handle)
-    )
+    listener = QueueListener(log_queue, TauriQueueHandler(app_handle))
     task_listeners[body.profile_index] = listener
     listener.start()
 
@@ -252,8 +249,6 @@ async def stop_task(
     app_handle: AppHandle,
     body: ProfileContext,
 ) -> None:
-    global task_processes, task_listeners
-
     task_process = task_processes.get(body.profile_index, None)
 
     if task_process and task_process.is_alive():
@@ -375,6 +370,7 @@ async def _generate_app_settings_model() -> AppSettings:
 
 
 def main() -> int:
+    """PyTauri main."""
     global manager
     manager = multiprocessing.Manager()
     _setup_logging()

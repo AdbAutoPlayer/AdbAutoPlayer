@@ -72,6 +72,9 @@ ignore = [
     "PLR0913", # too-many-arguments
 ]
 
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
 [tool.ruff.lint.per-file-ignores]
 # Ignore D100 (Missing docstring in public module) only in games subdirs
 "**/games/**/*.py" = [
@@ -81,6 +84,6 @@ ignore = [
     "D101", "D102", "D103",
     "PLR0913", "PLR2004",
 ]
-
-[tool.ruff.lint.pydocstyle]
-convention = "google"
+"**/__main__.py" = [
+    "D101", "D102", "D103", "PLW0603"
+]

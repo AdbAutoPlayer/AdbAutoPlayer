@@ -96,7 +96,7 @@ def _initialize_tesseract() -> None:
             if not os.path.isfile(fallback_path):
                 continue
 
-            pytesseract.tesseract_cmd = fallback_path # type: ignore[invalid-assignment]
+            pytesseract.tesseract_cmd = fallback_path  # type: ignore[invalid-assignment]
             break
         try:
             pytesseract.get_tesseract_version()

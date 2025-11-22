@@ -1,7 +1,6 @@
 import io
 import time
 import unittest
-from typing import cast
 from unittest.mock import Mock, patch
 
 import av

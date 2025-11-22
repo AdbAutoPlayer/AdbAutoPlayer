@@ -100,4 +100,5 @@ class SummaryGenerator:
 
     @classmethod
     def set_shared_dict(cls, shared_dict: dict):
+        """Set shared dict for Tauri Task multiprocessing."""
         cls()._shared_dict = shared_dict

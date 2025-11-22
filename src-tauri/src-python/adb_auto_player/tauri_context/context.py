@@ -11,18 +11,24 @@ _app_handle: contextvars.ContextVar[AppHandle | None] = contextvars.ContextVar(
 
 
 class TauriContext:
+    """Tauri context container."""
+
     @staticmethod
     def set_profile_index(profile_index: int | None):
+        """Set App active Profile Index."""
         _profile_index.set(profile_index)
 
     @staticmethod
     def get_profile_index() -> int | None:
+        """Get App active Profile Index."""
         return _profile_index.get()
 
     @staticmethod
     def set_app_handle(app_handle: AppHandle | None):
+        """Set Tauri App Handle."""
         _app_handle.set(app_handle)
 
     @staticmethod
     def get_app_handle() -> AppHandle | None:
+        """Returns Tauri App Handle."""
         return _app_handle.get()

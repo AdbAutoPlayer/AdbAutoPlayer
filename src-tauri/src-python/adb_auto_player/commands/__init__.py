@@ -5,7 +5,7 @@ import pkgutil
 
 from .debug import log_debug_info
 
-__all__ = [log_debug_info]
+__all__ = ["log_debug_info"]
 
 
 def load_command_modules():
