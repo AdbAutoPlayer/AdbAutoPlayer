@@ -32,7 +32,13 @@ export type Trigger = ("adb-settings-updated" | "game-settings-updated")
  * @minItems 1
  */
 export type Profiles1 = [string, ...(string)[]]
+/**
+ * Theme Enum.
+ */
 export type Theme = ("catppuccin" | "cerberus" | "crimson" | "fennec" | "hamlindigo" | "legacy" | "mint" | "modern" | "mona" | "nosh" | "nouveau" | "pine" | "reign" | "rocket" | "rose" | "sahara" | "seafoam" | "terminus" | "vintage" | "vox" | "wintry")
+/**
+ * Locale Enum.
+ */
 export type Locale = ("en" | "jp" | "vn")
 export type CloseButtonShouldMinimizeTheWindow = boolean
 export type EnableNotifications = boolean

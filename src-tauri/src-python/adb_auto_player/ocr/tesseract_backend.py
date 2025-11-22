@@ -89,10 +89,10 @@ def _initialize_tesseract() -> None:
 
         fallback_paths = [
             SettingsLoader.binaries_dir() / "tesseract" / "tesseract.exe",
-            SettingsLoader.binaries_dir() / "windows" / "tesseract" / "tesseract.exe",
         ]
 
         for fallback_path in fallback_paths:
+            logging.info(str(fallback_path.as_posix()))
             if not os.path.isfile(fallback_path):
                 continue
 
