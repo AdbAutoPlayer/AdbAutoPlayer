@@ -1,19 +1,19 @@
+use crate::LogMessage;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use tauri::{Emitter, Manager, State};
-use toml;
-use crate::LogMessage;
 
 const APP_SETTINGS_SCHEMA: &str = r##"
 {"$defs": {"Locale": {"enum": ["en", "jp", "vn"], "title": "Locale", "type": "string"}, "LoggingSettings": {"description": "Logging settings model.", "properties": {"level": {"default": "INFO", "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "FATAL"], "title": "Logging Level", "type": "string"}, "action_log_limit": {"default": 5, "minimum": 0, "title": "Log File Limit", "type": "integer"}}, "title": "LoggingSettings", "type": "object"}, "ProfileSettings": {"description": "Profile Settings model.", "properties": {"profiles": {"default": ["Default"], "items": {"type": "string"}, "minItems": 1, "title": "Profiles", "type": "array"}}, "title": "ProfileSettings", "type": "object"}, "Theme": {"enum": ["catppuccin", "cerberus", "crimson", "fennec", "hamlindigo", "legacy", "mint", "modern", "mona", "nosh", "nouveau", "pine", "reign", "rocket", "rose", "sahara", "seafoam", "terminus", "vintage", "vox", "wintry"], "title": "Theme", "type": "string"}, "UISettings": {"description": "UI Settings model.", "properties": {"theme": {"$ref": "#/$defs/Theme", "default": "catppuccin"}, "locale": {"$ref": "#/$defs/Locale", "default": "en"}, "close_should_minimize": {"default": false, "title": "Close button should minimize the window", "type": "boolean"}, "notifications_enabled": {"default": false, "title": "Enable Notifications", "type": "boolean"}}, "title": "UISettings", "type": "object"}}, "description": "App Settings model.", "properties": {"profiles": {"$ref": "#/$defs/ProfileSettings", "title": "Profiles"}, "ui": {"$ref": "#/$defs/UISettings", "title": "User Interface"}, "logging": {"$ref": "#/$defs/LoggingSettings", "title": "Logging"}}, "title": "AppSettings", "type": "object"}
 "##;
 
 // ---------- Enums ----------
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Theme {
+    #[default]
     Catppuccin,
     Cerberus,
     Crimson,
@@ -37,24 +37,13 @@ pub enum Theme {
     Wintry,
 }
 
-impl Default for Theme {
-    fn default() -> Self {
-        Theme::Catppuccin
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Locale {
+    #[default]
     En,
     Jp,
     Vn,
-}
-
-impl Default for Locale {
-    fn default() -> Self {
-        Locale::En
-    }
 }
 
 // ---------- LoggingSettings ----------
@@ -95,7 +84,7 @@ impl Default for LoggingSettings {
 }
 
 // ---------- UISettings ----------
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct UISettings {
     #[serde(default)]
     pub theme: Theme,
@@ -108,17 +97,6 @@ pub struct UISettings {
 
     #[serde(default)]
     pub notifications_enabled: bool,
-}
-
-impl Default for UISettings {
-    fn default() -> Self {
-        Self {
-            theme: Theme::default(),
-            locale: Locale::default(),
-            close_should_minimize: false,
-            notifications_enabled: false,
-        }
-    }
 }
 
 // ---------- ProfileSettings ----------
@@ -170,8 +148,7 @@ impl AppSettings {
     }
 
     pub fn save_to_file(&self, path: impl AsRef<Path>) -> std::io::Result<()> {
-        let toml_string = toml::to_string_pretty(self)
-            .expect("Failed to serialize settings");
+        let toml_string = toml::to_string_pretty(self).expect("Failed to serialize settings");
 
         fs::write(path, toml_string)
     }
@@ -187,9 +164,9 @@ pub struct AppSettingsResponse {
 #[tauri::command]
 pub fn get_app_settings_form(
     app_handle: tauri::AppHandle,
-    state: State<'_, Mutex<AppSettings>>
+    state: State<'_, Mutex<AppSettings>>,
 ) -> AppSettingsResponse {
-    let settings = AppSettings::load_from_file(&get_app_settings_path(&app_handle));
+    let settings = AppSettings::load_from_file(get_app_settings_path(&app_handle));
 
     // Update state
     {
@@ -208,17 +185,16 @@ pub fn get_app_settings_form(
 pub fn save_app_settings(
     app_handle: tauri::AppHandle,
     settings: AppSettings,
-    state: State<'_, Mutex<AppSettings>>
+    state: State<'_, Mutex<AppSettings>>,
 ) -> AppSettings {
     let path = get_app_settings_path(&app_handle);
-    AppSettings::save_to_file(&settings, &path)
-        .expect("Failed to save App Settings");
+    AppSettings::save_to_file(&settings, &path).expect("Failed to save App Settings");
 
     let mut state = state.lock().unwrap();
     *state = settings.clone();
 
     let path_display = path.display().to_string();
-    let message = format!("App Settings saved: {}", path_display);
+    let message = format!("App Settings saved: {path_display}");
 
     app_handle
         .emit("log-message", LogMessage::new(LogLevel::INFO, message))
@@ -226,9 +202,10 @@ pub fn save_app_settings(
     settings
 }
 
-fn get_app_settings_path(
-    app_handle: &tauri::AppHandle,
-) -> PathBuf {
-    let config_dir = app_handle.path().app_config_dir().expect("Failed to get config dir");
+fn get_app_settings_path(app_handle: &tauri::AppHandle) -> PathBuf {
+    let config_dir = app_handle
+        .path()
+        .app_config_dir()
+        .expect("Failed to get config dir");
     config_dir.join("App.toml")
 }

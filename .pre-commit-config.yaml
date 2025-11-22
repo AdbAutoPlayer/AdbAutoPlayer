@@ -62,12 +62,13 @@ repos:
         files: python/pyproject.toml
         args: [--project, python]
 
-  # Golang
-  - repo: https://github.com/golangci/golangci-lint
-    rev: v2.2.2
+  # Rust / Tauri
+  - repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
     hooks:
-      - id: golangci-lint
-        files: \.go$
+      - id: fmt
+      - id: clippy
+      - id: cargo-check
 
   # Frontend
   - repo: local

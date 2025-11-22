@@ -1,6 +1,6 @@
+use crate::{update_tray_menu, AppSettings};
 use std::sync::Mutex;
 use tauri::{App, AppHandle, Manager, WindowEvent};
-use crate::{update_tray_menu, AppSettings};
 
 #[tauri::command]
 pub fn show_window(app: AppHandle) -> Result<(), String> {
@@ -25,7 +25,8 @@ pub fn hide_window(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 pub fn setup_window_close_handler(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
-    let main_window = app.get_webview_window("main")
+    let main_window = app
+        .get_webview_window("main")
         .ok_or("Main window not found")?;
 
     let app_handle = app.handle().clone();
@@ -35,7 +36,8 @@ pub fn setup_window_close_handler(app: &mut App) -> Result<(), Box<dyn std::erro
             // Access state and check the flag in one scope
             let should_minimize = {
                 let state = app_handle.state::<Mutex<AppSettings>>();
-                state.lock()
+                state
+                    .lock()
                     .map(|app_settings| app_settings.ui.close_should_minimize)
                     .unwrap_or(false)
             };
@@ -46,7 +48,7 @@ pub fn setup_window_close_handler(app: &mut App) -> Result<(), Box<dyn std::erro
 
                 // Hide/minimize instead
                 if let Err(e) = hide_window(&app_handle) {
-                    eprintln!("Failed to hide window: {}", e);
+                    eprintln!("Failed to hide window: {e}");
                 }
             }
         }
