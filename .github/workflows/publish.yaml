@@ -79,7 +79,7 @@ jobs:
       # - <https://gregoryszorc.com/docs/python-build-standalone/main/running.html#obtaining-distributions>
       - name: Download python-build-standalone
         env:
-          PYTHON_VERSION: "3.13.9" # update this by yourself
+          PYTHON_VERSION: "3.14.0" # update this by yourself
           TAG: "20251031" # update this by yourself
           TARGET: ${{ matrix.target }}
         run: |
