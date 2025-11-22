@@ -1,11 +1,13 @@
 import io
 import time
 import unittest
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import av
 import numpy as np
 from adb_auto_player.device.adb import DeviceStream, StreamingNotSupportedError
+from adb_auto_player.file_loader import SettingsLoader
 from av.container.output import OutputContainer
 from av.video.stream import VideoStream
 
@@ -38,6 +40,14 @@ class TestDeviceStream(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.mock_device = Mock()
+
+        src_tauri_dir = Path(__file__)
+        for parent in src_tauri_dir.parents:
+            if parent.name == "src-tauri":
+                src_tauri_dir = parent
+                break
+
+        SettingsLoader.set_app_config_dir(src_tauri_dir / "Settings")
 
     def test_stream_initialization(self):
         """Test DeviceStream initialization."""

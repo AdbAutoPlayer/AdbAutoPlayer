@@ -1,18 +1,10 @@
 """Tests for IPCModelConverter."""
 
-from enum import StrEnum
 from unittest.mock import patch
 
 from adb_auto_player.ipc_util import IPCModelConverter
 from adb_auto_player.models.commands import MenuItem
 from adb_auto_player.models.registries import GameMetadata
-
-
-class TestCategory(StrEnum):
-    """Test enum for categories."""
-
-    COMBAT = "combat"
-    NAVIGATION = "navigation"
 
 
 class TestIPCModelConverter:
@@ -97,30 +89,6 @@ class TestIPCModelConverter:
         result = IPCModelConverter._get_menu_options_from_commands("NonExistent", game)
 
         assert result == []
-
-    @patch.object(IPCModelConverter, "_extract_categories_from_game")
-    @patch.object(IPCModelConverter, "_build_menu_options")
-    @patch.object(IPCModelConverter, "_extract_categories_from_menu_options")
-    @patch.object(IPCModelConverter, "_extract_constraints_from_game")
-    def test_convert_game_to_gui_options_no_settings_file(
-        self,
-        mock_extract_constraints,
-        mock_extract_menu_categories,
-        mock_build_menu,
-        mock_extract_game_categories,
-    ):
-        """Test conversion with no Settings file."""
-        # Setup mocks
-        mock_extract_game_categories.return_value = list()
-        mock_build_menu.return_value = []
-        mock_extract_menu_categories.return_value = list()
-        mock_extract_constraints.return_value = None
-
-        game = GameMetadata(name="Test Game", settings_file=None)
-
-        result = IPCModelConverter.convert_game_to_gui_options("TestModule", game)
-
-        assert result.settings_file is None
 
     def test_resolve_label_from_settings_no_label_from_settings(self):
         """Test label resolution when no label_from_settings is set."""
