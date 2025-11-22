@@ -1,16 +1,16 @@
 use pyo3::prelude::*;
 
 mod commands;
+mod log;
+mod settings;
 mod tray;
 mod window;
-mod settings;
-mod log;
 
 pub use commands::*;
+pub use log::*;
+pub use settings::*;
 pub use tray::*;
 pub use window::*;
-pub use settings::*;
-pub use log::*;
 
 pub fn tauri_generate_context() -> tauri::Context {
     tauri::generate_context!()
@@ -19,14 +19,14 @@ pub fn tauri_generate_context() -> tauri::Context {
 #[pymodule(gil_used = false)]
 #[pyo3(name = "ext_mod")]
 pub mod ext_mod {
-    use tauri::Manager;
     use super::*;
+    use tauri::Manager;
 
     #[pymodule_init]
     fn init(module: &Bound<'_, PyModule>) -> PyResult<()> {
         match std::env::current_dir() {
             Ok(path) => println!("Current working directory: {}", path.display()),
-            Err(e) => eprintln!("Error getting current directory: {}", e),
+            Err(e) => eprintln!("Error getting current directory: {e}"),
         }
         pytauri::pymodule_export(
             module,

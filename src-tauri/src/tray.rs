@@ -1,9 +1,12 @@
-use tauri::tray::{TrayIconBuilder, MouseButton};
-use tauri::menu::{Menu, MenuItem};
-use tauri::{AppHandle, App};
 use crate::window;
+use tauri::menu::{Menu, MenuItem};
+use tauri::tray::{MouseButton, TrayIconBuilder};
+use tauri::{App, AppHandle};
 
-pub fn update_tray_menu(app: &AppHandle, window_visible: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub fn update_tray_menu(
+    app: &AppHandle,
+    window_visible: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
     let tray = app.tray_by_id("main-tray").ok_or("Tray not found")?;
 
     let menu = if window_visible {
@@ -32,28 +35,27 @@ pub fn setup_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         .menu(&menu)
         .show_menu_on_left_click(false)
         .tooltip("AdbAutoPlayer")
-        .on_menu_event(|app, event| {
-            match event.id.as_ref() {
-                "minimize" => {
-                    let _ = window::hide_window(app);
-                }
-                "show" => {
-                    let _ = window::internal_show_window(app);
-                }
-                "exit" => {
-                    app.exit(0);
-                }
-                _ => {}
+        .on_menu_event(|app, event| match event.id.as_ref() {
+            "minimize" => {
+                let _ = window::hide_window(app);
             }
-        })
-        .on_tray_icon_event(|tray, event| match event {
-            tauri::tray::TrayIconEvent::DoubleClick {
-                button: MouseButton::Left, ..
-            } => {
-                let app = tray.app_handle();
-                let _ = window::internal_show_window(&app);
+            "show" => {
+                let _ = window::internal_show_window(app);
+            }
+            "exit" => {
+                app.exit(0);
             }
             _ => {}
+        })
+        .on_tray_icon_event(|tray, event| {
+            if let tauri::tray::TrayIconEvent::DoubleClick {
+                button: MouseButton::Left,
+                ..
+            } = event
+            {
+                let app = tray.app_handle();
+                let _ = window::internal_show_window(app);
+            }
         })
         .build(app)?;
 
