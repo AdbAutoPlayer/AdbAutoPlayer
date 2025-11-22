@@ -83,7 +83,6 @@
       const logUnsub = await listen<LogMessage>(
         EventNames.LOG_MESSAGE,
         (event) => {
-          console.log("handling event")
           const logMessage = event.payload;
 
           const logLevel: LogLevel = $appSettings?.logging?.level ?? "INFO";

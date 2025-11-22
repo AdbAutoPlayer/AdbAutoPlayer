@@ -335,7 +335,7 @@
       profileProps.states[i] = {
         activeGame: otherState.game_menu,
         activeTask:  otherState.active_task,
-        deviceId: state.device_id,
+        deviceId: otherState.device_id,
       }
     }
   }
