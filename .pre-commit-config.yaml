@@ -50,7 +50,6 @@ repos:
     rev: 0.9.11
     hooks:
       - id: uv-lock
-      - id: uv-export
 
   # Rust / Tauri
   - repo: https://github.com/doublify/pre-commit-rust
