@@ -1,0 +1,45 @@
+{
+  "dependencies": {
+    "@js-joda/core": "^5.6.5",
+    "@tailwindcss/vite": "^4.1.16",
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-opener": "^2",
+    "@types/json-schema": "^7.0.15",
+    "posthog-js": "^1.285.0",
+    "tailwindcss": "^4.1.16",
+    "tauri-plugin-pytauri-api": "^0.8.0"
+  },
+  "description": "",
+  "devDependencies": {
+    "@skeletonlabs/skeleton": "^4.0.0",
+    "@skeletonlabs/skeleton-svelte": "^4.0.0",
+    "@sveltejs/adapter-static": "^3.0.9",
+    "@sveltejs/kit": "^2.48.4",
+    "@sveltejs/vite-plugin-svelte": "^6.2.1",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tauri-apps/cli": "^2",
+    "json-schema-to-typescript": "^15.0.4",
+    "prettier": "^3.6.2",
+    "prettier-plugin-svelte": "^3.4.0",
+    "prettier-plugin-tailwindcss": "^0.7.1",
+    "svelte": "^5.43.2",
+    "svelte-check": "^4.3.3",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.12",
+    "vite-plugin-devtools-json": "^1.0.0"
+  },
+  "license": "MIT",
+  "name": "adb-auto-player",
+  "scripts": {
+    "build": "vite build",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "dev": "vite dev",
+    "prettier-write": "prettier --write \"**/*.{ts,js,cjs,svelte}\"",
+    "preview": "vite preview",
+    "pytauri": "node pytauri-bootstrap.cjs",
+    "tauri": "tauri"
+  },
+  "type": "module",
+  "version": "0.0.0"
+}

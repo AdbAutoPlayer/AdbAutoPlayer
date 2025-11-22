@@ -1,0 +1,30 @@
+[project]
+name = "workspace"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = []
+
+[dependency-groups]
+dev = ["adb-auto-player"]
+
+[tool.uv.workspace]
+members = ["src-tauri"]
+
+[tool.uv.sources]
+adb-auto-player = { workspace = true }
+
+
+[tool.pyright]
+# See: <https://pytauri.github.io/pytauri/0.5/usage/tutorial/build-standalone/#get-portable-python>
+# ref: <https://github.com/microsoft/pyright/blob/1.1.391/docs/configuration.md#environment-options>
+exclude = [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/dist",
+    "**/.*",
+    "**/pyembed",
+    # 👇 necessary, because when `tauri-cli bundles python,
+    # it will copy `pyembed` to the target directory (i.e., rust output dir).
+    "**/target",
+    # 👆
+]
