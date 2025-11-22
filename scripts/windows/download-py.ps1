@@ -1,6 +1,6 @@
 ### Argument ###
 
-$PYTHON_VERSION = "3.14.0"  # update these by yourself
+$PYTHON_VERSION = "3.13.9"  # update these by yourself
 $TAG = "20251031"  # update these by yourself
 $TARGET = "x86_64-pc-windows-msvc"
 
