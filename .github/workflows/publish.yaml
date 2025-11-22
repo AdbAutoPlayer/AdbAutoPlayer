@@ -71,9 +71,7 @@ jobs:
           node-version: lts/*
           cache: "pnpm"
 
-      - name: Install project dependencies
-        run: |
-          pnpm install
+      - run: pnpm install
 
       # See:
       # - <https://github.com/astral-sh/python-build-standalone/releases>
