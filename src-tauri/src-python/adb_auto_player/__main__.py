@@ -99,15 +99,17 @@ def tauri_profile_aware_command(func):
 
 
 class TauriQueueHandler(logging.Handler):
-    def __init__(self, app_handle):
+    def __init__(self, app_handle, profile_index):
         super().__init__()
         self.app_handle = app_handle
+        self.profile_index = profile_index
 
     def emit(self, record):
         log_message = LogMessageFactory.create_log_message(
             record=record,
             message=StringHelper.sanitize_path(record.getMessage()),
             html_class=getattr(record, "preset", None),
+            profile_index=self.profile_index,
         )
         Emitter.emit(self.app_handle, "log-message", log_message)
 
@@ -203,7 +205,9 @@ async def start_task(
         return
 
     log_queue = Queue()
-    listener = QueueListener(log_queue, TauriQueueHandler(app_handle))
+    listener = QueueListener(
+        log_queue, TauriQueueHandler(app_handle, body.profile_index)
+    )
     task_listeners[body.profile_index] = listener
     listener.start()
 
