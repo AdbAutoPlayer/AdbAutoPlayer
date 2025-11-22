@@ -1,0 +1,159 @@
+# See:
+# - <https://github.com/tauri-apps/tauri-action>
+# - <https://pytauri.github.io/pytauri/latest/usage/tutorial/build-standalone/>
+
+name: "publish"
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+  # On push to `release` branch
+  push:
+    branches:
+      - release
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  publish-tauri:
+    permissions:
+      contents: write # required for creating github releases
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: "macos-14" # for Intel based macs.
+            target: "x86_64-apple-darwin"
+          - platform: "macos-14" # for Arm based macs (M1 and above).
+            target: "aarch64-apple-darwin"
+          - platform: "ubuntu-22.04"
+            target: "x86_64-unknown-linux-gnu"
+          - platform: "ubuntu-22.04-arm"
+            target: "aarch64-unknown-linux-gnu"
+          - platform: "windows-2022"
+            target: "x86_64-pc-windows-msvc"
+          - platform: "windows-11-arm"
+            target: "aarch64-pc-windows-msvc"
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies (ubuntu only)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          # version-file: "pyproject.toml"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          # Optional: when there is a `packageManager` field in the `package.json`
+          version: "latest"
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Or: `node-version-file: package.json`
+          node-version: lts/*
+          cache: "pnpm"
+
+      - name: Install project dependencies
+        run: |
+          pnpm install
+
+      # See:
+      # - <https://github.com/astral-sh/python-build-standalone/releases>
+      # - <https://raw.githubusercontent.com/astral-sh/python-build-standalone/latest-release/latest-release.json>
+      # - <https://gregoryszorc.com/docs/python-build-standalone/main/running.html#obtaining-distributions>
+      - name: Download python-build-standalone
+        env:
+          PYTHON_VERSION: "3.14.0" # update this by yourself
+          TAG: "20251031" # update this by yourself
+          TARGET: ${{ matrix.target }}
+        run: |
+          url="https://github.com/astral-sh/python-build-standalone/releases/download/${TAG}/cpython-${PYTHON_VERSION}+${TAG}-${TARGET}-install_only_stripped.tar.gz"
+          DEST_DIR="src-tauri/pyembed"
+
+          mkdir "$DEST_DIR"
+          curl -L "$url" | tar -xz -C "$DEST_DIR"
+
+          # ref: <https://github.com/pytauri/pytauri/issues/99#issuecomment-2704556726>
+          if [[ "${{ runner.os }}" == "macOS" ]]; then
+              python_major_minor="${PYTHON_VERSION%.*}"  # "3.13.7" -> "3.13"
+              install_name_tool -id "@rpath/libpython${python_major_minor}.dylib" "$DEST_DIR/python/lib/libpython${python_major_minor}.dylib"
+          fi
+
+      - name: Install the project into the embedded python environment
+        env:
+          PYTAURI_STANDALONE: 1 # see your `setup.py`
+          PYTHON_PATH: ${{ runner.os == 'Windows' && './src-tauri/pyembed/python/python.exe' || './src-tauri/pyembed/python/bin/python3' }}
+        run: |
+          uv pip install \
+              --exact \
+              --compile-bytecode \
+              --python=${{ env.PYTHON_PATH }} \
+              ./src-tauri
+
+      # Set build environment variables, see:
+      # <https://pytauri.github.io/pytauri/latest/usage/tutorial/build-standalone/#build-and-bundle>
+
+      - name: Set build environment variables (windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $PYO3_PYTHON = (Resolve-Path -LiteralPath ".\src-tauri\pyembed\python\python.exe").Path
+          echo "PYO3_PYTHON=$PYO3_PYTHON" >> $env:GITHUB_ENV
+
+      - name: Set build environment variables (linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        env:
+          # `adb-auto-player` is your app `productName` in `tauri.conf.json`
+          PRODUCT_NAME: "AdbAutoPlayer"
+        run: |
+          PYO3_PYTHON=$(realpath ./src-tauri/pyembed/python/bin/python3)
+          RUSTFLAGS=" \
+            -C link-arg=-Wl,-rpath,\$ORIGIN/../lib/$PRODUCT_NAME/lib \
+            -L $(realpath ./src-tauri/pyembed/python/lib)"
+
+          echo "PYO3_PYTHON=$PYO3_PYTHON" >> $GITHUB_ENV
+          echo "RUSTFLAGS=$RUSTFLAGS" >> $GITHUB_ENV
+
+      - name: Set build environment variables (macos)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          PYO3_PYTHON=$(realpath ./src-tauri/pyembed/python/bin/python3)
+          RUSTFLAGS=" \
+            -C link-arg=-Wl,-rpath,@executable_path/../Resources/lib \
+            -L $(realpath ./src-tauri/pyembed/python/lib)"
+
+          echo "PYO3_PYTHON=$PYO3_PYTHON" >> $GITHUB_ENV
+          echo "RUSTFLAGS=$RUSTFLAGS" >> $GITHUB_ENV
+
+      - name: Build and bundle the app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
+          releaseName: "App v__VERSION__"
+          releaseBody: "See the assets to download this version and install."
+          releaseDraft: true
+          includeDebug: true # Optional, disable to speed up the build
+          args: '--target ${{ matrix.target }} --config src-tauri/tauri.bundle.json --verbose'

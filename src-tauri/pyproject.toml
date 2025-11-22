@@ -1,0 +1,87 @@
+[project]
+name = "adb-auto-player"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+authors = [
+    { name = "yulesxoxo <https://github.com/yulesxoxo/yulesxoxo>" },
+    { name = "Vale <https://github.com/Valextr/Valextr>" },
+]
+requires-python = ">=3.14"
+dependencies = [
+    "pytauri == 0.8.*",
+    "pydantic == 2.*",
+    "anyio == 4.*",
+    "adbutils>=2.10.0,<3",
+    "opencv-python>=4.10.0.84,<5",
+    "pydantic>=2.10.5,<3",
+    "av>=16.0.1,<17",
+    "pillow>=11.1.0",
+    "pytesseract>=0.3.13",
+    "psutil>=7.0.0",
+]
+
+[project.scripts]
+adb-auto-player = "adb_auto_player.main_cli:main"
+
+[project.entry-points.pytauri]
+ext_mod = "adb_auto_player.ext_mod"
+
+[build-system]
+requires = ["setuptools >= 80", "setuptools-scm >= 8"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv]
+package = true
+required-version = ">=0.7.0"
+
+[tool.setuptools.packages]
+find = { where = ["src-python"] }
+
+[tool.ruff]
+line-length = 88
+indent-width = 4
+target-version = "py312"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint]
+select = [
+    "F",   # pyflakes
+    "D",   # pydocstyle
+    "E",   # pycodestyle error
+    "N",   # pep8-naming
+    "RUF", # ruff
+    "UP",  # pyupgrade
+    "PL",  # pylint
+]
+ignore = [
+    "D100",  # Missing docstring in public module
+    "D104", # Missing docstring in public package
+    "D107", # Missing docstring in `__init__`
+     # I feel D100 and D104 are pointless when most modules are as small as they are.
+    "D203",  # incorrect-blank-line-before-class
+    "D406",  # missing-new-line-after-section-name
+    "D407",  # missing-dashed-underline-after-section
+    "UP017", # datetime-timezone-utc
+    # PLR0913 is simply too annoying in practise we have a lot of optionals that
+    # can be nice to have but not used all the time.
+    "PLR0913", # too-many-arguments
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore D100 (Missing docstring in public module) only in games subdirs
+"**/games/**/*.py" = [
+    "D101", "D102", "D103",
+]
+"**/tests/**/*.py" = [
+    "D101", "D102", "D103",
+    "PLR0913", "PLR2004",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

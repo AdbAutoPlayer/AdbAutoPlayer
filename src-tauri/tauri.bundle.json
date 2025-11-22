@@ -1,0 +1,16 @@
+{
+  "bundle": {
+    "active": true,
+    "resources": {
+      "pyembed/python": "./"
+    },
+    "targets": [
+      "deb",
+      "rpm",
+      "msi",
+      "nsis",
+      "app",
+      "dmg"
+    ]
+  }
+}
