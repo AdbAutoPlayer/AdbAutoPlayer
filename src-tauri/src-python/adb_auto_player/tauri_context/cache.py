@@ -1,8 +1,8 @@
 import functools
 import threading
 from collections import OrderedDict
-from typing import Any
 from collections.abc import Callable, Hashable
+from typing import Any
 
 from .context import TauriContext
 
