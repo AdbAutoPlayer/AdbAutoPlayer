@@ -1,0 +1,59 @@
+#!/usr/bin/env node
+
+const { execSync } = require("child_process");
+const process = require("process");
+const path = require("path");
+
+const extraArgs = process.argv.slice(2).join(" ");
+
+function runCommand(cmd) {
+  try {
+    execSync(cmd, { stdio: "inherit" });
+  } catch (err) {
+    console.error(`\nCommand failed: ${cmd}`);
+    process.exit(1);
+  }
+}
+
+function checkCommandExists(cmd, installHint) {
+  try {
+    execSync(`${cmd} --version`, { stdio: "ignore" });
+    console.log(`Found '${cmd}'`);
+  } catch (err) {
+    console.error(`'${cmd}' is not installed.`);
+    console.error(`Hint: ${installHint}`);
+    process.exit(1);
+  }
+}
+
+checkCommandExists(
+  "uv",
+  "Install uv: https://github.com/astral-sh/uv"
+);
+
+runCommand(
+  "uv venv --allow-existing --python-preference only-system",
+);
+
+const isWin = process.platform === "win32";
+const VENV_PATH = path.join(__dirname, ".venv");
+
+function runInVenv(command) {
+  let fullCmd;
+  if (isWin) {
+    // Windows: use cmd.exe /c to call the activate.bat
+    const activate = path.join(VENV_PATH, "Scripts", "activate.bat");
+    fullCmd = `cmd.exe /c "call ${activate} && ${command}"`;
+  } else {
+    // Unix/macOS: source the activate script in a shell
+    const activate = path.join(VENV_PATH, "bin", "activate");
+    fullCmd = `sh -c "source ${activate} && ${command}"`;
+  }
+  runCommand(fullCmd);
+}
+
+runInVenv("uv pip install -e src-tauri");
+
+runCommand("pnpm install");
+
+runInVenv(`pnpm tauri ${extraArgs}`);

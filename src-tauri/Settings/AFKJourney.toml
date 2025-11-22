@@ -1,0 +1,68 @@
+["AFK Stages"]
+Attempts = 5
+Formations = 10
+"Skip Manual Formations" = false
+"Spend Gold" = false
+"Start with current Formation" = true
+"Suggested Formations" = true
+
+["Arcane Labyrinth"]
+Difficulty = 13
+"Key Quota" = 2700
+
+["Claim AFK Rewards"]
+"Claim Stage Rewards" = false
+
+["Custom Routine 1"]
+"Display Name" = ""
+Repeat = true
+"Task List" = []
+
+["Custom Routine 2"]
+"Display Name" = ""
+Repeat = true
+"Task List" = []
+
+["Custom Routine 3"]
+"Display Name" = ""
+Repeat = true
+"Task List" = []
+
+[Dailies]
+"Arena Battle" = false
+"Buy All Affinity" = false
+"Buy Discount Affinity" = true
+"Buy Temporal Essences" = false
+"Essence Buy Count" = 1
+"Single Pull" = false
+
+["Dream Realm"]
+"Spend Gold" = false
+
+["Dura's Trials"]
+Attempts = 5
+Formations = 10
+"Spend Gold" = false
+"Start with current Formation" = true
+"Suggested Formations" = true
+
+[General]
+"Assist Limit" = 20
+"Exclude Heroes" = []
+
+["Legend Trial"]
+Attempts = 5
+Formations = 10
+"Skip Manual Formations" = false
+"Spend Gold" = false
+"Start with current Formation" = true
+"Suggested Formations" = true
+Towers = [
+    "Lightbearer",
+    "Wilder",
+    "Graveborn",
+    "Mauler",
+]
+
+["Titan Reaver Proxy Battles"]
+"Titan Reaver Proxy Battle Limit" = 50

@@ -1,0 +1,14 @@
+[profiles]
+profiles = [
+    "Default",
+]
+
+[ui]
+theme = "terminus"
+locale = "en"
+close_should_minimize = false
+notifications_enabled = false
+
+[logging]
+level = "INFO"
+action_log_limit = 0

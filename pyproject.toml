@@ -1,0 +1,89 @@
+[project]
+name = "workspace"
+version = "0.1.0"
+requires-python = ">=3.13.9"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "adb-auto-player",
+    "ty>=0.0.1a22",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+]
+
+[tool.uv]
+required-version = ">=0.9.11"
+
+[tool.uv.workspace]
+members = ["src-tauri"]
+
+[tool.uv.sources]
+adb-auto-player = { workspace = true }
+
+
+[tool.pyright]
+# See: <https://pytauri.github.io/pytauri/0.5/usage/tutorial/build-standalone/#get-portable-python>
+# ref: <https://github.com/microsoft/pyright/blob/1.1.391/docs/configuration.md#environment-options>
+exclude = [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/dist",
+    "**/.*",
+    "**/pyembed",
+    # 👇 necessary, because when `tauri-cli bundles python,
+    # it will copy `pyembed` to the target directory (i.e., rust output dir).
+    "**/target",
+    # 👆
+]
+
+[tool.ruff]
+line-length = 88
+indent-width = 4
+target-version = "py312"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint]
+select = [
+    "F",   # pyflakes
+    "D",   # pydocstyle
+    "E",   # pycodestyle error
+    "N",   # pep8-naming
+    "RUF", # ruff
+    "UP",  # pyupgrade
+    "PL",  # pylint
+]
+ignore = [
+    "D100",  # Missing docstring in public module
+    "D104", # Missing docstring in public package
+    "D107", # Missing docstring in `__init__`
+    # I feel D100 and D104 are pointless when most modules are as small as they are.
+    "D203",  # incorrect-blank-line-before-class
+    "D406",  # missing-new-line-after-section-name
+    "D407",  # missing-dashed-underline-after-section
+    "UP017", # datetime-timezone-utc
+    # PLR0913 is simply too annoying in practise we have a lot of optionals that
+    # can be nice to have but not used all the time.
+    "PLR0913", # too-many-arguments
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore D100 (Missing docstring in public module) only in games subdirs
+"**/games/**/*.py" = [
+    "D101", "D102", "D103",
+]
+"**/tests/**/*.py" = [
+    "D101", "D102", "D103",
+    "PLR0913", "PLR2004",
+]
+"**/__main__.py" = [
+    "D101", "D102", "D103", "PLW0603"
+]

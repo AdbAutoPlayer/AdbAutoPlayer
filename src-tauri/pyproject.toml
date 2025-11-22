@@ -1,0 +1,39 @@
+[project]
+name = "adb-auto-player"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+authors = [
+    { name = "yulesxoxo <https://github.com/yulesxoxo/yulesxoxo>" },
+    { name = "Vale <https://github.com/Valextr/Valextr>" },
+]
+requires-python = ">=3.13.9"
+dependencies = [
+    "pytauri == 0.8.*",
+    "pydantic>=2.12.4,<3",
+    "anyio>=4.11.0,<5",
+    "adbutils>=2.12.0,<3",
+    "opencv-python>=4.12.0.88,<5",# Python 3.14 is blocked by this
+    "av>=16.0.1,<17",
+    "pillow>=12.0.0,<13",
+    "pytesseract>=0.3.13,<0.4",
+    "psutil>=7.1.3,<8",
+    "numpy>=2.2.6,<2.3"
+]
+
+[project.scripts]
+adb-auto-player = "adb_auto_player.main_cli:main"
+
+[project.entry-points.pytauri]
+ext_mod = "adb_auto_player.ext_mod"
+
+[build-system]
+requires = ["setuptools >= 80", "setuptools-scm >= 8"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv]
+package = true
+required-version = ">=0.9.11"
+
+[tool.setuptools.packages]
+find = { where = ["src-python"] }

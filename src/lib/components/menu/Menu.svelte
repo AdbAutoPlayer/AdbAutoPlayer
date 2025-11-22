@@ -1,0 +1,77 @@
+<script lang="ts">
+  import { Accordion } from "@skeletonlabs/skeleton-svelte";
+
+  import type { MenuButton } from "$lib/menu/model";
+  import TooltipButton from "./TooltipButton.svelte";
+  import { t } from "$lib/i18n/i18n";
+
+  let {
+    buttons,
+    disableActions,
+    categories,
+  }: {
+    buttons: MenuButton[];
+    disableActions: boolean;
+    categories: string[];
+  } = $props();
+
+  const categorizedButtons = $derived.by(() => {
+    const result: Record<string, MenuButton[]> = {};
+
+    for (const button of buttons) {
+      const category = button.option.category || "";
+      if (!result[category]) {
+        result[category] = [];
+      }
+      result[category].push(button);
+    }
+
+    return result;
+  });
+
+  const uncategorizedButtons = $derived.by(() => {
+    return categorizedButtons[""] || [];
+  });
+</script>
+
+<div class="h-full max-h-full">
+  {#if categories.length > 0}
+    <Accordion multiple>
+      {#each categories as category}
+        {#if categorizedButtons[category] && categorizedButtons[category].length > 0}
+          <Accordion.Item value={category}>
+            <Accordion.ItemTrigger class="flex items-center justify-between">
+              <span class="px-2 py-1 h5">
+                {$t(category)}
+              </span>
+              <Accordion.ItemIndicator class="group flex items-center">
+                <span class="hidden size-4 group-data-[state=open]:block">
+                  -
+                </span>
+                <span class="block size-4 group-data-[state=open]:hidden">
+                  +
+                </span>
+              </Accordion.ItemIndicator>
+            </Accordion.ItemTrigger>
+            <Accordion.ItemContent>
+              <div class="flex flex-wrap justify-center gap-4">
+                {#each categorizedButtons[category] as menuButton}
+                  <TooltipButton {menuButton} {disableActions} />
+                {/each}
+              </div>
+            </Accordion.ItemContent>
+          </Accordion.Item>
+          <hr class="hr" />
+        {/if}
+      {/each}
+    </Accordion>
+  {/if}
+
+  {#if uncategorizedButtons.length > 0}
+    <div class="mt-4 flex flex-wrap justify-center gap-4">
+      {#each uncategorizedButtons as menuButton}
+        <TooltipButton {menuButton} {disableActions} />
+      {/each}
+    </div>
+  {/if}
+</div>
