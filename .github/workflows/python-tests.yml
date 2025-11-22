@@ -71,7 +71,7 @@ jobs:
           slug: AdbAutoPlayer/AdbAutoPlayer
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.os }}
-          files: "python/junit.xml"
+          files: "junit.xml"
           disable_search: 'true'
 
       - name: Upload coverage reports to Codecov
@@ -80,7 +80,7 @@ jobs:
           slug: AdbAutoPlayer/AdbAutoPlayer
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.os }}
-          files: "python/coverage.xml"
+          files: "coverage.xml"
           disable_search: 'true'
 
       - name: Check if tests failed
