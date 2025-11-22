@@ -188,22 +188,31 @@ async def start_task(
     body: StartTaskBody,
 ) -> None:
     global task_processes, task_listeners, task_labels
-    if (
-        task_processes.get(body.profile_index, None)
-        and task_processes[body.profile_index].is_alive()
-    ):
+
+    if not manager:
+        logging.error("No manager!")
+        return
+
+    if not _base_app_config_dir:
+        logging.error("Cannot resolve App Config Dir")
+        return
+
+    task_process = task_processes.get(body.profile_index, None)
+
+    if task_process and task_process.is_alive():
         logging.warning("Task is already running!")
         return
 
     log_queue = Queue()
-    task_listeners[body.profile_index] = QueueListener(
+    listener = QueueListener(
         log_queue, TauriQueueHandler(app_handle)
     )
-    task_listeners[body.profile_index].start()
+    task_listeners[body.profile_index] = listener
+    listener.start()
 
     summary_dict = manager.dict()
 
-    task_processes[body.profile_index] = Process(
+    task_process = Process(
         target=run_task,
         args=(
             " ".join(body.args),
@@ -214,13 +223,11 @@ async def start_task(
         ),
     )
 
+    task_processes[body.profile_index] = task_process
     task_labels[body.profile_index] = body.label
-    task_processes[body.profile_index].start()
+    task_process.start()
 
-    while (
-        task_processes.get(body.profile_index, None)
-        and task_processes[body.profile_index].is_alive()
-    ):
+    while task_process and task_process.is_alive():
         await asyncio.sleep(0.5)
 
     Emitter.emit(
@@ -234,8 +241,10 @@ async def start_task(
     task_processes[body.profile_index] = None
     task_labels[body.profile_index] = None
 
-    task_listeners[body.profile_index].stop()
-    task_listeners[body.profile_index] = None
+    listener = task_listeners.get(body.profile_index, None)
+    if listener:
+        listener.stop()
+        task_listeners[body.profile_index] = None
 
 
 @tauri_profile_aware_command
@@ -245,12 +254,11 @@ async def stop_task(
 ) -> None:
     global task_processes, task_listeners
 
-    if (
-        task_processes.get(body.profile_index, None)
-        and task_processes[body.profile_index].is_alive()
-    ):
-        task_processes[body.profile_index].terminate()
-        task_processes[body.profile_index].join()
+    task_process = task_processes.get(body.profile_index, None)
+
+    if task_process and task_process.is_alive():
+        task_process.terminate()
+        task_process.join()
         logging.info("Task stopped!")
 
 
@@ -303,6 +311,7 @@ async def get_game_settings_form(
     if (
         not metadata
         or not metadata.settings_file
+        or not metadata.gui_metadata
         or not metadata.gui_metadata.settings_class
     ):
         raise Exception("gg you managed to run into a race condition")

@@ -152,7 +152,7 @@ class TestIntegrationWithRealDecoding(unittest.TestCase):
         output_buffer = io.BytesIO()
         container: OutputContainer = av.open(output_buffer, "w", format="h264")
 
-        stream: VideoStream = cast(VideoStream, container.add_stream("h264", rate=5))
+        stream: VideoStream = container.add_stream("h264", rate=5)
         stream.width = width
         stream.height = height
         stream.pix_fmt = "yuv420p"

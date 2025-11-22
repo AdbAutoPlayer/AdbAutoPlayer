@@ -5,7 +5,12 @@ requires-python = ">=3.14"
 dependencies = []
 
 [dependency-groups]
-dev = ["adb-auto-player"]
+dev = [
+    "adb-auto-player",
+    "ty>=0.0.1a22",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+]
 
 [tool.uv]
 required-version = ">=0.7.0"

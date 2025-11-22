@@ -18,6 +18,8 @@ class TestServer(unittest.TestCase):
         start_time = time.time()
 
         while True:
+            if not proc.stdout:
+                break
             # Stop after timeout
             if time.time() - start_time > timeout:
                 proc.terminate()
