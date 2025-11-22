@@ -6,6 +6,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+from adb_auto_player.file_loader import SettingsLoader
 from adb_auto_player.image_manipulation import IO
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.ocr import PSM, TesseractBackend, TesseractConfig
@@ -14,7 +15,15 @@ from adb_auto_player.ocr import PSM, TesseractBackend, TesseractConfig
 class TestTesseractBackendAFKJPopup(unittest.TestCase):
     """Test cases for OCR backend implementations."""
 
-    tesseract_backend = TesseractBackend()
+    def setUp(self):
+        """Set up test fixtures."""
+        src_python_dir = Path(__file__)
+        for parent in src_python_dir.parents:
+            if parent.name == "src-python":
+                src_python_dir = parent
+                break
+
+        SettingsLoader.set_resource_dir(src_python_dir / "adb_auto_player")
 
     @staticmethod
     def _get_bgr_image(filename: str) -> np.ndarray:

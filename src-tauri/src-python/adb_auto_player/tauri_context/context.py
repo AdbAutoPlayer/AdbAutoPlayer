@@ -1,6 +1,8 @@
 import contextvars
+from typing import TYPE_CHECKING
 
-from pytauri import AppHandle
+if TYPE_CHECKING:
+    from pytauri import AppHandle
 
 _profile_index: contextvars.ContextVar[int | None] = contextvars.ContextVar(
     "profile_index", default=None
