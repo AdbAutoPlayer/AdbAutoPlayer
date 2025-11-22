@@ -13,7 +13,7 @@ inputs:
     default: '0.7.11'
   python-version:
     description: 'Python version to install'
-    default: '3.13'
+    default: '3.14'
 runs:
   using: composite
   steps:
@@ -37,4 +37,5 @@ runs:
       if: inputs.tool == 'all' || inputs.tool == 'uv-python'
       run: |
         uv python install ${{ inputs.python-version }}
+        uv sync
       shell: bash
