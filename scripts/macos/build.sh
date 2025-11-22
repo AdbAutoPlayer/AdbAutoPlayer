@@ -8,7 +8,8 @@ PROJECT_NAME="adb-auto-player"
 PYLIB_DIR="$(realpath src-tauri/pyembed/python/lib)"
 
 export PYTAURI_STANDALONE="1"
-export PYO3_PYTHON="$(realpath src-tauri/pyembed/python/bin/python3)"
+PYO3_PYTHON="$(realpath src-tauri/pyembed/python/bin/python3)"
+export PYO3_PYTHON
 export RUSTFLAGS=" \
     -C link-arg=-Wl,-rpath,@executable_path/../Resources/lib \
     -L $PYLIB_DIR"
