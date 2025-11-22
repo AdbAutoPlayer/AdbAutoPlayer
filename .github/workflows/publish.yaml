@@ -63,7 +63,6 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          # Optional: when there is a `packageManager` field in the `package.json`
           version: "latest"
       - name: Install Node.js
         uses: actions/setup-node@v4
