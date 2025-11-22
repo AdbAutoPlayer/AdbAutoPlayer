@@ -35,7 +35,8 @@ def find_project_root(marker: str = "AdbAutoPlayer") -> Path:
         current = current.parent
 
     raise RuntimeError(
-        "Could not find 'AdbAutoPlayer' directory in the current path or any of its parents."
+        "Could not find 'AdbAutoPlayer' directory in the current path "
+        "or any of its parents."
     )
 
 

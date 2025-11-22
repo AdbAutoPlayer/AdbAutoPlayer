@@ -13,6 +13,7 @@ def _load_modules() -> None:
 
 @lru_cache(maxsize=1)
 def get_game_tasks() -> dict[str, list[Command]]:
+    """Returns all Tasks for all Games."""
     cmds: dict[str, list[Command]] = {}
     for module, registered_commands in COMMAND_REGISTRY.items():
         if module in GAME_REGISTRY:

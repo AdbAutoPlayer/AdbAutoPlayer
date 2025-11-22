@@ -10,36 +10,41 @@ from adb_auto_player.models.pydantic import (
 )
 from adb_auto_player.tauri_context import profile_aware_cache
 
-_profile_app_config_dir: Path | None = None
-_profile_resource_dir: Path | None = None
-
 
 class SettingsLoader:
     """Utility class for resolving and caching important settings paths."""
 
+    _profile_app_config_dir: Path | None = None
+    _profile_resource_dir: Path | None = None
+
     @staticmethod
     def get_app_config_dir() -> Path:
-        global _profile_app_config_dir
-        if _profile_app_config_dir is None:
+        """Get App Config Dir."""
+        if SettingsLoader._profile_app_config_dir is None:
             raise RuntimeError("App Config Dir undefined")
-        return _profile_app_config_dir
+        return SettingsLoader._profile_app_config_dir
 
     @staticmethod
     def set_app_config_dir(value: Path) -> None:
-        global _profile_app_config_dir
-        _profile_app_config_dir = value
+        """Set App Config Dir."""
+        SettingsLoader._profile_app_config_dir = value
 
     @staticmethod
     def get_resource_dir() -> Path:
-        global _profile_resource_dir
-        if _profile_resource_dir is None:
+        """Get resource dir."""
+        if SettingsLoader._profile_resource_dir is None:
             raise RuntimeError("Resource Dir undefined")
-        return _profile_resource_dir
+        return SettingsLoader._profile_resource_dir
 
     @staticmethod
     def set_resource_dir(value: Path) -> None:
-        global _profile_resource_dir
-        _profile_resource_dir = value
+        """Set resource dir.
+
+        Expects contents to have the structure as the adb_auto_player project dir.
+        ./games/afk_journey/templates/...
+        ./binaries/...
+        """
+        SettingsLoader._profile_resource_dir = value
 
     @staticmethod
     def games_dir() -> Path:

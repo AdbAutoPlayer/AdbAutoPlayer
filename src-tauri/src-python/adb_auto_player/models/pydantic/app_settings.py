@@ -15,6 +15,8 @@ NonNegativeInt = Annotated[int, Field(ge=0)]
 
 
 class Theme(str, Enum):
+    """Theme Enum."""
+
     catppuccin = "catppuccin"
     cerberus = "cerberus"
     crimson = "crimson"
@@ -39,6 +41,8 @@ class Theme(str, Enum):
 
 
 class Locale(str, Enum):
+    """Locale Enum."""
+
     en = "en"
     jp = "jp"
     vn = "vn"

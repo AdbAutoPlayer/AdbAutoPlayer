@@ -4,7 +4,6 @@ import logging
 import pprint
 import time
 
-from adb_auto_player.decorators import register_command
 from adb_auto_player.device.adb import AdbClientHelper, AdbController
 from adb_auto_player.file_loader import SettingsLoader
 from adb_auto_player.models.geometry import PointOutsideDisplay
@@ -12,11 +11,8 @@ from adb_auto_player.util import RuntimeInfo
 from adbutils import AdbClient
 
 
-@register_command(
-    gui=None,  # This is hard coded in the GUI so we do not need it.
-    name="Debug",
-)
 def log_debug_info() -> None:
+    """Log Debug Info."""
     logging.getLogger().setLevel(logging.DEBUG)
     logging.info("--- Debug Info Start ---")
     _log_hardware_info()

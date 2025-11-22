@@ -9,6 +9,7 @@ from .context import TauriContext
 
 def profile_aware_cache(maxsize: int | None = None):
     """Per-profile cache decorator.
+
     Each profile gets its own cache.
     profile_index=None is used for CLI mode.
     """
@@ -44,6 +45,7 @@ def profile_aware_cache(maxsize: int | None = None):
 
         def cache_clear(profile_index: int | None = None):
             """Clear cache for a specific profile.
+
             profile_index=None  → clear all profiles
             profile_index=int   → clear only that profile
             """
@@ -55,7 +57,7 @@ def profile_aware_cache(maxsize: int | None = None):
                 if profile_index in caches:
                     caches[profile_index].clear()
 
-        wrapper.cache_clear = cache_clear # type: ignore[unresolved-attribute]
+        wrapper.cache_clear = cache_clear  # type: ignore[unresolved-attribute]
 
         return wrapper
 
@@ -67,5 +69,5 @@ def _make_key(args, kwargs):
     if kwargs:
         # Using a stable marker to separate positional and keyword args
         items = tuple(sorted(kwargs.items()))
-        return args + (object(),) + items
+        return args + (object(),) + items  # noqa: RUF005
     return args
