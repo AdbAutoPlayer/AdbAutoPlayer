@@ -7,6 +7,9 @@ dependencies = []
 [dependency-groups]
 dev = ["adb-auto-player"]
 
+[tool.uv]
+required-version = ">=0.7.0"
+
 [tool.uv.workspace]
 members = ["src-tauri"]
 
