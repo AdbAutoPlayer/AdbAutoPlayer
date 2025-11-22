@@ -29,7 +29,7 @@ runs:
         cache: 'pnpm'
     - name: Install uv
       if: inputs.tool == 'all' || inputs.tool == 'uv-python'
-      uses: astral-sh/setup-uv@v6
+      uses: astral-sh/setup-uv@v7
       with:
         version: ${{ inputs.uv-version }}
         enable-cache: true
