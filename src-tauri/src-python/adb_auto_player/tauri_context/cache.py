@@ -55,8 +55,7 @@ def profile_aware_cache(maxsize: int | None = None):
                 if profile_index in caches:
                     caches[profile_index].clear()
 
-        wrapper.cache_clear = cache_clear
-        wrapper._profile_caches = caches
+        wrapper.cache_clear = cache_clear # type: ignore[unresolved-attribute]
 
         return wrapper
 
