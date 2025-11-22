@@ -84,7 +84,7 @@
         EventNames.LOG_MESSAGE,
         (event) => {
           const logMessage = event.payload;
-
+          console.log(logMessage);
           const logLevel: LogLevel = $appSettings?.logging?.level ?? "INFO";
 
           if ($debugLogLevelOverwrite || logLevelOrder[logMessage.level] >= logLevelOrder[logLevel]) {
