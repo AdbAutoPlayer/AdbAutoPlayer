@@ -43,10 +43,10 @@
 
   function getDeviceID(profile: number): string {
     if (profileProps.states[profile] && profileProps.states[profile].deviceId) {
-      return '- ' + profileProps.states[profile].deviceId;
+      return ` (${profileProps.states[profile].deviceId})`;
     }
 
-    return "- Offline";
+    return " (Offline)";
   }
 
   function getStatus(profile: number): string {
@@ -66,7 +66,7 @@
 
     const activeTask = profileProps.states[profile].activeTask;
 
-    return `${gameTitle}: ${activeTask}`;
+    return `${gameTitle} — ${activeTask}`;
   }
 
   function getStatusColor(profile: number): string {
@@ -115,7 +115,7 @@
             >
               <span class={`w-3 h-3 rounded-full ${getStatusColor(i)}`}></span>
 
-              <span class="text-left">
+              <span class="text-left whitespace-normal">
                 <span class="font-semibold">{profile} {getDeviceID(i)}</span>
                 <br />
                 <span class="text-sm opacity-80">{getStatus(i)}</span>
