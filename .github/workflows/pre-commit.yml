@@ -23,9 +23,6 @@ jobs:
       - name: Setup Node, uv, Python
         uses: ./.github/actions/setup-tools
 
-      - name: pnpm install
-        run: |
-          cd frontend
-          pnpm install
+      - run: pnpm install
 
       - run: uvx pre-commit run --all-files
