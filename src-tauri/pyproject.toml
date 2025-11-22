@@ -7,7 +7,7 @@ authors = [
     { name = "yulesxoxo <https://github.com/yulesxoxo/yulesxoxo>" },
     { name = "Vale <https://github.com/Valextr/Valextr>" },
 ]
-requires-python = ">=3.14"
+requires-python = ">=3.13.9"
 dependencies = [
     "pytauri == 0.8.*",
     "pydantic == 2.*",
