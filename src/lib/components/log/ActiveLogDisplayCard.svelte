@@ -37,9 +37,9 @@
     return profileEntries[index] ?? [];
   }
 
-  function insertEntry(index: number | undefined, entry: TextDisplayCardItem) {
+  function insertEntry(index: number | undefined | null, entry: TextDisplayCardItem) {
     const insertCount =
-      index === undefined
+      index === undefined || index === null
         ? $appSettings?.profiles?.profiles?.length ?? 1
         : 1;
 
@@ -84,7 +84,6 @@
         EventNames.LOG_MESSAGE,
         (event) => {
           const logMessage = event.payload;
-          console.log(logMessage);
           const logLevel: LogLevel = $appSettings?.logging?.level ?? "INFO";
 
           if ($debugLogLevelOverwrite || logLevelOrder[logMessage.level] >= logLevelOrder[logLevel]) {

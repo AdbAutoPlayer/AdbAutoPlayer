@@ -47,7 +47,10 @@ pub fn save_settings(
     let message = format!("Settings saved: {path_display}");
 
     app_handle
-        .emit("log-message", LogMessage::new(LogLevel::INFO, message))
+        .emit(
+            "log-message",
+            LogMessage::new(LogLevel::INFO, message).with_profile_index(profile_index),
+        )
         .expect("Failed to emit log-message");
 
     Ok(())

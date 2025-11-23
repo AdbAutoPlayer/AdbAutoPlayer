@@ -1,7 +1,7 @@
 use crate::window;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, TrayIconBuilder};
-use tauri::{App, AppHandle};
+use tauri::{App, AppHandle, Emitter};
 
 pub fn update_tray_menu(
     app: &AppHandle,
@@ -43,6 +43,8 @@ pub fn setup_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
                 let _ = window::internal_show_window(app);
             }
             "exit" => {
+                app.emit("kill-python", ()).unwrap();
+                app.cleanup_before_exit();
                 app.exit(0);
             }
             _ => {}

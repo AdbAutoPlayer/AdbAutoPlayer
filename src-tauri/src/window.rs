@@ -1,6 +1,6 @@
 use crate::{update_tray_menu, AppSettings};
 use std::sync::Mutex;
-use tauri::{App, AppHandle, Manager, WindowEvent};
+use tauri::{App, AppHandle, Emitter, Manager, WindowEvent};
 
 #[tauri::command]
 pub fn show_window(app: AppHandle) -> Result<(), String> {
@@ -50,7 +50,10 @@ pub fn setup_window_close_handler(app: &mut App) -> Result<(), Box<dyn std::erro
                 if let Err(e) = hide_window(&app_handle) {
                     eprintln!("Failed to hide window: {e}");
                 }
+                return;
             }
+
+            let _ = &app_handle.emit("kill-python", ()).unwrap();
         }
     });
 

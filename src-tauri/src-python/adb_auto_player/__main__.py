@@ -36,6 +36,8 @@ from pytauri import (
     AppHandle,
     Commands,
     Emitter,
+    Event,
+    Listener,
     Manager,
     builder_factory,
     context_factory,
@@ -248,16 +250,21 @@ async def start_task(
         task_listeners[body.profile_index] = None
 
 
+def _stop_process(process: Process | None) -> bool:
+    if process and process.is_alive():
+        process.terminate()
+        process.join()
+        return True
+    return False
+
+
 @tauri_profile_aware_command
 async def stop_task(
     app_handle: AppHandle,
     body: ProfileContext,
 ) -> None:
     task_process = task_processes.get(body.profile_index, None)
-
-    if task_process and task_process.is_alive():
-        task_process.terminate()
-        task_process.join()
+    if _stop_process(task_process):
         logging.info("Task stopped!")
 
 
@@ -390,6 +397,14 @@ def main() -> int:
             context=context_factory(),
             invoke_handler=commands.generate_handler(portal),
         )
+
+        def handler(event: Event):
+            for process in task_processes.values():
+                _stop_process(process)
+            sys.exit(0)
+
+        Listener.listen(app, "kill-python", handler)
+
         exit_code = app.run_return()
         return exit_code
 
