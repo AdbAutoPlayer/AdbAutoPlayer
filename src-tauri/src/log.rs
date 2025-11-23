@@ -7,6 +7,8 @@ pub struct LogMessage {
     pub level: LogLevel,
     pub message: String,
     pub timestamp: String,
+    #[serde(default)]
+    pub profile_index: Option<u8>,
 }
 
 impl LogMessage {
@@ -17,6 +19,12 @@ impl LogMessage {
             level,
             message: message.into(),
             timestamp: now.to_rfc3339_opts(SecondsFormat::Millis, true),
+            profile_index: None,
         }
+    }
+
+    pub fn with_profile_index(mut self, index: u8) -> Self {
+        self.profile_index = Some(index);
+        self
     }
 }
