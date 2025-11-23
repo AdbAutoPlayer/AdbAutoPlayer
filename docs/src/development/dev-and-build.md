@@ -1,5 +1,23 @@
 # Dev & Build
 
+## Windows
+### Dev
+```powershell
+pnpm install  
+pnpm pytauri dev  
+```
+
+### Build 
+```powershell
+uv venv --python-preference only-system
+.venv\Scripts\Activate.ps1
+scripts\windows\download-py.ps1
+scripts\windows\build.ps1
+```
+
+___
+TODO below is old remove
+
 ## Build scripts
 ### Windows .exe
 ```powershell

@@ -9,7 +9,6 @@ dependencies = [
  "chrono",
  "pyo3",
  "pytauri",
- "schemars 0.8.22",
  "serde",
  "serde_json",
  "tauri",
