@@ -233,14 +233,6 @@ async def start_task(
     while task_process and task_process.is_alive():
         await asyncio.sleep(0.5)
 
-    Emitter.emit(
-        app_handle,
-        "write-summary-to-log",
-        SummaryEvent(
-            profile_index=body.profile_index, msg=summary_dict.get("msg", None)
-        ),
-    )
-
     task_processes[body.profile_index] = None
     task_labels[body.profile_index] = None
 
@@ -248,6 +240,14 @@ async def start_task(
     if listener:
         listener.stop()
         task_listeners[body.profile_index] = None
+
+    Emitter.emit(
+        app_handle,
+        "write-summary-to-log",
+        SummaryEvent(
+            profile_index=body.profile_index, msg=summary_dict.get("msg", None)
+        ),
+    )
 
 
 def _stop_process(process: Process | None) -> bool:
@@ -265,7 +265,8 @@ async def stop_task(
 ) -> None:
     task_process = task_processes.get(body.profile_index, None)
     if _stop_process(task_process):
-        logging.info("Task stopped!")
+        logging.info("Stopping Task")
+        await asyncio.sleep(0.5)  # wait a bit for start start_task tear down
 
 
 class CacheClear(ProfileContext):
