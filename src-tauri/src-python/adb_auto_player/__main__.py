@@ -354,11 +354,16 @@ async def get_profile_state(
     app_handle: AppHandle,
     body: ProfileContext,
 ) -> ProfileState:
-    return ProfileState(
-        game_menu=get_game_gui_options(),
-        device_id=AdbController().d.serial,
-        active_task=task_labels.get(body.profile_index, None),
-    )
+    try:
+        return ProfileState(
+            game_menu=get_game_gui_options(),
+            device_id=AdbController().d.serial,
+            active_task=task_labels.get(body.profile_index, None),
+        )
+    except Exception as e:
+        _cache_clear(CacheGroup.ADB, body.profile_index)
+        logging.error(e)
+        raise e
 
 
 @tauri_profile_aware_command
