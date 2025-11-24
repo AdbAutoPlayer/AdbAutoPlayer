@@ -2,7 +2,7 @@
   import { onDestroy, onMount } from "svelte";
   import SchemaForm from "$lib/components/form/SchemaForm.svelte";
   import Menu from "$lib/components/menu/Menu.svelte";
-  import { appSettings, debugLogLevelOverwrite, pollState } from "$lib/stores";
+  import { appSettings, debugLogLevelOverwrite, profileStore } from "$lib/stores";
   import { showErrorToast } from "$lib/toast/toast-error";
   import { t } from "$lib/i18n/i18n";
   import type {
@@ -11,7 +11,7 @@
   } from "$pytauri/_apiTypes";
 
   import { EventNames } from "$lib/log/eventNames";
-  import type { MenuButton, ProfileProps, PydanticSettingsFormResponse, SettingsProps } from "$lib/menu/model";
+  import type { MenuButton, PydanticSettingsFormResponse, SettingsProps } from "$lib/menu/model";
   import type { GameGUIOptions } from "$pytauri/_apiTypes";
   import {
     cacheClear,
@@ -34,12 +34,6 @@
     formSchema: {},
     fileName: "",
   });
-
-  let profileProps: ProfileProps = $state({
-    activeProfile: 0,
-    states: []
-  })
-
   // Used for the current display.
   let defaultButtons: MenuButton[] = $derived.by(() => {
     return [
@@ -56,7 +50,7 @@
       },
       {
         callback: () => callDebug(),
-        isProcessRunning: "Debug" === (profileProps.states[profileProps.activeProfile]?.activeTask ?? null),
+        isProcessRunning: "Debug" === ($profileStore.states[$profileStore.activeProfile]?.activeTask ?? null),
         option: {
           label: "Debug",
           args: [],
@@ -66,15 +60,15 @@
     ];
   });
   let activeGameMenuButtons: MenuButton[] = $derived.by(() => {
-    const profile = profileProps.activeProfile;
+    const profile = $profileStore.activeProfile;
     const menuButtons: MenuButton[] = [...defaultButtons];
 
-    const activeGame = profileProps.states[profile]?.activeGame ?? null;
+    const activeGame = $profileStore.states[profile]?.activeGame ?? null;
     if (!activeGame) {
       return menuButtons;
     }
 
-    const activeTask = profileProps.states[profile]?.activeTask ?? null;
+    const activeTask = $profileStore.states[profile]?.activeTask ?? null;
 
     if (activeGame?.menu_options) {
       menuButtons.push(
@@ -107,9 +101,9 @@
         isProcessRunning: false,
         alwaysEnabled: true,
         option: {
-          label: "Stop Action",
+          label: "Stop Task",
           args: [],
-          tooltip: `Stops the currently running process`,
+          tooltip: `Stops the currently running Task`,
         },
       });
     }
@@ -117,10 +111,10 @@
     return menuButtons;
   });
   let categories: string[] = $derived.by(() => {
-    const profile = profileProps.activeProfile;
+    const profile = $profileStore.activeProfile;
     let tempCategories = ["Settings, Phone & Debug"];
 
-    const activeGame = profileProps.states[profile]?.activeGame ?? null;
+    const activeGame = $profileStore.states[profile]?.activeGame ?? null;
     if (!activeGame) {
       return tempCategories;
     }
@@ -141,42 +135,53 @@
   });
 
   async function callStopTask(profile: number) {
-    clearTimeout(updateStateTimeout);
+    stopStateUpdates();
 
-    await stopTask({profile_index: profile})
-    if (profileProps.states[profile]) {
-      profileProps.states[profile].activeTask = null;
+    try {
+      await stopTask({profile_index: profile})
+      if ($profileStore.states[profile]) {
+        $profileStore.states[profile].activeTask = null;
+      }
+    } catch (error) {
+      void showErrorToast(error, {
+        logToLogDisplay: false,
+        profile: profile,
+      })
     }
 
-    updateStateTimeout = setTimeout(updateStateHandler, 1000);
+    await triggerStateUpdate();
   }
   async function callDebug() {
-    const profile = profileProps.activeProfile;
-    const task = profileProps.states[profile]?.activeTask ?? null;
+    const profile = $profileStore.activeProfile;
+    const task = $profileStore.states[profile]?.activeTask ?? null;
     if (task !== null) {
       return;
     }
 
-    $pollState = false;
+    stopStateUpdates();
 
     try {
-      if (profileProps.states[profile]) {
-        profileProps.states[profile].activeTask = "Debug";
+      if ($profileStore.states[profile]) {
+        $profileStore.states[profile].activeTask = "Debug";
       }
       $debugLogLevelOverwrite = true;
       await debug({profile_index: profile});
     } catch (error) {
-      await showErrorToast(error, { title: `Failed to Start: Debug` });
+      void showErrorToast(error, { title: `Failed to Start: Debug`, profile: profile, });
     }
 
     $debugLogLevelOverwrite = false;
-    enablePolling();
+    await triggerStateUpdate();
   }
   async function callStartTask(menuOption: MenuOption) {
-    const profile = profileProps.activeProfile;
-    const task = profileProps.states[profile]?.activeTask ?? null;
+    const profile = $profileStore.activeProfile;
+    const task = $profileStore.states[profile]?.activeTask ?? null;
     if (task !== null) {
       return;
+    }
+
+    if ($profileStore.states[profile]) {
+      $profileStore.states[profile].activeTask = menuOption.label;
     }
 
     try {
@@ -185,15 +190,16 @@
         args: menuOption.args,
         label: menuOption.label
       });
-      void updateState();
+      await triggerStateUpdate();
       await taskPromise;
     } catch (error) {
       await showErrorToast(error, { title: `Failed to Start: ${menuOption.label}` });
     }
   }
+
   async function onFormSubmit() {
-    const profile = profileProps.activeProfile;
-    clearTimeout(updateStateTimeout);
+    stopStateUpdates(); // should not be needed but leaving it as is.
+    const profile = $profileStore.activeProfile;
     // console.log($state.snapshot(settingsProps));
     try {
       if (settingsProps.fileName === "App.toml") {
@@ -202,11 +208,11 @@
         })
         await applySettings(newSettings)
         const profileCount = $appSettings?.profiles?.profiles?.length ?? 1;
-        if (profileCount >= profileProps.activeProfile) {
-          profileProps.activeProfile = profileCount - 1;
+        if (profileCount >= $profileStore.activeProfile) {
+          $profileStore.activeProfile = profileCount - 1;
         }
 
-        profileProps.states.forEach((value, index) => {
+        $profileStore.states.forEach((value, index) => {
           if (index >= profileCount) {
             callStopTask(index);
           }
@@ -230,27 +236,26 @@
         }
       }
     } catch (e) {
-      await logError(String(e))
+      void logError(String(e))
     }
-    updateStateTimeout = setTimeout(updateStateHandler, 1000);
     settingsProps = {
       showSettingsForm: false,
       formData: {},
       formSchema: {},
       fileName: "",
     }
-    enablePolling();
+    await triggerStateUpdate();
     return;
   }
   async function openGameSettingsForm(game: GameGUIOptions | null) {
     if (game === null) {
-      await showErrorToast("Failed to Open Game Settings: No game found");
+      void showErrorToast("Failed to Open Game Settings: No game found");
       return;
     }
 
-    const profile = profileProps.activeProfile;
+    stopStateUpdates();
+    const profile = $profileStore.activeProfile;
 
-    $pollState = false;
     try {
       const data = await getGameSettingsForm({
         profile_index: profile,
@@ -267,12 +272,12 @@
       await showErrorToast(error, {
         title: "Failed to create Game Settings Form",
       });
-      enablePolling()
+      await triggerStateUpdate();
     }
   }
   async function openAdbSettingsForm() {
-    const profile = profileProps.activeProfile;
-    $pollState = false;
+    stopStateUpdates();
+    const profile = $profileStore.activeProfile;
     try {
       const data = await getAdbSettingsForm({profile_index: profile})  as PydanticSettingsFormResponse;
       // console.log(data);
@@ -287,46 +292,56 @@
       await showErrorToast(error, {
         title: "Failed to create ADB Settings Form",
       });
-      enablePolling();
+      await triggerStateUpdate();
     }
   }
 
-  // State logic probably needs to stay here but needs to be refactored on per
-  // profile basis, current polling logic does not work.
   let updateStateTimeout: number | undefined;
-  async function updateStateHandler() {
-    await updateState();
-    updateStateTimeout = setTimeout(updateStateHandler, 3000);
+  function stopStateUpdates() {
+    clearTimeout(updateStateTimeout);
   }
-
-  async function updateState() {
-    const profile = profileProps.activeProfile;
-    const profileCount = $appSettings?.profiles?.profiles?.length ?? 1;
-
-    if (!$pollState) {
-      return;
+  async function triggerStateUpdate() {
+    clearTimeout(updateStateTimeout);
+    await handleStateUpdate();
+  }
+  async function handleStateUpdate() {
+    try {
+      await updateState();
+    } catch (error) {
+      // Should not happen
+      console.error(error);
     }
+
+    updateStateTimeout = setTimeout(handleStateUpdate, 3000);
+  }
+  // Function is not using recursion intentionally
+  // Recursion does not play too nicely with Svelte reactivity.
+  async function updateState() {
+    const profile = $profileStore.activeProfile;
+    const profileCount = $appSettings?.profiles?.profiles?.length ?? 1;
 
     try {
       const state = await getProfileState({
         profile_index: profile,
       });
-      // console.log($state.snapshot(state));
 
-      profileProps.states[profile] = {
+      $profileStore.states[profile] = {
         activeGame: state.game_menu,
         activeTask: state.active_task,
         deviceId: state.device_id,
       }
     } catch (e) {
-      // ignore this its already logged on the backend.
+      if ($profileStore.states[profile]?.activeTask) {
+        void callStopTask(profile)
+      }
+      $profileStore.states[profile] = {
+        activeGame: null,
+        activeTask: null,
+        deviceId: null,
+      }
     }
 
-
     for (let i = 0; i < profileCount; i++) {
-      if (!$pollState) {
-        return;
-      }
       if (i === profile) continue;
 
       try {
@@ -334,44 +349,42 @@
           profile_index: i,
         });
 
-        profileProps.states[i] = {
+        $profileStore.states[i] = {
           activeGame: otherState.game_menu,
           activeTask:  otherState.active_task,
           deviceId: otherState.device_id,
-      }
+        }
       } catch (e) {
-        continue;
+        if ($profileStore.states[i]?.activeTask) {
+          void callStopTask(i)
+        }
+        $profileStore.states[i] = {
+          activeGame: null,
+           activeTask: null,
+          deviceId: null,
+        }
       }
-    }
-  }
-
-  function enablePolling() {
-    $pollState = true;
-    if (profileProps.states[profileProps.activeProfile]) {
-      profileProps.states[profileProps.activeProfile].activeTask = null;
     }
   }
 
   onMount(() => {
-    enablePolling();
-    updateStateHandler();
+    void triggerStateUpdate();
   });
 
   onDestroy(() => {
-    clearTimeout(updateStateTimeout);
+    stopStateUpdates();
   });
 </script>
 
-{#if !settingsProps.showSettingsForm && $pollState }
+{#if !settingsProps.showSettingsForm }
   <ProfileSelector
-    bind:profileProps={profileProps}
     bind:settingsProps={settingsProps}
   />
 {/if}
 
 <main class="w-full pt-2 pr-4 pb-4 pl-4">
   <h1 class="pb-2 text-center h1 text-3xl select-none">
-    {$t(profileProps.states[profileProps.activeProfile]?.activeGame?.game_title || "Start any supported Game!")}
+    {$t($profileStore.states[$profileStore.activeProfile]?.activeGame?.game_title || "Start any supported Game!")}
   </h1>
   <div
     class="flex max-h-[70vh] min-h-[20vh] flex-col overflow-hidden card bg-surface-100-900/50 p-4 text-center select-none"
@@ -384,7 +397,7 @@
       {:else}
         <Menu
           buttons={activeGameMenuButtons}
-          disableActions={Boolean(profileProps.states[profileProps.activeProfile]?.activeTask)}
+          disableActions={Boolean($profileStore.states[$profileStore.activeProfile]?.activeTask)}
           {categories}
         />
       {/if}
@@ -393,5 +406,5 @@
 </main>
 
 <aside class="flex min-h-6 flex-grow flex-col pr-4 pb-4 pl-4">
-  <ActiveLogDisplayCard profileIndex={profileProps.activeProfile} />
+  <ActiveLogDisplayCard profileIndex={$profileStore.activeProfile} />
 </aside>

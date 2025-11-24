@@ -16,6 +16,7 @@ class AdvancedSettings(BaseModel):
     adb_host: str = Field("127.0.0.1", title="ADB Host")
     adb_port: PortInt = Field(5037, title="ADB Port")
     hardware_decoding: bool = Field(False, title="Enable Hardware Decoding")
+    auto_resolve_device: bool = Field(True, title="Enable Automatic Device Resolution")
 
 
 class DeviceSettings(BaseModel):

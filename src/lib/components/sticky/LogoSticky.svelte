@@ -1,10 +1,13 @@
 <script lang="ts">
-  import { pollState } from "$lib/stores";
+  import { profileStore } from "$lib/stores";
+
+  const awake = "/images/3583082.png"
+  const sleep = "/images/3583083.png"
 </script>
 
 <div class="pointer-events-none fixed right-5 bottom-0 -z-50 m-0 select-none">
   <img
-    src={$pollState ? "/images/3583082.png" : "/images/3583083.png"}
+    src={$profileStore.states[$profileStore.activeProfile].activeTask ? sleep : awake}
     alt="uwu"
     draggable="false"
     class="max-w-[200px]"

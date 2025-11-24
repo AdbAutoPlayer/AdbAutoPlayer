@@ -135,7 +135,7 @@ def _get_devices(client: AdbClient) -> list[AdbDeviceInfo]:
 def _resolve_device(
     client: AdbClient,
 ) -> AdbDevice:
-    """Attempts to connect to a specific ADB device.
+    """Attempts to connect to a specific ADB device or auto resolve.
 
     Args:
         client (AdbClient): ADB client.
@@ -149,6 +149,13 @@ def _resolve_device(
     device_id = SettingsLoader.adb_settings().device.id
     device: AdbDevice | None = _connect_to_device(client, device_id)
     devices: list[AdbDeviceInfo] = _get_devices(client)
+
+    if not device and not SettingsLoader.adb_settings().advanced.auto_resolve_device:
+        available = ", ".join(d.serial for d in devices) if devices else "None"
+
+        raise GenericAdbUnrecoverableError(
+            f"Device '{device_id}' not found.\nAvailable devices: {available}. "
+        )
 
     if device is None and len(devices) == 1:
         only_device: str = devices[0].serial
