@@ -27,6 +27,7 @@ class SimpleGathering(BlueProtocolStarResonance):
     )
     def entry(self) -> None:
         self.start_stream()
+        logging.info("Simple Gathering started!")
         self.close_popups()
         self.show_ui()
         while True:

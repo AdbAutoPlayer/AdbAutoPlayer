@@ -6,6 +6,7 @@ import { reportError } from "$lib/utils/error-reporting";
 type ErrorToastOptions = {
   title?: string;
   logToLogDisplay?: boolean;
+  profile?: number;
 };
 
 /**
@@ -19,12 +20,17 @@ export async function showErrorToast(
   error: unknown,
   options: ErrorToastOptions = {},
 ) {
-  const { title = "Something went wrong", logToLogDisplay = true } = options;
+  const { title = "Something went wrong", logToLogDisplay = true, profile = undefined } = options;
 
   const message = capitalizeError(error);
 
   reportError(error);
-  if (logToLogDisplay) await logError(message); // Display in LogDisplay in case the toast disappears too fast
+  if (logToLogDisplay) {
+    await logError(
+      message,
+      profile
+    ); // Display in LogDisplay in case the toast disappears too fast
+  }
   console.error(error);
 
   toaster.error({

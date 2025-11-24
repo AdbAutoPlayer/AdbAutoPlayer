@@ -25,11 +25,12 @@ export async  function logWarning(message: string) {
   });
 }
 
-export async  function logError(message: string) {
+export async  function logError(message: string, profile?: number) {
   await emitLogMessageEvent({
     level: "ERROR",
     message: message,
     timestamp: new Date().toISOString(),
+    profile_index: profile,
   });
 }
 

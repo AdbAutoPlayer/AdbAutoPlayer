@@ -4,24 +4,21 @@
   import { t } from "$lib/i18n/i18n";
   import { invoke } from "@tauri-apps/api/core";
   import { showErrorToast } from "$lib/toast/toast-error";
-  import { appSettings, pollState } from "$lib/stores";
-  import type { ProfileProps, RustSettingsFormResponse, SettingsProps } from "$lib/menu/model";
+  import { appSettings, profileStore } from "$lib/stores";
+  import type { RustSettingsFormResponse, SettingsProps } from "$lib/menu/model";
   import Menu from "$lib/components/icons/lucide/Menu.svelte";
 
   let {
-    profileProps = $bindable(),
     settingsProps = $bindable(),
   }: {
-    profileProps: ProfileProps;
     settingsProps: SettingsProps;
   } = $props();
 
   async function openAppSettingsForm() {
-    $pollState = false;
     try {
       const data: RustSettingsFormResponse = await invoke("get_app_settings_form");
-
       // console.log(data);
+
       settingsProps = {
         showSettingsForm: true,
         formData: data.settings,
@@ -30,7 +27,6 @@
       }
       // console.log($state.snapshot(settingsProps));
     } catch (error) {
-      $pollState = true;
       await showErrorToast(error, {
         title: "Failed to create App Settings Form",
       });
@@ -42,40 +38,40 @@
   }
 
   function getDeviceID(profile: number): string {
-    if (profileProps.states[profile] && profileProps.states[profile].deviceId) {
-      return ` (${profileProps.states[profile].deviceId})`;
+    if ($profileStore.states[profile] && $profileStore.states[profile].deviceId) {
+      return ` (${$profileStore.states[profile].deviceId})`;
     }
 
     return " (Offline)";
   }
 
   function getStatus(profile: number): string {
-    if (!profileProps.states[profile] || !profileProps.states[profile].deviceId) {
+    if (!$profileStore.states[profile] || !$profileStore.states[profile].deviceId) {
       return "";
     }
 
-    if (!profileProps.states[profile].activeGame?.game_title) {
+    if (!$profileStore.states[profile].activeGame?.game_title) {
       return "Idle";
     }
 
-    const gameTitle = profileProps.states[profile].activeGame.game_title;
+    const gameTitle = $profileStore.states[profile].activeGame.game_title;
 
-    if (!profileProps.states[profile].activeTask) {
+    if (!$profileStore.states[profile].activeTask) {
       return `${gameTitle} - Idle`
     }
 
-    const activeTask = profileProps.states[profile].activeTask;
+    const activeTask = $profileStore.states[profile].activeTask;
 
     return `${gameTitle} — ${activeTask}`;
   }
 
   function getStatusColor(profile: number): string {
-    if (!profileProps.states[profile] || !profileProps.states[profile].deviceId) {
+    if (!$profileStore.states[profile] || !$profileStore.states[profile].deviceId) {
       return "bg-gray-500";
     }
     if (
-      !profileProps.states[profile].activeGame?.game_title
-      || !profileProps.states[profile].activeTask
+      !$profileStore.states[profile].activeGame?.game_title
+      || !$profileStore.states[profile].activeTask
     ) {
       return "bg-yellow-500";
     }
@@ -84,7 +80,7 @@
   }
 
   function selectProfile(index: number) {
-    profileProps.activeProfile = index;
+    $profileStore.activeProfile = index;
   }
 </script>
 
@@ -110,7 +106,7 @@
           {#each getProfiles() as profile, i}
             <button
               class="btn preset-outlined-primary-500 w-full flex items-center justify-start rounded transition-colors"
-              class:selected={i === profileProps.activeProfile}
+              class:selected={i === $profileStore.activeProfile}
               onclick={() => selectProfile(i)}
             >
               <span class={`w-3 h-3 rounded-full ${getStatusColor(i)}`}></span>
