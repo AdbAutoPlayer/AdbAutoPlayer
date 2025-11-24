@@ -185,7 +185,7 @@
         args: menuOption.args,
         label: menuOption.label
       });
-      await updateState();
+      void updateState();
       await taskPromise;
     } catch (error) {
       await showErrorToast(error, { title: `Failed to Start: ${menuOption.label}` });
@@ -295,13 +295,8 @@
   // profile basis, current polling logic does not work.
   let updateStateTimeout: number | undefined;
   async function updateStateHandler() {
-    try {
-      await updateState();
-      updateStateTimeout = setTimeout(updateStateHandler, 3000);
-    } catch (error) {
-      await showErrorToast(error, { title: "Failed to connect to Device" });
-      updateStateTimeout = setTimeout(updateStateHandler, 30000);
-    }
+    await updateState();
+    updateStateTimeout = setTimeout(updateStateHandler, 3000);
   }
 
   async function updateState() {
@@ -311,16 +306,22 @@
     if (!$pollState) {
       return;
     }
-    const state = await getProfileState({
-      profile_index: profile,
-    });
-    // console.log($state.snapshot(state));
 
-    profileProps.states[profile] = {
-      activeGame: state.game_menu,
-      activeTask: state.active_task,
-      deviceId: state.device_id,
+    try {
+      const state = await getProfileState({
+        profile_index: profile,
+      });
+      // console.log($state.snapshot(state));
+
+      profileProps.states[profile] = {
+        activeGame: state.game_menu,
+        activeTask: state.active_task,
+        deviceId: state.device_id,
+      }
+    } catch (e) {
+      // ignore this its already logged on the backend.
     }
+
 
     for (let i = 0; i < profileCount; i++) {
       if (!$pollState) {
@@ -328,14 +329,18 @@
       }
       if (i === profile) continue;
 
-      const otherState = await getProfileState({
-        profile_index: i,
-      });
+      try {
+        const otherState = await getProfileState({
+          profile_index: i,
+        });
 
-      profileProps.states[i] = {
-        activeGame: otherState.game_menu,
-        activeTask:  otherState.active_task,
-        deviceId: otherState.device_id,
+        profileProps.states[i] = {
+          activeGame: otherState.game_menu,
+          activeTask:  otherState.active_task,
+          deviceId: otherState.device_id,
+      }
+      } catch (e) {
+        continue;
       }
     }
   }
