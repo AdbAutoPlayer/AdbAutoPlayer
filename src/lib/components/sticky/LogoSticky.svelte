@@ -7,7 +7,7 @@
 
 <div class="pointer-events-none fixed right-5 bottom-0 -z-50 m-0 select-none">
   <img
-    src={$profileStore.states[$profileStore.activeProfile].activeTask ? sleep : awake}
+    src={$profileStore.states[$profileStore.activeProfile]?.activeTask ? sleep : awake}
     alt="uwu"
     draggable="false"
     class="max-w-[200px]"
