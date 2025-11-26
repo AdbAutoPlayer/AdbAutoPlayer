@@ -97,6 +97,10 @@ def _initialize_tesseract() -> None:
                 continue
 
             pytesseract.tesseract_cmd = fallback_path  # type: ignore[invalid-assignment]
+            tessdata = fallback_path.parent / "tessdata"
+            # Tesseract will not accept Windows extended Path
+            tessdata_prefix = str(tessdata.absolute()).removeprefix("\\\\?\\")
+            os.environ["TESSDATA_PREFIX"] = tessdata_prefix
             break
         try:
             pytesseract.get_tesseract_version()
