@@ -4,7 +4,8 @@ from enum import StrEnum, auto
 class HeroesEnum(StrEnum):
     """All heroes."""
 
-    def _generate_next_value_(name, start, count, last_values):  # noqa: N805
+    @staticmethod
+    def _generate_next_value_(name, start, count, last_values):
         return name.replace("_and_", " & ").replace("_", " ")
 
     Aliceth = auto()
