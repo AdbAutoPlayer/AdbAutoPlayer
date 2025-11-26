@@ -51,7 +51,7 @@ class TestExtractSourceInfo:
         try:
             raise ValueError("Test error")
         except ValueError:
-            exc_type, exc_value, exc_tb = sys.exc_info()
+            exc_info = sys.exc_info()
 
         record = logging.LogRecord(
             name="test",
@@ -60,7 +60,7 @@ class TestExtractSourceInfo:
             lineno=42,
             msg="Test error",
             args=(),
-            exc_info=(exc_type, exc_value, exc_tb),
+            exc_info=exc_info,
             func="test_func",
         )
 
@@ -83,7 +83,7 @@ class TestExtractSourceInfo:
                 ValueError,
                 ValueError("test"),
                 "not a traceback",
-            ),  # invalid traceback
+            ),  # type: ignore[invalid-argument-type]
             func="test_func",
         )
 
@@ -116,7 +116,7 @@ class TestExtractSourceInfo:
             try:
                 raise ValueError("Test error")
             except ValueError:
-                exc_type, exc_value, exc_tb = sys.exc_info()
+                exc_info = sys.exc_info()
 
             record = logging.LogRecord(
                 name="test",
@@ -125,9 +125,9 @@ class TestExtractSourceInfo:
                 lineno=42,
                 msg="Test error",
                 args=(),
-                exc_info=(exc_type, exc_value, exc_tb),
+                exc_info=exc_info,
                 func="test_func",
-            )
+            ) # type: ignore[invalid-argument-type]
 
             result = TracebackHelper.extract_source_info(record)
             assert result.source_file == "module.py"
@@ -159,7 +159,7 @@ class TestFormatDebugInfo:
         try:
             raise ValueError("Test error")
         except ValueError:
-            exc_type, exc_value, exc_tb = sys.exc_info()
+            exc_info = sys.exc_info()
 
         record = logging.LogRecord(
             name="test",
@@ -168,7 +168,7 @@ class TestFormatDebugInfo:
             lineno=42,
             msg="Test error",
             args=(),
-            exc_info=(exc_type, exc_value, exc_tb),
+            exc_info=exc_info,
             func="test_func",
         )
 
