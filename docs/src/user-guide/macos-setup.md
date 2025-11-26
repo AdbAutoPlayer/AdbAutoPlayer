@@ -26,8 +26,5 @@
 
 ## Additional Information
 
-- **Read the Important Notes**  
-  Inside the `AdbAutoPlayer_MacOS.zip`, review the [MACOS_READ_THIS_IMPORTANT.txt](https://github.com/AdbAutoPlayer/AdbAutoPlayer/tree/main/.github/scripts/MACOS_READ_THIS_IMPORTANT.txt) file for critical setup details.
-
 - **Build Locally (Optional)**  
   To build the app from source, follow the instructions in the [Dev & Build Guide](../development/dev-and-build.md).
