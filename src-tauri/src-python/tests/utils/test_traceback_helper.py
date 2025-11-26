@@ -101,7 +101,10 @@ class TestExtractSourceInfo:
             lineno=42,
             msg="Test error",
             args=(),
-            exc_info=(ValueError, ValueError("test")),  # too short
+            exc_info=(
+                ValueError,
+                ValueError("test"),
+            ),  # type: ignore[invalid-argument-type]
             func="test_func",
         )
 
@@ -127,7 +130,7 @@ class TestExtractSourceInfo:
                 args=(),
                 exc_info=exc_info,
                 func="test_func",
-            ) # type: ignore[invalid-argument-type]
+            )  # type: ignore[invalid-argument-type]
 
             result = TracebackHelper.extract_source_info(record)
             assert result.source_file == "module.py"
