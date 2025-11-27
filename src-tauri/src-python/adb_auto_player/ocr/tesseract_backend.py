@@ -92,7 +92,6 @@ def _initialize_tesseract() -> None:
         ]
 
         for fallback_path in fallback_paths:
-            logging.info(str(fallback_path.as_posix()))
             if not os.path.isfile(fallback_path):
                 continue
 
