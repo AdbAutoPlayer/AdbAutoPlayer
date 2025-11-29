@@ -314,8 +314,14 @@
 
     updateStateTimeout = setTimeout(handleStateUpdate, 3000);
   }
+
   // Function is not using recursion intentionally
   // Recursion does not play too nicely with Svelte reactivity.
+  // TODO completely refactor this into an event listener.
+  // State update events should be dispatched from Backend to make this
+  // less blocking...
+  // Implementation was fine for single instance but really kills
+  // responsiveness in multi instance
   async function updateState() {
     const profile = $profileStore.activeProfile;
     const profileCount = $appSettings?.profiles?.profiles?.length ?? 1;
