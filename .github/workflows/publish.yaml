@@ -178,4 +178,4 @@ jobs:
         with:
           name: tauri-build-${{ matrix.target }}
           path: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/
+            target/${{ matrix.target }}/release/bundle/
