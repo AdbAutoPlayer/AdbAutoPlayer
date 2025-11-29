@@ -39,3 +39,6 @@ inherits = "dev"
 
 [profile.bundle-release]
 inherits = "release"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = "2"

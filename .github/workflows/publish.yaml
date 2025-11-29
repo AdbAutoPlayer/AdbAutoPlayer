@@ -5,12 +5,10 @@
 name: "publish"
 
 on:
-  # Manual trigger
   workflow_dispatch:
-  # On push to `release` branch
-  push:
-    branches:
-      - release
+  release:
+    types:
+      - published
 
 defaults:
   run:
@@ -24,18 +22,24 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: "macos-14" # for Intel based macs.
-            target: "x86_64-apple-darwin"
-          - platform: "macos-14" # for Arm based macs (M1 and above).
+          # - platform: "macos-14" # for Intel based macs.
+          #   target: "x86_64-apple-darwin"
+          #   config: "src-tauri/tauri.bundle.json"
+          - platform: "macos-latest" # for Arm based macs (M1 and above).
             target: "aarch64-apple-darwin"
-          - platform: "ubuntu-22.04"
-            target: "x86_64-unknown-linux-gnu"
-          - platform: "ubuntu-22.04-arm"
-            target: "aarch64-unknown-linux-gnu"
-          - platform: "windows-2022"
+            config: "src-tauri/tauri.bundle.json"
+          # - platform: "ubuntu-22.04"
+          #   target: "x86_64-unknown-linux-gnu"
+          #   config: "src-tauri/tauri.bundle.json"
+          # - platform: "ubuntu-22.04-arm"
+          #   target: "aarch64-unknown-linux-gnu"
+          #   config: "src-tauri/tauri.bundle.json"
+          - platform: "windows-latest"
             target: "x86_64-pc-windows-msvc"
-          - platform: "windows-11-arm"
-            target: "aarch64-pc-windows-msvc"
+            config: "src-tauri/tauri.bundle.json"
+          # - platform: "windows-11-arm"
+          #   target: "aarch64-pc-windows-msvc"
+          #  config: "src-tauri/tauri.bundle.json"
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -65,10 +69,9 @@ jobs:
         with:
           version: "latest"
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          # Or: `node-version-file: package.json`
-          node-version: lts/*
+          node-version: "latest"
           cache: "pnpm"
 
       - run: pnpm install
@@ -79,8 +82,8 @@ jobs:
       # - <https://gregoryszorc.com/docs/python-build-standalone/main/running.html#obtaining-distributions>
       - name: Download python-build-standalone
         env:
-          PYTHON_VERSION: "3.13.9" # update this by yourself
-          TAG: "20251031" # update this by yourself
+          PYTHON_VERSION: "3.13.9"
+          TAG: "20251031"
           TARGET: ${{ matrix.target }}
         run: |
           url="https://github.com/astral-sh/python-build-standalone/releases/download/${TAG}/cpython-${PYTHON_VERSION}+${TAG}-${TARGET}-install_only_stripped.tar.gz"
@@ -97,7 +100,7 @@ jobs:
 
       - name: Install the project into the embedded python environment
         env:
-          PYTAURI_STANDALONE: 1 # see your `setup.py`
+          PYTAURI_STANDALONE: 1
           PYTHON_PATH: ${{ runner.os == 'Windows' && './src-tauri/pyembed/python/python.exe' || './src-tauri/pyembed/python/bin/python3' }}
         run: |
           uv pip install \
@@ -144,13 +147,34 @@ jobs:
           echo "RUSTFLAGS=$RUSTFLAGS" >> $GITHUB_ENV
 
       - name: Build and bundle the app
+        if: github.event_name == 'release'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
-          releaseName: "App v__VERSION__"
+          tagName: ${{ github.event.release.tag_name }}
+          releaseName: ${{ github.event.release.tag_name }}
           releaseBody: "See the assets to download this version and install."
           releaseDraft: true
-          includeDebug: true # Optional, disable to speed up the build
-          args: '--target ${{ matrix.target }} --config src-tauri/tauri.bundle.json --verbose'
+          includeDebug: false
+          args: '--target ${{ matrix.target }} --config ${{ matrix.config }} --verbose'
+
+      - uses: tauri-apps/tauri-action@v0
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          includeDebug: true
+          args: '--target ${{ matrix.target }} --config ${{ matrix.config }} --verbose'
+
+      - name: Upload test build artifacts
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-build-${{ matrix.target }}
+          path: |
+            target/${{ matrix.target }}/release/bundle/
