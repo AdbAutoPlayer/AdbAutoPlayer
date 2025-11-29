@@ -4,6 +4,7 @@
     "@tailwindcss/vite": "^4.1.16",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-updater": "~2",
     "@types/json-schema": "^7.0.15",
     "posthog-js": "^1.285.0",
     "tailwindcss": "^4.1.16",
