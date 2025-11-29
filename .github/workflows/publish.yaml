@@ -147,7 +147,7 @@ jobs:
           echo "RUSTFLAGS=$RUSTFLAGS" >> $GITHUB_ENV
 
       - name: Build and bundle the app
-        if: github.event_name != 'workflow_dispatch'
+        if: github.event_name == 'release'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
