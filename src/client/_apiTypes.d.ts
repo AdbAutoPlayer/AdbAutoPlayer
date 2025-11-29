@@ -15,17 +15,6 @@ export type ProfileIndex1 = number
  * @maxItems 3
  */
 export type RootModelTupleDictStrAnyDictStrAnyStr = [unknown, unknown, unknown]
-export type GameTitle = string
-export type Label1 = string
-export type Args1 = string[]
-export type CustomLabel = (string | null)
-export type Category = (string | null)
-export type Tooltip = (string | null)
-export type MenuOptions = MenuOption[]
-export type Categories = string[]
-export type SettingsFile = (string | null)
-export type DeviceId = (string | null)
-export type ActiveTask = (string | null)
 export type ProfileIndex2 = number
 export type Trigger = ("adb-settings-updated" | "game-settings-updated")
 /**
@@ -44,6 +33,18 @@ export type CloseButtonShouldMinimizeTheWindow = boolean
 export type EnableNotifications = boolean
 export type LoggingLevel = ("DEBUG" | "INFO" | "WARNING" | "ERROR" | "FATAL")
 export type LogFileLimit = number
+export type GameTitle = string
+export type Label1 = string
+export type Args1 = string[]
+export type CustomLabel = (string | null)
+export type Category = (string | null)
+export type Tooltip = (string | null)
+export type MenuOptions = MenuOption[]
+export type Categories = string[]
+export type SettingsFile = (string | null)
+export type DeviceId = (string | null)
+export type ActiveTask = (string | null)
+export type Index = number
 
 /**
  * Commands Input and Output Schemas
@@ -71,7 +72,7 @@ output: RootModelTupleDictStrAnyDictStrAnyStr
 }
 get_profile_state: {
 input: ProfileContext
-output: ProfileState
+output: RootModelNoneType
 }
 cache_clear: {
 input: CacheClear
@@ -80,6 +81,10 @@ output: RootModelNoneType
 _generate_app_settings_model: {
 input: void | undefined
 output: AppSettings
+}
+_generate_profile_state_update_model: {
+input: void | undefined
+output: ProfileStateUpdate
 }
 }
 export interface StartTaskBody {
@@ -90,27 +95,6 @@ label: Label
 }
 export interface ProfileContext {
 profile_index: ProfileIndex1
-[k: string]: unknown
-}
-export interface ProfileState {
-game_menu: (GameGUIOptions | null)
-device_id: DeviceId
-active_task: ActiveTask
-[k: string]: unknown
-}
-export interface GameGUIOptions {
-game_title: GameTitle
-menu_options: MenuOptions
-categories: Categories
-settings_file?: SettingsFile
-[k: string]: unknown
-}
-export interface MenuOption {
-label: Label1
-args: Args1
-custom_label?: CustomLabel
-category?: Category
-tooltip?: Tooltip
 [k: string]: unknown
 }
 export interface CacheClear {
@@ -150,5 +134,31 @@ notifications_enabled?: EnableNotifications
 export interface Logging {
 level?: LoggingLevel
 action_log_limit?: LogFileLimit
+[k: string]: unknown
+}
+export interface ProfileStateUpdate {
+state: ProfileState
+index: Index
+[k: string]: unknown
+}
+export interface ProfileState {
+game_menu: (GameGUIOptions | null)
+device_id: DeviceId
+active_task: ActiveTask
+[k: string]: unknown
+}
+export interface GameGUIOptions {
+game_title: GameTitle
+menu_options: MenuOptions
+categories: Categories
+settings_file?: SettingsFile
+[k: string]: unknown
+}
+export interface MenuOption {
+label: Label1
+args: Args1
+custom_label?: CustomLabel
+category?: Category
+tooltip?: Tooltip
 [k: string]: unknown
 }

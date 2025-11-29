@@ -4,7 +4,7 @@
   import { t } from "$lib/i18n/i18n";
   import { invoke } from "@tauri-apps/api/core";
   import { showErrorToast } from "$lib/toast/toast-error";
-  import { appSettings, profileStore } from "$lib/stores";
+  import { appSettings, profileStates, activeProfile } from "$lib/stores";
   import type { RustSettingsFormResponse, SettingsProps } from "$lib/menu/model";
   import Menu from "$lib/components/icons/lucide/Menu.svelte";
 
@@ -38,40 +38,40 @@
   }
 
   function getDeviceID(profile: number): string {
-    if ($profileStore.states[profile] && $profileStore.states[profile].deviceId) {
-      return ` (${$profileStore.states[profile].deviceId})`;
+    if ($profileStates[profile] && $profileStates[profile].device_id) {
+      return ` (${$profileStates[profile].device_id})`;
     }
 
     return " (Offline)";
   }
 
   function getStatus(profile: number): string {
-    if (!$profileStore.states[profile] || !$profileStore.states[profile].deviceId) {
+    if (!$profileStates[profile] || !$profileStates[profile].device_id) {
       return "";
     }
 
-    if (!$profileStore.states[profile].activeGame?.game_title) {
+    if (!$profileStates[profile].game_menu?.game_title) {
       return "Idle";
     }
 
-    const gameTitle = $profileStore.states[profile].activeGame.game_title;
+    const gameTitle = $profileStates[profile].game_menu.game_title;
 
-    if (!$profileStore.states[profile].activeTask) {
+    if (!$profileStates[profile].active_task) {
       return `${gameTitle} - Idle`
     }
 
-    const activeTask = $profileStore.states[profile].activeTask;
+    const activeTask = $profileStates[profile].active_task;
 
     return `${gameTitle} — ${activeTask}`;
   }
 
   function getStatusColor(profile: number): string {
-    if (!$profileStore.states[profile] || !$profileStore.states[profile].deviceId) {
+    if (!$profileStates[profile] || !$profileStates[profile].device_id) {
       return "bg-gray-500";
     }
     if (
-      !$profileStore.states[profile].activeGame?.game_title
-      || !$profileStore.states[profile].activeTask
+      !$profileStates[profile].game_menu?.game_title
+      || !$profileStates[profile].active_task
     ) {
       return "bg-yellow-500";
     }
@@ -80,7 +80,7 @@
   }
 
   function selectProfile(index: number) {
-    $profileStore.activeProfile = index;
+    $activeProfile = index;
   }
 </script>
 
@@ -106,7 +106,7 @@
           {#each getProfiles() as profile, i}
             <button
               class="btn preset-outlined-primary-500 w-full flex items-center justify-start rounded transition-colors"
-              class:selected={i === $profileStore.activeProfile}
+              class:selected={i === $activeProfile}
               onclick={() => selectProfile(i)}
             >
               <span class={`w-3 h-3 rounded-full ${getStatusColor(i)}`}></span>
