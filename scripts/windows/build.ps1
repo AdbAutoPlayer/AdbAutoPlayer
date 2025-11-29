@@ -6,7 +6,7 @@ $PROJECT_NAME = "adb-auto-player"
 $env:PYTAURI_STANDALONE = "1"
 $env:PYO3_PYTHON = (Resolve-Path -LiteralPath "src-tauri\pyembed\python\python.exe").Path
 
-uv.exe pip install `
+uv pip install `
     --exact `
     --compile-bytecode `
     --python="$env:PYO3_PYTHON" `
