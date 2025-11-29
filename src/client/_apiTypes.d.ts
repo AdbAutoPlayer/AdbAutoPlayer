@@ -44,6 +44,7 @@ export type Categories = string[]
 export type SettingsFile = (string | null)
 export type DeviceId = (string | null)
 export type ActiveTask = (string | null)
+export type Timestamp = number
 export type Index = number
 
 /**
@@ -138,6 +139,7 @@ action_log_limit?: LogFileLimit
 }
 export interface ProfileStateUpdate {
 state: ProfileState
+timestamp: Timestamp
 index: Index
 [k: string]: unknown
 }

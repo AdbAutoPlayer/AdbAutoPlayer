@@ -4,6 +4,7 @@ import asyncio
 import logging
 import multiprocessing
 import sys
+from datetime import datetime
 from functools import wraps
 from logging.handlers import QueueHandler, QueueListener
 from multiprocessing import Process, Queue, freeze_support
@@ -252,23 +253,17 @@ async def start_task(
     )
 
 
-def _stop_process(process: Process | None) -> bool:
-    if process and process.is_alive():
-        process.terminate()
-        process.join()
-        return True
-    return False
-
-
 @tauri_profile_aware_command
 async def stop_task(
     app_handle: AppHandle,
     body: ProfileContext,
 ) -> None:
     task_process = task_processes.get(body.profile_index, None)
-    if _stop_process(task_process):
+    if task_process and task_process.is_alive():
         logging.info("Stopping Task")
-        await asyncio.sleep(0.5)  # wait a bit for start start_task tear down
+        task_process.terminate()
+        task_process.join()
+        await asyncio.sleep(0.5)  # wait a bit for start_task tear down
 
 
 class CacheClear(ProfileContext):
@@ -354,6 +349,7 @@ class ProfileState(BaseModel):
 
 class ProfileStateUpdate(BaseModel):
     state: ProfileState
+    timestamp: float
     index: int
 
 
@@ -373,7 +369,8 @@ async def get_profile_state(
     # if already running, skip completely to prevent race conditions
     if lock.locked():
         return
-
+    # convert to ms for FE
+    timestamp = int(datetime.now().timestamp() * 1000)
     async with lock:
         try:
             state = ProfileState(
@@ -396,6 +393,7 @@ async def get_profile_state(
             ProfileStateUpdate(
                 state=state,
                 index=body.profile_index,
+                timestamp=timestamp,
             ),
         )
     return
@@ -449,7 +447,9 @@ def main() -> int:
 
         def handler(event: Event):
             for process in task_processes.values():
-                _stop_process(process)
+                if process and process.is_alive():
+                    process.terminate()
+                    process.join()
             sys.exit(0)
 
         Listener.listen(app, "kill-python", handler)

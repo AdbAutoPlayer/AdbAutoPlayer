@@ -2,7 +2,13 @@
   import { onDestroy, onMount } from "svelte";
   import SchemaForm from "$lib/components/form/SchemaForm.svelte";
   import Menu from "$lib/components/menu/Menu.svelte";
-  import { activeProfile, appSettings, debugLogLevelOverwrite, profileStates } from "$lib/stores";
+  import {
+    activeProfile,
+    appSettings,
+    debugLogLevelOverwrite,
+    profileStates,
+    profileStateTimestamp
+  } from "$lib/stores";
   import { showErrorToast } from "$lib/toast/toast-error";
   import { t } from "$lib/i18n/i18n";
   import type { AppSettings, GameGUIOptions, MenuOption, Trigger } from "$pytauri/_apiTypes";
@@ -131,10 +137,9 @@
   });
 
   async function callStopTask(profile: number) {
-    stopStateUpdates();
-
     try {
       await stopTask({profile_index: profile})
+      $profileStateTimestamp = Date.now() + 500;
       if ($profileStates[profile]) {
         $profileStates[profile].active_task = null;
       }
@@ -144,8 +149,9 @@
         profile: profile,
       })
     }
-
-    await triggerStateUpdate();
+    void getProfileState({
+      profile_index: profile,
+    });
   }
   async function callDebug() {
     const profile = $activeProfile;
@@ -153,8 +159,6 @@
     if (task !== null) {
       return;
     }
-
-    stopStateUpdates();
 
     try {
       if ($profileStates[profile]) {
@@ -167,7 +171,9 @@
     }
 
     $debugLogLevelOverwrite = false;
-    await triggerStateUpdate();
+    void getProfileState({
+      profile_index: profile,
+    });
   }
   async function callStartTask(menuOption: MenuOption) {
     const profile = $activeProfile;
@@ -175,7 +181,7 @@
     if (task !== null) {
       return;
     }
-
+    $profileStateTimestamp = Date.now() + 5000;
     if ($profileStates[profile]) {
       $profileStates[profile].active_task = menuOption.label;
     }
@@ -186,15 +192,15 @@
         args: menuOption.args,
         label: menuOption.label
       });
-      await triggerStateUpdate();
+      $profileStateTimestamp = Date.now() + 2500;
       await taskPromise;
     } catch (error) {
+      $profileStateTimestamp = Date.now() + 1000;
       await showErrorToast(error, { title: `Failed to Start: ${menuOption.label}` });
     }
   }
 
   async function onFormSubmit() {
-    stopStateUpdates(); // should not be needed but leaving it as is.
     const profile = $activeProfile;
     // console.log($state.snapshot(settingsProps));
     try {
@@ -210,7 +216,7 @@
 
         $profileStates.forEach((value, index) => {
           if (index >= profileCount) {
-            callStopTask(index);
+            void callStopTask(index);
           }
         });
       } else {
@@ -293,13 +299,13 @@
   function stopStateUpdates() {
     clearTimeout(updateStateTimeout);
   }
-  async function triggerStateUpdate() {
+  async function triggerStateUpdate(profile: number|null = null) {
     clearTimeout(updateStateTimeout);
-    await handleStateUpdate();
+    await handleStateUpdate(profile);
   }
-  async function handleStateUpdate() {
+  async function handleStateUpdate(profile: number|null = null) {
     try {
-      await updateState();
+      await updateState(profile);
     } catch (error) {
       // Should not happen
       console.error(error);
@@ -308,16 +314,17 @@
     updateStateTimeout = setTimeout(handleStateUpdate, 3000);
   }
 
-  async function updateState() {
-    const profile = $activeProfile;
+  async function updateState(profile: number|null = null) {
     const profileCount = $appSettings?.profiles?.profiles?.length ?? 1;
 
-    void getProfileState({
-      profile_index: profile,
-    });
+    if (profile) {
+      void getProfileState({
+        profile_index: profile,
+      });
+      return;
+    }
 
     for (let i = 0; i < profileCount; i++) {
-      if (i === profile) continue;
       void getProfileState({
         profile_index: i,
       });
