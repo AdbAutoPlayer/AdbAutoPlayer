@@ -12,6 +12,10 @@
   import { initPostHog } from "$lib/utils/posthog";
   import { logInfo } from "$lib/log/log-events";
   import { getVersion } from "@tauri-apps/api/app";
+  import { profileStates } from "$lib/stores";
+  import { listen } from "@tauri-apps/api/event";
+  import { EventNames } from "$lib/log/eventNames";
+  import type { ProfileStateUpdate } from "$pytauri/_apiTypes";
 
   let { children } = $props();
 
@@ -30,6 +34,29 @@
   onMount(() => {
     return setupExternalLinkHandler();
   });
+
+  onMount(() => {
+    let unsubscribers: Array<() => void> = [];
+
+    const setupListeners = async () => {
+      const stateUnsub = await listen<ProfileStateUpdate>(
+        EventNames.PROFILE_STATE_UPDATE,
+        (event) => {
+          console.log(event.payload);
+          $profileStates[event.payload.index] = {
+            game_menu: event.payload.state.game_menu,
+            active_task: event.payload.state.active_task,
+            device_id: event.payload.state.device_id,
+          }
+        }
+      );
+
+      unsubscribers.push(stateUnsub);
+    };
+
+    setupListeners();
+    return () => unsubscribers.forEach((unsub) => unsub());
+  })
 
   onMount(() => {
     initPostHog();

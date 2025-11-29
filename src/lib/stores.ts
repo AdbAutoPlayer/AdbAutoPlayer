@@ -1,9 +1,6 @@
 import { writable } from "svelte/store";
-import type { AppSettings } from "$pytauri/_apiTypes";
-import type { ProfileProps } from "$lib/menu/model";
+import type { AppSettings, ProfileState } from "$pytauri/_apiTypes";
 export const appSettings = writable<null|AppSettings>(null)
 export const debugLogLevelOverwrite  = writable<boolean>(false);
-export const profileStore = writable<ProfileProps>({
-  activeProfile: 0,
-  states: [],
-})
+export const activeProfile = writable<number>(0);
+export const profileStates = writable<ProfileState[]>([]);

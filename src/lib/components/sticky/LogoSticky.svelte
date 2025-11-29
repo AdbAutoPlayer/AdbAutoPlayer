@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { profileStore } from "$lib/stores";
+  import { activeProfile, profileStates } from "$lib/stores";
 
   const awake = "/images/3583082.png"
   const sleep = "/images/3583083.png"
@@ -7,7 +7,7 @@
 
 <div class="pointer-events-none fixed right-5 bottom-0 -z-50 m-0 select-none">
   <img
-    src={$profileStore.states[$profileStore.activeProfile]?.activeTask ? sleep : awake}
+    src={$profileStates[$activeProfile]?.active_task ? sleep : awake}
     alt="uwu"
     draggable="false"
     class="max-w-[200px]"
