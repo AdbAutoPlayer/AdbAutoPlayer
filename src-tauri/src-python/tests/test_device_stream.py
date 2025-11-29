@@ -169,7 +169,7 @@ class TestIntegrationWithRealDecoding(unittest.TestCase):
         for i in range(frame_count):
             # Create a test pattern
             frame = av.VideoFrame.from_ndarray(
-                np.random.randint(0, 255, (height, width, 3), dtype=np.uint8),
+                np.random.randint(0, 255, (height, width, 3), dtype=np.uint8),  # type: ignore[invalid-argument-type]
                 format="rgb24",
             )
             frame = frame.reformat(format="yuv420p")
