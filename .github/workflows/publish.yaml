@@ -146,6 +146,9 @@ jobs:
           echo "PYO3_PYTHON=$PYO3_PYTHON" >> $GITHUB_ENV
           echo "RUSTFLAGS=$RUSTFLAGS" >> $GITHUB_ENV
 
+      - run: pnpm set-version ${{ github.event.release.tag_name }}
+        if: github.event_name == 'release'
+
       - name: Build and bundle the app
         if: github.event_name == 'release'
         uses: tauri-apps/tauri-action@v0
