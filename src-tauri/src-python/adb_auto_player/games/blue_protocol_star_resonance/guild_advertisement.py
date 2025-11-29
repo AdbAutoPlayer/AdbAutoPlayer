@@ -49,7 +49,7 @@ class GuildAdvertisement(BlueProtocolStarResonance):
             sleep(300)
 
     def advertise_in_world_chat(self) -> None:
-        for i in range(1, 21):
+        for i in range(1, 26):
             if not self.is_in_world_chat_channel(i):
                 self.switch_world_chat_channel(i)
             if self.is_in_world_chat_channel(i):
