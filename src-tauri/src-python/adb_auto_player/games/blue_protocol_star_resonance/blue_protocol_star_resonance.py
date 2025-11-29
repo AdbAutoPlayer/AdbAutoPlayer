@@ -53,7 +53,7 @@ class BlueProtocolStarResonance(Game):
                 top="93%",
                 bottom="5%",
                 left="40%",
-                right="35%",
+                right="45%",
             ),
         )
 

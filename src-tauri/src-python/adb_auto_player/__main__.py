@@ -10,7 +10,7 @@ from multiprocessing import Process, Queue, freeze_support
 from multiprocessing.managers import SyncManager
 from os import getenv
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, NoReturn
 
 from adb_auto_player.commands import log_debug_info
 from adb_auto_player.device.adb import AdbController
@@ -54,6 +54,8 @@ task_labels: dict[int, str | None] = {}
 
 _base_app_config_dir: Path | None = None
 _base_resource_dir: Path | None = None
+
+profile_state_locks: dict[int, asyncio.Lock] = {}
 
 
 class ProfileContext(BaseModel):
@@ -350,21 +352,53 @@ class ProfileState(BaseModel):
     active_task: str | None
 
 
+class ProfileStateUpdate(BaseModel):
+    state: ProfileState
+    index: int
+
+
+def get_profile_state_lock(index: int) -> asyncio.Lock:
+    if index not in profile_state_locks:
+        profile_state_locks[index] = asyncio.Lock()
+    return profile_state_locks[index]
+
+
 @tauri_profile_aware_command
 async def get_profile_state(
     app_handle: AppHandle,
     body: ProfileContext,
-) -> ProfileState:
-    try:
-        return ProfileState(
-            game_menu=get_game_gui_options(),
-            device_id=AdbController().d.serial,
-            active_task=task_labels.get(body.profile_index, None),
+) -> None:
+    lock = get_profile_state_lock(body.profile_index)
+
+    # if already running, skip completely to prevent race conditions
+    if lock.locked():
+        return
+
+    async with lock:
+        try:
+            state = ProfileState(
+                game_menu=get_game_gui_options(),
+                device_id=AdbController().d.serial,
+                active_task=task_labels.get(body.profile_index, None),
+            )
+        except Exception as e:
+            _cache_clear(CacheGroup.ADB, body.profile_index)
+            logging.error(e)
+            state = ProfileState(
+                game_menu=None,
+                device_id=None,
+                active_task=task_labels.get(body.profile_index, None),
+            )
+
+        Emitter.emit(
+            app_handle,
+            "profile-state-update",
+            ProfileStateUpdate(
+                state=state,
+                index=body.profile_index,
+            ),
         )
-    except Exception as e:
-        _cache_clear(CacheGroup.ADB, body.profile_index)
-        logging.error(e)
-        raise e
+    return
 
 
 @tauri_profile_aware_command
@@ -379,11 +413,20 @@ async def cache_clear(
     _cache_clear(CacheGroup.GAME_SETTINGS, body.profile_index)
 
 
-@commands.command()
-async def _generate_app_settings_model() -> AppSettings:
+def _model_gen_command_error() -> NoReturn:
     raise RuntimeError(
         "This function exists to generate TypeScript bindings and should not be called."
     )
+
+
+@commands.command()
+async def _generate_app_settings_model() -> AppSettings:
+    _model_gen_command_error()
+
+
+@commands.command()
+async def _generate_profile_state_update_model() -> ProfileStateUpdate:
+    _model_gen_command_error()
 
 
 def main() -> int:
