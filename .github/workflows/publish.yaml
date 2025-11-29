@@ -5,12 +5,10 @@
 name: "publish"
 
 on:
-  # Manual trigger
   workflow_dispatch:
-  # On push to `release` branch
-  push:
-    branches:
-      - release
+  release:
+    types:
+      - published
 
 defaults:
   run:
