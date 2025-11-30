@@ -338,7 +338,7 @@ async def get_game_settings_form(
             "enum": choices,
         }
 
-    return (settings.model_dump(by_alias=True), schema, str(metadata.settings_file))
+    return settings.model_dump(by_alias=True), schema, str(metadata.settings_file)
 
 
 class ProfileState(BaseModel):
