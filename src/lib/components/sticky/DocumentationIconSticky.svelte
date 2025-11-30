@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import IconHelpCircle from "$lib/components/icons/feather/IconHelpCircle.svelte";
 </script>
 
