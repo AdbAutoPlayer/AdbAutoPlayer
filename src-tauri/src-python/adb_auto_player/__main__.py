@@ -4,6 +4,8 @@ import asyncio
 import logging
 import multiprocessing
 import sys
+from concurrent.futures import ThreadPoolExecutor
+from contextvars import copy_context
 from datetime import datetime
 from functools import wraps
 from logging.handlers import QueueHandler, QueueListener
@@ -57,6 +59,7 @@ _base_app_config_dir: Path | None = None
 _base_resource_dir: Path | None = None
 
 profile_state_locks: dict[int, asyncio.Lock] = {}
+_executor = ThreadPoolExecutor(max_workers=4)
 
 
 class ProfileContext(BaseModel):
@@ -338,7 +341,7 @@ async def get_game_settings_form(
             "enum": choices,
         }
 
-    return (settings.model_dump(by_alias=True), schema, str(metadata.settings_file))
+    return settings.model_dump(by_alias=True), schema, str(metadata.settings_file)
 
 
 class ProfileState(BaseModel):
@@ -359,6 +362,28 @@ def get_profile_state_lock(index: int) -> asyncio.Lock:
     return profile_state_locks[index]
 
 
+def _get_state_sync(profile_index: int) -> ProfileState:
+    """Synchronous helper function that runs in thread pool.
+
+    Context variables are already set by copy_context().
+    """
+    try:
+        state = ProfileState(
+            game_menu=get_game_gui_options(),
+            device_id=AdbController().d.serial,
+            active_task=task_labels.get(profile_index, None),
+        )
+    except Exception as e:
+        _cache_clear(CacheGroup.ADB, profile_index)
+        logging.error(e)
+        state = ProfileState(
+            game_menu=None,
+            device_id=None,
+            active_task=task_labels.get(profile_index, None),
+        )
+    return state
+
+
 @tauri_profile_aware_command
 async def get_profile_state(
     app_handle: AppHandle,
@@ -369,23 +394,17 @@ async def get_profile_state(
     # if already running, skip completely to prevent race conditions
     if lock.locked():
         return
+
     # convert to ms for FE
     timestamp = int(datetime.now().timestamp() * 1000)
+
     async with lock:
-        try:
-            state = ProfileState(
-                game_menu=get_game_gui_options(),
-                device_id=AdbController().d.serial,
-                active_task=task_labels.get(body.profile_index, None),
-            )
-        except Exception as e:
-            _cache_clear(CacheGroup.ADB, body.profile_index)
-            logging.error(e)
-            state = ProfileState(
-                game_menu=None,
-                device_id=None,
-                active_task=task_labels.get(body.profile_index, None),
-            )
+        ctx = copy_context()
+        loop = asyncio.get_event_loop()
+        state = await loop.run_in_executor(
+            _executor,
+            lambda: ctx.run(_get_state_sync, body.profile_index),
+        )
 
         Emitter.emit(
             app_handle,
@@ -450,6 +469,7 @@ def main() -> int:
                 if process and process.is_alive():
                     process.terminate()
                     process.join()
+            _executor.shutdown(wait=False, cancel_futures=True)
             sys.exit(0)
 
         Listener.listen(app, "kill-python", handler)

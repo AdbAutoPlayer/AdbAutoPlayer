@@ -16,6 +16,7 @@
   import { listen } from "@tauri-apps/api/event";
   import { EventNames } from "$lib/log/eventNames";
   import type { ProfileStateUpdate } from "$pytauri/_apiTypes";
+  import UpdateContainer from "$lib/components/updater/UpdateContainer.svelte";
 
   let { children } = $props();
 
@@ -86,6 +87,7 @@
 <div class="flex h-screen flex-col overflow-hidden">
   <header class="flex-none">
     <DocumentationIconSticky />
+    <UpdateContainer />
     <LogoSticky />
   </header>
 
