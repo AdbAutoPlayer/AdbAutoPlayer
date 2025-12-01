@@ -11,7 +11,7 @@ export enum SupportedLocale {
   VN = "vn",
 }
 
-export function getLocaleOrDefault(value: string): SupportedLocale{
+export function getLocaleOrDefault(value: string): SupportedLocale {
   return Object.values(SupportedLocale).includes(value as SupportedLocale)
     ? (value as SupportedLocale)
     : SupportedLocale.EN;

@@ -20,11 +20,15 @@ export const t: Readable<TranslationFunction> = derived(
   },
 );
 
-export function translate(text: string, locale: SupportedLocale = SupportedLocale.EN, values: InterpolationValues = {}): string {
+export function translate(
+  text: string,
+  locale: SupportedLocale = SupportedLocale.EN,
+  values: InterpolationValues = {},
+): string {
   if (locale !== SupportedLocale.EN) {
-    const trans = locales[locale]?.[text]
+    const trans = locales[locale]?.[text];
     if (trans) {
-      text = trans
+      text = trans;
     }
   }
 

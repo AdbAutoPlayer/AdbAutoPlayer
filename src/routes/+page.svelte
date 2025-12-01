@@ -7,14 +7,23 @@
     appSettings,
     debugLogLevelOverwrite,
     profileStates,
-    profileStateTimestamp
+    profileStateTimestamp,
   } from "$lib/stores";
   import { showErrorToast } from "$lib/toast/toast-error";
   import { t } from "$lib/i18n/i18n";
-  import type { AppSettings, GameGUIOptions, MenuOption, Trigger } from "$pytauri/_apiTypes";
+  import type {
+    AppSettings,
+    GameGUIOptions,
+    MenuOption,
+    Trigger,
+  } from "$pytauri/_apiTypes";
 
   import { EventNames } from "$lib/log/eventNames";
-  import type { MenuButton, PydanticSettingsFormResponse, SettingsProps } from "$lib/menu/model";
+  import type {
+    MenuButton,
+    PydanticSettingsFormResponse,
+    SettingsProps,
+  } from "$lib/menu/model";
   import {
     cacheClear,
     debug,
@@ -22,7 +31,7 @@
     getGameSettingsForm,
     getProfileState,
     startTask,
-    stopTask
+    stopTask,
   } from "$pytauri/apiClient";
   import { invoke } from "@tauri-apps/api/core";
   import { logError } from "$lib/log/log-events";
@@ -52,7 +61,8 @@
       },
       {
         callback: () => callDebug(),
-        isProcessRunning: "Debug" === ($profileStates[$activeProfile]?.active_task ?? null),
+        isProcessRunning:
+          "Debug" === ($profileStates[$activeProfile]?.active_task ?? null),
         option: {
           label: "Debug",
           args: [],
@@ -88,9 +98,7 @@
           option: {
             // This one needs to be translated because of the params
             label: $t("{{game}} Settings", {
-              game: gameMenu.game_title
-                ? $t(gameMenu.game_title)
-                : $t("Game"),
+              game: gameMenu.game_title ? $t(gameMenu.game_title) : $t("Game"),
             }),
             args: [],
             category: "Settings, Phone & Debug",
@@ -138,7 +146,7 @@
 
   async function callStopTask(profile: number) {
     try {
-      await stopTask({profile_index: profile})
+      await stopTask({ profile_index: profile });
       $profileStateTimestamp = Date.now() + 500;
       if ($profileStates[profile]) {
         $profileStates[profile].active_task = null;
@@ -147,7 +155,7 @@
       void showErrorToast(error, {
         logToLogDisplay: false,
         profile: profile,
-      })
+      });
     }
     void getProfileState({
       profile_index: profile,
@@ -165,9 +173,12 @@
         $profileStates[profile].active_task = "Debug";
       }
       $debugLogLevelOverwrite = true;
-      await debug({profile_index: profile});
+      await debug({ profile_index: profile });
     } catch (error) {
-      void showErrorToast(error, { title: `Failed to Start: Debug`, profile: profile, });
+      void showErrorToast(error, {
+        title: `Failed to Start: Debug`,
+        profile: profile,
+      });
     }
 
     $debugLogLevelOverwrite = false;
@@ -190,13 +201,15 @@
       const taskPromise = startTask({
         profile_index: profile,
         args: menuOption.args,
-        label: menuOption.label
+        label: menuOption.label,
       });
       $profileStateTimestamp = Date.now() + 2500;
       await taskPromise;
     } catch (error) {
       $profileStateTimestamp = Date.now() + 1000;
-      await showErrorToast(error, { title: `Failed to Start: ${menuOption.label}` });
+      await showErrorToast(error, {
+        title: `Failed to Start: ${menuOption.label}`,
+      });
     }
   }
 
@@ -206,9 +219,9 @@
     try {
       if (settingsProps.fileName === "App.toml") {
         const newSettings: AppSettings = await invoke("save_app_settings", {
-          settings: settingsProps.formData
-        })
-        await applySettings(newSettings)
+          settings: settingsProps.formData,
+        });
+        await applySettings(newSettings);
         const profileCount = $appSettings?.profiles?.profiles?.length ?? 1;
         if (profileCount >= $activeProfile) {
           $activeProfile = profileCount - 1;
@@ -223,29 +236,29 @@
         await invoke("save_settings", {
           profileIndex: profile,
           fileName: settingsProps.fileName,
-          jsonData: JSON.stringify(settingsProps.formData)
+          jsonData: JSON.stringify(settingsProps.formData),
         });
         if (settingsProps.fileName.endsWith("ADB.toml")) {
           await cacheClear({
             profile_index: profile,
-            trigger: EventNames.ADB_SETTINGS_UPDATED as Trigger
+            trigger: EventNames.ADB_SETTINGS_UPDATED as Trigger,
           });
         } else {
           await cacheClear({
             profile_index: profile,
-            trigger: EventNames.GAME_SETTINGS_UPDATED as Trigger
+            trigger: EventNames.GAME_SETTINGS_UPDATED as Trigger,
           });
         }
       }
     } catch (e) {
-      void logError(String(e))
+      void logError(String(e));
     }
     settingsProps = {
       showSettingsForm: false,
       formData: {},
       formSchema: {},
       fileName: "",
-    }
+    };
     await triggerStateUpdate();
     return;
   }
@@ -257,9 +270,9 @@
 
     stopStateUpdates();
     try {
-      const data = await getGameSettingsForm({
+      const data = (await getGameSettingsForm({
         profile_index: $activeProfile,
-      }) as PydanticSettingsFormResponse;
+      })) as PydanticSettingsFormResponse;
       // console.log(data);
 
       settingsProps = {
@@ -267,7 +280,7 @@
         formData: data[0],
         formSchema: data[1],
         fileName: data[2],
-      }
+      };
     } catch (error) {
       await showErrorToast(error, {
         title: "Failed to create Game Settings Form",
@@ -278,7 +291,9 @@
   async function openAdbSettingsForm() {
     stopStateUpdates();
     try {
-      const data = await getAdbSettingsForm({profile_index: $activeProfile})  as PydanticSettingsFormResponse;
+      const data = (await getAdbSettingsForm({
+        profile_index: $activeProfile,
+      })) as PydanticSettingsFormResponse;
       // console.log(data);
 
       settingsProps = {
@@ -286,7 +301,7 @@
         formData: data[0],
         formSchema: data[1],
         fileName: data[2],
-      }
+      };
     } catch (error) {
       await showErrorToast(error, {
         title: "Failed to create ADB Settings Form",
@@ -299,11 +314,11 @@
   function stopStateUpdates() {
     clearTimeout(updateStateTimeout);
   }
-  async function triggerStateUpdate(profile: number|null = null) {
+  async function triggerStateUpdate(profile: number | null = null) {
     clearTimeout(updateStateTimeout);
     await handleStateUpdate(profile);
   }
-  async function handleStateUpdate(profile: number|null = null) {
+  async function handleStateUpdate(profile: number | null = null) {
     try {
       await updateState(profile);
     } catch (error) {
@@ -314,7 +329,7 @@
     updateStateTimeout = setTimeout(handleStateUpdate, 3000);
   }
 
-  async function updateState(profile: number|null = null) {
+  async function updateState(profile: number | null = null) {
     const profileCount = $appSettings?.profiles?.profiles?.length ?? 1;
 
     if (profile) {
@@ -340,24 +355,23 @@
   });
 </script>
 
-{#if !settingsProps.showSettingsForm }
-  <ProfileSelector
-    bind:settingsProps={settingsProps}
-  />
+{#if !settingsProps.showSettingsForm}
+  <ProfileSelector bind:settingsProps />
 {/if}
 
 <main class="w-full pt-2 pr-4 pb-4 pl-4">
   <h1 class="pb-2 text-center h1 text-3xl select-none">
-    {$t($profileStates[$activeProfile]?.game_menu?.game_title || "Start any supported Game!")}
+    {$t(
+      $profileStates[$activeProfile]?.game_menu?.game_title ||
+        "Start any supported Game!",
+    )}
   </h1>
   <div
     class="flex max-h-[70vh] min-h-[20vh] flex-col overflow-hidden card bg-surface-100-900/50 p-4 text-center select-none"
   >
-    <div
-      class="flex-grow overflow-y-scroll pr-4"
-    >
+    <div class="flex-grow overflow-y-scroll pr-4">
       {#if settingsProps.showSettingsForm}
-        <SchemaForm bind:settingsProps={settingsProps} {onFormSubmit} />
+        <SchemaForm bind:settingsProps {onFormSubmit} />
       {:else}
         <Menu
           buttons={activeGameMenuButtons}

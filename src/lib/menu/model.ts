@@ -16,13 +16,13 @@ export interface SettingsProps {
 }
 
 export interface PydanticSettingsFormResponse {
-  0: FormDataGeneric,
-  1: JSONSchema,
-  2: string,
+  0: FormDataGeneric;
+  1: JSONSchema;
+  2: string;
 }
 
 export interface RustSettingsFormResponse {
-  settings: FormDataGeneric,
-  schema: string,
-  file_name: string,
+  settings: FormDataGeneric;
+  schema: string;
+  file_name: string;
 }

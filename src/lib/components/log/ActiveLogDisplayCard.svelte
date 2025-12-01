@@ -37,10 +37,13 @@
     return profileEntries[index] ?? [];
   }
 
-  function insertEntry(index: number | undefined | null, entry: TextDisplayCardItem) {
+  function insertEntry(
+    index: number | undefined | null,
+    entry: TextDisplayCardItem,
+  ) {
     const insertCount =
       index === undefined || index === null
-        ? $appSettings?.profiles?.profiles?.length ?? 1
+        ? ($appSettings?.profiles?.profiles?.length ?? 1)
         : 1;
 
     const startIndex = index ?? 0;
@@ -86,8 +89,14 @@
           const logMessage = event.payload;
           const logLevel: LogLevel = $appSettings?.logging?.level ?? "INFO";
 
-          if ($debugLogLevelOverwrite || logLevelOrder[logMessage.level] >= logLevelOrder[logLevel]) {
-            insertEntry(logMessage.profile_index, logMessageToTextDisplayCardItem(logMessage));
+          if (
+            $debugLogLevelOverwrite ||
+            logLevelOrder[logMessage.level] >= logLevelOrder[logLevel]
+          ) {
+            insertEntry(
+              logMessage.profile_index,
+              logMessageToTextDisplayCardItem(logMessage),
+            );
           }
         },
       );
@@ -96,7 +105,7 @@
         EventNames.WRITE_SUMMARY_TO_LOG,
         (event) => {
           if (event.payload) addSummaryMessageToLog(event.payload);
-        }
+        },
       );
 
       unsubscribers.push(logUnsub, summaryUnsub);

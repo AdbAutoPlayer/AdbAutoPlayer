@@ -14,7 +14,7 @@
   stroke-linejoin="round"
   class={className}
 >
-  <path d="M4 5h16"/>
-  <path d="M4 12h16"/>
-  <path d="M4 19h16"/>
+  <path d="M4 5h16" />
+  <path d="M4 12h16" />
+  <path d="M4 19h16" />
 </svg>

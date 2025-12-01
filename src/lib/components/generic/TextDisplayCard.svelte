@@ -9,10 +9,8 @@
     enableSearch?: boolean;
   };
 
-  let {
-    entries = $bindable([]),
-    enableSearch = true,
-  }: TextDisplayCardProps = $props();
+  let { entries = $bindable([]), enableSearch = true }: TextDisplayCardProps =
+    $props();
 
   let searchTerm: string = $state("");
   let searchVisible: boolean = $state(false);
@@ -147,82 +145,78 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-  <div
-    class="relative h-full flex-grow flex-col card bg-surface-100-900/50 p-4"
-  >
-    {#if enableSearch && searchVisible}
-      <div
-        class="absolute top-2 right-2 z-10 flex items-center gap-2 rounded-lg border border-surface-300-700 bg-surface-200-800 p-2 shadow-lg"
-      >
-        <input
-          bind:this={searchInput}
-          bind:value={searchTerm}
-          placeholder="Search..."
-          class="w-48 border-none bg-transparent text-sm text-surface-900-100 outline-none"
-          oninput={() => (currentMatchIndex = searchTerm ? 0 : -1)}
-        />
+<div class="relative h-full flex-grow flex-col card bg-surface-100-900/50 p-4">
+  {#if enableSearch && searchVisible}
+    <div
+      class="absolute top-2 right-2 z-10 flex items-center gap-2 rounded-lg border border-surface-300-700 bg-surface-200-800 p-2 shadow-lg"
+    >
+      <input
+        bind:this={searchInput}
+        bind:value={searchTerm}
+        placeholder="Search..."
+        class="w-48 border-none bg-transparent text-sm text-surface-900-100 outline-none"
+        oninput={() => (currentMatchIndex = searchTerm ? 0 : -1)}
+      />
 
-        {#if searchTerm}
-          <div class="no-select text-xs whitespace-nowrap text-surface-600-400">
-            {totalMatchCount > 0
-              ? `${currentMatchIndex + 1}/${totalMatchCount}`
-              : "0/0"}
-          </div>
-
-          <button
-            class="hover:bg-surface-300-600 no-select rounded px-2 py-1 text-xs"
-            disabled={totalMatchCount === 0}
-            onclick={() => {
-              currentMatchIndex =
-                currentMatchIndex <= 0
-                  ? totalMatchCount - 1
-                  : currentMatchIndex - 1;
-              scrollToMatch();
-            }}
-          >
-            <IconArrowUp size={14} strokeWidth={2} />
-          </button>
-          <button
-            class="hover:bg-surface-300-600 no-select rounded px-2 py-1 text-xs"
-            disabled={totalMatchCount === 0}
-            onclick={() => {
-              currentMatchIndex =
-                currentMatchIndex >= totalMatchCount - 1
-                  ? 0
-                  : currentMatchIndex + 1;
-              scrollToMatch();
-            }}
-          >
-            <IconArrowDown size={14} strokeWidth={2} />
-          </button>
-
-          <button
-            class="hover:bg-surface-300-600 no-select rounded px-2 py-1"
-            onclick={clearSearch}
-          >
-            <IconX size={14} strokeWidth={2} />
-          </button>
-        {/if}
+      {#if searchTerm}
+        <div class="no-select text-xs whitespace-nowrap text-surface-600-400">
+          {totalMatchCount > 0
+            ? `${currentMatchIndex + 1}/${totalMatchCount}`
+            : "0/0"}
+        </div>
 
         <button
           class="hover:bg-surface-300-600 no-select rounded px-2 py-1 text-xs"
-          onclick={toggleSearch}
+          disabled={totalMatchCount === 0}
+          onclick={() => {
+            currentMatchIndex =
+              currentMatchIndex <= 0
+                ? totalMatchCount - 1
+                : currentMatchIndex - 1;
+            scrollToMatch();
+          }}
         >
-          Close
+          <IconArrowUp size={14} strokeWidth={2} />
         </button>
-      </div>
-    {/if}
+        <button
+          class="hover:bg-surface-300-600 no-select rounded px-2 py-1 text-xs"
+          disabled={totalMatchCount === 0}
+          onclick={() => {
+            currentMatchIndex =
+              currentMatchIndex >= totalMatchCount - 1
+                ? 0
+                : currentMatchIndex + 1;
+            scrollToMatch();
+          }}
+        >
+          <IconArrowDown size={14} strokeWidth={2} />
+        </button>
 
-    <div
-      class="h-full flex-grow overflow-y-scroll font-mono break-words whitespace-normal select-text"
-      bind:this={logContainer}
-    >
-      {#each entries as { message, html_class }, index}
-        <div class={html_class}>
-          {@html searchTerm
-            ? highlightText(message, searchTerm, index)
-            : message}
-        </div>
-      {/each}
+        <button
+          class="hover:bg-surface-300-600 no-select rounded px-2 py-1"
+          onclick={clearSearch}
+        >
+          <IconX size={14} strokeWidth={2} />
+        </button>
+      {/if}
+
+      <button
+        class="hover:bg-surface-300-600 no-select rounded px-2 py-1 text-xs"
+        onclick={toggleSearch}
+      >
+        Close
+      </button>
     </div>
+  {/if}
+
+  <div
+    class="h-full flex-grow overflow-y-scroll font-mono break-words whitespace-normal select-text"
+    bind:this={logContainer}
+  >
+    {#each entries as { message, html_class }, index}
+      <div class={html_class}>
+        {@html searchTerm ? highlightText(message, searchTerm, index) : message}
+      </div>
+    {/each}
   </div>
+</div>
