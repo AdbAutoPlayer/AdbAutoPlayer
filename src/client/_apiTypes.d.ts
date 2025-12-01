@@ -33,6 +33,7 @@ export type CloseButtonShouldMinimizeTheWindow = boolean
 export type EnableNotifications = boolean
 export type LoggingLevel = ("DEBUG" | "INFO" | "WARNING" | "ERROR" | "FATAL")
 export type LogFileLimit = number
+export type ShutdownAfterTasks = boolean
 export type GameTitle = string
 export type Label1 = string
 export type Args1 = string[]
@@ -110,6 +111,7 @@ export interface AppSettings {
 profiles?: Profiles
 ui?: UserInterface
 logging?: Logging
+advanced?: Advanced
 [k: string]: unknown
 }
 /**
@@ -135,6 +137,13 @@ notifications_enabled?: EnableNotifications
 export interface Logging {
 level?: LoggingLevel
 action_log_limit?: LogFileLimit
+[k: string]: unknown
+}
+/**
+ * Advanced Settings model.
+ */
+export interface Advanced {
+shutdown_after_tasks?: ShutdownAfterTasks
 [k: string]: unknown
 }
 export interface ProfileStateUpdate {

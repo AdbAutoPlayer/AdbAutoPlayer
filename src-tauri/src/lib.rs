@@ -3,12 +3,14 @@ use pyo3::prelude::*;
 mod commands;
 mod log;
 mod settings;
+mod shutdown;
 mod tray;
 mod window;
 
 pub use commands::*;
 pub use log::*;
 pub use settings::*;
+pub use shutdown::*;
 pub use tray::*;
 pub use window::*;
 
@@ -52,6 +54,7 @@ pub mod ext_mod {
 
                         setup_window_close_handler(app)?;
                         setup_tray(app)?;
+                        setup_all_tasks_completed_listener(app)?;
                         Ok(())
                     });
                 Ok(builder)

@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Literal, NoReturn
 
 from adb_auto_player.commands import log_debug_info
-from adb_auto_player.device.adb import AdbController
+from adb_auto_player.device.adb import AdbClientHelper, AdbController
 from adb_auto_player.file_loader import SettingsLoader
 from adb_auto_player.ipc import GameGUIOptions, LogMessage
 from adb_auto_player.log import LogPreset
@@ -47,6 +47,8 @@ from pytauri import (
 )
 
 PYTAURI_GEN_TS = getenv("VIRTUAL_ENV_PROMPT") == "AdbAutoPlayer"
+SIG_TERM_EXIT_CODE = -15
+
 commands: Commands = Commands(experimental_gen_ts=PYTAURI_GEN_TS)
 
 manager: SyncManager | None = None
@@ -239,6 +241,8 @@ async def start_task(
     while task_process and task_process.is_alive():
         await asyncio.sleep(0.5)
 
+    exitcode = task_process.exitcode
+
     task_processes[body.profile_index] = None
     task_labels[body.profile_index] = None
 
@@ -246,6 +250,16 @@ async def start_task(
     if listener:
         listener.stop()
         task_listeners[body.profile_index] = None
+
+    if exitcode != SIG_TERM_EXIT_CODE and not any(
+        p is not None and p.is_alive() for p in task_processes.values()
+    ):
+        Emitter.emit(
+            app_handle,
+            "all-tasks-completed",
+            BaseModel(),
+        )
+        return
 
     Emitter.emit(
         app_handle,
@@ -470,6 +484,7 @@ def main() -> int:
                     process.terminate()
                     process.join()
             _executor.shutdown(wait=False, cancel_futures=True)
+            AdbClientHelper.get_adb_client().server_kill()
             sys.exit(0)
 
         Listener.listen(app, "kill-python", handler)
