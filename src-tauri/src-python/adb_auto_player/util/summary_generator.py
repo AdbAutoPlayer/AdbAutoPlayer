@@ -55,7 +55,7 @@ class SummaryGenerator:
                 f"Current value: {value} (type: {type(value).__name__})"
             )
         instance.entries[section_header][item] = value + count
-        instance._flush_summary()
+        cls._flush_summary()
 
     @classmethod
     def set(cls, section_header: str, item: str, value: _ValueType) -> None:
@@ -72,15 +72,17 @@ class SummaryGenerator:
             instance.entries[section_header] = {}
 
         instance.entries[section_header][item] = value
-        instance._flush_summary()
+        cls._flush_summary()
 
-    def _flush_summary(self) -> None:
+    @classmethod
+    def _flush_summary(cls) -> None:
         """Send summary via callback if available."""
-        if self._callback is not None:
+        if cls._callback is not None:
             try:
-                self._callback(self.get_summary_message())
-            except Exception:
-                # Silently ignore callback errors to prevent breaking the main logic
+                instance = cls()
+                cls._callback(instance.get_summary_message())
+            except Exception as e:
+                print(f"[ERROR] Callback: {e}")
                 pass
 
     def get_summary_message(self) -> str | None:

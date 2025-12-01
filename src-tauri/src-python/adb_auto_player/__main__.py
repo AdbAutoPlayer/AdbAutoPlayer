@@ -254,7 +254,8 @@ async def start_task(
     if not summary_queue.empty():
         try:
             summary_msg = summary_queue.get_nowait()
-        except Exception:
+        except Exception as e:
+            print(f"[ERROR] {e}")
             pass
 
     task_summary_queues[body.profile_index] = None
