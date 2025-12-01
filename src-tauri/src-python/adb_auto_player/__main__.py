@@ -30,6 +30,7 @@ from adb_auto_player.tauri_helpers import get_game_gui_options, get_game_metadat
 from adb_auto_player.util import (
     Execute,
     LogMessageFactory,
+    RuntimeInfo,
     StringHelper,
     SummaryGenerator,
 )
@@ -451,6 +452,13 @@ def main() -> int:
     global manager
     manager = multiprocessing.Manager()
     _setup_logging()
+
+    if RuntimeInfo.is_mac():
+        multiprocessing.set_start_method(
+            "spawn",
+            # force=True,
+        )
+
     with start_blocking_portal("asyncio") as portal:
         if PYTAURI_GEN_TS:
             output_dir = Path(__file__).parent.parent.parent.parent / "src" / "client"
