@@ -10,7 +10,6 @@ from datetime import datetime
 from functools import wraps
 from logging.handlers import QueueHandler, QueueListener
 from multiprocessing import Process, Queue, freeze_support
-from multiprocessing.managers import SyncManager
 from os import getenv
 from pathlib import Path
 from typing import Any, Literal, NoReturn
@@ -50,11 +49,10 @@ from pytauri import (
 PYTAURI_GEN_TS = getenv("VIRTUAL_ENV_PROMPT") == "AdbAutoPlayer"
 commands: Commands = Commands(experimental_gen_ts=PYTAURI_GEN_TS)
 
-manager: SyncManager | None = None
-
 task_processes: dict[int, Process | None] = {}
 task_listeners: dict[int, QueueListener | None] = {}
 task_labels: dict[int, str | None] = {}
+task_summary_queues: dict[int, Queue | None] = {}
 
 _base_app_config_dir: Path | None = None
 _base_resource_dir: Path | None = None
@@ -160,9 +158,9 @@ def _setup_logging() -> None:
 def run_task(
     command: str,
     log_queue: Queue,
+    summary_queue: Queue,
     app_config_dir: Path,
     resource_dir: Path,
-    summary_dict: dict[int, str],
 ) -> None:
     """Wrapper to run task in a separate process."""
     queue_handler = QueueHandler(log_queue)
@@ -170,7 +168,13 @@ def run_task(
     logger.setLevel(logging.DEBUG)
     logger.addHandler(queue_handler)
 
-    SummaryGenerator.set_shared_dict(summary_dict)
+    def summary_callback(msg: str | None):
+        try:
+            summary_queue.put(msg)
+        except Exception:
+            pass
+
+    SummaryGenerator.set_callback(summary_callback)
     SettingsLoader.set_app_config_dir(app_config_dir)
     SettingsLoader.set_resource_dir(resource_dir)
 
@@ -199,10 +203,6 @@ async def start_task(
     app_handle: AppHandle,
     body: StartTaskBody,
 ) -> None:
-    if not manager:
-        logging.error("No manager!")
-        return
-
     if not _base_app_config_dir:
         logging.error("Cannot resolve App Config Dir")
         return
@@ -214,22 +214,23 @@ async def start_task(
         return
 
     log_queue = Queue()
+    summary_queue = Queue()
+    task_summary_queues[body.profile_index] = summary_queue
+
     listener = QueueListener(
         log_queue, TauriQueueHandler(app_handle, body.profile_index)
     )
     task_listeners[body.profile_index] = listener
     listener.start()
 
-    summary_dict = manager.dict()
-
     task_process = Process(
         target=run_task,
         args=(
             " ".join(body.args),
             log_queue,
+            summary_queue,
             _base_app_config_dir / f"{body.profile_index}",
             _base_resource_dir,
-            summary_dict,
         ),
     )
 
@@ -248,12 +249,21 @@ async def start_task(
         listener.stop()
         task_listeners[body.profile_index] = None
 
+    # Get summary from queue
+    summary_msg = None
+    if not summary_queue.empty():
+        try:
+            summary_msg = summary_queue.get_nowait()
+        except Exception as e:
+            print(f"[ERROR] {e}")
+            pass
+
+    task_summary_queues[body.profile_index] = None
+
     Emitter.emit(
         app_handle,
         "write-summary-to-log",
-        SummaryEvent(
-            profile_index=body.profile_index, msg=summary_dict.get("msg", None)
-        ),
+        SummaryEvent(profile_index=body.profile_index, msg=summary_msg),
     )
 
 
@@ -449,15 +459,7 @@ async def _generate_profile_state_update_model() -> ProfileStateUpdate:
 
 def main() -> int:
     """PyTauri main."""
-    global manager
-    manager = multiprocessing.Manager()
     _setup_logging()
-
-    if RuntimeInfo.is_mac():
-        multiprocessing.set_start_method(
-            "spawn",
-            # force=True,
-        )
 
     with start_blocking_portal("asyncio") as portal:
         if PYTAURI_GEN_TS:
@@ -486,9 +488,17 @@ def main() -> int:
         return exit_code
 
 
-# - If you don't use `multiprocessing`, you can remove this line.
-# - If you do use `multiprocessing` but without this line,
-#   you will get endless spawn loop of your application process.
-#   See: <https://pyinstaller.org/en/v6.11.1/common-issues-and-pitfalls.html#multi-processing>.
-freeze_support()
-sys.exit(main())
+if RuntimeInfo.is_mac():
+    multiprocessing.set_start_method(
+        "spawn",
+        force=True,
+    )
+
+
+if __name__ == "__main__":
+    # - If you don't use `multiprocessing`, you can remove this line.
+    # - If you do use `multiprocessing` but without this line,
+    #   you will get endless spawn loop of your application process.
+    #   See: <https://pyinstaller.org/en/v6.11.1/common-issues-and-pitfalls.html#multi-processing>.
+    freeze_support()
+    sys.exit(main())

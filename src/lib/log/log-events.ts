@@ -1,5 +1,5 @@
 import { EventNames } from "$lib/log/eventNames";
-import { emit } from '@tauri-apps/api/event';
+import { emit } from "@tauri-apps/api/event";
 
 export async function logDebug(message: string) {
   await emitLogMessageEvent({
@@ -17,7 +17,7 @@ export async function logInfo(message: string) {
   });
 }
 
-export async  function logWarning(message: string) {
+export async function logWarning(message: string) {
   await emitLogMessageEvent({
     level: "WARNING",
     message: message,
@@ -25,7 +25,7 @@ export async  function logWarning(message: string) {
   });
 }
 
-export async  function logError(message: string, profile?: number) {
+export async function logError(message: string, profile?: number) {
   await emitLogMessageEvent({
     level: "ERROR",
     message: message,
@@ -35,6 +35,5 @@ export async  function logError(message: string, profile?: number) {
 }
 
 async function emitLogMessageEvent(message: LogMessage) {
-
   await emit<LogMessage>(EventNames.LOG_MESSAGE, message);
 }

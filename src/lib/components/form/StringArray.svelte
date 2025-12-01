@@ -25,16 +25,12 @@
 <div class="flex flex-col gap-2">
   {#each value as item, idx}
     <div class="flex items-center gap-2">
-      <input
-        type="text"
-        class="input w-full"
-        bind:value={value[idx]}
-      />
+      <input type="text" class="input w-full" bind:value={value[idx]} />
 
       {#if !minItems || idx >= minItems}
         <button
           type="button"
-          class="btn btn-sm preset-filled-error-100-900"
+          class="btn preset-filled-error-100-900 btn-sm"
           onclick={() => removeItem(idx)}
         >
           –
@@ -45,7 +41,7 @@
 
   <button
     type="button"
-    class="btn btn-sm preset-filled-primary-100-900"
+    class="btn preset-filled-primary-100-900 btn-sm"
     onclick={addItem}
   >
     + Add
