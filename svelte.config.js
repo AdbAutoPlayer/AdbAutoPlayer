@@ -15,8 +15,8 @@ const config = {
       fallback: "index.html",
     }),
     alias: {
-      '$pytauri': 'src/client',
-    }
+      $pytauri: "src/client",
+    },
   },
 };
 

@@ -38,9 +38,7 @@
     }, new Map<string, Array<{ original: string; translated: string }>>());
   }
 
-  let groupedOptions = $derived(
-    groupOptionsByFirstCharacter(choices || []),
-  );
+  let groupedOptions = $derived(groupOptionsByFirstCharacter(choices || []));
 
   function handleCheckboxChange(choice: string, isChecked: boolean) {
     value = updateCheckboxArray(value, choice, isChecked);
@@ -54,9 +52,9 @@
     >
       <SettingsSectionHeader text={$t(title)} />
     </div>
-  {#if choices.length === 0}
-    <NoOptionsAvailable />
-  {:else}
+    {#if choices.length === 0}
+      <NoOptionsAvailable />
+    {:else}
       <div class="flex flex-wrap gap-2.5">
         {#each [...groupedOptions.entries()] as [letter, options]}
           <div
@@ -72,7 +70,10 @@
                     value={option.original}
                     checked={value.includes(option.original)}
                     onchange={(e) =>
-                handleCheckboxChange(option.original, e.currentTarget.checked)}
+                      handleCheckboxChange(
+                        option.original,
+                        e.currentTarget.checked,
+                      )}
                   />
                   <span class="mr-0.25 break-keep">{option.translated}</span>
                 </label>
@@ -81,6 +82,6 @@
           </div>
         {/each}
       </div>
-  {/if}
+    {/if}
   </div>
 </div>

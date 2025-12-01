@@ -1,6 +1,6 @@
 """Module responsible for generating and managing summary counts of phrases."""
 
-from typing import Callable
+from collections.abc import Callable
 
 _ValueType = int | str | float
 

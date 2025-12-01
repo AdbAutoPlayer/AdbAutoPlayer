@@ -26,14 +26,9 @@ function checkCommandExists(cmd, installHint) {
   }
 }
 
-checkCommandExists(
-  "uv",
-  "Install uv: https://github.com/astral-sh/uv"
-);
+checkCommandExists("uv", "Install uv: https://github.com/astral-sh/uv");
 
-runCommand(
-  "uv venv --allow-existing --python-preference only-system",
-);
+runCommand("uv venv --allow-existing --python-preference only-system");
 
 const isWin = process.platform === "win32";
 const VENV_PATH = path.join(__dirname, ".venv");

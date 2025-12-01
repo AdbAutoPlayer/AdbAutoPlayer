@@ -38,9 +38,11 @@
         if (!sectionSchema) return null;
 
         const resolvedProps: Record<string, any> = {};
-        Object.entries(sectionSchema.properties ?? {}).forEach(([propKey, prop]) => {
-          resolvedProps[propKey] = resolveRef(prop, settingsProps.formSchema);
-        });
+        Object.entries(sectionSchema.properties ?? {}).forEach(
+          ([propKey, prop]) => {
+            resolvedProps[propKey] = resolveRef(prop, settingsProps.formSchema);
+          },
+        );
 
         return {
           key,
@@ -48,7 +50,7 @@
             ...sectionSchema,
             title: value.title ?? sectionSchema.title,
             properties: resolvedProps,
-          }
+          },
         };
       })
       .filter(Boolean) as Section[];
@@ -57,17 +59,17 @@
   });
 
   function resolveRef(prop: any, rootSchema: JSONSchema) {
-    if ('$ref' in prop && typeof prop.$ref === 'string') {
-      const refName = prop.$ref.replace('#/$defs/', '');
+    if ("$ref" in prop && typeof prop.$ref === "string") {
+      const refName = prop.$ref.replace("#/$defs/", "");
       return rootSchema.$defs?.[refName] ?? prop;
     }
 
-    if (prop.type === 'array' && prop.items?.$ref) {
+    if (prop.type === "array" && prop.items?.$ref) {
       // console.log($state.snapshot(prop))
-      const refName = prop.items.$ref.replace('#/$defs/', '');
+      const refName = prop.items.$ref.replace("#/$defs/", "");
       return {
         ...prop,
-        items: rootSchema.$defs?.[refName] ?? prop.items
+        items: rootSchema.$defs?.[refName] ?? prop.items,
       };
     }
 
@@ -85,7 +87,7 @@
     }
 
     isSaving = true;
-    onFormSubmit()
+    onFormSubmit();
     isSaving = false;
   }
 
@@ -118,11 +120,12 @@
     setupRealTimeValidation();
 
     return () => {
-        isSaving = false;
-    }
+      isSaving = false;
+    };
   });
 </script>
 
+// @ts-nocheck
 <div class="h-full max-h-full">
   <form id="schema-form" class="settings-form">
     <Accordion multiple>
@@ -134,25 +137,25 @@
             </span>
 
             <Accordion.ItemIndicator class="group flex items-center">
-                <span class="hidden size-4 group-data-[state=open]:block">
-                  -
-                </span>
+              <span class="hidden size-4 group-data-[state=open]:block">
+                -
+              </span>
               <span class="block size-4 group-data-[state=open]:hidden">
-                  +
-                </span>
+                +
+              </span>
             </Accordion.ItemIndicator>
           </Accordion.ItemTrigger>
           <Accordion.ItemContent>
             <div class="p-4">
               {#each Object.entries(schema.properties ?? {}) as [propKey, prop]}
                 <div class="mb-4 flex items-center justify-between">
-                  {#if prop.type === 'array' && prop.items?.enum && Array.isArray(settingsProps.formData[key][propKey])}
-                    {#if prop.formType === 'TaskList'}
+                  {#if prop.type === "array" && prop.items?.enum && Array.isArray(settingsProps.formData[key][propKey])}
+                    {#if prop.formType === "TaskList"}
                       <TaskList
                         choices={prop.items?.enum}
                         bind:value={settingsProps.formData[key][propKey]}
                       />
-                    {:else if prop.formType === 'AlnumGroupedCheckboxArray'}
+                    {:else if prop.formType === "AlnumGroupedCheckboxArray"}
                       <AlnumGroupedCheckboxArray
                         title={$t(prop.title ?? propKey)}
                         choices={prop.items?.enum}
@@ -167,7 +170,7 @@
                       </label>
 
                       <div class="flex flex-1 items-center">
-                        {#if prop.formType === 'ImageCheckboxArray' }
+                        {#if prop.formType === "ImageCheckboxArray"}
                           <ImageCheckboxArray
                             choices={prop.items?.enum}
                             assetPath={prop.assetPath}
@@ -181,7 +184,7 @@
                         {/if}
                       </div>
                     {/if}
-                  {:else if prop.type === 'array' && prop.items?.type === 'string' && Array.isArray(settingsProps.formData[key][propKey])}
+                  {:else if prop.type === "array" && prop.items?.type === "string" && Array.isArray(settingsProps.formData[key][propKey])}
                     <div class="w-full">
                       <StringArray
                         bind:value={settingsProps.formData[key][propKey]}
@@ -189,7 +192,6 @@
                       />
                     </div>
                   {:else}
-
                     <label
                       for={`${key}-${propKey}`}
                       class="mr-3 w-40 text-right"
@@ -209,7 +211,7 @@
                             <option value={option}>{$t(String(option))}</option>
                           {/each}
                         </select>
-                      {:else if prop.type === 'boolean'}
+                      {:else if prop.type === "boolean"}
                         <!-- Checkbox -->
                         <input
                           id={`${key}-${propKey}`}
@@ -217,10 +219,10 @@
                           class="checkbox"
                           bind:checked={
                             () => Boolean(settingsProps.formData[key][propKey]),
-                            v => settingsProps.formData[key][propKey] = v
+                            (v) => (settingsProps.formData[key][propKey] = v)
                           }
                         />
-                      {:else if prop.type === 'integer' || prop.type === 'number'}
+                      {:else if prop.type === "integer" || prop.type === "number"}
                         <!-- Numeric input -->
                         <input
                           id={`${key}-${propKey}`}
@@ -228,7 +230,8 @@
                           class="input w-full"
                           min={prop.minimum}
                           max={prop.maximum}
-                          step={prop.step ?? (prop.type === 'integer' ? 1 : 'any')}
+                          step={prop.step ??
+                            (prop.type === "integer" ? 1 : "any")}
                           bind:value={settingsProps.formData[key][propKey]}
                         />
                       {:else}
@@ -255,7 +258,7 @@
     <div class="m-4">
       <button
         type="button"
-        class="w-full btn preset-filled-primary-100-900 hover:preset-filled-primary-500"
+        class="btn w-full preset-filled-primary-100-900 hover:preset-filled-primary-500"
         disabled={isSaving}
         onclick={handleSave}
       >

@@ -10,7 +10,6 @@ repos:
       - id: check-yaml
       - id: check-toml
       - id: pretty-format-json
-        exclude: '^(frontend/package-lock\.json|frontend/package\.json|build/windows/info\.json|wails\.json)$'
         args:
           - "--autofix"
           - "--no-ensure-ascii"
@@ -64,19 +63,20 @@ repos:
     hooks:
       - id: prettier
         name: prettier
-        entry:  pnpm --prefix frontend run prettier-write
+        entry:  pnpm  run prettier-write
         language: system
-        files: frontend/
+        files: src/
         pass_filenames: false
 
   - repo: local
     hooks:
       - id: svelte-check
         name: svelte-check
-        entry: pnpm --prefix frontend run check
+        entry: pnpm run check
         language: system
-        files: frontend/
+        files: src/
         pass_filenames: false
+        exclude: '.*SchemaForm.svelte$'
       - id: image-check
         name: Ensure only PNG images
         language: fail

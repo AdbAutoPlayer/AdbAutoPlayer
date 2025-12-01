@@ -263,9 +263,7 @@ async def start_task(
     Emitter.emit(
         app_handle,
         "write-summary-to-log",
-        SummaryEvent(
-            profile_index=body.profile_index, msg=summary_msg
-        ),
+        SummaryEvent(profile_index=body.profile_index, msg=summary_msg),
     )
 
 

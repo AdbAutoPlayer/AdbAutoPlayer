@@ -30,7 +30,7 @@
     await logInfo(`App Version: ${version}`);
   }
 
-  init()
+  init();
 
   onMount(() => {
     return setupExternalLinkHandler();
@@ -44,15 +44,18 @@
         EventNames.PROFILE_STATE_UPDATE,
         (event) => {
           // Prevent race condition with optimistic UI updates.
-          if ($profileStateTimestamp && $profileStateTimestamp >= event.payload.timestamp) {
+          if (
+            $profileStateTimestamp &&
+            $profileStateTimestamp >= event.payload.timestamp
+          ) {
             return;
           }
           $profileStates[event.payload.index] = {
             game_menu: event.payload.state.game_menu,
             active_task: event.payload.state.active_task,
             device_id: event.payload.state.device_id,
-          }
-        }
+          };
+        },
       );
 
       unsubscribers.push(stateUnsub);
@@ -60,13 +63,12 @@
 
     setupListeners();
     return () => unsubscribers.forEach((unsub) => unsub());
-  })
+  });
 
   onMount(() => {
     initPostHog();
   });
 </script>
-
 
 <Toast.Group {toaster}>
   {#snippet children(toast)}
