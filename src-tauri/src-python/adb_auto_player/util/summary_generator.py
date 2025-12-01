@@ -1,5 +1,7 @@
 """Module responsible for generating and managing summary counts of phrases."""
 
+from typing import Callable
+
 _ValueType = int | str | float
 
 
@@ -7,7 +9,7 @@ class SummaryGenerator:
     """Singleton class to maintain and update counts for given phrases."""
 
     _instance = None
-    _shared_dict: dict | None = None
+    _callback: Callable[[str | None], None] | None = None
 
     def __new__(cls):
         """Create or return the singleton instance of SummaryGenerator.
@@ -73,10 +75,13 @@ class SummaryGenerator:
         instance._flush_summary()
 
     def _flush_summary(self) -> None:
-        """Send summary via log queue or STDOUT depending on availability."""
-        if self._shared_dict is not None:
-            self._shared_dict.clear()
-            self._shared_dict["msg"] = self.get_summary_message()
+        """Send summary via callback if available."""
+        if self._callback is not None:
+            try:
+                self._callback(self.get_summary_message())
+            except Exception:
+                # Silently ignore callback errors to prevent breaking the main logic
+                pass
 
     def get_summary_message(self) -> str | None:
         """Generate a formatted summary message from the current entries.
@@ -99,6 +104,10 @@ class SummaryGenerator:
         return "\n".join(lines)
 
     @classmethod
-    def set_shared_dict(cls, shared_dict: dict):
-        """Set shared dict for Tauri Task multiprocessing."""
-        cls()._shared_dict = shared_dict
+    def set_callback(cls, callback: Callable[[str | None], None]) -> None:
+        """Set callback function for summary updates.
+
+        Args:
+            callback: Function that accepts the summary message (str | None)
+        """
+        cls._callback = callback
