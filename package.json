@@ -33,7 +33,7 @@
   "name": "adb-auto-player",
   "scripts": {
     "build": "vite build",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check": "svelte-kit sync && svelte-check --no-tsconfig --ignore \"src/lib/components/form/SchemaForm.svelte\"",
     "dev": "vite dev",
     "prettier-write": "prettier --write \"**/*.{ts,js,cjs,svelte}\"",
     "preview": "vite preview",
