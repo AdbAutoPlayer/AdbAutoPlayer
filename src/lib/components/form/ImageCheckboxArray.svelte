@@ -30,11 +30,7 @@
           onchange={(e) =>
             handleCheckboxChange(choice, e.currentTarget.checked)}
         />
-        <img
-          src={`${assetPath}/${choice}.png`}
-          alt={choice}
-          class="h-6 w-6"
-        />
+        <img src={`${assetPath}/${choice}.png`} alt={choice} class="h-6 w-6" />
         <span>{$t(choice)}</span>
       </label>
     {/each}

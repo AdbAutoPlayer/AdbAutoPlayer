@@ -20,16 +20,17 @@ export async function showErrorToast(
   error: unknown,
   options: ErrorToastOptions = {},
 ) {
-  const { title = "Something went wrong", logToLogDisplay = true, profile = undefined } = options;
+  const {
+    title = "Something went wrong",
+    logToLogDisplay = true,
+    profile = undefined,
+  } = options;
 
   const message = capitalizeError(error);
 
   reportError(error);
   if (logToLogDisplay) {
-    await logError(
-      message,
-      profile
-    ); // Display in LogDisplay in case the toast disappears too fast
+    await logError(message, profile); // Display in LogDisplay in case the toast disappears too fast
   }
   console.error(error);
 

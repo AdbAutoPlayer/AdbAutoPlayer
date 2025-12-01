@@ -131,8 +131,14 @@ impl AppSettings {
     }
 
     pub fn save_to_file(&self, path: impl AsRef<Path>) -> std::io::Result<()> {
-        let toml_string = toml::to_string_pretty(self).expect("Failed to serialize settings");
+        let path = path.as_ref();
 
+        // Create parent directories if they don't exist
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+
+        let toml_string = toml::to_string_pretty(self).expect("Failed to serialize settings");
         fs::write(path, toml_string)
     }
 }
@@ -171,6 +177,7 @@ pub fn save_app_settings(
     state: State<'_, Mutex<AppSettings>>,
 ) -> AppSettings {
     let path = get_app_settings_path(&app_handle);
+    println!("{}", path.display());
     AppSettings::save_to_file(&settings, &path).expect("Failed to save App Settings");
 
     let mut state = state.lock().unwrap();
