@@ -11,64 +11,64 @@ import type { InvokeOptions } from "@tauri-apps/api/core";
 import type { Commands } from "./_apiTypes.d.ts";
 
 export async function startTask(
-  body: Commands["start_task"]["input"],
-  options?: InvokeOptions,
+    body: Commands["start_task"]["input"],
+    options?: InvokeOptions
 ): Promise<Commands["start_task"]["output"]> {
-  return await pyInvoke("start_task", body, options);
+    return await pyInvoke("start_task", body, options);
 }
 
 export async function stopTask(
-  body: Commands["stop_task"]["input"],
-  options?: InvokeOptions,
+    body: Commands["stop_task"]["input"],
+    options?: InvokeOptions
 ): Promise<Commands["stop_task"]["output"]> {
-  return await pyInvoke("stop_task", body, options);
+    return await pyInvoke("stop_task", body, options);
 }
 
 export async function debug(
-  body: Commands["debug"]["input"],
-  options?: InvokeOptions,
+    body: Commands["debug"]["input"],
+    options?: InvokeOptions
 ): Promise<Commands["debug"]["output"]> {
-  return await pyInvoke("debug", body, options);
+    return await pyInvoke("debug", body, options);
 }
 
 export async function getAdbSettingsForm(
-  body: Commands["get_adb_settings_form"]["input"],
-  options?: InvokeOptions,
+    body: Commands["get_adb_settings_form"]["input"],
+    options?: InvokeOptions
 ): Promise<Commands["get_adb_settings_form"]["output"]> {
-  return await pyInvoke("get_adb_settings_form", body, options);
+    return await pyInvoke("get_adb_settings_form", body, options);
 }
 
 export async function getGameSettingsForm(
-  body: Commands["get_game_settings_form"]["input"],
-  options?: InvokeOptions,
+    body: Commands["get_game_settings_form"]["input"],
+    options?: InvokeOptions
 ): Promise<Commands["get_game_settings_form"]["output"]> {
-  return await pyInvoke("get_game_settings_form", body, options);
+    return await pyInvoke("get_game_settings_form", body, options);
 }
 
 export async function getProfileState(
-  body: Commands["get_profile_state"]["input"],
-  options?: InvokeOptions,
+    body: Commands["get_profile_state"]["input"],
+    options?: InvokeOptions
 ): Promise<Commands["get_profile_state"]["output"]> {
-  return await pyInvoke("get_profile_state", body, options);
+    return await pyInvoke("get_profile_state", body, options);
 }
 
 export async function cacheClear(
-  body: Commands["cache_clear"]["input"],
-  options?: InvokeOptions,
+    body: Commands["cache_clear"]["input"],
+    options?: InvokeOptions
 ): Promise<Commands["cache_clear"]["output"]> {
-  return await pyInvoke("cache_clear", body, options);
+    return await pyInvoke("cache_clear", body, options);
 }
 
 export async function _generateAppSettingsModel(
-  body: Commands["_generate_app_settings_model"]["input"],
-  options?: InvokeOptions,
+    body: Commands["_generate_app_settings_model"]["input"],
+    options?: InvokeOptions
 ): Promise<Commands["_generate_app_settings_model"]["output"]> {
-  return await pyInvoke("_generate_app_settings_model", body, options);
+    return await pyInvoke("_generate_app_settings_model", body, options);
 }
 
 export async function _generateProfileStateUpdateModel(
-  body: Commands["_generate_profile_state_update_model"]["input"],
-  options?: InvokeOptions,
+    body: Commands["_generate_profile_state_update_model"]["input"],
+    options?: InvokeOptions
 ): Promise<Commands["_generate_profile_state_update_model"]["output"]> {
-  return await pyInvoke("_generate_profile_state_update_model", body, options);
+    return await pyInvoke("_generate_profile_state_update_model", body, options);
 }

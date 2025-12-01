@@ -67,6 +67,7 @@ repos:
         language: system
         files: src/
         pass_filenames: false
+        exclude: "src/client"
 
   - repo: local
     hooks:
