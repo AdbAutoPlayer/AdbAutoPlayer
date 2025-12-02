@@ -125,7 +125,6 @@
   });
 </script>
 
-// @ts-nocheck
 <div class="h-full max-h-full">
   <form id="schema-form" class="settings-form">
     <Accordion multiple>
