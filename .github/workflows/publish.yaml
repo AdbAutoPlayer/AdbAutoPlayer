@@ -157,32 +157,21 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
+          tagName: ${{ github.event.release.tag_name }}
+          releaseName: ${{ github.event.release.tag_name }}
+          releaseBody: "See the assets to download this version and install."
+          releaseDraft: true
           includeDebug: false
           args: '--target ${{ matrix.target }} --config ${{ matrix.config }} --verbose'
 
-      - name: Add instructions to macOS bundle
-        if: github.event_name == 'release' && matrix.platform == 'macos-latest'
-        run: |
-          BUNDLE_DIR="target/${{ matrix.target }}/release/bundle/macos"
-          TAR_FILE="$BUNDLE_DIR/AdbAutoPlayer_aarch64.app.tar.gz"
-          TEMP_DIR="temp_macos_bundle"
 
-          mkdir -p "$TEMP_DIR"
-          tar -xzf "$TAR_FILE" -C "$TEMP_DIR"
-          cp "scripts/macos/MACOS_READ_THIS_IMPORTANT.txt" "$TEMP_DIR/"
-          tar -czf "$TAR_FILE" -C "$TEMP_DIR" .
-
-          rm -rf "$TEMP_DIR"
-
-          echo "Added MACOS_READ_THIS_IMPORTANT.txt to the macOS release archive"
-
-      - name: Upload bundles to release
-        if: github.event_name == 'release'
+      - name: Upload macOS important readme to release
+        if: github.event_name == 'release' && runner.os == 'macOS'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: scripts/macos/MACOS_READ_THIS_IMPORTANT.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          BUNDLE_DIR="target/${{ matrix.target }}/release/bundle"
-          gh release upload ${{ github.event.release.tag_name }} "$BUNDLE_DIR"/**/*
 
       - uses: tauri-apps/tauri-action@v0
         if: github.event_name == 'workflow_dispatch'
