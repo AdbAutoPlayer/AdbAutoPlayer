@@ -54,7 +54,8 @@ commands: Commands = Commands(experimental_gen_ts=PYTAURI_GEN_TS)
 task_processes: dict[int, Process | None] = {}
 task_listeners: dict[int, QueueListener | None] = {}
 task_labels: dict[int, str | None] = {}
-task_summary_queues: dict[int, Optional[Queue]] = {}
+# Queue | None breaks on macOS standalone build because Queue is seen as function.
+task_summary_queues: dict[int, Optional[Queue]] = {}  # noqa: UP045
 
 _base_app_config_dir: Path | None = None
 _base_resource_dir: Path | None = None
