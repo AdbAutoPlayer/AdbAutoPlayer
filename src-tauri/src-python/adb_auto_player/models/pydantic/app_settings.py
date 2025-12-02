@@ -74,12 +74,21 @@ class ProfileSettings(BaseModel):
     profiles: list[str] = Field(default=["Default"], title="Profiles", min_length=1)
 
 
+class AdvancedSettings(BaseModel):
+    """Advanced Settings model."""
+
+    shutdown_after_tasks: bool = Field(default=False, title="Shutdown after Tasks")
+
+
 class AppSettings(BaseModel):
     """App Settings model."""
 
     profiles: ProfileSettings = Field(default_factory=ProfileSettings, title="Profiles")
     ui: UISettings = Field(default_factory=UISettings, title="User Interface")
     logging: LoggingSettings = Field(default_factory=LoggingSettings, title="Logging")
+    advanced: AdvancedSettings = Field(
+        default_factory=AdvancedSettings, title="Advanced"
+    )
 
 
 if __name__ == "__main__":
