@@ -76,7 +76,6 @@ repos:
         language: system
         files: src/
         pass_filenames: false
-        exclude: '.*SchemaForm.svelte$'
       - id: image-check
         name: Ensure only PNG images
         language: fail
