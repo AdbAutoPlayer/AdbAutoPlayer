@@ -1,0 +1,21 @@
+Install everything listed here if you haven't already: https://adbautoplayer.github.io/AdbAutoPlayer/user-guide/macos-setup.html
+
+macOS will display a warning that "AdbAutoPlayer" cannot be verified or is broken.
+
+To run the app, follow these steps:
+
+1. Open Terminal (located in Applications > Utilities).
+2. Run the following command, replacing "/path/to/" with the actual location of AdbAutoPlayer.app:
+   xattr -d com.apple.quarantine /path/to/AdbAutoPlayer.app
+   Tip: Drag AdbAutoPlayer.app from Finder into Terminal after typing "xattr -d com.apple.quarantine " to auto-fill the path.
+   Example (if the app is in Applications):
+   xattr -d com.apple.quarantine /Applications/AdbAutoPlayer.app
+3. Press Enter. You should now be able to start the app.
+
+If macOS still blocks the app, go to System Settings > Privacy & Security and approve AdbAutoPlayer.
+
+Additional Notes:
+- AdbAutoPlayer is safe to use but is not signed. Signing apps on macOS requires spending 99 USD per year and exposing private information publicly. https://developer.apple.com/programs/enroll/
+- If it still doesn't run ask ChatGPT or the LLM of your choice.
+- If you are worried about the code being malicious, you can copy it into the LLM of your choice to get assurance.
+- These instructions are for macOS Ventura and later. For older versions, ask a LLM.
