@@ -12,7 +12,7 @@ from logging.handlers import QueueHandler, QueueListener
 from multiprocessing import Process, Queue, freeze_support
 from os import getenv
 from pathlib import Path
-from typing import Any, Literal, NoReturn
+from typing import Any, Literal, NoReturn, Optional
 
 from adb_auto_player.commands import log_debug_info
 from adb_auto_player.device.adb import AdbClientHelper, AdbController
@@ -54,7 +54,7 @@ commands: Commands = Commands(experimental_gen_ts=PYTAURI_GEN_TS)
 task_processes: dict[int, Process | None] = {}
 task_listeners: dict[int, QueueListener | None] = {}
 task_labels: dict[int, str | None] = {}
-task_summary_queues: dict[int, Queue | None] = {}
+task_summary_queues: dict[int, Optional[Queue]] = {}
 
 _base_app_config_dir: Path | None = None
 _base_resource_dir: Path | None = None

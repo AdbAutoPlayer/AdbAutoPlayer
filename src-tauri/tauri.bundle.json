@@ -10,7 +10,8 @@
     },
     "targets": [
       "msi",
-      "app"
+      "app",
+      "dmg"
     ]
   }
 }
