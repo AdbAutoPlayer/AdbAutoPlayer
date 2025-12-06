@@ -28,6 +28,7 @@
     const version = await getVersion();
     console.log(version);
     await logInfo(`App Version: ${version}`);
+    initPostHog(version);
   }
 
   init();
@@ -63,10 +64,6 @@
 
     setupListeners();
     return () => unsubscribers.forEach((unsub) => unsub());
-  });
-
-  onMount(() => {
-    initPostHog();
   });
 </script>
 

@@ -1,10 +1,9 @@
 import posthog from "posthog-js";
-import { getVersion } from "@tauri-apps/api/app";
 
 const POSTHOG_KEY = "phc_GXmHn56fL10ymOt3inmqSER4wh5YuN3AG6lmauJ5b0o";
 const POSTHOG_HOST = "https://eu.i.posthog.com";
 
-export async function initPostHog() {
+export function initPostHog(version: string) {
   if (posthog.__loaded) {
     return;
   }
@@ -18,7 +17,7 @@ export async function initPostHog() {
     });
 
     posthog.register({
-      app_version: await getVersion(),
+      app_version: version,
     });
   } catch (error) {
     console.error(error);
