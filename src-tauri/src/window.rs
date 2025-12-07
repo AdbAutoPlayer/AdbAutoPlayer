@@ -9,6 +9,7 @@ pub fn show_window(app: AppHandle) -> Result<(), String> {
 
 pub fn internal_show_window(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     if let Some(window) = app.get_webview_window("main") {
+        window.unminimize()?;
         window.show()?;
         window.set_focus()?;
         update_tray_menu(app, true)?;
