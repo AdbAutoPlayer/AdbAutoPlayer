@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import multiprocessing
+import queue
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from contextvars import copy_context
@@ -172,9 +173,17 @@ def run_task(
     logger.addHandler(queue_handler)
 
     def summary_callback(msg: str | None):
+        # We are catching all exceptions here regardless
+        # because we never want the summary to actually stop the process via error
+        if summary_queue.full():
+            try:
+                summary_queue.get_nowait()
+            except (queue.Empty, Exception):
+                pass
         try:
-            summary_queue.put(msg)
-        except Exception:
+            summary_queue.put_nowait(msg)
+        except (queue.Full, Exception):
+            # queue.Full should really never happen here but leaving as is
             pass
 
     SummaryGenerator.set_callback(summary_callback)
@@ -217,7 +226,7 @@ async def start_task(
         return
 
     log_queue = Queue()
-    summary_queue = Queue()
+    summary_queue = Queue(maxsize=2)
     task_summary_queues[body.profile_index] = summary_queue
 
     listener = QueueListener(
@@ -266,12 +275,12 @@ async def start_task(
 
     # Get summary from queue
     summary_msg = None
-    if not summary_queue.empty():
+    while not summary_queue.empty():
         try:
             summary_msg = summary_queue.get_nowait()
         except Exception as e:
             print(f"[ERROR] {e}")
-            pass
+            break
 
     task_summary_queues[body.profile_index] = None
 
