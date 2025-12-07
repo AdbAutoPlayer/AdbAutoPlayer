@@ -103,7 +103,7 @@
                 >{$t("The App will restart automatically.")}</Dialog.Title
               >
             {/if}
-            <Dialog.CloseTrigger class="btn-icon preset-tonal">
+            <Dialog.CloseTrigger class="btn-icon hover:preset-tonal">
               <IconX size={16} />
             </Dialog.CloseTrigger>
           </header>

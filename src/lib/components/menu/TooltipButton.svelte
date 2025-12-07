@@ -38,7 +38,7 @@
     </Tooltip.Trigger>
     <Portal>
       <Tooltip.Positioner>
-        <Tooltip.Content class="card preset-filled-primary-500 p-4 select-none">
+        <Tooltip.Content class="card preset-tonal-surface p-4 select-none">
           {$t(menuButton.option.tooltip || "")}
         </Tooltip.Content>
       </Tooltip.Positioner>

@@ -17,7 +17,7 @@ type ErrorToastOptions = {
  * });
  */
 export async function showErrorToast(
-  error: unknown,
+  error: unknown | string,
   options: ErrorToastOptions = {},
 ) {
   const {
