@@ -89,8 +89,14 @@
           const logMessage = event.payload;
           const logLevel: LogLevel = $appSettings?.logging?.level ?? "INFO";
 
+          let alwaysLogDebug = false;
+          if (logMessage.profile_index) {
+            alwaysLogDebug =
+              $debugLogLevelOverwrite[logMessage.profile_index] ?? false;
+          }
+
           if (
-            $debugLogLevelOverwrite ||
+            alwaysLogDebug ||
             logLevelOrder[logMessage.level] >= logLevelOrder[logLevel]
           ) {
             insertEntry(
