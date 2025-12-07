@@ -6,6 +6,7 @@
   import { Dialog, Portal } from "@skeletonlabs/skeleton-svelte";
   import IconX from "$lib/components/icons/feather/IconX.svelte";
   import { t } from "$lib/i18n/i18n";
+  import { emit } from "@tauri-apps/api/event";
 
   let checkUpdateTimeout: number | null = null;
   let update: Update | null = $state(null);
@@ -58,6 +59,13 @@
 
         case "Finished":
           downloadProgress = 100;
+          emit("kill-python")
+            .then(() => {
+              console.log("Kill signal sent to Python.");
+            })
+            .catch((err) => {
+              console.error("Failed to send kill signal:", err);
+            });
           break;
       }
     });
