@@ -75,7 +75,7 @@
     insertEntry(summaryProfileIndex, {
       message: summaryMessage,
       timestamp: Instant.now(),
-      html_class: "whitespace-pre-wrap text-success-950",
+      html_class: "whitespace-pre-wrap text-secondary-500",
     });
   }
 
