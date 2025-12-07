@@ -21,18 +21,12 @@ class Theme(str, Enum):
     cerberus = "cerberus"
     crimson = "crimson"
     fennec = "fennec"
-    hamlindigo = "hamlindigo"
-    legacy = "legacy"
-    mint = "mint"
     modern = "modern"
     mona = "mona"
     nosh = "nosh"
     nouveau = "nouveau"
     pine = "pine"
-    reign = "reign"
-    rocket = "rocket"
     rose = "rose"
-    sahara = "sahara"
     seafoam = "seafoam"
     terminus = "terminus"
     vintage = "vintage"
@@ -60,7 +54,7 @@ class LoggingSettings(BaseModel):
 class UISettings(BaseModel):
     """UI Settings model."""
 
-    theme: Theme = Field(default=Theme.catppuccin, title="Theme")
+    theme: Theme = Field(default=Theme.cerberus, title="Theme")
     locale: Locale = Field(default=Locale.en, title="Locale")
     close_should_minimize: bool = Field(
         False, title="Close button should minimize the window"

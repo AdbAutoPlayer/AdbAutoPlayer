@@ -24,7 +24,7 @@ export type Profiles1 = [string, ...(string)[]]
 /**
  * Theme Enum.
  */
-export type Theme = ("catppuccin" | "cerberus" | "crimson" | "fennec" | "hamlindigo" | "legacy" | "mint" | "modern" | "mona" | "nosh" | "nouveau" | "pine" | "reign" | "rocket" | "rose" | "sahara" | "seafoam" | "terminus" | "vintage" | "vox" | "wintry")
+export type Theme = ("catppuccin" | "cerberus" | "crimson" | "fennec" | "modern" | "mona" | "nosh" | "nouveau" | "pine" | "rose" | "seafoam" | "terminus" | "vintage" | "vox" | "wintry")
 /**
  * Locale Enum.
  */

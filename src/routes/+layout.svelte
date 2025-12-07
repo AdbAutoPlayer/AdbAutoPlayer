@@ -69,7 +69,7 @@
 
 <Toast.Group {toaster}>
   {#snippet children(toast)}
-    <Toast {toast} class="data-[type=error]:preset-filled-error-100-900">
+    <Toast {toast} class="data-[type=error]:preset-tonal-error">
       <Toast.Message>
         <Toast.Title>
           <span class="text-lg">{toast.title}</span>

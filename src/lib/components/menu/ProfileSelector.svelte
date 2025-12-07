@@ -108,7 +108,7 @@
           <Dialog.Title class="text-2xl font-bold"
             >{$t("Profiles")}</Dialog.Title
           >
-          <Dialog.CloseTrigger class="btn-icon preset-tonal">
+          <Dialog.CloseTrigger class="btn-icon hover:preset-tonal">
             <IconX size={16} />
           </Dialog.CloseTrigger>
         </header>
@@ -117,7 +117,10 @@
         <aside class="flex-1 space-y-2 overflow-y-auto">
           {#each getProfiles() as profile, i}
             <button
-              class="btn flex w-full items-center justify-start rounded preset-outlined-primary-500 transition-colors"
+              class="btn flex w-full items-center justify-start rounded preset-tonal {i ===
+              $activeProfile
+                ? 'preset-outlined'
+                : ''} transition-colors"
               class:selected={i === $activeProfile}
               onclick={() => selectProfile(i)}
             >
@@ -135,7 +138,7 @@
         <!-- Sticky footer -->
         <footer class="sticky bottom-0 mt-4 bg-surface-100-900 py-2">
           <button
-            class="btn-primary btn w-full preset-filled-primary-100-900 p-2 hover:preset-filled-primary-500"
+            class="btn-primary btn w-full preset-tonal-primary p-2"
             onclick={() => openAppSettingsForm()}
           >
             Settings

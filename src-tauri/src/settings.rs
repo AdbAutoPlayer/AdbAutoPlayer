@@ -6,30 +6,24 @@ use std::sync::Mutex;
 use tauri::{Emitter, Manager, State};
 
 const APP_SETTINGS_SCHEMA: &str = r##"
-{"$defs": {"AdvancedSettings": {"description": "Advanced Settings model.", "properties": {"shutdown_after_tasks": {"default": false, "title": "Shutdown after Tasks", "type": "boolean"}}, "title": "AdvancedSettings", "type": "object"}, "Locale": {"description": "Locale Enum.", "enum": ["en", "jp", "vn"], "title": "Locale", "type": "string"}, "LoggingSettings": {"description": "Logging settings model.", "properties": {"level": {"default": "INFO", "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "FATAL"], "title": "Logging Level", "type": "string"}, "action_log_limit": {"default": 5, "minimum": 0, "title": "Log File Limit", "type": "integer"}}, "title": "LoggingSettings", "type": "object"}, "ProfileSettings": {"description": "Profile Settings model.", "properties": {"profiles": {"default": ["Default"], "items": {"type": "string"}, "minItems": 1, "title": "Profiles", "type": "array"}}, "title": "ProfileSettings", "type": "object"}, "Theme": {"description": "Theme Enum.", "enum": ["catppuccin", "cerberus", "crimson", "fennec", "hamlindigo", "legacy", "mint", "modern", "mona", "nosh", "nouveau", "pine", "reign", "rocket", "rose", "sahara", "seafoam", "terminus", "vintage", "vox", "wintry"], "title": "Theme", "type": "string"}, "UISettings": {"description": "UI Settings model.", "properties": {"theme": {"$ref": "#/$defs/Theme", "default": "catppuccin"}, "locale": {"$ref": "#/$defs/Locale", "default": "en"}, "close_should_minimize": {"default": false, "title": "Close button should minimize the window", "type": "boolean"}, "notifications_enabled": {"default": false, "title": "Enable Notifications", "type": "boolean"}}, "title": "UISettings", "type": "object"}}, "description": "App Settings model.", "properties": {"profiles": {"$ref": "#/$defs/ProfileSettings", "title": "Profiles"}, "ui": {"$ref": "#/$defs/UISettings", "title": "User Interface"}, "logging": {"$ref": "#/$defs/LoggingSettings", "title": "Logging"}, "advanced": {"$ref": "#/$defs/AdvancedSettings", "title": "Advanced"}}, "title": "AppSettings", "type": "object"}
+{"$defs": {"AdvancedSettings": {"description": "Advanced Settings model.", "properties": {"shutdown_after_tasks": {"default": false, "title": "Shutdown after Tasks", "type": "boolean"}}, "title": "AdvancedSettings", "type": "object"}, "Locale": {"description": "Locale Enum.", "enum": ["en", "jp", "vn"], "title": "Locale", "type": "string"}, "LoggingSettings": {"description": "Logging settings model.", "properties": {"level": {"default": "INFO", "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "FATAL"], "title": "Logging Level", "type": "string"}, "action_log_limit": {"default": 5, "minimum": 0, "title": "Log File Limit", "type": "integer"}}, "title": "LoggingSettings", "type": "object"}, "ProfileSettings": {"description": "Profile Settings model.", "properties": {"profiles": {"default": ["Default"], "items": {"type": "string"}, "minItems": 1, "title": "Profiles", "type": "array"}}, "title": "ProfileSettings", "type": "object"}, "Theme": {"description": "Theme Enum.", "enum": ["catppuccin", "cerberus", "crimson", "fennec", "modern", "mona", "nosh", "nouveau", "pine", "rose", "seafoam", "terminus", "vintage", "vox", "wintry"], "title": "Theme", "type": "string"}, "UISettings": {"description": "UI Settings model.", "properties": {"theme": {"$ref": "#/$defs/Theme", "default": "catppuccin"}, "locale": {"$ref": "#/$defs/Locale", "default": "en"}, "close_should_minimize": {"default": false, "title": "Close button should minimize the window", "type": "boolean"}, "notifications_enabled": {"default": false, "title": "Enable Notifications", "type": "boolean"}}, "title": "UISettings", "type": "object"}}, "description": "App Settings model.", "properties": {"profiles": {"$ref": "#/$defs/ProfileSettings", "title": "Profiles"}, "ui": {"$ref": "#/$defs/UISettings", "title": "User Interface"}, "logging": {"$ref": "#/$defs/LoggingSettings", "title": "Logging"}, "advanced": {"$ref": "#/$defs/AdvancedSettings", "title": "Advanced"}}, "title": "AppSettings", "type": "object"}
 "##;
 
 // ---------- Enums ----------
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Theme {
-    #[default]
     Catppuccin,
+    #[default]
     Cerberus,
     Crimson,
     Fennec,
-    Hamlindigo,
-    Legacy,
-    Mint,
     Modern,
     Mona,
     Nosh,
     Nouveau,
     Pine,
-    Reign,
-    Rocket,
     Rose,
-    Sahara,
     Seafoam,
     Terminus,
     Vintage,
