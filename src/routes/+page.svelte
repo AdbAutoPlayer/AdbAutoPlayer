@@ -172,7 +172,7 @@
       if ($profileStates[profile]) {
         $profileStates[profile].active_task = "Debug";
       }
-      $debugLogLevelOverwrite = true;
+      $debugLogLevelOverwrite[profile] = true;
       await debug({ profile_index: profile });
     } catch (error) {
       void showErrorToast(error, {
@@ -181,7 +181,7 @@
       });
     }
 
-    $debugLogLevelOverwrite = false;
+    $debugLogLevelOverwrite[profile] = false;
     void getProfileState({
       profile_index: profile,
     });
