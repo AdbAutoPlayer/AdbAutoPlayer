@@ -210,6 +210,10 @@ class SummaryEvent(BaseModel):
     msg: str | None
 
 
+class EmptyModel(BaseModel):
+    pass
+
+
 @tauri_profile_aware_command
 async def start_task(
     app_handle: AppHandle,
@@ -269,7 +273,7 @@ async def start_task(
         Emitter.emit(
             app_handle,
             "all-tasks-completed",
-            BaseModel(),
+            EmptyModel(),
         )
         return
 
