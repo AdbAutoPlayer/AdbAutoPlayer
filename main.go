@@ -44,7 +44,7 @@ func main() {
 		Services: []application.Service{
 			application.NewService(settings.GetService()),
 			application.NewService(&hotkeys.HotkeysService{}),
-			application.NewService(updater.NewUpdateService(Version, isDev)),
+			application.NewService(updater.NewUpdateService()),
 			application.NewService(&games.GamesService{}),
 			application.NewService(notifications.GetService()),
 			application.NewService(log_reader.NewLogReaderService()),

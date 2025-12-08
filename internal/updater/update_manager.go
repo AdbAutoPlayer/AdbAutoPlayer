@@ -1,17 +1,14 @@
 package updater
 
 import (
-	"adb-auto-player/internal/logger"
 	"context"
 	"fmt"
+	"runtime"
+	"strings"
+
 	"github.com/Masterminds/semver"
 	"github.com/google/go-github/v72/github"
 	"github.com/wailsapp/wails/v3/pkg/application"
-	"io"
-	"net/http"
-	"os"
-	"runtime"
-	"strings"
 )
 
 type UpdateInfo struct {
@@ -54,19 +51,6 @@ func NewUpdateManager(currentVersion string, isDev bool) UpdateManager {
 }
 
 func (u *UpdateManager) CheckForUpdates(autoUpdate bool, checkPrerelease bool) (UpdateInfo, error) {
-	if u.isDev {
-		/* UI Testing
-		return UpdateInfo{
-			Available:   true,
-			Version:     "1.0.0",
-			DownloadURL: "example.com",
-			Size:        1,
-			AutoUpdate:  false,
-		}, nil
-		*/
-		return UpdateInfo{Available: false}, nil
-	}
-
 	currentVer, err := semver.NewVersion(u.currentVersion)
 	if err != nil {
 		return UpdateInfo{}, fmt.Errorf("failed to parse current version: %w", err)
@@ -111,7 +95,7 @@ func (u *UpdateManager) CheckForUpdates(autoUpdate bool, checkPrerelease bool) (
 			DownloadURL:      *asset.BrowserDownloadURL,
 			Size:             size,
 			AutoUpdate:       autoUpdate,
-			RedirectToGitHub: runtime.GOOS != "windows",
+			RedirectToGitHub: true,
 		}, nil
 	}
 
@@ -285,65 +269,6 @@ func (u *UpdateManager) getReleasesBetweenTags(startTag, endTag string) ([]*gith
 	}
 
 	return filteredReleases, nil
-}
-
-func (u *UpdateManager) downloadFile(url, filepath string) error {
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err = resp.Body.Close(); err != nil {
-			logger.Get().Errorf("resp.Body.Close error: %v", err)
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %s", resp.Status)
-	}
-
-	out, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err = out.Close(); err != nil {
-			logger.Get().Errorf("out.Close error: %v", err)
-		}
-	}()
-
-	// Create a progress reader if callback is set
-	var reader io.Reader = resp.Body
-	if u.progressCallback != nil && resp.ContentLength > 0 {
-		reader = &progressReader{
-			reader:   resp.Body,
-			total:    resp.ContentLength,
-			callback: u.progressCallback,
-		}
-	}
-
-	_, err = io.Copy(out, reader)
-	return err
-}
-
-// progressReader wraps an io.Reader to report download progress
-type progressReader struct {
-	reader   io.Reader
-	total    int64
-	current  int64
-	callback func(float64)
-}
-
-func (pr *progressReader) Read(p []byte) (int, error) {
-	n, err := pr.reader.Read(p)
-	pr.current += int64(n)
-
-	if pr.callback != nil {
-		progress := float64(pr.current) / float64(pr.total) * 100
-		pr.callback(progress)
-	}
-
-	return n, err
 }
 
 func getContext() context.Context {

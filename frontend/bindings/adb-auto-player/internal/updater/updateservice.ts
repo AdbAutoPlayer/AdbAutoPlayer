@@ -15,8 +15,8 @@ export function CheckForUpdates(): $CancellablePromise<$models.UpdateInfo> {
     });
 }
 
-export function DownloadUpdate(downloadURL: string): $CancellablePromise<void> {
-    return $Call.ByID(674014119, downloadURL);
+export function DownloadUpdate(): $CancellablePromise<void> {
+    return $Call.ByID(674014119);
 }
 
 export function GetChangelogs(): $CancellablePromise<$models.Changelog[]> {
