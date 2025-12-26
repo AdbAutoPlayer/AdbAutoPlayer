@@ -4,12 +4,13 @@
   import { onMount } from "svelte";
   import { showErrorToast } from "$lib/toast/toast-error";
   import type { JSONSchema } from "json-schema-to-typescript";
-  import CheckboxArray from "$lib/components/form/CheckboxArray.svelte";
-  import ImageCheckboxArray from "$lib/components/form/ImageCheckboxArray.svelte";
-  import AlnumGroupedCheckboxArray from "$lib/components/form/AlnumGroupedCheckboxArray.svelte";
-  import TaskList from "$lib/components/form/TaskList.svelte";
+  import CheckboxArray from "$lib/form/components/CheckboxArray.svelte";
+  import ImageCheckboxArray from "$lib/form/components/ImageCheckboxArray.svelte";
+  import AlnumGroupedCheckboxArray from "$lib/form/components/AlnumGroupedCheckboxArray.svelte";
+  import TaskList from "$lib/form/components/TaskList.svelte";
   import type { SettingsProps } from "$lib/menu/model";
-  import StringArray from "$lib/components/form/StringArray.svelte";
+  import StringArray from "$lib/form/components/StringArray.svelte";
+  import { asArraySchema, asNonEmptyStringArray } from "$lib/form/types";
 
   let {
     settingsProps = $bindable(),
@@ -27,7 +28,7 @@
   }
 
   let sections: Section[] = $derived.by(() => {
-    const tmp = Object.entries(settingsProps.formSchema.properties ?? {})
+    return Object.entries(settingsProps.formSchema.properties ?? {})
       .map(([key, value]) => {
         if (!("$ref" in value)) return null;
 
@@ -54,8 +55,6 @@
         };
       })
       .filter(Boolean) as Section[];
-    // console.log(tmp)
-    return tmp;
   });
 
   function resolveRef(prop: any, rootSchema: JSONSchema) {
@@ -147,47 +146,49 @@
           <Accordion.ItemContent>
             <div class="p-4">
               {#each Object.entries(schema.properties ?? {}) as [propKey, prop]}
+                {@const arraySchema = asArraySchema(prop)}
+                {@const choices = asNonEmptyStringArray(prop)}
                 <div class="mb-4 flex items-center justify-between">
-                  {#if prop.type === "array" && prop.items?.enum && Array.isArray(settingsProps.formData[key][propKey])}
+                  {#if arraySchema && arraySchema.items.enum && Array.isArray(settingsProps.formData[key][propKey]) && choices}
                     {#if prop.formType === "TaskList"}
                       <TaskList
-                        choices={prop.items?.enum}
-                        bind:value={settingsProps.formData[key][propKey]}
-                      />
+                          choices={choices}
+                          bind:value={settingsProps.formData[key][propKey] as string[]}
+                        />
                     {:else if prop.formType === "AlnumGroupedCheckboxArray"}
                       <AlnumGroupedCheckboxArray
-                        title={$t(prop.title ?? propKey)}
-                        choices={prop.items?.enum}
-                        bind:value={settingsProps.formData[key][propKey]}
+                        title={$t(arraySchema.title ?? propKey)}
+                        choices={choices}
+                        bind:value={settingsProps.formData[key][propKey] as string[]}
                       />
                     {:else}
                       <label
                         for={`${key}-${propKey}`}
                         class="mr-3 w-40 text-right"
                       >
-                        {$t(prop.title ?? propKey)}
+                        {$t(arraySchema.title ?? propKey)}
                       </label>
 
                       <div class="flex flex-1 items-center">
-                        {#if prop.formType === "ImageCheckboxArray"}
+                        {#if arraySchema.formType === "ImageCheckboxArray"}
                           <ImageCheckboxArray
-                            choices={prop.items?.enum}
-                            assetPath={prop.assetPath}
-                            bind:value={settingsProps.formData[key][propKey]}
+                            choices={choices}
+                            assetPath={arraySchema.assetPath as string}
+                            bind:value={settingsProps.formData[key][propKey] as string[]}
                           />
                         {:else}
                           <CheckboxArray
-                            choices={prop.items?.enum}
-                            bind:value={settingsProps.formData[key][propKey]}
+                            choices={choices}
+                            bind:value={settingsProps.formData[key][propKey] as string[]}
                           />
                         {/if}
                       </div>
                     {/if}
-                  {:else if prop.type === "array" && prop.items?.type === "string" && Array.isArray(settingsProps.formData[key][propKey])}
+                  {:else if arraySchema && arraySchema.items.type === "string" && Array.isArray(settingsProps.formData[key][propKey])}
                     <div class="w-full">
                       <StringArray
-                        bind:value={settingsProps.formData[key][propKey]}
-                        minItems={prop.minItems}
+                        bind:value={settingsProps.formData[key][propKey] as string[]}
+                        minItems={arraySchema.minItems}
                       />
                     </div>
                   {:else}

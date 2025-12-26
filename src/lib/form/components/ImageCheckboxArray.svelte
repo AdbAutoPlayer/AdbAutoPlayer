@@ -2,16 +2,13 @@
   import { t } from "$lib/i18n/i18n";
   import { updateCheckboxArray } from "$lib/form/checkboxHelper";
   import NoOptionsAvailable from "$lib/components/generic/NoOptionsAvailable.svelte";
+  import type { ImageCheckboxArrayProps } from "$lib/form/types";
 
   let {
     choices,
     assetPath,
     value = $bindable(),
-  }: {
-    choices: Array<any>;
-    assetPath: string;
-    value: Array<any>;
-  } = $props();
+  }: ImageCheckboxArrayProps = $props();
 
   function handleCheckboxChange(choice: string, isChecked: boolean) {
     value = updateCheckboxArray(value, choice, isChecked);
