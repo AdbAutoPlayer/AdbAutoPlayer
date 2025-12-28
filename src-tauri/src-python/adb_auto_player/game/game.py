@@ -71,6 +71,12 @@ class _SwipeParams:
     duration: float = 1.0
 
 
+class _UndesiredResultError(Exception):
+    """Used for _execute_or_timeout."""
+
+    pass
+
+
 class Game(ABC):
     """Generic Game class."""
 
@@ -381,7 +387,7 @@ class Game(ABC):
         delay: float = 0.5,
         timeout: float = 30,
         timeout_message: str | None = None,
-    ) -> bool:
+    ) -> Literal[True]:
         """Waits for a region of interest (ROI) on the screen to change.
 
         This function monitors a specific region of the screen defined by
@@ -402,30 +408,28 @@ class Game(ABC):
             timeout_message (str | None): Custom timeout message. Defaults to None.
 
         Returns:
-            bool: True if the region of interest has changed, False otherwise.
+            bool: True if the region of interest has changed.
 
         Raises:
-            TimeoutException: If no change is detected within the timeout period.
+            GameTimeoutError: If no change is detected within the timeout period.
             ValueError: Invalid crop values.
         """
         crop_result = Cropping.crop(image=start_image, crop_regions=crop_regions)
 
-        def roi_changed() -> Literal[True] | None:
+        def roi_changed() -> Literal[True]:
             inner_crop_result = Cropping.crop(
                 image=self.get_screenshot(),
                 crop_regions=crop_regions,
             )
 
-            result = not TemplateMatcher.similar_image(
+            if TemplateMatcher.similar_image(
                 base_image=crop_result.image,
                 template_image=inner_crop_result.image,
                 threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
-            )
-
-            if result:
-                return True
-            return None
+            ):
+                raise _UndesiredResultError()
+            return True
 
         if timeout_message is None:
             timeout_message = (
@@ -591,7 +595,7 @@ class Game(ABC):
             GameTimeoutError: Template not found.
         """
 
-        def find_template() -> TemplateMatchResult | None:
+        def find_template() -> TemplateMatchResult:
             result = self.game_find_template_match(
                 template,
                 threshold=threshold or self.default_threshold,
@@ -600,7 +604,8 @@ class Game(ABC):
             )
             if result is not None:
                 logging.debug(f"wait_for_template: {template} found")
-            return result
+                return result
+            raise _UndesiredResultError()
 
         if timeout_message is None:
             timeout_message = (
@@ -624,22 +629,21 @@ class Game(ABC):
         """Waits for the template to disappear from the screen.
 
         Raises:
-            TimeoutException: Template still visible.
+            GameTimeoutError: Template still visible.
         """
 
-        def find_best_template() -> TemplateMatchResult | None:
-            result: TemplateMatchResult | None = self.game_find_template_match(
+        def find_best_template() -> None:
+            if self.game_find_template_match(
                 template,
                 threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
                 crop_regions=crop_regions,
-            )
-            if result is None:
-                logging.debug(
-                    f"wait_until_template_disappears: {template} no longer visible"
-                )
+            ):
+                raise _UndesiredResultError()
 
-            return result
+            logging.debug(
+                f"wait_until_template_disappears: {template} no longer visible"
+            )
 
         if timeout_message is None:
             timeout_message = (
@@ -651,7 +655,6 @@ class Game(ABC):
             delay=delay,
             timeout=timeout,
             timeout_message=timeout_message,
-            result_should_be_none=True,
         )
 
     def wait_for_any_template(
@@ -668,16 +671,21 @@ class Game(ABC):
         """Waits for any template to appear on the screen.
 
         Raises:
-            TimeoutException: No template visible.
+            GameTimeoutError: No template visible.
         """
 
-        def find_template() -> TemplateMatchResult | None:
-            return self.find_any_template(
+        def find_template() -> TemplateMatchResult:
+            find_template_result = self.find_any_template(
                 templates,
                 threshold=threshold or self.default_threshold,
                 grayscale=grayscale,
                 crop_regions=crop_regions,
             )
+
+            if find_template_result:
+                return find_template_result
+
+            raise _UndesiredResultError()
 
         if timeout_message is None:
             timeout_message = (
@@ -922,36 +930,20 @@ class Game(ABC):
 
     @staticmethod
     def _execute_or_timeout(
-        operation: Callable[[], T | None],
+        operation: Callable[[], T],
         timeout_message: str,
         delay: float = 0.5,
         timeout: float = 30,
-        result_should_be_none: bool = False,
     ) -> T:
-        """Repeatedly executes an operation until a desired result is reached.
-
-        Raises:
-            GameTimeoutError: Operation did not return the desired result.
-        """
-        time_spent_waiting: float = 0
-        end_time: float = time() + timeout
-        end_time_exceeded = False
+        end_time = time() + timeout
 
         while True:
-            result = operation()
-            if result_should_be_none and result is None:
-                return None  # type: ignore
-            if not result_should_be_none and result is not None:
-                return result
-
-            sleep(delay)
-            time_spent_waiting += delay
-
-            if time_spent_waiting >= timeout or end_time_exceeded:
-                raise GameTimeoutError(f"{timeout_message}")
-
-            if end_time <= time():
-                end_time_exceeded = True
+            try:
+                return operation()
+            except _UndesiredResultError:
+                if time() >= end_time:
+                    raise GameTimeoutError(timeout_message)
+                sleep(delay)
 
     def _get_game_module(self) -> str:
         parts = self.__class__.__module__.split(".")
