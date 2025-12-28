@@ -1,4 +1,4 @@
-use crate::window;
+use crate::{save_window_position, window};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, TrayIconBuilder};
 use tauri::{App, AppHandle, Emitter};
@@ -29,7 +29,6 @@ pub fn setup_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let show = MenuItem::with_id(app, "show", "Show AdbAutoPlayer", true, None::<&str>)?;
     let exit = MenuItem::with_id(app, "exit", "Exit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&show, &exit])?;
-
     let _tray = TrayIconBuilder::with_id("main-tray")
         .icon(app.default_window_icon().unwrap().clone())
         .menu(&menu)
@@ -43,6 +42,7 @@ pub fn setup_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
                 let _ = window::internal_show_window(app);
             }
             "exit" => {
+                let _ = save_window_position(app);
                 app.emit("kill-python", ()).unwrap();
                 app.cleanup_before_exit();
                 app.exit(0);

@@ -35,7 +35,11 @@ pub mod ext_mod {
             |_args, _kwargs| Ok(tauri_generate_context()),
             |_args, _kwargs| {
                 let builder = tauri::Builder::default()
-                    .plugin(tauri_plugin_window_state::Builder::new().build())
+                    .plugin(
+                        tauri_plugin_window_state::Builder::new()
+                            .skip_initial_state("main")
+                            .build(),
+                    )
                     .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
                         let _ = app
                             .get_webview_window("main")
