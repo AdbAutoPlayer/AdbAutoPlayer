@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import SchemaForm from "$lib/components/form/SchemaForm.svelte";
+  import SchemaForm from "$lib/form/SchemaForm.svelte";
   import Menu from "$lib/components/menu/Menu.svelte";
   import {
     activeProfile,

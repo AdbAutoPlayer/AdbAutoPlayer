@@ -3,14 +3,9 @@
   import { t } from "$lib/i18n/i18n";
   import SettingsSectionHeader from "./SettingsSectionHeader.svelte";
   import NoOptionsAvailable from "$lib/components/generic/NoOptionsAvailable.svelte";
+  import type { TaskListProps } from "$lib/form/types";
 
-  let {
-    choices,
-    value = $bindable(),
-  }: {
-    choices: string[];
-    value: string[];
-  } = $props();
+  let { choices, value = $bindable() }: TaskListProps = $props();
 
   let draggedItem = $state<string | null>(null);
   let draggedFromSelected = $state(false);
