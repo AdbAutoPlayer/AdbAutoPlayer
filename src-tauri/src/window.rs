@@ -1,6 +1,7 @@
 use crate::{update_tray_menu, AppSettings};
 use std::sync::Mutex;
 use tauri::{App, AppHandle, Emitter, Manager, WindowEvent};
+use tauri_plugin_window_state::{AppHandleExt, StateFlags, WindowExt};
 
 #[tauri::command]
 pub fn show_window(app: AppHandle) -> Result<(), String> {
@@ -9,6 +10,7 @@ pub fn show_window(app: AppHandle) -> Result<(), String> {
 
 pub fn internal_show_window(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     if let Some(window) = app.get_webview_window("main") {
+        let _ = window.restore_state(StateFlags::all());
         window.unminimize()?;
         window.show()?;
         window.set_focus()?;
@@ -18,9 +20,19 @@ pub fn internal_show_window(app: &AppHandle) -> Result<(), Box<dyn std::error::E
 }
 
 pub fn hide_window(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    let _ = save_window_position(app);
     if let Some(window) = app.get_webview_window("main") {
         window.hide()?;
         update_tray_menu(app, false)?;
+    }
+    Ok(())
+}
+
+pub fn save_window_position(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    if let Some(window) = app.get_webview_window("main") {
+        if window.is_visible().unwrap_or(false) {
+            let _ = app.save_window_state(StateFlags::all());
+        }
     }
     Ok(())
 }
@@ -53,6 +65,8 @@ pub fn setup_window_close_handler(app: &mut App) -> Result<(), Box<dyn std::erro
                 }
                 return;
             }
+
+            let _ = save_window_position(&app_handle);
 
             let _ = &app_handle.emit("kill-python", ()).unwrap();
         }
