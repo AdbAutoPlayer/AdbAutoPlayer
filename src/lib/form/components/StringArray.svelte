@@ -2,10 +2,7 @@
   import { showErrorToast } from "$lib/toast/toast-error";
   import type { StringValueArrayProps } from "$lib/form/types";
 
-  let {
-    value = $bindable(),
-    minItems,
-  }: StringValueArrayProps = $props();
+  let { value = $bindable(), minItems }: StringValueArrayProps = $props();
 
   function addItem() {
     value = [...value, ""];

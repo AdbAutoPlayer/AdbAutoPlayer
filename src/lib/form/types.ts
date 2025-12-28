@@ -2,7 +2,7 @@ import type { JSONSchema } from "json-schema-to-typescript";
 
 export interface ArraySchema {
   type: "array";
-  items: JSONSchema
+  items: JSONSchema;
   formType?: string;
   assetPath?: string;
   title?: string;
@@ -10,7 +10,7 @@ export interface ArraySchema {
   minItems?: number;
 }
 
-export function asArraySchema(prop: any): ArraySchema|null {
+export function asArraySchema(prop: any): ArraySchema | null {
   if (prop.type === "array" && prop.items) {
     return prop as ArraySchema;
   }
@@ -22,11 +22,11 @@ interface StringChoiceValueArrayProps {
   value: string[];
 }
 
-
 export type TaskListProps = StringChoiceValueArrayProps;
 export type CheckboxArrayProps = StringChoiceValueArrayProps;
 
-export interface AlnumGroupedCheckboxArrayProps extends StringChoiceValueArrayProps {
+export interface AlnumGroupedCheckboxArrayProps
+  extends StringChoiceValueArrayProps {
   title: string;
 }
 
@@ -39,7 +39,9 @@ export interface StringValueArrayProps {
   minItems?: number;
 }
 
-export function asNonEmptyStringArray(schema: any): NonEmptyArray<string> | null {
+export function asNonEmptyStringArray(
+  schema: any,
+): NonEmptyArray<string> | null {
   const arraySchema = asArraySchema(schema);
 
   if (!arraySchema) {
@@ -56,4 +58,4 @@ export function asNonEmptyStringArray(schema: any): NonEmptyArray<string> | null
 }
 
 const isStringArray = (arr: any): arr is string[] =>
-  Array.isArray(arr) && arr.every(i => typeof i === "string");
+  Array.isArray(arr) && arr.every((i) => typeof i === "string");

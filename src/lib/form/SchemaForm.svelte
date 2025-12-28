@@ -152,14 +152,18 @@
                   {#if arraySchema && arraySchema.items.enum && Array.isArray(settingsProps.formData[key][propKey]) && choices}
                     {#if prop.formType === "TaskList"}
                       <TaskList
-                          choices={choices}
-                          bind:value={settingsProps.formData[key][propKey] as string[]}
-                        />
+                        {choices}
+                        bind:value={
+                          settingsProps.formData[key][propKey] as string[]
+                        }
+                      />
                     {:else if prop.formType === "AlnumGroupedCheckboxArray"}
                       <AlnumGroupedCheckboxArray
                         title={$t(arraySchema.title ?? propKey)}
-                        choices={choices}
-                        bind:value={settingsProps.formData[key][propKey] as string[]}
+                        {choices}
+                        bind:value={
+                          settingsProps.formData[key][propKey] as string[]
+                        }
                       />
                     {:else}
                       <label
@@ -172,14 +176,18 @@
                       <div class="flex flex-1 items-center">
                         {#if arraySchema.formType === "ImageCheckboxArray"}
                           <ImageCheckboxArray
-                            choices={choices}
+                            {choices}
                             assetPath={arraySchema.assetPath as string}
-                            bind:value={settingsProps.formData[key][propKey] as string[]}
+                            bind:value={
+                              settingsProps.formData[key][propKey] as string[]
+                            }
                           />
                         {:else}
                           <CheckboxArray
-                            choices={choices}
-                            bind:value={settingsProps.formData[key][propKey] as string[]}
+                            {choices}
+                            bind:value={
+                              settingsProps.formData[key][propKey] as string[]
+                            }
                           />
                         {/if}
                       </div>
@@ -187,7 +195,9 @@
                   {:else if arraySchema && arraySchema.items.type === "string" && Array.isArray(settingsProps.formData[key][propKey])}
                     <div class="w-full">
                       <StringArray
-                        bind:value={settingsProps.formData[key][propKey] as string[]}
+                        bind:value={
+                          settingsProps.formData[key][propKey] as string[]
+                        }
                         minItems={arraySchema.minItems}
                       />
                     </div>
