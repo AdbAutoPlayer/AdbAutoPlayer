@@ -1,14 +1,9 @@
 <script lang="ts">
   import { t } from "$lib/i18n/i18n";
   import { updateCheckboxArray } from "$lib/form/checkboxHelper";
+  import type { CheckboxArrayProps } from "$lib/form/types";
 
-  let {
-    choices,
-    value = $bindable(),
-  }: {
-    choices: Array<any>;
-    value: Array<any>;
-  } = $props();
+  let { choices, value = $bindable() }: CheckboxArrayProps = $props();
 
   function handleCheckboxChange(choice: string, isChecked: boolean) {
     value = updateCheckboxArray(value, choice, isChecked);

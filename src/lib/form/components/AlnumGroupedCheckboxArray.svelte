@@ -1,19 +1,15 @@
 <script lang="ts">
   import { t } from "$lib/i18n/i18n";
   import { updateCheckboxArray } from "$lib/form/checkboxHelper";
-  import SettingsSectionHeader from "$lib/components/form/SettingsSectionHeader.svelte";
+  import SettingsSectionHeader from "$lib/form/components/SettingsSectionHeader.svelte";
   import NoOptionsAvailable from "$lib/components/generic/NoOptionsAvailable.svelte";
-  import IconX from "$lib/components/icons/feather/IconX.svelte";
+  import type { AlnumGroupedCheckboxArrayProps } from "$lib/form/types";
 
   let {
     title,
     choices,
     value = $bindable(),
-  }: {
-    title: string;
-    choices: Array<any>;
-    value: Array<any>;
-  } = $props();
+  }: AlnumGroupedCheckboxArrayProps = $props();
 
   function groupOptionsByFirstCharacter(
     options: string[],
