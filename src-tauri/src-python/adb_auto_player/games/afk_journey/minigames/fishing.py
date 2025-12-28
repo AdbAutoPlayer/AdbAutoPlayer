@@ -279,7 +279,7 @@ def _find_fishing_colors_fast(img: np.ndarray) -> tuple[int | None, int | None]:
     length_when_the_circle_is_almost_full = 140
     if contours:
         # Get largest contour
-        largest_contour = max(contours, key=cv2.contourArea)
+        largest_contour = max(contours, key=lambda c: cv2.contourArea(c))
         x, y, w_box, h_box = cv2.boundingRect(largest_contour)
         # This is a bit sketchy
         # The fishing circle box starts at the top middle so at the start you will
