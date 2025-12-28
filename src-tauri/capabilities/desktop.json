@@ -1,7 +1,8 @@
 {
   "identifier": "desktop-capability",
   "permissions": [
-    "updater:default"
+    "updater:default",
+    "window-state:default"
   ],
   "platforms": [
     "macOS",
