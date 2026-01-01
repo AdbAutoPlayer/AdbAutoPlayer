@@ -34,6 +34,10 @@ class FrostfireShowdownMixin(AFKJourneyBase, ABC):
         Returns:
             Tuple of (difficulty_name, max_stamina, max_retries)
         """
+        # Reset defeat counter and failed heroes for new run/token
+        self._defeat_counter = 0
+        self._failed_hero_teams = []
+        
         # First, check if we're on Frostfire difficulty (non-active) and need to navigate to Epic
         frostfire_non_active = self.game_find_template_match(
             template="event/frostfire_showdown/difficulty_frostfire",
@@ -421,8 +425,7 @@ class FrostfireShowdownMixin(AFKJourneyBase, ABC):
         match result.template:
             case "event/frostfire_showdown/victory":
                 logging.info("Victory!")
-                # Reset defeat counter and failed heroes on victory
-                self._defeat_counter = 0
+                # Reset failed heroes on victory so next battle can use whole hero pool
                 self._failed_hero_teams = []
                 self.tap(Point(550, 1800))  # Tap to Close
                 sleep(5)
@@ -472,8 +475,6 @@ class FrostfireShowdownMixin(AFKJourneyBase, ABC):
                 logging.info("Max retries reached, using a new token...")
                 self.tap(Point(100, 1800))  # Tap back button on defeat screen
                 sleep(3)
-                self._defeat_counter = 0  # Reset counter for next token
-                self._failed_hero_teams = []  # Reset failed heroes for new token
                 self.tap(Point(550, 1800))  # Tap Battle Record
                 sleep(5)
                 # Use another token
