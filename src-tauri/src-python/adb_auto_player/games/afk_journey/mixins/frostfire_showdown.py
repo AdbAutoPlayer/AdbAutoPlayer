@@ -215,7 +215,7 @@ class FrostfireShowdownMixin(AFKJourneyBase, ABC):
             None: No stamina indicator found
         """
         # Get display dimensions
-        resolution = self.display_info.normalized_resolution
+        width, height = self.display_info.dimensions
         
         # Define crop region below the hero icon
         # Hero icons are approximately 150px wide and 150px tall
@@ -228,9 +228,9 @@ class FrostfireShowdownMixin(AFKJourneyBase, ABC):
         
         # Calculate crop values (in pixels)
         left_crop = max(0, hero_x + stamina_x_offset - stamina_area_width // 2)
-        right_crop = max(0, resolution.width - (hero_x + stamina_x_offset + stamina_area_width // 2))
+        right_crop = max(0, width - (hero_x + stamina_x_offset + stamina_area_width // 2))
         top_crop = max(0, hero_y - stamina_y_offset)
-        bottom_crop = max(0, resolution.height - (hero_y + stamina_y_offset + stamina_area_height))
+        bottom_crop = max(0, height - (hero_y + stamina_y_offset + stamina_area_height))
         
         # Whoever the fuck made this CropRegions, this shit took forever to make work, it works, but I wish there was a better way
         crop_regions = CropRegions(
