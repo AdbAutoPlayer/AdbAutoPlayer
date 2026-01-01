@@ -34,6 +34,18 @@ class FrostfireShowdownMixin(AFKJourneyBase, ABC):
         Returns:
             Tuple of (difficulty_name, max_stamina, max_retries)
         """
+        # First, check if we're on Frostfire difficulty (non-active) and need to navigate to Epic
+        frostfire_non_active = self.game_find_template_match(
+            template="event/frostfire_showdown/difficulty_frostfire",
+            threshold=ConfidenceValue("85%")
+        )
+        
+        if frostfire_non_active is not None:
+            logging.info("[Difficulty Detection] Detected Frostfire difficulty (non-active). Navigating to Epic difficulty...")
+            self.tap(Point(220, 1505))  # Navigate to Epic difficulty
+            sleep(2)  # Wait for UI to update
+            logging.info("[Difficulty Detection] Navigated to Epic difficulty")
+        
         # Define difficulty configurations
         # Template name: (difficulty_name, max_stamina, max_retries)
         difficulty_configs = {
