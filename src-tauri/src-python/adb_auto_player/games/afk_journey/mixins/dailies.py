@@ -16,6 +16,7 @@ from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 
+from .duras_trials import DurasTrialsMixin
 from .legend_trial import SeasonLegendTrial
 
 # from adb_auto_player.games.afk_journey.mixins import (
@@ -56,10 +57,17 @@ class DailiesMixin(AFKJourneyBase, ABC):
         DreamRealmMixin().run_dream_realm(daily=True)  # type: ignore[abstract]
         ArenaMixin().run_arena() if do_arena else logging.info("Arena battle disabled.")  # type: ignore[abstract]
         self.claim_hamburger()
-        self.raise_hero_affinity()
+        if self.settings.dailies.raise_affinity:
+            self.raise_hero_affinity()
+        else:
+            logging.info("Affinity farming disabled.")
         self.swap_essences()
         if self.settings.legend_trials.towers:
             SeasonLegendTrial().push_legend_trials()  # type: ignore[abstract]
+        if self.settings.dailies.duras_trials:
+            DurasTrialsMixin().push_duras_trials()  # type: ignore[abstract]
+        else:
+            logging.info("Dura's Trials disabled.")
         AFKStagesMixin().push_afk_stages(season=True)  # type: ignore[abstract]
 
     ############################# Daily Rewards ##############################
