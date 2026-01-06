@@ -128,6 +128,12 @@ class DailiesSettings(BaseModel):
     arena_battle: bool = Field(default=False, alias="Arena Battle")
     buy_essences: bool = Field(default=False, alias="Buy Temporal Essences")
     essence_buy_count: int = Field(default=1, ge=1, le=4, alias="Essence Buy Count")
+    raise_affinity: bool = Field(
+        default=True, alias="Collect Affinity", title="Collect Affinity"
+    )
+    duras_trials: bool = Field(
+        default=True, alias="Run Dura's Trials", title="Run Dura's Trials"
+    )
 
 
 class ClaimAFKRewardsSettings(BaseModel):
