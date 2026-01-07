@@ -1017,8 +1017,8 @@ packages:
   posthog-js@1.292.0:
     resolution: {integrity: sha512-sKBwrVT0vMqai8pAknmzK86vSQ5t36TDpQJyrLDj30ImkaiGuG4cVyI2wQ6l8vqdzk+rGAFUSP6Rqc2dMSQWWQ==}
 
-  preact@10.27.2:
-    resolution: {integrity: sha512-5SYSgFKSyhCbk6SrXyMpqjb5+MQBgfvEKE/OC+PujcY34sOpqtr+0AZQtPYx5IA6VxynQ7rUPCtKzyovpj9Bpg==}
+  preact@10.28.2:
+    resolution: {integrity: sha512-lbteaWGzGHdlIuiJ0l2Jq454m6kcpI1zNje6d8MlGAFlYvP2GO4ibnat7P74Esfz4sPTdM6UxtTwh/d3pwM9JA==}
 
   prettier-plugin-svelte@3.4.0:
     resolution: {integrity: sha512-pn1ra/0mPObzqoIQn/vUTR3ZZI6UuZ0sHqMK5x2jMLGrs53h0sXhkVuDcrlssHwIMk7FYrMjHBPoUSyyEEDlBQ==}
@@ -2134,10 +2134,10 @@ snapshots:
       '@posthog/core': 1.5.2
       core-js: 3.46.0
       fflate: 0.4.8
-      preact: 10.27.2
+      preact: 10.28.2
       web-vitals: 4.2.4
 
-  preact@10.27.2: {}
+  preact@10.28.2: {}
 
   prettier-plugin-svelte@3.4.0(prettier@3.6.2)(svelte@5.43.6):
     dependencies:
