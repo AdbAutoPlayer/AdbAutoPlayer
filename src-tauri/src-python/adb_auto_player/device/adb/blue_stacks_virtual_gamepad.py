@@ -9,6 +9,17 @@ class BlueStacksVirtualGamepad(InputDevice):
 
     shell getevent -p /dev/input/eventX
     name: "BlueStacks Virtual Gamepad"
+    events:
+        KEY (0001): 0130 0131 0133 0134 0136 0137 0138 0139 013a 013b 013d 013e
+        ABS (0003):
+            0000 : value 0, min -32768, max 32767, fuzz 16, flat 128, resolution 0
+            0001 : value 0, min -32768, max 32767, fuzz 16, flat 128, resolution 0
+            0002 : value 0, min -32768, max 32767, fuzz 16, flat 128, resolution 0
+            0005 : value 0, min -32768, max 32767, fuzz 16, flat 128, resolution 0
+            0009 : value 0, min 0, max 255, fuzz 0, flat 0, resolution 0
+            000a : value 0, min 0, max 255, fuzz 0, flat 0, resolution 0
+            0010 : value 0, min -1, max 1, fuzz 0, flat 0, resolution 0
+            0011 : value 0, min -1, max 1, fuzz 0, flat 0, resolution 0
     """
 
     @property
