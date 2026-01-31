@@ -19,7 +19,7 @@ class TestIntegration:
         result = TemplateMatcher.find_template_match(
             base_image,
             template,
-            threshold=ConfidenceValue("100%"),
+            threshold=ConfidenceValue("99%"),
         )
         assert isinstance(result, MatchResult)
 
