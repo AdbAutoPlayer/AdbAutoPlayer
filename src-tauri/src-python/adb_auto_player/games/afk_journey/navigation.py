@@ -81,6 +81,7 @@ class Navigation(PopupMessageHandler, ABC):
     def _get_overview_navigation_templates() -> list[str]:
         return [
             "navigation/homestead/homestead_enter.png",
+            "navigation/homestead/homestead_invaded.png",
             "navigation/homestead/world.png",
             "popup/quick_purchase.png",
             "navigation/confirm.png",
@@ -108,7 +109,10 @@ class Navigation(PopupMessageHandler, ABC):
             return None
 
         match result.template:
-            case "navigation/homestead/homestead_enter.png":
+            case (
+                "navigation/homestead/homestead_enter.png"
+                | "navigation/homestead/homestead_invaded.png"
+            ):
                 return self._handle_homestead_enter(result, overview)
             case "navigation/homestead/world.png":
                 return self._handle_homestead_world(result, overview)
