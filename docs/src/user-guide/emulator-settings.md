@@ -35,7 +35,7 @@
 - **Others**:
     - **ADB Debugging**: Enable **Local Connection**.
 
-### AdbAutoPlayer Settings
+### ADB Settings
 Device ID: `emulator-5554`
 
 ---

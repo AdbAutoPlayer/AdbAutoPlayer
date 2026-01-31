@@ -6,7 +6,7 @@ A comprehensive guide to enable USB debugging on popular Android phone brands fo
 
 ## Table of Contents
 
-- [AdbAutoPlayer Settings](#adbautoplayer-settings)
+- [ADB Settings](#adb-settings)
 - [Important Considerations](#important-considerations)
 - [Prerequisites](#prerequisites)
 - [Universal Steps](#universal-steps)
@@ -25,16 +25,15 @@ A comprehensive guide to enable USB debugging on popular Android phone brands fo
 
 ---
 
-## AdbAutoPlayer Settings
+## ADB Settings
 
 ![device-config.png](../images/real-phone/device-config.png)
 
 ### Device Settings in AdbAutoPlayer
 
-| Setting              | Description                                                              |
-|----------------------|--------------------------------------------------------------------------|
-| **"Resize Display"** | Enable this - Changes your display size to 1080x1920 when the bot starts |
-| **Resolution**       | Set to **1080x1920** for optimal compatibility                           |
+| Setting                           | Description                                                              |
+|-----------------------------------|--------------------------------------------------------------------------|
+| **Resize Display (Phone/Tablet)** | Enable this - Changes your display size to 1080x1920 when the bot starts |
 
 ---
 
