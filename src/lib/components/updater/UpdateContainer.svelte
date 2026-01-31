@@ -37,12 +37,13 @@
     checkUpdateTimeout = setTimeout(checkUpdate, 1000 * 60 * 15); // wait 15 minutes;
   }
 
-  function startUpdate(): void {
+  async function startUpdate(): Promise<void> {
+    update = (await check({ timeout: 5000 })) ?? update;
     if (!update) {
       return;
     }
-    isUpdating = true;
-    update.downloadAndInstall((event) => {
+
+    await update.downloadAndInstall((event) => {
       switch (event.event) {
         case "Started":
           totalSize = event.data.contentLength ?? 0;
