@@ -45,30 +45,38 @@ class BlueProtocolStarResonance(Game):
             self.tap(self.TOGGLE_DISPLAY_POINT)
             sleep(1)
 
-    def is_ui_hidden(self, max_proportion: float = 0.05) -> bool:
-        """Checks if UI is hidden by looking for the health bar."""
+    def is_ui_hidden(
+        self,
+        min_white_portion: float = 0.20,
+        min_white_threshold=250,
+    ) -> bool:
+        """Checks if UI is hidden.
+
+        Specifically checks for the white camera and emote button.
+        """
         result = Cropping.crop(
             self.get_screenshot(),
             crop_regions=CropRegions(
-                top="93%",
-                bottom="5%",
-                left="40%",
-                right="45%",
+                top="73%",
+                bottom="14%",
+                left="2%",
+                right="96%",
             ),
         )
 
-        min_color = np.array([161, 204, 63], dtype=np.uint8)
-        max_color = np.array([210, 254, 110], dtype=np.uint8)
+        white_mask = cv2.inRange(
+            result.image,
+            np.array([min_white_threshold] * 3, dtype=np.uint8),
+            np.array([255, 255, 255], dtype=np.uint8),
+        )
 
-        # Create mask of pixels in the range
-        mask = cv2.inRange(result.image, min_color, max_color)
+        white_pixel_count = cv2.countNonZero(white_mask)
+        total_pixels = result.image.shape[0] * result.image.shape[1]
 
-        # Count non-zero pixels in the mask
-        count = cv2.countNonZero(mask)
+        white_fraction = white_pixel_count / total_pixels
 
-        # Proportion of matching pixels
-        proportion = count / (result.image.shape[0] * result.image.shape[1])
-        return proportion <= max_proportion
+        # UI is hidden if NOT enough white is present
+        return white_fraction < min_white_portion
 
     @property
     def character_center(self) -> Point:

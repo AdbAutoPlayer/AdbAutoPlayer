@@ -257,8 +257,6 @@ async def start_task(
     while task_process and task_process.is_alive():
         await asyncio.sleep(0.5)
 
-    exitcode = task_process.exitcode
-
     task_processes[body.profile_index] = None
     task_labels[body.profile_index] = None
 
@@ -266,16 +264,6 @@ async def start_task(
     if listener:
         listener.stop()
         task_listeners[body.profile_index] = None
-
-    if exitcode != SIG_TERM_EXIT_CODE and not any(
-        p is not None and p.is_alive() for p in task_processes.values()
-    ):
-        Emitter.emit(
-            app_handle,
-            "all-tasks-completed",
-            EmptyModel(),
-        )
-        return
 
     # Get summary from queue
     summary_msg = None
@@ -293,6 +281,16 @@ async def start_task(
         "write-summary-to-log",
         SummaryEvent(profile_index=body.profile_index, msg=summary_msg),
     )
+
+    if task_process.exitcode != SIG_TERM_EXIT_CODE and not any(
+        p is not None and p.is_alive() for p in task_processes.values()
+    ):
+        Emitter.emit(
+            app_handle,
+            "all-tasks-completed",
+            EmptyModel(),
+        )
+    return
 
 
 @tauri_profile_aware_command
