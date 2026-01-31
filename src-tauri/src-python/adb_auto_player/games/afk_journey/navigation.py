@@ -80,14 +80,12 @@ class Navigation(PopupMessageHandler, ABC):
     @staticmethod
     def _get_overview_navigation_templates() -> list[str]:
         return [
-            "navigation/homestead/leave.png",
             "navigation/homestead/homestead_enter.png",
             "navigation/homestead/world.png",
             "popup/quick_purchase.png",
             "navigation/confirm.png",
             "navigation/notice.png",
             "navigation/confirm_text.png",
-            "navigation/time_of_day.png",
             "navigation/dotdotdot.png",
             "battle/copy.png",
             "guide/close.png",
@@ -114,8 +112,6 @@ class Navigation(PopupMessageHandler, ABC):
                 return self._handle_homestead_enter(result, overview)
             case "navigation/homestead/world.png":
                 return self._handle_homestead_world(result, overview)
-            case "navigation/time_of_day.png":
-                return Overview.WORLD
             case "navigation/notice.png":
                 # This is the Game Entry Screen
                 self.tap(self.CENTER_POINT)
@@ -287,11 +283,13 @@ class Navigation(PopupMessageHandler, ABC):
             timeout=self.NAVIGATION_TIMEOUT,
         )
 
-        if result.template == "popup/quick_purchase.png":
-            self.press_back_button()
-            sleep(1)
+        if result.template != "popup/quick_purchase.png":
+            return
 
-        _ = self.wait_for_any_template(
+        self.press_back_button()
+        sleep(1)
+
+        self.wait_for_any_template(
             templates=[
                 "battle_modes/afk_stage.png",
                 "battle_modes/duras_trials.png",
