@@ -25,7 +25,10 @@ MATCH_AREA_BOX = Box(
     height=1180,
 )
 
-MATCH_TARGET_SCALE = 1.8  # 180%
+MATCH_TARGET_SCALES = (
+    1.4,  # 4x4 Board
+    1.8,  # 3x3 Board
+)
 
 
 class MatchingCards(AFKJourneyBase):
@@ -62,7 +65,10 @@ class MatchingCards(AFKJourneyBase):
             threshold=ConfidenceValue("95%"),
         )
         crop_result = Cropping.crop_to_box(self.get_screenshot(), MATCH_TARGET_BOX)
-        target = Scaling.scale_percent(crop_result.image, MATCH_TARGET_SCALE)
+        targets = [
+            Scaling.scale_percent(crop_result.image, target_scale)
+            for target_scale in MATCH_TARGET_SCALES
+        ]
         logging.info("Starting Matching Cards ...")
         self.tap(
             Point(int(1080 / 2), int(1920 / 2)),
@@ -80,13 +86,17 @@ class MatchingCards(AFKJourneyBase):
                 self.get_screenshot(),
                 MATCH_AREA_BOX,
             )
-            if result := TemplateMatcher.find_template_match(
-                cropped.image,
-                target,
-                threshold=ConfidenceValue("60%"),
-            ):
-                self.tap(result.with_offset(cropped.offset), log=False)
-                last_match_time = time.time()
+
+            for target in targets:
+                if result := TemplateMatcher.find_template_match(
+                    cropped.image,
+                    target,
+                    threshold=ConfidenceValue("60%"),
+                ):
+                    self.tap(result.with_offset(cropped.offset), log=False)
+                    last_match_time = time.time()
+                    targets = [target]
+                    break
 
             if time.time() - last_match_time > five_seconds:
                 # game is finished
