@@ -25,8 +25,7 @@ interface StringChoiceValueArrayProps {
 export type TaskListProps = StringChoiceValueArrayProps;
 export type CheckboxArrayProps = StringChoiceValueArrayProps;
 
-export interface AlnumGroupedCheckboxArrayProps
-  extends StringChoiceValueArrayProps {
+export interface AlnumGroupedCheckboxArrayProps extends StringChoiceValueArrayProps {
   title: string;
 }
 

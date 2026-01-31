@@ -8,7 +8,7 @@
   import { t } from "$lib/i18n/i18n";
   import { emit } from "@tauri-apps/api/event";
 
-  let checkUpdateTimeout: number | null = null;
+  let checkUpdateTimeout: ReturnType<typeof setTimeout> | undefined;
   let update: Update | null = $state(null);
 
   // Modal
@@ -76,7 +76,7 @@
   });
 
   onDestroy(() => {
-    checkUpdateTimeout = null;
+    clearTimeout(checkUpdateTimeout);
   });
 </script>
 

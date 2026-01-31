@@ -268,7 +268,7 @@
       return;
     }
 
-    stopStateUpdates();
+    clearTimeout(updateStateTimeout);
     try {
       const data = (await getGameSettingsForm({
         profile_index: $activeProfile,
@@ -289,7 +289,7 @@
     }
   }
   async function openAdbSettingsForm() {
-    stopStateUpdates();
+    clearTimeout(updateStateTimeout);
     try {
       const data = (await getAdbSettingsForm({
         profile_index: $activeProfile,
@@ -310,10 +310,8 @@
     }
   }
 
-  let updateStateTimeout: number | undefined;
-  function stopStateUpdates() {
-    clearTimeout(updateStateTimeout);
-  }
+  let updateStateTimeout: ReturnType<typeof setTimeout> | undefined;
+
   async function triggerStateUpdate(profile: number | null = null) {
     clearTimeout(updateStateTimeout);
     await handleStateUpdate(profile);
@@ -351,7 +349,7 @@
   });
 
   onDestroy(() => {
-    stopStateUpdates();
+    clearTimeout(updateStateTimeout);
   });
 </script>
 
