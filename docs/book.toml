@@ -10,5 +10,3 @@ edition = "2021"
 [output.html]
 git-repository-url = "https://github.com/AdbAutoPlayer/AdbAutoPlayer"
 edit-url-template = "https://github.com/AdbAutoPlayer/AdbAutoPlayer/edit/main/docs/{path}"
-
-[preprocessor.alerts]

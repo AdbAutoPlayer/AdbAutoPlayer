@@ -21,8 +21,6 @@ jobs:
 
       - run: cargo install mdbook
 
-      - run: cargo install mdbook-alerts
-
       - run: mdbook build
         working-directory: docs
 
