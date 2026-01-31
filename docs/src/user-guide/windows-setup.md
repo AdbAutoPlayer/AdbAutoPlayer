@@ -7,10 +7,9 @@
 
 ## Installation
 
-1. **Download the App**
-   - Get the latest release of **AdbAutoPlayer**:
-     [AdbAutoPlayer_Windows.zip](https://github.com/AdbAutoPlayer/AdbAutoPlayer/releases/latest)
-   - Extract the contents of the `.zip` file to a folder on your computer.
+- Downloadthe latest release of **AdbAutoPlayer**:
+  [AdbAutoPlayer_x.y.z_x64_en-US.msi](https://github.com/AdbAutoPlayer/AdbAutoPlayer/releases/latest) (it will show the actual version instead of x.y.z)
+- Run the Installer.
 
 ---
 

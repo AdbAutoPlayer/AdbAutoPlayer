@@ -13,11 +13,6 @@
 - **Display**:
   - **Resolution Setting**: Select **Mobile Mode (1080 × 1920)**.
 
-### AdbAutoPlayer Settings
-
-Device ID: `127.0.0.1:7555`
-
-
 ---
 
 

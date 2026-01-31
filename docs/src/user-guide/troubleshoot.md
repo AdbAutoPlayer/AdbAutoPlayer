@@ -19,7 +19,6 @@ This issue usually occurs due to one of the following reasons:
 
 1. **Windows Security or another Antivirus software flagged a false positive** and deleted/quarantined one or more files. Learn more about [false positives](https://encyclopedia.kaspersky.com/glossary/false-positive).
 2. **An error occurred during the update process**, preventing all files from being properly installed.
-3. **You didn’t extract all files from the .zip** or moved the **.exe** to a different directory, causing missing dependencies.
 
 Make sure to extract all files and check your antivirus settings to prevent accidental deletions. 
 
