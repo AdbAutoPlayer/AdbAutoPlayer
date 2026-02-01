@@ -10,7 +10,6 @@ function runCommand(cmd) {
   try {
     execSync(cmd, { stdio: "inherit" });
   } catch (err) {
-    console.error(`\nCommand failed: ${cmd}`);
     process.exit(1);
   }
 }
