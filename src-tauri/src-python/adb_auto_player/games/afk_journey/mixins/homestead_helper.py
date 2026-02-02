@@ -4,6 +4,7 @@ import logging
 import re
 from collections.abc import Callable
 from time import sleep
+from typing import ClassVar
 
 import cv2
 from adb_auto_player.decorators import register_command
@@ -24,6 +25,30 @@ class HomesteadHelperMixin(AFKJourneyBase):
     HOMESTEAD_BUILDINGS_SECTION_POINT = Point(680, 415)
     PRODUCTION_BUILDING_ENTRY_POINT = Point(630, 1780)
     PRODUCTION_SCREEN_POINT = Point(535, 1220)
+
+    # Templates.
+    HOMESTEAD_OVERVIEW_CHECK_TEMPLATE = "homestead/homestead_overview_check.png"
+    HOMESTEAD_OVERVIEW_PRODUCTION_TEMPLATE = (
+        "homestead/homestead_overview_production.png"
+    )
+    PRODUCTION_BUILDING_TEMPLATES: ClassVar[tuple[str, ...]] = (
+        "homestead/navigate_to_kitchen.png",
+        "homestead/navigate_to_forge.png",
+        "homestead/navigate_to_alchemy.png",
+    )
+    PRODUCTION_ACTION_BUTTON_TEMPLATES: ClassVar[tuple[str, ...]] = (
+        "homestead/cook_button.png",
+        "homestead/alchem_button.png",
+        "homestead/forge_button.png",
+    )
+    CRAFTING_REQUESTS_TEMPLATE = "homestead/requests.png"
+    CRAFTING_DECK_TEMPLATE = "homestead/deck_in_crafting_page.png"
+    ORDER_COMPLETE_MAIN_TEMPLATE = "homestead/order_complete_main_page.png"
+    ORDER_COMPLETE_TEMPLATE = "homestead/order_complete.png"
+
+    # Template polling controls.
+    PRODUCTION_ACTION_BUTTON_ATTEMPTS = 10
+    PRODUCTION_ACTION_BUTTON_DELAY = 3
 
     # Crafting controls.
     CRAFT_ITEM_POINT = Point(530, 1700)
@@ -54,11 +79,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
         )
         self.navigate_to_homestead()
         crafted_count = 0
-        building_templates = [
-            "homestead/navigate_to_kitchen.png",
-            "homestead/navigate_to_forge.png",
-            "homestead/navigate_to_alchemy.png",
-        ]
+        building_templates = self.PRODUCTION_BUILDING_TEMPLATES
 
         while True:
             self.navigate_to_homestead_overview()
@@ -70,10 +91,12 @@ class HomesteadHelperMixin(AFKJourneyBase):
                     logging.info("Craft item limit reached: %s", crafted_count)
                     self.navigate_to_homestead()
                     return
-                self.navigate_to_production_building(
+                if not self.navigate_to_production_building(
                     building_template,
                     from_overview=True,
-                )
+                ):
+                    self.navigate_to_homestead()
+                    return
                 crafted, limit_reached = self._handle_crafting_requests(
                     remaining_crafts=remaining_crafts,
                 )
@@ -101,7 +124,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
         building_template: str,
         *,
         from_overview: bool = False,
-    ) -> None:
+    ) -> bool:
         """Navigate to a specific production building."""
         if not from_overview:
             self.navigate_to_homestead_overview()
@@ -115,11 +138,22 @@ class HomesteadHelperMixin(AFKJourneyBase):
         )
         self.tap(building_button)
         sleep(2)
-        # Static UI: these fixed taps replace navigate_to_kitchen/forge/alchemy flow.
+        # Static UI: tap the entry point, then wait for the production action button.
         self.tap(self.PRODUCTION_BUILDING_ENTRY_POINT)
-        sleep(15)
-        self.tap(self.PRODUCTION_SCREEN_POINT)
-        sleep(3)
+        for _ in range(self.PRODUCTION_ACTION_BUTTON_ATTEMPTS):
+            if production_button := self.find_any_template(
+                list(self.PRODUCTION_ACTION_BUTTON_TEMPLATES)
+            ):
+                self.tap(production_button)
+                sleep(3)
+                return True
+            sleep(self.PRODUCTION_ACTION_BUTTON_DELAY)
+        logging.warning(
+            "Production action button not found after %ss; stopping run.",
+            self.PRODUCTION_ACTION_BUTTON_ATTEMPTS
+            * self.PRODUCTION_ACTION_BUTTON_DELAY,
+        )
+        return False
 
     ############################## Helper Functions ##############################
 
@@ -150,7 +184,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
         """Open the Homestead overview using the overview button."""
         sleep(2)  # allow UI to settle before matching
         overview_check = self.wait_for_template(
-            template="homestead/homestead_overview_check.png",
+            template=self.HOMESTEAD_OVERVIEW_CHECK_TEMPLATE,
             timeout=self.NAVIGATION_TIMEOUT,
             timeout_message="Failed to find Homestead overview button.",
         )
@@ -165,7 +199,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
 
         def open_production() -> None:
             production_button = self.wait_for_template(
-                template="homestead/homestead_overview_production.png",
+                template=self.HOMESTEAD_OVERVIEW_PRODUCTION_TEMPLATE,
                 timeout=self.NAVIGATION_TIMEOUT,
                 timeout_message="Failed to find Homestead production button.",
             )
@@ -195,7 +229,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
         ocr = TesseractBackend(config=TesseractConfig(psm=PSM.SINGLE_LINE))
         while True:
             request_icon = self.game_find_template_match(
-                template="homestead/requests.png",
+                template=self.CRAFTING_REQUESTS_TEMPLATE,
             )
             if request_icon is None:
                 self._return_to_production_building_selection()
@@ -259,7 +293,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
 
         while True:
             if self.game_find_template_match(
-                template="homestead/deck_in_crafting_page.png",
+                template=self.CRAFTING_DECK_TEMPLATE,
             ):
                 return
             sleep(3)
@@ -310,7 +344,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
     def _handle_order_selling(self) -> int:
         """Sell completed orders from the main page."""
         order_complete = self.game_find_template_match(
-            template="homestead/order_complete_main_page.png",
+            template=self.ORDER_COMPLETE_MAIN_TEMPLATE,
         )
         if order_complete is None:
             return 0
@@ -324,7 +358,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
         sold_count = 0
         while True:
             order_complete = self.game_find_template_match(
-                template="homestead/order_complete.png",
+                template=self.ORDER_COMPLETE_TEMPLATE,
             )
             if order_complete is None:
                 break
