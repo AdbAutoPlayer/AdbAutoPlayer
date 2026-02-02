@@ -4,7 +4,18 @@
 3. Install Node https://nodejs.org/en/download
 4. Install pnpm https://pnpm.io/installation
 
-```powershell
+```shell
 pnpm install  
 pnpm pytauri dev  
 ```
+
+
+## Troubleshooting
+If running the development server fails with the error:  
+> No module named adb_auto_player
+
+You can fix it by reinstalling the Tauri package:
+
+```shell
+uv sync --reinstall-package=tauri-app
+````
