@@ -1,7 +1,6 @@
 """AFK Journey Dura's Trials Mixin."""
 
 import logging
-from abc import ABC
 from time import sleep
 
 from adb_auto_player.decorators import register_command, register_custom_routine_choice
@@ -19,7 +18,7 @@ from ..battle_state import Mode
 from ..gui_category import AFKJCategory
 
 
-class DurasTrialsMixin(AFKJourneyBase, ABC):
+class DurasTrialsMixin(AFKJourneyBase):
     """Dura's Trials Mixin."""
 
     @register_command(
@@ -101,12 +100,11 @@ class DurasTrialsMixin(AFKJourneyBase, ABC):
             next_button = self.game_find_template_match(
                 template="next.png", crop_regions=CropRegions(left=0.6, top=0.9)
             )
+            nonlocal count
+            count += 1
+            logging.info(f"Dura's Trials cleared: {count}")
+            SummaryGenerator.increment("Dura's Trials", "Cleared")
             if next_button is not None:
-                nonlocal count
-                count += 1
-                logging.info(f"Dura's Trials cleared: {count}")
-                SummaryGenerator.increment("Dura's Trials", "Cleared")
-
                 self.tap(next_button)
                 self.tap(next_button)
                 sleep(3)
