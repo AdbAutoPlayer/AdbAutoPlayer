@@ -1,15 +1,20 @@
 """Homestead helper mixin."""
 
 import logging
+import re
 from collections.abc import Callable
 from time import sleep
 
+import cv2
 from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.image_manipulation import Color, ColorFormat
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Offset, Point
+from adb_auto_player.ocr import PSM, TesseractBackend, TesseractConfig
+from adb_auto_player.util import SummaryGenerator
 
 
 class HomesteadHelperMixin(AFKJourneyBase):
@@ -24,7 +29,8 @@ class HomesteadHelperMixin(AFKJourneyBase):
     CRAFT_ITEM_POINT = Point(530, 1700)
     SELECT_ITEM_OFFSET = Offset(0, 345)
     CRAFTING_REQUESTS_INITIAL_WAIT = 7
-    CRAFT_ITEM_LIMIT = 180
+    CRAFTING_STOCK_SLICE = (923, 915, 80, 50)
+    CRAFTING_REQUEST_SLICE = (953, 975, 50, 50)
 
     # Order selling controls.
     ORDER_COMPLETE_MAIN_OFFSET = Offset(-50, 50)
@@ -36,12 +42,16 @@ class HomesteadHelperMixin(AFKJourneyBase):
         name="HomesteadOrdersHelper",
         gui=GUIMetadata(
             label="Homestead Orders Helper",
-            category=AFKJCategory.WIP_PLEASE_TEST,
+            category=AFKJCategory.GAME_MODES,
         ),
     )
     def navigate_production_buildings_for_crafting(self) -> None:
         """Navigate through kitchen, forge, and alchemy for crafting."""
         self.start_up()
+        logging.warning(
+            "This will try to handle all scenarios but you are recommended to put your"
+            " production buildings horizontally (at least not adjacent to each other)"
+        )
         self.navigate_to_homestead()
         crafted_count = 0
         building_templates = [
@@ -53,7 +63,9 @@ class HomesteadHelperMixin(AFKJourneyBase):
         while True:
             self.navigate_to_homestead_overview()
             for building_template in building_templates:
-                remaining_crafts = self.CRAFT_ITEM_LIMIT - crafted_count
+                remaining_crafts = (
+                    self.settings.homestead.craft_item_limit - crafted_count
+                )
                 if remaining_crafts <= 0:
                     logging.info("Craft item limit reached: %s", crafted_count)
                     self.navigate_to_homestead()
@@ -71,7 +83,8 @@ class HomesteadHelperMixin(AFKJourneyBase):
                     self.navigate_to_homestead()
                     return
             self.navigate_to_homestead()
-            if self._handle_order_selling():
+            sold_count = self._handle_order_selling()
+            if sold_count:
                 self.navigate_to_homestead()
 
     def navigate_to_homestead_overview(self) -> None:
@@ -179,6 +192,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
             tuple[int, bool]: Crafted count and whether the craft limit was hit.
         """
         crafted = 0
+        ocr = TesseractBackend(config=TesseractConfig(psm=PSM.SINGLE_LINE))
         while True:
             request_icon = self.game_find_template_match(
                 template="homestead/requests.png",
@@ -191,76 +205,123 @@ class HomesteadHelperMixin(AFKJourneyBase):
             self.tap(request_target)
             sleep(4)
 
-            while True:
+            stock_count, request_count = self._get_crafting_counts(ocr)
+            if stock_count is None or request_count is None:
+                logging.warning(
+                    "OCR failed for crafting counts (stock=%s, request=%s); skipping.",
+                    stock_count,
+                    request_count,
+                )
+                self._return_to_requests_list()
+                continue
+
+            needed = request_count - stock_count
+            if needed <= 0:
+                self._return_to_requests_list()
+                continue
+
+            if remaining_crafts is not None:
+                remaining = remaining_crafts - crafted
+                if remaining <= 0:
+                    return crafted, True
+                needed = min(needed, remaining)
+
+            for _ in range(needed):
                 self.tap(self.CRAFT_ITEM_POINT)
-                request_reached = self._wait_for_crafting_deck_or_requests()
+                self._wait_for_crafting_deck()
                 crafted += 1
+                SummaryGenerator.increment("Homestead Orders Helper", "Items Crafted")
                 if remaining_crafts is None:
                     limit_reached = False
                 else:
                     limit_reached = crafted >= remaining_crafts
-                if request_reached:
-                    self.press_back_button()
-                    sleep(4)
-                    self.press_back_button()
-                    sleep(4)
                 if limit_reached:
                     return crafted, True
-                if request_reached:
-                    break
+            self._return_to_requests_list()
 
     def _return_to_production_building_selection(self) -> None:
         """Return to the production building selection screen."""
         self.navigate_to_homestead()
         self.navigate_to_homestead_overview()
 
-    def _wait_for_crafting_deck_or_requests(
+    def _wait_for_crafting_deck(
         self,
         *,
         initial_wait: int | None = None,
-    ) -> bool:
-        """Wait for crafting deck or go_to_requests after starting a craft.
-
-        Returns:
-            bool: True if go_to_requests appears, False if deck is back.
-        """
+    ) -> None:
+        """Wait for crafting deck after starting a craft."""
         initial_wait = (
             self.CRAFTING_REQUESTS_INITIAL_WAIT
             if initial_wait is None
             else initial_wait
         )
-        if self.game_find_template_match(
-            template="homestead/go_to_requests.png",
-        ):
-            return True
         sleep(initial_wait)
 
         while True:
             if self.game_find_template_match(
-                template="homestead/go_to_requests.png",
-            ):
-                return True
-            if self.game_find_template_match(
                 template="homestead/deck_in_crafting_page.png",
             ):
-                return False
+                return
             sleep(3)
 
-    def _handle_order_selling(self) -> bool:
+    def _return_to_requests_list(self) -> None:
+        self.press_back_button()
+        sleep(4)
+        self.press_back_button()
+        sleep(4)
+
+    def _get_crafting_counts(
+        self,
+        ocr: TesseractBackend,
+    ) -> tuple[int | None, int | None]:
+        screenshot = self.get_screenshot()
+        stock_count = self._ocr_number_from_slice(
+            screenshot,
+            self.CRAFTING_STOCK_SLICE,
+            ocr,
+        )
+        request_count = self._ocr_number_from_slice(
+            screenshot,
+            self.CRAFTING_REQUEST_SLICE,
+            ocr,
+        )
+        return stock_count, request_count
+
+    def _ocr_number_from_slice(
+        self,
+        image,
+        region: tuple[int, int, int, int],
+        ocr: TesseractBackend,
+    ) -> int | None:
+        x, y, width, height = region
+        crop = image[y : y + height, x : x + width]
+        if crop.size == 0:
+            return None
+        gray = Color.to_grayscale(crop, ColorFormat.BGR)
+        _, thresholded = cv2.threshold(
+            gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU
+        )
+        text = ocr.extract_text(thresholded)
+        digits = re.findall(r"\d+", text)
+        if not digits:
+            return None
+        return int("".join(digits))
+
+    def _handle_order_selling(self) -> int:
         """Sell completed orders from the main page."""
         order_complete = self.game_find_template_match(
             template="homestead/order_complete_main_page.png",
         )
         if order_complete is None:
-            return False
+            return 0
 
         self.tap(order_complete.box.center + self.ORDER_COMPLETE_MAIN_OFFSET)
         sleep(2)
-        self._sell_completed_orders()
-        return True
+        return self._sell_completed_orders()
 
-    def _sell_completed_orders(self) -> None:
+    def _sell_completed_orders(self) -> int:
         """Sell all completed orders on the orders page."""
+        sold_count = 0
         while True:
             order_complete = self.game_find_template_match(
                 template="homestead/order_complete.png",
@@ -276,3 +337,6 @@ class HomesteadHelperMixin(AFKJourneyBase):
             if not self.handle_popup_messages():
                 self.tap(self.POPUP_DISMISS_POINT)
                 sleep(4)
+            sold_count += 1
+            SummaryGenerator.increment("Homestead Orders Helper", "Orders Sold")
+        return sold_count
