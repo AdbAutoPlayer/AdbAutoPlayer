@@ -140,6 +140,16 @@ class ClaimAFKRewardsSettings(BaseModel):
     claim_stage_rewards: bool = Field(default=False, alias="Claim Stage Rewards")
 
 
+class HomesteadSettings(BaseModel):
+    """Homestead Settings model."""
+
+    craft_item_limit: PositiveInt = Field(
+        default=80,
+        alias="Craft Item Limit",
+        title="Craft Item Limit",
+    )
+
+
 class TitanReaverProxyBattlesSettings(BaseModel):
     proxy_battle_limit: PositiveInt = Field(
         default=50,
@@ -179,6 +189,11 @@ class Settings(TomlSettings):
         default_factory=DreamRealmSettings,
         alias="Dream Realm",
         title="Dream Realm",
+    )
+    homestead: HomesteadSettings = Field(
+        default_factory=HomesteadSettings,
+        alias="Homestead",
+        title="Homestead",
     )
     claim_afk_rewards: ClaimAFKRewardsSettings = Field(
         default_factory=ClaimAFKRewardsSettings,
