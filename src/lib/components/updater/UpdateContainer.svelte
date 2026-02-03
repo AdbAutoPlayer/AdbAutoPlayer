@@ -43,6 +43,8 @@
       return;
     }
 
+    isUpdating = true;
+
     await update.downloadAndInstall((event) => {
       switch (event.event) {
         case "Started":
