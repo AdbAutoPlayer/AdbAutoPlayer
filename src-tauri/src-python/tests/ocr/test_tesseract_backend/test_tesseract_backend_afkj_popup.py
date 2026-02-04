@@ -48,11 +48,11 @@ class TestTesseractBackendAFKJPopup(unittest.TestCase):
 
         text_detected = False
 
-        start_time = time.time()
+        start_time = time.perf_counter()
         results = tesseract_backend.detect_text_blocks(
             no_hero_on_talent_buff_popup, min_confidence=ConfidenceValue("90%")
         )
-        duration = time.time() - start_time
+        duration = time.perf_counter() - start_time
         print(f"\ndetect_text_blocks without preprocessing took {duration:.4f} seconds")
 
         for result in results:
@@ -74,7 +74,7 @@ class TestTesseractBackendAFKJPopup(unittest.TestCase):
 
         text_detected = False
 
-        start_time = time.time()
+        start_time = time.perf_counter()
         no_hero_on_talent_buff_popup = cv2.cvtColor(
             no_hero_on_talent_buff_popup,
             cv2.COLOR_BGR2GRAY,
@@ -83,7 +83,7 @@ class TestTesseractBackendAFKJPopup(unittest.TestCase):
         results = tesseract_backend.detect_text_blocks(
             no_hero_on_talent_buff_popup, min_confidence=ConfidenceValue("90%")
         )
-        duration = time.time() - start_time
+        duration = time.perf_counter() - start_time  # elapsed time
         print(f"\ndetect_text_blocks grayscale {duration:.4f} seconds")
 
         for result in results:

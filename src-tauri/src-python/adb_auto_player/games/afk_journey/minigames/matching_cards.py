@@ -76,12 +76,12 @@ class MatchingCards(AFKJourneyBase):
         )
         sleep(3)
 
-        start_time = time.time()
+        start_time = time.monotonic()
         last_match_time = start_time
 
         five_seconds = 5
         sixty_seconds = 60
-        while time.time() - start_time < sixty_seconds:
+        while time.monotonic() - start_time < sixty_seconds:
             cropped = Cropping.crop_to_box(
                 self.get_screenshot(),
                 MATCH_AREA_BOX,
@@ -94,11 +94,11 @@ class MatchingCards(AFKJourneyBase):
                     threshold=ConfidenceValue("60%"),
                 ):
                     self.tap(result.with_offset(cropped.offset), log=False)
-                    last_match_time = time.time()
+                    last_match_time = time.monotonic()
                     targets = [target]
                     break
 
-            if time.time() - last_match_time > five_seconds:
+            if time.monotonic() - last_match_time > five_seconds:
                 # game is finished
                 break
 
