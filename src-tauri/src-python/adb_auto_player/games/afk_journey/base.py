@@ -2,6 +2,7 @@
 
 import logging
 import re
+from datetime import datetime, timedelta
 from time import sleep
 from typing import Any
 
@@ -9,9 +10,11 @@ from adb_auto_player.decorators import register_cache, register_game
 from adb_auto_player.exceptions import (
     AutoPlayerWarningError,
     GameActionFailedError,
+    GameNotRunningOrFrozenError,
     GameTimeoutError,
 )
 from adb_auto_player.game import Game
+from adb_auto_player.image_manipulation import Cropping
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import CacheGroup, GameGUIMetadata
 from adb_auto_player.models.device import Resolution
@@ -19,6 +22,7 @@ from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import TemplateMatchResult
 from adb_auto_player.tauri_context import profile_aware_cache
+from adb_auto_player.template_matching import TemplateMatcher
 from adb_auto_player.util import SummaryGenerator
 
 from .battle_state import BattleState, Mode
@@ -592,12 +596,39 @@ class AFKJourneyBase(Navigation, Game):
 
         return False
 
-    def _is_battle_outcome_successful(self, attempt: int) -> bool | None:
-        """Whether the battle was successful.
+    def _wait_for_battle_over_template(
+        self,
+        freeze_check_interval: timedelta = timedelta(seconds=30),
+    ) -> TemplateMatchResult:
+        if self.battle_state.mode and self.battle_state.mode.has_timer():
+            roi_crop = CropRegions(right="90%", bottom="90%")
+            prev_crop = Cropping.crop(self.get_screenshot(), roi_crop)
 
-        None is for unclear scenarios, None cases should be replaced by Exceptions.
-        """
-        match = self.wait_for_any_template(
+            last_check = datetime.now()
+            while True:
+                screenshot = self.get_screenshot()
+                match = self.find_any_template(
+                    templates=self._get_battle_over_templates(),
+                    crop_regions=CropRegions(top=0.4),
+                    screenshot=screenshot,
+                )
+                if match is not None:
+                    return match
+
+                now = datetime.now()
+                if now - last_check >= freeze_check_interval:
+                    curr_crop = Cropping.crop(screenshot, roi_crop)
+                    if TemplateMatcher.similar_image(
+                        prev_crop.image,
+                        curr_crop.image,
+                        threshold=ConfidenceValue("98%"),
+                    ):
+                        raise GameNotRunningOrFrozenError("Battle frozen")
+                    prev_crop = curr_crop
+                    last_check = now
+                sleep(1)
+
+        return self.wait_for_any_template(
             templates=self._get_battle_over_templates(),
             timeout=self.BATTLE_TIMEOUT,
             crop_regions=CropRegions(top=0.4),
@@ -605,6 +636,15 @@ class AFKJourneyBase(Navigation, Game):
             timeout_message=self.BATTLE_TIMEOUT_ERROR_MESSAGE,
         )
 
+    def _is_battle_outcome_successful(
+        self,
+        attempt: int,
+    ) -> bool | None:
+        """Whether the battle was successful.
+
+        None is for unclear scenarios, None cases should be replaced by Exceptions.
+        """
+        match = self._wait_for_battle_over_template()
         result = None
         match match.template:
             case "duras_trials/no_next.png":

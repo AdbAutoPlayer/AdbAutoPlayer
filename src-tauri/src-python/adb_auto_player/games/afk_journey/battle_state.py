@@ -14,6 +14,15 @@ class Mode(StrEnum):
     def is_afk_stages(self) -> bool:
         return self in {Mode.AFK_STAGES, Mode.SEASON_AFK_STAGES}
 
+    def has_timer(self) -> bool:
+        """Added in case there is ever a battle mode without a timer."""
+        return self in {
+            Mode.AFK_STAGES,
+            Mode.SEASON_AFK_STAGES,
+            Mode.LEGEND_TRIALS,
+            Mode.DURAS_TRIALS,
+        }
+
 
 @dataclass
 class BattleState:
