@@ -19,7 +19,7 @@ from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import CacheGroup, GameGUIMetadata
 from adb_auto_player.models.device import Resolution
 from adb_auto_player.models.geometry import Point
-from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.models.image_manipulation import CropRegions, CropResult
 from adb_auto_player.models.template_matching import TemplateMatchResult
 from adb_auto_player.tauri_context import profile_aware_cache
 from adb_auto_player.template_matching import TemplateMatcher
@@ -598,13 +598,13 @@ class AFKJourneyBase(Navigation, Game):
 
     def _wait_for_battle_over_template(
         self,
-        freeze_check_interval: timedelta = timedelta(seconds=30),
+        freeze_check_timeout: timedelta = timedelta(seconds=30),
     ) -> TemplateMatchResult:
         if self.battle_state.mode and self.battle_state.mode.has_timer():
             roi_crop = CropRegions(right="90%", bottom="90%")
-            prev_crop = Cropping.crop(self.get_screenshot(), roi_crop)
+            no_change_detected_since = None
+            prev_crop: CropResult | None = None
 
-            last_check = datetime.now()
             while True:
                 screenshot = self.get_screenshot()
                 match = self.find_any_template(
@@ -615,17 +615,21 @@ class AFKJourneyBase(Navigation, Game):
                 if match is not None:
                     return match
 
-                now = datetime.now()
-                if now - last_check >= freeze_check_interval:
-                    curr_crop = Cropping.crop(screenshot, roi_crop)
-                    if TemplateMatcher.similar_image(
-                        prev_crop.image,
-                        curr_crop.image,
-                        threshold=ConfidenceValue("98%"),
-                    ):
+                curr_crop = Cropping.crop(screenshot, roi_crop)
+
+                if prev_crop is not None and TemplateMatcher.similar_image(
+                    prev_crop.image,
+                    curr_crop.image,
+                    threshold=ConfidenceValue("98%"),
+                ):
+                    now = datetime.now()
+                    if no_change_detected_since is None:
+                        no_change_detected_since = now
+                    elif now - no_change_detected_since >= freeze_check_timeout:
                         raise GameNotRunningOrFrozenError("Battle frozen")
-                    prev_crop = curr_crop
-                    last_check = now
+                else:
+                    no_change_detected_since = None
+                prev_crop = curr_crop
                 sleep(1)
 
         return self.wait_for_any_template(
