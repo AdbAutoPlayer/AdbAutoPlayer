@@ -1,11 +1,12 @@
 """Tests for SettingsLoader module."""
 
+import unittest
 from pathlib import Path
 
 from adb_auto_player.file_loader import SettingsLoader
 
 
-class TestSettingsLoader:
+class TestSettingsLoader(unittest.TestCase):
     """Test cases for SettingsLoader class."""
 
     def setUp(self):
@@ -20,4 +21,8 @@ class TestSettingsLoader:
 
     def test_adb_settings_real_data(self):
         settings = SettingsLoader.adb_settings()
-        assert not settings.advanced.hardware_decoding
+        self.assertFalse(settings.advanced.hardware_decoding)
+
+
+if __name__ == "__main__":
+    unittest.main()
