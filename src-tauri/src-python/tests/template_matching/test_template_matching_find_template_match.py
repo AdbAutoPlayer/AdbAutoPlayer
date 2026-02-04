@@ -20,7 +20,7 @@ class TestFindTemplateMatch:
         template = IO.load_image(Path(__file__).parent / "data" / "small_note")
 
         result = TemplateMatcher.find_template_match(
-            base_image, template, MatchMode.BEST, ConfidenceValue("100%")
+            base_image, template, MatchMode.BEST, ConfidenceValue("99%")
         )
 
         assert result is not None

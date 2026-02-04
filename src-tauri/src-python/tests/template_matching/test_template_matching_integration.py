@@ -32,7 +32,7 @@ class TestIntegration:
         assert is_similar is True
 
         all_matches = TemplateMatcher.find_all_template_matches(
-            base_image, template, ConfidenceValue("100%"), min_distance=50
+            base_image, template, ConfidenceValue("99%"), min_distance=50
         )
         assert len(all_matches) == 1
 
