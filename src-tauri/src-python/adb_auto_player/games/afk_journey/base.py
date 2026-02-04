@@ -14,6 +14,7 @@ from adb_auto_player.exceptions import (
     GameTimeoutError,
 )
 from adb_auto_player.game import Game
+from adb_auto_player.image_manipulation import Cropping
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import CacheGroup, GameGUIMetadata
 from adb_auto_player.models.device import Resolution
@@ -21,10 +22,9 @@ from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import TemplateMatchResult
 from adb_auto_player.tauri_context import profile_aware_cache
+from adb_auto_player.template_matching import TemplateMatcher
 from adb_auto_player.util import SummaryGenerator
 
-from ...image_manipulation import Cropping
-from ...template_matching import TemplateMatcher
 from .battle_state import BattleState, Mode
 from .gui_category import AFKJCategory
 from .navigation import Navigation
