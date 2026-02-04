@@ -186,7 +186,3 @@ class TestIntegrationWithRealDecoding(unittest.TestCase):
 
         container.close()
         return output_buffer.getvalue()
-
-
-if __name__ == "__main__":
-    unittest.main()

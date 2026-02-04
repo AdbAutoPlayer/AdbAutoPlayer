@@ -22,7 +22,3 @@ class TestSettingsLoader(unittest.TestCase):
     def test_adb_settings_real_data(self):
         settings = SettingsLoader.adb_settings()
         self.assertFalse(settings.advanced.hardware_decoding)
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -131,7 +131,3 @@ class TestBox(unittest.TestCase):
         p = Point(10, 20)
         box = box.with_offset(p)
         self.assertEqual(box.top_left, Point(10, 20))
-
-
-if __name__ == "__main__":
-    unittest.main()

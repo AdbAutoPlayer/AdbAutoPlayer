@@ -18,7 +18,3 @@ class TestStringHelper(unittest.TestCase):
         path = "/path/to/archive.tar.gz"
         result = StringHelper.get_filename_without_extension(path)
         self.assertEqual(result, "archive.tar")
-
-
-if __name__ == "__main__":
-    unittest.main()
