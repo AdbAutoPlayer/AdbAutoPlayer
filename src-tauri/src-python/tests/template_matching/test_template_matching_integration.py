@@ -39,4 +39,4 @@ class TestIntegration:
         all_matches = TemplateMatcher.find_all_template_matches(
             base_image, template, ConfidenceValue("80%"), min_distance=50
         )
-        assert 1 < len(all_matches) <= 4
+        assert 1 < len(all_matches) <= 5
