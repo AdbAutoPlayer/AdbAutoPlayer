@@ -173,8 +173,7 @@ class TestGame(unittest.TestCase):
         for _ in range(10):
             start_time: float = time.perf_counter()
             full_result = game.game_find_template_match(template_image)
-            if not full_result:
-                assert False
+            assert full_result is not None
             full_times.append(time.perf_counter() - start_time)
             full_results.append(full_result)
 
@@ -182,8 +181,7 @@ class TestGame(unittest.TestCase):
             cropped_result = game.game_find_template_match(
                 template_image, crop_regions=crop
             )
-            if not cropped_result:
-                assert False
+            assert cropped_result is not None
             cropped_times.append(time.perf_counter() - start_time)
             cropped_results.append(cropped_result)
 
