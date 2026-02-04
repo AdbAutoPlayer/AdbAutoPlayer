@@ -171,20 +171,18 @@ class TestGame(unittest.TestCase):
         crop = CropRegions(top=0.9, right=0.6, left=0.1)
 
         for _ in range(10):
-            start_time: float = time.time()
+            start_time: float = time.perf_counter()
             full_result = game.game_find_template_match(template_image)
-            if not full_result:
-                assert False
-            full_times.append(time.time() - start_time)
+            assert full_result is not None
+            full_times.append(time.perf_counter() - start_time)
             full_results.append(full_result)
 
-            start_time = time.time()
+            start_time = time.perf_counter()
             cropped_result = game.game_find_template_match(
                 template_image, crop_regions=crop
             )
-            if not cropped_result:
-                assert False
-            cropped_times.append(time.time() - start_time)
+            assert cropped_result is not None
+            cropped_times.append(time.perf_counter() - start_time)
             cropped_results.append(cropped_result)
 
         self.assertTrue(

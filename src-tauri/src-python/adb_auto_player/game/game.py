@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from enum import StrEnum, auto
 from functools import cached_property, lru_cache
 from pathlib import Path
-from time import sleep, time
+from time import monotonic, perf_counter, sleep
 from typing import Literal, TypeVar
 
 import cv2
@@ -935,13 +935,13 @@ class Game(ABC):
         delay: float = 0.5,
         timeout: float = 30,
     ) -> T:
-        end_time = time() + timeout
+        end_time = monotonic() + timeout
 
         while True:
             try:
                 return operation()
             except _UndesiredResultError:
-                if time() >= end_time:
+                if monotonic() >= end_time:
                     raise GameTimeoutError(timeout_message)
                 sleep(delay)
 
@@ -1185,9 +1185,9 @@ class Game(ABC):
         # the feature needs to be fast if this function is called...
         self.disable_debug_screenshots = True
 
-        start_time = time()
+        start_time = perf_counter()
         _ = self.get_screenshot()
-        total_time = (time() - start_time) * 1000
+        total_time = (perf_counter() - start_time) * 1000
         if total_time > max_frame_delay:
             raise AutoPlayerUnrecoverableError(
                 f"Screenshot/Frame delay: {int(total_time)} ms above max frame delay: "
@@ -1198,9 +1198,9 @@ class Game(ABC):
         total_time = 0.0
         iterations = 10
         for _ in range(iterations):
-            start_time = time()
+            start_time = perf_counter()
             self.tap(PointOutsideDisplay(), log=False)
-            total_time += (time() - start_time) * 1000
+            total_time += (perf_counter() - start_time) * 1000
         average_time = total_time / iterations
         if average_time > max_input_delay:
             raise AutoPlayerUnrecoverableError(

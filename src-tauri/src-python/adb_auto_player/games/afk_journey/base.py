@@ -2,8 +2,8 @@
 
 import logging
 import re
-from datetime import datetime, timedelta
-from time import sleep
+from datetime import timedelta
+from time import monotonic, sleep
 from typing import Any
 
 from adb_auto_player.decorators import register_cache, register_game
@@ -598,7 +598,7 @@ class AFKJourneyBase(Navigation, Game):
 
     def _wait_for_battle_over_template(
         self,
-        freeze_check_timeout: timedelta = timedelta(seconds=30),
+        freeze_check_timeout: float = timedelta(seconds=30).total_seconds(),
     ) -> TemplateMatchResult:
         if self.battle_state.mode and self.battle_state.mode.has_timer():
             roi_crop = CropRegions(right="90%", bottom="90%")
@@ -622,7 +622,7 @@ class AFKJourneyBase(Navigation, Game):
                     curr_crop.image,
                     threshold=ConfidenceValue("98%"),
                 ):
-                    now = datetime.now()
+                    now = monotonic()
                     if no_change_detected_since is None:
                         no_change_detected_since = now
                     elif now - no_change_detected_since >= freeze_check_timeout:

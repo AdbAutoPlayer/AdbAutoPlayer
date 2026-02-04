@@ -42,7 +42,3 @@ class TestOCRResult(unittest.TestCase):
 
         # Check that original OCRResult box remains unchanged (immutability)
         self.assertEqual(self.ocr_result.box.top_left, self.top_left)
-
-
-if __name__ == "__main__":
-    unittest.main()

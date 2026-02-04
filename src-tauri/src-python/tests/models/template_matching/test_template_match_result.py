@@ -45,7 +45,3 @@ class TestTemplateMatchResult(unittest.TestCase):
         # Check that a new instance is returned (immutability)
         self.assertIsNot(new_result, self.result)
         self.assertIsNot(new_result.box, self.result.box)
-
-
-if __name__ == "__main__":
-    unittest.main()

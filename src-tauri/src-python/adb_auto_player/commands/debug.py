@@ -78,9 +78,9 @@ def _test_input_delay(controller: AdbController) -> None:
     total_time = 0.0
     iterations = 10
     for _ in range(iterations):
-        start_time = time.time()
+        start_time = time.perf_counter()
         controller.tap(PointOutsideDisplay())
-        total_time += (time.time() - start_time) * 1000
+        total_time += (time.perf_counter() - start_time) * 1000  # Duration in ms
     average_time = total_time / iterations
     logging.info(
         f"Average time to tap screen over {iterations} attempts: {average_time:.2f} ms"

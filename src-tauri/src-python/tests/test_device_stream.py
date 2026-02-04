@@ -1,6 +1,7 @@
 import io
 import time
 import unittest
+from datetime import timedelta
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -142,8 +143,8 @@ class TestIntegrationWithRealDecoding(unittest.TestCase):
                 stream.start()
 
                 # Wait for decoding
-                timeout = time.time() + 10
-                while stream.latest_frame is None and time.time() < timeout:
+                timeout = time.monotonic() + timedelta(seconds=10).total_seconds()
+                while stream.latest_frame is None and time.monotonic() < timeout:
                     time.sleep(0.1)
 
                 # Verify frame dimensions
@@ -185,7 +186,3 @@ class TestIntegrationWithRealDecoding(unittest.TestCase):
 
         container.close()
         return output_buffer.getvalue()
-
-
-if __name__ == "__main__":
-    unittest.main()
