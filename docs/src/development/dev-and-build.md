@@ -19,3 +19,17 @@ You can fix it by reinstalling the Tauri package:
 ```shell
 uv sync --reinstall-package=tauri-app
 ````
+
+---
+
+## Common Linting Fixes
+
+### Error: `time.time` is banned (TID251)
+
+Use this prompt with an AI to fix it instantly:
+````text
+Replace any wall-clock-based elapsed-time logic (`time.time()`, `datetime.now()`) with monotonic timing. Keep the same durations but use `time.monotonic()` or `time.perf_counter()` for comparisons. Do not change logging or timestamp code.
+```python
+#TODO your code snippet
+```
+````

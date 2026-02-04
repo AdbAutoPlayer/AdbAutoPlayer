@@ -1,10 +1,9 @@
 """Arcane Labyrinth Mixin."""
 
 import logging
-import time
 from abc import ABC
 from math import floor
-from time import sleep
+from time import monotonic, sleep
 
 from adb_auto_player.decorators import register_command, register_custom_routine_choice
 from adb_auto_player.exceptions import (
@@ -228,9 +227,9 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 self._click_best_gate(result)
                 self._arcane_lab_start_battle()
 
-                start_time = time.time()
+                start_time = monotonic()
                 while self._battle_is_not_completed():
-                    if time.time() - start_time > self.BATTLE_TIMEOUT:
+                    if monotonic() - start_time > self.BATTLE_TIMEOUT:
                         raise GameTimeoutError(self.BATTLE_TIMEOUT_ERROR_MESSAGE)
 
             case "arcane_labyrinth/select_a_crest.png" | "arcane_labyrinth/confirm.png":

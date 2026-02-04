@@ -57,6 +57,7 @@ select = [
     "RUF", # ruff
     "UP",  # pyupgrade
     "PL",  # pylint
+    "TID251", # ONLY the banned-api rule, no other tidy-import rules
 ]
 ignore = [
     "D100",  # Missing docstring in public module
@@ -74,6 +75,9 @@ ignore = [
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff.lint.flake8-tidy-imports]
+banned-api."time.time".msg = "Use time.monotonic() or time.perf_counter() to avoid issues with system clock drifts/updates."
 
 [tool.ruff.lint.per-file-ignores]
 # Ignore D100 (Missing docstring in public module) only in games subdirs
