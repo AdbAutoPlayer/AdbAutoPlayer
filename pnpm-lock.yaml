@@ -40,8 +40,8 @@ importers:
         version: 0.8.0
     devDependencies:
       '@skeletonlabs/skeleton':
-        specifier: ^4.11.0
-        version: 4.11.0(tailwindcss@4.1.18)
+        specifier: ^4.12.0
+        version: 4.12.0(tailwindcss@4.1.18)
       '@skeletonlabs/skeleton-svelte':
         specifier: ^4.12.0
         version: 4.12.0(svelte@5.49.1)
@@ -528,8 +528,8 @@ packages:
     peerDependencies:
       svelte: ^5.29.0
 
-  '@skeletonlabs/skeleton@4.11.0':
-    resolution: {integrity: sha512-n13ZVQKNSrkcoW6oIvqrPmWPuJRBK3YvS3c48zKVWFvhjTDe+YKlJTpezTw2daL1XQxC1x3gPlm37YKj32omNw==}
+  '@skeletonlabs/skeleton@4.12.0':
+    resolution: {integrity: sha512-5Zch+aAarrWQaWEtjdb/jlaT5Q2H4Lt6pCl8utvrkKGGlXfAWd2yjzho75E1nxdbsS9F2q+5ipewlbrtmGYB8Q==}
     peerDependencies:
       tailwindcss: ^4.0.0
 
@@ -1725,7 +1725,7 @@ snapshots:
       '@zag-js/tree-view': 1.32.0
       svelte: 5.49.1
 
-  '@skeletonlabs/skeleton@4.11.0(tailwindcss@4.1.18)':
+  '@skeletonlabs/skeleton@4.12.0(tailwindcss@4.1.18)':
     dependencies:
       tailwindcss: 4.1.18
 
