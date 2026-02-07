@@ -7,7 +7,7 @@
     "@tauri-apps/plugin-updater": "~2.10.0",
     "@tauri-apps/plugin-window-state": "~2.4.1",
     "@types/json-schema": "^7.0.15",
-    "posthog-js": "^1.336.4",
+    "posthog-js": "^1.342.1",
     "tailwindcss": "^4.1.18",
     "tauri-plugin-pytauri-api": "^0.8.0"
   },
