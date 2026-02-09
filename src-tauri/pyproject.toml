@@ -37,3 +37,7 @@ required-version = ">=0.9.11"
 
 [tool.setuptools.packages]
 find = { where = ["src-python"], exclude = ["tests*", "*/tests*"] }
+
+[tool.setuptools.package-data]
+# Include only .py, .pyd, .so files in all packages
+"*" = ["*.pyd", "*.so"]
