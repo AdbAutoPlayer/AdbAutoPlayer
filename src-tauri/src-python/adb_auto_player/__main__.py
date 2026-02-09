@@ -193,10 +193,10 @@ def run_task(
     try:
         e = Execute.find_command_and_execute(command, get_game_tasks())
         if isinstance(e, BaseException):
-            logging.error(e, exc_info=True)
+            logging.error(e)
             sys.exit(1)
     except Exception as exc:
-        logging.error(exc, exc_info=True)
+        logging.error(exc)
         sys.exit(1)
 
 
@@ -365,20 +365,11 @@ async def get_game_settings_form(
     module = StringHelper.get_game_module(settings.__module__)
     choices = list(CUSTOM_ROUTINE_REGISTRY.get(module, {}).keys())
 
-    schema = settings.model_json_schema()
-    defs = schema.setdefault("$defs", {})
-    if "TaskListSettings" in defs and "properties" in defs["TaskListSettings"]:
-        defs["TaskListSettings"]["properties"]["Task List"]["items"] = {
-            "$ref": "#/$defs/TaskListEnum"
-        }
-
-        defs["TaskListEnum"] = {
-            "title": "TaskListEnum",
-            "type": "string",
-            "enum": choices,
-        }
-
-    return settings.model_dump(by_alias=True), schema, str(metadata.settings_file)
+    return (
+        settings.model_dump(by_alias=True),
+        settings.generate_model_json_schema_with_task_list_choices(choices),
+        str(metadata.settings_file),
+    )
 
 
 class ProfileState(BaseModel):

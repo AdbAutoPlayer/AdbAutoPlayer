@@ -100,7 +100,7 @@ def _test_resize_display(controller: AdbController) -> None:
         controller.set_display_size("1080x1920")
         logging.info("Set Display Size 1080x1920 - OK")
     except Exception as e:
-        logging.error(f"{e}", exc_info=True)
+        logging.error(f"{e}")
     try:
         controller.reset_display_size()
         logging.info("Reset Display Size - OK")
