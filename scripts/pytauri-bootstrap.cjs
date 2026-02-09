@@ -4,6 +4,8 @@ const { execSync } = require("child_process");
 const process = require("process");
 const path = require("path");
 
+process.chdir(path.resolve(__dirname, ".."));
+
 const extraArgs = process.argv.slice(2).join(" ");
 
 function runCommand(cmd) {
@@ -30,7 +32,7 @@ checkCommandExists("uv", "Install uv: https://github.com/astral-sh/uv");
 runCommand("uv venv --allow-existing --python-preference only-system");
 
 const isWin = process.platform === "win32";
-const VENV_PATH = path.join(__dirname, ".venv");
+const VENV_PATH = path.join(process.cwd(), ".venv");
 
 function runInVenv(command) {
   let fullCmd;
@@ -47,7 +49,5 @@ function runInVenv(command) {
 }
 
 runInVenv("uv pip install -e src-tauri");
-
 runCommand("pnpm install");
-
 runInVenv(`pnpm tauri ${extraArgs}`);

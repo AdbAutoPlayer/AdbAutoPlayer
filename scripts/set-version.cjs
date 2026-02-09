@@ -8,7 +8,7 @@ if (!newVersion) {
   process.exit(1);
 }
 
-const configPath = path.join(__dirname, "src-tauri", "tauri.conf.json");
+const configPath = path.join(__dirname, "../src-tauri", "tauri.conf.json");
 
 // Load file
 const configRaw = fs.readFileSync(configPath, "utf8");
