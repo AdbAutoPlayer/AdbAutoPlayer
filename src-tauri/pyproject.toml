@@ -39,4 +39,4 @@ required-version = ">=0.9.11"
 find = { where = ["src-python"], exclude = ["tests*", "*/tests*"] }
 
 [tool.setuptools.exclude-package-data]
-"*adb_auto_player*" = ["binaries/*", "games/*/templates/*"]
+"adb_auto_player" = ["binaries/*", "games/*/templates/*"]
