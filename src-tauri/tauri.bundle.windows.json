@@ -3,12 +3,13 @@
     "active": true,
     "resources": {
       "pyembed/python": "./",
+      "src-python/adb_auto_player/Binaries/": "./binaries/",
       "src-python/adb_auto_player/games/afk_journey/templates/": "./games/afk_journey/templates/",
       "src-python/adb_auto_player/games/blue_protocol_star_resonance/templates/": "./games/blue_protocol_star_resonance/templates/",
       "src-python/adb_auto_player/games/guitar_girl/templates/": "./games/guitar_girl/templates/"
     },
     "targets": [
-      "app"
+      "msi"
     ]
   }
 }

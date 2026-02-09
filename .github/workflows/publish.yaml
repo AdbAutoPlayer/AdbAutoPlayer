@@ -36,7 +36,7 @@ jobs:
           #   config: "src-tauri/tauri.bundle.json"
           - platform: "windows-latest"
             target: "x86_64-pc-windows-msvc"
-            config: "src-tauri/tauri.bundle.json"
+            config: "src-tauri/tauri.bundle.windows.json"
           # - platform: "windows-11-arm"
           #   target: "aarch64-pc-windows-msvc"
           #  config: "src-tauri/tauri.bundle.json"
