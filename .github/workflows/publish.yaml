@@ -162,7 +162,7 @@ jobs:
           releaseBody: "See the assets to download this version and install."
           releaseDraft: true
           includeDebug: false
-          args: '--target ${{ matrix.target }} --config ${{ matrix.config }} --verbose'
+          args: '--target ${{ matrix.target }} --config ${{ matrix.config }} --config src-tauri/tauri.bundle.templates.json --verbose'
 
 
       - name: Upload macOS important readme to release
