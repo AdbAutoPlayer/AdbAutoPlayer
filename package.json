@@ -34,12 +34,13 @@
   "name": "adb-auto-player",
   "scripts": {
     "build": "vite build",
+    "bundle-templates": "node scripts/bundle-templates.cjs",
     "check": "svelte-kit sync && svelte-check --no-tsconfig --ignore \"src/lib/components/form/SchemaForm.svelte\"",
     "dev": "vite dev",
     "prettier-write": "prettier --write \"**/*.{ts,js,cjs,svelte}\"",
     "preview": "vite preview",
-    "pytauri": "node pytauri-bootstrap.cjs",
-    "set-version": "node set-version.cjs",
+    "pytauri": "node scripts/pytauri-bootstrap.cjs",
+    "set-version": "node scripts/set-version.cjs",
     "tauri": "tauri"
   },
   "type": "module",
