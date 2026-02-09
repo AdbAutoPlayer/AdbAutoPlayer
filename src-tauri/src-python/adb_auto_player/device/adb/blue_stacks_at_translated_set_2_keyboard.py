@@ -52,7 +52,24 @@ class ATTranslatedSet2Keyboard(InputDevice):
         """Name of the input device."""
         return "AT Translated Set 2 keyboard"
 
-    # TODO I need hold and release functions
+    def press(self, key_code: int) -> None:
+        """Press and immediately release a key."""
+        self._batch(
+            [
+                f"1 {key_code} 1",  # KEY DOWN
+                "0 0 0",  # SYN_REPORT
+                f"1 {key_code} 0",  # KEY UP
+                "0 0 0",  # SYN_REPORT
+            ]
+        )
+
+    def hold(self, key_code: int) -> None:
+        """Press and hold a key (do NOT release yet)."""
+        self._batch([f"1 {key_code} 1", "0 0 0"])  # KEY DOWN  # SYN_REPORT
+
+    def release(self, key_code: int) -> None:
+        """Release a previously held key."""
+        self._batch([f"1 {key_code} 0", "0 0 0"])  # KEY UP  # SYN_REPORT
 
     # ---------- low-level helpers ----------
     def _batch(self, cmds: list[str]) -> None:
