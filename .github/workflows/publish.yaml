@@ -149,6 +149,8 @@ jobs:
       - run: pnpm set-version ${{ github.event.release.tag_name }}
         if: github.event_name == 'release'
 
+      - run: pnpm bundle-templates
+
       - name: Build and bundle the app
         if: github.event_name == 'release'
         uses: tauri-apps/tauri-action@v0
@@ -181,7 +183,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           includeDebug: true
-          args: '--target ${{ matrix.target }} --config ${{ matrix.config }} --verbose'
+          args: '--target ${{ matrix.target }} --config ${{ matrix.config }} --config src-tauri/tauri.bundle.templates.json --verbose'
 
       - name: Upload test build artifacts
         if: github.event_name == 'workflow_dispatch'
