@@ -1,7 +1,10 @@
 const fs = require("fs");
 const path = require("path");
 
-const GAMES_DIR = path.join(__dirname, "../src-tauri/src-python/adb_auto_player/games");
+const GAMES_DIR = path.join(
+  __dirname,
+  "../src-tauri/src-python/adb_auto_player/games",
+);
 const OUTPUT_FILE = path.join(
   __dirname,
   "../src-tauri",
