@@ -63,7 +63,7 @@ repos:
     hooks:
       - id: prettier
         name: prettier
-        entry:  pnpm  run prettier-write
+        entry: pnpm run prettier-write
         language: system
         files: src/
         pass_filenames: false
