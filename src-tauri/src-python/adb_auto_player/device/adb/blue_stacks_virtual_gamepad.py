@@ -1,5 +1,6 @@
 import time
 
+from adb_auto_player.device.adb import AdbController
 from adb_auto_player.device.adb.adb_input_device import InputDevice
 from adb_auto_player.models.device import DPad, Stick
 
@@ -160,22 +161,38 @@ class BlueStacksVirtualGamepad(InputDevice):
 
     # ─── Low-level helpers ───────────────────────────────────────
     def _hold_stick(self, x_code, y_code, x_val, y_val):
-        self.sendevent(3, x_code, x_val)
-        self.sendevent(3, y_code, y_val)
-        self.ev_syn()
+        _batch_shell_commands(
+            [
+                f"sendevent {self.input_device_file} 3 {x_code} {x_val}",
+                f"sendevent {self.input_device_file} 3 {y_code} {y_val}",
+                f"sendevent {self.input_device_file} {self.EV_SYN} 0 0",
+            ]
+        )
 
     def _release_stick(self, x_code, y_code):
-        self.sendevent(3, x_code, self.CENTER)
-        self.sendevent(3, y_code, self.CENTER)
-        self.ev_syn()
+        _batch_shell_commands(
+            [
+                f"sendevent {self.input_device_file} 3 {x_code} {self.CENTER}",
+                f"sendevent {self.input_device_file} 3 {y_code} {self.CENTER}",
+                f"sendevent {self.input_device_file} {self.EV_SYN} 0 0",
+            ]
+        )
 
     def _hold_hat(self, axis, value):
-        self.sendevent(3, axis, value)
-        self.ev_syn()
+        _batch_shell_commands(
+            [
+                f"sendevent {self.input_device_file} 3 {axis} {value}",
+                f"sendevent {self.input_device_file} {self.EV_SYN} 0 0",
+            ]
+        )
 
     def _release_hat(self, axis):
-        self.sendevent(3, axis, 0)
-        self.ev_syn()
+        _batch_shell_commands(
+            [
+                f"sendevent {self.input_device_file} 3 {axis} 0",
+                f"sendevent {self.input_device_file} {self.EV_SYN} 0 0",
+            ]
+        )
 
     # ---------------- Sticks ----------------
     @property
@@ -203,3 +220,7 @@ class BlueStacksVirtualGamepad(InputDevice):
     def dpad(self) -> DPad:
         """D-pad."""
         return self._dpad
+
+
+def _batch_shell_commands(commands: list[str]) -> None:
+    AdbController().d.shell("; ".join(commands))

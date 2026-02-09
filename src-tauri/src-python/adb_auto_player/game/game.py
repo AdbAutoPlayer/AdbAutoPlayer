@@ -276,11 +276,8 @@ class Game(ABC):
             log_message (str | None, optional): Custom Log message, default msg if None
             log (bool, optional): Log the tap command.
         """
-        if log_message is None:
-            log_message = "Tapped"
-
         if log:
-            log_message = log_message + f": {coordinates}"
+            log_message = (log_message or "Tapped") + f": {coordinates}"
         else:
             log_message = None
 
@@ -1199,7 +1196,7 @@ class Game(ABC):
         iterations = 10
         for _ in range(iterations):
             start_time = perf_counter()
-            self.tap(PointOutsideDisplay(), log=False)
+            self.tap(PointOutsideDisplay(), log=False, non_blocking_sleep_duration=None)
             total_time += (perf_counter() - start_time) * 1000
         average_time = total_time / iterations
         if average_time > max_input_delay:
