@@ -35,8 +35,11 @@ build-backend = "setuptools.build_meta"
 package = true
 required-version = ">=0.9.11"
 
+[tool.setuptools]
+include-package-data = false
+
 [tool.setuptools.packages]
 find = { where = ["src-python"], exclude = ["tests*", "*/tests*"] }
 
-[tool.setuptools.exclude-package-data]
-"adb_auto_player" = ["binaries/*", "games/*/templates/*"]
+[tool.setuptools.package-data]
+"*" = ["*.pyd", "*.so"]
