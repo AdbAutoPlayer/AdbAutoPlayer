@@ -1,6 +1,9 @@
+import typing
+
 from adb_auto_player.device.adb import AdbController
 from adb_auto_player.device.adb.adb_input_device import InputDevice
 from adb_auto_player.models.device import DisplayInfo
+from adb_auto_player.models.geometry import Coordinates
 
 
 class BlueStacksVirtualTouch(InputDevice):
@@ -32,24 +35,42 @@ class BlueStacksVirtualTouch(InputDevice):
     ABS_MT_POSITION_X = 0x0035
     ABS_MT_POSITION_Y = 0x0036
 
+    RELEASE_FRAME_CMDS: typing.ClassVar = [
+        "0 2 0",  # SYN_MT_REPORT
+        "0 0 0",  # SYN_REPORT
+    ]
+
     # ---------- public API ----------
 
-    def tap(self, x: int, y: int) -> None:
-        """Fast tap using sendevent."""
-        sx = self._scale_x(x)
-        sy = self._scale_y(y)
+    def hold(self, coordinates: Coordinates) -> None:
+        """Finger down and hold."""
+        sx = self._scale_x(coordinates.x)
+        sy = self._scale_y(coordinates.y)
 
         cmds = [
-            # finger down
-            f"sendevent "
-            f"{self.input_device_file} {self.EV_ABS} {self.ABS_MT_POSITION_X} {sx}",
-            f"sendevent "
-            f"{self.input_device_file} {self.EV_ABS} {self.ABS_MT_POSITION_Y} {sy}",
-            f"sendevent {self.input_device_file} 0 2 0",  # SYN_MT_REPORT
-            f"sendevent {self.input_device_file} 0 0 0",  # SYN_REPORT
-            # finger up (inferred by silence)
-            f"sendevent {self.input_device_file} 0 2 0",  # SYN_MT_REPORT
-            f"sendevent {self.input_device_file} 0 0 0",  # SYN_REPORT
+            f"{self.EV_ABS} {self.ABS_MT_POSITION_X} {sx}",
+            f"{self.EV_ABS} {self.ABS_MT_POSITION_Y} {sy}",
+            "0 2 0",  # SYN_MT_REPORT
+            "0 0 0",  # SYN_REPORT
+        ]
+
+        self._batch(cmds)
+
+    def release(self) -> None:
+        """Release the currently held finger."""
+        self._batch(self.RELEASE_FRAME_CMDS)
+
+    def tap(self, coordinates: Coordinates) -> None:
+        """Fast tap using a single batch command."""
+        sx = self._scale_x(coordinates.x)
+        sy = self._scale_y(coordinates.y)
+
+        cmds = [
+            f"{self.EV_ABS} {self.ABS_MT_POSITION_X} {sx}",
+            f"{self.EV_ABS} {self.ABS_MT_POSITION_Y} {sy}",
+            "0 2 0",  # SYN_MT_REPORT
+            "0 0 0",  # SYN_REPORT
+            *self.RELEASE_FRAME_CMDS,  # finger up
         ]
 
         self._batch(cmds)
@@ -63,6 +84,6 @@ class BlueStacksVirtualTouch(InputDevice):
         return int(y * self.ABS_MAX / self.display_info.resolution.height)
 
     # ---------- low-level helpers ----------
-    @staticmethod
-    def _batch(cmds: list[str]) -> None:
-        AdbController().d.shell("; ".join(cmds))
+    def _batch(self, cmds: list[str]) -> None:
+        full_cmds = [f"sendevent {self.input_device_file} {cmd}" for cmd in cmds]
+        AdbController().d.shell("; ".join(full_cmds))
