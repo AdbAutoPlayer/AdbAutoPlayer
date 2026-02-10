@@ -532,7 +532,9 @@ class DailiesMixin(AFKJourneyBase, ABC):
             # NOTE: Sometimes spam click works and other times not.
             # So we go with the safe route of click then back.
             self.tap(Point(540, 840))
-            sleep(0.5)
+            sleep(0.25)
+            self.tap(Point(540, 840))  # Mitigate missed click when low frames
+            sleep(0.25)
             self.tap(back_button)
             sleep(0.5)
 
