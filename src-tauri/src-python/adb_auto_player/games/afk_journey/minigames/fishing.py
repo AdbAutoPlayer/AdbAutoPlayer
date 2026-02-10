@@ -73,13 +73,15 @@ class Fishing(AFKJourneyBase):
             "fishing/emberlight_festival/other_aquatic_creatures",
         ]
 
-        if self.find_any_template(fish_caught_templates):
+        if self.find_any_template(
+            fish_caught_templates,
+            threshold=ConfidenceValue("70%"),
+        ):
             # Originally tried with back button but can lead to exiting minigame
             # clicking somewhere at the bottom-ish of the screen seems safer
+            sleep(1)
             self.tap(Point(500, 1700))
-            sleep(2)
-            self.tap(Point(500, 1700))
-            sleep(2)
+            sleep(5)
             return self.i_am_in_emberlight_festival_fishing_screen()
         return False
 
