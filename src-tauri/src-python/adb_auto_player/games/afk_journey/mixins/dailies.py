@@ -62,12 +62,12 @@ class DailiesMixin(AFKJourneyBase, ABC):
         else:
             logging.info("Affinity farming disabled.")
         self.swap_essences()
-        if self.settings.legend_trials.towers:
-            SeasonLegendTrial().push_legend_trials()  # type: ignore[abstract]
         if self.settings.dailies.duras_trials:
             DurasTrialsMixin().push_duras_trials()  # type: ignore[abstract]
         else:
             logging.info("Dura's Trials disabled.")
+        if self.settings.legend_trials.towers:
+            SeasonLegendTrial().push_legend_trials()  # type: ignore[abstract]
         AFKStagesMixin().push_afk_stages(season=True)  # type: ignore[abstract]
 
     ############################# Daily Rewards ##############################
