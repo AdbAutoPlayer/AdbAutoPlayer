@@ -478,8 +478,6 @@ class DailiesMixin(AFKJourneyBase, ABC):
             return
 
         logging.info("Claim Daily Quest rewards.")
-        self.tap(Point(300, 1820))  # Focus on Dailies
-        sleep(self.FAST_TIMEOUT)
         self._quick_claim()
         self.tap(Point(370, 180))  # Claim top row
         sleep(self.FAST_TIMEOUT)
