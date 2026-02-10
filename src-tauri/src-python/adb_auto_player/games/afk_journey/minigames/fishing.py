@@ -1,5 +1,6 @@
 import logging
 import threading
+from enum import StrEnum, auto
 from time import sleep
 
 import cv2
@@ -16,6 +17,7 @@ from ..base import AFKJourneyBase
 from ..gui_category import AFKJCategory
 
 STRONG_PULL = Point(780, 1290)
+FISHING_ROD = Point(535, 1450)
 DISTANCE_600 = 600
 DISTANCE_400 = 400
 DISTANCE_200 = 200
@@ -26,55 +28,93 @@ FISHING_DELAY = 1.0 / 30.0  # 1 Frame this is used for the fishing loop
 # could potentially be reduced to 1.0 / 60.0 if device streaming at 60 fps
 
 
+class FishingMode(StrEnum):
+    """Fishing Modes."""
+
+    NORMAL = auto()
+    EMBERLIGHT_FESTIVAL = auto()
+    QUEST = auto()
+
+
 class Fishing(AFKJourneyBase):
     """Fishing."""
+
+    def __init__(self):
+        super().__init__()
+        self.fishing_mode = FishingMode.NORMAL
 
     @register_command(
         gui=GUIMetadata(
             label="Fishing",
             category=AFKJCategory.EVENTS_AND_OTHER,
         ),
+        name="afk_journey.fishing",
     )
-    def fishing(self) -> None:
+    def entrypoint(self) -> None:
         self.start_up(device_streaming=True)
         self.assert_frame_and_input_delay_below_threshold()
-
-        logging.warning(
-            "!!!This is unfinished!!!"
-            "You have to go to fishing spots and start the fishing minigame yourself. "
-            "Just fish the first fish or fail on purpose before starting the "
-            "Fishing bot. This will not work for quest fishing spots."
-        )
-
         self._warmup_cache_for_all_fishing_templates()
 
-        # TODO needs map navigation logic
-        # the _fish function only works inside of the fishing minigame
-        # after navigation might be easier to intentionally fail the first time to be
-        # inside the fishing screen and not the overworld.
+        self.fishing()
 
-        if not self._i_am_in_the_fishing_screen():
-            logging.error("Not inside Fishing minigame.")
-            return
+    def i_am_in_emberlight_festival_fishing_screen(self) -> bool:
+        if self.game_find_template_match(
+            "fishing/emberlight_festival/rod.png",
+            crop_regions=CropRegions(
+                left="60%",
+                right="10%",
+                top="90%",
+            ),
+        ):
+            return True
+
+        fish_caught_templates = [
+            "fishing/emberlight_festival/fishing_proficiency",
+            "fishing/emberlight_festival/other_aquatic_creatures",
+        ]
+
+        if self.find_any_template(fish_caught_templates):
+            # Originally tried with back button but can lead to exiting minigame
+            # clicking somewhere at the bottom-ish of the screen seems safer
+            self.tap(Point(500, 1700))
+            sleep(2)
+            return self.i_am_in_emberlight_festival_fishing_screen()
+        return False
+
+    def fishing(self) -> None:
+        if self.i_am_in_emberlight_festival_fishing_screen():
+            self.fishing_mode = FishingMode.EMBERLIGHT_FESTIVAL
+            logging.warning(
+                "It works for me if it doesn't work for you tough luck. - xoxo Yules"
+            )
+
+        if self.fishing_mode in (FishingMode.NORMAL, FishingMode.QUEST):
+            logging.warning(
+                "!!!This is unfinished!!!"
+                "You have to go to fishing spots and start the fishing minigame "
+                "yourself. "
+                "Just fish the first fish or fail on purpose before starting the "
+                "Fishing bot. This will not work for quest fishing spots."
+            )
+
+            if not self._i_am_in_the_fishing_screen():
+                logging.error("Not inside Fishing minigame.")
+                return
 
         while self._i_am_in_the_fishing_screen():
             self._start_fishing()
         return
 
     def _warmup_cache_for_all_fishing_templates(self):
-        templates = [
-            "fishing/book.png",
-            "fishing/hook.png",
-            "fishing/hook_fish.png",
-            "fishing/hook_fish_big.png",
-            "fishing/hook_held.png",
-            "fishing/fishing_rod.png",
-            "fishing/fishing_rod_big.png",
-        ]
-        for template in templates:
-            _ = self._load_image(template)
+        fishing_template_dir = self.template_dir / "fishing"
+        for template_path in fishing_template_dir.rglob("*"):
+            if template_path.is_file():
+                _ = self._load_image(template_path)
 
-    def _i_am_in_the_fishing_screen(self, is_quest_fishing_spot: bool = False) -> bool:
+    def _i_am_in_the_fishing_screen(self) -> bool:
+        if self.fishing_mode == FishingMode.EMBERLIGHT_FESTIVAL:
+            return self.i_am_in_emberlight_festival_fishing_screen()
+
         general_templates = [
             "fishing/hook_fish",
             "fishing/hook_fish_big",
@@ -107,13 +147,12 @@ class Fishing(AFKJourneyBase):
                 # clicking somewhere at the bottom-ish of the screen seems safer
                 self.tap(Point(500, 1700))
                 sleep(2)
-                return self._i_am_in_the_fishing_screen(is_quest_fishing_spot)
+                return self._i_am_in_the_fishing_screen()
 
         except GameTimeoutError:
             return False
 
-        # Check we are in the regular minigame
-        if not is_quest_fishing_spot:
+        if self.fishing_mode == FishingMode.NORMAL:
             return (
                 self.game_find_template_match(
                     "fishing/book.png",
@@ -124,8 +163,31 @@ class Fishing(AFKJourneyBase):
             )
         return True
 
-    def _start_fishing(self) -> None:
-        btn = self.wait_for_any_template(
+    def wait_for_fish_hooked(self):
+        if self.fishing_mode == FishingMode.EMBERLIGHT_FESTIVAL:
+            templates = [
+                "fishing/emberlight_festival/hook_fish",
+            ]
+        else:
+            templates = [
+                "fishing/hook_fish",
+                "fishing/hook_fish_big",
+            ]
+
+        _ = self.wait_for_any_template(
+            templates=templates,
+            crop_regions=CropRegions(left=0.3, right=0.3, top=0.5, bottom=0.2),
+            timeout=self.MIN_TIMEOUT,
+            delay=0.1,
+            threshold=ConfidenceValue("70%"),
+            ensure_order=False,
+        )
+
+    def get_fishing_rod_button(self) -> Coordinates:
+        if self.fishing_mode is FishingMode.EMBERLIGHT_FESTIVAL:
+            return FISHING_ROD
+
+        return self.wait_for_any_template(
             [
                 "fishing/hook_fish",
                 "fishing/hook_fish_big",
@@ -138,20 +200,26 @@ class Fishing(AFKJourneyBase):
             threshold=ConfidenceValue("70%"),
         )
 
-        # TODO could use some code so it always hit the middle in the pull size slider
-        self.tap(btn)
-        sleep(1)
-        _ = self.wait_for_any_template(
-            templates=[
-                "fishing/hook_fish",
-                "fishing/hook_fish_big",
-            ],
-            crop_regions=CropRegions(left=0.3, right=0.3, top=0.5, bottom=0.2),
-            timeout=self.MIN_TIMEOUT,
-            delay=0.1,
-            threshold=ConfidenceValue("70%"),
-            ensure_order=False,
-        )
+    def _start_fishing(self) -> None:
+        btn = self.get_fishing_rod_button()
+
+        if self.fishing_mode == FishingMode.EMBERLIGHT_FESTIVAL:
+            self._tap_coordinates_till_template_disappears(
+                coordinates=btn,
+                template="fishing/emberlight_festival/rod.png",
+                crop_regions=CropRegions(
+                    left="60%",
+                    right="10%",
+                    top="90%",
+                ),
+                delay=3.0,
+            )
+
+        else:
+            # TODO make it always hit the middle of the size slider
+            self.tap(btn)
+            sleep(1)
+        self.wait_for_fish_hooked()
         sleep(0.6)
         self.tap(btn, blocking=False)
 
@@ -198,15 +266,8 @@ class Fishing(AFKJourneyBase):
                 if count % check_book_at == 0:
                     # TODO for quest fishing spot book does not exist,
                     # maybe check for dialogue buttons or the sun/moon time switch
-                    if self.game_find_template_match(
-                        "fishing/book.png",
-                        crop_regions=CropRegions(left=0.9, bottom=0.9),
-                        screenshot=screenshot,
-                        threshold=ConfidenceValue("70%"),
-                    ):
+                    if self.fishing_minigame_ended(screenshot):
                         logging.info("Fishing done")
-                        # TODO Not sure how to detect a catch or loss here.
-                        # Might have to OCR the remaining attempts?
                         break
 
                 if not thread or not thread.is_alive():
@@ -247,6 +308,21 @@ class Fishing(AFKJourneyBase):
         if distance > DISTANCE_50:
             return self.hold(btn, duration=0.25, blocking=False, log=False)
         return thread
+
+    def fishing_minigame_ended(self, screenshot: np.ndarray) -> bool:
+        # TODO Not sure how to detect a catch or loss here.
+        # Might have to OCR the remaining attempts?
+        if self.fishing_mode.EMBERLIGHT_FESTIVAL:
+            return self.i_am_in_emberlight_festival_fishing_screen()
+        return (
+            self.game_find_template_match(
+                "fishing/book.png",
+                crop_regions=CropRegions(left=0.9, bottom=0.9),
+                screenshot=screenshot,
+                threshold=ConfidenceValue("70%"),
+            )
+            is not None
+        )
 
 
 def _find_fishing_colors_fast(img: np.ndarray) -> tuple[int | None, int | None]:
