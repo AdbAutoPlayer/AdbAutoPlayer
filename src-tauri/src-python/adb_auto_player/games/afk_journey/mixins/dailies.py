@@ -113,7 +113,6 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         self._click_confirm_on_popup()
 
-        self.tap(Point(520, 1750))
         return True
 
     ############################# Mystical House ##############################
