@@ -78,6 +78,8 @@ class Fishing(AFKJourneyBase):
             # clicking somewhere at the bottom-ish of the screen seems safer
             self.tap(Point(500, 1700))
             sleep(2)
+            self.tap(Point(500, 1700))
+            sleep(2)
             return self.i_am_in_emberlight_festival_fishing_screen()
         return False
 
