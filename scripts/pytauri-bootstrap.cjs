@@ -3,6 +3,7 @@
 const { execSync } = require("child_process");
 const process = require("process");
 const path = require("path");
+const { existsSync } = require("node:fs");
 
 process.chdir(path.resolve(__dirname, ".."));
 
@@ -29,7 +30,13 @@ function checkCommandExists(cmd, installHint) {
 
 checkCommandExists("uv", "Install uv: https://github.com/astral-sh/uv");
 
-runCommand("uv venv --allow-existing --python-preference only-system");
+const venvPath = path.join(process.cwd(), ".venv");
+
+if (!existsSync(venvPath)) {
+  runCommand("uv venv --python-preference only-system");
+} else {
+  console.log(".venv already exists, skipping...");
+}
 
 const isWin = process.platform === "win32";
 const VENV_PATH = path.join(process.cwd(), ".venv");
