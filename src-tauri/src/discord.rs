@@ -17,7 +17,7 @@ pub fn execute_discord_webhook(webhook_url: String, content: String) {
         let payload = json!({
             "content": content,
             "username": "AdbAutoPlayer",
-            "avatar_url": "https://adbautoplayer.github.io/AdbAutoPlayer/images/app-icon.png",
+            "avatar_url": "https://raw.githubusercontent.com/AdbAutoPlayer/AdbAutoPlayer/refs/heads/main/app-icon.png",
         });
 
         let _ = client.post(&webhook_url).json(&payload).send();
