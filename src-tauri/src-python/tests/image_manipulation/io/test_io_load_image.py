@@ -90,7 +90,7 @@ class TestLoadImage:
         gray_img = np.full((10, 10), 128, dtype=np.uint8)
         mock_to_gray.return_value = gray_img
 
-        path = Path("img.png")
+        path = Path("test_img.png")
 
         result = IO.load_image(path, grayscale=True)
 
