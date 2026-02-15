@@ -205,9 +205,10 @@ class StartTaskBody(ProfileContext):
     label: str
 
 
-class SummaryEvent(BaseModel):
+class TaskCompletedEventEvent(BaseModel):
     profile_index: int
     msg: str | None
+    exit_code: int | None
 
 
 class EmptyModel(BaseModel):
@@ -276,13 +277,19 @@ async def start_task(
 
     task_summary_queues[body.profile_index] = None
 
+    exitcode = task_process.exitcode
+
     Emitter.emit(
         app_handle,
         "task-completed",
-        SummaryEvent(profile_index=body.profile_index, msg=summary_msg),
+        TaskCompletedEventEvent(
+            profile_index=body.profile_index,
+            msg=summary_msg,
+            exit_code=exitcode,
+        ),
     )
 
-    if task_process.exitcode != SIG_TERM_EXIT_CODE and not any(
+    if exitcode != SIG_TERM_EXIT_CODE and not any(
         p is not None and p.is_alive() for p in task_processes.values()
     ):
         Emitter.emit(
