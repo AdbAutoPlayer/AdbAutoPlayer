@@ -2,6 +2,7 @@ use pyo3::prelude::*;
 
 mod commands;
 mod log;
+mod notification;
 mod settings;
 mod shutdown;
 mod tray;
@@ -22,6 +23,7 @@ pub fn tauri_generate_context() -> tauri::Context {
 #[pyo3(name = "ext_mod")]
 pub mod ext_mod {
     use super::*;
+    use crate::notification::setup_task_completed_listener;
     use tauri::Manager;
 
     #[pymodule_init]
@@ -35,6 +37,7 @@ pub mod ext_mod {
             |_args, _kwargs| Ok(tauri_generate_context()),
             |_args, _kwargs| {
                 let builder = tauri::Builder::default()
+                    .plugin(tauri_plugin_notification::init())
                     .plugin(
                         tauri_plugin_window_state::Builder::new()
                             .skip_initial_state("main")
@@ -57,6 +60,7 @@ pub mod ext_mod {
                         setup_window_close_handler(app)?;
                         setup_tray(app)?;
                         setup_all_tasks_completed_listener(app)?;
+                        setup_task_completed_listener(app)?;
                         Ok(())
                     });
                 Ok(builder)

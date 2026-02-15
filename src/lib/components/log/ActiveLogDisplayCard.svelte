@@ -108,7 +108,7 @@
       );
 
       const summaryUnsub = await listen<SummaryData>(
-        EventNames.WRITE_SUMMARY_TO_LOG,
+        EventNames.TASK_COMPLETED,
         (event) => {
           if (event.payload) addSummaryMessageToLog(event.payload);
         },
