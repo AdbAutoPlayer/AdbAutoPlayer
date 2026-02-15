@@ -252,7 +252,7 @@
                           class="input w-full"
                           bind:value={settingsProps.formData[key][propKey]}
                           {...prop.regex ? { pattern: prop.regex } : {}}
-                          {...prop.title ? { title: prop.title } : {}}
+                          {...prop.htmlTitle ? { title: prop.htmlTitle } : {}}
                         />
                       {/if}
                     </div>

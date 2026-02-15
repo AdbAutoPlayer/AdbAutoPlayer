@@ -34,7 +34,7 @@ class SectionTextSettings(BaseModel):
         title="Regex Start With a",
         json_schema_extra={
             "regex": "^a.*$",
-            "title": "Text should start with lowercase a",
+            "htmlTitle": "Text should start with lowercase a",
         },
     )
 

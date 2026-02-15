@@ -30,7 +30,8 @@ export type Theme = ("catppuccin" | "cerberus" | "crimson" | "fennec" | "modern"
  */
 export type Locale = ("en" | "jp" | "vn")
 export type CloseButtonShouldMinimizeTheWindow = boolean
-export type EnableNotifications = boolean
+export type DesktopNotifications = boolean
+export type DiscordWebhook = string
 export type LoggingLevel = ("DEBUG" | "INFO" | "WARNING" | "ERROR" | "FATAL")
 export type ShutdownAfterTasks = boolean
 export type GameTitle = string
@@ -109,6 +110,7 @@ trigger: Trigger
 export interface AppSettings {
 profiles?: Profiles
 ui?: UserInterface
+notifications?: Notifications
 logging?: Logging
 advanced?: Advanced
 [k: string]: unknown
@@ -127,7 +129,14 @@ export interface UserInterface {
 theme?: Theme
 locale?: Locale
 close_should_minimize?: CloseButtonShouldMinimizeTheWindow
-notifications_enabled?: EnableNotifications
+[k: string]: unknown
+}
+/**
+ * Notification Settings model.
+ */
+export interface Notifications {
+desktop_notifications?: DesktopNotifications
+discord_webhook?: DiscordWebhook
 [k: string]: unknown
 }
 /**

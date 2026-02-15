@@ -58,7 +58,20 @@ class UISettings(BaseModel):
     close_should_minimize: bool = Field(
         False, title="Close button should minimize the window"
     )
-    notifications_enabled: bool = Field(False, title="Enable Notifications")
+
+
+class NotificationSettings(BaseModel):
+    """Notification Settings model."""
+
+    desktop_notifications: bool = Field(False, title="Desktop Notifications")
+    discord_webhook: str = Field(
+        "",
+        title="Discord Webhook",
+        json_schema_extra={
+            "regex": "^https://discordapp\\.com/api/webhooks/.*",
+            "htmlTitle": "Discord Webhook has to start with 'https://discordapp.com/api/webhooks/'",
+        },
+    )
 
 
 class ProfileSettings(BaseModel):
@@ -78,6 +91,9 @@ class AppSettings(BaseModel):
 
     profiles: ProfileSettings = Field(default_factory=ProfileSettings, title="Profiles")
     ui: UISettings = Field(default_factory=UISettings, title="User Interface")
+    notifications: NotificationSettings = Field(
+        default_factory=NotificationSettings, title="Notifications"
+    )
     logging: LoggingSettings = Field(default_factory=LoggingSettings, title="Logging")
     advanced: AdvancedSettings = Field(
         default_factory=AdvancedSettings, title="Advanced"
