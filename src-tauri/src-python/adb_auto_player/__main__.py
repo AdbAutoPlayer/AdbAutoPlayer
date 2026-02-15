@@ -48,7 +48,7 @@ from pytauri import (
 )
 
 PYTAURI_GEN_TS = getenv("VIRTUAL_ENV_PROMPT") == "AdbAutoPlayer"
-SIG_TERM_EXIT_CODE = -15
+SIGTERM_EXIT_CODE = -15
 
 commands: Commands = Commands(experimental_gen_ts=PYTAURI_GEN_TS)
 
@@ -277,7 +277,7 @@ async def start_task(
 
     task_summary_queues[body.profile_index] = None
 
-    exitcode = task_process.exitcode
+    exit_code = task_process.exitcode
 
     Emitter.emit(
         app_handle,
@@ -285,11 +285,11 @@ async def start_task(
         TaskCompletedEventEvent(
             profile_index=body.profile_index,
             msg=summary_msg,
-            exit_code=exitcode,
+            exit_code=exit_code,
         ),
     )
 
-    if exitcode != SIG_TERM_EXIT_CODE and not any(
+    if exit_code != SIGTERM_EXIT_CODE and not any(
         p is not None and p.is_alive() for p in task_processes.values()
     ):
         Emitter.emit(
