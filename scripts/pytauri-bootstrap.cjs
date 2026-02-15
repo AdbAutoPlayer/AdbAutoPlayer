@@ -55,6 +55,6 @@ function runInVenv(command) {
   runCommand(fullCmd);
 }
 
-runInVenv("uv pip install -e src-tauri");
+runInVenv("uv pip install --group dev -e src-tauri");
 runCommand("pnpm install");
 runInVenv(`pnpm tauri ${extraArgs}`);

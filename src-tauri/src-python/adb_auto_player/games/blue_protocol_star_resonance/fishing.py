@@ -1,14 +1,15 @@
 import logging
-from datetime import datetime, timedelta
 from enum import Enum, auto
-from time import sleep, monotonic, perf_counter
+from time import monotonic, perf_counter, sleep
 
-import cv2
 import numpy as np
 from adb_auto_player.decorators import register_command
-from adb_auto_player.device.adb import ATTranslatedSet2Keyboard, BlueStacksVirtualTouch, XiaomiJoystick
-
-from adb_auto_player.exceptions import AutoPlayerUnrecoverableError, AutoPlayerError
+from adb_auto_player.device.adb import (
+    ATTranslatedSet2Keyboard,
+    BlueStacksVirtualTouch,
+    XiaomiJoystick,
+)
+from adb_auto_player.exceptions import AutoPlayerError, AutoPlayerUnrecoverableError
 from adb_auto_player.image_manipulation import IO, Cropping
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Box, Point
@@ -60,7 +61,6 @@ class Fishing(BlueProtocolStarResonance):
             self.tap(result)
             sleep(5)
 
-
         while True:
             if not self.is_fishing_minigame_ready():
                 self.close_popups()
@@ -86,7 +86,8 @@ class Fishing(BlueProtocolStarResonance):
         except AutoPlayerError:
             self.keyboard = None
         raise AutoPlayerUnrecoverableError(
-            "Cannot initialize Xiaomi Joystick or AT Translated Set 2 Keyboard for steering"
+            "Cannot initialize Xiaomi Joystick or AT Translated Set 2 Keyboard"
+            " for steering"
         )
 
     def select_reeling_method(self) -> None:
@@ -114,18 +115,19 @@ class Fishing(BlueProtocolStarResonance):
                 self.virtual_touch = None
                 logging.info(
                     "Using ADB input motionevent for reeling (%.6f s vs %.6f s)",
-                    avg_me_time, avg_vt_time
+                    avg_me_time,
+                    avg_vt_time,
                 )
             else:
                 logging.info(
                     "Using BlueStacks Virtual Touch for reeling (%.6f s vs %.6f s)",
-                    avg_vt_time, avg_me_time
+                    avg_vt_time,
+                    avg_me_time,
                 )
         except AutoPlayerError:
             self.virtual_touch = None
             self.device.hold_release(self.FISHING_POLE_BUTTON)
             logging.info("Using BlueStacks Virtual Touch for reeling")
-        return
 
     def is_fishing_pole_broken(self) -> bool:
         cropped = Cropping.crop_to_box(
@@ -411,15 +413,19 @@ class Fishing(BlueProtocolStarResonance):
             case HorizontalDirection.CENTER:
                 if self.joystick:
                     self.joystick.l_stick.hold_left()
-                else:
+                elif self.keyboard:
                     self.keyboard.hold(self.A)
+                else:
+                    raise AutoPlayerUnrecoverableError("No steering method found")
                 self.joystick_direction = HorizontalDirection.LEFT
             case HorizontalDirection.RIGHT:
-                    if self.joystick:
-                        self.joystick.l_stick.release()
-                    else:
-                        self.keyboard.release(self.D)
-                    self.joystick_direction = HorizontalDirection.CENTER
+                if self.joystick:
+                    self.joystick.l_stick.release()
+                elif self.keyboard:
+                    self.keyboard.release(self.D)
+                else:
+                    raise AutoPlayerUnrecoverableError("No steering method found")
+                self.joystick_direction = HorizontalDirection.CENTER
         return
 
     def step_right(self) -> None:
@@ -428,18 +434,23 @@ class Fishing(BlueProtocolStarResonance):
             case HorizontalDirection.LEFT:
                 if self.joystick:
                     self.joystick.l_stick.release()
-                else:
+                elif self.keyboard:
                     self.keyboard.release(self.A)
+                else:
+                    raise AutoPlayerUnrecoverableError("No steering method found")
                 self.joystick_direction = HorizontalDirection.CENTER
             case HorizontalDirection.CENTER:
                 if self.joystick:
                     self.joystick.l_stick.hold_right()
-                else:
+                elif self.keyboard:
                     self.keyboard.hold(self.D)
+                else:
+                    raise AutoPlayerUnrecoverableError("No steering method found")
                 self.joystick_direction = HorizontalDirection.RIGHT
             case HorizontalDirection.RIGHT:
                 return
         return
+
 
 def get_color_match_percentage(
     image: np.ndarray,
@@ -448,8 +459,9 @@ def get_color_match_percentage(
     max_blue: int = 20,
 ) -> float:
     """Returns the percentage of pixels that match the color."""
-    b, g, r = cv2.split(image)
-    mask = (r >= min_red) & (g <= max_green) & (b <= max_blue)
-
-    # mask = (image[:, :, 2] >= min_red) & (image[:, :, 1] <= max_green) & (image[:, :, 0] <= max_blue)
+    mask = (
+        (image[:, :, 2] >= min_red)
+        & (image[:, :, 1] <= max_green)
+        & (image[:, :, 0] <= max_blue)
+    )
     return np.sum(mask) / mask.size
