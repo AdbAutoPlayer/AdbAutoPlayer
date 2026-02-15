@@ -78,6 +78,7 @@ convention = "google"
 
 [tool.ruff.lint.flake8-tidy-imports]
 banned-api."time.time".msg = "Use time.monotonic() or time.perf_counter() to avoid issues with system clock drifts/updates."
+banned-api."cv2.split".msg = "Use direct numpy indexing (image[:, :, channel]) instead of cv2.split() for better performance."
 
 [tool.ruff.lint.per-file-ignores]
 # Ignore D100 (Missing docstring in public module) only in games subdirs

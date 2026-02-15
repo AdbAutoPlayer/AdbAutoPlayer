@@ -208,7 +208,7 @@ class Fishing(BlueProtocolStarResonance):
     def fishing_loop(self) -> None:
         self.equip_or_buy_fishing_gear()
         self.tap(self.FISHING_POLE_BUTTON)
-        if not self.fish_hooked():
+        if not self.is_fish_hooked():
             return
 
         self.tap(self.FISHING_POLE_BUTTON)
@@ -222,12 +222,12 @@ class Fishing(BlueProtocolStarResonance):
         while self.is_bait_empty():
             self.equip_or_buy_bait()
 
-    def fish_hooked(
+    def is_fish_hooked(
         self,
         min_box_area_correct_color_percentage: float = 0.7,
     ) -> bool:
-        timeout = datetime.now() + timedelta(seconds=30)
-        while datetime.now() < timeout:
+        timeout = monotonic() + 30
+        while monotonic() < timeout:
             fish_hooked_exclamation_mark = Box(
                 top_left=Point(943, 548),
                 width=28,
@@ -288,7 +288,7 @@ class Fishing(BlueProtocolStarResonance):
             case HorizontalDirection.LEFT:
                 self.step_right()
             case HorizontalDirection.CENTER:
-                pass
+                return
             case HorizontalDirection.RIGHT:
                 self.step_left()
         return
@@ -407,7 +407,7 @@ class Fishing(BlueProtocolStarResonance):
         self.stop_reeling()
         match self.joystick_direction:
             case HorizontalDirection.LEFT:
-                pass
+                return
             case HorizontalDirection.CENTER:
                 if self.joystick:
                     self.joystick.l_stick.hold_left()
@@ -420,7 +420,7 @@ class Fishing(BlueProtocolStarResonance):
                     else:
                         self.keyboard.release(self.D)
                     self.joystick_direction = HorizontalDirection.CENTER
-        pass
+        return
 
     def step_right(self) -> None:
         self.stop_reeling()
@@ -438,9 +438,8 @@ class Fishing(BlueProtocolStarResonance):
                     self.keyboard.hold(self.D)
                 self.joystick_direction = HorizontalDirection.RIGHT
             case HorizontalDirection.RIGHT:
-                pass
+                return
         return
-
 
 def get_color_match_percentage(
     image: np.ndarray,
@@ -451,4 +450,6 @@ def get_color_match_percentage(
     """Returns the percentage of pixels that match the color."""
     b, g, r = cv2.split(image)
     mask = (r >= min_red) & (g <= max_green) & (b <= max_blue)
+
+    # mask = (image[:, :, 2] >= min_red) & (image[:, :, 1] <= max_green) & (image[:, :, 0] <= max_blue)
     return np.sum(mask) / mask.size
