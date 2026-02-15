@@ -8,12 +8,30 @@ use tauri_plugin_notification::NotificationExt;
 #[derive(Debug, Deserialize)]
 struct TaskCompletedPayload {
     msg: Option<String>,
+    exit_code: Option<i32>,
 }
+
+const SIGTERM_EXIT_CODE: i32 = -15;
 
 pub fn setup_task_completed_listener(app: &mut App) -> tauri::Result<()> {
     let app_handle = app.handle().clone();
 
     app.listen("task-completed", move |event| {
+        let payload: TaskCompletedPayload = match serde_json::from_str(event.payload()) {
+            Ok(p) => p,
+            Err(err) => {
+                eprintln!("Failed to parse task-completed payload: {}", err);
+                return;
+            }
+        };
+
+        let message = payload.msg.unwrap_or_default();
+        let exit_code = payload.exit_code.unwrap_or(-1);
+
+        if exit_code == SIGTERM_EXIT_CODE {
+            return;
+        }
+
         let (desktop_notifications, discord_webhook) = app_handle
             .state::<Mutex<AppSettings>>()
             .lock()
@@ -24,11 +42,6 @@ pub fn setup_task_completed_listener(app: &mut App) -> tauri::Result<()> {
                 )
             })
             .unwrap_or((false, String::new()));
-
-        let message = serde_json::from_str::<TaskCompletedPayload>(event.payload())
-            .ok()
-            .and_then(|data| data.msg)
-            .unwrap_or_default();
 
         if desktop_notifications {
             let mut builder = app_handle.notification().builder().title("Task Completed");

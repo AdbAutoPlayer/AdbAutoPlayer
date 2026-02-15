@@ -11,9 +11,10 @@
   import { listen } from "@tauri-apps/api/event";
   import { appSettings, debugLogLevelOverwrite } from "$lib/stores";
 
-  interface SummaryData {
+  interface TaskCompletedEvent {
     profile_index: number;
     msg: string | null;
+    exit_code: number | null;
   }
 
   interface Props {
@@ -61,7 +62,7 @@
     }
   }
 
-  function addSummaryMessageToLog(summary: SummaryData) {
+  function addSummaryMessageToLog(summary: TaskCompletedEvent) {
     if (!summary.msg) {
       return;
     }
@@ -107,7 +108,7 @@
         },
       );
 
-      const summaryUnsub = await listen<SummaryData>(
+      const summaryUnsub = await listen<TaskCompletedEvent>(
         EventNames.TASK_COMPLETED,
         (event) => {
           if (event.payload) addSummaryMessageToLog(event.payload);
