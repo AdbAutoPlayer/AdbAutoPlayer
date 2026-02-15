@@ -244,7 +244,6 @@ def _check_orientation(d: AdbDeviceWrapper) -> Orientation:
                 x in orientation_check for x in ["Orientation: 1", "Orientation: 3"]
             ):
                 return Orientation.LANDSCAPE
-        logging.debug(f"orientation_check: {orientation_check}")
     except Exception as e:
         logging.debug(f"SurfaceOrientation check failed: {e}")
 
@@ -258,7 +257,7 @@ def _check_orientation(d: AdbDeviceWrapper) -> Orientation:
                 return Orientation.PORTRAIT
             elif any(x in rotation_check for x in ["ROTATION_90", "ROTATION_270"]):
                 return Orientation.LANDSCAPE
-        logging.debug(f"rotation_check: {rotation_check}")
+            logging.debug(f"rotation_check: {rotation_check}")
     except Exception as e:
         logging.debug(f"Rotation check failed: {e}")
 
@@ -272,7 +271,7 @@ def _check_orientation(d: AdbDeviceWrapper) -> Orientation:
                 return Orientation.PORTRAIT
             elif any(x in display_check for x in ["orientation=1", "orientation=3"]):
                 return Orientation.LANDSCAPE
-        logging.debug(f"display_check: {display_check}")
+            logging.debug(f"display_check: {display_check}")
     except Exception as e:
         logging.debug(f"Display orientation check failed: {e}")
 
