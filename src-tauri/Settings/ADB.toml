@@ -1,10 +1,10 @@
 [advanced]
 adb_host = "127.0.0.1"
 adb_port = 5037
-hardware_decoding = false
+hardware_decoding = true
 
 [device]
-id = "127.0.0.1:5555"
+id = "127.0.0.1:5560"
 streaming = true
 streaming_fps = 30
 use_wm_resize = false
