@@ -1,6 +1,7 @@
 use pyo3::prelude::*;
 
 mod commands;
+mod discord;
 mod log;
 mod notification;
 mod settings;

@@ -6,7 +6,7 @@ use std::sync::Mutex;
 use tauri::{Emitter, Manager, State};
 
 const APP_SETTINGS_SCHEMA: &str = r##"
-{"$defs": {"AdvancedSettings": {"description": "Advanced Settings model.", "properties": {"shutdown_after_tasks": {"default": false, "title": "Shutdown after Tasks", "type": "boolean"}}, "title": "AdvancedSettings", "type": "object"}, "Locale": {"description": "Locale Enum.", "enum": ["en", "jp", "vn"], "title": "Locale", "type": "string"}, "LoggingSettings": {"description": "Logging settings model.", "properties": {"level": {"default": "INFO", "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "FATAL"], "title": "Logging Level", "type": "string"}}, "title": "LoggingSettings", "type": "object"}, "ProfileSettings": {"description": "Profile Settings model.", "properties": {"profiles": {"default": ["Default"], "items": {"type": "string"}, "minItems": 1, "title": "Profiles", "type": "array"}}, "title": "ProfileSettings", "type": "object"}, "Theme": {"description": "Theme Enum.", "enum": ["catppuccin", "cerberus", "crimson", "fennec", "modern", "mona", "nosh", "nouveau", "pine", "rose", "seafoam", "terminus", "vintage", "vox", "wintry"], "title": "Theme", "type": "string"}, "UISettings": {"description": "UI Settings model.", "properties": {"theme": {"$ref": "#/$defs/Theme", "default": "catppuccin"}, "locale": {"$ref": "#/$defs/Locale", "default": "en"}, "close_should_minimize": {"default": false, "title": "Close button should minimize the window", "type": "boolean"}, "notifications_enabled": {"default": false, "title": "Enable Notifications", "type": "boolean"}}, "title": "UISettings", "type": "object"}}, "description": "App Settings model.", "properties": {"profiles": {"$ref": "#/$defs/ProfileSettings", "title": "Profiles"}, "ui": {"$ref": "#/$defs/UISettings", "title": "User Interface"}, "logging": {"$ref": "#/$defs/LoggingSettings", "title": "Logging"}, "advanced": {"$ref": "#/$defs/AdvancedSettings", "title": "Advanced"}}, "title": "AppSettings", "type": "object"}
+{"$defs": {"AdvancedSettings": {"description": "Advanced Settings model.", "properties": {"shutdown_after_tasks": {"default": false, "title": "Shutdown after Tasks", "type": "boolean"}}, "title": "AdvancedSettings", "type": "object"}, "Locale": {"description": "Locale Enum.", "enum": ["en", "jp", "vn"], "title": "Locale", "type": "string"}, "LoggingSettings": {"description": "Logging settings model.", "properties": {"level": {"default": "INFO", "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "FATAL"], "title": "Logging Level", "type": "string"}}, "title": "LoggingSettings", "type": "object"}, "NotificationSettings": {"description": "Notification Settings model.", "properties": {"desktop_notifications": {"default": false, "title": "Desktop Notifications", "type": "boolean"}, "discord_webhook": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": null, "htmlTitle": "Discord Webhook has to start with 'https://discordapp.com/api/webhooks/'", "regex": "^https://discordapp\\.com/api/webhooks/.*", "title": "Discord Webhook"}}, "title": "NotificationSettings", "type": "object"}, "ProfileSettings": {"description": "Profile Settings model.", "properties": {"profiles": {"default": ["Default"], "items": {"type": "string"}, "minItems": 1, "title": "Profiles", "type": "array"}}, "title": "ProfileSettings", "type": "object"}, "Theme": {"description": "Theme Enum.", "enum": ["catppuccin", "cerberus", "crimson", "fennec", "modern", "mona", "nosh", "nouveau", "pine", "rose", "seafoam", "terminus", "vintage", "vox", "wintry"], "title": "Theme", "type": "string"}, "UISettings": {"description": "UI Settings model.", "properties": {"theme": {"$ref": "#/$defs/Theme", "default": "cerberus"}, "locale": {"$ref": "#/$defs/Locale", "default": "en"}, "close_should_minimize": {"default": false, "title": "Close button should minimize the window", "type": "boolean"}}, "title": "UISettings", "type": "object"}}, "description": "App Settings model.", "properties": {"profiles": {"$ref": "#/$defs/ProfileSettings", "title": "Profiles"}, "ui": {"$ref": "#/$defs/UISettings", "title": "User Interface"}, "notifications": {"$ref": "#/$defs/NotificationSettings", "title": "Notifications"}, "logging": {"$ref": "#/$defs/LoggingSettings", "title": "Logging"}, "advanced": {"$ref": "#/$defs/AdvancedSettings", "title": "Advanced"}}, "title": "AppSettings", "type": "object"}
 "##;
 
 // ---------- Enums ----------
@@ -69,9 +69,16 @@ pub struct UISettings {
 
     #[serde(default)]
     pub close_should_minimize: bool,
+}
+
+// ---------- NotificationSettings ----------
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
+pub struct NotificationSettings {
+    #[serde(default)]
+    pub desktop_notifications: bool,
 
     #[serde(default)]
-    pub notifications_enabled: bool,
+    pub discord_webhook: String,
 }
 
 // ---------- ProfileSettings ----------
@@ -100,6 +107,9 @@ pub struct AppSettings {
 
     #[serde(default)]
     pub ui: UISettings,
+
+    #[serde(default)]
+    pub notifications: NotificationSettings,
 
     #[serde(default)]
     pub logging: LoggingSettings,
