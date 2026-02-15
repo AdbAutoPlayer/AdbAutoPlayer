@@ -110,6 +110,7 @@ class SeasonLegendTrial(AFKJourneyBase):
                     templates=[
                         "next.png",
                         "legend_trials/top_floor_reached.png",
+                        "legend_trials/unlocks_at_season_phase.png",
                     ],
                     threshold=ConfidenceValue("80%"),
                 )
