@@ -598,7 +598,7 @@ class AFKJourneyBase(Navigation, Game):
 
     def _wait_for_battle_over_template(
         self,
-        freeze_check_timeout: float = timedelta(seconds=30).total_seconds(),
+        freeze_check_timeout: float = timedelta(seconds=45).total_seconds(),
     ) -> TemplateMatchResult:
         if self.battle_state.mode and self.battle_state.mode.has_timer():
             roi_crop = CropRegions(right="90%", bottom="90%")
