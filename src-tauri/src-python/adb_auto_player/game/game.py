@@ -83,7 +83,6 @@ class Game(ABC):
     def __init__(self) -> None:
         """Initialize a game."""
         self.default_threshold: ConfidenceValue = ConfidenceValue("90%")
-        self.disable_debug_screenshots: bool = False
 
         # e.g. AFK Journey
         #   Global: com.farlightgames.igame.gp
@@ -92,7 +91,6 @@ class Game(ABC):
         self.package_name_prefixes: list[str] = []
         # Assuming landscape for most games
         self.base_resolution: Resolution = Resolution.from_string("1920x1080")
-        self._debug_screenshot_counter: int = 0
         self._device: AdbController | None = None
         self._stream: DeviceStream | None = None
         self._target_package_name: str | None = None
@@ -1180,7 +1178,6 @@ class Game(ABC):
         """
         # Debug screenshots add additional IO, we can disable this here because we know
         # the feature needs to be fast if this function is called...
-        self.disable_debug_screenshots = True
 
         start_time = perf_counter()
         _ = self.get_screenshot()

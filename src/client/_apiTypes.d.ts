@@ -32,7 +32,6 @@ export type Locale = ("en" | "jp" | "vn")
 export type CloseButtonShouldMinimizeTheWindow = boolean
 export type EnableNotifications = boolean
 export type LoggingLevel = ("DEBUG" | "INFO" | "WARNING" | "ERROR" | "FATAL")
-export type LogFileLimit = number
 export type ShutdownAfterTasks = boolean
 export type GameTitle = string
 export type Label1 = string
@@ -136,7 +135,6 @@ notifications_enabled?: EnableNotifications
  */
 export interface Logging {
 level?: LoggingLevel
-action_log_limit?: LogFileLimit
 [k: string]: unknown
 }
 /**

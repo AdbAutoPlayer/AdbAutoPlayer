@@ -50,7 +50,6 @@ class Fishing(BlueProtocolStarResonance):
         name="BPSR.fishing",
     )
     def entry(self) -> None:
-        self.disable_debug_screenshots = True
         self.start_stream()
         self.close_popups()
 

@@ -48,7 +48,6 @@ class LoggingSettings(BaseModel):
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "FATAL"] = Field(
         "INFO", title="Logging Level"
     )
-    action_log_limit: NonNegativeInt = Field(5, title="Log File Limit")
 
 
 class UISettings(BaseModel):
