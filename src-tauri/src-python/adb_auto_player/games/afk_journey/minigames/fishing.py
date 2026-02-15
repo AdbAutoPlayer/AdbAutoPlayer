@@ -77,13 +77,15 @@ class Fishing(AFKJourneyBase):
             fish_caught_templates,
             threshold=ConfidenceValue("70%"),
         ):
-            # Originally tried with back button but can lead to exiting minigame
-            # clicking somewhere at the bottom-ish of the screen seems safer
-            sleep(1)
-            self.tap(Point(500, 1700))
-            sleep(5)
+            self.close_fish_catch_popup()
             return self.i_am_in_emberlight_festival_fishing_screen()
         return False
+
+    def close_fish_catch_popup(self) -> None:
+        # Originally tried with back button but can lead to exiting minigame
+        # clicking somewhere at the bottom-ish of the screen seems safer
+        self.tap(Point(500, 1700))
+        sleep(2)
 
     def fishing(self) -> None:
         if self.i_am_in_emberlight_festival_fishing_screen():
@@ -107,6 +109,29 @@ class Fishing(AFKJourneyBase):
 
         while self._i_am_in_the_fishing_screen():
             self._start_fishing()
+            if self.fishing_mode == FishingMode.EMBERLIGHT_FESTIVAL:
+                while True:
+                    if self.game_find_template_match(
+                        template="fishing/emberlight_festival/rod.png",
+                        crop_regions=CropRegions(
+                            left="60%",
+                            right="10%",
+                            top="90%",
+                        ),
+                    ):
+                        sleep(2)
+                    if not self.game_find_template_match(
+                        template="fishing/emberlight_festival/rod.png",
+                        crop_regions=CropRegions(
+                            left="60%",
+                            right="10%",
+                            top="90%",
+                        ),
+                    ):
+                        self.close_fish_catch_popup()
+                        continue
+                    break
+
         return
 
     def _warmup_cache_for_all_fishing_templates(self):
@@ -147,10 +172,7 @@ class Fishing(AFKJourneyBase):
             )
 
             if result.template in fish_caught_templates:
-                # Originally tried with back button but can lead to exiting minigame
-                # clicking somewhere at the bottom-ish of the screen seems safer
-                self.tap(Point(500, 1700))
-                sleep(2)
+                self.close_fish_catch_popup()
                 return self._i_am_in_the_fishing_screen()
 
         except GameTimeoutError:
