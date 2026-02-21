@@ -36,15 +36,15 @@ importers:
         specifier: ^1.347.2
         version: 1.347.2
       tailwindcss:
-        specifier: ^4.1.18
-        version: 4.1.18
+        specifier: ^4.2.0
+        version: 4.2.0
       tauri-plugin-pytauri-api:
         specifier: ^0.8.0
         version: 0.8.0
     devDependencies:
       '@skeletonlabs/skeleton':
         specifier: ^4.12.0
-        version: 4.12.0(tailwindcss@4.1.18)
+        version: 4.12.0(tailwindcss@4.2.0)
       '@skeletonlabs/skeleton-svelte':
         specifier: ^4.12.0
         version: 4.12.0(svelte@5.51.1)
@@ -59,7 +59,7 @@ importers:
         version: 6.2.4(svelte@5.51.1)(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.30.2))
       '@tailwindcss/forms':
         specifier: ^0.5.11
-        version: 0.5.11(tailwindcss@4.1.18)
+        version: 0.5.11(tailwindcss@4.2.0)
       '@tauri-apps/cli':
         specifier: ^2.10.0
         version: 2.10.0
@@ -1296,6 +1296,9 @@ packages:
   tailwindcss@4.1.18:
     resolution: {integrity: sha512-4+Z+0yiYyEtUVCScyfHCxOYP06L5Ne+JiHhY2IjR2KWMIWhJOYZKLSGZaP5HkZ8+bY0cxfzwDE5uOmzFXyIwxw==}
 
+  tailwindcss@4.2.0:
+    resolution: {integrity: sha512-yYzTZ4++b7fNYxFfpnberEEKu43w44aqDMNM9MHMmcKuCH7lL8jJ4yJ7LGHv7rSwiqM0nkiobF9I6cLlpS2P7Q==}
+
   tapable@2.3.0:
     resolution: {integrity: sha512-g9ljZiwki/LfxmQADO3dEY1CbpmXT5Hm2fJ+QaGKwSXUylMybePR7/67YW7jOrrvjEgL1Fmz5kzyAjWVWLlucg==}
     engines: {node: '>=6'}
@@ -1731,9 +1734,9 @@ snapshots:
       '@zag-js/tree-view': 1.32.0
       svelte: 5.51.1
 
-  '@skeletonlabs/skeleton@4.12.0(tailwindcss@4.1.18)':
+  '@skeletonlabs/skeleton@4.12.0(tailwindcss@4.2.0)':
     dependencies:
-      tailwindcss: 4.1.18
+      tailwindcss: 4.2.0
 
   '@standard-schema/spec@1.1.0': {}
 
@@ -1788,10 +1791,10 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@tailwindcss/forms@0.5.11(tailwindcss@4.1.18)':
+  '@tailwindcss/forms@0.5.11(tailwindcss@4.2.0)':
     dependencies:
       mini-svg-data-uri: 1.4.4
-      tailwindcss: 4.1.18
+      tailwindcss: 4.2.0
 
   '@tailwindcss/node@4.1.18':
     dependencies:
@@ -2604,6 +2607,8 @@ snapshots:
       zimmerframe: 1.1.4
 
   tailwindcss@4.1.18: {}
+
+  tailwindcss@4.2.0: {}
 
   tapable@2.3.0: {}
 
