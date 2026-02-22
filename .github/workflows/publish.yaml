@@ -169,7 +169,7 @@ jobs:
 
       - name: Upload macOS important readme to release
         if: github.event_name == 'release' && runner.os == 'macOS'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v2.4.2
         with:
           files: scripts/macos/MACOS_READ_THIS_IMPORTANT.txt
         env:
