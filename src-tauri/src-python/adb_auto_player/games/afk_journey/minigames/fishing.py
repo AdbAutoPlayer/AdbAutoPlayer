@@ -292,7 +292,7 @@ class Fishing(AFKJourneyBase):
                 if count % check_book_at == 0:
                     # TODO for quest fishing spot book does not exist,
                     # maybe check for dialogue buttons or the sun/moon time switch
-                    if self.fishing_minigame_ended(screenshot):
+                    if self.fishing_minigame_ended():
                         logging.info("Fishing done")
                         break
 
@@ -335,16 +335,15 @@ class Fishing(AFKJourneyBase):
             return self.hold(btn, duration=0.25, blocking=False, log=False)
         return thread
 
-    def fishing_minigame_ended(self, screenshot: np.ndarray) -> bool:
+    def fishing_minigame_ended(self) -> bool:
         # TODO Not sure how to detect a catch or loss here.
         # Might have to OCR the remaining attempts?
-        if self.fishing_mode.EMBERLIGHT_FESTIVAL:
+        if self.fishing_mode == self.fishing_mode.EMBERLIGHT_FESTIVAL:
             return self.i_am_in_emberlight_festival_fishing_screen()
         return (
             self.game_find_template_match(
                 "fishing/book.png",
                 crop_regions=CropRegions(left=0.9, bottom=0.9),
-                screenshot=screenshot,
                 threshold=ConfidenceValue("70%"),
             )
             is not None
