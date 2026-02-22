@@ -169,9 +169,7 @@ jobs:
 
       - name: Upload macOS important readme to release
         if: github.event_name == 'release' && runner.os == 'macOS'
-        uses: softprops/action-gh-release@v2.4.2
-        with:
-          files: scripts/macos/MACOS_READ_THIS_IMPORTANT.txt
+        run: gh release upload "${{ github.event.release.tag_name }}" scripts/macos/MACOS_READ_THIS_IMPORTANT.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
