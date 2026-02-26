@@ -8,7 +8,11 @@ edition = "2021"
 
 
 [profile.release]
+codegen-units = 1
 lto = "thin"
+opt-level = "s"
+panic = "abort"
+strip = true
 
 # See: <https://pytauri.github.io/pytauri/0.5/usage/tutorial/build-standalone/#configure-tauri-cli>
 [profile.bundle-dev]
