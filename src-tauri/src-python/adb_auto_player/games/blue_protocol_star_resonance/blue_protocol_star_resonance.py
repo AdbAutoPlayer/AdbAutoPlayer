@@ -1,3 +1,4 @@
+import re
 from time import sleep
 
 import cv2
@@ -5,9 +6,12 @@ import numpy as np
 from adb_auto_player.decorators import register_game
 from adb_auto_player.game import Game
 from adb_auto_player.image_manipulation import Cropping
+from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GameGUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.models.ocr import OCRResult
+from adb_auto_player.ocr import PSM, TesseractBackend, TesseractConfig
 
 
 @register_game(
@@ -32,7 +36,7 @@ class BlueProtocolStarResonance(Game):
         while result := self.find_any_template(
             power_savings_templates + daily_reset,
         ):
-            self.tap(result)
+            self.tap(result, log=False)
             sleep(3)
 
     def hide_ui(self) -> None:
@@ -81,3 +85,39 @@ class BlueProtocolStarResonance(Game):
     @property
     def character_center(self) -> Point:
         return Point(self.center.x, self.center.y + 80)
+
+    def get_interact_options(
+        self,
+        expected_number_of_options: int | None = None,
+        min_amount_of_characters_per_option: int = 2,
+    ) -> list[OCRResult]:
+        if expected_number_of_options == 1:
+            top = "480px"
+            bottom = "525px"
+        else:
+            top = "300px"
+            bottom = "200px"
+
+        crop_result = Cropping.crop(
+            self.get_screenshot(),
+            CropRegions(
+                left="1300px",
+                right="270px",
+                top=top,
+                bottom=bottom,
+            ),
+        )
+
+        ocr = TesseractBackend(config=TesseractConfig(psm=PSM.DEFAULT))
+        ocr_results = ocr.detect_text_lines(
+            crop_result.image,
+            min_confidence=ConfidenceValue("80%"),
+        )
+        return [
+            r.with_offset(crop_result.offset)
+            for r in ocr_results
+            if (
+                len(r.text.strip()) >= min_amount_of_characters_per_option
+                and re.fullmatch(r"[A-Za-z0-9 ]+", r.text.strip())
+            )
+        ]
