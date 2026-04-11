@@ -19,7 +19,7 @@ dependencies = [
     "pytesseract>=0.3.13,<0.4",
     "psutil>=7.2.2,<8",
     "numpy>=2.4.3,<2.5",
-    "rapidocr>=3.7.0",
+    "rapidocr>=3.8.1",
     "onnxruntime>=1.24.4"
 ]
 
