@@ -30,7 +30,7 @@ adb-auto-player = "adb_auto_player.main_cli:main"
 ext_mod = "adb_auto_player.ext_mod"
 
 [build-system]
-requires = ["setuptools >= 80", "setuptools-scm >= 8"]
+requires = ["setuptools >= 80", "setuptools-scm>=10.0.5"]
 build-backend = "setuptools.build_meta"
 
 [tool.uv]
