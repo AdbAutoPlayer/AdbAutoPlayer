@@ -12,7 +12,7 @@ dependencies = [
 dev = [
     "adb-auto-player",
     "ty>=0.0.29",
-    "pytest>=8.4.1",
+    "pytest>=9.0.3",
     "pytest-cov>=6.2.1",
 ]
 
