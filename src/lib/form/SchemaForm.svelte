@@ -230,16 +230,34 @@
                           <span class="slider"></span>
                         </label>
                       {:else if prop.type === "integer" || prop.type === "number"}
-                        <input
-                          id={`${key}-${propKey}`}
-                          type="number"
-                          class="input"
-                          min={prop.minimum}
-                          max={prop.maximum}
-                          step={prop.step ??
-                            (prop.type === "integer" ? 1 : "any")}
-                          bind:value={settingsProps.formData[key][propKey]}
-                        />
+                        {#if prop.formType === "slider"}
+                          <div class="slider-container">
+                            <input
+                              id={`${key}-${propKey}`}
+                              type="range"
+                              class="range-input"
+                              min={prop.minimum}
+                              max={prop.maximum}
+                              step={prop.multipleOf ??
+                                (prop.type === "integer" ? 1 : 0.1)}
+                              bind:value={settingsProps.formData[key][propKey]}
+                            />
+                            <span class="range-value"
+                              >{settingsProps.formData[key][propKey]}</span
+                            >
+                          </div>
+                        {:else}
+                          <input
+                            id={`${key}-${propKey}`}
+                            type="number"
+                            class="input"
+                            min={prop.minimum}
+                            max={prop.maximum}
+                            step={prop.multipleOf ??
+                              (prop.type === "integer" ? 1 : "any")}
+                            bind:value={settingsProps.formData[key][propKey]}
+                          />
+                        {/if}
                       {:else}
                         <input
                           id={`${key}-${propKey}`}
@@ -477,5 +495,46 @@
     to {
       transform: rotate(360deg);
     }
+  }
+
+  .slider-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .range-input {
+    flex: 1;
+    appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--bg-3);
+    border: 1px solid var(--line);
+    outline: none;
+  }
+
+  .range-input::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: transform 0.1s;
+  }
+
+  .range-input::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+  }
+
+  .range-value {
+    min-width: 32px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-2);
+    text-align: right;
   }
 </style>

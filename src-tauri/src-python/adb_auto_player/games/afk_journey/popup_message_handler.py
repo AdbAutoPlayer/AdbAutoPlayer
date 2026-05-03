@@ -1,6 +1,5 @@
 import logging
 import re
-import time
 from abc import ABC
 from dataclasses import dataclass, replace
 
@@ -270,7 +269,7 @@ class PopupMessageHandler(Game, ABC):
         if matching_popup.has_dont_remind_me:
             if preprocess_result.dont_remind_me_checkbox:
                 self.tap(preprocess_result.dont_remind_me_checkbox)
-                time.sleep(1)
+                self.sleep_action()
             else:
                 logging.warning("Don't remind me checkbox expected but not found.")
 
@@ -304,7 +303,7 @@ class PopupMessageHandler(Game, ABC):
             self.hold(coordinates=button, duration=popup.hold_duration_seconds)
         else:
             self.tap(coordinates=button)
-        time.sleep(3)
+        self.sleep_navigation()
         return popup
 
     def _run_popup_ocr(

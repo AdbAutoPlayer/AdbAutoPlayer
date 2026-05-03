@@ -82,7 +82,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         logging.info("Claim AFK rewards twice for battle pass.")
         for _ in range(4):
             self.tap(Point(520, 1420))
-            sleep(self.FAST_TIMEOUT)
+            sleep(self.fast_timeout)
 
         logging.info("Looking for free hourglasses.")
         claim_limit = 3
@@ -92,7 +92,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
 
         logging.debug("Back.")
         self.press_back_button()
-        sleep(self.FAST_TIMEOUT)
+        sleep(self.fast_timeout)
 
     def _claim_hourglasses(self) -> bool:
         """Claim free hourglass.
@@ -103,11 +103,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
         try:
             free_hourglass = self.wait_for_template(
                 "dailies/daily_rewards/free_hourglass.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="No more free hourglasses.",
             )
             self.tap(free_hourglass)
-            sleep(self.FAST_TIMEOUT)
+            sleep(self.fast_timeout)
         except GameTimeoutError as fail:
             logging.info(fail)
             return False
@@ -130,7 +130,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             emporium = self.wait_for_template(
                 "dailies/emporium/emporium.png",
                 threshold=ConfidenceValue("70%"),
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to find Emporium.",
             )
             self.tap(emporium)
@@ -142,7 +142,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         self._buy_affinity_items()
         self._buy_bound_essence()
 
-        sleep(self.FAST_TIMEOUT)
+        sleep(self.fast_timeout)
         logging.debug("Back to Mystical House.")
         self.press_back_button()
 
@@ -153,7 +153,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Opening Guild Store.")
             guild_store = self.wait_for_template(
                 "dailies/emporium/guild_store.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to find Guild Store.",
             )
             self.tap(guild_store)
@@ -165,7 +165,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Look for discount Invite Letter.")
             invite_letter = self.wait_for_template(
                 "dailies/emporium/invite_letter.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Discount Invite Letter already purchased.",
             )
             self.tap(invite_letter)
@@ -173,11 +173,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Confirm purchase.")
             buy_letter = self.wait_for_template(
                 "dailies/emporium/buy_letter.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to purchase Invite Letter.",
             )
             self.tap(buy_letter)
-            sleep(self.FAST_TIMEOUT)  # pop up takes time to appear in slow devices
+            sleep(self.fast_timeout)  # pop up takes time to appear in slow devices
         except GameTimeoutError as fail:
             logging.info(fail)
 
@@ -199,7 +199,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Open Friendship Store.")
             friendship_store = self.wait_for_template(
                 "dailies/emporium/friendship_store.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to find Friendship Store.",
             )
             self.tap(friendship_store)
@@ -257,7 +257,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Open Dream Store.")
             dream_store = self.wait_for_template(
                 "dailies/emporium/dream_store.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to find Dream Store.",
             )
             self.tap(dream_store)
@@ -305,29 +305,29 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Opening Noble Tavern.")
             tavern = self.wait_for_template(
                 "dailies/noble_tavern/noble_tavern.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to find the Noble Tavern.",
             )
             self.tap(tavern)
-            sleep(self.FAST_TIMEOUT)
+            sleep(self.fast_timeout)
 
             logging.debug("Select All-Hero Recruitment.")
             all_hero_recruit = self.wait_for_template(
                 "dailies/noble_tavern/all_hero_recruit.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to find All-Hero Recruitment.",
             )
             self.tap(all_hero_recruit)
-            sleep(self.FAST_TIMEOUT)
+            sleep(self.fast_timeout)
 
             logging.debug("Click Recruit 1.")
             recruit = self.wait_for_template(
                 "dailies/noble_tavern/recruit.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="No Invite Letters.",
             )
             self.tap(recruit)
-            sleep(self.FAST_TIMEOUT)
+            sleep(self.fast_timeout)
 
             max_hero_continue = self.game_find_template_match(
                 "dailies/noble_tavern/maxed_hero_continue.png"
@@ -339,11 +339,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Wait for back button.")
             confirm_summon = self.wait_for_template(
                 "back.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to recruit.",
             )
             self.tap(confirm_summon)
-            sleep(self.FAST_TIMEOUT)
+            sleep(self.fast_timeout)
         except GameTimeoutError as fail:
             logging.error(f"{fail} {self.LANG_ERROR}")
 
@@ -375,7 +375,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Click Friends.")
             friends = self.wait_for_template(
                 "dailies/hamburger/friends.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to find Friends. Sadge.",
             )
             self.tap(friends)
@@ -384,11 +384,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Click Send & Receive.")
             send_receive = self.wait_for_template(
                 "dailies/hamburger/send_receive.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Friend rewards already claimed.",
             )
             self.tap(send_receive)
-            sleep(self.FAST_TIMEOUT)
+            sleep(self.fast_timeout)
             self.tap(Point(540, 1620))  # Close confirmation
             sleep(1)
         except GameTimeoutError as fail:
@@ -406,7 +406,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Click Mail.")
             mail = self.wait_for_template(
                 "dailies/hamburger/mail.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to find Mail.",
             )
             self.tap(mail)
@@ -419,7 +419,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Click Read All.")
             read_all = self.wait_for_template(
                 "dailies/hamburger/read_all.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="No mail.",
             )
             self.tap(read_all)
@@ -440,11 +440,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Click Noble Path.")
             battle_pass = self.wait_for_template(
                 "dailies/hamburger/battle_pass.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to find Battle Pass.",
             )
             self.tap(battle_pass)
-            sleep(self.FAST_TIMEOUT)
+            sleep(self.fast_timeout)
         except GameTimeoutError as fail:
             logging.error(fail)
             return
@@ -455,7 +455,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         )
         for bp_reward in available_rewards:
             self.tap(bp_reward)
-            sleep(self.FAST_TIMEOUT)
+            sleep(self.fast_timeout)
             self._quick_claim()
             sleep(1)
 
@@ -470,11 +470,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Click Quests.")
             quests = self.wait_for_template(
                 "dailies/hamburger/quests.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to find daily Quests.",
             )
             self.tap(quests)
-            sleep(self.FAST_TIMEOUT)
+            sleep(self.fast_timeout)
         except GameTimeoutError as fail:
             logging.error(fail)
             return
@@ -482,13 +482,13 @@ class DailiesMixin(AFKJourneyBase, ABC):
         logging.info("Claim Daily Quest rewards.")
         self._quick_claim()
         self.tap(Point(370, 180))  # Claim top row
-        sleep(self.FAST_TIMEOUT)
+        sleep(self.fast_timeout)
         self.tap(Point(530, 1740))  # Close confirmation
-        sleep(self.FAST_TIMEOUT)
+        sleep(self.fast_timeout)
 
         logging.info("Claim Guild Quest rewards.")
         self.tap(Point(830, 1670))  # Guild Quests
-        sleep(self.FAST_TIMEOUT)
+        sleep(self.fast_timeout)
         self._quick_claim()
 
     def _quick_claim(self) -> None:
@@ -500,9 +500,9 @@ class DailiesMixin(AFKJourneyBase, ABC):
             return
 
         self.tap(claim)
-        sleep(self.FAST_TIMEOUT)
+        sleep(self.fast_timeout)
         self.tap(Point(540, 1620))  # Close confirmation
-        sleep(self.FAST_TIMEOUT)
+        sleep(self.fast_timeout)
 
     ############################# Resonating Hall ##############################
 
@@ -566,11 +566,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
         try:
             new_actions = self.wait_for_template(
                 "resonating_hall/new_actions.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to find New Actions button.",
             )
             self.tap(new_actions)
-            sleep(self.FAST_TIMEOUT)
+            sleep(self.fast_timeout)
         except GameTimeoutError as fail:
             logging.error(f"Could not find New Actions button: {fail}")
             return
@@ -597,23 +597,23 @@ class DailiesMixin(AFKJourneyBase, ABC):
                     raise GameTimeoutError(f"Failed to find action template #{i}.")
 
                 self.tap(action)
-                sleep(self.FAST_TIMEOUT)
+                sleep(self.fast_timeout)
 
             logging.debug("Confirm essence swap.")
             confirm = self.wait_for_template(
                 "confirm_text.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to find Confirm button.",
             )
             self.tap(confirm)
-            sleep(self.FAST_TIMEOUT)
+            sleep(self.fast_timeout)
         except GameTimeoutError as fail:
             logging.debug(fail)
             return False
 
         logging.debug("Closing swapped results window.")
         self.tap(Point(550, 200))
-        sleep(self.FAST_TIMEOUT)
+        sleep(self.fast_timeout)
 
         logging.debug("Leave weapon and hero view.")
         for _ in range(2):
@@ -622,6 +622,6 @@ class DailiesMixin(AFKJourneyBase, ABC):
                 self.tap(back)
             else:
                 self.press_back_button()
-            sleep(self.FAST_TIMEOUT)
+            sleep(self.fast_timeout)
 
         return True

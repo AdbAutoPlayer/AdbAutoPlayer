@@ -86,7 +86,7 @@ class AssistMixin(AFKJourneyBase):
                 ],
                 crop_regions=CropRegions(left=0.1, top=0.4, bottom=0.1),
                 delay=0.1,
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.fast_timeout,
             )
         except GameTimeoutError:
             return False
@@ -122,7 +122,7 @@ class AssistMixin(AFKJourneyBase):
         ready = self.wait_for_template(
             template="assist/ready.png",
             crop_regions=CropRegions(left=0.2, right=0.1, top=0.8),
-            timeout=self.MIN_TIMEOUT,
+            timeout=self.min_timeout,
         )
 
         while self.game_find_template_match(

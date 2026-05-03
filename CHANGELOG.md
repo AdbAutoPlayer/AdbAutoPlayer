@@ -1,10 +1,12 @@
 # Changelog
 
-## [12.8.8] - 2026-05-01
+## [12.8.9] - 2026-05-02
 
 ### Added
-- **Stuck Game Watchdog**: Introduced a new mechanism to detect if the game is stuck. It automatically restarts the game and resumes the current task after a configurable period.
-  - **How to enable**: Go to **Settings > Advanced** and enable "**Restart Stuck Tasks**".
-  - **How it works**: You can set the inactivity period (in minutes) via the "**Restart Stuck Task After Mins**" setting.
-- **Hero Recognition**: Added portrait recognition for new heroes: **Evie**, **Frieren**, and **Himmel**.
-  - **Important Note**: Currently, only **Evie** has been fully tested and is confirmed working for AFK Stages. Frieren and Himmel are included but may require further optimization.
+- **⚡ Configurable Automation Speeds**: Replaced legacy hardcoded delays with dynamic, user-adjustable settings.
+  - Added **Action Delay** and **Navigation Delay** sliders to tune interaction speed.
+  - Added **Template Timeout** slider to control how long the bot waits for in-game elements.
+  - Added **Watchdog Restart Delay** slider to customize the wait time after a game restart.
+- **🎨 Enhanced Settings UI**: Advanced settings now feature modern sliders with real-time value indicators for better precision.
+- **🦸 Hero Recognition**: Added full support for **Frieren** and **Himmel** templates. These heroes are now correctly recognized and usable in AFK Stages automation.
+- **🐛 Changelog Fix**: Fixed the issue where the changelog was not showing up inside the app. Yeah! 🚀

@@ -36,6 +36,7 @@ from adb_auto_player.models.device import DisplayInfo, Resolution
 from adb_auto_player.models.geometry import Coordinates, Point, PointOutsideDisplay
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.pydantic import TaskListSettings
+from adb_auto_player.models.pydantic.app_settings import AppSettings
 from adb_auto_player.models.registries import CustomRoutineEntry
 from adb_auto_player.models.template_matching import MatchMode, TemplateMatchResult
 from adb_auto_player.registries import CUSTOM_ROUTINE_REGISTRY, GAME_REGISTRY
@@ -100,6 +101,30 @@ class Game(ABC):
     def settings(self) -> BaseModel:
         """Required property to return the game settings."""
         ...
+
+    @property
+    def app_settings(self) -> AppSettings:
+        """Get Global App Settings."""
+        try:
+            # App.toml is located in the root config dir, not the profile dir
+            app_config_dir = SettingsLoader.get_app_config_dir().parent
+            app_settings_path = app_config_dir / "App.toml"
+            return AppSettings.from_toml(app_settings_path)
+        except Exception:
+            return AppSettings()
+
+    def sleep_action(self) -> None:
+        """Sleep for the duration configured for standard actions."""
+        sleep(self.app_settings.advanced.action_delay)
+
+    def sleep_navigation(self) -> None:
+        """Sleep for the duration configured for navigation transitions."""
+        sleep(self.app_settings.advanced.navigation_delay)
+
+    @property
+    def template_timeout(self) -> float:
+        """Get the global template timeout from settings."""
+        return self.app_settings.advanced.template_timeout
 
     @property
     def display_info(self) -> DisplayInfo:
@@ -579,7 +604,7 @@ class Game(ABC):
         grayscale: bool = False,
         crop_regions: CropRegions = CropRegions(),
         delay: float = 0.5,
-        timeout: float = 30,
+        timeout: float | None = None,
         timeout_message: str | None = None,
     ) -> TemplateMatchResult:
         """Waits for the template to appear in the screen.
@@ -587,6 +612,8 @@ class Game(ABC):
         Raises:
             GameTimeoutError: Template not found.
         """
+        if timeout is None:
+            timeout = self.template_timeout
 
         def find_template() -> TemplateMatchResult:
             result = self.game_find_template_match(
@@ -616,7 +643,7 @@ class Game(ABC):
         grayscale: bool = False,
         crop_regions: CropRegions = CropRegions(),
         delay: float = 0.5,
-        timeout: float = 30,
+        timeout: float | None = None,
         timeout_message: str | None = None,
     ) -> None:
         """Waits for the template to disappear from the screen.
@@ -624,6 +651,8 @@ class Game(ABC):
         Raises:
             GameTimeoutError: Template still visible.
         """
+        if timeout is None:
+            timeout = self.template_timeout
 
         def find_best_template() -> None:
             if self.game_find_template_match(
@@ -657,7 +686,7 @@ class Game(ABC):
         grayscale: bool = False,
         crop_regions: CropRegions = CropRegions(),
         delay: float = 0.5,
-        timeout: float = 30,
+        timeout: float | None = None,
         timeout_message: str | None = None,
         ensure_order: bool = True,
     ) -> TemplateMatchResult:
@@ -666,6 +695,8 @@ class Game(ABC):
         Raises:
             GameTimeoutError: No template visible.
         """
+        if timeout is None:
+            timeout = self.template_timeout
 
         def find_template() -> TemplateMatchResult:
             find_template_result = self.find_any_template(

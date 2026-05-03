@@ -164,7 +164,7 @@ class Fishing(AFKJourneyBase):
         try:
             result = self.wait_for_any_template(
                 templates=fish_caught_templates + general_templates,
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 threshold=ConfidenceValue("70%"),
                 ensure_order=True,
                 crop_regions=CropRegions(
@@ -204,7 +204,7 @@ class Fishing(AFKJourneyBase):
         _ = self.wait_for_any_template(
             templates=templates,
             crop_regions=CropRegions(left=0.3, right=0.3, top=0.5, bottom=0.2),
-            timeout=self.MIN_TIMEOUT,
+            timeout=self.min_timeout,
             delay=0.1,
             threshold=ConfidenceValue("70%"),
             ensure_order=False,
@@ -222,7 +222,7 @@ class Fishing(AFKJourneyBase):
                 "fishing/fishing_rod_big",
             ],
             crop_regions=CropRegions(left=0.3, right=0.3, top=0.5, bottom=0.2),
-            timeout=self.MIN_TIMEOUT,
+            timeout=self.min_timeout,
             timeout_message="Cast Fishing Rod Button not found",
             threshold=ConfidenceValue("70%"),
         )

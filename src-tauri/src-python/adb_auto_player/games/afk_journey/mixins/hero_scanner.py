@@ -251,7 +251,7 @@ class HeroScannerMixin:
 
         # 3. Navigation to Hall
         self.navigate_to_resonating_hall()  # ty: ignore[unresolved-attribute]
-        time.sleep(3)
+        self.sleep_navigation()  # ty: ignore[unresolved-attribute]
 
         # 4. Load Data
         full_data = self._load_tracker(self.tracker_file)
@@ -274,7 +274,7 @@ class HeroScannerMixin:
         # Navigate to the first hero once (Antandra or Top-Left)
         first_hero_point = Point(130, 1050)
         self.tap(first_hero_point)  # ty: ignore[unresolved-attribute]
-        time.sleep(4)
+        self.sleep_navigation()  # ty: ignore[unresolved-attribute]
 
         while heroes_scanned < limit:  # Safety cap, stop on Hammie/Chippy
             try:
@@ -351,13 +351,13 @@ class HeroScannerMixin:
                 # 5. Navigate Next
                 next_arrow = Point(1045, 1080)
                 self.tap(next_arrow)  # ty: ignore[unresolved-attribute]
-                time.sleep(3.5)
+                self.sleep_navigation()  # ty: ignore[unresolved-attribute]
             except Exception as e:
                 logger.error(f"Error during scan at hero #{heroes_scanned + 1}: {e}")
                 # Try to recover by skipping to next hero
                 next_arrow = Point(1045, 1080)
                 self.tap(next_arrow)  # ty: ignore[unresolved-attribute]
-                time.sleep(4)
+                self.sleep_navigation()  # ty: ignore[unresolved-attribute]
                 heroes_scanned += 1
 
         # Go back to main hall
@@ -618,7 +618,7 @@ class HeroScannerMixin:
         """
         # 1. Click the Ascend button
         self.tap(Point(COORD_BTN_ASCEND[0], COORD_BTN_ASCEND[1]))  # ty: ignore[unresolved-attribute]
-        time.sleep(0.8)  # Wait for panel animation or tooltip
+        self.sleep_action()  # ty: ignore[unresolved-attribute]
 
         full_ss = self.get_screenshot()  # ty: ignore[unresolved-attribute]
 
@@ -631,10 +631,10 @@ class HeroScannerMixin:
             logger.debug("Detected Ascend lock tooltip!")
             # 1. Tap portrait to dismiss tooltip (enters zoom mode)
             self.tap(Point(540, 400))  # ty: ignore[unresolved-attribute]
-            time.sleep(1.0)
+            self.sleep_action()  # ty: ignore[unresolved-attribute]
             # 2. Tap back to exit zoom mode and return to hero screen
             self.tap(Point(COORD_BTN_BACK_PANEL[0], COORD_BTN_BACK_PANEL[1]))  # ty: ignore[unresolved-attribute]
-            time.sleep(1.0)
+            self.sleep_action()  # ty: ignore[unresolved-attribute]
             # Return our special temporary placeholder
             return "Paragon Locked"
 
@@ -662,7 +662,7 @@ class HeroScannerMixin:
 
         # 6. Close the panel (Back button)
         self.tap(Point(COORD_BTN_BACK_PANEL[0], COORD_BTN_BACK_PANEL[1]))  # ty: ignore[unresolved-attribute]
-        time.sleep(0.5)
+        self.sleep_action()  # ty: ignore[unresolved-attribute]
 
         # 6. Parse the "Current Â» Future" logic (Main detection)
         if not full_line_text:

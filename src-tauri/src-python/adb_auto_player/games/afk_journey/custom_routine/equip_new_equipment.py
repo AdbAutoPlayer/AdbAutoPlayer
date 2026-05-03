@@ -154,14 +154,14 @@ class EquipNewEquipment(AFKJourneyBase):
                     template="equipment/quick_equip.png",
                     crop_regions=self._EQUIPMENT_QUICK_EQUIP_CROP_REGIONS,
                     threshold=self._EQUIPMENT_TEMPLATE_THRESHOLD,
-                    timeout=self.MIN_TIMEOUT,
+                    timeout=self.min_timeout,
                 )
                 self.tap(quick_equip)
                 self.wait_until_template_disappears(
                     template="equipment/quick_equip.png",
                     crop_regions=self._EQUIPMENT_QUICK_EQUIP_CROP_REGIONS,
                     threshold=self._EQUIPMENT_TEMPLATE_THRESHOLD,
-                    timeout=self.FAST_TIMEOUT,
+                    timeout=self.fast_timeout,
                 )
                 logging.info(f"{class_str} Equipment equipped")
                 self.press_back_button()

@@ -132,7 +132,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
 
         building_button = self.wait_for_template(
             template=building_template,
-            timeout=self.NAVIGATION_TIMEOUT,
+            timeout=self.navigation_timeout,
             timeout_message=(
                 f"Failed to find production building button: {building_template}"
             ),
@@ -186,7 +186,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
         sleep(2)  # allow UI to settle before matching
         overview_check = self.wait_for_template(
             template=self.HOMESTEAD_OVERVIEW_CHECK_TEMPLATE,
-            timeout=self.NAVIGATION_TIMEOUT,
+            timeout=self.navigation_timeout,
             timeout_message="Failed to find Homestead overview button.",
         )
         self.tap(overview_check)
@@ -201,7 +201,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
         def open_production() -> None:
             production_button = self.wait_for_template(
                 template=self.HOMESTEAD_OVERVIEW_PRODUCTION_TEMPLATE,
-                timeout=self.NAVIGATION_TIMEOUT,
+                timeout=self.navigation_timeout,
                 timeout_message="Failed to find Homestead production button.",
             )
             self.tap(production_button)

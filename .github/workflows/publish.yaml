@@ -198,3 +198,31 @@ jobs:
           name: tauri-build-${{ matrix.target }}
           path: |
             target/${{ matrix.target }}/release/bundle/
+
+  update-latest-json:
+    needs: publish-tauri
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Extract changelog
+        id: extract_changelog
+        run: |
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          node scripts/extract-changelog.cjs ${{ github.event.release.tag_name }} >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      - name: Patch latest.json
+        run: |
+          gh release download ${{ github.event.release.tag_name }} --repo ${{ github.repository }} --pattern "latest.json" --clobber
+          node -e "
+            const fs = require('fs');
+            const latest = JSON.parse(fs.readFileSync('latest.json', 'utf8'));
+            latest.notes = process.env.NOTES;
+            fs.writeFileSync('latest.json', JSON.stringify(latest, null, 2));
+          "
+          gh release upload ${{ github.event.release.tag_name }} --repo ${{ github.repository }} latest.json --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NOTES: ${{ steps.extract_changelog.outputs.body }}

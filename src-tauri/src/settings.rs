@@ -18,19 +18,58 @@ const APP_SETTINGS_SCHEMA: &str = r##"
         },
         "restart_stuck_task": {
           "default": false,
-          "title": "Restart Game if Task is Stuck",
+          "title": "Watchdogs: Restart Game if Task is Stuck",
           "type": "boolean"
         },
-        "restart_stuck_task_after_mins": {
-          "default": 60,
-          "title": "Restart After (Minutes)",
-          "type": "integer",
-          "minimum": 3
-        }
+          "restart_stuck_task_after_mins": {
+            "default": 60,
+            "title": "Watchdogs: Restart After (Minutes)",
+            "type": "integer",
+            "minimum": 3
+          },
+          "action_delay": {
+            "default": 1.0,
+            "title": "Action Delay (Seconds)",
+            "description": "Wait time after a standard click or action.",
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 5.0,
+            "multipleOf": 0.1,
+            "formType": "slider"
+          },
+          "navigation_delay": {
+            "default": 2.0,
+            "title": "Navigation Delay (Seconds)",
+            "description": "Wait time after a screen transition or navigation action.",
+            "type": "number",
+            "minimum": 0.5,
+            "maximum": 10.0,
+            "multipleOf": 0.1,
+            "formType": "slider"
+          },
+          "template_timeout": {
+            "default": 10.0,
+            "title": "Template Timeout (Seconds)",
+            "description": "Max time to wait for an image/template to appear.",
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 60.0,
+            "multipleOf": 0.1,
+            "formType": "slider"
+          },
+          "watchdog_restart_delay": {
+            "default": 40,
+            "title": "Watchdog Restart Delay (Seconds)",
+            "description": "Wait time before restarting the task if the game is closed or stuck.",
+            "type": "integer",
+            "minimum": 10,
+            "maximum": 300,
+            "formType": "slider"
+          }
+        },
+        "title": "AdvancedSettings",
+        "type": "object"
       },
-      "title": "AdvancedSettings",
-      "type": "object"
-    },
     "Locale": {
       "description": "Locale Enum.",
       "enum": ["en", "jp", "vn"],
@@ -67,8 +106,8 @@ const APP_SETTINGS_SCHEMA: &str = r##"
         "discord_webhook": {
           "anyOf": [{ "type": "string" }, { "type": "null" }],
           "default": null,
-          "htmlTitle": "Discord Webhook has to start with 'https://discordapp.com/api/webhooks/'",
-          "regex": "^https://discordapp\\.com/api/webhooks/.*",
+          "htmlTitle": "Discord Webhook has to start with 'https://discord.com/api/webhooks/' or 'https://discordapp.com/api/webhooks/'",
+          "regex": "^https://(discord|discordapp)\\.com/api/webhooks/.*",
           "title": "Discord Webhook"
         }
       },
@@ -248,6 +287,30 @@ pub struct AdvancedSettings {
     pub restart_stuck_task: bool,
     #[serde(default = "default_restart_mins")]
     pub restart_stuck_task_after_mins: u32,
+    #[serde(default = "default_action_delay")]
+    pub action_delay: f32,
+    #[serde(default = "default_navigation_delay")]
+    pub navigation_delay: f32,
+    #[serde(default = "default_template_timeout")]
+    pub template_timeout: f32,
+    #[serde(default = "default_watchdog_restart_delay")]
+    pub watchdog_restart_delay: u32,
+}
+
+fn default_action_delay() -> f32 {
+    1.0
+}
+
+fn default_navigation_delay() -> f32 {
+    2.0
+}
+
+fn default_template_timeout() -> f32 {
+    10.0
+}
+
+fn default_watchdog_restart_delay() -> u32 {
+    40
 }
 
 fn default_restart_mins() -> u32 {

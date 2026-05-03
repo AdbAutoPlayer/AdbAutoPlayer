@@ -32,7 +32,6 @@ class MockAFKJ(ArenaMixin, SeasonLegendTrial):
         self.battle_state = MagicMock()
         self.battle_state.faction_lower = "lightbearer"
         self.LANG_ERROR = "error"
-        self.MIN_TIMEOUT = 1
 
     @property
     def settings(self):

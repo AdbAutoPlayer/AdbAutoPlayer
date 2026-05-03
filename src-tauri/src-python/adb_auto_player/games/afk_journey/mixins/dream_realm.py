@@ -103,7 +103,7 @@ class DreamRealmMixin(AFKJourneyBase):
 
         try:
             buy = self.wait_for_template(
-                template="dream_realm/buy.png", timeout=self.FAST_TIMEOUT
+                template="dream_realm/buy.png", timeout=self.fast_timeout
             )
             logging.debug("Purchasing DR attempt.")
             self.tap(buy)
@@ -121,7 +121,7 @@ class DreamRealmMixin(AFKJourneyBase):
             dr_mode = self.wait_for_template(
                 "dream_realm/label.png",
                 timeout_message="Could not find Dream Realm.",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
             )
             self.tap(dr_mode)
             sleep(2)
@@ -145,7 +145,7 @@ class DreamRealmMixin(AFKJourneyBase):
             logging.debug("Click Tap to Close, if available.")
             tap_to_close = self.wait_for_template(
                 "tap_to_close.png",
-                timeout=self.FAST_TIMEOUT,
+                timeout=self.fast_timeout,
                 timeout_message="Dream Realm rewards already claimed.",
             )
             self.tap(tap_to_close)

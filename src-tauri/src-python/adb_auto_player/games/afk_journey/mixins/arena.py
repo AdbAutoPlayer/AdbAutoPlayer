@@ -1,7 +1,6 @@
 """Arena Mixin."""
 
 import logging
-from time import sleep
 
 from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import GameTimeoutError
@@ -64,10 +63,10 @@ class ArenaMixin(AFKJourneyBase):
             arena_mode = self.wait_for_template(
                 "arena/label.png",
                 timeout_message="Failed to find Arena.",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
             )
             self.tap(arena_mode)
-            sleep(2)
+            self.sleep_navigation()
         except GameTimeoutError as fail:
             logging.error(f"{fail} {self.LANG_ERROR}")
             raise
@@ -84,11 +83,11 @@ class ArenaMixin(AFKJourneyBase):
         try:
             _ = self.wait_for_any_template(
                 templates=["arena/weekly_rewards.png", "arena/weekly_notice.png"],
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="No notices found.",
             )
             self.tap(Point(380, 1890))
-            sleep(4)
+            self.sleep_navigation()
 
             return True
         except GameTimeoutError as fail:
@@ -107,10 +106,10 @@ class ArenaMixin(AFKJourneyBase):
             logging.debug("Start arena challenge.")
             btn = self.wait_for_any_template(
                 templates=["arena/challenge.png", "arena/continue.png"],
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to start Arena runs.",
             )
-            sleep(2)
+            self.sleep_navigation()
             self.tap(btn)
 
             logging.debug("Choosing opponent.")
@@ -118,7 +117,7 @@ class ArenaMixin(AFKJourneyBase):
             opponent = self.wait_for_template(
                 template="arena/opponent.png",
                 crop_regions=CropRegions(right=0.6),  # Target weakest opponent.
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to find Arena opponent.",
             )
             self.tap(opponent)
@@ -137,16 +136,16 @@ class ArenaMixin(AFKJourneyBase):
             logging.debug("Initiate battle.")
             start = self.wait_for_template(
                 template="arena/battle.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to start Arena battle.",
             )
-            sleep(2)
+            self.sleep_navigation()
             self.tap(start)
 
             logging.debug("Skip battle.")
             skip = self.wait_for_template(
                 template="arena/skip.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to skip Arena battle.",
             )
             self.tap(skip)
@@ -155,12 +154,12 @@ class ArenaMixin(AFKJourneyBase):
             self.handle_popup_messages()  # Clear any potential popups
             confirm = self.wait_for_any_template(
                 templates=["arena/done.png", "next.png", "navigation/confirm.png"],
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed to confirm Arena battle completion.",
             )
-            sleep(4)
+            self.sleep_navigation()
             self.tap(confirm)
-            sleep(2)
+            self.sleep_navigation()
             return True
         except GameTimeoutError as fail:
             logging.error(fail)
@@ -176,7 +175,7 @@ class ArenaMixin(AFKJourneyBase):
             logging.debug("Claiming free attempts.")
             buy = self.wait_for_template(
                 template="arena/buy.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="Failed looking for free attempts.",
             )
             self.tap(buy)
@@ -186,7 +185,7 @@ class ArenaMixin(AFKJourneyBase):
         try:
             _ = self.wait_for_template(
                 template="arena/buy_free.png",
-                timeout=self.MIN_TIMEOUT,
+                timeout=self.min_timeout,
                 timeout_message="No more free attempts.",
             )
             logging.debug("Free attempt found.")

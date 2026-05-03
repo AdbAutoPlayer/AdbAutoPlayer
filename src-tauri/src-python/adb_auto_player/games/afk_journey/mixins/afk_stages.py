@@ -1,7 +1,6 @@
 """AFK Stages Mixin."""
 
 import logging
-from time import sleep
 
 from adb_auto_player.decorators import register_command, register_custom_routine_choice
 from adb_auto_player.exceptions import (
@@ -89,7 +88,7 @@ class AFKStagesMixin(AFKJourneyBase):
                 Point(x=800, y=1610),
                 log_message="Clicking Battle button",
             )
-        sleep(2)
+        self.sleep_navigation()
         if confirm := self.game_find_template_match(
             template="navigation/confirm.png",
             crop_regions=CropRegions(left=0.5, top=0.5),

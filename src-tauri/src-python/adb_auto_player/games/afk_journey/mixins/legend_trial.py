@@ -1,7 +1,6 @@
 """AFK Journey Season Legend Trial."""
 
 import logging
-from time import sleep
 
 from adb_auto_player.decorators import register_command, register_custom_routine_choice
 from adb_auto_player.exceptions import (
@@ -62,7 +61,7 @@ class SeasonLegendTrial(AFKJourneyBase):
                 logging.info(f"{faction}s excluded in Settings")
                 continue
 
-            sleep(2)  # Give the UI time to load icons
+            self.sleep_navigation()  # Give the UI time to load icons
             if self.game_find_template_match(
                 template=(
                     f"legend_trials/faction_icon_{self.battle_state.faction_lower}.png"
@@ -153,7 +152,7 @@ class SeasonLegendTrial(AFKJourneyBase):
             threshold=ConfidenceValue("80%"),
             grayscale=True,
             crop_regions=CropRegions(left=0.3, right=0.3, top=0.2, bottom=0.2),
-            timeout=self.MIN_TIMEOUT,
+            timeout=self.min_timeout,
             timeout_message="Cannot find Challenge button "
             "assuming Trial is already cleared",
         )

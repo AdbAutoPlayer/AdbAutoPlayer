@@ -78,12 +78,11 @@ class Execute:
                     advanced = app_settings.get("advanced", {})
                     timeout_enabled = advanced.get("restart_stuck_task", False)
                     timeout_mins = advanced.get("restart_stuck_task_after_mins", 60)
-                    # Enforce a minimum of 3 minutes to avoid false positives
-                    # during long battles
                     if timeout_enabled:
                         timeout_mins = max(3, timeout_mins)
+                    watchdog_restart_delay = advanced.get("watchdog_restart_delay", 40)
         except Exception:
-            pass
+            watchdog_restart_delay = 40
 
         # --- Watchdog Logic (Activity Based) ---
         last_activity_time = time.monotonic()
@@ -214,9 +213,10 @@ class Execute:
                                 cast(Any, instance).restart_game()
                                 timeout_triggered = False
                                 logging.info(
-                                    "Waiting 40 seconds for game to restart..."
+                                    "Waiting %s seconds for game to restart...",
+                                    watchdog_restart_delay,
                                 )
-                                time.sleep(40)
+                                time.sleep(watchdog_restart_delay)
                                 last_activity_time = time.monotonic()
                                 continue  # Retry the loop
                             except Exception as ex:
@@ -241,9 +241,10 @@ class Execute:
                             try:
                                 cast(Any, instance).restart_game()
                                 logging.info(
-                                    "Waiting 40 seconds for game to restart..."
+                                    "Waiting %s seconds for game to restart...",
+                                    watchdog_restart_delay,
                                 )
-                                time.sleep(40)
+                                time.sleep(watchdog_restart_delay)
                                 last_activity_time = time.monotonic()
                                 continue  # Retry the loop
                             except Exception as ex:
