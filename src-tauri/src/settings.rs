@@ -367,6 +367,24 @@ impl AppSettings {
         if settings.profiles.profiles.is_empty() {
             settings.profiles.profiles = default_profiles();
         }
+
+        // Sanitize advanced settings (fix for users upgrading from bugged 12.8.9)
+        if settings.advanced.action_delay < 0.1 {
+            settings.advanced.action_delay = default_action_delay();
+        }
+        if settings.advanced.navigation_delay < 0.5 {
+            settings.advanced.navigation_delay = default_navigation_delay();
+        }
+        if settings.advanced.template_timeout < 1.0 {
+            settings.advanced.template_timeout = default_template_timeout();
+        }
+        if settings.advanced.watchdog_restart_delay < 10 {
+            settings.advanced.watchdog_restart_delay = default_watchdog_restart_delay();
+        }
+        if settings.advanced.restart_stuck_task_after_mins < 3 {
+            settings.advanced.restart_stuck_task_after_mins = default_restart_mins();
+        }
+
         settings
     }
 
