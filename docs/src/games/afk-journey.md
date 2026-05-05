@@ -5,9 +5,18 @@
 ## Supported Resolutions:
 - **1080x1920**
 
-## Features
-> [!IMPORTANT]
-> Work in Progress section will be added later
+## Bot Features
+AdbAutoPlayer provides a comprehensive suite of automation for AFK Journey:
+
+* **Daily Routine:** Automatically perform all daily tasks in one click.
+* **Stage Pushing:** Push AFK stages with automatic team formation and retries.
+* **Arena Battles:** Automate your daily arena matches.
+* **Dream Realm:** Collect rewards and participate in Dream Realm battles.
+* **Legend Trial:** Progress through the various towers.
+* **Arcane Labyrinth:** Clear the labyrinth levels automatically.
+
+![ui-palette.png](../images/app/ui-palette.png)
+![ui-accordion.png](../images/app/ui-accordion.png)
 
 ## In-Game Recommended Settings  
 

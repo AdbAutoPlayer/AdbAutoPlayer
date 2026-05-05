@@ -1,5 +1,6 @@
 # Summary
 - [Introduction](./introduction.md)
+- [UI Guide](user-guide/ui-guide.md)
 
 # User Guide
 - [Emulator Settings](user-guide/emulator-settings.md)
@@ -12,6 +13,7 @@
 # Games
 - [AFK Journey](games/afk-journey.md)
 - [Guitar Girl](games/guitar-girl.md)
+- [Blue Protocol Star Resonance](games/blue-protocol.md)
 
 # App Development
 - [Dev & Build](development/dev-and-build.md)

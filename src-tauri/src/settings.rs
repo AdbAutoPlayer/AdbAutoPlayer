@@ -279,7 +279,7 @@ impl Default for ProfileSettings {
 }
 
 // ---------- AdvancedSettings ----------
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdvancedSettings {
     #[serde(default)]
     pub shutdown_after_tasks: bool,
@@ -295,6 +295,20 @@ pub struct AdvancedSettings {
     pub template_timeout: f32,
     #[serde(default = "default_watchdog_restart_delay")]
     pub watchdog_restart_delay: u32,
+}
+
+impl Default for AdvancedSettings {
+    fn default() -> Self {
+        Self {
+            shutdown_after_tasks: false,
+            restart_stuck_task: false,
+            restart_stuck_task_after_mins: default_restart_mins(),
+            action_delay: default_action_delay(),
+            navigation_delay: default_navigation_delay(),
+            template_timeout: default_template_timeout(),
+            watchdog_restart_delay: default_watchdog_restart_delay(),
+        }
+    }
 }
 
 fn default_action_delay() -> f32 {

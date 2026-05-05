@@ -18,13 +18,32 @@ It works by using [**ADB (Android Debug Bridge)**](https://developer.android.com
 
 ---
 
-## Features
+![ui-main.png](images/app/ui-main.png)
 
-* Bots for **some mobile games** included
-* Easy to set up and run
-* Can handle daily quests, farming, and other repetitive actions
+---
 
-![app.png](images/app/app.png)
+## Modern & Customizable Interface
+
+AdbAutoPlayer now features a modern, flexible interface designed for better control and visibility:
+
+* **Sidebar Navigation:** Quickly switch between different profiles and games.
+* **Live Log Panel:** Monitor bot actions in real-time with a dedicated log display.
+* **Customizable Themes:** Personalize the look with a wide range of colors and dark/light modes.
+* **Flexible View Modes:** Choose between **Cards**, **Palette**, or **Accordion** views to organize your tasks.
+
+Check out the [**UI Guide**](user-guide/ui-guide.md) for more details.
+
+![ui-customizer.png](images/app/ui-customizer.png)
+
+---
+
+## Key Features
+
+* **Game Automation:** Handles daily quests, farming, and repetitive actions automatically.
+* **Multi-Game Support:** Includes specialized bots for popular mobile games like **AFK Journey** and **Guitar Girl**.
+* **Easy Setup:** Designed to be user-friendly and quick to configure with emulators or real devices.
+* **Cross-Platform:** Officially supported on **Windows** and **macOS**.
+
 
 ---
 
