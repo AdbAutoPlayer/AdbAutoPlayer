@@ -1,6 +1,6 @@
 [package]
 name = "adb-auto-player"
-version = "12.8.9"
+version = "12.8.10"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"

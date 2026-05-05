@@ -27,7 +27,7 @@ A comprehensive guide to enable USB debugging on popular Android phone brands fo
 
 ## ADB Settings
 
-![device-config.png](../images/real-phone/device-config.png)
+![ui-settings.png](../images/app/ui-settings.png)
 
 ### Device Settings in AdbAutoPlayer
 

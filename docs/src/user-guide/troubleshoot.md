@@ -1,9 +1,8 @@
 # Troubleshooting
 
 ## General try disabling Device Stream
-If Device Streaming is active try unchecking it and see if your problem goes away.  
-If your problem does NOT go away activate it again.  
-![device-stream.png](../images/app/device-stream.png)
+If Device Streaming is active try disabling it in **ADB Settings** if you encounter performance issues.  
+![ui-settings.png](../images/app/ui-settings.png)
 
 ## Emulator
 > [!NOTE]

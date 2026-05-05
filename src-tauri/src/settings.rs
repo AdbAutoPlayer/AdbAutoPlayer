@@ -279,7 +279,7 @@ impl Default for ProfileSettings {
 }
 
 // ---------- AdvancedSettings ----------
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdvancedSettings {
     #[serde(default)]
     pub shutdown_after_tasks: bool,
@@ -295,6 +295,20 @@ pub struct AdvancedSettings {
     pub template_timeout: f32,
     #[serde(default = "default_watchdog_restart_delay")]
     pub watchdog_restart_delay: u32,
+}
+
+impl Default for AdvancedSettings {
+    fn default() -> Self {
+        Self {
+            shutdown_after_tasks: false,
+            restart_stuck_task: false,
+            restart_stuck_task_after_mins: default_restart_mins(),
+            action_delay: default_action_delay(),
+            navigation_delay: default_navigation_delay(),
+            template_timeout: default_template_timeout(),
+            watchdog_restart_delay: default_watchdog_restart_delay(),
+        }
+    }
 }
 
 fn default_action_delay() -> f32 {
@@ -353,6 +367,24 @@ impl AppSettings {
         if settings.profiles.profiles.is_empty() {
             settings.profiles.profiles = default_profiles();
         }
+
+        // Sanitize advanced settings (fix for users upgrading from bugged 12.8.9)
+        if settings.advanced.action_delay < 0.1 {
+            settings.advanced.action_delay = default_action_delay();
+        }
+        if settings.advanced.navigation_delay < 0.5 {
+            settings.advanced.navigation_delay = default_navigation_delay();
+        }
+        if settings.advanced.template_timeout < 1.0 {
+            settings.advanced.template_timeout = default_template_timeout();
+        }
+        if settings.advanced.watchdog_restart_delay < 10 {
+            settings.advanced.watchdog_restart_delay = default_watchdog_restart_delay();
+        }
+        if settings.advanced.restart_stuck_task_after_mins < 3 {
+            settings.advanced.restart_stuck_task_after_mins = default_restart_mins();
+        }
+
         settings
     }
 
