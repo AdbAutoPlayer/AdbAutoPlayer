@@ -2,13 +2,13 @@
   "dependencies": {
     "@js-joda/core": "^6.0.1",
     "@tailwindcss/vite": "^4.2.4",
-    "@tauri-apps/api": "^2.10.1",
+    "@tauri-apps/api": "^2.11.0",
     "@tauri-apps/plugin-notification": "~2.3.3",
-    "@tauri-apps/plugin-opener": "^2.5.3",
+    "@tauri-apps/plugin-opener": "^2.5.4",
     "@tauri-apps/plugin-updater": "~2.10.1",
     "@tauri-apps/plugin-window-state": "~2.4.1",
     "@types/json-schema": "^7.0.15",
-    "posthog-js": "^1.372.1",
+    "posthog-js": "^1.372.6",
     "tailwindcss": "^4.2.4",
     "tauri-plugin-pytauri-api": "^0.8.0"
   },
@@ -27,7 +27,7 @@
     "prettier-plugin-svelte": "^3.5.1",
     "prettier-plugin-tailwindcss": "^0.7.3",
     "svelte": "^5.55.5",
-    "svelte-check": "^4.4.6",
+    "svelte-check": "^4.4.7",
     "typescript": "^6.0.3",
     "vite": "^8.0.10",
     "vite-plugin-devtools-json": "^1.0.0"
