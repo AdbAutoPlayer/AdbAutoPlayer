@@ -147,7 +147,7 @@ class QuestMixin(AFKJourneyBase, ABC):
                 "Holding button: "
                 + result.template.split("/")[-1].replace("_", " ").capitalize()
             )
-            self.hold(Point(550, 1200))
+            self.hold(result)
             return True
 
         # Then we check for buttons we need to press, higher threshold as
@@ -162,6 +162,7 @@ class QuestMixin(AFKJourneyBase, ABC):
             )
             self.tap(result2, scale=True)
             if result2.template == "quests/start_battle":
+                self.handle_popup_messages()
                 logging.info("Waiting for battle to finish")
                 sleep(30)  # Longer sleep for battle to finish
             elif result2.template == "quests/skip":

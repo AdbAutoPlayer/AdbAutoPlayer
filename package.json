@@ -34,6 +34,12 @@
   },
   "license": "MIT",
   "name": "adb-auto-player",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "core-js",
+      "protobufjs"
+    ]
+  },
   "scripts": {
     "build": "vite build",
     "bundle-templates": "node scripts/bundle-templates.cjs",
@@ -46,5 +52,5 @@
     "tauri": "tauri"
   },
   "type": "module",
-  "version": "12.8.11"
+  "version": "12.8.12"
 }

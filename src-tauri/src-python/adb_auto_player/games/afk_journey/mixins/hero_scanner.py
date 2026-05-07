@@ -196,10 +196,10 @@ class HeroScannerMixin:
             # We determine the limit by hero count in settings if possible
             try:
                 total_heroes = (
-                    len(self.settings.general.excluded_heroes) + 100  # ty: ignore[unresolved-attribute]
+                    len(self.settings.general.excluded_heroes) + 200  # ty: ignore[unresolved-attribute]
                 )
             except Exception:
-                total_heroes = 120
+                total_heroes = 200
 
         limit: int = total_heroes
 
@@ -266,6 +266,10 @@ class HeroScannerMixin:
         logger.info(
             f"Loaded {len(self.canonical_hero_names)} hero names from template."
         )
+
+        if total_heroes is None:
+            limit = len(self.canonical_hero_names) + 100
+            logger.info(f"Adaptive scan limit set to {limit} heroes.")
 
         heroes_scanned = 0
         global_ascend_available = False
