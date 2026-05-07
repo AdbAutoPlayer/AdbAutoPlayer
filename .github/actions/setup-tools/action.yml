@@ -20,7 +20,7 @@ runs:
     - name: Install pnpm
       uses: pnpm/action-setup@v4
       with:
-        version: "latest"
+        version: "10"
     - name: Setup Node
       if: inputs.tool == 'all'
       uses: actions/setup-node@v4
