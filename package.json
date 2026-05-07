@@ -34,6 +34,12 @@
   },
   "license": "MIT",
   "name": "adb-auto-player",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "core-js",
+      "protobufjs"
+    ]
+  },
   "scripts": {
     "build": "vite build",
     "bundle-templates": "node scripts/bundle-templates.cjs",
