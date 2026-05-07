@@ -35,7 +35,7 @@
   "license": "MIT",
   "name": "adb-auto-player",
   "pnpm": {
-    "onlyBuiltDependencies": [
+    "ignoredBuiltDependencies": [
       "core-js",
       "protobufjs"
     ]
