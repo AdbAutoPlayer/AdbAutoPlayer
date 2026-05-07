@@ -52,12 +52,17 @@ class DurasTrialsMixin(AFKJourneyBase):
                     "duras_trials/sweep.png",
                     "guide/close.png",
                     "guide/next.png",
+                    "battle/skip.png",
                     "duras_trials/continue_gray.png",
                 ],
             )
 
             match result.template:
-                case "guide/close.png" | "guide/next.png":
+                case "guide/close.png" | "guide/next.png" | "battle/skip.png":
+                    if result.template == "battle/skip.png":
+                        logging.info("Skip button found, tapping")
+                    self.tap(result)
+                    sleep(1)
                     self._handle_guide_popup()
                 case _:
                     break
