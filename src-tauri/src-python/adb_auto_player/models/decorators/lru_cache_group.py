@@ -6,4 +6,5 @@ class CacheGroup(Enum):
 
     GAME_SETTINGS = auto()
     ADB_SETTINGS = auto()
+    APP_SETTINGS = auto()
     ADB = auto()

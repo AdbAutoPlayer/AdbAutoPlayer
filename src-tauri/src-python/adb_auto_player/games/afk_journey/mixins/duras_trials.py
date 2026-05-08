@@ -53,14 +53,22 @@ class DurasTrialsMixin(AFKJourneyBase):
                     "guide/close.png",
                     "guide/next.png",
                     "battle/skip.png",
+                    "battle/skip_orange.png",
+                    "quests/skip.png",
                     "duras_trials/continue_gray.png",
                 ],
             )
 
             match result.template:
-                case "guide/close.png" | "guide/next.png" | "battle/skip.png":
-                    if result.template == "battle/skip.png":
-                        logging.info("Skip button found, tapping")
+                case (
+                    "guide/close.png"
+                    | "guide/next.png"
+                    | "battle/skip.png"
+                    | "battle/skip_orange.png"
+                    | "quests/skip.png"
+                ):
+                    if "skip" in result.template:
+                        logging.info(f"Skip button found ({result.template}), tapping")
                     self.tap(result)
                     sleep(1)
                     self._handle_guide_popup()
@@ -104,7 +112,8 @@ class DurasTrialsMixin(AFKJourneyBase):
                 crop_regions=CropRegions(left=0.3, right=0.3, top=0.6, bottom=0.3),
             )
             next_button = self.game_find_template_match(
-                template="next.png", crop_regions=CropRegions(left=0.6, top=0.9)
+                template="next.png",
+                crop_regions=CropRegions(left=0.6, top=0.9),
             )
             nonlocal count
             count += 1

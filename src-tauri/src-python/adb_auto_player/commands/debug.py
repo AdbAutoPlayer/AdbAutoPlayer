@@ -17,6 +17,7 @@ def log_debug_info() -> None:
     logging.info("--- Debug Info Start ---")
     _log_hardware_info()
     _log_adb_settings()
+    _log_app_settings()
     if not _get_and_log_adb_client():
         logging.warning("ADB client could not be initialized.")
         logging.info("--- Debug Info End ---")
@@ -52,6 +53,11 @@ def _log_hardware_info() -> None:
 def _log_adb_settings() -> None:
     logging.info("--- ADB Settings ---")
     logging.info(f"{pprint.pformat(SettingsLoader.adb_settings())}")
+
+
+def _log_app_settings() -> None:
+    logging.info("--- App Settings ---")
+    logging.info(f"{pprint.pformat(SettingsLoader.app_settings())}")
 
 
 def _get_and_log_adb_client() -> AdbClient | None:
