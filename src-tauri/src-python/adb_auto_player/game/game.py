@@ -102,7 +102,7 @@ class Game(ABC):
         """Required property to return the game settings."""
         ...
 
-    @property
+    @cached_property
     def app_settings(self) -> AppSettings:
         """Get Global App Settings."""
         try:

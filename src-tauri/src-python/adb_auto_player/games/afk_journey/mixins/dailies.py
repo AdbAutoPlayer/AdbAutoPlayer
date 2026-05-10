@@ -129,11 +129,21 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.debug("Opening Emporium.")
             emporium = self.wait_for_template(
                 "dailies/emporium/emporium.png",
-                threshold=ConfidenceValue("70%"),
+                threshold=ConfidenceValue("80%"),
                 timeout=self.min_timeout,
                 timeout_message="Failed to find Emporium.",
             )
             self.tap(emporium)
+            # Verify we actually entered the emporium by looking for one of the stores
+            self.wait_for_any_template(
+                [
+                    "dailies/emporium/guild_store.png",
+                    "dailies/emporium/friendship_store.png",
+                    "dailies/emporium/dream_store.png",
+                ],
+                timeout=self.fast_timeout,
+                timeout_message="Tapped Emporium but stores did not appear.",
+            )
         except GameTimeoutError as fail:
             logging.error(fail)
             return
