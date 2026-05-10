@@ -158,7 +158,7 @@
             </header>
 
             <main
-              class="scrollbar-thin scrollbar-thumb-white/10 max-h-[70vh] overflow-y-auto p-6"
+              class="max-h-[70vh] scrollbar-thin scrollbar-thumb-white/10 overflow-y-auto p-6"
             >
               {#if !isUpdating}
                 <div class="space-y-6">

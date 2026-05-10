@@ -364,28 +364,31 @@ impl AppSettings {
         };
 
         let mut settings = toml::from_str::<AppSettings>(&content).unwrap_or_default();
-        if settings.profiles.profiles.is_empty() {
-            settings.profiles.profiles = default_profiles();
+        settings.sanitize();
+        settings
+    }
+
+    pub fn sanitize(&mut self) {
+        if self.profiles.profiles.is_empty() {
+            self.profiles.profiles = default_profiles();
         }
 
         // Sanitize advanced settings (fix for users upgrading from bugged 12.8.9)
-        if settings.advanced.action_delay < 0.1 {
-            settings.advanced.action_delay = default_action_delay();
+        if self.advanced.action_delay < 0.1 {
+            self.advanced.action_delay = default_action_delay();
         }
-        if settings.advanced.navigation_delay < 0.5 {
-            settings.advanced.navigation_delay = default_navigation_delay();
+        if self.advanced.navigation_delay < 0.5 {
+            self.advanced.navigation_delay = default_navigation_delay();
         }
-        if settings.advanced.template_timeout < 1.0 {
-            settings.advanced.template_timeout = default_template_timeout();
+        if self.advanced.template_timeout < 1.0 {
+            self.advanced.template_timeout = default_template_timeout();
         }
-        if settings.advanced.watchdog_restart_delay < 10 {
-            settings.advanced.watchdog_restart_delay = default_watchdog_restart_delay();
+        if self.advanced.watchdog_restart_delay < 10 {
+            self.advanced.watchdog_restart_delay = default_watchdog_restart_delay();
         }
-        if settings.advanced.restart_stuck_task_after_mins < 3 {
-            settings.advanced.restart_stuck_task_after_mins = default_restart_mins();
+        if self.advanced.restart_stuck_task_after_mins < 3 {
+            self.advanced.restart_stuck_task_after_mins = default_restart_mins();
         }
-
-        settings
     }
 
     pub fn save_to_file(&self, path: impl AsRef<Path>) -> std::io::Result<()> {
@@ -431,11 +434,12 @@ pub fn get_app_settings_form(
 #[tauri::command]
 pub fn save_app_settings(
     app_handle: tauri::AppHandle,
-    settings: AppSettings,
+    mut settings: AppSettings,
     state: State<'_, Mutex<AppSettings>>,
 ) -> AppSettings {
     let path = get_app_settings_path(&app_handle);
     println!("{}", path.display());
+    settings.sanitize();
     AppSettings::save_to_file(&settings, &path).expect("Failed to save App Settings");
 
     let mut state = state.lock().unwrap();
