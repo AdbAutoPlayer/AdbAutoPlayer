@@ -1196,9 +1196,6 @@ class Game(ABC):
         Args:
             max_frame_delay(int, optional): maximum frame delay in milliseconds.
             max_input_delay(int, optional): maximum input delay in milliseconds.
-
-        Raises:
-            AutoPlayerUnrecoverableError: frame or input delay above max allowed value.
         """
         # Debug screenshots add additional IO, we can disable this here because we know
         # the feature needs to be fast if this function is called...
@@ -1207,11 +1204,12 @@ class Game(ABC):
         _ = self.get_screenshot()
         total_time = (perf_counter() - start_time) * 1000
         if total_time > max_frame_delay:
-            raise AutoPlayerUnrecoverableError(
+            logging.warning(
                 f"Screenshot/Frame delay: {int(total_time)} ms above max frame delay: "
-                f"{max_frame_delay} ms exiting..."
+                f"{max_frame_delay} ms. Performance may be poor."
             )
-        logging.info(f"Screenshot/Frame delay: {int(total_time)} ms")
+        else:
+            logging.info(f"Screenshot/Frame delay: {int(total_time)} ms")
 
         total_time = 0.0
         iterations = 10
@@ -1221,11 +1219,12 @@ class Game(ABC):
             total_time += (perf_counter() - start_time) * 1000
         average_time = total_time / iterations
         if average_time > max_input_delay:
-            raise AutoPlayerUnrecoverableError(
+            logging.warning(
                 f"Average input delay: {int(average_time)} ms above max input delay: "
-                f"{max_input_delay} ms exiting..."
+                f"{max_input_delay} ms. Performance may be poor."
             )
-        logging.info(f"Average input delay: {int(average_time)} ms")
+        else:
+            logging.info(f"Average input delay: {int(average_time)} ms")
 
     @lru_cache
     def get_templates_from_dir(self, subdir: str) -> list[str]:

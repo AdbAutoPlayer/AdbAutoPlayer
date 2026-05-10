@@ -139,7 +139,7 @@ class DeviceStream:
     def _handle_stream(self) -> None:
         """Generic stream handler."""
         self._process = self.controller.d.shell(
-            cmdargs="screenrecord --output-format=h264 --time-limit=1 -",
+            cmdargs="screenrecord --output-format=h264 -",
             stream=True,
         )
 
