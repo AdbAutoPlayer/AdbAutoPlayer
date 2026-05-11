@@ -124,10 +124,19 @@ class QuestMixin(AFKJourneyBase, ABC):
             "back",
         ]
 
+        # When the TAP & HOLD wheel appears, the text label is detectable
+        # but the golden Cast button is always at screen center — use fixed coords
+        tap_and_hold = self.find_any_template(
+            templates=["quests/tap_and_hold", "quests/tap_and_hold_large"],
+        )
+        if tap_and_hold is not None:
+            logging.info("TAP & HOLD wheel detected — holding cast button at center")
+            # Cast button is at screen center, ~170px below the tap_and_hold label
+            cast_point = Point(tap_and_hold.x, tap_and_hold.y + 170)
+            self.device.swipe(cast_point, cast_point, duration=3.0)
+            return True
+
         holding_buttons = [
-            "quests/generic_hold",
-            "quests/tap_and_hold",
-            "quests/tap_and_hold_large",
             "quests/sense",
             "quests/heal",
             "quests/place",
@@ -135,21 +144,29 @@ class QuestMixin(AFKJourneyBase, ABC):
             "quests/rewind",
             "quests/cast",
             "quests/cast_alt",
+            "quests/cast_alt_v2",
             "quests/feed",
             "quests/encourage",
             "quests/contact",
+            "quests/generic_hold",
         ]
 
-        # First we check for buttons on screen taht we need to hold down
+        # Check for buttons on screen that we need to hold down
         result = self.find_any_template(
             templates=holding_buttons,
         )
         if result is not None:
+            hold_point = Point(result.x, result.y)
+            # generic_hold matches the dark wheel navigation arrows which surround
+            # the TAP & HOLD wheel. If detected off-center it's a wheel arrow,
+            # not the actual hold target — redirect to the wheel's cast button center
+            if result.template == "quests/generic_hold" and abs(result.x - 540) > 50:
+                hold_point = Point(540, result.y + 170)
             logging.info(
                 "Holding button: "
                 + result.template.split("/")[-1].replace("_", " ").capitalize()
             )
-            self.hold(result)
+            self.device.swipe(hold_point, hold_point, duration=3.0)
             return True
 
         # Then we check for buttons we need to press, higher threshold as
