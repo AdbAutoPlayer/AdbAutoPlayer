@@ -6,6 +6,7 @@ from time import sleep
 from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import GameActionFailedError, GameTimeoutError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
+from adb_auto_player.games.afk_journey.battle_state import Mode
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
@@ -26,6 +27,7 @@ class RavagedRealmMixin(AFKJourneyBase):
     )
     def run_ravaged_realm(self) -> None:
         """Complete Ravaged Realm."""
+        self.battle_state.mode = Mode.RAVAGED_REALM
         self.start_up()
 
         try:
@@ -106,41 +108,44 @@ class RavagedRealmMixin(AFKJourneyBase):
         self.tap(battle_btn)
         self.sleep_navigation()
 
-        # Open Records (community formations).
-        # Template already exists: battle/records.png
-        records = self.wait_for_template(
-            "battle/records.png",
-            timeout_message="Failed to find Records button.",
-            timeout=self.min_timeout,
-        )
-        self.tap(records)
-        self.sleep_navigation()
+        if self.settings.ravaged_realm.use_suggested_formations:
+            # Open Records (community formations).
+            # Template already exists: battle/records.png
+            records = self.wait_for_template(
+                "battle/records.png",
+                timeout_message="Failed to find Records button.",
+                timeout=self.min_timeout,
+            )
+            self.tap(records)
+            self.sleep_navigation()
 
-        # Select the first formation via the Use button.
-        # Template already exists: battle/use.png
-        use_btn = self.wait_for_template(
-            "battle/use.png",
-            timeout_message="Failed to find Use button in Records.",
-            timeout=self.min_timeout,
-        )
-        self.tap(use_btn)
-        self.sleep_navigation()
+            # Select the first formation via the Use button.
+            # Template already exists: battle/use.png
+            use_btn = self.wait_for_template(
+                "battle/use.png",
+                timeout_message="Failed to find Use button in Records.",
+                timeout=self.min_timeout,
+            )
+            self.tap(use_btn)
+            self.sleep_navigation()
 
-        # Press Skip twice to copy the formation to both slots.
-        for i in range(2):
-            try:
-                skip_btn = self.wait_for_any_template(
-                    templates=["event/ravaged_realm/skip.png"],
-                    timeout=self.template_timeout,
-                    timeout_message=f"Failed to find Skip button (press {i + 1}/2).",
-                )
-                self.tap(skip_btn)
-                self.sleep_action()
-            except GameTimeoutError as fail:
-                logging.error(f"{fail}")
-                return
+            # Press Skip twice to copy the formation to both slots.
+            for i in range(2):
+                try:
+                    skip_btn = self.wait_for_any_template(
+                        templates=["event/ravaged_realm/skip.png"],
+                        timeout=self.template_timeout,
+                        timeout_message=f"Failed to find Skip (press {i + 1}/2).",
+                    )
+                    self.tap(skip_btn)
+                    self.sleep_action()
+                except GameTimeoutError as fail:
+                    logging.error(f"{fail}")
+                    return
 
-        self.sleep_navigation()
+            self.sleep_navigation()
+        else:
+            logging.info("Using current formation (skipping Records).")
         logging.info("Initiating battle...")
         self.tap(Point(850, 1780))
         self.sleep_navigation()

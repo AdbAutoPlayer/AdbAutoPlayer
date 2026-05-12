@@ -91,6 +91,12 @@ class AFKStagesSettings(BattleAllowsManualSettings):
     pass
 
 
+class RavagedRealmSettings(BattleAllowsManualSettings):
+    """Ravaged Realm Settings model."""
+
+    pass
+
+
 class DurasTrialsSettings(BattleAllowsManualSettings):
     """Dura's Trials Settings model."""
 
@@ -181,6 +187,11 @@ class Settings(TomlSettings):
     )
     afk_stages: AFKStagesSettings = Field(
         default_factory=AFKStagesSettings, alias="AFK Stages", title="AFK Stages"
+    )
+    ravaged_realm: RavagedRealmSettings = Field(
+        default_factory=RavagedRealmSettings,
+        alias="Ravaged Realm",
+        title="Ravaged Realm",
     )
     duras_trials: DurasTrialsSettings = Field(
         default_factory=DurasTrialsSettings,

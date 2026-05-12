@@ -97,6 +97,8 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
                 return getattr(self.settings.duras_trials, attribute)
             case Mode.LEGEND_TRIALS:
                 return getattr(self.settings.legend_trials, attribute)
+            case Mode.RAVAGED_REALM:
+                return getattr(self.settings.ravaged_realm, attribute)
             case _:
                 return getattr(self.settings.afk_stages, attribute)
 

@@ -7,6 +7,7 @@ class Mode(StrEnum):
     AFK_STAGES = "AFK Stages"
     SEASON_AFK_STAGES = "Season AFK Stages"
     LEGEND_TRIALS = "Season Legend Trial"
+    RAVAGED_REALM = "Ravaged Realm"
 
     def is_duras(self) -> bool:
         return self in {Mode.DURAS_TRIALS}
@@ -21,6 +22,7 @@ class Mode(StrEnum):
             Mode.SEASON_AFK_STAGES,
             Mode.LEGEND_TRIALS,
             Mode.DURAS_TRIALS,
+            Mode.RAVAGED_REALM,
         }
 
 
