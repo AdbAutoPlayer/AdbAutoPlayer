@@ -3,7 +3,6 @@
 import logging
 from time import sleep
 
-import numpy as np
 
 from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import GameActionFailedError, GameTimeoutError
@@ -136,6 +135,7 @@ class RavagedRealmMixin(AFKJourneyBase):
             logging.error(f"{fail}")
             return False
 
+    # ruff: noqa: PLR0915
     def _run_battle(self) -> None:
         """Tap Battle to enter prep screen, copy first Records formation, and start."""
         attempts = self.settings.ravaged_realm.attempts
@@ -156,6 +156,16 @@ class RavagedRealmMixin(AFKJourneyBase):
                 )
                 self.tap(battle_btn)
                 self.sleep_navigation()
+
+                # Intercept gold popups triggered when attempts are exhausted
+                if self.find_any_template(["battle/spend.png", "battle/gold.png"]):
+                    if not spend_gold:
+                        logging.warning("No attempts. Not spending gold. Returning.")
+                        self.press_back_button()
+                        return
+                    logging.info("Confirming gold purchase for battle attempt...")
+                    self._click_confirm_on_popup()
+                    self.sleep_navigation()
 
                 # Wait for the prep screen interface to fully load
                 prep_match = self.wait_for_any_template(
@@ -191,14 +201,6 @@ class RavagedRealmMixin(AFKJourneyBase):
                 logging.warning("Failed to start Battle. Are heroes selected?")
                 return
             self.sleep_action()
-
-            # Handle possible Spend Gold popup if configured
-            if self.find_any_template(["battle/spend.png", "battle/gold.png"]):
-                if not spend_gold:
-                    logging.warning("Not spending gold. Ending battle loop.")
-                    self.press_back_button()
-                    return
-                self._click_confirm_on_popup()
 
             logging.info("Waiting for battle to complete or skip button...")
             try:
@@ -257,38 +259,21 @@ class RavagedRealmMixin(AFKJourneyBase):
                 continue
 
             logging.info(f"Checking squad tab {tab_idx}/4 ({faction})...")
-
-            before_tabs = None
-            if tab_idx > 1:
-                try:
-                    before_tabs = self.get_screenshot()[1820:1940, 100:1050]
-                except Exception:
-                    pass
-
             self.tap(tab_point)
-            # Allow boss entrance animation to load fully
-            sleep(9)
+            # Allow tab transition to complete (PR #667 with extra safety margin)
+            self.sleep_navigation()
+            self.sleep_navigation()
+            sleep(4)
 
-            if tab_idx > 1 and before_tabs is not None:
-                try:
-                    after_tabs = self.get_screenshot()[1820:1940, 100:1050]
-                    diff = np.mean(
-                        np.abs(before_tabs.astype(float) - after_tabs.astype(float))
-                    )
-                    logging.debug(f"Tabs row pixel diff for {faction}: {diff:.2f}")
-                    min_diff = 2.0
-                    if diff < min_diff:
-                        logging.info(f"Squad {faction} locked or inactive. Skipping.")
-                        continue
-                except Exception as e:
-                    logging.debug(f"Pixel comparison error: {e}")
-
-            battle_btn = self.find_any_template(
-                templates=["battle/battle.png"],
-                threshold=ConfidenceValue("75%"),
-            )
-            if not battle_btn:
-                logging.info(f"Squad {faction} has no attempts available. Skipping.")
+            try:
+                self.wait_for_template(
+                    "battle/battle.png",
+                    threshold=ConfidenceValue("75%"),
+                    timeout=self.template_timeout,
+                    timeout_message=f"Squad {faction} locked or inactive.",
+                )
+            except GameTimeoutError:
+                logging.info(f"Squad {faction} locked or inactive. Skipping.")
                 continue
 
             logging.info(f"Squad {faction} active. Executing battle loop...")
