@@ -4,7 +4,7 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player.decorators import register_command
+from adb_auto_player.decorators import register_command, register_custom_routine_choice
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
@@ -37,7 +37,6 @@ class DailiesMixin(AFKJourneyBase, ABC):
         super().__init__()
         self.perform_essence_swap = False
 
-    # TODO should be broken up into components and registered for my custom routine
     @register_command(
         name="Dailies",
         gui=GUIMetadata(
@@ -46,6 +45,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
             tooltip="Complete all daily tasks and collect rewards automatically",
         ),
     )
+    @register_custom_routine_choice(label="Dailies")
     def run_dailies(self) -> None:
         """Complete daily chores."""
         self.start_up(device_streaming=False)

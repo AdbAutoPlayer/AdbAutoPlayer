@@ -4,7 +4,7 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player.decorators import register_command
+from adb_auto_player.decorators import register_command, register_custom_routine_choice
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models import ConfidenceValue
@@ -23,6 +23,7 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
             tooltip="Participate in the Sunlit Showdown event automatically",
         ),
     )
+    @register_custom_routine_choice(label="Sunlit Showdown")
     def attempt_sunlit(self) -> None:
         """Attempt to run Sunlit Showdown Battles."""
         self.start_up()

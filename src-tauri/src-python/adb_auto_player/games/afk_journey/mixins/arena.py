@@ -2,7 +2,7 @@
 
 import logging
 
-from adb_auto_player.decorators import register_command
+from adb_auto_player.decorators import register_command, register_custom_routine_choice
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
@@ -22,6 +22,7 @@ class ArenaMixin(AFKJourneyBase):
             tooltip="Participate in daily Arena battles automatically",
         ),
     )
+    @register_custom_routine_choice(label="Arena")
     def run_arena(self) -> None:
         """Use Arena attempts."""
         self.start_up(device_streaming=False)
