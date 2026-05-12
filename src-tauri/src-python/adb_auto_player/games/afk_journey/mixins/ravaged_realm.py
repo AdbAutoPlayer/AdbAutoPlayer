@@ -258,10 +258,10 @@ class RavagedRealmMixin(AFKJourneyBase):
 
             logging.info(f"Checking squad tab {tab_idx}/4 ({faction})...")
 
-            before_img = None
+            before_tabs = None
             if tab_idx > 1:
                 try:
-                    before_img = self.get_screenshot()[400:1200, 200:900]
+                    before_tabs = self.get_screenshot()[1820:1940, 100:1050]
                 except Exception:
                     pass
 
@@ -269,14 +269,14 @@ class RavagedRealmMixin(AFKJourneyBase):
             # Allow boss entrance animation to load fully
             sleep(9)
 
-            if tab_idx > 1 and before_img is not None:
+            if tab_idx > 1 and before_tabs is not None:
                 try:
-                    after_img = self.get_screenshot()[400:1200, 200:900]
+                    after_tabs = self.get_screenshot()[1820:1940, 100:1050]
                     diff = np.mean(
-                        np.abs(before_img.astype(float) - after_img.astype(float))
+                        np.abs(before_tabs.astype(float) - after_tabs.astype(float))
                     )
-                    logging.info(f"Pixel diff for tab {faction}: {diff:.2f}")
-                    min_diff = 5.0
+                    logging.debug(f"Tabs row pixel diff for {faction}: {diff:.2f}")
+                    min_diff = 2.0
                     if diff < min_diff:
                         logging.info(f"Squad {faction} locked or inactive. Skipping.")
                         continue
@@ -291,6 +291,6 @@ class RavagedRealmMixin(AFKJourneyBase):
                 logging.info(f"Squad {faction} has no attempts available. Skipping.")
                 continue
 
-            logging.info(f"Squad {faction} active. [TEST MODE] Skipping actual battle.")
-            # self._run_battle()
+            logging.info(f"Squad {faction} active. Executing battle loop...")
+            self._run_battle()
             self.sleep_navigation()
