@@ -1,5 +1,15 @@
 # Changelog
 
+## [12.8.16] - 2026-05-13
+
+### Added
+
+- 🖥️ **UI / Settings**: Enhanced the in-app update dialog to natively parse and render structured Markdown text, cleanly formatting bold highlights and bulleted changelog entries.
+
+### Fixed
+
+- 🎮 **ADB Streaming**: Restored absolute backward compatibility for continuous H264 screen capture on custom emulator configurations (such as BlueStacks 5 running with the combined Vulkan backend) by automatically defaulting to highly resilient chunked stream processing and stripping incompatible runtime codec overrides.
+
 ## [12.8.15] - 2026-05-12
 
 ### Added
