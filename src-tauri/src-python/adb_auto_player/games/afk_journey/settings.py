@@ -91,9 +91,21 @@ class AFKStagesSettings(BattleAllowsManualSettings):
     pass
 
 
+DEFAULT_TOWERS = list(TowerEnum.__members__.values())
+
+
 class RavagedRealmSettings(BaseModel):
     """Ravaged Realm Settings model."""
 
+    squads: list[TowerEnum] = Field(
+        default_factory=lambda: DEFAULT_TOWERS,
+        alias="Squads",
+        title="Squads",
+        json_schema_extra={
+            "formType": "ImageCheckboxArray",
+            "assetPath": "AFKJourney/Towers",
+        },
+    )
     attempts: PositiveInt = Field(default=5, alias="Attempts", title="Attempts")
     use_suggested_formations: bool = Field(
         default=True,
@@ -107,9 +119,6 @@ class DurasTrialsSettings(BattleAllowsManualSettings):
     """Dura's Trials Settings model."""
 
     pass
-
-
-DEFAULT_TOWERS = list(TowerEnum.__members__.values())
 
 
 class LegendTrialsSettings(BattleAllowsManualSettings):

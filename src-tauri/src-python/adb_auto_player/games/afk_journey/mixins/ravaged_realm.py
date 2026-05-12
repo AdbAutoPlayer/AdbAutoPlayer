@@ -239,14 +239,20 @@ class RavagedRealmMixin(AFKJourneyBase):
     def _run_all_squads(self) -> None:
         """Iterate through all 4 squad tabs and run battle attempts."""
         squad_tabs = [
-            Point(260, 1880),  # Immortal Squad
-            Point(485, 1880),  # Dauntless Squad
-            Point(710, 1880),  # Sylvan Squad
-            Point(935, 1880),  # Aurora Squad
+            (Point(260, 1880), "Graveborn"),  # Immortal Squad
+            (Point(485, 1880), "Mauler"),  # Dauntless Squad
+            (Point(710, 1880), "Wilder"),  # Sylvan Squad
+            (Point(935, 1880), "Lightbearer"),  # Aurora Squad
         ]
 
-        for tab_idx, tab_point in enumerate(squad_tabs, start=1):
-            logging.info(f"Checking squad tab {tab_idx}/4...")
+        configured_squads = self.settings.ravaged_realm.squads
+
+        for tab_idx, (tab_point, faction) in enumerate(squad_tabs, start=1):
+            if faction not in configured_squads:
+                logging.info(f"Squad {faction} disabled in settings. Skipping.")
+                continue
+
+            logging.info(f"Checking squad tab {tab_idx}/4 ({faction})...")
             self.tap(tab_point)
             sleep(2)
 
@@ -255,9 +261,9 @@ class RavagedRealmMixin(AFKJourneyBase):
                 threshold=ConfidenceValue("75%"),
             )
             if not battle_btn:
-                logging.info(f"Squad tab {tab_idx} locked or unavailable. Skipping.")
+                logging.info(f"Squad {faction} locked or unavailable. Skipping.")
                 continue
 
-            logging.info(f"Squad tab {tab_idx} active. Executing battle loop...")
+            logging.info(f"Squad {faction} active. Executing battle loop...")
             self._run_battle()
             self.sleep_navigation()
