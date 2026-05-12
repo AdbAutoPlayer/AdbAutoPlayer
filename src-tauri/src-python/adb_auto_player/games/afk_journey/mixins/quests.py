@@ -11,6 +11,8 @@ from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 
+_GENERIC_HOLD_CENTER_TOLERANCE = 50
+
 
 class QuestMixin(AFKJourneyBase, ABC):
     """Assist Mixin."""
@@ -160,7 +162,10 @@ class QuestMixin(AFKJourneyBase, ABC):
             # generic_hold matches the dark wheel navigation arrows which surround
             # the TAP & HOLD wheel. If detected off-center it's a wheel arrow,
             # not the actual hold target — redirect to the wheel's cast button center
-            if result.template == "quests/generic_hold" and abs(result.x - 540) > 50:
+            if (
+                result.template == "quests/generic_hold"
+                and abs(result.x - 540) > _GENERIC_HOLD_CENTER_TOLERANCE
+            ):
                 hold_point = Point(540, result.y + 170)
             logging.info(
                 "Holding button: "
@@ -213,11 +218,9 @@ class QuestMixin(AFKJourneyBase, ABC):
 
         # Finally we click the 'Echoes of Dissent' text to auto-path. We return False
         # as we need to increment the counter in case we get stuck clicking it
-        if path:
-            if self.find_any_template(["quests/questbook"]):
-                logging.info("Auto-pathing")
-                self.tap(Point(820, 375))
-                sleep(5)
-                return False
+        if path and self.find_any_template(["quests/questbook"]):
+            logging.info("Auto-pathing")
+            self.tap(Point(820, 375))
+            sleep(5)
 
         return False
