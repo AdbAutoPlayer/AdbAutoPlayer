@@ -99,10 +99,30 @@ class DeviceStream:
         self.latest_frame: np.ndarray | None = None
         self._frame_lock = threading.Lock()
         self._running = False
-        self._use_time_limit = getattr(controller, "is_controlling_emulator", True)
+        self._use_time_limit = self._should_use_time_limit()
         self._stream_thread: threading.Thread | None = None
         self._monitor_thread: threading.Thread | None = None
         self._process: AdbConnection | None = None
+
+    def _should_use_time_limit(self) -> bool:
+        """Determine if chunked streaming should be used based on emulator brand."""
+        is_emu = getattr(self.controller, "is_controlling_emulator", True)
+        if not is_emu:
+            return False
+
+        try:
+            props = str(self.controller.d.shell("getprop")).lower()
+            if "bluestacks" in props:
+                return True
+            devices = str(self.controller.d.shell("getevent -pl")).lower()
+            if "bluestacks" in devices:
+                return True
+            if "mumu" in props or "microvirt" in props or "nemu" in props:
+                return False
+        except Exception:
+            pass
+
+        return True
 
     def start(self) -> None:
         """Start the screen streaming thread."""
@@ -110,7 +130,7 @@ class DeviceStream:
             return
 
         self._running = True
-        self._use_time_limit = getattr(self.controller, "is_controlling_emulator", True)
+        self._use_time_limit = self._should_use_time_limit()
         self._stream_thread = threading.Thread(target=self._stream_screen)
         self._stream_thread.daemon = True
         self._stream_thread.start()
