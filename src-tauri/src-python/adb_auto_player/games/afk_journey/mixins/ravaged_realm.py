@@ -156,10 +156,29 @@ class RavagedRealmMixin(AFKJourneyBase):
                     timeout=self.min_timeout,
                 )
                 self.tap(battle_btn)
-                self.sleep_navigation()
 
-                # Intercept gold popups triggered when attempts are exhausted
-                if self.find_any_template(["battle/spend.png", "battle/gold.png"]):
+                # Wait for prep screen interface OR gold purchase popup
+                prep_match = self.wait_for_any_template(
+                    templates=[
+                        "battle/records.png",
+                        "battle/formations_icon.png",
+                        "battle/spend.png",
+                        "battle/gold.png",
+                        "navigation/confirm.png",
+                        "confirm_text.png",
+                    ],
+                    crop_regions=CropRegions(top=0.4),
+                    timeout=self.template_timeout,
+                    timeout_message="Failed to load battle prep screen.",
+                )
+
+                # If we caught a gold purchase popup instead of the prep screen
+                if prep_match.template in [
+                    "battle/spend.png",
+                    "battle/gold.png",
+                    "navigation/confirm.png",
+                    "confirm_text.png",
+                ]:
                     if not spend_gold:
                         logging.warning("No attempts. Not spending gold. Returning.")
                         self.press_back_button()
@@ -168,16 +187,16 @@ class RavagedRealmMixin(AFKJourneyBase):
                     self._click_confirm_on_popup()
                     self.sleep_navigation()
 
-                # Wait for the prep screen interface to fully load
-                prep_match = self.wait_for_any_template(
-                    templates=[
-                        "battle/records.png",
-                        "battle/formations_icon.png",
-                    ],
-                    crop_regions=CropRegions(top=0.5),
-                    timeout=self.template_timeout,
-                    timeout_message="Failed to load battle prep screen.",
-                )
+                    # Now wait for the actual prep screen to load after purchase
+                    prep_match = self.wait_for_any_template(
+                        templates=[
+                            "battle/records.png",
+                            "battle/formations_icon.png",
+                        ],
+                        crop_regions=CropRegions(top=0.5),
+                        timeout=self.template_timeout,
+                        timeout_message="Failed to load prep screen after purchase.",
+                    )
             except GameTimeoutError as fail:
                 logging.error(str(fail))
                 return
