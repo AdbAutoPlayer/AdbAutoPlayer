@@ -39,7 +39,7 @@ class RavagedRealmMixin(AFKJourneyBase):
                 logging.info("Ravaged Realm skipped successfully.")
                 return
 
-            self._run_battle()
+            self._run_all_squads()
         except (GameTimeoutError, GameActionFailedError) as e:
             logging.error(str(e))
             return
@@ -232,7 +232,32 @@ class RavagedRealmMixin(AFKJourneyBase):
                 self.sleep_navigation()
                 self.tap(self.CENTER_POINT)
                 self.sleep_navigation()
-                break
             except GameTimeoutError as fail:
                 logging.error(str(fail))
                 break
+
+    def _run_all_squads(self) -> None:
+        """Iterate through all 4 squad tabs and run battle attempts."""
+        squad_tabs = [
+            Point(260, 1880),  # Immortal Squad
+            Point(485, 1880),  # Dauntless Squad
+            Point(710, 1880),  # Sylvan Squad
+            Point(935, 1880),  # Aurora Squad
+        ]
+
+        for tab_idx, tab_point in enumerate(squad_tabs, start=1):
+            logging.info(f"Checking squad tab {tab_idx}/4...")
+            self.tap(tab_point)
+            sleep(2)
+
+            battle_btn = self.find_any_template(
+                templates=["battle/battle.png"],
+                threshold=ConfidenceValue("75%"),
+            )
+            if not battle_btn:
+                logging.info(f"Squad tab {tab_idx} locked or unavailable. Skipping.")
+                continue
+
+            logging.info(f"Squad tab {tab_idx} active. Executing battle loop...")
+            self._run_battle()
+            self.sleep_navigation()
