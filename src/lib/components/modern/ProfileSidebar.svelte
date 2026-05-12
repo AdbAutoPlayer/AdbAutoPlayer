@@ -155,7 +155,11 @@
                 title={$t("Delete profile")}
                 onclick={(e) => {
                   e.stopPropagation();
-                  onDeleteProfile?.(i);
+                  if (
+                    confirm($t("Are you sure you want to delete this profile?"))
+                  ) {
+                    onDeleteProfile?.(i);
+                  }
                 }}
               >
                 <svg

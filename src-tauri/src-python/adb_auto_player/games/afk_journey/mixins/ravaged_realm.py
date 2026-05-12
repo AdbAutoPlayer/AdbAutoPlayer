@@ -9,10 +9,10 @@ from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.battle_state import Mode
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models import ConfidenceValue
-from adb_auto_player.models.template_matching import TemplateMatchResult
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.models.template_matching import TemplateMatchResult
 
 
 class RavagedRealmMixin(AFKJourneyBase):
