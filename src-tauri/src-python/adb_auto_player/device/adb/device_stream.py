@@ -167,10 +167,17 @@ class DeviceStream:
 
     def _handle_stream(self) -> None:
         """Generic stream handler."""
+        try:
+            res = self.controller.get_display_info().resolution
+            size_str = f"--size {res.width}x{res.height}"
+        except Exception:
+            size_str = ""
+
+        base_cmd = (
+            f"screenrecord --output-format=h264 {size_str} --bit-rate 2000000".strip()
+        )
         cmdargs = (
-            "screenrecord --output-format=h264 --time-limit=1 -"
-            if self._use_time_limit
-            else "screenrecord --output-format=h264 -"
+            f"{base_cmd} --time-limit=1 -" if self._use_time_limit else f"{base_cmd} -"
         )
         self._process = self.controller.d.shell(
             cmdargs=cmdargs,
