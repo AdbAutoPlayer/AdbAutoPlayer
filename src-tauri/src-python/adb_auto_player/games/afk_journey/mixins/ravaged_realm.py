@@ -95,7 +95,7 @@ class RavagedRealmMixin(AFKJourneyBase):
         self.sleep_navigation()
         return True
 
-    def _copy_suggested_formation(self, prep_match: TemplateMatchResult) -> bool:
+    def _copy_ravaged_realm_formation(self, prep_match: TemplateMatchResult) -> bool:
         """Open Records and copy the first community formation."""
         try:
             if prep_match.template == "battle/records.png":
@@ -168,7 +168,7 @@ class RavagedRealmMixin(AFKJourneyBase):
                 return
 
             if self.settings.ravaged_realm.use_suggested_formations:
-                if not self._copy_suggested_formation(prep_match):
+                if not self._copy_ravaged_realm_formation(prep_match):
                     return
                 self.sleep_navigation()
             else:
