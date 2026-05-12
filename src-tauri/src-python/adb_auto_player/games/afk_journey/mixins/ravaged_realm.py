@@ -256,12 +256,22 @@ class RavagedRealmMixin(AFKJourneyBase):
             self.tap(tab_point)
             sleep(2)
 
+            # Verify if the screen successfully switched to this squad's faction
+            faction_icon = self.game_find_template_match(
+                template=f"legend_trials/faction_icon_{faction.lower()}.png",
+                crop_regions=CropRegions(right=0.5, top=0.2, bottom=0.5),
+                threshold=ConfidenceValue("70%"),
+            )
+            if not faction_icon:
+                logging.info(f"Squad {faction} locked or inactive. Skipping.")
+                continue
+
             battle_btn = self.find_any_template(
                 templates=["battle/battle.png"],
                 threshold=ConfidenceValue("75%"),
             )
             if not battle_btn:
-                logging.info(f"Squad {faction} locked or unavailable. Skipping.")
+                logging.info(f"Squad {faction} has no attempts available. Skipping.")
                 continue
 
             logging.info(f"Squad {faction} active. Executing battle loop...")
