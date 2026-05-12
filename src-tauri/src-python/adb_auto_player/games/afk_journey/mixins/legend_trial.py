@@ -1,4 +1,4 @@
-"""AFK Journey Season Legend Trial."""
+"""AFK Journey Legend Trial."""
 
 import logging
 
@@ -20,7 +20,7 @@ from ..gui_category import AFKJCategory
 
 # Tested S4 2025.05.23
 class SeasonLegendTrial(AFKJourneyBase):
-    """Season Legend Trial Mixin."""
+    """Legend Trial Mixin (supports both Season and non-Season)."""
 
     @register_command(
         name="LegendTrial",
@@ -36,7 +36,7 @@ class SeasonLegendTrial(AFKJourneyBase):
         self.start_up()
         self.battle_state.mode = Mode.LEGEND_TRIALS
 
-        if not self._is_on_season_legend_trial_select():
+        if not self._is_on_legend_trial_select():
             try:
                 self.navigate_to_legend_trials_select_tower()
             except GameTimeoutError as e:
@@ -54,7 +54,7 @@ class SeasonLegendTrial(AFKJourneyBase):
 
         for faction in factions:
             self.battle_state.faction = faction
-            if not self._is_on_season_legend_trial_select():
+            if not self._is_on_legend_trial_select():
                 self.navigate_to_legend_trials_select_tower()
 
             if self.battle_state.faction not in towers:
@@ -158,11 +158,18 @@ class SeasonLegendTrial(AFKJourneyBase):
         )
         self.tap(challenge_btn)
 
-    def _is_on_season_legend_trial_select(self) -> bool:
+    def _is_on_legend_trial_select(self) -> bool:
+        """Check if on Legend Trial tower select (Season or non-Season)."""
         return (
-            self.game_find_template_match(
-                template="legend_trials/s_header.png",
-                crop_regions=CropRegions(right=0.8, bottom=0.8),
+            self.find_any_template(
+                templates=[
+                    "legend_trials/s_header.png",
+                    "legend_trials/banner_lightbearer.png",
+                    "legend_trials/banner_wilder.png",
+                    "legend_trials/banner_graveborn.png",
+                    "legend_trials/banner_mauler.png",
+                ],
+                crop_regions=CropRegions(left=0.1, right=0.1, top=0.1, bottom=0.1),
             )
             is not None
         )

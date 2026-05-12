@@ -398,10 +398,16 @@ class Navigation(PopupMessageHandler, ABC):
         )
 
         self._tap_till_template_disappears(result.template)
-        self.wait_for_template(
-            template="legend_trials/s_header.png",
-            crop_regions=CropRegions(right=0.8, bottom=0.8),
-            timeout_message="Could not find Season Legend Trial Header",
+        self.wait_for_any_template(
+            templates=[
+                "legend_trials/s_header.png",
+                "legend_trials/banner_lightbearer.png",
+                "legend_trials/banner_wilder.png",
+                "legend_trials/banner_graveborn.png",
+                "legend_trials/banner_mauler.png",
+            ],
+            crop_regions=CropRegions(left=0.1, right=0.1, top=0.1, bottom=0.1),
+            timeout_message="Could not find Legend Trial Header",
             timeout=self.template_timeout,
         )
         self.sleep_action()

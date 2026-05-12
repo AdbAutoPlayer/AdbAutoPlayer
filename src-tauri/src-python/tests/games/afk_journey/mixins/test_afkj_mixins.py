@@ -16,7 +16,7 @@ class MockAFKJ(ArenaMixin, SeasonLegendTrial):
     # Annotate methods that will be mocked to avoid ty-check shadowing errors
     wait_for_template: MagicMock
     wait_for_any_template: MagicMock
-    _is_on_season_legend_trial_select: MagicMock
+    _is_on_legend_trial_select: MagicMock
     navigate_to_legend_trials_select_tower: MagicMock
     game_find_template_match: MagicMock
     _choose_opponent: MagicMock
@@ -105,7 +105,7 @@ class TestAFKJMixinsCoverage:
     def test_legend_trial_navigation_error_coverage(self):
         """Cover navigation error in push_legend_trials."""
         bot = MockAFKJ()
-        with patch.object(bot, "_is_on_season_legend_trial_select", return_value=False):
+        with patch.object(bot, "_is_on_legend_trial_select", return_value=False):
             with patch.object(
                 bot,
                 "navigate_to_legend_trials_select_tower",
@@ -137,7 +137,7 @@ class TestAFKJMixinsCoverage:
     def test_push_legend_trials_full_flow(self):
         """Cover push_legend_trials main loop and faction logic."""
         bot = MockAFKJ()
-        with patch.object(bot, "_is_on_season_legend_trial_select", return_value=True):
+        with patch.object(bot, "_is_on_legend_trial_select", return_value=True):
             bot.settings.legend_trials.towers = ["Lightbearer", "Wilder"]
             # Faction icon found for Lightbearer (not available today),
             # not found for Wilder
@@ -177,7 +177,7 @@ class TestAFKJMixinsCoverage:
     def test_legend_trial_not_on_select_screen(self):
         """Cover line 59: navigate_to_legend_trials_select_tower when not on screen."""
         bot = MockAFKJ()
-        with patch.object(bot, "_is_on_season_legend_trial_select", return_value=False):
+        with patch.object(bot, "_is_on_legend_trial_select", return_value=False):
             # To break the loop quickly, we can mock game_find_template_match
             # to return True (so it skips) or raise an error.
             with patch.object(bot, "game_find_template_match", return_value=True):
@@ -187,7 +187,7 @@ class TestAFKJMixinsCoverage:
     def test_legend_trial_tower_not_found_coverage(self):
         """Cover GameTimeoutError at line 81 in push_legend_trials."""
         bot = MockAFKJ()
-        with patch.object(bot, "_is_on_season_legend_trial_select", return_value=True):
+        with patch.object(bot, "_is_on_legend_trial_select", return_value=True):
             # Mock find_template_match to return True
             # (tower icon not found implies available today?)
             # Wait, at line 66: if self.game_find_template_match(...): continue
@@ -202,7 +202,7 @@ class TestAFKJMixinsCoverage:
     def test_legend_trial_generic_error_coverage(self):
         """Cover AutoPlayerError and AutoPlayerWarningError at lines 90-95."""
         bot = MockAFKJ()
-        with patch.object(bot, "_is_on_season_legend_trial_select", return_value=True):
+        with patch.object(bot, "_is_on_legend_trial_select", return_value=True):
             with patch.object(bot, "game_find_template_match", return_value=False):
                 with patch.object(
                     bot, "wait_for_template", return_value=Point(100, 100)
