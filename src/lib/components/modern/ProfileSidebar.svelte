@@ -8,9 +8,12 @@
   interface Props {
     collapsed: boolean;
     onAddProfile: () => void;
+    onDeleteProfile?: (index: number) => void;
+    onRenameProfile?: (index: number, newName: string) => void;
   }
 
-  let { collapsed, onAddProfile }: Props = $props();
+  let { collapsed, onAddProfile, onDeleteProfile, onRenameProfile }: Props =
+    $props();
 
   const profiles = $derived($appSettings?.profiles?.profiles ?? []);
   const runningCount = $derived(
@@ -74,7 +77,9 @@
       {#each profiles as p, i}
         {@const status = getStatus(i)}
         {@const selected = i === $activeProfile}
-        <button
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
           class="profile-row"
           class:selected
           onclick={() => selectProfile(i)}
@@ -118,7 +123,59 @@
               {/if}
             </div>
           </div>
-        </button>
+          <div class="row-actions">
+            <button
+              class="action-btn-mini"
+              title={$t("Rename profile")}
+              onclick={(e) => {
+                e.stopPropagation();
+                const newName = prompt($t("Enter new profile name:"), p);
+                if (newName && newName.trim() && newName.trim() !== p) {
+                  onRenameProfile?.(i, newName.trim());
+                }
+              }}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                width="12"
+                height="12"
+                ><path
+                  d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"
+                /></svg
+              >
+            </button>
+            {#if profiles.length > 1}
+              <button
+                class="action-btn-mini delete"
+                title={$t("Delete profile")}
+                onclick={(e) => {
+                  e.stopPropagation();
+                  if (
+                    confirm($t("Are you sure you want to delete this profile?"))
+                  ) {
+                    onDeleteProfile?.(i);
+                  }
+                }}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  width="12"
+                  height="12"><path d="M18 6 6 18M6 6l12 12" /></svg
+                >
+              </button>
+            {/if}
+          </div>
+        </div>
       {/each}
     </div>
 
@@ -348,5 +405,40 @@
     height: 10px;
     border-radius: 999px;
     border: 2px solid var(--bg-1);
+  }
+  .row-actions {
+    display: flex;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity var(--dur-1);
+  }
+
+  .profile-row:hover .row-actions {
+    opacity: 1;
+  }
+
+  .action-btn-mini {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-4);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition:
+      background var(--dur-1),
+      color var(--dur-1);
+  }
+
+  .action-btn-mini:hover {
+    background: var(--bg-hover);
+    color: var(--text-1);
+  }
+
+  .action-btn-mini.delete:hover {
+    color: var(--warn);
   }
 </style>

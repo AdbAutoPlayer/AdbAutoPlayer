@@ -1,6 +1,6 @@
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, mock_open, patch
 
 from adb_auto_player.exceptions import GenericAdbUnrecoverableError
 from adb_auto_player.models.commands import Command
@@ -30,7 +30,7 @@ class TestExecuteRestart(unittest.TestCase):
             patch(
                 "adb_auto_player.util.execute.tomllib.load", return_value=app_settings
             ),
-            patch("builtins.open", unittest.mock.mock_open()),
+            patch("builtins.open", mock_open()),
             patch(
                 "adb_auto_player.file_loader.SettingsLoader.get_app_config_dir",
                 return_value=Path("dummy"),
@@ -84,7 +84,7 @@ class TestExecuteRestart(unittest.TestCase):
             patch(
                 "adb_auto_player.util.execute.tomllib.load", return_value=app_settings
             ),
-            patch("builtins.open", unittest.mock.mock_open()),
+            patch("builtins.open", mock_open()),
             patch(
                 "adb_auto_player.file_loader.SettingsLoader.get_app_config_dir",
                 return_value=Path("dummy"),
@@ -118,7 +118,7 @@ class TestExecuteRestart(unittest.TestCase):
             patch(
                 "adb_auto_player.util.execute.tomllib.load", return_value=app_settings
             ),
-            patch("builtins.open", unittest.mock.mock_open()),
+            patch("builtins.open", mock_open()),
             patch(
                 "adb_auto_player.file_loader.SettingsLoader.get_app_config_dir",
                 return_value=Path("dummy"),
@@ -150,7 +150,7 @@ class TestExecuteRestart(unittest.TestCase):
             patch(
                 "adb_auto_player.util.execute.tomllib.load", return_value=app_settings
             ),
-            patch("builtins.open", unittest.mock.mock_open()),
+            patch("builtins.open", mock_open()),
             patch(
                 "adb_auto_player.file_loader.SettingsLoader.get_app_config_dir",
                 return_value=Path("dummy"),

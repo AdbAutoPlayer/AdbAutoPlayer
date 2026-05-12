@@ -57,13 +57,11 @@ class ArenaMixin(AFKJourneyBase):
     def _enter_arena(self) -> None:
         """Enter Arena."""
         logging.info("Entering Arena...")
-        self.navigate_to_world()
-        self.tap(Point(460, 1830))  # Battle Modes
+        self.navigate_to_battle_modes_screen()
         try:
-            arena_mode = self.wait_for_template(
+            arena_mode = self._find_in_battle_modes(
                 "arena/label.png",
-                timeout_message="Failed to find Arena.",
-                timeout=self.min_timeout,
+                "Failed to find Arena.",
             )
             self.tap(arena_mode)
             self.sleep_navigation()

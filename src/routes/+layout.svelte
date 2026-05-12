@@ -284,6 +284,64 @@
     }
   }
 
+  async function handleDeleteProfile(index: number) {
+    if (!$appSettings || !$appSettings.profiles?.profiles) return;
+    const currentProfiles = $appSettings.profiles.profiles;
+    if (currentProfiles.length <= 1) return;
+
+    const newProfiles = currentProfiles.filter((_, i) => i !== index);
+    let newActive = $appSettings.profiles.active_profile ?? 0;
+    if (newActive === index) {
+      newActive = Math.max(0, index - 1);
+    } else if (newActive > index) {
+      newActive--;
+    }
+
+    try {
+      const newSettings = {
+        ...$appSettings,
+        profiles: {
+          ...$appSettings.profiles,
+          profiles: newProfiles,
+          active_profile: newActive,
+        },
+      };
+
+      const savedSettings: AppSettings = await invoke("save_app_settings", {
+        settings: newSettings,
+      });
+      await applySettings(savedSettings);
+      $activeProfile = newActive;
+      void logInfo(`Deleted profile at index ${index}`);
+    } catch (error) {
+      void logError(`Failed to delete profile: ${error}`);
+    }
+  }
+
+  async function handleRenameProfile(index: number, newName: string) {
+    if (!$appSettings || !$appSettings.profiles?.profiles) return;
+    const currentProfiles = [...$appSettings.profiles.profiles];
+    currentProfiles[index] = newName;
+
+    try {
+      const newSettings = {
+        ...$appSettings,
+        profiles: {
+          ...$appSettings.profiles,
+          profiles: currentProfiles,
+        },
+      };
+
+      const savedSettings: AppSettings = await invoke("save_app_settings", {
+        settings: newSettings,
+      });
+      await applySettings(savedSettings);
+      void logInfo(`Renamed profile at index ${index} to ${newName}`);
+    } catch (error) {
+      void logError(`Failed to rename profile: ${error}`);
+    }
+  }
+
   $effect(() => {
     if ($uiState.showSettings && !settingsProps.showSettingsForm) {
       if ($uiState.settingsType === "app") {
@@ -413,6 +471,8 @@
         <ProfileSidebar
           collapsed={sidebarCollapsed}
           onAddProfile={handleAddProfile}
+          onDeleteProfile={handleDeleteProfile}
+          onRenameProfile={handleRenameProfile}
         />
       {/if}
 
