@@ -273,6 +273,7 @@ class RavagedRealmMixin(AFKJourneyBase):
                     diff = np.mean(
                         np.abs(before_img.astype(float) - after_img.astype(float))
                     )
+                    logging.info(f"Pixel diff for tab {faction}: {diff:.2f}")
                     min_diff = 5.0
                     if diff < min_diff:
                         logging.info(f"Squad {faction} locked or inactive. Skipping.")
@@ -288,6 +289,6 @@ class RavagedRealmMixin(AFKJourneyBase):
                 logging.info(f"Squad {faction} has no attempts available. Skipping.")
                 continue
 
-            logging.info(f"Squad {faction} active. Executing battle loop...")
-            self._run_battle()
+            logging.info(f"Squad {faction} active. [TEST MODE] Skipping actual battle.")
+            # self._run_battle()
             self.sleep_navigation()
