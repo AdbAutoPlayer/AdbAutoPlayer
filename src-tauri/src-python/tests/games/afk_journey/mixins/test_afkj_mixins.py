@@ -64,7 +64,13 @@ class MockAFKJ(ArenaMixin, SeasonLegendTrial):
     def game_find_template_match(self, *args, **kwargs):
         return MagicMock()
 
+    def swipe_up(self, *args, **kwargs):
+        pass
+
     def navigate_to_world(self):
+        pass
+
+    def navigate_to_battle_modes_screen(self):
         pass
 
     def start_up(self, *args, **kwargs):
