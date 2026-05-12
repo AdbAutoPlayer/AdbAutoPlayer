@@ -9,6 +9,8 @@ from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
+from adb_auto_player.models.geometry import Point
+from adb_auto_player.models.image_manipulation import CropRegions
 
 
 class RavagedRealmMixin(AFKJourneyBase):
@@ -124,7 +126,7 @@ class RavagedRealmMixin(AFKJourneyBase):
         self.tap(use_btn)
         self.sleep_navigation()
 
-        # Press Skip twice to copy the formation to both slots and initiate battle.
+        # Press Skip twice to copy the formation to both slots.
         for i in range(2):
             try:
                 skip_btn = self.wait_for_any_template(
@@ -138,7 +140,27 @@ class RavagedRealmMixin(AFKJourneyBase):
                 logging.error(f"{fail}")
                 return
 
-        # Wait for and dismiss the battle-ended screen.
         self.sleep_navigation()
-        self.tap(self.CENTER_POINT)
+        logging.info("Initiating battle...")
+        self.tap(Point(850, 1780))
         self.sleep_navigation()
+
+        logging.info("Waiting for battle to complete...")
+        try:
+            match = self.wait_for_any_template(
+                templates=self._get_battle_over_templates(),
+                timeout=self.BATTLE_TIMEOUT,
+                crop_regions=CropRegions(top=0.4),
+                delay=1.0,
+                timeout_message="Battle over screen not found after timeout.",
+            )
+            logging.info("Battle complete. Dismissing result screen...")
+            self.sleep_navigation()
+            self.tap(match)
+            self.sleep_navigation()
+            self.tap(Point(550, 1800))
+            self.sleep_navigation()
+            self.tap(self.CENTER_POINT)
+            self.sleep_navigation()
+        except GameTimeoutError as fail:
+            logging.error(str(fail))
