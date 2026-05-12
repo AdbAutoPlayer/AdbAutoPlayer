@@ -566,6 +566,16 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
                     "battle/power_up.png",
                     "battle/result.png",
                 ]
+            case Mode.RAVAGED_REALM:
+                return [
+                    "arena/done.png",
+                    "next.png",
+                    "battle/victory_rewards.png",
+                    "retry.png",
+                    "navigation/confirm.png",
+                    "battle/power_up.png",
+                    "battle/result.png",
+                ]
             case _:
                 return [
                     "next.png",
