@@ -9,6 +9,7 @@ from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.battle_state import Mode
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models import ConfidenceValue
+from adb_auto_player.models.template_matching import TemplateMatchResult
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
@@ -94,6 +95,43 @@ class RavagedRealmMixin(AFKJourneyBase):
         self.sleep_navigation()
         return True
 
+    def _copy_suggested_formation(self, prep_match: TemplateMatchResult) -> bool:
+        """Open Records and copy the first community formation."""
+        try:
+            if prep_match.template == "battle/records.png":
+                records = prep_match
+            else:
+                records = self.wait_for_template(
+                    "battle/records.png",
+                    timeout_message="Failed to find Records button.",
+                    timeout=self.min_timeout,
+                )
+            self.tap(records)
+            self.sleep_navigation()
+
+            # Select the first formation via the Use button.
+            use_btn = self.wait_for_template(
+                "battle/use.png",
+                timeout_message="Failed to find Use button in Records.",
+                timeout=self.min_timeout,
+            )
+            self.tap(use_btn)
+            self.sleep_navigation()
+
+            # Press Skip twice to copy the formation to both slots.
+            for i in range(2):
+                skip_btn = self.wait_for_any_template(
+                    templates=["event/ravaged_realm/skip.png"],
+                    timeout=self.template_timeout,
+                    timeout_message=f"Failed to find Skip (press {i + 1}/2).",
+                )
+                self.tap(skip_btn)
+                self.sleep_action()
+            return True
+        except GameTimeoutError as fail:
+            logging.error(f"{fail}")
+            return False
+
     def _run_battle(self) -> None:
         """Tap Battle to enter prep screen, copy first Records formation, and start."""
         attempts = self.settings.ravaged_realm.attempts
@@ -114,52 +152,41 @@ class RavagedRealmMixin(AFKJourneyBase):
                 )
                 self.tap(battle_btn)
                 self.sleep_navigation()
+
+                # Wait for the prep screen interface to fully load
+                prep_match = self.wait_for_any_template(
+                    templates=[
+                        "battle/records.png",
+                        "battle/formations_icon.png",
+                    ],
+                    crop_regions=CropRegions(top=0.5),
+                    timeout=self.template_timeout,
+                    timeout_message="Failed to load battle prep screen.",
+                )
             except GameTimeoutError as fail:
                 logging.error(str(fail))
                 return
 
             if self.settings.ravaged_realm.use_suggested_formations:
-                # Open Records (community formations).
-                # Template already exists: battle/records.png
-                try:
-                    records = self.wait_for_template(
-                        "battle/records.png",
-                        timeout_message="Failed to find Records button.",
-                        timeout=self.min_timeout,
-                    )
-                    self.tap(records)
-                    self.sleep_navigation()
-
-                    # Select the first formation via the Use button.
-                    # Template already exists: battle/use.png
-                    use_btn = self.wait_for_template(
-                        "battle/use.png",
-                        timeout_message="Failed to find Use button in Records.",
-                        timeout=self.min_timeout,
-                    )
-                    self.tap(use_btn)
-                    self.sleep_navigation()
-
-                    # Press Skip twice to copy the formation to both slots.
-                    for i in range(2):
-                        skip_btn = self.wait_for_any_template(
-                            templates=["event/ravaged_realm/skip.png"],
-                            timeout=self.template_timeout,
-                            timeout_message=f"Failed to find Skip (press {i + 1}/2).",
-                        )
-                        self.tap(skip_btn)
-                        self.sleep_action()
-                except GameTimeoutError as fail:
-                    logging.error(f"{fail}")
+                if not self._copy_suggested_formation(prep_match):
                     return
-
                 self.sleep_navigation()
             else:
                 logging.info("Using current formation (skipping Records).")
 
             logging.info("Initiating battle...")
-            self.tap(Point(850, 1780))
-            self.sleep_navigation()
+            try:
+                self.tap(Point(850, 1780))
+                self._tap_coordinates_till_template_disappears(
+                    coordinates=Point(850, 1780),
+                    template=prep_match.template,
+                    crop_regions=CropRegions(top=0.5),
+                    delay=2.0,
+                )
+            except GameActionFailedError:
+                logging.warning("Failed to start Battle. Are heroes selected?")
+                return
+            self.sleep_action()
 
             # Handle possible Spend Gold popup if configured
             if self.find_any_template(["battle/spend.png", "battle/gold.png"]):
