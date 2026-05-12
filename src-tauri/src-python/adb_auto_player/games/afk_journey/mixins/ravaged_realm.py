@@ -3,6 +3,8 @@
 import logging
 from time import sleep
 
+import numpy as np
+
 from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import GameActionFailedError, GameTimeoutError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
@@ -253,18 +255,30 @@ class RavagedRealmMixin(AFKJourneyBase):
                 continue
 
             logging.info(f"Checking squad tab {tab_idx}/4 ({faction})...")
-            self.tap(tab_point)
-            sleep(2)
 
-            # Verify if the screen successfully switched to this squad's faction
-            faction_icon = self.game_find_template_match(
-                template=f"legend_trials/faction_icon_{faction.lower()}.png",
-                crop_regions=CropRegions(right=0.5, top=0.2, bottom=0.5),
-                threshold=ConfidenceValue("70%"),
-            )
-            if not faction_icon:
-                logging.info(f"Squad {faction} locked or inactive. Skipping.")
-                continue
+            before_img = None
+            if tab_idx > 1:
+                try:
+                    before_img = self.get_screenshot()[400:1200, 200:900]
+                except Exception:
+                    pass
+
+            self.tap(tab_point)
+            # Allow boss entrance animation to load fully
+            sleep(6)
+
+            if tab_idx > 1 and before_img is not None:
+                try:
+                    after_img = self.get_screenshot()[400:1200, 200:900]
+                    diff = np.mean(
+                        np.abs(before_img.astype(float) - after_img.astype(float))
+                    )
+                    min_diff = 5.0
+                    if diff < min_diff:
+                        logging.info(f"Squad {faction} locked or inactive. Skipping.")
+                        continue
+                except Exception as e:
+                    logging.debug(f"Pixel comparison error: {e}")
 
             battle_btn = self.find_any_template(
                 templates=["battle/battle.png"],
