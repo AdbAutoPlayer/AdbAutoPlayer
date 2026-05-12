@@ -7,7 +7,7 @@ from time import sleep
 from typing import ClassVar
 
 import cv2
-from adb_auto_player.decorators import register_command
+from adb_auto_player.decorators import register_command, register_custom_routine_choice
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
@@ -71,6 +71,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
             tooltip="Assist with production and orders in the Homestead automatically",
         ),
     )
+    @register_custom_routine_choice(label="Homestead Orders Helper")
     def navigate_production_buildings_for_crafting(self) -> None:
         """Navigate through kitchen, forge, and alchemy for crafting."""
         self.start_up()

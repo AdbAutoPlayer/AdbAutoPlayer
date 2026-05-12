@@ -4,7 +4,7 @@ import logging
 from time import sleep
 
 
-from adb_auto_player.decorators import register_command
+from adb_auto_player.decorators import register_command, register_custom_routine_choice
 from adb_auto_player.exceptions import GameActionFailedError, GameTimeoutError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.battle_state import Mode
@@ -27,6 +27,7 @@ class RavagedRealmMixin(AFKJourneyBase):
             tooltip="Complete the Ravaged Realm event automatically",
         ),
     )
+    @register_custom_routine_choice(label="Ravaged Realm")
     def run_ravaged_realm(self) -> None:
         """Complete Ravaged Realm."""
         self.battle_state.mode = Mode.RAVAGED_REALM
