@@ -91,10 +91,14 @@ class AFKStagesSettings(BattleAllowsManualSettings):
     pass
 
 
-class RavagedRealmSettings(BattleAllowsManualSettings):
+class RavagedRealmSettings(BaseModel):
     """Ravaged Realm Settings model."""
 
-    pass
+    use_suggested_formations: bool = Field(
+        default=True,
+        alias="Suggested Formations",
+        title="Suggested Formations",
+    )
 
 
 class DurasTrialsSettings(BattleAllowsManualSettings):
