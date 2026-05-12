@@ -94,11 +94,13 @@ class AFKStagesSettings(BattleAllowsManualSettings):
 class RavagedRealmSettings(BaseModel):
     """Ravaged Realm Settings model."""
 
+    attempts: PositiveInt = Field(default=5, alias="Attempts", title="Attempts")
     use_suggested_formations: bool = Field(
         default=True,
         alias="Suggested Formations",
         title="Suggested Formations",
     )
+    spend_gold: bool = Field(default=False, alias="Spend Gold", title="Spend Gold")
 
 
 class DurasTrialsSettings(BattleAllowsManualSettings):

@@ -96,76 +96,97 @@ class RavagedRealmMixin(AFKJourneyBase):
 
     def _run_battle(self) -> None:
         """Tap Battle to enter prep screen, copy first Records formation, and start."""
-        logging.info("Starting Ravaged Realm battle...")
-        self.sleep_navigation()
+        attempts = self.settings.ravaged_realm.attempts
+        spend_gold = self.settings.ravaged_realm.spend_gold
 
-        # Tap the Battle button to enter the battle prep screen.
-        battle_btn = self.wait_for_template(
-            "battle/battle.png",
-            timeout_message="Failed to find Battle button.",
-            timeout=self.min_timeout,
-        )
-        self.tap(battle_btn)
-        self.sleep_navigation()
-
-        if self.settings.ravaged_realm.use_suggested_formations:
-            # Open Records (community formations).
-            # Template already exists: battle/records.png
-            records = self.wait_for_template(
-                "battle/records.png",
-                timeout_message="Failed to find Records button.",
-                timeout=self.min_timeout,
+        for attempt in range(1, attempts + 1):
+            logging.info(
+                f"Starting Ravaged Realm battle (Attempt {attempt}/{attempts})..."
             )
-            self.tap(records)
             self.sleep_navigation()
 
-            # Select the first formation via the Use button.
-            # Template already exists: battle/use.png
-            use_btn = self.wait_for_template(
-                "battle/use.png",
-                timeout_message="Failed to find Use button in Records.",
-                timeout=self.min_timeout,
-            )
-            self.tap(use_btn)
-            self.sleep_navigation()
+            # Tap the Battle button to enter the battle prep screen.
+            try:
+                battle_btn = self.wait_for_template(
+                    "battle/battle.png",
+                    timeout_message="Failed to find Battle button.",
+                    timeout=self.min_timeout,
+                )
+                self.tap(battle_btn)
+                self.sleep_navigation()
+            except GameTimeoutError as fail:
+                logging.error(str(fail))
+                return
 
-            # Press Skip twice to copy the formation to both slots.
-            for i in range(2):
+            if self.settings.ravaged_realm.use_suggested_formations:
+                # Open Records (community formations).
+                # Template already exists: battle/records.png
                 try:
-                    skip_btn = self.wait_for_any_template(
-                        templates=["event/ravaged_realm/skip.png"],
-                        timeout=self.template_timeout,
-                        timeout_message=f"Failed to find Skip (press {i + 1}/2).",
+                    records = self.wait_for_template(
+                        "battle/records.png",
+                        timeout_message="Failed to find Records button.",
+                        timeout=self.min_timeout,
                     )
-                    self.tap(skip_btn)
-                    self.sleep_action()
+                    self.tap(records)
+                    self.sleep_navigation()
+
+                    # Select the first formation via the Use button.
+                    # Template already exists: battle/use.png
+                    use_btn = self.wait_for_template(
+                        "battle/use.png",
+                        timeout_message="Failed to find Use button in Records.",
+                        timeout=self.min_timeout,
+                    )
+                    self.tap(use_btn)
+                    self.sleep_navigation()
+
+                    # Press Skip twice to copy the formation to both slots.
+                    for i in range(2):
+                        skip_btn = self.wait_for_any_template(
+                            templates=["event/ravaged_realm/skip.png"],
+                            timeout=self.template_timeout,
+                            timeout_message=f"Failed to find Skip (press {i + 1}/2).",
+                        )
+                        self.tap(skip_btn)
+                        self.sleep_action()
                 except GameTimeoutError as fail:
                     logging.error(f"{fail}")
                     return
 
-            self.sleep_navigation()
-        else:
-            logging.info("Using current formation (skipping Records).")
-        logging.info("Initiating battle...")
-        self.tap(Point(850, 1780))
-        self.sleep_navigation()
+                self.sleep_navigation()
+            else:
+                logging.info("Using current formation (skipping Records).")
 
-        logging.info("Waiting for battle to complete...")
-        try:
-            match = self.wait_for_any_template(
-                templates=self._get_battle_over_templates(),
-                timeout=self.BATTLE_TIMEOUT,
-                crop_regions=CropRegions(top=0.4),
-                delay=1.0,
-                timeout_message="Battle over screen not found after timeout.",
-            )
-            logging.info("Battle complete. Dismissing result screen...")
+            logging.info("Initiating battle...")
+            self.tap(Point(850, 1780))
             self.sleep_navigation()
-            self.tap(match)
-            self.sleep_navigation()
-            self.tap(Point(550, 1800))
-            self.sleep_navigation()
-            self.tap(self.CENTER_POINT)
-            self.sleep_navigation()
-        except GameTimeoutError as fail:
-            logging.error(str(fail))
+
+            # Handle possible Spend Gold popup if configured
+            if self.find_any_template(["battle/spend.png", "battle/gold.png"]):
+                if not spend_gold:
+                    logging.warning("Not spending gold. Ending battle loop.")
+                    self.press_back_button()
+                    return
+                self._click_confirm_on_popup()
+
+            logging.info("Waiting for battle to complete...")
+            try:
+                match = self.wait_for_any_template(
+                    templates=self._get_battle_over_templates(),
+                    timeout=self.BATTLE_TIMEOUT,
+                    crop_regions=CropRegions(top=0.4),
+                    delay=1.0,
+                    timeout_message="Battle over screen not found after timeout.",
+                )
+                logging.info("Battle complete. Dismissing result screen...")
+                self.sleep_navigation()
+                self.tap(match)
+                self.sleep_navigation()
+                self.tap(Point(550, 1800))
+                self.sleep_navigation()
+                self.tap(self.CENTER_POINT)
+                self.sleep_navigation()
+                break
+            except GameTimeoutError as fail:
+                logging.error(str(fail))
+                break
