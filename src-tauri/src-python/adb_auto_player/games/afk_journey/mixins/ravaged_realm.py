@@ -196,15 +196,34 @@ class RavagedRealmMixin(AFKJourneyBase):
                     return
                 self._click_confirm_on_popup()
 
-            logging.info("Waiting for battle to complete...")
+            logging.info("Waiting for battle to complete or skip button...")
             try:
+                templates = [
+                    *self._get_battle_over_templates(),
+                    "battle/skip.png",
+                    "battle/skip_orange.png",
+                ]
                 match = self.wait_for_any_template(
-                    templates=self._get_battle_over_templates(),
+                    templates=templates,
                     timeout=self.BATTLE_TIMEOUT,
                     crop_regions=CropRegions(top=0.4),
                     delay=1.0,
                     timeout_message="Battle over screen not found after timeout.",
                 )
+
+                if match.template in ["battle/skip.png", "battle/skip_orange.png"]:
+                    logging.info("Live battle skip button detected. Tapping skip...")
+                    self.tap(match)
+                    self.sleep_action()
+
+                    match = self.wait_for_any_template(
+                        templates=self._get_battle_over_templates(),
+                        timeout=self.template_timeout,
+                        crop_regions=CropRegions(top=0.4),
+                        delay=1.0,
+                        timeout_message="Battle over screen not found after skipping.",
+                    )
+
                 logging.info("Battle complete. Dismissing result screen...")
                 self.sleep_navigation()
                 self.tap(match)
