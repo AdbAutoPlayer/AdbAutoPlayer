@@ -272,7 +272,7 @@ class Fishing(AFKJourneyBase):
 
     def _fishing(self, btn: Coordinates) -> None:
         check_book_at = 20
-        click_strong_pull_at = 10
+        click_strong_pull_at = 4
         count = 0
         thread = None
 
@@ -325,15 +325,15 @@ class Fishing(AFKJourneyBase):
         # Holds are not blocking so processing can continue
         # Debug log disabled to reduce IO/Processing time
         if distance > DISTANCE_600:
-            return self.hold(btn, duration=1.75, blocking=False, log=False)
+            return self.hold(btn, duration=0.6, blocking=False, log=False)
         if distance > DISTANCE_400:
-            return self.hold(btn, duration=1.25, blocking=False, log=False)
+            return self.hold(btn, duration=0.45, blocking=False, log=False)
         if distance > DISTANCE_200:
-            return self.hold(btn, duration=0.75, blocking=False, log=False)
+            return self.hold(btn, duration=0.3, blocking=False, log=False)
         if distance > DISTANCE_100:
-            return self.hold(btn, duration=0.5, blocking=False, log=False)
+            return self.hold(btn, duration=0.2, blocking=False, log=False)
         if distance > DISTANCE_50:
-            return self.hold(btn, duration=0.25, blocking=False, log=False)
+            return self.hold(btn, duration=0.1, blocking=False, log=False)
         return thread
 
     def fishing_minigame_ended(self) -> bool:

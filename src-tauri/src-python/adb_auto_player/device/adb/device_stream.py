@@ -99,7 +99,9 @@ class DeviceStream:
         self.latest_frame: np.ndarray | None = None
         self._frame_lock = threading.Lock()
         self._running = False
+        self._use_time_limit = False
         self._stream_thread: threading.Thread | None = None
+        self._monitor_thread: threading.Thread | None = None
         self._process: AdbConnection | None = None
 
     def start(self) -> None:
@@ -108,9 +110,36 @@ class DeviceStream:
             return
 
         self._running = True
+        self._use_time_limit = False
         self._stream_thread = threading.Thread(target=self._stream_screen)
         self._stream_thread.daemon = True
         self._stream_thread.start()
+
+        self._monitor_thread = threading.Thread(target=self._monitor_fallback)
+        self._monitor_thread.daemon = True
+        self._monitor_thread.start()
+
+    def _monitor_fallback(self) -> None:
+        """Monitor stream initialization and fallback if continuous stream hangs."""
+        # Wait up to 4 seconds for the first frame to appear
+        for _ in range(40):
+            if not self._running:
+                return
+            if self.get_latest_frame() is not None:
+                return
+            time.sleep(0.1)
+
+        # If no frame received after 4 seconds, fallback to --time-limit=1
+        if self._running and self.get_latest_frame() is None:
+            logging.info(
+                "Continuous stream capture timed out, falling back to --time-limit=1"
+            )
+            self._use_time_limit = True
+            if self._process:
+                try:
+                    self._process.close()
+                except Exception:
+                    pass
 
     def stop(self) -> None:
         """Stop the screen streaming thread."""
@@ -138,8 +167,13 @@ class DeviceStream:
 
     def _handle_stream(self) -> None:
         """Generic stream handler."""
+        cmdargs = (
+            "screenrecord --output-format=h264 --time-limit=1 -"
+            if self._use_time_limit
+            else "screenrecord --output-format=h264 -"
+        )
         self._process = self.controller.d.shell(
-            cmdargs="screenrecord --output-format=h264 -",
+            cmdargs=cmdargs,
             stream=True,
         )
 
