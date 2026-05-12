@@ -200,6 +200,7 @@ def _try_common_ports_and_device_ids(
     logging.debug("Trying common device ids")
     common_device_ids: list[str] = [
         "127.0.0.1:5555",
+        "127.0.0.1:5556",
         "emulator-5554",
         "127.0.0.1:5557",
         "127.0.0.1:7555",
