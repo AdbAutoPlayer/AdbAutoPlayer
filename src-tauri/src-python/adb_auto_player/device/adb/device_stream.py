@@ -99,7 +99,7 @@ class DeviceStream:
         self.latest_frame: np.ndarray | None = None
         self._frame_lock = threading.Lock()
         self._running = False
-        self._use_time_limit = False
+        self._use_time_limit = getattr(controller, "is_controlling_emulator", True)
         self._stream_thread: threading.Thread | None = None
         self._monitor_thread: threading.Thread | None = None
         self._process: AdbConnection | None = None
@@ -110,7 +110,7 @@ class DeviceStream:
             return
 
         self._running = True
-        self._use_time_limit = False
+        self._use_time_limit = getattr(self.controller, "is_controlling_emulator", True)
         self._stream_thread = threading.Thread(target=self._stream_screen)
         self._stream_thread.daemon = True
         self._stream_thread.start()
