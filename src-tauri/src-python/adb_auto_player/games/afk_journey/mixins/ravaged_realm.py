@@ -69,6 +69,8 @@ class RavagedRealmMixin(AFKJourneyBase):
         )
         self.tap(label)
         self.sleep_navigation()
+        # Allow initial event entrance animation to finish completely
+        sleep(8)
 
     def _try_skip(self) -> bool:
         """Check for and handle the Skip button.
@@ -265,7 +267,7 @@ class RavagedRealmMixin(AFKJourneyBase):
 
             self.tap(tab_point)
             # Allow boss entrance animation to load fully
-            sleep(6)
+            sleep(9)
 
             if tab_idx > 1 and before_img is not None:
                 try:
