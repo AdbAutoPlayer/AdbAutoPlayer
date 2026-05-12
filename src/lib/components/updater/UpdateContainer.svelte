@@ -97,6 +97,23 @@
   onDestroy(() => {
     clearTimeout(checkUpdateTimeout);
   });
+
+  function renderMarkdownLite(text: string): string {
+    if (!text) return "";
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(
+        /\*\*(.*?)\*\*/g,
+        '<strong class="text-text-1 font-bold">$1</strong>',
+      )
+      .replace(
+        /^###\s+(.*)$/gm,
+        '<h4 class="text-text-1 font-bold mt-3 mb-1">$1</h4>',
+      )
+      .replace(/^\-\s+(.*)$/gm, '<span class="text-accent mr-1.5">•</span> $1');
+  }
 </script>
 
 {#if update}
@@ -184,7 +201,7 @@
                         <div
                           class="changelog-content text-text-3 text-sm leading-relaxed whitespace-pre-wrap"
                         >
-                          {update.body}
+                          {@html renderMarkdownLite(update.body)}
                         </div>
                       </div>
                     </div>

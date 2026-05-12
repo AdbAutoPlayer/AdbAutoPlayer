@@ -99,10 +99,33 @@ class DeviceStream:
         self.latest_frame: np.ndarray | None = None
         self._frame_lock = threading.Lock()
         self._running = False
-        self._use_time_limit = False
+        self._is_bluestacks = False
+        self._use_time_limit = self._should_use_time_limit()
         self._stream_thread: threading.Thread | None = None
         self._monitor_thread: threading.Thread | None = None
         self._process: AdbConnection | None = None
+
+    def _should_use_time_limit(self) -> bool:
+        """Determine if chunked streaming should be used based on emulator brand."""
+        is_emu = getattr(self.controller, "is_controlling_emulator", True)
+        if not is_emu:
+            return False
+
+        try:
+            props = str(self.controller.d.shell("getprop")).lower()
+            if "bluestacks" in props:
+                self._is_bluestacks = True
+                return True
+            devices = str(self.controller.d.shell("getevent -pl")).lower()
+            if "bluestacks" in devices:
+                self._is_bluestacks = True
+                return True
+            if "mumu" in props or "microvirt" in props or "nemu" in props:
+                return False
+        except Exception:
+            pass
+
+        return True
 
     def start(self) -> None:
         """Start the screen streaming thread."""
@@ -110,7 +133,7 @@ class DeviceStream:
             return
 
         self._running = True
-        self._use_time_limit = False
+        self._use_time_limit = self._should_use_time_limit()
         self._stream_thread = threading.Thread(target=self._stream_screen)
         self._stream_thread.daemon = True
         self._stream_thread.start()
@@ -167,10 +190,20 @@ class DeviceStream:
 
     def _handle_stream(self) -> None:
         """Generic stream handler."""
+        if self._is_bluestacks:
+            base_cmd = "screenrecord --output-format=h264"
+        else:
+            try:
+                res = self.controller.get_display_info().resolution
+                size_str = f"--size {res.width}x{res.height}"
+            except Exception:
+                size_str = ""
+            base_cmd = (
+                f"screenrecord --output-format=h264 {size_str} --bit-rate 2000000"
+            ).strip()
+
         cmdargs = (
-            "screenrecord --output-format=h264 --time-limit=1 -"
-            if self._use_time_limit
-            else "screenrecord --output-format=h264 -"
+            f"{base_cmd} --time-limit=1 -" if self._use_time_limit else f"{base_cmd} -"
         )
         self._process = self.controller.d.shell(
             cmdargs=cmdargs,

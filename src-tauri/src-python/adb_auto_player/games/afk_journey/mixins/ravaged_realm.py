@@ -3,7 +3,7 @@
 import logging
 from time import sleep
 
-from adb_auto_player.decorators import register_command
+from adb_auto_player.decorators import register_command, register_custom_routine_choice
 from adb_auto_player.exceptions import GameActionFailedError, GameTimeoutError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.battle_state import Mode
@@ -26,6 +26,7 @@ class RavagedRealmMixin(AFKJourneyBase):
             tooltip="Complete the Ravaged Realm event automatically",
         ),
     )
+    @register_custom_routine_choice(label="Ravaged Realm")
     def run_ravaged_realm(self) -> None:
         """Complete Ravaged Realm."""
         self.battle_state.mode = Mode.RAVAGED_REALM
@@ -67,6 +68,8 @@ class RavagedRealmMixin(AFKJourneyBase):
         )
         self.tap(label)
         self.sleep_navigation()
+        # Allow initial event entrance animation to finish completely
+        sleep(8)
 
     def _try_skip(self) -> bool:
         """Check for and handle the Skip button.
@@ -132,6 +135,7 @@ class RavagedRealmMixin(AFKJourneyBase):
             logging.error(f"{fail}")
             return False
 
+    # ruff: noqa: PLR0915
     def _run_battle(self) -> None:
         """Tap Battle to enter prep screen, copy first Records formation, and start."""
         attempts = self.settings.ravaged_realm.attempts
@@ -151,18 +155,47 @@ class RavagedRealmMixin(AFKJourneyBase):
                     timeout=self.min_timeout,
                 )
                 self.tap(battle_btn)
-                self.sleep_navigation()
 
-                # Wait for the prep screen interface to fully load
+                # Wait for prep screen interface OR gold purchase popup
                 prep_match = self.wait_for_any_template(
                     templates=[
                         "battle/records.png",
                         "battle/formations_icon.png",
+                        "battle/spend.png",
+                        "battle/gold.png",
+                        "navigation/confirm.png",
+                        "confirm_text.png",
                     ],
-                    crop_regions=CropRegions(top=0.5),
+                    crop_regions=CropRegions(top=0.4),
                     timeout=self.template_timeout,
                     timeout_message="Failed to load battle prep screen.",
                 )
+
+                # If we caught a gold purchase popup instead of the prep screen
+                if prep_match.template in [
+                    "battle/spend.png",
+                    "battle/gold.png",
+                    "navigation/confirm.png",
+                    "confirm_text.png",
+                ]:
+                    if not spend_gold:
+                        logging.warning("No attempts. Not spending gold. Returning.")
+                        self.press_back_button()
+                        return
+                    logging.info("Confirming gold purchase for battle attempt...")
+                    self._click_confirm_on_popup()
+                    self.sleep_navigation()
+
+                    # Now wait for the actual prep screen to load after purchase
+                    prep_match = self.wait_for_any_template(
+                        templates=[
+                            "battle/records.png",
+                            "battle/formations_icon.png",
+                        ],
+                        crop_regions=CropRegions(top=0.5),
+                        timeout=self.template_timeout,
+                        timeout_message="Failed to load prep screen after purchase.",
+                    )
             except GameTimeoutError as fail:
                 logging.error(str(fail))
                 return
@@ -187,14 +220,6 @@ class RavagedRealmMixin(AFKJourneyBase):
                 logging.warning("Failed to start Battle. Are heroes selected?")
                 return
             self.sleep_action()
-
-            # Handle possible Spend Gold popup if configured
-            if self.find_any_template(["battle/spend.png", "battle/gold.png"]):
-                if not spend_gold:
-                    logging.warning("Not spending gold. Ending battle loop.")
-                    self.press_back_button()
-                    return
-                self._click_confirm_on_popup()
 
             logging.info("Waiting for battle to complete or skip button...")
             try:
@@ -254,24 +279,20 @@ class RavagedRealmMixin(AFKJourneyBase):
 
             logging.info(f"Checking squad tab {tab_idx}/4 ({faction})...")
             self.tap(tab_point)
-            sleep(2)
+            # Allow tab transition to complete (PR #667 with extra safety margin)
+            self.sleep_navigation()
+            self.sleep_navigation()
+            sleep(4)
 
-            # Verify if the screen successfully switched to this squad's faction
-            faction_icon = self.game_find_template_match(
-                template=f"legend_trials/faction_icon_{faction.lower()}.png",
-                crop_regions=CropRegions(right=0.5, top=0.2, bottom=0.5),
-                threshold=ConfidenceValue("70%"),
-            )
-            if not faction_icon:
+            try:
+                self.wait_for_template(
+                    "battle/battle.png",
+                    threshold=ConfidenceValue("75%"),
+                    timeout=self.template_timeout,
+                    timeout_message=f"Squad {faction} locked or inactive.",
+                )
+            except GameTimeoutError:
                 logging.info(f"Squad {faction} locked or inactive. Skipping.")
-                continue
-
-            battle_btn = self.find_any_template(
-                templates=["battle/battle.png"],
-                threshold=ConfidenceValue("75%"),
-            )
-            if not battle_btn:
-                logging.info(f"Squad {faction} has no attempts available. Skipping.")
                 continue
 
             logging.info(f"Squad {faction} active. Executing battle loop...")
