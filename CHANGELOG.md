@@ -1,14 +1,7 @@
 # Changelog
 
-## [12.8.16] - 2026-05-13
-
-### Added
-
-- 🖥️ **UI / Settings**: Enhanced the in-app update dialog to natively parse and render structured Markdown text, cleanly formatting bold highlights and bulleted changelog entries.
-- ⚙️ **Custom Routine**: Exposed all remaining AFK Journey game modes (**Arena**, **Dream Realm**, **Dailies**, **Ravaged Realm**, **Sunlit Showdown**, **Frostfire Showdown**, **Auto-Progress Quests**, **Homestead Orders Helper**) as discoverable and selectable sequence choices within the automated Custom Routine batching system.
+## [12.8.17] - 2026-05-13
 
 ### Fixed
 
-- 🎮 **ADB Streaming**: Restored absolute backward compatibility for continuous H264 screen capture on custom emulator configurations (such as BlueStacks 5 running with the combined Vulkan backend) by automatically defaulting to highly resilient chunked stream processing and stripping incompatible runtime codec overrides.
-- ⚔️ **AFK Journey**: Resolved a race condition during **Ravaged Realm** battle prep screen loading by synchronizing detection of both the preparation layout and gold purchase modals simultaneously, guaranteeing seamless automated attempt management and popup interception.
-- ⚔️ **AFK Journey**: Fixed an automated navigation issue where defeat screens matching the "Power Up" header could inadvertently tap the center assist coordinate and leave the application stuck on the "Proxy Battle Request" overlay; the detection logic now reliably attempts to trigger the retry action or gracefully returns to the formation layout.
+- ⚔️ **AFK Journey**: Resolved an automated navigation timeout in **AFK Stages** and **Season AFK Stages** where the bot could fail to clear final battle outcome interfaces (such as rewards or result popups); the detection engine now robustly intercepts and triggers the subsequent continuation action to maintain reliable, continuous multi-attempt clearing.
