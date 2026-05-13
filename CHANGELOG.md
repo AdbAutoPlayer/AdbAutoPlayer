@@ -11,3 +11,4 @@
 
 - 🎮 **ADB Streaming**: Restored absolute backward compatibility for continuous H264 screen capture on custom emulator configurations (such as BlueStacks 5 running with the combined Vulkan backend) by automatically defaulting to highly resilient chunked stream processing and stripping incompatible runtime codec overrides.
 - ⚔️ **AFK Journey**: Resolved a race condition during **Ravaged Realm** battle prep screen loading by synchronizing detection of both the preparation layout and gold purchase modals simultaneously, guaranteeing seamless automated attempt management and popup interception.
+- ⚔️ **AFK Journey**: Fixed an automated navigation issue where defeat screens matching the "Power Up" header could inadvertently tap the center assist coordinate and leave the application stuck on the "Proxy Battle Request" overlay; the detection logic now reliably attempts to trigger the retry action or gracefully returns to the formation layout.
