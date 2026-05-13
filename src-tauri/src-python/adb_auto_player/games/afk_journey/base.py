@@ -743,23 +743,43 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
                 result = False
 
             case "battle/result.png":
-                self.tap(Point(x=950, y=1800))
-                # Wait for the subsequent Next button to appear and tap it to proceed
-                if self.battle_state.mode in (
-                    Mode.AFK_STAGES,
-                    Mode.SEASON_AFK_STAGES,
+                # Ensure this is not a defeat screen capturing the statistics
+                # icon by checking for Retry/Defeat indicators
+                if retry_btn := self.game_find_template_match(
+                    "retry.png",
+                    threshold=ConfidenceValue("70%"),
+                    crop_regions=CropRegions(top=0.4),
                 ):
-                    try:
-                        next_btn = self.wait_for_template(
-                            "next.png",
-                            crop_regions=CropRegions(top=0.6),
-                            timeout=5.0,
-                        )
-                        self.tap(next_btn)
-                        self.sleep_navigation()
-                    except GameTimeoutError:
-                        pass
-                result = True
+                    self.tap(
+                        retry_btn,
+                        log_message=f"Lost Battle #{attempt}, retrying",
+                    )
+                    result = False
+                elif self.game_find_template_match(
+                    "battle/power_up.png",
+                    crop_regions=CropRegions(top=0.4),
+                ):
+                    logging.info(f"Lost Battle #{attempt}, retrying")
+                    self.press_back_button()
+                    result = False
+                else:
+                    self.tap(Point(x=950, y=1800))
+                    # Wait for subsequent Next button and tap to proceed
+                    if self.battle_state.mode in (
+                        Mode.AFK_STAGES,
+                        Mode.SEASON_AFK_STAGES,
+                    ):
+                        try:
+                            next_btn = self.wait_for_template(
+                                "next.png",
+                                crop_regions=CropRegions(top=0.6),
+                                timeout=5.0,
+                            )
+                            self.tap(next_btn)
+                            self.sleep_navigation()
+                        except GameTimeoutError:
+                            pass
+                    result = True
 
             case "afk_stages/tap_to_close.png" | "legend_trials/available_after.png":
                 raise AutoPlayerWarningError("Final Stage reached, exiting...")
