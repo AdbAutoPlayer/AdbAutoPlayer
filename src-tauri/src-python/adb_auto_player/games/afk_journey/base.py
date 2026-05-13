@@ -690,10 +690,16 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
                     self._re_enter_battle_for_duras()
                     result = False
                 else:
-                    # TODO should probably just throw an Exception
-                    # I have no idea what this case is used for
-                    # should leave comments in the future
-                    self.tap(Point(x=550, y=1800))
+                    logging.info(f"Lost Battle #{attempt}, retrying")
+                    if retry_btn := self.game_find_template_match(
+                        "retry.png",
+                        threshold=ConfidenceValue("70%"),
+                        crop_regions=CropRegions(top=0.4),
+                    ):
+                        self.tap(retry_btn)
+                    else:
+                        self.press_back_button()
+                    result = False
 
             case "navigation/confirm.png":
                 # TODO should probably just throw an Exception
