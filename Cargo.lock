@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "adb-auto-player"
-version = "12.8.16"
+version = "12.8.17"
 dependencies = [
  "chrono",
  "pyo3",

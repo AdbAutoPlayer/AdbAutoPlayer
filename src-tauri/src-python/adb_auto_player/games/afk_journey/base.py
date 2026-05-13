@@ -661,7 +661,7 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
             timeout_message=self.BATTLE_TIMEOUT_ERROR_MESSAGE,
         )
 
-    def _is_battle_outcome_successful(
+    def _is_battle_outcome_successful(  # noqa: PLR0912, PLR0915
         self,
         attempt: int,
     ) -> bool | None:
@@ -678,6 +678,21 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
 
             case "battle/victory_rewards.png":
                 self.tap(Point(x=550, y=1800))
+                # Wait for the subsequent Next button to appear and tap it to proceed
+                if self.battle_state.mode in (
+                    Mode.AFK_STAGES,
+                    Mode.SEASON_AFK_STAGES,
+                ):
+                    try:
+                        next_btn = self.wait_for_template(
+                            "next.png",
+                            crop_regions=CropRegions(top=0.6),
+                            timeout=5.0,
+                        )
+                        self.tap(next_btn)
+                        self.sleep_navigation()
+                    except GameTimeoutError:
+                        pass
                 result = True
 
             case "battle/power_up.png":
@@ -714,6 +729,13 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
                 | "duras_trials/first_clear_bottom_half.png"
                 | "duras_trials/end_sunrise.png"
             ):
+                # Tap Next directly to proceed to next stage setup
+                if self.battle_state.mode in (
+                    Mode.AFK_STAGES,
+                    Mode.SEASON_AFK_STAGES,
+                ):
+                    self.tap(match)
+                    self.sleep_navigation()
                 result = True
 
             case "retry.png":
@@ -722,6 +744,21 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
 
             case "battle/result.png":
                 self.tap(Point(x=950, y=1800))
+                # Wait for the subsequent Next button to appear and tap it to proceed
+                if self.battle_state.mode in (
+                    Mode.AFK_STAGES,
+                    Mode.SEASON_AFK_STAGES,
+                ):
+                    try:
+                        next_btn = self.wait_for_template(
+                            "next.png",
+                            crop_regions=CropRegions(top=0.6),
+                            timeout=5.0,
+                        )
+                        self.tap(next_btn)
+                        self.sleep_navigation()
+                    except GameTimeoutError:
+                        pass
                 result = True
 
             case "afk_stages/tap_to_close.png" | "legend_trials/available_after.png":
