@@ -206,7 +206,7 @@ class Navigation(PopupMessageHandler, ABC):
                         "resonating_hall/collections.png",
                         "resonating_hall/equipment.png",
                     ],
-                    timeout=2,  # Increased timeout slightly
+                    timeout=self.template_timeout,
                 )
                 return True
             except GameTimeoutError:
@@ -475,7 +475,7 @@ class Navigation(PopupMessageHandler, ABC):
         world_chat_label = self.wait_for_template(
             "chat/label_world_chat.png",
             crop_regions=CropRegions(bottom="50%", right="50%", left="10%"),
-            timeout=5,
+            timeout=self.template_timeout,
         )
         self.tap(
             world_chat_label.box.top_left + Offset(-70, 550),

@@ -170,13 +170,12 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
 
     def _ensure_on_battle_screen(self) -> None:
         """Ensure we're on the battle screen, navigating if necessary."""
-        retry_button = self._find_retry_button(timeout=5.0)
+        retry_button = self._find_retry_button(timeout=self.template_timeout)
         if retry_button:
             self.tap(retry_button)
             self.sleep_navigation()
-            return
 
-        if self._find_battle_screen(timeout=2.0):
+        if self._find_battle_screen(timeout=self.template_timeout):
             return
 
         self.press_back_button()
@@ -197,16 +196,17 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
     def _find_battle_screen(
         self, timeout: float, *, raise_on_timeout: bool = False
     ) -> TemplateMatchResult | None:
-        """Locate the battle screen records button."""
+        """Locate the battle screen by looking for 'Records' or 'Battle' button."""
         try:
-            return self.wait_for_template(
-                template="battle/records.png",
-                crop_regions=CropRegions(right=0.5, top=0.8),
+            return self.wait_for_any_template(
+                templates=["battle/records.png", "battle/battle.png"],
                 timeout=timeout,
+                crop_regions=CropRegions(top=0.5),
+                threshold=ConfidenceValue("80%"),
             )
-        except GameTimeoutError as error:
+        except GameTimeoutError:
             if raise_on_timeout:
-                raise error
+                raise
             return None
 
     def _handle_battle_screen_pass(
@@ -368,26 +368,36 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
 
     def _navigate_to_formation_selection(self) -> None:
         """Navigate to the formation selection screen."""
-        self.wait_for_template(
-            template="battle/records.png",
-            crop_regions=CropRegions(right=0.5, top=0.8),
+        result = self.wait_for_any_template(
+            templates=["battle/records.png", "battle/battle.png"],
+            crop_regions=CropRegions(top=0.7),
+            threshold=ConfidenceValue("80%"),
+            timeout=self.template_timeout,
         )
         self.sleep_action()
-        try:
-            self._tap_till_template_disappears(
-                template="battle/records.png",
-                crop_regions=CropRegions(right=0.5, top=0.8),
-                tap_delay=5.0,
-                error_message="No videos available for this battle",
-            )
-            self.wait_for_template(
-                "battle/copy.png",
-                crop_regions=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
-                timeout=self.min_timeout,
-                timeout_message="No more formations available for this battle",
-            )
-        except (GameTimeoutError, GameActionFailedError) as e:
-            raise AutoPlayerWarningError(e)
+
+        # If we found Records, tap it to open formations
+        if result.template == "battle/records.png":
+            try:
+                self._tap_till_template_disappears(
+                    template="battle/records.png",
+                    crop_regions=CropRegions(top=0.7),
+                    threshold=ConfidenceValue("80%"),
+                    tap_delay=5.0,
+                    error_message="No videos available for this battle",
+                )
+                self.wait_for_template(
+                    "battle/copy.png",
+                    crop_regions=CropRegions(left=0.3, right=0.1, top=0.7, bottom=0.1),
+                    timeout=self.min_timeout,
+                    timeout_message="No more formations available for this battle",
+                )
+            except (GameTimeoutError, GameActionFailedError) as e:
+                raise AutoPlayerWarningError(e)
+        # If we found the Battle button instead, we are already where we need to be
+        # to just start the fight, but we can't copy formations.
+        elif result.template == "battle/battle.png":
+            logging.info("Records not found, but Battle button is present. Proceeding.")
 
         # UI is not interactable for some time fuck Lilith
         self.sleep_navigation()
@@ -471,9 +481,10 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
             templates=[
                 "battle/records.png",
                 "battle/formations_icon.png",
+                "battle/battle.png",
             ],
             crop_regions=CropRegions(top=0.5),
-            timeout=10,
+            timeout=self.template_timeout,
         )
 
         try:
@@ -687,7 +698,7 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
                         next_btn = self.wait_for_template(
                             "next.png",
                             crop_regions=CropRegions(top=0.6),
-                            timeout=5.0,
+                            timeout=self.template_timeout,
                         )
                         self.tap(next_btn)
                         self.sleep_navigation()
@@ -773,7 +784,7 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
                             next_btn = self.wait_for_template(
                                 "next.png",
                                 crop_regions=CropRegions(top=0.6),
-                                timeout=5.0,
+                                timeout=self.template_timeout,
                             )
                             self.tap(next_btn)
                             self.sleep_navigation()
