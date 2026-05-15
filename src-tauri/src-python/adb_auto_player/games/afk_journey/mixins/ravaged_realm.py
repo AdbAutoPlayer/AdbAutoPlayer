@@ -80,8 +80,10 @@ class RavagedRealmMixin(AFKJourneyBase):
         Returns:
             True if the skip flow was executed, False if Battle should be run instead.
         """
-        skip = self.find_any_template(
-            templates=["battle/skip.png", "battle/skip_orange.png"],
+        skip = self.game_find_template_match(
+            "event/ravaged_realm/skip.png",
+            threshold=ConfidenceValue("80%"),
+            crop_regions=CropRegions(top=0.7),
         )
         if skip is None:
             return False
@@ -146,12 +148,13 @@ class RavagedRealmMixin(AFKJourneyBase):
                 f"Starting Ravaged Realm battle (Attempt {attempt}/{attempts})..."
             )
             self.sleep_navigation()
-
             # Tap the Battle button to enter the battle prep screen.
             try:
                 battle_btn = self.wait_for_template(
                     "battle/battle.png",
-                    timeout_message="Failed to find Battle button.",
+                    threshold=ConfidenceValue("15%"),
+                    crop_regions=CropRegions(top=0.6, bottom=0.1),
+                    timeout_message="Failed to find Battle button even at 15% threshold.",
                     timeout=self.min_timeout,
                 )
                 self.tap(battle_btn)
@@ -248,7 +251,6 @@ class RavagedRealmMixin(AFKJourneyBase):
                         delay=1.0,
                         timeout_message="Battle over screen not found after skipping.",
                     )
-
                 logging.info("Battle complete. Dismissing result screen...")
                 self.sleep_navigation()
                 self.tap(match)
@@ -261,39 +263,180 @@ class RavagedRealmMixin(AFKJourneyBase):
                 logging.error(str(fail))
                 break
 
+    def _detect_faction_states(
+        self,
+        faction_templates: dict[str, str],
+        open_templates: dict[str, str],
+        tab_region: CropRegions,
+    ) -> list[tuple[int, str, str, Point, float]]:
+        """Scan for all possible faction states and return detected points."""
+        detected = []
+        for faction, locked_tpl in faction_templates.items():
+            # Check Locked state
+            match_locked = self.game_find_template_match(
+                locked_tpl, crop_regions=tab_region, threshold=ConfidenceValue("30%")
+            )
+            if match_locked:
+                detected.append(
+                    (
+                        match_locked.x,
+                        faction,
+                        "Locked",
+                        Point(match_locked.x, match_locked.y),
+                        match_locked.confidence.value,
+                    )
+                )
+
+            # Check Open state
+            open_tpl = open_templates.get(faction)
+            if open_tpl:
+                match_open = self.game_find_template_match(
+                    open_tpl,
+                    crop_regions=tab_region,
+                    threshold=ConfidenceValue("30%"),
+                )
+                if match_open:
+                    detected.append(
+                        (
+                            match_open.x,
+                            faction,
+                            "Open",
+                            Point(match_open.x, match_open.y),
+                            match_open.confidence.value,
+                        )
+                    )
+        return detected
+
+    def _get_squad_states(self) -> dict[str, Point]:
+        """Detect squad tab locations and states using relative ordering.
+
+        Returns:
+            A dictionary mapping faction names to their clickable Points,
+            only for squads that are not locked.
+        """
+        faction_templates = {
+            "Graveborn": "event/ravaged_realm/Immortal_Squad_Locked.png",
+            "Mauler": "event/ravaged_realm/Dauntless_Squad_Locked.png",
+            "Wilder": "event/ravaged_realm/Sylvan_Squad_Locked.png",
+            "Lightbearer": "event/ravaged_realm/Aurora_Squad_Locked.png",
+        }
+        open_templates = {
+            "Graveborn": "event/ravaged_realm/Immortal_Squad_Open.png",
+            "Wilder": "event/ravaged_realm/Sylvan_Squad_Open.png",
+            "Lightbearer": "event/ravaged_realm/Aurora_Squad_Open.png",
+        }
+
+        active_squads = {}
+        tab_region = CropRegions(top=0.7)
+        detected_points = self._detect_faction_states(
+            faction_templates, open_templates, tab_region
+        )
+
+        # Determine average Y coordinate for tabs
+        y_coords = [p[3].y for p in detected_points]
+        avg_y = int(sum(y_coords) / len(y_coords)) if y_coords else 1830
+
+        # Fallback for Immortal (Graveborn)
+        if not any(d[1] == "Graveborn" for d in detected_points):
+            match_immortal = self.game_find_template_match(
+                faction_templates["Graveborn"],
+                crop_regions=CropRegions(left=0, right=0.6, top=0.7),
+                threshold=ConfidenceValue("30%"),
+            )
+            if match_immortal:
+                detected_points.append(
+                    (
+                        match_immortal.x,
+                        "Graveborn",
+                        "Locked",
+                        Point(match_immortal.x, match_immortal.y),
+                        match_immortal.confidence.value,
+                    )
+                )
+            else:
+                # Absolute fallback if everything fails for Graveborn
+                detected_points.append((150, "Graveborn", "Open", Point(150, avg_y), 1.0))
+
+        # Resolve best match: pick the state with higher confidence for each faction
+        faction_best = {}
+        for _, faction, state, point, confidence in detected_points:
+            if faction not in faction_best:
+                faction_best[faction] = (state, point, confidence)
+            else:
+                prev_state, prev_point, prev_conf = faction_best[faction]
+                if confidence > prev_conf:
+                    faction_best[faction] = (state, point, confidence)
+
+        for faction, (state, point, conf) in faction_best.items():
+            # Calculate search window centered on the tab, ensuring it's at least 450px wide
+            # template is 299x142, so we need some margin.
+            window_width = 450
+            left_px = point.x - (window_width // 2)
+            right_px = point.x + (window_width // 2)
+
+            # Clamp and shift window if it goes out of bounds
+            if left_px < 0:
+                right_px -= left_px
+                left_px = 0
+            if right_px > 1080:
+                left_px -= (right_px - 1080)
+                right_px = 1080
+            
+            # Ensure left_px doesn't become negative after shift (edge case for small screens)
+            left_px = max(0, left_px)
+
+            # We now rely solely on the best match between Locked and Open templates
+            # as the secondary padlock check was too prone to false positives (0.45+ on active squads).
+            if state == "Locked":
+                logging.info(f"Squad {faction} is locked.")
+                continue
+
+            active_squads[faction] = point
+            logging.info(f"Squad {faction} is active.")
+
+        return active_squads
+
     def _run_all_squads(self) -> None:
         """Iterate through all 4 squad tabs and run battle attempts."""
-        squad_tabs = [
-            (Point(260, 1880), "Graveborn"),  # Immortal Squad
-            (Point(485, 1880), "Mauler"),  # Dauntless Squad
-            (Point(710, 1880), "Wilder"),  # Sylvan Squad
-            (Point(935, 1880), "Lightbearer"),  # Aurora Squad
-        ]
-
         configured_squads = self.settings.ravaged_realm.squads
+        active_squad_points = self._get_squad_states()
 
-        for tab_idx, (tab_point, faction) in enumerate(squad_tabs, start=1):
+        if not active_squad_points:
+            logging.warning("No active squads detected in Ravaged Realm.")
+            return
+
+        # Faction order to maintain consistency
+        faction_order = ["Graveborn", "Mauler", "Wilder", "Lightbearer"]
+
+        for faction in faction_order:
+            if faction not in active_squad_points:
+                continue
+
             if faction not in configured_squads:
                 logging.info(f"Squad {faction} disabled in settings. Skipping.")
                 continue
 
-            logging.info(f"Checking squad tab {tab_idx}/4 ({faction})...")
+            tab_point = active_squad_points[faction]
+            logging.info(f"Switching to squad: {faction}...")
             self.tap(tab_point)
-            # Allow tab transition to complete (PR #667 with extra safety margin)
             self.sleep_navigation()
             self.sleep_navigation()
-            sleep(4)
+            sleep(2)
 
-            try:
-                self.wait_for_template(
-                    "battle/battle.png",
-                    threshold=ConfidenceValue("75%"),
-                    timeout=self.template_timeout,
-                    timeout_message=f"Squad {faction} locked or inactive.",
-                )
-            except GameTimeoutError:
-                logging.info(f"Squad {faction} locked or inactive. Skipping.")
+            # Verification of Battle button (restrict region to avoid tabs at bottom)
+            # Using a very low threshold (15%) because seasonal UI gradients cause low confidence,
+            # but in this restricted region, the best match is almost certainly the button.
+            battle_match = self.game_find_template_match(
+                "battle/battle.png",
+                threshold=ConfidenceValue("15%"),
+                crop_regions=CropRegions(top=0.6, bottom=0.1),
+            )
+            
+            if not battle_match:
+                logging.info(f"Squad {faction} battle not ready (Battle button not found).")
                 continue
+            
+            battle_btn = battle_match
 
             logging.info(f"Squad {faction} active. Executing battle loop...")
             self._run_battle()

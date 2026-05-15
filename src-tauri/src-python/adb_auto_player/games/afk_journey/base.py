@@ -204,9 +204,9 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
                 crop_regions=CropRegions(top=0.5),
                 threshold=ConfidenceValue("80%"),
             )
-        except GameTimeoutError:
+        except GameTimeoutError as error:
             if raise_on_timeout:
-                raise
+                raise error
             return None
 
     def _handle_battle_screen_pass(
@@ -394,7 +394,8 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
                 )
             except (GameTimeoutError, GameActionFailedError) as e:
                 raise AutoPlayerWarningError(e)
-        # If we found the Battle button instead, we are already where we need to be
+        # If we didn't find Records, check if Battle button was found instead.
+        # This can happen in some modes or scenarios. We can still proceed
         # to just start the fight, but we can't copy formations.
         elif result.template == "battle/battle.png":
             logging.info("Records not found, but Battle button is present. Proceeding.")
@@ -484,7 +485,7 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
                 "battle/battle.png",
             ],
             crop_regions=CropRegions(top=0.5),
-            timeout=self.template_timeout,
+            timeout=10,
         )
 
         try:
@@ -672,7 +673,7 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
             timeout_message=self.BATTLE_TIMEOUT_ERROR_MESSAGE,
         )
 
-    def _is_battle_outcome_successful(  # noqa: PLR0912, PLR0915
+    def _is_battle_outcome_successful(
         self,
         attempt: int,
     ) -> bool | None:
@@ -689,43 +690,10 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
 
             case "battle/victory_rewards.png":
                 self.tap(Point(x=550, y=1800))
-                # Wait for the subsequent Next button to appear and tap it to proceed
-                if self.battle_state.mode in (
-                    Mode.AFK_STAGES,
-                    Mode.SEASON_AFK_STAGES,
-                ):
-                    try:
-                        next_btn = self.wait_for_template(
-                            "next.png",
-                            crop_regions=CropRegions(top=0.6),
-                            timeout=self.template_timeout,
-                        )
-                        self.tap(next_btn)
-                        self.sleep_navigation()
-                    except GameTimeoutError:
-                        pass
                 result = True
 
             case "battle/power_up.png":
-                if self.battle_state.mode == Mode.DURAS_TRIALS:
-                    self.tap(
-                        Point(x=550, y=1800),
-                        log_message=f"Lost Battle #{attempt}, retrying",
-                    )
-                    self.sleep_navigation()
-                    self._re_enter_battle_for_duras()
-                    result = False
-                else:
-                    logging.info(f"Lost Battle #{attempt}, retrying")
-                    if retry_btn := self.game_find_template_match(
-                        "retry.png",
-                        threshold=ConfidenceValue("70%"),
-                        crop_regions=CropRegions(top=0.4),
-                    ):
-                        self.tap(retry_btn)
-                    else:
-                        self.press_back_button()
-                    result = False
+                result = self._handle_power_up_screen(attempt)
 
             case "navigation/confirm.png":
                 # TODO should probably just throw an Exception
@@ -754,47 +722,73 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
                 result = False
 
             case "battle/result.png":
-                # Ensure this is not a defeat screen capturing the statistics
-                # icon by checking for Retry/Defeat indicators
-                if retry_btn := self.game_find_template_match(
-                    "retry.png",
-                    threshold=ConfidenceValue("70%"),
-                    crop_regions=CropRegions(top=0.4),
-                ):
-                    self.tap(
-                        retry_btn,
-                        log_message=f"Lost Battle #{attempt}, retrying",
-                    )
-                    result = False
-                elif self.game_find_template_match(
-                    "battle/power_up.png",
-                    crop_regions=CropRegions(top=0.4),
-                ):
-                    logging.info(f"Lost Battle #{attempt}, retrying")
-                    self.press_back_button()
-                    result = False
-                else:
-                    self.tap(Point(x=950, y=1800))
-                    # Wait for subsequent Next button and tap to proceed
-                    if self.battle_state.mode in (
-                        Mode.AFK_STAGES,
-                        Mode.SEASON_AFK_STAGES,
-                    ):
-                        try:
-                            next_btn = self.wait_for_template(
-                                "next.png",
-                                crop_regions=CropRegions(top=0.6),
-                                timeout=self.template_timeout,
-                            )
-                            self.tap(next_btn)
-                            self.sleep_navigation()
-                        except GameTimeoutError:
-                            pass
-                    result = True
+                result = self._handle_ambiguous_result_screen(attempt)
 
             case "afk_stages/tap_to_close.png" | "legend_trials/available_after.png":
                 raise AutoPlayerWarningError("Final Stage reached, exiting...")
         return result
+
+    def _handle_power_up_screen(self, attempt: int) -> bool:
+        """Handle power up screen."""
+        if self.battle_state.mode == Mode.DURAS_TRIALS:
+            self.tap(
+                Point(x=550, y=1800),
+                log_message=f"Lost Battle #{attempt}, retrying",
+            )
+            self.sleep_navigation()
+            self._re_enter_battle_for_duras()
+        else:
+            logging.info(f"Lost Battle #{attempt}, retrying")
+            if retry_btn := self.game_find_template_match(
+                "retry.png",
+                threshold=ConfidenceValue("70%"),
+                crop_regions=CropRegions(top=0.4),
+            ):
+                self.tap(retry_btn)
+            else:
+                self.press_back_button()
+        return False
+
+    def _handle_ambiguous_result_screen(self, attempt: int) -> bool:
+        """Handle ambiguous result screen."""
+        # Ensure this is not a defeat screen capturing the statistics
+        # icon by checking for Retry/Defeat indicators
+        if retry_btn := self.game_find_template_match(
+            "retry.png",
+            threshold=ConfidenceValue("70%"),
+            crop_regions=CropRegions(top=0.4),
+        ):
+            self.tap(
+                retry_btn,
+                log_message=f"Lost Battle #{attempt}, retrying",
+            )
+            return False
+
+        if self.game_find_template_match(
+            "battle/power_up.png",
+            crop_regions=CropRegions(top=0.4),
+        ):
+            logging.info(f"Lost Battle #{attempt}, retrying")
+            self.press_back_button()
+            return False
+
+        self.tap(Point(x=950, y=1800))
+        # Wait for subsequent Next button and tap to proceed
+        if self.battle_state.mode in (
+            Mode.AFK_STAGES,
+            Mode.SEASON_AFK_STAGES,
+        ):
+            try:
+                next_btn = self.wait_for_template(
+                    "next.png",
+                    crop_regions=CropRegions(top=0.6),
+                    timeout=5.0,
+                )
+                self.tap(next_btn)
+                self.sleep_navigation()
+            except GameTimeoutError:
+                pass
+        return True
 
     def _handle_guide_popup(
         self,
