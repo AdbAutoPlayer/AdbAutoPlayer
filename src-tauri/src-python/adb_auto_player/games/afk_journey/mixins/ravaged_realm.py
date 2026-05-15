@@ -154,7 +154,7 @@ class RavagedRealmMixin(AFKJourneyBase):
                     "battle/battle.png",
                     threshold=ConfidenceValue("15%"),
                     crop_regions=CropRegions(top=0.6, bottom=0.1),
-                    timeout_message="Failed to find Battle button even at 15% threshold.",
+                    timeout_message="Failed to find Battle button.",
                     timeout=self.min_timeout,
                 )
                 self.tap(battle_btn)
@@ -355,7 +355,9 @@ class RavagedRealmMixin(AFKJourneyBase):
                 )
             else:
                 # Absolute fallback if everything fails for Graveborn
-                detected_points.append((150, "Graveborn", "Open", Point(150, avg_y), 1.0))
+                detected_points.append(
+                    (150, "Graveborn", "Open", Point(150, avg_y), 1.0)
+                )
 
         # Resolve best match: pick the state with higher confidence for each faction
         faction_best = {}
@@ -363,12 +365,12 @@ class RavagedRealmMixin(AFKJourneyBase):
             if faction not in faction_best:
                 faction_best[faction] = (state, point, confidence)
             else:
-                prev_state, prev_point, prev_conf = faction_best[faction]
+                _, _, prev_conf = faction_best[faction]
                 if confidence > prev_conf:
                     faction_best[faction] = (state, point, confidence)
 
         for faction, (state, point, conf) in faction_best.items():
-            # Calculate search window centered on the tab, ensuring it's at least 450px wide
+            # Search window centered on the tab (at least 450px wide)
             # template is 299x142, so we need some margin.
             window_width = 450
             left_px = point.x - (window_width // 2)
@@ -378,15 +380,15 @@ class RavagedRealmMixin(AFKJourneyBase):
             if left_px < 0:
                 right_px -= left_px
                 left_px = 0
-            if right_px > 1080:
-                left_px -= (right_px - 1080)
-                right_px = 1080
-            
-            # Ensure left_px doesn't become negative after shift (edge case for small screens)
+            if right_px > self.base_resolution.width:
+                left_px -= right_px - self.base_resolution.width
+                right_px = self.base_resolution.width
+
+            # Ensure left_px doesn't become negative after shift
             left_px = max(0, left_px)
 
             # We now rely solely on the best match between Locked and Open templates
-            # as the secondary padlock check was too prone to false positives (0.45+ on active squads).
+            # as the secondary padlock check was too prone to false positives.
             if state == "Locked":
                 logging.info(f"Squad {faction} is locked.")
                 continue
@@ -423,20 +425,18 @@ class RavagedRealmMixin(AFKJourneyBase):
             self.sleep_navigation()
             sleep(2)
 
-            # Verification of Battle button (restrict region to avoid tabs at bottom)
-            # Using a very low threshold (15%) because seasonal UI gradients cause low confidence,
-            # but in this restricted region, the best match is almost certainly the button.
+            # Verification of Battle button (avoid tabs at bottom)
+            # Seasonal UI gradients cause low confidence (threshold 15%),
+            # but in this restricted region, match is almost certainly the button.
             battle_match = self.game_find_template_match(
                 "battle/battle.png",
                 threshold=ConfidenceValue("15%"),
                 crop_regions=CropRegions(top=0.6, bottom=0.1),
             )
-            
+
             if not battle_match:
-                logging.info(f"Squad {faction} battle not ready (Battle button not found).")
+                logging.info(f"Squad {faction} battle button not found.")
                 continue
-            
-            battle_btn = battle_match
 
             logging.info(f"Squad {faction} active. Executing battle loop...")
             self._run_battle()
