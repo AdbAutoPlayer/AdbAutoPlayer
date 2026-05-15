@@ -36,11 +36,9 @@ class RavagedRealmMixin(AFKJourneyBase):
             self._enter_ravaged_realm()
             self.sleep_navigation()
 
-            if self._try_skip():
-                logging.info("Ravaged Realm skipped successfully.")
-                return
+            self._try_skip()
 
-            self._run_all_squads()
+            self._run_battle()
         except (GameTimeoutError, GameActionFailedError) as e:
             logging.error(str(e))
             return
@@ -71,32 +69,32 @@ class RavagedRealmMixin(AFKJourneyBase):
         # Allow initial event entrance animation to finish completely
         sleep(8)
 
-    def _try_skip(self) -> bool:
-        """Check for and handle the Skip button.
+    def _try_skip(self) -> None:
+        """Check for and handle the Skip button if present.
 
-        If the Skip button is present the run has already been completed today:
-        tap Skip → confirm the popup → tap to close the rewards screen.
-
-        Returns:
-            True if the skip flow was executed, False if Battle should be run instead.
+        If the Skip button is visible, tap it and confirm the popup.
+        Battle attempts will still run after this.
         """
-        skip = self.find_any_template(
-            templates=["battle/skip.png", "battle/skip_orange.png"],
-        )
-        if skip is None:
-            return False
+        try:
+            skip = self.wait_for_any_template(
+                templates=[
+                    "event/ravaged_realm/skip_orange.png",
+                    "event/ravaged_realm/skip.png",
+                    "battle/skip.png",
+                    "battle/skip_orange.png",
+                ],
+                timeout=self.min_timeout,
+                timeout_message="No skip button found.",
+            )
+        except GameTimeoutError:
+            return
 
-        logging.info("Skip available - claiming skip rewards.")
+        logging.info("Skip button found - tapping and confirming.")
         self.tap(skip)
         self.sleep_action()
 
-        self._tap_till_template_disappears(template="navigation/confirm")
-        self.sleep_action()
-
-        # Close the rewards list by tapping anywhere on it.
-        self.tap(self.CENTER_POINT)
+        self._tap_till_template_disappears(template="navigation/confirm_text")
         self.sleep_navigation()
-        return True
 
     def _copy_ravaged_realm_formation(self, prep_match: TemplateMatchResult) -> bool:
         """Open Records and copy the first community formation."""
@@ -260,41 +258,3 @@ class RavagedRealmMixin(AFKJourneyBase):
             except GameTimeoutError as fail:
                 logging.error(str(fail))
                 break
-
-    def _run_all_squads(self) -> None:
-        """Iterate through all 4 squad tabs and run battle attempts."""
-        squad_tabs = [
-            (Point(260, 1880), "Graveborn"),  # Immortal Squad
-            (Point(485, 1880), "Mauler"),  # Dauntless Squad
-            (Point(710, 1880), "Wilder"),  # Sylvan Squad
-            (Point(935, 1880), "Lightbearer"),  # Aurora Squad
-        ]
-
-        configured_squads = self.settings.ravaged_realm.squads
-
-        for tab_idx, (tab_point, faction) in enumerate(squad_tabs, start=1):
-            if faction not in configured_squads:
-                logging.info(f"Squad {faction} disabled in settings. Skipping.")
-                continue
-
-            logging.info(f"Checking squad tab {tab_idx}/4 ({faction})...")
-            self.tap(tab_point)
-            # Allow tab transition to complete (PR #667 with extra safety margin)
-            self.sleep_navigation()
-            self.sleep_navigation()
-            sleep(4)
-
-            try:
-                self.wait_for_template(
-                    "battle/battle.png",
-                    threshold=ConfidenceValue("75%"),
-                    timeout=self.template_timeout,
-                    timeout_message=f"Squad {faction} locked or inactive.",
-                )
-            except GameTimeoutError:
-                logging.info(f"Squad {faction} locked or inactive. Skipping.")
-                continue
-
-            logging.info(f"Squad {faction} active. Executing battle loop...")
-            self._run_battle()
-            self.sleep_navigation()
