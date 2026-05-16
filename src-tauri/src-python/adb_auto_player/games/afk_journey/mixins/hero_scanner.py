@@ -279,7 +279,7 @@ class HeroScannerMixin:
         first_hero_point = Point(130, 1050)
         self.tap(first_hero_point)  # ty: ignore[unresolved-attribute]
         self.sleep_navigation()  # ty: ignore[unresolved-attribute]
-        sleep(2)  # Extra wait for the first hero load lag
+        time.sleep(2)  # Extra wait for the first hero load lag
 
         while heroes_scanned < limit:  # Safety cap, stop on Hammie/Chippy
             try:
