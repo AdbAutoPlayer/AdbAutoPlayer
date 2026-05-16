@@ -279,6 +279,7 @@ class HeroScannerMixin:
         first_hero_point = Point(130, 1050)
         self.tap(first_hero_point)  # ty: ignore[unresolved-attribute]
         self.sleep_navigation()  # ty: ignore[unresolved-attribute]
+        sleep(2)  # Extra wait for the first hero load lag
 
         while heroes_scanned < limit:  # Safety cap, stop on Hammie/Chippy
             try:
@@ -1000,7 +1001,7 @@ class HeroScannerMixin:
         ex = self._parse_ex_level(raw_ex_combined, ascension, name)
 
         # Combine for dictionary output
-        raw_name = " ".join(raw_names)
+        raw_name = " | ".join(raw_names)
 
         return {
             "name": name,

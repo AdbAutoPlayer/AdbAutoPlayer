@@ -1,5 +1,13 @@
 # Changelog
 
+## [12.8.19] - 2026-05-16
+
+### Fixed
+
+- ⚔️ **AFK Journey**: Enhanced Ravaged Realm automation reliability by updating the `Immortal_Squad_Open.png` template to accurately detect the new "Endless" seasonal UI variant.
+- ⚔️ **AFK Journey**: Improved faction template matching for all Ravaged Realm squads (Graveborn, Wilder, Lightbearer) by dynamically cropping the attempt counter section from the templates, ensuring matching stability regardless of attempts consumed.
+- ⚔️ **AFK Journey**: Fixed a false-positive click issue in the Ravaged Realm battle setup where the bot would mistakenly click empty space "in alto" (above the battle button); increased the battle button detection threshold from 15% to 75% to prevent interference from character rendering or UI gradients.
+
 ## [12.8.18] - 2026-05-13
 
 ### Fixed

@@ -152,7 +152,7 @@ class RavagedRealmMixin(AFKJourneyBase):
             try:
                 battle_btn = self.wait_for_template(
                     "battle/battle.png",
-                    threshold=ConfidenceValue("15%"),
+                    threshold=ConfidenceValue("75%"),
                     crop_regions=CropRegions(top=0.6, bottom=0.1),
                     timeout_message="Failed to find Battle button.",
                     timeout=self.min_timeout,
@@ -426,11 +426,10 @@ class RavagedRealmMixin(AFKJourneyBase):
             sleep(2)
 
             # Verification of Battle button (avoid tabs at bottom)
-            # Seasonal UI gradients cause low confidence (threshold 15%),
-            # but in this restricted region, match is almost certainly the button.
+            # Threshold restored to 75% as button is highly visible now.
             battle_match = self.game_find_template_match(
                 "battle/battle.png",
-                threshold=ConfidenceValue("15%"),
+                threshold=ConfidenceValue("75%"),
                 crop_regions=CropRegions(top=0.6, bottom=0.1),
             )
 
