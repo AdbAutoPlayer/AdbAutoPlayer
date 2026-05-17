@@ -263,170 +263,55 @@ class RavagedRealmMixin(AFKJourneyBase):
                 logging.error(str(fail))
                 break
 
-    def _detect_faction_states(
-        self,
-        faction_templates: dict[str, str],
-        open_templates: dict[str, str],
-        tab_region: CropRegions,
-    ) -> list[tuple[int, str, str, Point, float]]:
-        """Scan for all possible faction states and return detected points."""
-        detected = []
-        for faction, locked_tpl in faction_templates.items():
-            # Check Locked state
-            match_locked = self.game_find_template_match(
-                locked_tpl, crop_regions=tab_region, threshold=ConfidenceValue("30%")
-            )
-            if match_locked:
-                detected.append(
-                    (
-                        match_locked.x,
-                        faction,
-                        "Locked",
-                        Point(match_locked.x, match_locked.y),
-                        match_locked.confidence.value,
-                    )
-                )
-
-            # Check Open state
-            open_tpl = open_templates.get(faction)
-            if open_tpl:
-                match_open = self.game_find_template_match(
-                    open_tpl,
-                    crop_regions=tab_region,
-                    threshold=ConfidenceValue("30%"),
-                )
-                if match_open:
-                    detected.append(
-                        (
-                            match_open.x,
-                            faction,
-                            "Open",
-                            Point(match_open.x, match_open.y),
-                            match_open.confidence.value,
-                        )
-                    )
-        return detected
-
-    def _get_squad_states(self) -> dict[str, Point]:
-        """Detect squad tab locations and states using relative ordering.
-
-        Returns:
-            A dictionary mapping faction names to their clickable Points,
-            only for squads that are not locked.
-        """
-        faction_templates = {
-            "Graveborn": "event/ravaged_realm/Immortal_Squad_Locked.png",
-            "Mauler": "event/ravaged_realm/Dauntless_Squad_Locked.png",
-            "Wilder": "event/ravaged_realm/Sylvan_Squad_Locked.png",
-            "Lightbearer": "event/ravaged_realm/Aurora_Squad_Locked.png",
-        }
-        open_templates = {
-            "Graveborn": "event/ravaged_realm/Immortal_Squad_Open.png",
-            "Wilder": "event/ravaged_realm/Sylvan_Squad_Open.png",
-            "Lightbearer": "event/ravaged_realm/Aurora_Squad_Open.png",
-        }
-
-        active_squads = {}
-        tab_region = CropRegions(top=0.7)
-        detected_points = self._detect_faction_states(
-            faction_templates, open_templates, tab_region
-        )
-
-        # Determine average Y coordinate for tabs
-        y_coords = [p[3].y for p in detected_points]
-        avg_y = int(sum(y_coords) / len(y_coords)) if y_coords else 1830
-
-        # Fallback for Immortal (Graveborn)
-        if not any(d[1] == "Graveborn" for d in detected_points):
-            match_immortal = self.game_find_template_match(
-                faction_templates["Graveborn"],
-                crop_regions=CropRegions(left=0, right=0.6, top=0.7),
-                threshold=ConfidenceValue("30%"),
-            )
-            if match_immortal:
-                detected_points.append(
-                    (
-                        match_immortal.x,
-                        "Graveborn",
-                        "Locked",
-                        Point(match_immortal.x, match_immortal.y),
-                        match_immortal.confidence.value,
-                    )
-                )
-            else:
-                # Absolute fallback if everything fails for Graveborn
-                detected_points.append(
-                    (150, "Graveborn", "Open", Point(150, avg_y), 1.0)
-                )
-
-        # Resolve best match: pick the state with higher confidence for each faction
-        faction_best = {}
-        for _, faction, state, point, confidence in detected_points:
-            if faction not in faction_best:
-                faction_best[faction] = (state, point, confidence)
-            else:
-                _, _, prev_conf = faction_best[faction]
-                if confidence > prev_conf:
-                    faction_best[faction] = (state, point, confidence)
-
-        for faction, (state, point, conf) in faction_best.items():
-            # Search window centered on the tab (at least 450px wide)
-            # template is 299x142, so we need some margin.
-            window_width = 450
-            left_px = point.x - (window_width // 2)
-            right_px = point.x + (window_width // 2)
-
-            # Clamp and shift window if it goes out of bounds
-            if left_px < 0:
-                right_px -= left_px
-                left_px = 0
-            if right_px > self.base_resolution.width:
-                left_px -= right_px - self.base_resolution.width
-                right_px = self.base_resolution.width
-
-            # Ensure left_px doesn't become negative after shift
-            left_px = max(0, left_px)
-
-            # We now rely solely on the best match between Locked and Open templates
-            # as the secondary padlock check was too prone to false positives.
-            if state == "Locked":
-                logging.info(f"Squad {faction} is locked.")
-                continue
-
-            active_squads[faction] = point
-            logging.info(f"Squad {faction} is active.")
-
-        return active_squads
-
     def _run_all_squads(self) -> None:
         """Iterate through all 4 squad tabs and run battle attempts."""
         configured_squads = self.settings.ravaged_realm.squads
-        active_squad_points = self._get_squad_states()
-
-        if not active_squad_points:
-            logging.warning("No active squads detected in Ravaged Realm.")
-            return
 
         # Faction order to maintain consistency
         faction_order = ["Graveborn", "Mauler", "Wilder", "Lightbearer"]
 
-        for faction in faction_order:
-            if faction not in active_squad_points:
-                continue
+        # Initialize scroll state: None at startup to force alignment
+        scroll_state = None
+        active_y = 1780
 
+        # Absolute X coordinates for each faction depending on the scroll state:
+        # State 1 (Scrolled fully to the left, Graveborn visible):
+        #   Graveborn: 360, Mauler: 659, Wilder: 958
+        # State 2 (Scrolled fully to the right, Lightbearer visible):
+        #   Mauler: 360, Wilder: 659, Lightbearer: 958
+        state_coords = {
+            1: {"Graveborn": 360, "Mauler": 659, "Wilder": 958},
+            2: {"Mauler": 360, "Wilder": 659, "Lightbearer": 958},
+        }
+
+        for faction in faction_order:
             if faction not in configured_squads:
                 logging.info(f"Squad {faction} disabled in settings. Skipping.")
                 continue
 
-            tab_point = active_squad_points[faction]
-            logging.info(f"Switching to squad: {faction}...")
-            self.tap(tab_point)
-            self.sleep_navigation()
-            self.sleep_navigation()
-            sleep(2)
+            # Ensure we are in the correct scroll state for the target faction
+            if faction == "Graveborn":
+                if scroll_state != 1:
+                    logging.info("Ensuring squad tab bar is scrolled to the left (State 1)...")
+                    self.swipe_right(y=active_y, sx=200, ex=900, duration=0.5)
+                    self.sleep_navigation()
+                    scroll_state = 1
+            else:
+                if scroll_state != 2:
+                    logging.info("Ensuring squad tab bar is scrolled to the right (State 2)...")
+                    self.swipe_left(y=active_y, sx=900, ex=200, duration=0.5)
+                    self.sleep_navigation()
+                    scroll_state = 2
 
-            # Verification of Battle button (avoid tabs at bottom)
-            # Threshold restored to 75% as button is highly visible now.
+            click_x = state_coords[scroll_state][faction]
+            logging.info(f"Switching to squad: {faction} (X={click_x})...")
+            self.tap(Point(click_x, active_y))
+            self.sleep_navigation()
+            self.sleep_navigation()
+            sleep(2)  # Wait for tab expansion transition
+
+            # Check if this squad is unlocked by verifying the presence of the Battle button.
+            # (If locked or unavailable, the game shows 'Unavailable' instead of the Battle button)
             battle_match = self.game_find_template_match(
                 "battle/battle.png",
                 threshold=ConfidenceValue("75%"),
@@ -434,7 +319,9 @@ class RavagedRealmMixin(AFKJourneyBase):
             )
 
             if not battle_match:
-                logging.info(f"Squad {faction} battle button not found.")
+                logging.info(
+                    f"Squad {faction} is locked or battle button not found. Skipping."
+                )
                 continue
 
             logging.info(f"Squad {faction} active. Executing battle loop...")

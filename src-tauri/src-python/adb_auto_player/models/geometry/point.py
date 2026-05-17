@@ -1,5 +1,6 @@
 """Point class for geometric operations."""
 
+import logging
 from dataclasses import dataclass
 from typing import SupportsIndex
 
@@ -18,7 +19,6 @@ class Point(Coordinates):
         self._x = int(x)
         self._y = int(y)
         if self._x < 0 or self._y < 0:
-            import logging
             logging.warning(f"Clamping negative Point coordinates: x={x}, y={y} to 0")
             self._x = max(0, self._x)
             self._y = max(0, self._y)
@@ -87,7 +87,6 @@ class Point(Coordinates):
         new_x = self.x + other.x
         new_y = self.y + other.y
         if new_x < 0 or new_y < 0:
-            import logging
             logging.warning(
                 f"Clamping negative coordinates in Point.__add__: "
                 f"({self.x}, {self.y}) + ({other.x}, {other.y}) -> ({new_x}, {new_y})"
