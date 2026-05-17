@@ -80,8 +80,10 @@ class RavagedRealmMixin(AFKJourneyBase):
         Returns:
             True if the skip flow was executed, False if Battle should be run instead.
         """
-        skip = self.find_any_template(
-            templates=["battle/skip.png", "battle/skip_orange.png"],
+        skip = self.game_find_template_match(
+            "event/ravaged_realm/skip.png",
+            threshold=ConfidenceValue("80%"),
+            crop_regions=CropRegions(top=0.7),
         )
         if skip is None:
             return False
@@ -146,11 +148,12 @@ class RavagedRealmMixin(AFKJourneyBase):
                 f"Starting Ravaged Realm battle (Attempt {attempt}/{attempts})..."
             )
             self.sleep_navigation()
-
             # Tap the Battle button to enter the battle prep screen.
             try:
                 battle_btn = self.wait_for_template(
                     "battle/battle.png",
+                    threshold=ConfidenceValue("75%"),
+                    crop_regions=CropRegions(top=0.6, bottom=0.1),
                     timeout_message="Failed to find Battle button.",
                     timeout=self.min_timeout,
                 )
@@ -248,7 +251,6 @@ class RavagedRealmMixin(AFKJourneyBase):
                         delay=1.0,
                         timeout_message="Battle over screen not found after skipping.",
                     )
-
                 logging.info("Battle complete. Dismissing result screen...")
                 self.sleep_navigation()
                 self.tap(match)
@@ -263,36 +265,71 @@ class RavagedRealmMixin(AFKJourneyBase):
 
     def _run_all_squads(self) -> None:
         """Iterate through all 4 squad tabs and run battle attempts."""
-        squad_tabs = [
-            (Point(260, 1880), "Graveborn"),  # Immortal Squad
-            (Point(485, 1880), "Mauler"),  # Dauntless Squad
-            (Point(710, 1880), "Wilder"),  # Sylvan Squad
-            (Point(935, 1880), "Lightbearer"),  # Aurora Squad
-        ]
-
         configured_squads = self.settings.ravaged_realm.squads
 
-        for tab_idx, (tab_point, faction) in enumerate(squad_tabs, start=1):
+        # Faction order to maintain consistency
+        faction_order = ["Graveborn", "Mauler", "Wilder", "Lightbearer"]
+
+        # Initialize scroll state: None at startup to force alignment
+        scroll_state = None
+        active_y = 1780
+
+        # Scroll state constants to satisfy lint magic value checks (PLR2004)
+        state_left = 1
+        state_right = 2
+
+        # Absolute X coordinates for each faction depending on the scroll state:
+        # State 1 (Scrolled fully to the left, Graveborn visible):
+        #   Graveborn: 360, Mauler: 659, Wilder: 958
+        # State 2 (Scrolled fully to the right, Lightbearer visible):
+        #   Mauler: 360, Wilder: 659, Lightbearer: 958
+        state_coords = {
+            state_left: {"Graveborn": 360, "Mauler": 659, "Wilder": 958},
+            state_right: {"Mauler": 360, "Wilder": 659, "Lightbearer": 958},
+        }
+
+        for faction in faction_order:
             if faction not in configured_squads:
                 logging.info(f"Squad {faction} disabled in settings. Skipping.")
                 continue
 
-            logging.info(f"Checking squad tab {tab_idx}/4 ({faction})...")
-            self.tap(tab_point)
-            # Allow tab transition to complete (PR #667 with extra safety margin)
-            self.sleep_navigation()
-            self.sleep_navigation()
-            sleep(4)
-
-            try:
-                self.wait_for_template(
-                    "battle/battle.png",
-                    threshold=ConfidenceValue("75%"),
-                    timeout=self.template_timeout,
-                    timeout_message=f"Squad {faction} locked or inactive.",
+            # Ensure we are in the correct scroll state for the target faction
+            if faction == "Graveborn":
+                if scroll_state != state_left:
+                    logging.info(
+                        "Ensuring squad tab bar is scrolled to the left (State 1)..."
+                    )
+                    self.swipe_right(y=active_y, sx=200, ex=900, duration=0.5)
+                    self.sleep_navigation()
+                    scroll_state = state_left
+            elif scroll_state != state_right:
+                logging.info(
+                    "Ensuring squad tab bar is scrolled to the right (State 2)..."
                 )
-            except GameTimeoutError:
-                logging.info(f"Squad {faction} locked or inactive. Skipping.")
+                self.swipe_left(y=active_y, sx=900, ex=200, duration=0.5)
+                self.sleep_navigation()
+                scroll_state = state_right
+
+            click_x = state_coords[scroll_state][faction]
+            logging.info(f"Switching to squad: {faction}...")
+            self.tap(Point(click_x, active_y))
+            self.sleep_navigation()
+            self.sleep_navigation()
+            sleep(2)  # Wait for tab expansion transition
+
+            # Check if this squad is unlocked by verifying the presence of
+            # the Battle button. (If locked or unavailable, the game shows
+            # 'Unavailable' instead of the Battle button)
+            battle_match = self.game_find_template_match(
+                "battle/battle.png",
+                threshold=ConfidenceValue("75%"),
+                crop_regions=CropRegions(top=0.6, bottom=0.1),
+            )
+
+            if not battle_match:
+                logging.info(
+                    f"Squad {faction} is locked or battle button not found. Skipping."
+                )
                 continue
 
             logging.info(f"Squad {faction} active. Executing battle loop...")

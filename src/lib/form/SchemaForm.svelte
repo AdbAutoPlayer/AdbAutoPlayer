@@ -242,9 +242,15 @@
                                 (prop.type === "integer" ? 1 : 0.1)}
                               bind:value={settingsProps.formData[key][propKey]}
                             />
-                            <span class="range-value"
-                              >{settingsProps.formData[key][propKey]}</span
-                            >
+                            <input
+                              type="number"
+                              class="range-number-input"
+                              min={prop.minimum}
+                              max={prop.maximum}
+                              step={prop.multipleOf ??
+                                (prop.type === "integer" ? 1 : 0.1)}
+                              bind:value={settingsProps.formData[key][propKey]}
+                            />
                           </div>
                         {:else}
                           <input
@@ -530,11 +536,32 @@
     transform: scale(1.1);
   }
 
-  .range-value {
-    min-width: 32px;
-    font-size: 12px;
+  .range-number-input {
+    width: 48px;
+    padding: 4px 6px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-2);
-    text-align: right;
+    text-align: center;
+    background: var(--bg-3);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    outline: none;
+    transition: all var(--dur-1);
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  .range-number-input::-webkit-outer-spin-button,
+  .range-number-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+  }
+
+  .range-number-input:focus {
+    border-color: var(--accent);
+    background: var(--bg-1);
+    box-shadow: 0 0 0 2px var(--accent-ghost);
   }
 </style>
