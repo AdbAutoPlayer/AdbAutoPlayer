@@ -304,7 +304,7 @@ class RavagedRealmMixin(AFKJourneyBase):
                     scroll_state = 2
 
             click_x = state_coords[scroll_state][faction]
-            logging.info(f"Switching to squad: {faction} (X={click_x})...")
+            logging.info(f"Switching to squad: {faction}...")
             self.tap(Point(click_x, active_y))
             self.sleep_navigation()
             self.sleep_navigation()
