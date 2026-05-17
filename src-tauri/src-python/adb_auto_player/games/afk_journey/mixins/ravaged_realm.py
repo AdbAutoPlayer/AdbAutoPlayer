@@ -274,14 +274,18 @@ class RavagedRealmMixin(AFKJourneyBase):
         scroll_state = None
         active_y = 1780
 
+        # Scroll state constants to satisfy lint magic value checks (PLR2004)
+        state_left = 1
+        state_right = 2
+
         # Absolute X coordinates for each faction depending on the scroll state:
         # State 1 (Scrolled fully to the left, Graveborn visible):
         #   Graveborn: 360, Mauler: 659, Wilder: 958
         # State 2 (Scrolled fully to the right, Lightbearer visible):
         #   Mauler: 360, Wilder: 659, Lightbearer: 958
         state_coords = {
-            1: {"Graveborn": 360, "Mauler": 659, "Wilder": 958},
-            2: {"Mauler": 360, "Wilder": 659, "Lightbearer": 958},
+            state_left: {"Graveborn": 360, "Mauler": 659, "Wilder": 958},
+            state_right: {"Mauler": 360, "Wilder": 659, "Lightbearer": 958},
         }
 
         for faction in faction_order:
@@ -291,17 +295,20 @@ class RavagedRealmMixin(AFKJourneyBase):
 
             # Ensure we are in the correct scroll state for the target faction
             if faction == "Graveborn":
-                if scroll_state != 1:
-                    logging.info("Ensuring squad tab bar is scrolled to the left (State 1)...")
+                if scroll_state != state_left:
+                    logging.info(
+                        "Ensuring squad tab bar is scrolled to the left (State 1)..."
+                    )
                     self.swipe_right(y=active_y, sx=200, ex=900, duration=0.5)
                     self.sleep_navigation()
-                    scroll_state = 1
-            else:
-                if scroll_state != 2:
-                    logging.info("Ensuring squad tab bar is scrolled to the right (State 2)...")
-                    self.swipe_left(y=active_y, sx=900, ex=200, duration=0.5)
-                    self.sleep_navigation()
-                    scroll_state = 2
+                    scroll_state = state_left
+            elif scroll_state != state_right:
+                logging.info(
+                    "Ensuring squad tab bar is scrolled to the right (State 2)..."
+                )
+                self.swipe_left(y=active_y, sx=900, ex=200, duration=0.5)
+                self.sleep_navigation()
+                scroll_state = state_right
 
             click_x = state_coords[scroll_state][faction]
             logging.info(f"Switching to squad: {faction}...")
@@ -310,8 +317,9 @@ class RavagedRealmMixin(AFKJourneyBase):
             self.sleep_navigation()
             sleep(2)  # Wait for tab expansion transition
 
-            # Check if this squad is unlocked by verifying the presence of the Battle button.
-            # (If locked or unavailable, the game shows 'Unavailable' instead of the Battle button)
+            # Check if this squad is unlocked by verifying the presence of
+            # the Battle button. (If locked or unavailable, the game shows
+            # 'Unavailable' instead of the Battle button)
             battle_match = self.game_find_template_match(
                 "battle/battle.png",
                 threshold=ConfidenceValue("75%"),
