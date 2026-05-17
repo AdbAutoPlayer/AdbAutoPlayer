@@ -18,10 +18,10 @@ class Point(Coordinates):
         self._x = int(x)
         self._y = int(y)
         if self._x < 0 or self._y < 0:
-            raise ValueError(
-                f"Invalid Point coordinates: x={x}, y={y}. "
-                f"Both values must be non-negative."
-            )
+            import logging
+            logging.warning(f"Clamping negative Point coordinates: x={x}, y={y} to 0")
+            self._x = max(0, self._x)
+            self._y = max(0, self._y)
 
     def __post_init__(self):
         """Validate that coordinates are non-negative."""
@@ -87,8 +87,11 @@ class Point(Coordinates):
         new_x = self.x + other.x
         new_y = self.y + other.y
         if new_x < 0 or new_y < 0:
-            raise ValueError(
-                f"Invalid Point coordinates: x={new_x}, y={new_y}. "
-                "Both values must be non-negative."
+            import logging
+            logging.warning(
+                f"Clamping negative coordinates in Point.__add__: "
+                f"({self.x}, {self.y}) + ({other.x}, {other.y}) -> ({new_x}, {new_y})"
             )
+            new_x = max(0, new_x)
+            new_y = max(0, new_y)
         return Point(new_x, new_y)
