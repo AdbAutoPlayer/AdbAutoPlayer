@@ -11,10 +11,15 @@ class TestPoint(unittest.TestCase):
         self.assertEqual(p.y, 4)
 
     def test_point_creation_invalid_negative(self):
-        with self.assertRaises(ValueError):
-            Point(-1, 5)
-        with self.assertRaises(ValueError):
-            Point(3, -2)
+        # Negative coordinates are clamped to 0 and log a warning
+        # instead of raising ValueError
+        p1 = Point(-1, 5)
+        self.assertEqual(p1.x, 0)
+        self.assertEqual(p1.y, 5)
+
+        p2 = Point(3, -2)
+        self.assertEqual(p2.x, 3)
+        self.assertEqual(p2.y, 0)
 
     def test_distance_to(self):
         p1 = Point(0, 0)
