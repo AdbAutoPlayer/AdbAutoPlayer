@@ -117,6 +117,7 @@ class QuestMixin(AFKJourneyBase, ABC):
     def _find_quest_images(self, path=True) -> bool:
         """Find and click images relating to quests."""
         buttons = [
+            "quests/skip",
             "confirm_text",
             "quests/red_dialogue",
             "quests/blue_dialogue",
@@ -130,7 +131,6 @@ class QuestMixin(AFKJourneyBase, ABC):
             "quests/questrewards",
             "quests/tap_to_close",
             "quests/unlocked",
-            "quests/skip",
             "navigation/confirm",
             "quests/track",
             "back",
