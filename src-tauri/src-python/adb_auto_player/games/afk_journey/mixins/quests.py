@@ -7,6 +7,7 @@ from time import sleep
 from adb_auto_player.decorators import register_command, register_custom_routine_choice
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.games.afk_journey.minigames.matching_cards import MatchingCards
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
@@ -49,11 +50,19 @@ class QuestMixin(AFKJourneyBase, ABC):
                 count += 1
                 sleep(1)
 
+            if self.find_any_template(["quests/match_quest"]) is not None:
+                logging.info("Matching Cards minigame detected — running automatically")
+                try:
+                    MatchingCards.matching_cards(self)
+                    count = 0
+                except Exception as e:
+                    logging.error(f"Matching Cards minigame failed: {e}")
+                    break
+
             quest_blockers = [
                 "quests/follow_quest",
                 "quests/stealth_quest",
                 "quests/sorting_quest",
-                "quests/match_quest",
                 "quests/locked_quest",
                 "quests/pattern_quest",
             ]
