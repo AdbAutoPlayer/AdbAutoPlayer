@@ -133,9 +133,8 @@ class QuestMixin(AFKJourneyBase, ABC):
             templates=["quests/tap_and_hold", "quests/tap_and_hold_large"],
         )
         if tap_and_hold is not None:
-            logging.info("TAP & HOLD wheel detected — holding cast button at center")
-            # Cast button is at screen center, ~170px below the tap_and_hold label
-            cast_point = Point(tap_and_hold.x, tap_and_hold.y + 170)
+            logging.info("TAP & HOLD button detected — holding at button position")
+            cast_point = Point(tap_and_hold.x, tap_and_hold.y)
             self.device.swipe(cast_point, cast_point, duration=3.0)
             return True
 
