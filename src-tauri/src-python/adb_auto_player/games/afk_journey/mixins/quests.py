@@ -147,6 +147,19 @@ class QuestMixin(AFKJourneyBase, ABC):
             self.device.swipe(cast_point, cast_point, duration=3.0)
             return True
 
+        # Gesture quest: open the emote menu then click the quest-marked gesture
+        gesture_button = self.find_any_template(["quests/gesture_button"])
+        if gesture_button is not None:
+            logging.info("Gesture quest detected — opening emote menu")
+            self.tap(gesture_button, scale=True)
+            sleep(1)
+            quest_gesture = self.find_any_template(["quests/gesture_quest_marker"])
+            if quest_gesture is not None:
+                logging.info("Clicking quest gesture")
+                self.tap(quest_gesture, scale=True)
+                sleep(2)
+            return True
+
         holding_buttons = [
             "quests/sense",
             "quests/heal",
@@ -208,21 +221,7 @@ class QuestMixin(AFKJourneyBase, ABC):
                 sleep(1)
             return True
 
-        if self.find_any_template(["quests/time_change"]):
-            logging.info("Changing time")
-            self.tap(Point(550, 1500))
-            return True
-
-        if self.find_any_template(["confirm_text_italic"]):
-            logging.info("Changing outfit")
-            self.tap(Point(730, 1800))
-
-            confirm = self.game_find_template_match(template="navigation/confirm")
-            if confirm:
-                self.tap(confirm)
-                sleep(2)
-                self.tap(Point(100, 1800))
-                sleep(2)
+        if self._handle_special_quest_actions():
             return True
 
         # Finally we click the 'Echoes of Dissent' text to auto-path. We return False
@@ -231,5 +230,25 @@ class QuestMixin(AFKJourneyBase, ABC):
             logging.info("Auto-pathing")
             self.tap(Point(820, 375))
             sleep(5)
+
+        return False
+
+    def _handle_special_quest_actions(self) -> bool:
+        """Handle time-change and outfit-change prompts."""
+        if self.find_any_template(["quests/time_change"]):
+            logging.info("Changing time")
+            self.tap(Point(550, 1500))
+            return True
+
+        if self.find_any_template(["confirm_text_italic"]):
+            logging.info("Changing outfit")
+            self.tap(Point(730, 1800))
+            confirm = self.game_find_template_match(template="navigation/confirm")
+            if confirm:
+                self.tap(confirm)
+                sleep(2)
+                self.tap(Point(100, 1800))
+                sleep(2)
+            return True
 
         return False
