@@ -192,29 +192,7 @@ class QuestMixin(AFKJourneyBase, ABC):
             self.device.swipe(hold_point, hold_point, duration=3.0)
             return True
 
-        # Then we check for buttons we need to press, higher threshold as
-        # red/blue_dialogue trigger a lot with background noise
-        result2 = self.find_any_template(
-            templates=buttons, threshold=ConfidenceValue("92%")
-        )
-        if result2 is not None:
-            logging.info(
-                "Clicking button: "
-                + result2.template.split("/")[-1].replace("_", " ").capitalize()
-            )
-            self.tap(result2, scale=True)
-            if result2.template == "quests/start_battle":
-                self.handle_popup_messages()
-                logging.info("Waiting for battle to finish")
-                sleep(30)  # Longer sleep for battle to finish
-            elif result2.template == "quests/skip":
-                # Skipping always needs confirmation so we do it here quickly
-                # rather than run the quest button check for the Confirm button
-                sleep(1)
-                # logging.info('Confirming Skip..')
-                self._tap_till_template_disappears(template="navigation/confirm")
-            else:
-                sleep(1)
+        if self._handle_dialogue_buttons(buttons):
             return True
 
         if self._handle_special_quest_actions():
@@ -228,6 +206,44 @@ class QuestMixin(AFKJourneyBase, ABC):
             sleep(5)
 
         return False
+
+    def _handle_dialogue_buttons(self, buttons: list[str]) -> bool:
+        """Click the highest-priority dialogue or action button on screen."""
+        # Prioritise checkmarked dialogue choices over generic red dialogue
+        checkmark = self.find_any_template(
+            ["quests/red_dialogue_checkmark"],
+            threshold=ConfidenceValue("80%"),
+        )
+        if checkmark is not None:
+            logging.info("Clicking checkmarked dialogue choice")
+            self.tap(checkmark, scale=True)
+            sleep(1)
+            return True
+
+        # Higher threshold as red/blue_dialogue trigger a lot with background noise
+        result = self.find_any_template(
+            templates=buttons, threshold=ConfidenceValue("92%")
+        )
+        if result is None:
+            return False
+        logging.info(
+            "Clicking button: "
+            + result.template.split("/")[-1].replace("_", " ").capitalize()
+        )
+        self.tap(result, scale=True)
+        if result.template == "quests/start_battle":
+            self.handle_popup_messages()
+            logging.info("Waiting for battle to finish")
+            sleep(30)  # Longer sleep for battle to finish
+        elif result.template == "quests/skip":
+            # Skipping always needs confirmation so we do it here quickly
+            # rather than run the quest button check for the Confirm button
+            sleep(1)
+            # logging.info('Confirming Skip..')
+            self._tap_till_template_disappears(template="navigation/confirm")
+        else:
+            sleep(1)
+        return True
 
     def _handle_gesture_quest(self, gesture_button) -> None:
         """Open emote menu and click the appropriate quest gesture."""
@@ -255,6 +271,14 @@ class QuestMixin(AFKJourneyBase, ABC):
                 logging.info("Clicking Wolf Form gesture")
                 self.tap(wolf_form, scale=True)
                 sleep(2)
+                sense_button = self.find_any_template(
+                    ["quests/ancestral_sense_button"],
+                    threshold=ConfidenceValue("80%"),
+                )
+                if sense_button is not None:
+                    logging.info("Pressing Ancestral Sense ability button")
+                    self.tap(sense_button, scale=True)
+                    sleep(2)
             return
 
         logging.info("Gesture quest — opening emote menu")
