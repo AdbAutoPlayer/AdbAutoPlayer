@@ -148,16 +148,12 @@ class QuestMixin(AFKJourneyBase, ABC):
             return True
 
         # Gesture quest: open the emote menu then click the quest-marked gesture
-        gesture_button = self.find_any_template(["quests/gesture_button"])
+        gesture_button = self.find_any_template(
+            ["quests/gesture_button"],
+            threshold=ConfidenceValue("80%"),
+        )
         if gesture_button is not None:
-            logging.info("Gesture quest detected — opening emote menu")
-            self.tap(gesture_button, scale=True)
-            sleep(1)
-            quest_gesture = self.find_any_template(["quests/gesture_quest_marker"])
-            if quest_gesture is not None:
-                logging.info("Clicking quest gesture")
-                self.tap(quest_gesture, scale=True)
-                sleep(2)
+            self._handle_gesture_quest(gesture_button)
             return True
 
         holding_buttons = [
@@ -232,6 +228,49 @@ class QuestMixin(AFKJourneyBase, ABC):
             sleep(5)
 
         return False
+
+    def _handle_gesture_quest(self, gesture_button) -> None:
+        """Open emote menu and click the appropriate quest gesture."""
+        if self.find_any_template(
+            ["quests/ancestral_sense"],
+            threshold=ConfidenceValue("80%"),
+            grayscale=True,
+        ):
+            logging.info("Ancestral Sense quest — opening gesture menu")
+            self.tap(gesture_button, scale=True)
+            sleep(2)
+            magic_tab = self.find_any_template(
+                ["quests/gesture_magic_tab"],
+                threshold=ConfidenceValue("80%"),
+            )
+            if magic_tab is not None:
+                logging.info("Navigating to Magic tab")
+                self.tap(magic_tab, scale=True)
+                sleep(1)
+            wolf_form = self.find_any_template(
+                ["quests/gesture_wolf_form"],
+                threshold=ConfidenceValue("80%"),
+            )
+            if wolf_form is not None:
+                logging.info("Clicking Wolf Form gesture")
+                self.tap(wolf_form, scale=True)
+                sleep(2)
+            return
+
+        logging.info("Gesture quest — opening emote menu")
+        self.tap(gesture_button, scale=True)
+        sleep(2)
+        quest_gesture = self.find_any_template(
+            [
+                "quests/gesture_quest_marker_blue",
+                "quests/gesture_quest_marker_orange",
+            ],
+            threshold=ConfidenceValue("80%"),
+        )
+        if quest_gesture is not None:
+            logging.info("Clicking quest gesture")
+            self.tap(quest_gesture, scale=True)
+            sleep(2)
 
     def _handle_special_quest_actions(self) -> bool:
         """Handle time-change and outfit-change prompts."""
