@@ -128,6 +128,7 @@ class QuestMixin(AFKJourneyBase, ABC):
             "quests/chest",
             "quests/battle_button",
             "quests/start_battle",
+            "quests/claim",
             "quests/questrewards",
             "quests/tap_to_close",
             "quests/unlocked",
