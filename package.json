@@ -8,7 +8,7 @@
     "@tauri-apps/plugin-updater": "~2.10.1",
     "@tauri-apps/plugin-window-state": "~2.4.1",
     "@types/json-schema": "^7.0.15",
-    "posthog-js": "^1.372.10",
+    "posthog-js": "^1.373.5",
     "tailwindcss": "^4.3.0",
     "tauri-plugin-pytauri-api": "^0.8.0"
   },
@@ -17,19 +17,19 @@
     "@skeletonlabs/skeleton": "^4.15.2",
     "@skeletonlabs/skeleton-svelte": "^4.15.2",
     "@sveltejs/adapter-static": "^3.0.10",
-    "@sveltejs/kit": "^2.59.1",
+    "@sveltejs/kit": "^2.60.1",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@tailwindcss/forms": "^0.5.11",
     "@tauri-apps/cli": "^2.11.1",
-    "@types/node": "^25.6.2",
+    "@types/node": "^25.8.0",
     "json-schema-to-typescript": "^15.0.4",
     "prettier": "^3.8.3",
-    "prettier-plugin-svelte": "^3.5.1",
+    "prettier-plugin-svelte": "^3.5.2",
     "prettier-plugin-tailwindcss": "^0.8.0",
-    "svelte": "^5.55.5",
+    "svelte": "^5.55.7",
     "svelte-check": "^4.4.8",
     "typescript": "^6.0.3",
-    "vite": "^8.0.11",
+    "vite": "^8.0.13",
     "vite-plugin-devtools-json": "^1.0.0"
   },
   "license": "MIT",
@@ -52,5 +52,5 @@
     "tauri": "tauri"
   },
   "type": "module",
-  "version": "12.8.18"
+  "version": "12.8.20"
 }

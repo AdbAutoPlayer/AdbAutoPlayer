@@ -25,12 +25,13 @@ class TestBox(unittest.TestCase):
         self.assertEqual(box.area, 30 * 40)
 
     def test_invalid_initialization(self):
-        # Negative x or y should raise ValueError
-        with self.assertRaises(ValueError):
-            Box(Point(x=-1, y=0), width=10, height=10)
+        # Negative coordinates in top_left are clamped to 0 during Point
+        # creation, so Box succeeds with clamped point
+        box1 = Box(Point(x=-1, y=0), width=10, height=10)
+        self.assertEqual(box1.top_left.x, 0)
 
-        with self.assertRaises(ValueError):
-            Box(Point(x=0, y=-5), width=10, height=10)
+        box2 = Box(Point(x=0, y=-5), width=10, height=10)
+        self.assertEqual(box2.top_left.y, 0)
 
         # Zero or negative width/height should raise ValueError
         with self.assertRaises(ValueError):
