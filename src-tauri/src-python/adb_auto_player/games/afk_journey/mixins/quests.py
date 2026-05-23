@@ -80,39 +80,54 @@ class QuestMixin(AFKJourneyBase, ABC):
             stuck_cap = 3
 
             if count >= stuck_cap and self._find_quest_images(path=False) is False:
-                # Action if we've entered a non-quest dialogue
-                farewell = self.game_find_template_match(template="quests/farewell.png")
-                if farewell:
-                    logging.warning("Non-quest dialogue found, clearing")
-                    self.tap(farewell, scale=True)
-                    sleep(2)
-                    # Manually path away from the dialogue
-                    self.tap(Point(880, 365))
-                    sleep(2)  # Long wait to path before we check for quest images
+                if self._handle_stuck_state():
                     count = 0
-
-                # Check if we're in the world screen
-                homestead_button = self.game_find_template_match(
-                    template="navigation/homestead/homestead_enter.png"
-                )
-
-                if not homestead_button:
-                    # Attempt to close any full screen flavour text
-                    logging.info("Clearing full screen popup")
-                    self.tap(Point(550, 1825))
-                    sleep(2)
-
-                if homestead_button and not farewell:
-                    # else try and move a few pixels to retrigger action buttons
-                    logging.warning("Possibly stuck.. trying to fix")
-                    self.swipe_down(550, 1500, 1510, 0.1)
-                    sleep(2)
 
             # Check if we're unstuck and reset count if so
             if self._find_quest_images(path=False) is True:
                 count = 0
 
         logging.info("Finished Quest running")
+
+    def _handle_stuck_state(self) -> bool:
+        """Handle the stuck state. Returns True if count should be reset."""
+        reset = False
+
+        # Action if we've entered a non-quest dialogue
+        farewell = self.game_find_template_match(template="quests/farewell.png")
+        if farewell:
+            logging.warning("Non-quest dialogue found, clearing")
+            self.tap(farewell, scale=True)
+            sleep(2)
+            # Manually path away from the dialogue
+            self.tap(Point(880, 365))
+            sleep(2)  # Long wait to path before we check for quest images
+            reset = True
+
+        # Check if we're in the world screen
+        homestead_button = self.game_find_template_match(
+            template="navigation/homestead/homestead_enter.png"
+        )
+
+        if not homestead_button:
+            # Attempt to close any full screen flavour text
+            logging.info("Clearing full screen popup")
+            self.tap(Point(550, 1825))
+            sleep(2)
+            back_arrow = self.game_find_template_match("quests/back_arrow.png")
+            if back_arrow:
+                logging.info("Tapping back arrow to return to normal screen")
+                self.tap(back_arrow)
+                sleep(2)
+                reset = True
+
+        if homestead_button and not farewell:
+            # else try and move a few pixels to retrigger action buttons
+            logging.warning("Possibly stuck.. trying to fix")
+            self.swipe_down(550, 1500, 1510, 0.1)
+            sleep(2)
+
+        return reset
 
     def _find_quest_images(self, path=True) -> bool:
         """Find and click images relating to quests."""
