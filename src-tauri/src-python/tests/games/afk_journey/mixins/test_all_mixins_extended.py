@@ -24,6 +24,8 @@ from adb_auto_player.games.afk_journey.mixins.titan_reaver_proxy_battle import (
     TitanReaverProxyBattleMixin,
 )
 from adb_auto_player.models import ConfidenceValue
+from adb_auto_player.models.geometry import Box, Point
+from adb_auto_player.models.template_matching import TemplateMatchResult
 
 
 class MockAllAFKJ(
@@ -264,6 +266,87 @@ def test_run_ravaged_realm():
     with patch.object(bot, "start_up"):
         with patch.object(bot, "_enter_ravaged_realm"):
             bot.run_ravaged_realm()
+
+
+def test_run_ravaged_realm_skip():
+    """Skip path: _try_skip returns True → _run_all_squads is never called."""
+    bot = MockAllAFKJ()
+    with (
+        patch.object(bot, "start_up"),
+        patch.object(bot, "_enter_ravaged_realm"),
+        patch.object(bot, "_try_skip", return_value=True),
+        patch.object(bot, "_run_all_squads") as mock_squads,
+        patch("time.sleep"),
+    ):
+        bot.run_ravaged_realm()
+        mock_squads.assert_not_called()
+
+
+def test_run_all_squads_skips_disabled_factions():
+    """Factions not in configured_squads are skipped without any tap."""
+    bot = MockAllAFKJ()
+    bot._settings.ravaged_realm = MagicMock()
+    bot._settings.ravaged_realm.squads = []  # all disabled
+
+    with (
+        patch.object(bot, "_run_battle") as mock_battle,
+        patch("time.sleep"),
+    ):
+        bot._run_all_squads()
+        mock_battle.assert_not_called()
+
+
+def test_run_all_squads_runs_enabled_faction():
+    """An enabled faction with a Battle button present triggers _run_battle."""
+    bot = MockAllAFKJ()
+    bot._settings.ravaged_realm = MagicMock()
+    bot._settings.ravaged_realm.squads = ["Graveborn"]
+
+    battle_match = TemplateMatchResult(
+        template="battle/battle.png",
+        confidence=ConfidenceValue("90%"),
+        box=Box(Point(0, 0), 100, 50),
+    )
+
+    with (
+        patch.object(bot, "game_find_template_match", return_value=battle_match),
+        patch.object(bot, "_run_battle") as mock_battle,
+        patch.object(bot, "swipe_right"),
+        patch("time.sleep"),
+    ):
+        bot._run_all_squads()
+        mock_battle.assert_called_once()
+
+
+def test_run_all_squads_skips_locked_squad():
+    """A faction where Battle button is absent (locked) is skipped."""
+    bot = MockAllAFKJ()
+    bot._settings.ravaged_realm = MagicMock()
+    bot._settings.ravaged_realm.squads = ["Graveborn"]
+
+    with (
+        patch.object(bot, "game_find_template_match", return_value=None),
+        patch.object(bot, "_run_battle") as mock_battle,
+        patch.object(bot, "swipe_right"),
+        patch("time.sleep"),
+    ):
+        bot._run_all_squads()
+        mock_battle.assert_not_called()
+
+
+def test_run_all_squads_scrolls_right_for_non_graveborn():
+    """Non-Graveborn factions trigger a swipe_left to reach State 2."""
+    bot = MockAllAFKJ()
+    bot._settings.ravaged_realm = MagicMock()
+    bot._settings.ravaged_realm.squads = ["Mauler"]
+
+    with (
+        patch.object(bot, "game_find_template_match", return_value=None),
+        patch.object(bot, "swipe_left") as mock_swipe_left,
+        patch("time.sleep"),
+    ):
+        bot._run_all_squads()
+        mock_swipe_left.assert_called_once()
 
 
 def test_start_afk_journey():
