@@ -91,10 +91,12 @@ class AFKStagesMixin(AFKJourneyBase):
                 log_message="Clicking Season AFK Stages button",
             )
         else:
-            self.tap(
-                Point(x=800, y=1610),
-                log_message="Clicking Battle button",
+            result = self.wait_for_template(
+                "afk_stages/season_battle.png",
+                crop_regions=CropRegions(left=0.5, top=0.7),
+                timeout=self.min_timeout,
             )
+            self.tap(result, log_message="Clicking Battle button")
         self.sleep_navigation()
         if confirm := self.game_find_template_match(
             template="navigation/confirm.png",
