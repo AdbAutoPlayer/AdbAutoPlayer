@@ -1159,8 +1159,8 @@ class Game(ABC):
         crop_regions: CropRegions | None = None,
         scale: bool = False,  # TODO remove later
         delay: float = 10.0,
+        max_tap_count: int = 3,
     ) -> None:
-        max_tap_count = 3
         tap_count = 0
         time_since_last_tap = delay  # force immediate first tap
         while self.game_find_template_match(

@@ -75,7 +75,7 @@ class SeasonLegendTrial(AFKJourneyBase):
                 result = self.wait_for_template(
                     template=f"legend_trials/banner_{self.battle_state.faction_lower}.png",
                     crop_regions=CropRegions(left=0.1, right=0.1, top=0.1, bottom=0.1),
-                    timeout=5,
+                    timeout=self.template_timeout,
                 )
             except GameTimeoutError:
                 logging.error(f"{faction}s Tower not found")

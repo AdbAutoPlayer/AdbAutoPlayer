@@ -306,4 +306,16 @@ def _prepare_images_for_processing(
     if grayscale:
         return Color.to_grayscale(base_image), Color.to_grayscale(template_image)
 
+    # Normalize channel counts (e.g., if one is BGRA and other is BGR)
+    # OpenCV matchTemplate requires images to have same depth and channel count.
+    channels_rgb = 3
+    channels_rgba = 4
+    if base_image.ndim == channels_rgb and template_image.ndim == channels_rgb:
+        if base_image.shape[2] != template_image.shape[2]:
+            # If one has alpha and other doesn't, drop alpha
+            if base_image.shape[2] == channels_rgba:
+                base_image = base_image[:, :, :channels_rgb]
+            if template_image.shape[2] == channels_rgba:
+                template_image = template_image[:, :, :channels_rgb]
+
     return base_image, template_image

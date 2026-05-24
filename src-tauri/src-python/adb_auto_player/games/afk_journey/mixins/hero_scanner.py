@@ -279,6 +279,7 @@ class HeroScannerMixin:
         first_hero_point = Point(130, 1050)
         self.tap(first_hero_point)  # ty: ignore[unresolved-attribute]
         self.sleep_navigation()  # ty: ignore[unresolved-attribute]
+        time.sleep(2)  # Extra wait for the first hero load lag
 
         while heroes_scanned < limit:  # Safety cap, stop on Hammie/Chippy
             try:
@@ -801,12 +802,11 @@ class HeroScannerMixin:
                 # Use search on the combined context to find the earliest/clearest match
                 match = re.search(pattern, combined_context, re.IGNORECASE)
                 if match:
-                    found_ranks.append(
-                        (
-                            match.start(),
-                            (callable(rank_val) and rank_val(match)) or rank_val,  # ty: ignore[call-top-callable]
-                        )
-                    )
+                    if isinstance(rank_val, str):
+                        val_str = rank_val
+                    else:
+                        val_str = rank_val(match)
+                    found_ranks.append((match.start(), val_str))
 
             if found_ranks:
                 # Sort by start position ASCENDING to find the current rank
@@ -1000,7 +1000,7 @@ class HeroScannerMixin:
         ex = self._parse_ex_level(raw_ex_combined, ascension, name)
 
         # Combine for dictionary output
-        raw_name = " ".join(raw_names)
+        raw_name = " | ".join(raw_names)
 
         return {
             "name": name,

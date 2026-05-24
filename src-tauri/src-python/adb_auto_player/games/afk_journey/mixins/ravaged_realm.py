@@ -36,9 +36,9 @@ class RavagedRealmMixin(AFKJourneyBase):
             self._enter_ravaged_realm()
             self.sleep_navigation()
 
-            self._try_skip()
-
-            self._run_battle()
+            if self._try_skip():
+                logging.info("Ravaged Realm skipped successfully.")
+            self._run_all_squads()
         except (GameTimeoutError, GameActionFailedError) as e:
             logging.error(str(e))
             return
@@ -69,25 +69,22 @@ class RavagedRealmMixin(AFKJourneyBase):
         # Allow initial event entrance animation to finish completely
         sleep(8)
 
-    def _try_skip(self) -> None:
+    def _try_skip(self) -> bool:
         """Check for and handle the Skip button if present.
 
         If the Skip button is visible, tap it and confirm the popup.
         Battle attempts will still run after this.
+
+        Returns:
+            True if the skip flow was executed, False otherwise.
         """
-        try:
-            skip = self.wait_for_any_template(
-                templates=[
-                    "event/ravaged_realm/skip_orange.png",
-                    "event/ravaged_realm/skip.png",
-                    "battle/skip.png",
-                    "battle/skip_orange.png",
-                ],
-                timeout=self.min_timeout,
-                timeout_message="No skip button found.",
-            )
-        except GameTimeoutError:
-            return
+        skip = self.game_find_template_match(
+            "event/ravaged_realm/skip.png",
+            threshold=ConfidenceValue("80%"),
+            crop_regions=CropRegions(top=0.7),
+        )
+        if skip is None:
+            return False
 
         logging.info("Skip button found - tapping and confirming.")
         self.tap(skip)
@@ -95,6 +92,7 @@ class RavagedRealmMixin(AFKJourneyBase):
 
         self._tap_till_template_disappears(template="navigation/confirm_text")
         self.sleep_navigation()
+        return True
 
     def _copy_ravaged_realm_formation(self, prep_match: TemplateMatchResult) -> bool:
         """Open Records and copy the first community formation."""
@@ -144,11 +142,12 @@ class RavagedRealmMixin(AFKJourneyBase):
                 f"Starting Ravaged Realm battle (Attempt {attempt}/{attempts})..."
             )
             self.sleep_navigation()
-
             # Tap the Battle button to enter the battle prep screen.
             try:
                 battle_btn = self.wait_for_template(
                     "battle/battle.png",
+                    threshold=ConfidenceValue("75%"),
+                    crop_regions=CropRegions(top=0.6, bottom=0.1),
                     timeout_message="Failed to find Battle button.",
                     timeout=self.min_timeout,
                 )
@@ -246,7 +245,6 @@ class RavagedRealmMixin(AFKJourneyBase):
                         delay=1.0,
                         timeout_message="Battle over screen not found after skipping.",
                     )
-
                 logging.info("Battle complete. Dismissing result screen...")
                 self.sleep_navigation()
                 self.tap(match)
@@ -258,3 +256,76 @@ class RavagedRealmMixin(AFKJourneyBase):
             except GameTimeoutError as fail:
                 logging.error(str(fail))
                 break
+
+    def _run_all_squads(self) -> None:
+        """Iterate through all 4 squad tabs and run battle attempts."""
+        configured_squads = self.settings.ravaged_realm.squads
+
+        # Faction order to maintain consistency
+        faction_order = ["Graveborn", "Mauler", "Wilder", "Lightbearer"]
+
+        # Initialize scroll state: None at startup to force alignment
+        scroll_state = None
+        active_y = 1780
+
+        # Scroll state constants to satisfy lint magic value checks (PLR2004)
+        state_left = 1
+        state_right = 2
+
+        # Absolute X coordinates for each faction depending on the scroll state:
+        # State 1 (Scrolled fully to the left, Graveborn visible):
+        #   Graveborn: 360, Mauler: 659, Wilder: 958
+        # State 2 (Scrolled fully to the right, Lightbearer visible):
+        #   Mauler: 360, Wilder: 659, Lightbearer: 958
+        state_coords = {
+            state_left: {"Graveborn": 360, "Mauler": 659, "Wilder": 958},
+            state_right: {"Mauler": 360, "Wilder": 659, "Lightbearer": 958},
+        }
+
+        for faction in faction_order:
+            if faction not in configured_squads:
+                logging.info(f"Squad {faction} disabled in settings. Skipping.")
+                continue
+
+            # Ensure we are in the correct scroll state for the target faction
+            if faction == "Graveborn":
+                if scroll_state != state_left:
+                    logging.info(
+                        "Ensuring squad tab bar is scrolled to the left (State 1)..."
+                    )
+                    self.swipe_right(y=active_y, sx=200, ex=900, duration=0.5)
+                    self.sleep_navigation()
+                    scroll_state = state_left
+            elif scroll_state != state_right:
+                logging.info(
+                    "Ensuring squad tab bar is scrolled to the right (State 2)..."
+                )
+                self.swipe_left(y=active_y, sx=900, ex=200, duration=0.5)
+                self.sleep_navigation()
+                scroll_state = state_right
+
+            click_x = state_coords[scroll_state][faction]
+            logging.info(f"Switching to squad: {faction}...")
+            self.tap(Point(click_x, active_y))
+            self.sleep_navigation()
+            self.sleep_navigation()
+            sleep(2)  # Wait for tab expansion transition
+
+            # Check if this squad is unlocked by verifying the presence of
+            # the Battle button. (If locked or unavailable, the game shows
+            # 'Unavailable' instead of the Battle button)
+            battle_match = self.game_find_template_match(
+                "battle/battle.png",
+                threshold=ConfidenceValue("75%"),
+                crop_regions=CropRegions(top=0.6, bottom=0.1),
+            )
+
+            if not battle_match:
+                logging.info(
+                    f"Squad {faction} is locked or battle button not found. Skipping."
+                )
+                continue
+
+            logging.info(f"Squad {faction} active. Executing battle loop...")
+            self._run_battle()
+            self.sleep_navigation()
