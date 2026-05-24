@@ -1,5 +1,6 @@
 """OCR."""
 
+from ._backend import OCRBackend
 from .rapidocr_backend import RapidOCRBackend
 from .tesseract_backend import TesseractBackend
 from .tesseract_config import TesseractConfig
@@ -11,6 +12,7 @@ __all__ = [
     "OEM",
     "PSM",
     "Lang",
+    "OCRBackend",
     "RapidOCRBackend",
     "TesseractBackend",
     "TesseractConfig",

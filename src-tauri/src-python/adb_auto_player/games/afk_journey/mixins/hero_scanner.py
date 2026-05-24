@@ -23,7 +23,7 @@ class HeroScannerMixin:
     @cached_property
     def _hero_scanner(self) -> HeroScanner:
         """Lazily-initialised HeroScanner service."""
-        return HeroScanner(self)  # type: ignore[arg-type]
+        return HeroScanner(self)  # ty: ignore[invalid-argument-type]
 
     @register_command(
         name="HeroScanner",

@@ -71,18 +71,15 @@ class SeasonLegendTrial(AFKJourneyBase):
                 logging.warning(f"{faction} Tower not available today")
                 continue
 
-            try:
-                result = self.wait_for_template(
-                    template=f"legend_trials/banner_{self.battle_state.faction_lower}.png",
-                    crop_regions=CropRegions(left=0.1, right=0.1, top=0.1, bottom=0.1),
-                    timeout=self.template_timeout,
-                )
-            except GameTimeoutError:
+            logging.info(f"Starting {faction} Tower")
+            if not self._try_wait_and_tap(
+                f"legend_trials/banner_{self.battle_state.faction_lower}.png",
+                crop_regions=CropRegions(left=0.1, right=0.1, top=0.1, bottom=0.1),
+                timeout=self.template_timeout,
+                timeout_message=f"{faction}s Tower not found",
+            ):
                 logging.error(f"{faction}s Tower not found")
                 continue
-
-            logging.info(f"Starting {faction} Tower")
-            self.tap(result)
             try:
                 self._select_legend_trials_floor()
                 self._handle_legend_trials_battle()

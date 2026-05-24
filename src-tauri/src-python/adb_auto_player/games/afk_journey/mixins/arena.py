@@ -170,15 +170,11 @@ class ArenaMixin(AFKJourneyBase):
         Returns:
             bool: True if free attempt claimed, False not available.
         """
-        try:
-            logging.debug("Claiming free attempts.")
-            buy = self.wait_for_template(
-                template="arena/buy.png",
-                timeout=self.min_timeout,
-                timeout_message="Failed looking for free attempts.",
-            )
-            self.tap(buy)
-        except GameTimeoutError:
+        logging.debug("Claiming free attempts.")
+        if not self._try_wait_and_tap(
+            "arena/buy.png",
+            timeout_message="Failed looking for free attempts.",
+        ):
             return False
 
         try:

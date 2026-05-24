@@ -9,10 +9,12 @@ from adb_auto_player.models.geometry import Box, Point
 from adb_auto_player.models.ocr import OCRResult
 from rapidocr import RapidOCR
 
+from ._backend import OCRBackend
+
 logger = logging.getLogger(__name__)
 
 
-class RapidOCRBackend:
+class RapidOCRBackend(OCRBackend):
     """RapidOCR backend for text detection.
 
     Faster alternative to Tesseract, especially on machines with GPU support.

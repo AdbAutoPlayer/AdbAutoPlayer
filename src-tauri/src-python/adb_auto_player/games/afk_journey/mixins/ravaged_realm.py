@@ -53,12 +53,12 @@ class RavagedRealmMixin(AFKJourneyBase):
         """Navigate to the Ravaged Realm screen via hamburger menu > Events."""
         logging.info("Entering Ravaged Realm...")
         self.navigate_to_world()
-        logging.info("Opening hamburger menu...")
-        self._tap_till_template_disappears(template="navigation/hamburger_menu")
-        sleep(2)
-        logging.info("Tapping Events...")
-        self._tap_till_template_disappears(template="dailies/hamburger/events")
-        sleep(2)
+        self._navigate_menu_chain(
+            [
+                "navigation/hamburger_menu",
+                "dailies/hamburger/events",
+            ]
+        )
         logging.info("Looking for Ravaged Realm label...")
         label = self.wait_for_template(
             "event/ravaged_realm/label.png",

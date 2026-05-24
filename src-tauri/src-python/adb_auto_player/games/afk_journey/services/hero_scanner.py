@@ -1070,7 +1070,7 @@ class HeroScanner:
         result = self._rapid_ocr(image)
         if result:
             if hasattr(result, "txts") and result.txts:
-                return " ".join(result.txts).strip()
+                return " ".join(str(t) for t in result.txts).strip()  # ty: ignore[not-iterable]
 
             texts = []
             results_list = result if isinstance(result, list) else [result]
