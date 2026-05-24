@@ -215,14 +215,12 @@ class TesseractBackend(OCRBackend):
     def detect_text_blocks(
         self,
         image: np.ndarray,
-        config: TesseractConfig | None = None,
         min_confidence: ConfidenceValue = ConfidenceValue(0.0),
-    ):
+    ) -> list[OCRResult]:
         """Detect text blocks and return results with bounding boxes.
 
         Args:
             image: Input RGB image as numpy array
-            config: Optional TesseractConfig override
             min_confidence: Minimum confidence threshold, default no Threshold
 
         Returns:
@@ -230,7 +228,6 @@ class TesseractBackend(OCRBackend):
         """
         return self._detect_text_grouping(
             image,
-            config=config,
             min_confidence=min_confidence,
             level=_GroupingLevel.BLOCK,
         )
