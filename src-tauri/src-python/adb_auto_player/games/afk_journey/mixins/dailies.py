@@ -196,18 +196,14 @@ class DailiesMixin(AFKJourneyBase, ABC):
             return
 
         logging.info("Looking for affinity items...")
-        try:
-            logging.debug("Open Friendship Store.")
-            friendship_store = self.wait_for_template(
-                "dailies/emporium/friendship_store.png",
-                timeout=self.min_timeout,
-                timeout_message="Failed to find Friendship Store.",
-            )
-            self.tap(friendship_store)
-            sleep(1)
-        except GameTimeoutError as fail:
-            logging.error(f"{fail} {self.LANG_ERROR}")
+        logging.debug("Open Friendship Store.")
+        if not self._try_wait_and_tap(
+            "dailies/emporium/friendship_store.png",
+            timeout_message="Failed to find Friendship Store.",
+        ):
+            logging.error(f"Failed to find Friendship Store. {self.LANG_ERROR}")
             return
+        sleep(1)
 
         logging.debug("Looking for discount affinity item.")
         discount_affinity = self.game_find_template_match(
@@ -254,18 +250,14 @@ class DailiesMixin(AFKJourneyBase, ABC):
             return
 
         logging.info("Looking for Temporal Essences...")
-        try:
-            logging.debug("Open Dream Store.")
-            dream_store = self.wait_for_template(
-                "dailies/emporium/dream_store.png",
-                timeout=self.min_timeout,
-                timeout_message="Failed to find Dream Store.",
-            )
-            self.tap(dream_store)
-            sleep(1)
-        except GameTimeoutError as fail:
-            logging.error(f"{fail} {self.LANG_ERROR}")
+        logging.debug("Open Dream Store.")
+        if not self._try_wait_and_tap(
+            "dailies/emporium/dream_store.png",
+            timeout_message="Failed to find Dream Store.",
+        ):
+            logging.error(f"Failed to find Dream Store. {self.LANG_ERROR}")
             return
+        sleep(1)
 
         logging.debug("Buying bound temporal essences.")
         bound_essences = self.find_all_template_matches(
@@ -372,29 +364,25 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def _claim_friend_rewards(self) -> None:
         """Claim friend rewards."""
         logging.info("Claiming friend rewards.")
-        try:
-            logging.debug("Click Friends.")
-            friends = self.wait_for_template(
-                "dailies/hamburger/friends.png",
-                timeout=self.min_timeout,
-                timeout_message="Failed to find Friends. Sadge.",
-            )
-            self.tap(friends)
-            sleep(1)
-
-            logging.debug("Click Send & Receive.")
-            send_receive = self.wait_for_template(
-                "dailies/hamburger/send_receive.png",
-                timeout=self.min_timeout,
-                timeout_message="Friend rewards already claimed.",
-            )
-            self.tap(send_receive)
-            sleep(self.fast_timeout)
-            self.tap(Point(540, 1620))  # Close confirmation
-            sleep(1)
-        except GameTimeoutError as fail:
-            logging.info(f"{fail} {self.LANG_ERROR}")
+        logging.debug("Click Friends.")
+        if not self._try_wait_and_tap(
+            "dailies/hamburger/friends.png",
+            timeout_message="Failed to find Friends. Sadge.",
+        ):
+            logging.info(f"Failed to find Friends. Sadge. {self.LANG_ERROR}")
             return
+        sleep(1)
+
+        logging.debug("Click Send & Receive.")
+        if not self._try_wait_and_tap(
+            "dailies/hamburger/send_receive.png",
+            timeout_message="Friend rewards already claimed.",
+        ):
+            logging.info(f"Friend rewards already claimed. {self.LANG_ERROR}")
+            return
+        sleep(self.fast_timeout)
+        self.tap(Point(540, 1620))  # Close confirmation
+        sleep(1)
 
         logging.debug("Back.")  # TODO: Create generic back method.
         back = self.game_find_template_match("back.png")
@@ -403,32 +391,25 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def _claim_mail(self) -> None:
         """Claim mail."""
         logging.info("Claiming Mail.")
-        try:
-            logging.debug("Click Mail.")
-            mail = self.wait_for_template(
-                "dailies/hamburger/mail.png",
-                timeout=self.min_timeout,
-                timeout_message="Failed to find Mail.",
-            )
-            self.tap(mail)
-            sleep(1)
-        except GameTimeoutError as fail:
-            logging.error(fail)
+        logging.debug("Click Mail.")
+        if not self._try_wait_and_tap(
+            "dailies/hamburger/mail.png",
+            timeout_message="Failed to find Mail.",
+        ):
+            logging.error("Failed to find Mail.")
             return
+        sleep(1)
 
-        try:
-            logging.debug("Click Read All.")
-            read_all = self.wait_for_template(
-                "dailies/hamburger/read_all.png",
-                timeout=self.min_timeout,
-                timeout_message="No mail.",
-            )
-            self.tap(read_all)
+        logging.debug("Click Read All.")
+        if self._try_wait_and_tap(
+            "dailies/hamburger/read_all.png",
+            timeout_message="No mail.",
+        ):
             sleep(1)
             self.tap(Point(540, 1620))  # Close confirmation
             sleep(1)
-        except GameTimeoutError as fail:
-            logging.info(fail)
+        else:
+            logging.info("No mail.")
 
         logging.debug("Back.")
         back = self.game_find_template_match("back.png")
@@ -437,18 +418,14 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def _claim_battle_pass(self) -> None:
         """Claim Battle Pass rewards."""
         logging.info("Claim Battle Pass rewards.")
-        try:
-            logging.debug("Click Noble Path.")
-            battle_pass = self.wait_for_template(
-                "dailies/hamburger/battle_pass.png",
-                timeout=self.min_timeout,
-                timeout_message="Failed to find Battle Pass.",
-            )
-            self.tap(battle_pass)
-            sleep(self.fast_timeout)
-        except GameTimeoutError as fail:
-            logging.error(fail)
+        logging.debug("Click Noble Path.")
+        if not self._try_wait_and_tap(
+            "dailies/hamburger/battle_pass.png",
+            timeout_message="Failed to find Battle Pass.",
+        ):
+            logging.error("Failed to find Battle Pass.")
             return
+        sleep(self.fast_timeout)
 
         logging.debug("Looking for available rewards.")
         available_rewards = self.find_all_template_matches(
@@ -467,18 +444,14 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def _claim_quests(self) -> None:
         """Claim Quest rewards."""
         logging.info("Claim Quest rewards.")
-        try:
-            logging.debug("Click Quests.")
-            quests = self.wait_for_template(
-                "dailies/hamburger/quests.png",
-                timeout=self.min_timeout,
-                timeout_message="Failed to find daily Quests.",
-            )
-            self.tap(quests)
-            sleep(self.fast_timeout)
-        except GameTimeoutError as fail:
-            logging.error(fail)
+        logging.debug("Click Quests.")
+        if not self._try_wait_and_tap(
+            "dailies/hamburger/quests.png",
+            timeout_message="Failed to find daily Quests.",
+        ):
+            logging.error("Failed to find daily Quests.")
             return
+        sleep(self.fast_timeout)
 
         logging.info("Claim Daily Quest rewards.")
         self._quick_claim()
@@ -564,17 +537,13 @@ class DailiesMixin(AFKJourneyBase, ABC):
         logging.info("Begin swapping essences...")
 
         # Click New Actions once at the beginning (fixes essence swap bug)
-        try:
-            new_actions = self.wait_for_template(
-                "resonating_hall/new_actions.png",
-                timeout=self.min_timeout,
-                timeout_message="Failed to find New Actions button.",
-            )
-            self.tap(new_actions)
-            sleep(self.fast_timeout)
-        except GameTimeoutError as fail:
-            logging.error(f"Could not find New Actions button: {fail}")
+        if not self._try_wait_and_tap(
+            "resonating_hall/new_actions.png",
+            timeout_message="Failed to find New Actions button.",
+        ):
+            logging.error("Could not find New Actions button.")
             return
+        sleep(self.fast_timeout)
 
         swapped: bool = True
         while swapped:
