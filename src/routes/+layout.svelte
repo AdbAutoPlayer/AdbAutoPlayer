@@ -10,15 +10,7 @@
   import { initPostHog } from "$lib/utils/posthog";
   import { logInfo, logError } from "$lib/log/log-events";
   import { getVersion } from "@tauri-apps/api/app";
-  import {
-    profileStates,
-    profileStateTimestamp,
-    activeProfile,
-    uiState,
-    appSettings,
-    appVersion,
-    debugLogLevelOverwrite,
-  } from "$lib/stores";
+  import { profiles, settings, ui } from "$lib/stores.svelte";
   import { listen } from "@tauri-apps/api/event";
   import { EventNames } from "$lib/log/eventNames";
   import type {
@@ -60,10 +52,10 @@
   });
 
   $effect(() => {
-    document.documentElement.className = $uiState.theme;
+    document.documentElement.className = ui.theme;
     document.documentElement.style.setProperty(
       "--accent-h",
-      $uiState.accentHue.toString(),
+      ui.accentHue.toString(),
     );
   });
 
@@ -72,7 +64,7 @@
     await invoke("show_window");
 
     const version = await getVersion();
-    appVersion.set(version);
+    settings.setVersion(version);
     await logInfo(`App Version: ${version}`);
     initPostHog(version);
   }
@@ -91,17 +83,17 @@
         EventNames.PROFILE_STATE_UPDATE,
         (event) => {
           if (
-            $profileStateTimestamp &&
-            $profileStateTimestamp >= event.payload.timestamp
+            profiles.timestamp &&
+            profiles.timestamp >= event.payload.timestamp
           ) {
             return;
           }
-          $profileStates[event.payload.index] = {
+          profiles.states[event.payload.index] = {
             game_menu: event.payload.state.game_menu,
             active_task: event.payload.state.active_task,
             device_id: event.payload.state.device_id,
           };
-          $profileStates = [...$profileStates];
+          profiles.setStates([...profiles.states]);
         },
       );
 
@@ -114,14 +106,14 @@
 
   async function callDebug() {
     try {
-      await debug({ profile_index: $activeProfile });
+      await debug({ profile_index: profiles.active });
     } catch (error) {
       void logError(String(error));
     }
   }
 
   function toggleTheme() {
-    $uiState.theme = $uiState.theme === "dark" ? "light" : "dark";
+    ui.setTheme(ui.theme === "dark" ? "light" : "dark");
   }
 
   function handleDocs() {
@@ -129,11 +121,11 @@
   }
 
   function toggleSidebar() {
-    $uiState.sidebarOpen = !$uiState.sidebarOpen;
+    ui.setSidebarOpen(!ui.sidebarOpen);
   }
 
   function toggleLog() {
-    $uiState.logOpen = !$uiState.logOpen;
+    ui.setLogOpen(!ui.logOpen);
   }
 
   // --- Global Settings Logic ---
@@ -155,7 +147,7 @@
   }
 
   const adbQuickActions = $derived.by(() => {
-    const profile = $profileStates[$activeProfile];
+    const profile = profiles.states[profiles.active];
     const options = profile?.game_menu?.menu_options ?? [];
     return options.filter((o) => o.label.includes("Display Size"));
   });
@@ -163,7 +155,7 @@
   async function handleQuickAction(option: MenuOption) {
     try {
       await startTask({
-        profile_index: $activeProfile,
+        profile_index: profiles.active,
         label: option.label,
         args: option.args,
       });
@@ -176,7 +168,7 @@
   async function openAdbSettingsForm() {
     try {
       const data = (await getAdbSettingsForm({
-        profile_index: $activeProfile,
+        profile_index: profiles.active,
       })) as PydanticSettingsFormResponse;
 
       settingsProps = {
@@ -192,8 +184,8 @@
   }
 
   async function openGameSettingsForm() {
-    const profile = $activeProfile;
-    const game = $profileStates[profile]?.game_menu;
+    const profile = profiles.active;
+    const game = profiles.states[profile]?.game_menu;
     if (!game) return;
 
     try {
@@ -220,11 +212,11 @@
       formSchema: {},
       fileName: "",
     };
-    $uiState.showSettings = false;
+    ui.setShowSettings(false);
   }
 
   async function onFormSubmit() {
-    const profile = $activeProfile;
+    const profile = profiles.active;
     try {
       if (settingsProps.fileName === "App.toml") {
         const newSettings: AppSettings = await invoke("save_app_settings", {
@@ -258,17 +250,17 @@
   }
 
   async function handleAddProfile() {
-    if (!$appSettings) return;
+    if (!settings.settings) return;
 
-    const currentProfiles = $appSettings.profiles?.profiles ?? ["Default"];
+    const currentProfiles = settings.settings.profiles?.profiles ?? ["Default"];
     const newProfileName = `Profile ${currentProfiles.length + 1}`;
     const newProfiles = [...currentProfiles, newProfileName];
 
     try {
       const newSettings = {
-        ...$appSettings,
+        ...settings.settings,
         profiles: {
-          ...$appSettings.profiles,
+          ...settings.settings.profiles,
           profiles: newProfiles,
           active_profile: newProfiles.length - 1,
         },
@@ -285,12 +277,12 @@
   }
 
   async function handleDeleteProfile(index: number) {
-    if (!$appSettings || !$appSettings.profiles?.profiles) return;
-    const currentProfiles = $appSettings.profiles.profiles;
+    if (!settings.settings || !settings.settings.profiles?.profiles) return;
+    const currentProfiles = settings.settings.profiles.profiles;
     if (currentProfiles.length <= 1) return;
 
     const newProfiles = currentProfiles.filter((_, i) => i !== index);
-    let newActive = $appSettings.profiles.active_profile ?? 0;
+    let newActive = settings.settings.profiles.active_profile ?? 0;
     if (newActive === index) {
       newActive = Math.max(0, index - 1);
     } else if (newActive > index) {
@@ -299,9 +291,9 @@
 
     try {
       const newSettings = {
-        ...$appSettings,
+        ...settings.settings,
         profiles: {
-          ...$appSettings.profiles,
+          ...settings.settings.profiles,
           profiles: newProfiles,
           active_profile: newActive,
         },
@@ -311,7 +303,7 @@
         settings: newSettings,
       });
       await applySettings(savedSettings);
-      $activeProfile = newActive;
+      profiles.select(newActive);
       void logInfo(`Deleted profile at index ${index}`);
     } catch (error) {
       void logError(`Failed to delete profile: ${error}`);
@@ -319,15 +311,15 @@
   }
 
   async function handleRenameProfile(index: number, newName: string) {
-    if (!$appSettings || !$appSettings.profiles?.profiles) return;
-    const currentProfiles = [...$appSettings.profiles.profiles];
+    if (!settings.settings || !settings.settings.profiles?.profiles) return;
+    const currentProfiles = [...settings.settings.profiles.profiles];
     currentProfiles[index] = newName;
 
     try {
       const newSettings = {
-        ...$appSettings,
+        ...settings.settings,
         profiles: {
-          ...$appSettings.profiles,
+          ...settings.settings.profiles,
           profiles: currentProfiles,
         },
       };
@@ -343,15 +335,15 @@
   }
 
   $effect(() => {
-    if ($uiState.showSettings && !settingsProps.showSettingsForm) {
-      if ($uiState.settingsType === "app") {
+    if (ui.showSettings && !settingsProps.showSettingsForm) {
+      if (ui.settingsType === "app") {
         openAppSettingsForm();
-      } else if ($uiState.settingsType === "adb") {
+      } else if (ui.settingsType === "adb") {
         openAdbSettingsForm();
-      } else if ($uiState.settingsType === "game") {
+      } else if (ui.settingsType === "game") {
         openGameSettingsForm();
       }
-    } else if (!$uiState.showSettings && settingsProps.showSettingsForm) {
+    } else if (!ui.showSettings && settingsProps.showSettingsForm) {
       settingsProps.showSettingsForm = false;
     }
   });
@@ -373,33 +365,33 @@
   {/snippet}
 </Toast.Group>
 
-<div class="app-container {$uiState.theme}">
+<div class="app-container {ui.theme}">
   <StatusBar
-    theme={$uiState.theme}
+    theme={ui.theme}
     onToggleTheme={toggleTheme}
     onToggleSidebar={toggleSidebar}
     onToggleLog={toggleLog}
     onDocs={handleDocs}
     onAppSettings={() => {
-      $uiState.settingsType = "app";
-      $uiState.showSettings = true;
+      ui.setSettingsType("app");
+      ui.setShowSettings(true);
     }}
     onGameSettings={() => {
-      $uiState.settingsType = "game";
-      $uiState.showSettings = true;
+      ui.setSettingsType("game");
+      ui.setShowSettings(true);
     }}
     onAdbSettings={() => {
-      $uiState.settingsType = "adb";
-      $uiState.showSettings = true;
+      ui.setSettingsType("adb");
+      ui.setShowSettings(true);
     }}
     onDebug={callDebug}
-    sidebarOpen={$uiState.sidebarOpen}
-    logOpen={$uiState.logOpen}
-    onCustomizer={() => ($uiState.customizerOpen = !$uiState.customizerOpen)}
+    sidebarOpen={ui.sidebarOpen}
+    logOpen={ui.logOpen}
+    onCustomizer={() => ui.setCustomizerOpen(!ui.customizerOpen)}
   />
 
-  {#if $uiState.customizerOpen}
-    <ThemeCustomizer onClose={() => ($uiState.customizerOpen = false)} />
+  {#if ui.customizerOpen}
+    <ThemeCustomizer onClose={() => ui.setCustomizerOpen(false)} />
   {/if}
 
   <!-- Global Settings Overlay -->
@@ -464,10 +456,10 @@
 
   <div
     class="main-layout"
-    class:layout-bottom={$appSettings?.ui?.log_panel_position === "bottom"}
+    class:layout-bottom={settings.settings?.ui?.log_panel_position === "bottom"}
   >
     <div class="content-wrapper">
-      {#if $uiState.sidebarOpen}
+      {#if ui.sidebarOpen}
         <ProfileSidebar
           collapsed={sidebarCollapsed}
           onAddProfile={handleAddProfile}
@@ -483,10 +475,10 @@
     </div>
 
     <LogPanel
-      profileIndex={$activeProfile}
+      profileIndex={profiles.active}
       onClear={() => {}}
-      collapsed={!$uiState.logOpen}
-      position={$appSettings?.ui?.log_panel_position}
+      collapsed={!ui.logOpen}
+      position={settings.settings?.ui?.log_panel_position}
     />
   </div>
 </div>

@@ -4,7 +4,7 @@
   import { t } from "$lib/i18n/i18n";
   import { invoke } from "@tauri-apps/api/core";
   import { showErrorToast } from "$lib/toast/toast-error";
-  import { appSettings, profileStates, activeProfile } from "$lib/stores";
+  import { settings, profiles } from "$lib/stores.svelte";
   import type {
     RustSettingsFormResponse,
     SettingsProps,
@@ -41,44 +41,44 @@
   }
 
   function getProfiles(): string[] {
-    return $appSettings?.profiles?.profiles ?? ["Default"];
+    return settings.settings?.profiles?.profiles ?? ["Default"];
   }
 
   function getDeviceID(profile: number): string {
-    if ($profileStates[profile] && $profileStates[profile].device_id) {
-      return ` (${$profileStates[profile].device_id})`;
+    if (profiles.states[profile] && profiles.states[profile].device_id) {
+      return ` (${profiles.states[profile].device_id})`;
     }
 
     return " (Offline)";
   }
 
   function getStatus(profile: number): string {
-    if (!$profileStates[profile] || !$profileStates[profile].device_id) {
+    if (!profiles.states[profile] || !profiles.states[profile].device_id) {
       return "";
     }
 
-    if (!$profileStates[profile].game_menu?.game_title) {
+    if (!profiles.states[profile].game_menu?.game_title) {
       return "Idle";
     }
 
-    const gameTitle = $profileStates[profile].game_menu.game_title;
+    const gameTitle = profiles.states[profile].game_menu.game_title;
 
-    if (!$profileStates[profile].active_task) {
+    if (!profiles.states[profile].active_task) {
       return `${gameTitle} - Idle`;
     }
 
-    const activeTask = $profileStates[profile].active_task;
+    const activeTask = profiles.states[profile].active_task;
 
     return `${gameTitle} — ${activeTask}`;
   }
 
   function getStatusColor(profile: number): string {
-    if (!$profileStates[profile] || !$profileStates[profile].device_id) {
+    if (!profiles.states[profile] || !profiles.states[profile].device_id) {
       return "bg-gray-500";
     }
     if (
-      !$profileStates[profile].game_menu?.game_title ||
-      !$profileStates[profile].active_task
+      !profiles.states[profile].game_menu?.game_title ||
+      !profiles.states[profile].active_task
     ) {
       return "bg-yellow-500";
     }
@@ -87,13 +87,13 @@
   }
 
   async function selectProfile(index: number) {
-    if (!$appSettings) return;
-    $activeProfile = index;
+    if (!settings.settings) return;
+    profiles.select(index);
 
     try {
       const newSettings = {
-        ...$appSettings,
-        profiles: { ...$appSettings.profiles, active_profile: index },
+        ...settings.settings,
+        profiles: { ...settings.settings.profiles, active_profile: index },
       };
       const savedSettings: AppSettings = await invoke("save_app_settings", {
         settings: newSettings,
@@ -134,10 +134,10 @@
           {#each getProfiles() as profile, i}
             <button
               class="btn preset-tonal flex w-full items-center justify-start rounded {i ===
-              $activeProfile
+              profiles.active
                 ? 'preset-outlined'
                 : ''} transition-colors"
-              class:selected={i === $activeProfile}
+              class:selected={i === profiles.active}
               onclick={() => selectProfile(i)}
             >
               <span class={`h-3 w-3 rounded-full ${getStatusColor(i)}`}></span>

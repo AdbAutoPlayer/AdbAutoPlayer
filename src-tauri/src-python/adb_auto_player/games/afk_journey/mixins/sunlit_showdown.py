@@ -49,14 +49,13 @@ class SunlitShowdownMixin(AFKJourneyBase, ABC):
         logging.info(
             "Opening Sunlit Showdown",
         )
-        self._tap_till_template_disappears(template="navigation/hamburger_menu")
-        sleep(2)
-        self._tap_till_template_disappears(template="dailies/hamburger/events")
-        sleep(2)
-        self._tap_till_template_disappears(
-            template="event/sunlit_showdown/sunlit_showdown"
+        self._navigate_menu_chain(
+            [
+                "navigation/hamburger_menu",
+                "dailies/hamburger/events",
+                "event/sunlit_showdown/sunlit_showdown",
+            ]
         )
-        sleep(2)
         self.wait_for_template(template="event/sunlit_showdown/title_s")
         self.tap(Point(650, 1450))  # Join
         sleep(3)

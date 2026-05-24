@@ -1,12 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import {
-    activeProfile,
-    appSettings,
-    profileStates,
-    profileStateTimestamp,
-    uiState,
-  } from "$lib/stores";
+  import { profiles, settings, ui } from "$lib/stores.svelte";
   import { showErrorToast } from "$lib/toast/toast-error";
   import { t } from "$lib/i18n/i18n";
   import type { MenuOption } from "$pytauri/_apiTypes";
@@ -21,7 +15,7 @@
   import Hero from "$lib/components/modern/Hero.svelte";
   import TaskGrid from "$lib/components/modern/TaskGrid.svelte";
 
-  const currentProfileState = $derived($profileStates[$activeProfile]);
+  const currentProfileState = $derived(profiles.states[profiles.active]);
 
   // Used for the current display.
   let defaultButtons: MenuButton[] = $derived([]);
@@ -85,10 +79,10 @@
   async function callStopTask(profile: number) {
     try {
       await stopTask({ profile_index: profile });
-      $profileStateTimestamp = Date.now() / 1000 + 0.5;
-      if ($profileStates[profile]) {
-        $profileStates[profile].active_task = null;
-        $profileStates = [...$profileStates];
+      profiles.setTimestamp(Date.now() / 1000 + 0.5);
+      if (profiles.states[profile]) {
+        profiles.states[profile].active_task = null;
+        profiles.setStates([...profiles.states]);
       }
     } catch (error) {
       void showErrorToast(error, {
@@ -102,16 +96,16 @@
   }
 
   async function callDebug() {
-    const profile = $activeProfile;
-    const task = $profileStates[profile]?.active_task ?? null;
+    const profile = profiles.active;
+    const task = profiles.states[profile]?.active_task ?? null;
     if (task !== null) {
       return;
     }
 
     try {
-      if ($profileStates[profile]) {
-        $profileStates[profile].active_task = "Debug";
-        $profileStates = [...$profileStates];
+      if (profiles.states[profile]) {
+        profiles.states[profile].active_task = "Debug";
+        profiles.setStates([...profiles.states]);
       }
       await debug({ profile_index: profile });
     } catch (error) {
@@ -127,15 +121,15 @@
   }
 
   async function callStartTask(menuOption: MenuOption) {
-    const profile = $activeProfile;
-    const task = $profileStates[profile]?.active_task ?? null;
+    const profile = profiles.active;
+    const task = profiles.states[profile]?.active_task ?? null;
     if (task !== null) {
       return;
     }
-    $profileStateTimestamp = Date.now() / 1000 + 5.0;
-    if ($profileStates[profile]) {
-      $profileStates[profile].active_task = menuOption.label;
-      $profileStates = [...$profileStates];
+    profiles.setTimestamp(Date.now() / 1000 + 5.0);
+    if (profiles.states[profile]) {
+      profiles.states[profile].active_task = menuOption.label;
+      profiles.setStates([...profiles.states]);
     }
 
     try {
@@ -146,7 +140,7 @@
       });
       await taskPromise;
     } catch (error) {
-      $profileStateTimestamp = Date.now() + 1000;
+      profiles.setTimestamp(Date.now() + 1000);
       await showErrorToast(error, {
         title: `Failed to Start: ${menuOption.label}`,
       });
@@ -170,7 +164,7 @@
   }
 
   async function updateState(profile: number | null = null) {
-    const profileCount = $appSettings?.profiles?.profiles?.length ?? 1;
+    const profileCount = settings.settings?.profiles?.profiles?.length ?? 1;
     if (profile !== null) {
       void getProfileState({
         profile_index: profile,
@@ -196,14 +190,14 @@
 
 <div class="page-content">
   <Hero
-    onStop={() => callStopTask($activeProfile)}
+    onStop={() => callStopTask(profiles.active)}
     activeTaskButton={activeGameMenuButtons.find((b) => b.isProcessRunning)}
   />
 
   <div class="task-view">
     <TaskGrid
       buttons={activeGameMenuButtons}
-      disableActions={Boolean($profileStates[$activeProfile]?.active_task)}
+      disableActions={Boolean(profiles.states[profiles.active]?.active_task)}
       {categories}
     />
   </div>

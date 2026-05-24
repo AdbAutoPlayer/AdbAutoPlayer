@@ -1,11 +1,6 @@
 <script lang="ts">
   import { t } from "$lib/i18n/i18n";
-  import {
-    activeProfile,
-    profileStates,
-    appSettings,
-    appVersion,
-  } from "$lib/stores";
+  import { profiles, settings } from "$lib/stores.svelte";
 
   interface Props {
     theme: "dark" | "light";
@@ -37,7 +32,7 @@
     logOpen,
   }: Props = $props();
 
-  const profile = $derived($profileStates[$activeProfile]);
+  const profile = $derived(profiles.states[profiles.active]);
   const status = $derived(
     profile?.device_id ? (profile.active_task ? "running" : "idle") : "offline",
   );
@@ -100,7 +95,7 @@
       />
     </svg>
     <div class="brand-name">AdbAutoPlayer</div>
-    <div class="version">v{$appVersion}</div>
+    <div class="version">v{settings.appVersion}</div>
   </div>
 
   <div class="divider"></div>
@@ -116,7 +111,8 @@
         : 'none'}"
     ></span>
     <span class="profile-name"
-      >{$appSettings?.profiles?.profiles?.[$activeProfile] ?? "Profile"}</span
+      >{settings.settings?.profiles?.profiles?.[profiles.active] ??
+        "Profile"}</span
     >
     <span class="sep">·</span>
     <span class="device-id">{profile?.device_id || $t("no device")}</span>

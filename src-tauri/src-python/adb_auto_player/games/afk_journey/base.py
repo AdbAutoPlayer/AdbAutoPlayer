@@ -581,6 +581,7 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
 
             case Mode.RAVAGED_REALM:
                 return [
+                    "event/ravaged_realm/battle_ended.png",
                     "arena/done.png",
                     "next.png",
                     "battle/victory_rewards.png",
@@ -588,6 +589,9 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
                     "navigation/confirm.png",
                     "battle/power_up.png",
                     "battle/result.png",
+                    "tap_to_close.png",
+                    "afk_stages/tap_to_close.png",
+                    "quests/tap_to_close.png",
                 ]
 
             case _:
@@ -827,3 +831,70 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
             return True
         except GameTimeoutError:
             return False
+
+    def _try_wait_and_tap(
+        self,
+        template: str,
+        timeout: float | None = None,
+        timeout_message: str = "",
+        threshold: ConfidenceValue | None = None,
+        crop_regions: CropRegions = CropRegions(),
+    ) -> bool:
+        """Wait for a template then tap it, returning False on timeout.
+
+        Replaces the repeated pattern::
+
+            try:
+                match = self.wait_for_template(template, timeout=..., ...)
+                self.tap(match)
+            except GameTimeoutError as e:
+                logging.info/error(e)
+                return False
+
+        Args:
+            template: Template path relative to the game's template directory.
+            timeout: Wait timeout in seconds; defaults to ``self.min_timeout``.
+            timeout_message: Message logged (at DEBUG level) on timeout.
+            threshold: Confidence threshold override.
+            crop_regions: Region to restrict the search to.
+
+        Returns:
+            True if the template was found and tapped, False on timeout.
+        """
+        try:
+            match = self.wait_for_template(
+                template,
+                timeout=timeout if timeout is not None else self.min_timeout,
+                timeout_message=timeout_message,
+                threshold=threshold,
+                crop_regions=crop_regions,
+            )
+            self.tap(match)
+            return True
+        except GameTimeoutError as e:
+            logging.debug(e)
+            return False
+
+    def _navigate_menu_chain(
+        self,
+        templates: list[str],
+        sleep_between: float = 2.0,
+        tap_delay: float = 10.0,
+    ) -> None:
+        """Navigate through a sequence of menus by tapping each template until gone.
+
+        Replaces repeated blocks of::
+
+            self._tap_till_template_disappears(template="a")
+            sleep(2)
+            self._tap_till_template_disappears(template="b")
+            sleep(2)
+
+        Args:
+            templates: Template paths to tap in order.
+            sleep_between: Seconds to sleep after each tap.
+            tap_delay: Max seconds between taps in ``_tap_till_template_disappears``.
+        """
+        for template in templates:
+            self._tap_till_template_disappears(template=template, tap_delay=tap_delay)
+            sleep(sleep_between)

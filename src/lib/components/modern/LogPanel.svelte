@@ -4,13 +4,7 @@
   import { listen } from "@tauri-apps/api/event";
   import { revealItemInDir } from "@tauri-apps/plugin-opener";
   import { homeDir } from "@tauri-apps/api/path";
-  import {
-    activeProfile,
-    appSettings,
-    debugLogLevelOverwrite,
-    profileStates,
-    uiState,
-  } from "$lib/stores";
+  import { profiles, settings, ui } from "$lib/stores.svelte";
   import { EventNames } from "$lib/log/eventNames";
   import {
     formatMessage,
@@ -18,6 +12,9 @@
   } from "$lib/log/logHelper";
   import type { TextDisplayCardItem } from "$lib/log/logHelper";
   import { Instant } from "@js-joda/core";
+  import LogEntry from "./LogEntry.svelte";
+  import LogFilters from "./LogFilters.svelte";
+  import LogActions from "./LogActions.svelte";
 
   const awakeMascot = "/images/3583082.png";
   const sleepMascot = "/images/3583083.png";
@@ -43,7 +40,7 @@
   }: Props = $props();
 
   let profileEntries: Record<number, TextDisplayCardItem[]> = $state({});
-  let maxEntries = 1000;
+  let maxEntries = 5000;
   let scrollContainer: HTMLDivElement | null = $state(null);
 
   const logLevelOrder: Record<string, number> = {
@@ -64,7 +61,7 @@
   ) {
     const insertCount =
       index === undefined || index === null
-        ? ($appSettings?.profiles?.profiles?.length ?? 1)
+        ? (settings.settings?.profiles?.profiles?.length ?? 1)
         : 1;
 
     const startIndex = index ?? 0;
@@ -101,7 +98,7 @@
       message: summaryMessage,
       timestamp: Instant.now(),
       html_class: "whitespace-pre-wrap text-secondary-500",
-      level: "INFO", // Summary messages are usually info
+      level: "INFO",
     } as any);
   }
 
@@ -111,12 +108,12 @@
       const logUnsub = await listen<any>(EventNames.LOG_MESSAGE, (event) => {
         const logMessage = event.payload;
         const configLogLevel =
-          ($appSettings?.logging?.level as string) ?? "INFO";
+          (settings.settings?.logging?.level as string) ?? "INFO";
 
         let alwaysLogDebug = false;
         if (logMessage.profile_index !== undefined) {
           alwaysLogDebug =
-            $debugLogLevelOverwrite[logMessage.profile_index] ?? false;
+            settings.debugLogLevelOverwrite[logMessage.profile_index] ?? false;
         }
 
         if (
@@ -145,19 +142,37 @@
 
   const currentEntries = $derived(getOrCreateEntriesForProfile(profileIndex));
 
-  function fmtTime(instant: Instant) {
-    // Basic formatting for the terminal look
-    const d = new Date(instant.toEpochMilli());
-    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
-  }
-
   function handleClear() {
     profileEntries[profileIndex] = [];
     profileEntries = { ...profileEntries };
     onClear();
   }
 
-  const isTaskRunning = $derived(!!$profileStates[profileIndex]?.active_task);
+  function fmtTime(instant: Instant) {
+    const d = new Date(instant.toEpochMilli());
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
+  }
+
+  function handleExport() {
+    if (currentEntries.length === 0) return;
+    const logText = currentEntries
+      .map(
+        (e) =>
+          `[${fmtTime(e.timestamp)}] [${(e as any).level || "INFO"}] ${e.message.replace(/<[^>]*>/g, "")}`,
+      )
+      .join("\n");
+    const blob = new Blob([logText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `adbautoplayer-log-profile-${profileIndex}-${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  const isTaskRunning = $derived(!!profiles.states[profileIndex]?.active_task);
 
   async function handleLogClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
@@ -187,15 +202,12 @@
 <div
   class="log-panel"
   class:collapsed
-  class:compact={$uiState.taskViewVariant === "accordion"}
+  class:compact={ui.taskViewVariant === "accordion"}
   data-position={position}
 >
   <div class="header">
-    <span class="status-dot"></span>
-    <div class="title">{$t("Live Log")}</div>
-    <span class="spacer"></span>
-    <span class="count">{currentEntries.length} {$t("lines")}</span>
-    <button class="clear-btn" onclick={handleClear}>{$t("clear")}</button>
+    <LogFilters linesCount={currentEntries.length} />
+    <LogActions onClear={handleClear} onExport={handleExport} />
   </div>
 
   <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -209,15 +221,7 @@
     />
 
     {#each currentEntries as entry}
-      <div class="log-line">
-        <span class="time">{fmtTime(entry.timestamp)}</span>
-        <span class="level-tag" data-level={(entry as any).level || "INFO"}>
-          {(entry as any).level || "INFO"}
-        </span>
-        <span class="message">
-          {@html entry.message.replace(/^\[[A-Z]+\]\s*/, "")}
-        </span>
-      </div>
+      <LogEntry {entry} />
     {/each}
     {#if currentEntries.length === 0}
       <div class="empty">{$t("No logs for this profile yet...")}</div>
@@ -270,44 +274,6 @@
     border-bottom: 1px solid var(--line);
   }
 
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: var(--ok);
-  }
-
-  .title {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-3);
-  }
-
-  .spacer {
-    flex: 1;
-  }
-
-  .count {
-    font-size: 11px;
-    color: var(--text-4);
-    font-family: var(--font-mono);
-  }
-
-  .clear-btn {
-    font-size: 11px;
-    color: var(--text-3);
-    padding: 2px 6px;
-    border-radius: 4px;
-    transition: background var(--dur-1);
-  }
-
-  .clear-btn:hover {
-    background: var(--bg-hover);
-    color: var(--text-1);
-  }
-
   .scroll-area {
     flex: 1;
     overflow: auto;
@@ -316,58 +282,7 @@
     font-family: var(--font-mono);
     font-size: 12px;
     line-height: 1.55;
-  }
-
-  .log-line {
-    display: grid;
-    grid-template-columns: 74px 62px 1fr;
-    gap: 8px;
-    padding: 2px 14px;
-    min-width: 0;
-  }
-
-  .time {
-    color: var(--text-4);
-  }
-
-  .level-tag {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    border: 1px solid;
-    border-radius: 4px;
-    padding: 1px 0;
-    text-align: center;
-    height: fit-content;
-  }
-
-  .level-tag[data-level="DEBUG"] {
-    color: var(--text-4);
-    border-color: var(--text-4);
-  }
-  .level-tag[data-level="INFO"] {
-    color: var(--accent-hi);
-    border-color: color-mix(in oklab, var(--accent-hi) 40%, transparent);
-  }
-  .level-tag[data-level="WARNING"] {
-    color: var(--warn);
-    border-color: color-mix(in oklab, var(--warn) 45%, transparent);
-  }
-  .level-tag[data-level="ERROR"] {
-    color: var(--err);
-    border-color: color-mix(in oklab, var(--err) 45%, transparent);
-  }
-  .level-tag[data-level="FATAL"] {
-    color: var(--err);
-    border-color: var(--err);
-    font-weight: 700;
-  }
-
-  .message {
-    text-wrap: pretty;
-    word-break: break-word;
-    white-space: pre-wrap;
-    min-width: 0;
+    position: relative;
   }
 
   .empty {
@@ -390,11 +305,6 @@
   .log-panel.compact[data-position="bottom"] .scroll-area {
     font-size: 11.5px;
     line-height: 1.4;
-  }
-
-  .log-panel.compact[data-position="bottom"] .log-line {
-    grid-template-columns: 68px 58px 1fr;
-    padding: 1px 14px;
   }
 
   .mascot-watermark {

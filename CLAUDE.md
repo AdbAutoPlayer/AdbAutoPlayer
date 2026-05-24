@@ -22,6 +22,8 @@ pnpm prettier-write    # Format with Prettier + Tailwind plugin
 
 ### Python
 
+Run Python commands from the `src-tauri/` directory (where `pyproject.toml` lives):
+
 ```bash
 uv sync                              # Sync dependencies from uv.lock
 uv run pytest                        # Run all tests
@@ -30,6 +32,8 @@ uv run pytest --cov --cov-branch     # Run tests with coverage
 uv run ruff check --fix              # Lint and auto-fix
 uv run ruff format                   # Format code
 ```
+
+Tests mock `pytauri` and `adb_auto_player.ext_mod` (Rust-compiled extensions) so no device or Tauri window is required.
 
 ### Rust
 
@@ -57,7 +61,7 @@ uvx pre-commit run --all-files
 
 ### Three-Layer Stack
 
-```
+```text
 SvelteKit UI (TypeScript)
     ↕ PyTauri IPC (async JSON-RPC, events)
 Tauri Runtime (Rust) — window, tray, updater, process lifecycle
@@ -83,9 +87,9 @@ Android Device
 ### Python (`src-tauri/src-python/adb_auto_player/`)
 
 | Module | Role |
-|---|---|
-| `game.py` | Abstract `Game` base class (~1000 LOC). All tap/swipe/OCR/template-match helpers live here. |
-| `games/` | Concrete game implementations (e.g., `afk_journey/base.py` ~27K LOC). Each subclasses `Game`. |
+| --- | --- |
+| `game.py` | `Game` base class composed from mixins (`_InputMixin`, `_ScreenshotMixin`, `_TemplateMixin`, `_LifecycleMixin`, `_TaskMixin`). All tap/swipe/OCR/template-match helpers live here. |
+| `games/` | Concrete game implementations (e.g., `afk_journey/base.py`). Each subclasses `Game` and uses further mixins for large feature areas. |
 | `device/adb/` | `AdbController` and `DeviceStream` — wraps adbutils for input injection and screen capture. |
 | `ocr/` | OCR via RapidOCR + ONNX runtime. |
 | `template_matching/` | OpenCV template matching with confidence scoring. |
@@ -104,7 +108,23 @@ Android Device
 
 ### Game Extension Pattern
 
-To add a new game: subclass `Game`, register it in `GAME_REGISTRY` via the auto-discovery mechanism (`load_modules` + `discover_and_add_games`), and add a TOML settings template. The registry drives all UI menus and task dispatch automatically.
+To add a new game:
+
+1. Create a class under `games/<game_name>/` that subclasses `Game`.
+2. Decorate it with `@register_game()` — supplies game metadata and the Pydantic settings class.
+3. Decorate task methods with `@register_command()` — wires them into the UI menu with optional labels/tooltips.
+4. For alternate task variants, use `@register_custom_routine_choice()` on methods.
+5. Add a TOML settings template under `src-tauri/Settings/`.
+
+All three decorator types are required to fully wire a game into the UI. The auto-discovery (`load_modules` + `discover_and_add_games`) picks up any decorated classes automatically — no manual registry edits needed.
+
+### Python Type Checking
+
+Pyright is configured in the root `pyproject.toml`. It excludes `node_modules`, `__pycache__`, `pyembed`, and `target/` — the Tauri build copies Python embeddings into `target/`, which would otherwise produce false type errors. The pre-commit pipeline uses `ty` (not Pyright directly) for type checks.
+
+### Linting Rules
+
+Ruff enforces Google-style docstrings and bans certain APIs (e.g., `time.time` → use `time.monotonic`, `cv2.split` → use numpy indexing). Test files and `games/` subdirectories have relaxed per-file ignores (D101–D103, PLR0913, PLR2004).
 
 ### IPC & Real-Time Logging
 
@@ -116,7 +136,7 @@ To add a new game: subclass `Game`, register it in `GAME_REGISTRY` via the auto-
 ## Key Configuration Files
 
 | File | Purpose |
-|---|---|
+| --- | --- |
 | `src-tauri/tauri.conf.json` | Tauri app config (window, updater, capabilities) |
 | `src-tauri/pyproject.toml` | Python package config + entry point |
 | `pyproject.toml` (root) | uv workspace + Ruff/Pyright tool config |
