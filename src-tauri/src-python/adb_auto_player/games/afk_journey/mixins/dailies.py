@@ -101,17 +101,12 @@ class DailiesMixin(AFKJourneyBase, ABC):
         Returns:
             bool: True if a free hourglass was claimed, False otherwise.
         """
-        try:
-            free_hourglass = self.wait_for_template(
-                "dailies/daily_rewards/free_hourglass.png",
-                timeout=self.min_timeout,
-                timeout_message="No more free hourglasses.",
-            )
-            self.tap(free_hourglass)
-            sleep(self.fast_timeout)
-        except GameTimeoutError as fail:
-            logging.info(fail)
+        if not self._try_wait_and_tap(
+            "dailies/daily_rewards/free_hourglass.png",
+            timeout_message="No more free hourglasses.",
+        ):
             return False
+        sleep(self.fast_timeout)
 
         self._click_confirm_on_popup()
 
@@ -160,16 +155,11 @@ class DailiesMixin(AFKJourneyBase, ABC):
     def _buy_single_pull(self) -> None:
         """Buy the daily single pull."""
         logging.info("Looking for discount Invite Letter...")
-        try:
-            logging.debug("Opening Guild Store.")
-            guild_store = self.wait_for_template(
-                "dailies/emporium/guild_store.png",
-                timeout=self.min_timeout,
-                timeout_message="Failed to find Guild Store.",
-            )
-            self.tap(guild_store)
-        except GameTimeoutError as fail:
-            logging.error(f"{fail} {self.LANG_ERROR}")
+        logging.debug("Opening Guild Store.")
+        if not self._try_wait_and_tap(
+            "dailies/emporium/guild_store.png",
+            timeout_message=f"Failed to find Guild Store. {self.LANG_ERROR}",
+        ):
             return
 
         try:

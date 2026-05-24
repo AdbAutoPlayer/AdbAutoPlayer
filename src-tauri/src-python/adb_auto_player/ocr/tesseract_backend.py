@@ -15,6 +15,7 @@ from adb_auto_player.models.ocr import OCRResult
 from adb_auto_player.util.runtime import RuntimeInfo
 from pytesseract import pytesseract
 
+from ._backend import OCRBackend
 from .tesseract_config import TesseractConfig
 from .tesseract_lang import Lang
 
@@ -117,7 +118,7 @@ def _initialize_tesseract() -> None:
     return None
 
 
-class TesseractBackend:
+class TesseractBackend(OCRBackend):
     """Tesseract OCR backend implementation."""
 
     def __init__(self, config: TesseractConfig = TesseractConfig()):

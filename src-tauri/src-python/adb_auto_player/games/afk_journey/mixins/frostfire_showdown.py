@@ -124,14 +124,13 @@ class FrostfireShowdownMixin(AFKJourneyBase, ABC):
         logging.info(
             "Opening Frostfire Showdown",
         )
-        self._tap_till_template_disappears(template="navigation/hamburger_menu")
-        sleep(2)
-        self._tap_till_template_disappears(template="dailies/hamburger/events")
-        sleep(2)
-        self._tap_till_template_disappears(
-            template="event/frostfire_showdown/frostfire_showdown"
+        self._navigate_menu_chain(
+            [
+                "navigation/hamburger_menu",
+                "dailies/hamburger/events",
+                "event/frostfire_showdown/frostfire_showdown",
+            ]
         )
-        sleep(2)
         self.wait_for_template(template="event/frostfire_showdown/title_s")
         self.tap(Point(650, 1450))  # Join
         sleep(3)
