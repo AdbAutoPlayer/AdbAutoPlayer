@@ -20,16 +20,16 @@
     "@sveltejs/kit": "^2.60.1",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@tailwindcss/forms": "^0.5.11",
-    "@tauri-apps/cli": "^2.11.1",
+    "@tauri-apps/cli": "^2.11.2",
     "@types/node": "^25.8.0",
     "json-schema-to-typescript": "^15.0.4",
     "prettier": "^3.8.3",
     "prettier-plugin-svelte": "^3.5.2",
     "prettier-plugin-tailwindcss": "^0.8.0",
-    "svelte": "^5.55.7",
+    "svelte": "^5.55.9",
     "svelte-check": "^4.4.8",
     "typescript": "^6.0.3",
-    "vite": "^8.0.13",
+    "vite": "^8.0.14",
     "vite-plugin-devtools-json": "^1.0.0"
   },
   "license": "MIT",
@@ -52,5 +52,5 @@
     "tauri": "tauri"
   },
   "type": "module",
-  "version": "12.8.20"
+  "version": "12.8.21"
 }
