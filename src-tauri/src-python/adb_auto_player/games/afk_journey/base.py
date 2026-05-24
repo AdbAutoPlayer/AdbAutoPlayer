@@ -581,6 +581,7 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
 
             case Mode.RAVAGED_REALM:
                 return [
+                    "event/ravaged_realm/battle_ended.png",
                     "arena/done.png",
                     "next.png",
                     "battle/victory_rewards.png",
@@ -588,6 +589,9 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
                     "navigation/confirm.png",
                     "battle/power_up.png",
                     "battle/result.png",
+                    "tap_to_close.png",
+                    "afk_stages/tap_to_close.png",
+                    "quests/tap_to_close.png",
                 ]
 
             case _:

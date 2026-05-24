@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ffprobe -v quiet -show_format -show_streams \"f:/Adbautoplayer/AdbAutoPlayer/ravaged_realm_debug.mp4\")",
+      "Bash(ffmpeg -i \"f:/Adbautoplayer/AdbAutoPlayer/ravaged_realm_debug.mp4\" -ss 45 -t 40 -vf \"fps=0.5,scale=414:736\" \"f:/Adbautoplayer/AdbAutoPlayer/frame_%03d.png\" -y)",
+      "Bash(ffmpeg -i \"f:/Adbautoplayer/AdbAutoPlayer/ravaged_realm_debug.mp4\" -ss 55 -frames:v 1 \"f:/Adbautoplayer/AdbAutoPlayer/battle_ended_full.png\" -y)",
+      "Bash(ffmpeg -i \"f:/Adbautoplayer/AdbAutoPlayer/ravaged_realm_debug.mp4\" -ss 70 -frames:v 1 -update 1 \"f:/Adbautoplayer/AdbAutoPlayer/battle_ended_stable.png\" -y)",
+      "Bash(python -c ':*)"
+    ]
+  }
+}

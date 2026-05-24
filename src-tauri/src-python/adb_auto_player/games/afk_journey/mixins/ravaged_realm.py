@@ -108,6 +108,7 @@ class RavagedRealmMixin(AFKJourneyBase):
             else:
                 records = self.wait_for_template(
                     "battle/records.png",
+                    threshold=ConfidenceValue("80%"),
                     timeout_message="Failed to find Records button.",
                     timeout=self.min_timeout,
                 )
@@ -127,6 +128,7 @@ class RavagedRealmMixin(AFKJourneyBase):
             for i in range(2):
                 skip_btn = self.wait_for_any_template(
                     templates=["event/ravaged_realm/skip.png"],
+                    threshold=ConfidenceValue("80%"),
                     timeout=self.template_timeout,
                     timeout_message=f"Failed to find Skip (press {i + 1}/2).",
                 )
@@ -137,7 +139,22 @@ class RavagedRealmMixin(AFKJourneyBase):
             logging.error(f"{fail}")
             return False
 
-    # ruff: noqa: PLR0915
+    def _click_through_wave_prep_screens(self) -> None:
+        """Click Next/Battle buttons through all wave prep screens to start combat."""
+        for _ in range(3):
+            try:
+                btn = self.wait_for_any_template(
+                    templates=["battle/next.png", "battle/battle.png"],
+                    threshold=ConfidenceValue("80%"),
+                    crop_regions=CropRegions(top=0.7),
+                    timeout=5.0,
+                    timeout_message="No more prep screen buttons.",
+                )
+                self.tap(btn)
+                self.sleep_navigation()
+            except GameTimeoutError:
+                return
+
     def _run_battle(self) -> None:
         """Tap Battle to enter prep screen, copy first Records formation, and start."""
         attempts = self.settings.ravaged_realm.attempts
@@ -169,8 +186,9 @@ class RavagedRealmMixin(AFKJourneyBase):
                         "navigation/confirm.png",
                         "confirm_text.png",
                     ],
+                    threshold=ConfidenceValue("80%"),
                     crop_regions=CropRegions(top=0.4),
-                    timeout=self.template_timeout,
+                    timeout=max(30.0, self.template_timeout),
                     timeout_message="Failed to load battle prep screen.",
                 )
 
@@ -189,15 +207,28 @@ class RavagedRealmMixin(AFKJourneyBase):
                     self._click_confirm_on_popup()
                     self.sleep_navigation()
 
+                    # Tap the Battle button again to enter prep screen after purchase
+                    logging.info("Tapping Battle button again after purchase...")
+                    battle_btn = self.wait_for_template(
+                        "battle/battle.png",
+                        threshold=ConfidenceValue("75%"),
+                        crop_regions=CropRegions(top=0.6, bottom=0.1),
+                        timeout_message="Failed to find Battle button after purchase.",
+                        timeout=self.min_timeout,
+                    )
+                    self.tap(battle_btn)
+                    self.sleep_navigation()
+
                     # Now wait for the actual prep screen to load after purchase
                     prep_match = self.wait_for_any_template(
                         templates=[
                             "battle/records.png",
                             "battle/formations_icon.png",
                         ],
-                        crop_regions=CropRegions(top=0.5),
-                        timeout=self.template_timeout,
-                        timeout_message="Failed to load prep screen after purchase.",
+                        threshold=ConfidenceValue("80%"),
+                        crop_regions=CropRegions(),
+                        timeout=max(30.0, self.template_timeout),
+                        timeout_message=("Failed to load prep screen after purchase."),
                     )
             except GameTimeoutError as fail:
                 logging.error(str(fail))
@@ -211,17 +242,7 @@ class RavagedRealmMixin(AFKJourneyBase):
                 logging.info("Using current formation (skipping Records).")
 
             logging.info("Initiating battle...")
-            try:
-                self.tap(Point(850, 1780))
-                self._tap_coordinates_till_template_disappears(
-                    coordinates=Point(850, 1780),
-                    template=prep_match.template,
-                    crop_regions=CropRegions(top=0.5),
-                    delay=2.0,
-                )
-            except GameActionFailedError:
-                logging.warning("Failed to start Battle. Are heroes selected?")
-                return
+            self._click_through_wave_prep_screens()
             self.sleep_action()
 
             logging.info("Waiting for battle to complete or skip button...")
@@ -234,7 +255,8 @@ class RavagedRealmMixin(AFKJourneyBase):
                 match = self.wait_for_any_template(
                     templates=templates,
                     timeout=self.BATTLE_TIMEOUT,
-                    crop_regions=CropRegions(top=0.4),
+                    crop_regions=CropRegions(),
+                    threshold=ConfidenceValue("65%"),
                     delay=1.0,
                     timeout_message="Battle over screen not found after timeout.",
                 )
@@ -246,18 +268,20 @@ class RavagedRealmMixin(AFKJourneyBase):
 
                     match = self.wait_for_any_template(
                         templates=self._get_battle_over_templates(),
-                        timeout=self.template_timeout,
-                        crop_regions=CropRegions(top=0.4),
+                        timeout=max(60.0, self.template_timeout),
+                        crop_regions=CropRegions(),
+                        threshold=ConfidenceValue("65%"),
                         delay=1.0,
-                        timeout_message="Battle over screen not found after skipping.",
+                        timeout_message=(
+                            "Battle over screen not found after skipping."
+                        ),
                     )
                 logging.info("Battle complete. Dismissing result screen...")
                 self.sleep_navigation()
-                self.tap(match)
-                self.sleep_navigation()
-                self.tap(Point(550, 1800))
-                self.sleep_navigation()
-                self.tap(self.CENTER_POINT)
+                if match.template == "event/ravaged_realm/battle_ended.png":
+                    self.tap(self.CENTER_POINT)
+                else:
+                    self.tap(match)
                 self.sleep_navigation()
             except GameTimeoutError as fail:
                 logging.error(str(fail))

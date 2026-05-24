@@ -155,6 +155,14 @@ legend_trial_messages = [
     ),
 ]
 
+ravaged_realm_messages = [
+    PopupMessage(
+        # Use to purchase a Ravaged Realm challenge attempt? Daily Attempts: 10/10
+        text="Use to purchase a Ravaged Realm challenge attempt?",
+        ignore=True,
+    ),
+]
+
 HEAD_FROM_WORLD_TO_HOMESTEAD_MESSAGE = PopupMessage(
     # Heading to the Homestead now. Continue?
     text="Heading to Homestead now",
@@ -178,6 +186,7 @@ popup_messages: list[PopupMessage] = (
     + misc_messages
     + fishing_messages
     + legend_trial_messages
+    + ravaged_realm_messages
     + [
         HEAD_FROM_HOMESTEAD_TO_WORLD_MESSAGE,
         HEAD_FROM_WORLD_TO_HOMESTEAD_MESSAGE,
