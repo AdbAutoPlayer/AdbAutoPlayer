@@ -2,6 +2,7 @@ use pyo3::prelude::*;
 
 mod commands;
 mod discord;
+mod error;
 mod log;
 mod notification;
 mod settings;
@@ -10,6 +11,7 @@ mod tray;
 mod window;
 
 pub use commands::*;
+pub use error::*;
 pub use log::*;
 pub use settings::*;
 pub use shutdown::*;
@@ -29,9 +31,10 @@ pub mod ext_mod {
 
     #[pymodule_init]
     fn init(module: &Bound<'_, PyModule>) -> PyResult<()> {
+        let _ = tracing_subscriber::fmt::try_init();
         match std::env::current_dir() {
-            Ok(path) => println!("Current working directory: {}", path.display()),
-            Err(e) => eprintln!("Error getting current directory: {e}"),
+            Ok(path) => tracing::info!("Current working directory: {}", path.display()),
+            Err(e) => tracing::error!("Error getting current directory: {e}"),
         }
         pytauri::pymodule_export(
             module,

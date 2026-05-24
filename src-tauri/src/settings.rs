@@ -1,4 +1,4 @@
-use crate::LogMessage;
+use crate::{CommandError, LogMessage};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -415,7 +415,7 @@ pub struct AppSettingsResponse {
 pub fn get_app_settings_form(
     app_handle: tauri::AppHandle,
     state: State<'_, Mutex<AppSettings>>,
-) -> AppSettingsResponse {
+) -> Result<AppSettingsResponse, CommandError> {
     let settings = AppSettings::load_from_file(get_app_settings_path(&app_handle));
 
     // Update state
@@ -424,11 +424,11 @@ pub fn get_app_settings_form(
         *s = settings.clone();
     }
 
-    AppSettingsResponse {
+    Ok(AppSettingsResponse {
         settings,
         schema: APP_SETTINGS_SCHEMA.to_string(),
         file_name: "App.toml".to_string(),
-    }
+    })
 }
 
 #[tauri::command]
@@ -436,11 +436,11 @@ pub fn save_app_settings(
     app_handle: tauri::AppHandle,
     mut settings: AppSettings,
     state: State<'_, Mutex<AppSettings>>,
-) -> AppSettings {
+) -> Result<AppSettings, CommandError> {
     let path = get_app_settings_path(&app_handle);
-    println!("{}", path.display());
+    tracing::info!("{}", path.display());
     settings.sanitize();
-    AppSettings::save_to_file(&settings, &path).expect("Failed to save App Settings");
+    AppSettings::save_to_file(&settings, &path)?;
 
     let mut state = state.lock().unwrap();
     *state = settings.clone();
@@ -448,10 +448,8 @@ pub fn save_app_settings(
     let path_display = path.display().to_string();
     let message = format!("App Settings saved: {path_display}");
 
-    app_handle
-        .emit("log-message", LogMessage::new(LogLevel::INFO, message))
-        .expect("Failed to emit log-message");
-    settings
+    app_handle.emit("log-message", LogMessage::new(LogLevel::INFO, message))?;
+    Ok(settings)
 }
 
 fn get_app_settings_path(app_handle: &tauri::AppHandle) -> PathBuf {

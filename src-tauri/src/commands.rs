@@ -1,4 +1,4 @@
-use crate::{LogLevel, LogMessage};
+use crate::{CommandError, LogLevel, LogMessage};
 use serde_json::Value;
 use std::fs;
 use tauri::{AppHandle, Emitter, Manager};
@@ -9,49 +9,44 @@ pub fn save_settings(
     profile_index: u8,
     file_name: String,
     json_data: String,
-) -> Result<(), String> {
+) -> Result<(), CommandError> {
     // Parse JSON string into a serde_json::Value
-    let parsed_json: Value =
-        serde_json::from_str(&json_data).map_err(|e| format!("Invalid JSON: {e}"))?;
-    println!("Debug: JSON parsed successfully: {parsed_json:?}");
+    let parsed_json: Value = serde_json::from_str(&json_data)?;
+    tracing::debug!("JSON parsed successfully: {parsed_json:?}");
 
     // Convert serde_json::Value into a serde-compatible structure for TOML
-    let toml_value = toml::Value::try_from(parsed_json)
-        .map_err(|e| format!("Failed to convert JSON to TOML: {e}"))?;
-    println!("Debug: Conversion successful: {toml_value:?}");
+    let toml_value =
+        toml::Value::try_from(parsed_json).map_err(|e| CommandError::TomlConvert(e.to_string()))?;
+    tracing::debug!("Conversion successful: {toml_value:?}");
 
     // Serialize to pretty TOML string
-    let toml_string = toml::to_string_pretty(&toml_value)
-        .map_err(|e| format!("Failed to serialize TOML: {e}"))?;
-    println!("Debug: TOML serialization successful\n{toml_string}");
+    let toml_string = toml::to_string_pretty(&toml_value)?;
+    tracing::debug!("TOML serialization successful\n{toml_string}");
 
     let config_dir = app_handle
         .path()
         .app_config_dir()
-        .expect("Failed to get config directory");
-    println!("Debug: Config directory: {config_dir:?}");
+        .map_err(|_| CommandError::ConfigDirNotFound)?;
+    tracing::debug!("Config directory: {config_dir:?}");
 
     let profile_path = config_dir.join(profile_index.to_string());
-    println!("Debug: Profile path: {profile_path:?}");
+    tracing::debug!("Profile path: {profile_path:?}");
 
     let settings_path = profile_path.join(&file_name);
-    println!("Debug: Settings file path: {settings_path:?}");
+    tracing::debug!("Settings file path: {settings_path:?}");
 
-    fs::create_dir_all(&profile_path)
-        .map_err(|e| format!("Failed to create config directories: {e}"))?;
+    fs::create_dir_all(&profile_path)?;
 
     // Write TOML string to file
-    fs::write(&settings_path, toml_string).map_err(|e| format!("Failed to write file: {e}"))?;
+    fs::write(&settings_path, toml_string)?;
 
     let path_display = settings_path.display().to_string();
     let message = format!("Settings saved: {path_display}");
 
-    app_handle
-        .emit(
-            "log-message",
-            LogMessage::new(LogLevel::INFO, message).with_profile_index(profile_index),
-        )
-        .expect("Failed to emit log-message");
+    app_handle.emit(
+        "log-message",
+        LogMessage::new(LogLevel::INFO, message).with_profile_index(profile_index),
+    )?;
 
     Ok(())
 }

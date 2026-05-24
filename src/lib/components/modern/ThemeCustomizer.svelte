@@ -1,6 +1,6 @@
 <script lang="ts">
   import { t } from "$lib/i18n/i18n";
-  import { uiState } from "$lib/stores";
+  import { ui } from "$lib/stores.svelte";
   import { fade, fly } from "svelte/transition";
 
   let { onClose }: { onClose: () => void } = $props();
@@ -48,8 +48,8 @@
       <div class="mode-toggle">
         <button
           class="mode-btn"
-          class:active={$uiState.theme === "dark"}
-          onclick={() => ($uiState.theme = "dark")}
+          class:active={ui.theme === "dark"}
+          onclick={() => ui.setTheme("dark")}
         >
           <svg
             viewBox="0 0 24 24"
@@ -64,8 +64,8 @@
         </button>
         <button
           class="mode-btn"
-          class:active={$uiState.theme === "light"}
-          onclick={() => ($uiState.theme = "light")}
+          class:active={ui.theme === "light"}
+          onclick={() => ui.setTheme("light")}
         >
           <svg
             viewBox="0 0 24 24"
@@ -86,13 +86,14 @@
     <!-- Accent Color -->
     <section class="section">
       <div class="section-label">
-        {$t("Accent Hue")} ({$uiState.accentHue}°)
+        {$t("Accent Hue")} ({ui.accentHue}°)
       </div>
       <input
         type="range"
         min="0"
         max="360"
-        bind:value={$uiState.accentHue}
+        value={ui.accentHue}
+        oninput={(e) => ui.setAccentHue(Number(e.currentTarget.value))}
         class="hue-slider"
       />
 
@@ -101,8 +102,8 @@
           <button
             class="preset-btn"
             style="--p-color: oklch(0.67 0.18 {p.h})"
-            class:active={$uiState.accentHue === p.h}
-            onclick={() => ($uiState.accentHue = p.h)}
+            class:active={ui.accentHue === p.h}
+            onclick={() => ui.setAccentHue(p.h)}
             title={p.name}
           ></button>
         {/each}
