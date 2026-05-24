@@ -7,6 +7,7 @@ from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models.decorators import GUIMetadata
+from adb_auto_player.models.geometry import Point
 
 
 class SupremeArenaMixin(AFKJourneyBase):
@@ -66,20 +67,40 @@ class SupremeArenaMixin(AFKJourneyBase):
             bool: True if opponent chosen and challenge confirmed, False otherwise.
         """
         try:
-            logging.debug("Tapping Challenge to enter opponent selection.")
-            btn = self.wait_for_template(
-                template="supreme_arena/challenge.png",
+            logging.debug("Tapping Challenge or Continue to enter opponent selection.")
+            btn = self.wait_for_any_template(
+                templates=["supreme_arena/challenge.png", "arena/continue.png"],
                 timeout=self.min_timeout,
-                timeout_message="Failed to find Challenge button.",
+                timeout_message="Failed to find Challenge or Continue button.",
             )
             self.sleep_navigation()
             self.tap(btn)
 
-            logging.debug("Selecting leftmost opponent via Challenge button.")
-            challenge = self.wait_for_template(
-                template="supreme_arena/challenge.png",
+            logging.debug("Waiting for Select Opponent screen.")
+            result = self.wait_for_any_template(
+                templates=[
+                    "supreme_arena/select_opponent.png",
+                    "supreme_arena/no_attempts_popup.png",
+                ],
                 timeout=self.min_timeout,
-                timeout_message="Failed to find opponent Challenge button.",
+                timeout_message="Failed to find Select Opponent screen.",
+            )
+
+            if "no_attempts_popup" in result.template:
+                logging.info(
+                    "All free Supreme Arena attempts used. Declining purchase."
+                )
+                self.tap(Point(485, 1250))  # Tap X to cancel purchase
+                return False
+
+            logging.debug("Tapping leftmost opponent card.")
+            self.tap(Point(165, 950))
+
+            logging.debug("Waiting for Challenge! button on opponent detail screen.")
+            challenge = self.wait_for_template(
+                template="supreme_arena/challenge_detail.png",
+                timeout=self.min_timeout,
+                timeout_message="Failed to find Challenge! button.",
             )
             self.tap(challenge)
             return True
