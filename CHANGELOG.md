@@ -2,29 +2,21 @@
 
 ## [12.9.0] - 2026-05-24
 
-### Added
+### AFK Journey
 
-- ⚔️ **AFK Journey - Supreme Arena**: New automation — challenges the weakest opponent each attempt, handles the gold purchase popup, and loops for the configured number of attempts.
-- ⚔️ **AFK Journey - Quests**: MatchingCards minigame is now detected and solved automatically instead of being treated as a blocker.
-- ⚔️ **AFK Journey - Quests**: Gesture quest support — opens the emote menu, navigates to the Magic tab for Ancestral Sense quests, and clicks the correct quest-marked gesture.
-- ⚔️ **AFK Journey - Quests**: Back arrow detection in stuck-state recovery to exit full-screen overlays.
-- ⚔️ **AFK Journey - Quests**: Checkmarked red dialogue choices are now prioritised over generic dialogue buttons.
-- ⚔️ **AFK Journey - Quests**: `claim` button added to the action button list; `skip` moved to top priority.
+#### New Features
 
-### Fixed
+- **Supreme Arena**: Automatically challenges the weakest opponent, handles the gold purchase popup, and repeats for the configured number of attempts.
+- **Quests**: Matching Cards minigame is now solved automatically.
+- **Quests**: Gesture quests are now handled — opens the emote menu, selects the Magic tab for Ancestral Sense quests, and taps the correct gesture.
+- **Quests**: Dialogue choices with a checkmark are now prioritised over generic dialogue buttons.
+- **Quests**: Added `claim` to the action button list; `skip` is now top priority.
 
-- ⚔️ **AFK Journey - Ravaged Realm**: Fixed the battle not starting, now correctly clicks through all wave prep screens before initiating combat.
-- ⚔️ **AFK Journey - Ravaged Realm**: Fixed "Battle over screen not found after skipping"
-- ⚔️ **AFK Journey - Quests**: TAP & HOLD was clicking ~170 px below the actual button — now taps the detected button position directly.
-- ⚔️ **AFK Journey - AFK Stages**: Season and Battle buttons are now located dynamically via template matching instead of hardcoded coordinates, fixing misclicks when the UI shifts.
-- ⚔️ **AFK Journey - Ravaged Realm**: Skip no longer exits the run early; battle attempts now always execute after claiming the skip rewards.
-- ⚔️ **AFK Journey - Ravaged Realm**: Skip confirmation now uses the correct `confirm_text` template.
-- 🛠️ **CI**: Fixed `ty-check` pre-commit hook — was searching the wrong source root and failing on all internal imports.
+#### Bug Fixes
 
-### Dependencies
-
-- `numpy` `>=2.4.5` → `>=2.4.6`
-- `prettier-plugin-svelte` `3.5.2` → `4.0.1`
-- `posthog-js` `1.373.5` → `1.376.0`
-- `@sveltejs/kit` `2.60.1` → `2.61.0`
-- `@types/node` `25.8.0` → `25.9.1`
+- **Ravaged Realm**: Battle no longer fails to start — all wave prep screens are now clicked through correctly.
+- **Ravaged Realm**: Fixed "Battle over screen not found" error when using skip.
+- **Ravaged Realm**: Skip no longer exits the run early; squads always fight after the skip rewards are claimed.
+- **AFK Stages**: Season and Battle buttons are now detected dynamically, fixing misclicks when the UI shifts position.
+- **Quests**: TAP & HOLD was tapping ~170 px below the target — now taps the correct position.
+- **Quests**: Back arrow is now detected in stuck-state recovery to exit full-screen overlays.
