@@ -9,7 +9,17 @@
       "Bash(xargs wc:*)",
       "Bash(xargs grep:*)",
       "Bash(uv run:*)",
-      "Bash(python -m pytest src-python/tests/games/afk_journey/mixins/test_all_mixins_extended.py -v)"
+      "Bash(python -m pytest src-python/tests/games/afk_journey/mixins/test_all_mixins_extended.py -v)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:patch-diff.githubusercontent.com)",
+      "Bash(curl -s \"https://patch-diff.githubusercontent.com/raw/AdbAutoPlayer/AdbAutoPlayer/pull/691.diff\")",
+      "WebFetch(domain:api.github.com)",
+      "Bash(uvx pre-commit:*)",
+      "Bash(curl -s \"https://patch-diff.githubusercontent.com/raw/AdbAutoPlayer/AdbAutoPlayer/pull/692.diff\")",
+      "Bash(curl -fsSL https://raw.githubusercontent.com/AdbAutoPlayer/AdbAutoPlayer/de8d0a139543818dff6a27a0675bb5c9e52caef9/src-tauri/src-python/adb_auto_player/games/afk_journey/templates/afk_stages/season_battle.png -o f:/Adbautoplayer/AdbAutoPlayer/src-tauri/src-python/adb_auto_player/games/afk_journey/templates/afk_stages/season_battle.png)",
+      "Bash(curl -fsSL __TRACKED_VAR__/battle_modes/supreme_arena.png -o __TRACKED_VAR__/battle_modes/supreme_arena.png)",
+      "Bash(curl -fsSL __TRACKED_VAR__/event/ravaged_realm/skip_orange.png -o __TRACKED_VAR__/event/ravaged_realm/skip_orange.png)",
+      "Bash(curl -fsSL __TRACKED_VAR__/supreme_arena/__TRACKED_VAR__ -o __TRACKED_VAR__/supreme_arena/__TRACKED_VAR__)"
     ]
   }
 }

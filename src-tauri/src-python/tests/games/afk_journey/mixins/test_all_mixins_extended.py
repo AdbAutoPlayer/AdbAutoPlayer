@@ -269,7 +269,7 @@ def test_run_ravaged_realm():
 
 
 def test_run_ravaged_realm_skip():
-    """Skip path: _try_skip returns True → _run_all_squads is never called."""
+    """Skip path: _try_skip returns True → _run_all_squads still runs."""
     bot = MockAllAFKJ()
     with (
         patch.object(bot, "start_up"),
@@ -279,7 +279,7 @@ def test_run_ravaged_realm_skip():
         patch("time.sleep"),
     ):
         bot.run_ravaged_realm()
-        mock_squads.assert_not_called()
+        mock_squads.assert_called_once()
 
 
 def test_run_all_squads_skips_disabled_factions():
