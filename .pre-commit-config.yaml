@@ -39,8 +39,8 @@ repos:
       - id: ty
         name: ty-check
         language: system
-        types: [ python ]
-        entry: uvx ty check
+        entry: uvx ty check --project src-tauri --python .venv src-tauri/src-python
+        pass_filenames: false
 
   # uv
   - repo: https://github.com/astral-sh/uv-pre-commit

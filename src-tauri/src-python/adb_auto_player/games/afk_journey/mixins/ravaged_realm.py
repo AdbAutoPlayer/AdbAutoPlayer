@@ -38,8 +38,6 @@ class RavagedRealmMixin(AFKJourneyBase):
 
             if self._try_skip():
                 logging.info("Ravaged Realm skipped successfully.")
-                return
-
             self._run_all_squads()
         except (GameTimeoutError, GameActionFailedError) as e:
             logging.error(str(e))
@@ -72,13 +70,13 @@ class RavagedRealmMixin(AFKJourneyBase):
         sleep(8)
 
     def _try_skip(self) -> bool:
-        """Check for and handle the Skip button.
+        """Check for and handle the Skip button if present.
 
-        If the Skip button is present the run has already been completed today:
-        tap Skip → confirm the popup → tap to close the rewards screen.
+        If the Skip button is visible, tap it and confirm the popup.
+        Battle attempts will still run after this.
 
         Returns:
-            True if the skip flow was executed, False if Battle should be run instead.
+            True if the skip flow was executed, False otherwise.
         """
         skip = self.game_find_template_match(
             "event/ravaged_realm/skip.png",
@@ -88,15 +86,11 @@ class RavagedRealmMixin(AFKJourneyBase):
         if skip is None:
             return False
 
-        logging.info("Skip available - claiming skip rewards.")
+        logging.info("Skip button found - tapping and confirming.")
         self.tap(skip)
         self.sleep_action()
 
-        self._tap_till_template_disappears(template="navigation/confirm")
-        self.sleep_action()
-
-        # Close the rewards list by tapping anywhere on it.
-        self.tap(self.CENTER_POINT)
+        self._tap_till_template_disappears(template="navigation/confirm_text")
         self.sleep_navigation()
         return True
 
