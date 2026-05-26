@@ -1,6 +1,7 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.file_loader.settings_loader import SettingsLoader
 from adb_auto_player.games.afk_journey.mixins.afk_stages import AFKStagesMixin
 from adb_auto_player.games.afk_journey.mixins.arcane_labyrinth import (
@@ -174,6 +175,18 @@ def test_push_afk_stages():
     with patch.object(bot, "start_up"):
         bot.push_afk_stages(season=False)
         bot.push_afk_stages(season=True)
+
+
+def test_push_afk_stages_timeout_fallback():
+    bot = MockAllAFKJ()
+
+    def mock_wait(*args, **kwargs):
+        raise GameTimeoutError("Mock timeout")
+
+    with patch.object(bot, "start_up"):
+        with patch.object(bot, "wait_for_template", side_effect=mock_wait):
+            bot.push_afk_stages(season=False)
+            bot.push_afk_stages(season=True)
 
 
 def test_run_arcane_labyrinth():
