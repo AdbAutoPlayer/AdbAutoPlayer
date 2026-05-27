@@ -11,7 +11,43 @@ use tauri::utils::platform::resource_dir;
 
 use adb_auto_player_lib::{ext_mod, tauri_generate_context};
 
-fn main() -> Result<Infallible, Box<dyn Error>> {
+fn main() {
+    if let Err(err) = run() {
+        let log_path = std::env::temp_dir().join("AdbAutoPlayer_crash.log");
+        let _ = std::fs::write(&log_path, err.to_string());
+
+        #[cfg(windows)]
+        show_error_dialog(
+            "AdbAutoPlayer - Startup Error",
+            &format!(
+                "{err}\n\nA crash log has been saved to:\n{}",
+                log_path.display()
+            ),
+        );
+
+        std::process::exit(1);
+    }
+}
+
+#[cfg(windows)]
+fn show_error_dialog(title: &str, message: &str) {
+    use std::ffi::OsStr;
+    use std::os::windows::ffi::OsStrExt;
+
+    let title_wide: Vec<u16> = OsStr::new(title).encode_wide().chain(Some(0)).collect();
+    let msg_wide: Vec<u16> = OsStr::new(message).encode_wide().chain(Some(0)).collect();
+
+    unsafe {
+        windows_sys::Win32::UI::WindowsAndMessaging::MessageBoxW(
+            0,
+            msg_wide.as_ptr(),
+            title_wide.as_ptr(),
+            0x00000010u32, // MB_OK | MB_ICONERROR
+        );
+    }
+}
+
+fn run() -> Result<Infallible, Box<dyn Error>> {
     let py_env = if cfg!(dev) {
         // `cfg(dev)` is set by `tauri-build` in `build.rs`, which means running with `tauri dev`,
         // see: <https://github.com/tauri-apps/tauri/pull/8937>.
