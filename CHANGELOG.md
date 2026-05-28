@@ -1,8 +1,11 @@
 # Changelog
 
-## [12.9.2] - 2026-05-28
+## [12.9.3] - 2026-05-29
+
+### Features
+
+- **ADB Device Scanner**: Added an automated ADB process and port scanner in the Device Settings form. It automatically detects running emulators (such as LDPlayer, BlueStacks, Nox, MEmu, MuMu, and Android Studio Emulator) and finds their active ADB ports, auto-filling the Device ID field.
 
 ### Bug Fixes
 
-- **Startup Diagnostics**: Added native, cross-platform startup error dialogs (Windows, macOS, and Linux) and crash log writing to surface fatal issues instead of exiting silently.
-- **Crash Logging**: Implemented a global exception hook in Python to capture and log unhandled startup/import errors.
+- **Auto-Progress Quests**: Fixed map repeatedly opening and closing by dynamically offset tapping the quest tracker text relative to the detected questbook icon, rather than using a hardcoded coordinate.

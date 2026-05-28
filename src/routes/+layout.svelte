@@ -351,15 +351,16 @@
 
 <Toast.Group {toaster}>
   {#snippet children(toast)}
-    <Toast {toast} class="data-[type=error]:preset-tonal-error">
+    <Toast {toast}>
       <Toast.Message>
-        <Toast.Title>
-          <span class="text-lg">{toast.title}</span>
-        </Toast.Title>
-        <Toast.Description>
-          <p>{toast.description}</p>
-        </Toast.Description>
+        <Toast.Title>{toast.title}</Toast.Title>
+        {#if toast.description}
+          <Toast.Description>{toast.description}</Toast.Description>
+        {/if}
       </Toast.Message>
+      {#if toast.action}
+        <Toast.ActionTrigger>{toast.action.label}</Toast.ActionTrigger>
+      {/if}
       <Toast.CloseTrigger />
     </Toast>
   {/snippet}
@@ -620,6 +621,121 @@
   }
 
   .close-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-1);
+  }
+
+  /* Premium Toast styles targeting Zag.js components */
+  :global([data-scope="toast"][data-part="group"]) {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+    width: calc(100% - 48px);
+    max-width: 360px;
+  }
+
+  @keyframes toast-enter {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  :global([data-scope="toast"][data-part="root"]) {
+    display: flex;
+    width: 100%;
+    align-items: start;
+    justify-content: space-between;
+    gap: 12px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line);
+    background-color: var(--bg-1);
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(12px);
+    pointer-events: auto;
+    animation: toast-enter 0.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Decorative accent left indicator */
+  :global([data-scope="toast"][data-part="root"]::before) {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: var(--accent);
+  }
+
+  :global([data-scope="toast"][data-part="root"][data-type="error"]::before) {
+    background-color: var(--err);
+  }
+
+  :global([data-scope="toast"][data-part="root"][data-type="info"]::before) {
+    background-color: var(--accent);
+  }
+
+  /* Specific states */
+  :global([data-scope="toast"][data-part="root"][data-type="error"]) {
+    border-color: oklch(0.7 0.19 25 / 0.3);
+    background-color: oklch(0.205 0.01 280 / 0.9);
+  }
+
+  :global([data-scope="toast"][data-part="root"][data-type="info"]) {
+    border-color: oklch(0.67 0.18 var(--accent-h) / 0.2);
+    background-color: oklch(0.205 0.01 280 / 0.9);
+  }
+
+  :global([data-scope="toast"][data-part="message"]) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding-left: 6px;
+  }
+
+  :global([data-scope="toast"][data-part="title"]) {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-1);
+    line-height: 1.4;
+  }
+
+  :global([data-scope="toast"][data-part="description"]) {
+    font-size: 12px;
+    color: var(--text-3);
+    line-height: 1.4;
+  }
+
+  :global([data-scope="toast"][data-part="close-trigger"]) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    color: var(--text-3);
+    background: transparent;
+    transition:
+      background var(--dur-1),
+      color var(--dur-1);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  :global([data-scope="toast"][data-part="close-trigger"]:hover) {
     background: var(--bg-hover);
     color: var(--text-1);
   }
