@@ -12,20 +12,19 @@ use tauri::utils::platform::resource_dir;
 use adb_auto_player_lib::{ext_mod, tauri_generate_context};
 
 fn main() {
-    if let Err(err) = run() {
-        let log_path = std::env::temp_dir().join("AdbAutoPlayer_crash.log");
-        let _ = std::fs::write(&log_path, err.to_string());
+    let Err(err) = run();
+    let log_path = std::env::temp_dir().join("AdbAutoPlayer_crash.log");
+    let _ = std::fs::write(&log_path, err.to_string());
 
-        show_error_dialog(
-            "AdbAutoPlayer - Startup Error",
-            &format!(
-                "{err}\n\nA crash log has been saved to:\n{}",
-                log_path.display()
-            ),
-        );
+    show_error_dialog(
+        "AdbAutoPlayer - Startup Error",
+        &format!(
+            "{err}\n\nA crash log has been saved to:\n{}",
+            log_path.display()
+        ),
+    );
 
-        std::process::exit(1);
-    }
+    std::process::exit(1);
 }
 
 #[cfg(windows)]
@@ -38,7 +37,7 @@ fn show_error_dialog(title: &str, message: &str) {
 
     unsafe {
         windows_sys::Win32::UI::WindowsAndMessaging::MessageBoxW(
-            0,
+            std::ptr::null_mut(),
             msg_wide.as_ptr(),
             title_wide.as_ptr(),
             0x00000010u32, // MB_OK | MB_ICONERROR
