@@ -5,6 +5,8 @@ import logging
 import multiprocessing
 import queue
 import sys
+import tempfile
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from contextvars import copy_context
 from datetime import datetime
@@ -46,6 +48,16 @@ from pytauri import (
     builder_factory,
     context_factory,
 )
+
+
+def _write_crash_log(exc_type, exc_value, exc_tb) -> None:
+    log_path = Path(tempfile.gettempdir()) / "AdbAutoPlayer_crash.log"
+    with open(log_path, "w", encoding="utf-8") as f:
+        traceback.print_exception(exc_type, exc_value, exc_tb, file=f)
+    sys.__excepthook__(exc_type, exc_value, exc_tb)
+
+
+sys.excepthook = _write_crash_log
 
 PYTAURI_GEN_TS = getenv("VIRTUAL_ENV_PROMPT") == "AdbAutoPlayer"
 SIGTERM_EXIT_CODE = -15
