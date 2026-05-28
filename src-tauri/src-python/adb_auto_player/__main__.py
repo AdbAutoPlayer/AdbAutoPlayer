@@ -1,28 +1,12 @@
 """The main entry point for the Tauri app."""
 
-import sys
-import tempfile
-import traceback
-from pathlib import Path
-
-
-def _write_crash_log(
-    exc_type: type[BaseException],
-    exc_value: BaseException,
-    exc_tb: object,
-) -> None:
-    log_path = Path(tempfile.gettempdir()) / "AdbAutoPlayer_crash.log"
-    with open(log_path, "w") as f:
-        traceback.print_exception(exc_type, exc_value, exc_tb, file=f)
-    sys.__excepthook__(exc_type, exc_value, exc_tb)
-
-
-sys.excepthook = _write_crash_log
-
 import asyncio
 import logging
 import multiprocessing
 import queue
+import sys
+import tempfile
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from contextvars import copy_context
 from datetime import datetime
@@ -30,6 +14,7 @@ from functools import wraps
 from logging.handlers import QueueHandler, QueueListener
 from multiprocessing import Process, Queue, freeze_support
 from os import getenv
+from pathlib import Path
 from typing import Any, Literal, NoReturn, Optional
 
 from adb_auto_player.commands import log_debug_info
@@ -63,6 +48,16 @@ from pytauri import (
     builder_factory,
     context_factory,
 )
+
+
+def _write_crash_log(exc_type, exc_value, exc_tb) -> None:
+    log_path = Path(tempfile.gettempdir()) / "AdbAutoPlayer_crash.log"
+    with open(log_path, "w", encoding="utf-8") as f:
+        traceback.print_exception(exc_type, exc_value, exc_tb, file=f)
+    sys.__excepthook__(exc_type, exc_value, exc_tb)
+
+
+sys.excepthook = _write_crash_log
 
 PYTAURI_GEN_TS = getenv("VIRTUAL_ENV_PROMPT") == "AdbAutoPlayer"
 SIGTERM_EXIT_CODE = -15
