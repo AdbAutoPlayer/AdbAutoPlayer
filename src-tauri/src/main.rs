@@ -16,7 +16,6 @@ fn main() {
         let log_path = std::env::temp_dir().join("AdbAutoPlayer_crash.log");
         let _ = std::fs::write(&log_path, err.to_string());
 
-        #[cfg(windows)]
         show_error_dialog(
             "AdbAutoPlayer - Startup Error",
             &format!(
@@ -46,6 +45,55 @@ fn show_error_dialog(title: &str, message: &str) {
         );
     }
 }
+
+#[cfg(target_os = "macos")]
+fn show_error_dialog(title: &str, message: &str) {
+    let safe_msg = message
+        .replace('\\', "\\\\")
+        .replace('"', "\\\"")
+        .replace('\n', " ");
+    let safe_title = title.replace('\\', "\\\\").replace('"', "\\\"");
+    let script = format!(
+        r#"display dialog "{safe_msg}" buttons {{"OK"}} with icon stop with title "{safe_title}""#
+    );
+    let _ = std::process::Command::new("osascript")
+        .args(["-e", &script])
+        .status();
+}
+
+#[cfg(target_os = "linux")]
+fn show_error_dialog(title: &str, message: &str) {
+    let candidates: &[(&str, &[&str])] = &[
+        ("zenity", &["--error", "--no-wrap"]),
+        ("kdialog", &["--sorry"]),
+        ("xmessage", &["-center"]),
+    ];
+    for &(cmd, base_args) in candidates {
+        let mut command = std::process::Command::new(cmd);
+        command.args(base_args);
+        match cmd {
+            "zenity" => {
+                command.arg(format!("--text={message}"));
+                command.arg(format!("--title={title}"));
+            }
+            "kdialog" => {
+                command.arg(message);
+                command.args(["--title", title]);
+            }
+            _ => {
+                command.arg(message);
+            }
+        }
+        match command.status() {
+            Ok(_) => return,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(_) => return,
+        }
+    }
+}
+
+#[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
+fn show_error_dialog(_title: &str, _message: &str) {}
 
 fn run() -> Result<Infallible, Box<dyn Error>> {
     let py_env = if cfg!(dev) {
