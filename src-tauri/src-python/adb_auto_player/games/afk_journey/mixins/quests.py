@@ -214,11 +214,12 @@ class QuestMixin(AFKJourneyBase, ABC):
         if self._handle_special_quest_actions():
             return True
 
-        # Finally we click the 'Echoes of Dissent' text to auto-path. We return False
+        # Finally we click the quest tracker text to auto-path. We return False
         # as we need to increment the counter in case we get stuck clicking it
-        if path and self.find_any_template(["quests/questbook"]):
+        questbook_match = self.find_any_template(["quests/questbook"])
+        if path and questbook_match is not None:
             logging.info("Auto-pathing")
-            self.tap(Point(820, 375))
+            self.tap(Point(questbook_match.x + 100, questbook_match.y))
             sleep(5)
 
         return False

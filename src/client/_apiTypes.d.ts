@@ -83,6 +83,10 @@ get_profile_state: {
 input: ProfileContext
 output: RootModelNoneType
 }
+scan_emulator_ports: {
+input: ProfileContext
+output: string[]
+}
 cache_clear: {
 input: CacheClear
 output: RootModelNoneType

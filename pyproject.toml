@@ -1,6 +1,6 @@
 [project]
 name = "workspace"
-version = "12.9.2"
+version = "12.9.3"
 requires-python = ">=3.11"
 dependencies = [
     "pytest-cov>=7.1.0",
