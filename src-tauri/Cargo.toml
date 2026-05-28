@@ -1,6 +1,6 @@
 [package]
 name = "adb-auto-player"
-version = "12.9.1"
+version = "12.9.2"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
@@ -45,3 +45,6 @@ tracing-subscriber = "0.3"
 tauri-plugin-single-instance = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-window-state = "2"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = ["Win32_UI_WindowsAndMessaging"] }
