@@ -1,7 +1,8 @@
 # Changelog
 
-## [12.9.1] - 2026-05-26
+## [12.9.2] - 2026-05-28
 
 ### Bug Fixes
 
-- **AFK Stages**: Fixed an issue where the bot would timeout if only one mode (Season or Normal) was left to complete. The bot now falls back to static coordinates when the single button spans the entire screen.
+- **Startup Diagnostics**: Added native, cross-platform startup error dialogs (Windows, macOS, and Linux) and crash log writing to surface fatal issues instead of exiting silently.
+- **Crash Logging**: Implemented a global exception hook in Python to capture and log unhandled startup/import errors.
