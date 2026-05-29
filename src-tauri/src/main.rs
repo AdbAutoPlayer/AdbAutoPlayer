@@ -11,7 +11,90 @@ use tauri::utils::platform::resource_dir;
 
 use adb_auto_player_lib::{ext_mod, tauri_generate_context};
 
-fn main() -> Result<Infallible, Box<dyn Error>> {
+fn main() {
+    let Err(err) = run();
+    let log_path = std::env::temp_dir().join("AdbAutoPlayer_crash.log");
+    let _ = std::fs::write(&log_path, err.to_string());
+
+    show_error_dialog(
+        "AdbAutoPlayer - Startup Error",
+        &format!(
+            "{err}\n\nA crash log has been saved to:\n{}",
+            log_path.display()
+        ),
+    );
+
+    std::process::exit(1);
+}
+
+#[cfg(windows)]
+fn show_error_dialog(title: &str, message: &str) {
+    use std::ffi::OsStr;
+    use std::os::windows::ffi::OsStrExt;
+
+    let title_wide: Vec<u16> = OsStr::new(title).encode_wide().chain(Some(0)).collect();
+    let msg_wide: Vec<u16> = OsStr::new(message).encode_wide().chain(Some(0)).collect();
+
+    unsafe {
+        windows_sys::Win32::UI::WindowsAndMessaging::MessageBoxW(
+            std::ptr::null_mut(),
+            msg_wide.as_ptr(),
+            title_wide.as_ptr(),
+            0x00000010u32, // MB_OK | MB_ICONERROR
+        );
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn show_error_dialog(title: &str, message: &str) {
+    let safe_msg = message
+        .replace('\\', "\\\\")
+        .replace('"', "\\\"")
+        .replace('\n', " ");
+    let safe_title = title.replace('\\', "\\\\").replace('"', "\\\"");
+    let script = format!(
+        r#"display dialog "{safe_msg}" buttons {{"OK"}} with icon stop with title "{safe_title}""#
+    );
+    let _ = std::process::Command::new("osascript")
+        .args(["-e", &script])
+        .status();
+}
+
+#[cfg(target_os = "linux")]
+fn show_error_dialog(title: &str, message: &str) {
+    let candidates: &[(&str, &[&str])] = &[
+        ("zenity", &["--error", "--no-wrap"]),
+        ("kdialog", &["--sorry"]),
+        ("xmessage", &["-center"]),
+    ];
+    for &(cmd, base_args) in candidates {
+        let mut command = std::process::Command::new(cmd);
+        command.args(base_args);
+        match cmd {
+            "zenity" => {
+                command.arg(format!("--text={message}"));
+                command.arg(format!("--title={title}"));
+            }
+            "kdialog" => {
+                command.arg(message);
+                command.args(["--title", title]);
+            }
+            _ => {
+                command.arg(message);
+            }
+        }
+        match command.status() {
+            Ok(_) => return,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(_) => return,
+        }
+    }
+}
+
+#[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
+fn show_error_dialog(_title: &str, _message: &str) {}
+
+fn run() -> Result<Infallible, Box<dyn Error>> {
     let py_env = if cfg!(dev) {
         // `cfg(dev)` is set by `tauri-build` in `build.rs`, which means running with `tauri dev`,
         // see: <https://github.com/tauri-apps/tauri/pull/8937>.

@@ -1,10 +1,28 @@
 """The main entry point for the Tauri app."""
 
+# ruff: noqa: E402
+
+# Register global exception hook at the very beginning to capture
+# any startup or import errors.
+import sys
+import tempfile
+import traceback
+from pathlib import Path
+
+
+def _write_crash_log(exc_type, exc_value, exc_tb) -> None:
+    log_path = Path(tempfile.gettempdir()) / "AdbAutoPlayer_crash.log"
+    with open(log_path, "w", encoding="utf-8") as f:
+        traceback.print_exception(exc_type, exc_value, exc_tb, file=f)
+    sys.__excepthook__(exc_type, exc_value, exc_tb)
+
+
+sys.excepthook = _write_crash_log
+
 import asyncio
 import logging
 import multiprocessing
 import queue
-import sys
 from concurrent.futures import ThreadPoolExecutor
 from contextvars import copy_context
 from datetime import datetime
@@ -12,11 +30,13 @@ from functools import wraps
 from logging.handlers import QueueHandler, QueueListener
 from multiprocessing import Process, Queue, freeze_support
 from os import getenv
-from pathlib import Path
 from typing import Any, Literal, NoReturn, Optional
 
 from adb_auto_player.commands import log_debug_info
 from adb_auto_player.device.adb import AdbClientHelper, AdbController
+from adb_auto_player.device.adb.adb_scanner import (
+    scan_emulator_ports as scan_emulator_ports_impl,
+)
 from adb_auto_player.file_loader import SettingsLoader
 from adb_auto_player.ipc import GameGUIOptions, LogMessage
 from adb_auto_player.log import LogPreset
@@ -466,6 +486,20 @@ async def get_profile_state(
 
 
 @tauri_profile_aware_command
+async def scan_emulator_ports(
+    app_handle: AppHandle,
+    body: ProfileContext,
+) -> list[str]:
+    ctx = copy_context()
+    loop = asyncio.get_event_loop()
+    ports = await loop.run_in_executor(
+        _executor,
+        lambda: ctx.run(scan_emulator_ports_impl),
+    )
+    return ports
+
+
+@tauri_profile_aware_command
 async def cache_clear(
     app_handle: AppHandle,
     body: CacheClear,
@@ -516,7 +550,10 @@ def main() -> int:
                     process.terminate()
                     process.join()
             _executor.shutdown(wait=False, cancel_futures=True)
-            AdbClientHelper.get_adb_client().server_kill()
+            try:
+                AdbClientHelper.get_adb_client().server_kill()
+            except Exception as e:
+                logging.debug(f"Failed to kill ADB server on shutdown: {e}")
             sys.exit(0)
 
         Listener.listen(app, "kill-python", handler)

@@ -10,6 +10,9 @@
   import type { SettingsProps } from "$lib/menu/model";
   import StringArray from "$lib/form/components/StringArray.svelte";
   import { asArraySchema, asNonEmptyStringArray } from "$lib/form/types";
+  import { scanEmulatorPorts } from "$pytauri/apiClient";
+  import { profiles } from "$lib/stores.svelte";
+  import { toaster } from "$lib/toast/toaster-svelte";
 
   let {
     settingsProps = $bindable(),
@@ -21,6 +24,42 @@
 
   let isSaving = $state(false);
   let openSections = $state(new Set<string>());
+  let isScanning = $state(false);
+
+  async function scanAdbDevices() {
+    isScanning = true;
+    try {
+      const activeDevices = await scanEmulatorPorts({
+        profile_index: profiles.active,
+      });
+      if (activeDevices && activeDevices.length > 0) {
+        toaster.info({
+          title: $t("Device Found"),
+          description: `${$t("Discovered active device:")} ${activeDevices[0]}`,
+          action: {
+            label: $t("Apply"),
+            onClick: () => {
+              settingsProps.formData.device.id = activeDevices[0];
+            },
+          },
+        });
+      } else {
+        toaster.error({
+          title: $t("No Devices Found"),
+          description: $t(
+            "Could not find any running emulator with an active ADB connection.",
+          ),
+        });
+      }
+    } catch (error) {
+      void showErrorToast(error, {
+        title: $t("Scan failed"),
+        logToLogDisplay: true,
+      });
+    } finally {
+      isScanning = false;
+    }
+  }
 
   interface Section {
     key: string;
@@ -265,14 +304,30 @@
                           />
                         {/if}
                       {:else}
-                        <input
-                          id={`${key}-${propKey}`}
-                          type="text"
-                          class="input"
-                          bind:value={settingsProps.formData[key][propKey]}
-                          {...prop.regex ? { pattern: prop.regex } : {}}
-                          {...prop.htmlTitle ? { title: prop.htmlTitle } : {}}
-                        />
+                        <div class="input-with-button">
+                          <input
+                            id={`${key}-${propKey}`}
+                            type="text"
+                            class="input"
+                            bind:value={settingsProps.formData[key][propKey]}
+                            {...prop.regex ? { pattern: prop.regex } : {}}
+                            {...prop.htmlTitle ? { title: prop.htmlTitle } : {}}
+                          />
+                          {#if key === "device" && propKey === "id"}
+                            <button
+                              type="button"
+                              class="scan-btn"
+                              onclick={scanAdbDevices}
+                              disabled={isScanning}
+                            >
+                              {#if isScanning}
+                                <span class="spinner-small"></span>
+                              {:else}
+                                {$t("Scan")}
+                              {/if}
+                            </button>
+                          {/if}
+                        </div>
                       {/if}
                     </div>
                   {/if}
@@ -563,5 +618,47 @@
     border-color: var(--accent);
     background: var(--bg-1);
     box-shadow: 0 0 0 2px var(--accent-ghost);
+  }
+
+  .input-with-button {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .scan-btn {
+    padding: 0 16px;
+    height: 38px;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all var(--dur-1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    white-space: nowrap;
+  }
+
+  .scan-btn:hover:not(:disabled) {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+
+  .scan-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .spinner-small {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
   }
 </style>

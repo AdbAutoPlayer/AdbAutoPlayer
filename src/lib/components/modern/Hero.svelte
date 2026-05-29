@@ -1,11 +1,6 @@
 <script lang="ts">
   import { t } from "$lib/i18n/i18n";
-  import {
-    activeProfile,
-    profileStates,
-    appSettings,
-    uiState,
-  } from "$lib/stores";
+  import { profiles, settings, ui } from "$lib/stores.svelte";
   import { onMount, onDestroy } from "svelte";
   import type { MenuButton } from "$lib/menu/model";
 
@@ -16,7 +11,7 @@
 
   let { onStop, activeTaskButton }: Props = $props();
 
-  const profile = $derived($profileStates[$activeProfile]);
+  const profile = $derived(profiles.states[profiles.active]);
   const gameTitle = $derived(profile?.game_menu?.game_title);
   const activeTask = $derived(profile?.active_task);
   const displayTaskName = $derived(
@@ -24,7 +19,7 @@
   );
   const deviceId = $derived(profile?.device_id);
   const profileName = $derived(
-    $appSettings?.profiles?.profiles?.[$activeProfile],
+    settings.settings?.profiles?.profiles?.[profiles.active],
   );
 
   let startTime = $state<number | null>(null);
@@ -63,10 +58,7 @@
 
 {#if !activeTask}
   <!-- Calm idle hero -->
-  <div
-    class="hero-idle"
-    class:compact={$uiState.taskViewVariant === "accordion"}
-  >
+  <div class="hero-idle" class:compact={ui.taskViewVariant === "accordion"}>
     <div class="icon-idle">
       <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"
         ><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" /></svg
@@ -90,10 +82,7 @@
   </div>
 {:else}
   <!-- Loud running hero -->
-  <div
-    class="hero-running"
-    class:compact={$uiState.taskViewVariant === "accordion"}
-  >
+  <div class="hero-running" class:compact={ui.taskViewVariant === "accordion"}>
     <!-- moving stripes bg -->
     <div class="stripes" aria-hidden="true"></div>
 

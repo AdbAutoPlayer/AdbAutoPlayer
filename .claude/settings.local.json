@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ffprobe -v quiet -show_format -show_streams \"f:/Adbautoplayer/AdbAutoPlayer/ravaged_realm_debug.mp4\")",
+      "Bash(ffmpeg -i \"f:/Adbautoplayer/AdbAutoPlayer/ravaged_realm_debug.mp4\" -ss 45 -t 40 -vf \"fps=0.5,scale=414:736\" \"f:/Adbautoplayer/AdbAutoPlayer/frame_%03d.png\" -y)",
+      "Bash(ffmpeg -i \"f:/Adbautoplayer/AdbAutoPlayer/ravaged_realm_debug.mp4\" -ss 55 -frames:v 1 \"f:/Adbautoplayer/AdbAutoPlayer/battle_ended_full.png\" -y)",
+      "Bash(ffmpeg -i \"f:/Adbautoplayer/AdbAutoPlayer/ravaged_realm_debug.mp4\" -ss 70 -frames:v 1 -update 1 \"f:/Adbautoplayer/AdbAutoPlayer/battle_ended_stable.png\" -y)",
+      "Bash(python -c ':*)",
+      "Bash(xargs wc:*)",
+      "Bash(xargs grep:*)",
+      "Bash(uv run:*)",
+      "Bash(python -m pytest src-python/tests/games/afk_journey/mixins/test_all_mixins_extended.py -v)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:patch-diff.githubusercontent.com)",
+      "Bash(curl -s \"https://patch-diff.githubusercontent.com/raw/AdbAutoPlayer/AdbAutoPlayer/pull/691.diff\")",
+      "WebFetch(domain:api.github.com)",
+      "Bash(uvx pre-commit:*)",
+      "Bash(curl -s \"https://patch-diff.githubusercontent.com/raw/AdbAutoPlayer/AdbAutoPlayer/pull/692.diff\")",
+      "Bash(curl -fsSL https://raw.githubusercontent.com/AdbAutoPlayer/AdbAutoPlayer/de8d0a139543818dff6a27a0675bb5c9e52caef9/src-tauri/src-python/adb_auto_player/games/afk_journey/templates/afk_stages/season_battle.png -o f:/Adbautoplayer/AdbAutoPlayer/src-tauri/src-python/adb_auto_player/games/afk_journey/templates/afk_stages/season_battle.png)",
+      "Bash(curl -fsSL __TRACKED_VAR__/battle_modes/supreme_arena.png -o __TRACKED_VAR__/battle_modes/supreme_arena.png)",
+      "Bash(curl -fsSL __TRACKED_VAR__/event/ravaged_realm/skip_orange.png -o __TRACKED_VAR__/event/ravaged_realm/skip_orange.png)",
+      "Bash(curl -fsSL __TRACKED_VAR__/supreme_arena/__TRACKED_VAR__ -o __TRACKED_VAR__/supreme_arena/__TRACKED_VAR__)",
+      "Bash(curl -s \"https://patch-diff.githubusercontent.com/raw/AdbAutoPlayer/AdbAutoPlayer/pull/687.diff\")",
+      "Bash(curl -s https://patch-diff.githubusercontent.com/raw/AdbAutoPlayer/AdbAutoPlayer/pull/690.diff)",
+      "Bash(pnpm install:*)",
+      "Bash(uv sync:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(uvx ty:*)",
+      "Bash(grep -v \"Cannot resolve imported module \\\\`\\\\.\")"
+    ]
+  }
+}

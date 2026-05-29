@@ -7,7 +7,7 @@
   import IconX from "$lib/components/icons/feather/IconX.svelte";
   import { t } from "$lib/i18n/i18n";
   import { emit } from "@tauri-apps/api/event";
-  import { appSettings } from "$lib/stores";
+  import { settings } from "$lib/stores.svelte";
   import { get } from "svelte/store";
   import { toaster } from "$lib/toast/toaster-svelte";
 
@@ -33,8 +33,7 @@
       if (update && firstUpdateDetected) {
         isDialogOpen = true;
 
-        const settings = get(appSettings);
-        if (settings?.notifications?.desktop_notifications) {
+        if (settings.settings?.notifications?.desktop_notifications) {
           toaster.info({
             title: get(t)("Update Available"),
             description: get(t)(

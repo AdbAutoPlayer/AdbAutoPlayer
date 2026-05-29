@@ -191,6 +191,12 @@ class TitanReaverProxyBattlesSettings(BaseModel):
     )
 
 
+class SupremeArenaSettings(BaseModel):
+    """Supreme Arena Settings model."""
+
+    attempts: PositiveInt = Field(default=5, alias="Attempts", title="Attempts")
+
+
 class Settings(TomlSettings):
     """Settings model."""
 
@@ -242,6 +248,11 @@ class Settings(TomlSettings):
         default_factory=TitanReaverProxyBattlesSettings,
         alias="Titan Reaver Proxy Battles",
         title="Titan Reaver Proxy Battles",
+    )
+    supreme_arena: SupremeArenaSettings = Field(
+        default_factory=SupremeArenaSettings,
+        alias="Supreme Arena",
+        title="Supreme Arena",
     )
     custom_routine_one: TaskListSettings = Field(
         default_factory=TaskListSettings,

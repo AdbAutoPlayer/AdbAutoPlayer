@@ -102,16 +102,14 @@ class DreamRealmMixin(AFKJourneyBase):
         logging.debug("Looking for more DR attempts...")
         self.tap(self.battle_skip_coord)
 
-        try:
-            buy = self.wait_for_template(
-                template="dream_realm/buy.png", timeout=self.fast_timeout
-            )
-            logging.debug("Purchasing DR attempt.")
-            self.tap(buy)
+        if self._try_wait_and_tap(
+            "dream_realm/buy.png",
+            timeout=self.fast_timeout,
+            timeout_message="No more DR attempts to purchase.",
+        ):
             return True
-        except GameTimeoutError:
-            logging.info("No more DR attempts to purchase.")
-            return False
+        logging.info("No more DR attempts to purchase.")
+        return False
 
     def _enter_dr(self) -> None:
         """Enter Dream Realm."""
@@ -142,17 +140,15 @@ class DreamRealmMixin(AFKJourneyBase):
         self.tap(reward)
         sleep(2)
 
-        try:
-            logging.debug("Click Tap to Close, if available.")
-            tap_to_close = self.wait_for_template(
-                "tap_to_close.png",
-                timeout=self.fast_timeout,
-                timeout_message="Dream Realm rewards already claimed.",
-            )
-            self.tap(tap_to_close)
+        logging.debug("Click Tap to Close, if available.")
+        if self._try_wait_and_tap(
+            "tap_to_close.png",
+            timeout=self.fast_timeout,
+            timeout_message="Dream Realm rewards already claimed.",
+        ):
             sleep(1)
-        except GameTimeoutError as fail:
-            logging.info(fail)
+        else:
+            logging.info("Dream Realm rewards already claimed.")
 
         logging.debug("Return to Dream Realm.")
         self.press_back_button()

@@ -5,6 +5,7 @@ import logging
 from adb_auto_player.decorators import register_command, register_custom_routine_choice
 from adb_auto_player.exceptions import (
     AutoPlayerWarningError,
+    GameTimeoutError,
 )
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
@@ -79,24 +80,43 @@ class AFKStagesMixin(AFKJourneyBase):
     def _select_afk_stage(self) -> None:
         """Selects an AFK stage template."""
         if self.battle_state.mode == Mode.SEASON_AFK_STAGES:
-            result = self.wait_for_template(
-                "afk_stages/season_battle.png",
-                crop_regions=CropRegions(left=0.5, top=0.7),
-                timeout=self.min_timeout,
-            )
-            # The crossing swords are on the Battle button (right side).
-            # The Season AFK Stages (Phantimal Challenge) button is the left button.
-            self.tap(
-                Point(x=215, y=result.box.center.y),
-                log_message="Clicking Season AFK Stages button",
-            )
+            try:
+                result = self.wait_for_template(
+                    "afk_stages/season_battle.png",
+                    crop_regions=CropRegions(left=0.5, top=0.7),
+                    timeout=self.min_timeout,
+                )
+                # The crossing swords are on the Battle button (right side).
+                # The Season AFK Stages (Phantimal Challenge) button is the left button.
+                self.tap(
+                    Point(x=215, y=result.box.center.y),
+                    log_message="Clicking Season AFK Stages button",
+                )
+            except GameTimeoutError:
+                logging.info(
+                    "Template not found, "
+                    "using static coordinates for Season AFK Stages."
+                )
+                self.tap(
+                    Point(x=300, y=1610),
+                    log_message="Clicking Season AFK Stages button (fallback)",
+                )
         else:
-            result = self.wait_for_template(
-                "afk_stages/season_battle.png",
-                crop_regions=CropRegions(left=0.5, top=0.7),
-                timeout=self.min_timeout,
-            )
-            self.tap(result, log_message="Clicking Battle button")
+            try:
+                result = self.wait_for_template(
+                    "afk_stages/season_battle.png",
+                    crop_regions=CropRegions(left=0.5, top=0.7),
+                    timeout=self.min_timeout,
+                )
+                self.tap(result, log_message="Clicking Battle button")
+            except GameTimeoutError:
+                logging.info(
+                    "Template not found, using static coordinates for Battle button."
+                )
+                self.tap(
+                    Point(x=800, y=1610),
+                    log_message="Clicking Battle button (fallback)",
+                )
         self.sleep_navigation()
         if confirm := self.game_find_template_match(
             template="navigation/confirm.png",

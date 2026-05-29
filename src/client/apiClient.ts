@@ -52,6 +52,13 @@ export async function getProfileState(
     return await pyInvoke("get_profile_state", body, options);
 }
 
+export async function scanEmulatorPorts(
+    body: Commands["scan_emulator_ports"]["input"],
+    options?: InvokeOptions
+): Promise<Commands["scan_emulator_ports"]["output"]> {
+    return await pyInvoke("scan_emulator_ports", body, options);
+}
+
 export async function cacheClear(
     body: Commands["cache_clear"]["input"],
     options?: InvokeOptions

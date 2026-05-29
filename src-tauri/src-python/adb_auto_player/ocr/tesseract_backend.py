@@ -15,6 +15,7 @@ from adb_auto_player.models.ocr import OCRResult
 from adb_auto_player.util.runtime import RuntimeInfo
 from pytesseract import pytesseract
 
+from ._backend import OCRBackend
 from .tesseract_config import TesseractConfig
 from .tesseract_lang import Lang
 
@@ -117,7 +118,7 @@ def _initialize_tesseract() -> None:
     return None
 
 
-class TesseractBackend:
+class TesseractBackend(OCRBackend):
     """Tesseract OCR backend implementation."""
 
     def __init__(self, config: TesseractConfig = TesseractConfig()):
@@ -214,14 +215,12 @@ class TesseractBackend:
     def detect_text_blocks(
         self,
         image: np.ndarray,
-        config: TesseractConfig | None = None,
         min_confidence: ConfidenceValue = ConfidenceValue(0.0),
-    ):
+    ) -> list[OCRResult]:
         """Detect text blocks and return results with bounding boxes.
 
         Args:
             image: Input RGB image as numpy array
-            config: Optional TesseractConfig override
             min_confidence: Minimum confidence threshold, default no Threshold
 
         Returns:
@@ -229,7 +228,6 @@ class TesseractBackend:
         """
         return self._detect_text_grouping(
             image,
-            config=config,
             min_confidence=min_confidence,
             level=_GroupingLevel.BLOCK,
         )

@@ -9,7 +9,7 @@
   import type { TextDisplayCardItem } from "$lib/log/logHelper";
   import { onMount } from "svelte";
   import { listen } from "@tauri-apps/api/event";
-  import { appSettings, debugLogLevelOverwrite } from "$lib/stores";
+  import { settings } from "$lib/stores.svelte";
 
   interface TaskCompletedEvent {
     profile_index: number;
@@ -44,7 +44,7 @@
   ) {
     const insertCount =
       index === undefined || index === null
-        ? ($appSettings?.profiles?.profiles?.length ?? 1)
+        ? (settings.settings?.profiles?.profiles?.length ?? 1)
         : 1;
 
     const startIndex = index ?? 0;
@@ -88,12 +88,14 @@
         EventNames.LOG_MESSAGE,
         (event) => {
           const logMessage = event.payload;
-          const logLevel: LogLevel = $appSettings?.logging?.level ?? "INFO";
+          const logLevel: LogLevel =
+            settings.settings?.logging?.level ?? "INFO";
 
           let alwaysLogDebug = false;
           if (logMessage.profile_index) {
             alwaysLogDebug =
-              $debugLogLevelOverwrite[logMessage.profile_index] ?? false;
+              settings.debugLogLevelOverwrite[logMessage.profile_index] ??
+              false;
           }
 
           if (
