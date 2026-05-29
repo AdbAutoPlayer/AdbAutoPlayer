@@ -1,11 +1,9 @@
 # Changelog
 
-## [12.9.3] - 2026-05-29
-
-### Features
-
-- **ADB Device Scanner**: Added an automated ADB process and port scanner in the Device Settings form. It automatically detects running emulators (such as LDPlayer, BlueStacks, Nox, MEmu, MuMu, and Android Studio Emulator) and finds their active ADB ports, auto-filling the Device ID field.
+## [12.9.4] - 2026-05-29
 
 ### Bug Fixes
 
-- **Auto-Progress Quests**: Fixed map repeatedly opening and closing by dynamically offset tapping the quest tracker text relative to the detected questbook icon, rather than using a hardcoded coordinate.
+- **Auto-Progress Quests**: Improved reliability and robustness of quest pathing and popup handling:
+  - Replaced the incorrect green menu template for the "Track" button (diamond/rombo) with the actual world screen orange diamond template and reduced its threshold to `80%` to ensure it is clicked successfully.
+  - Added support for dark-background `"Tap to close"` popups (such as the "Unfolded Map" popup) using a dedicated white-on-dark template to prevent execution hangs.

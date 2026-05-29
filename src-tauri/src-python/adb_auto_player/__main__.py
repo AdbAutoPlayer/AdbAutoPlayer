@@ -550,7 +550,10 @@ def main() -> int:
                     process.terminate()
                     process.join()
             _executor.shutdown(wait=False, cancel_futures=True)
-            AdbClientHelper.get_adb_client().server_kill()
+            try:
+                AdbClientHelper.get_adb_client().server_kill()
+            except Exception as e:
+                logging.debug(f"Failed to kill ADB server on shutdown: {e}")
             sys.exit(0)
 
         Listener.listen(app, "kill-python", handler)
