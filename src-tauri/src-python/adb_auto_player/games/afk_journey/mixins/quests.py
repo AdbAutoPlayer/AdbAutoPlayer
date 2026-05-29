@@ -189,9 +189,14 @@ class QuestMixin(AFKJourneyBase, ABC):
             threshold=ConfidenceValue("80%"),
         )
         if path and questbook_match is not None:
-            logging.info("Auto-pathing")
-            self.tap(Point(questbook_match.x + 200, questbook_match.y))
-            sleep(5)
+            nav_match = self.find_any_template(
+                ["quests/quest_nav"],
+                threshold=ConfidenceValue("80%"),
+            )
+            if nav_match is not None:
+                logging.info("Auto-pathing")
+                self.tap(nav_match, scale=True)
+                sleep(5)
 
         return False
 
