@@ -146,21 +146,13 @@ class QuestMixin(AFKJourneyBase, ABC):
             "quests/claim",
             "quests/questrewards",
             "quests/tap_to_close",
+            "quests/tap_to_close_dark",
             "quests/unlocked",
             "navigation/confirm",
-            "quests/track",
             "back",
         ]
 
-        # When the TAP & HOLD wheel appears, the text label is detectable
-        # but the golden Cast button is always at screen center — use fixed coords
-        tap_and_hold = self.find_any_template(
-            templates=["quests/tap_and_hold", "quests/tap_and_hold_large"],
-        )
-        if tap_and_hold is not None:
-            logging.info("TAP & HOLD button detected — holding at button position")
-            cast_point = Point(tap_and_hold.x, tap_and_hold.y)
-            self.device.swipe(cast_point, cast_point, duration=3.0)
+        if self._handle_holding_buttons():
             return True
 
         # Gesture quest: open the emote menu then click the quest-marked gesture
@@ -170,6 +162,50 @@ class QuestMixin(AFKJourneyBase, ABC):
         )
         if gesture_button is not None:
             self._handle_gesture_quest(gesture_button)
+            return True
+
+        # Check for the big "Track" button (diamond/rombo) with a lower threshold
+        # due to its semi-transparent background
+        track_button = self.find_any_template(
+            ["quests/track"],
+            threshold=ConfidenceValue("80%"),
+        )
+        if track_button is not None:
+            logging.info("Tapping Track button")
+            self.tap(track_button, scale=True)
+            sleep(2)
+            return True
+
+        if self._handle_dialogue_buttons(buttons):
+            return True
+
+        if self._handle_special_quest_actions():
+            return True
+
+        # Finally we click the quest tracker text to auto-path. We return False
+        # as we need to increment the counter in case we get stuck clicking it
+        questbook_match = self.find_any_template(
+            ["quests/questbook"],
+            threshold=ConfidenceValue("80%"),
+        )
+        if path and questbook_match is not None:
+            logging.info("Auto-pathing")
+            self.tap(Point(questbook_match.x + 200, questbook_match.y))
+            sleep(5)
+
+        return False
+
+    def _handle_holding_buttons(self) -> bool:
+        """Check for buttons on screen that we need to hold down."""
+        # When the TAP & HOLD wheel appears, the text label is detectable
+        # but the golden Cast button is always at screen center — use fixed coords
+        tap_and_hold = self.find_any_template(
+            templates=["quests/tap_and_hold", "quests/tap_and_hold_large"],
+        )
+        if tap_and_hold is not None:
+            logging.info("TAP & HOLD button detected — holding at button position")
+            cast_point = Point(tap_and_hold.x, tap_and_hold.y)
+            self.device.swipe(cast_point, cast_point, duration=3.0)
             return True
 
         holding_buttons = [
@@ -207,20 +243,6 @@ class QuestMixin(AFKJourneyBase, ABC):
             )
             self.device.swipe(hold_point, hold_point, duration=3.0)
             return True
-
-        if self._handle_dialogue_buttons(buttons):
-            return True
-
-        if self._handle_special_quest_actions():
-            return True
-
-        # Finally we click the quest tracker text to auto-path. We return False
-        # as we need to increment the counter in case we get stuck clicking it
-        questbook_match = self.find_any_template(["quests/questbook"])
-        if path and questbook_match is not None:
-            logging.info("Auto-pathing")
-            self.tap(Point(questbook_match.x + 100, questbook_match.y))
-            sleep(5)
 
         return False
 
