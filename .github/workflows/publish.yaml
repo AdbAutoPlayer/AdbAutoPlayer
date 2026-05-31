@@ -45,6 +45,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Disable Windows Defender (Windows only)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Set-MpPreference -DisableRealtimeMonitoring $true
+
       - name: Install system dependencies (ubuntu only)
         if: runner.os == 'Linux'
         run: |
@@ -97,6 +102,13 @@ jobs:
               python_major_minor="${PYTHON_VERSION%.*}"  # "3.13.7" -> "3.13"
               install_name_tool -id "@rpath/libpython${python_major_minor}.dylib" "$DEST_DIR/python/lib/libpython${python_major_minor}.dylib"
           fi
+
+          # Clean up unnecessary files to reduce build/packaging time
+          rm -rf "$DEST_DIR/python/include"
+          rm -rf "$DEST_DIR/python/Lib/test" "$DEST_DIR/python/lib/python*/test"
+          rm -rf "$DEST_DIR/python/Lib/ensurepip" "$DEST_DIR/python/lib/python*/ensurepip"
+          rm -rf "$DEST_DIR/python/Lib/idlelib" "$DEST_DIR/python/lib/python*/idlelib"
+          rm -rf "$DEST_DIR/python/Lib/turtledemo" "$DEST_DIR/python/lib/python*/turtledemo"
 
       - name: Install the project into the embedded python environment
         env:
