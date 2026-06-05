@@ -7,7 +7,12 @@
       "src-python/adb_auto_player/Binaries/": "./binaries/"
     },
     "targets": [
-      "msi"
-    ]
+      "nsis"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
   }
 }

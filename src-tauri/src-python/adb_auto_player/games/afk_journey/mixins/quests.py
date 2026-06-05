@@ -1,6 +1,8 @@
 """AFK Journey Quest Mixin."""
 
 import logging
+import math
+import random
 from abc import ABC
 from time import sleep
 
@@ -123,12 +125,46 @@ class QuestMixin(AFKJourneyBase, ABC):
                 reset = True
 
         if homestead_button and not farewell:
-            # else try and move a few pixels to retrigger action buttons
-            logging.warning("Possibly stuck.. trying to fix")
-            self.swipe_down(550, 1500, 1510, 0.1)
-            sleep(2)
+            self._nudge_character()
 
         return reset
+
+    def _nudge_character(self) -> None:
+        """Nudge the character in a random direction to get unstuck."""
+        logging.warning(
+            "Possibly stuck.. attempting a corrective nudge in a random direction"
+        )
+        try:
+            display_info = self.device.get_display_info()
+            width = display_info.resolution.width
+            height = display_info.resolution.height
+
+            # Start point: center-bottom of screen (above bottom menus)
+            sx = int(width * 0.5)
+            sy = int(height * 0.73)
+
+            # Pick a random angle (in radians)
+            angle = random.uniform(0, 2 * math.pi)
+            distance = 250
+
+            dx = int(distance * math.cos(angle))
+            dy = int(distance * math.sin(angle))
+
+            ex = sx + dx
+            ey = sy + dy
+
+            # Clamp coordinates to ensure they are on screen
+            ex = max(0, min(width - 1, ex))
+            ey = max(0, min(height - 1, ey))
+
+            logging.info(
+                f"Nudging character from ({sx}, {sy}) to ({ex}, {ey}) "
+                f"(angle: {math.degrees(angle):.1f}°)"
+            )
+            self.device.swipe(Point(sx, sy), Point(ex, ey), duration=0.5)
+            sleep(2)
+        except Exception as e:
+            logging.error(f"Failed to nudge character: {e}")
 
     def _find_quest_images(self, path=True) -> bool:
         """Find and click images relating to quests."""
@@ -190,7 +226,7 @@ class QuestMixin(AFKJourneyBase, ABC):
         # Check for the big "Track" button (diamond/rombo) with a lower threshold
         # due to its semi-transparent background
         track_button = self.find_any_template(
-            ["quests/track"],
+            ["quests/track", "quests/track_blue"],
             threshold=ConfidenceValue("80%"),
         )
         if track_button is not None:
@@ -214,7 +250,7 @@ class QuestMixin(AFKJourneyBase, ABC):
             if nav_match is not None:
                 logging.info("Auto-pathing")
                 self.tap(nav_match, scale=True)
-                sleep(5)
+                sleep(10)
 
         return False
 
