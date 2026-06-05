@@ -30,6 +30,14 @@ class OCREngine(StrEnum):
     RapidOCR = "RapidOCR"
 
 
+class OpponentPosition(StrEnum):
+    """Which opponent card to select in Supreme Arena."""
+
+    Left = "Left"
+    Middle = "Middle"
+    Right = "Right"
+
+
 # Models
 class GeneralSettings(BaseModel):
     """General Settings model."""
@@ -195,6 +203,12 @@ class SupremeArenaSettings(BaseModel):
     """Supreme Arena Settings model."""
 
     attempts: PositiveInt = Field(default=5, alias="Attempts", title="Attempts")
+    opponent_position: OpponentPosition = Field(
+        default=OpponentPosition.Left,
+        alias="Opponent Position",
+        title="Opponent Position",
+        description="Which opponent card to select: Left (weakest), Middle, or Right.",
+    )
 
 
 class Settings(TomlSettings):

@@ -102,7 +102,10 @@
   function resolveRef(prop: any, rootSchema: JSONSchema) {
     if ("$ref" in prop && typeof prop.$ref === "string") {
       const refName = prop.$ref.replace("#/$defs/", "");
-      return rootSchema.$defs?.[refName] ?? prop;
+      const resolved = rootSchema.$defs?.[refName] ?? prop;
+      // Preserve field-level metadata (title, description, default) over the definition
+      const { $ref: _, ...fieldOverrides } = prop;
+      return { ...resolved, ...fieldOverrides };
     }
 
     if (prop.type === "array" && prop.items?.$ref) {
