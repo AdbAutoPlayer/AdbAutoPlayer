@@ -1,10 +1,11 @@
 # Changelog
 
-## [12.9.5] - 2026-05-31
+## [12.9.6] - 2026-06-08
 
 ### Bug Fixes
 
-- **Auto-Progress Quests**: Improved reliability and robustness of quest pathing and dialogue handling:
-  - Implemented a corrective random-angle swipe on the virtual joystick (0.5s duration, 250px) to automatically get the character unstuck when pathing fails.
-  - Increased the sleep interval after starting auto-pathing from 5s to 10s to support longer routes.
-  - Prioritized dialogue and skip buttons over emote/gesture checks to prevent false-positive clicks on background emote buttons during active dialogues.
+- **Legend Trial**: Improved battle loop reliability with additional screen handling:
+  - Added handling for `tap_to_close` screens that appear after battle results, automatically re-selecting the current floor.
+  - Added handling for `victory_rewards` screen to properly dismiss and continue.
+  - Added `records` and `battle` screen recognition to avoid false exits from the battle loop.
+  - Enabled grayscale matching for more reliable template detection.
