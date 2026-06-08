@@ -3,7 +3,7 @@
   import { t } from "$lib/i18n/i18n";
   import SettingsSectionHeader from "./SettingsSectionHeader.svelte";
   import NoOptionsAvailable from "$lib/components/generic/NoOptionsAvailable.svelte";
-  import type { TaskListProps } from "$lib/form/types";
+  import type { TaskItem, TaskListProps } from "$lib/form/types";
 
   let { choices, value = $bindable() }: TaskListProps = $props();
 
@@ -109,8 +109,8 @@
 
     // Handle empty list
     if (value.length === 0) {
-      if (!draggedFromSelected || !value.includes(draggedItem)) {
-        value = [...value, draggedItem];
+      if (!draggedFromSelected) {
+        value = [{ name: draggedItem, repeat: true }];
       }
       resetDragState();
       return;
@@ -151,7 +151,7 @@
     } else {
       // Adding from available tasks
       const newValue = [...value];
-      newValue.splice(insertIndex, 0, draggedItem);
+      newValue.splice(insertIndex, 0, { name: draggedItem, repeat: true });
       value = newValue;
     }
 
@@ -205,8 +205,14 @@
     }
   }
 
-  function addTask(task: string) {
-    value = [...value, task];
+  function addTask(taskName: string) {
+    value = [...value, { name: taskName, repeat: true }];
+  }
+
+  function toggleRepeat(index: number) {
+    const newValue = [...value];
+    newValue[index] = { ...newValue[index], repeat: !newValue[index].repeat };
+    value = newValue;
   }
 </script>
 
@@ -325,7 +331,7 @@
                 <div class="bg-primary-500 my-1 h-1 w-full rounded-full"></div>
               {/if}
 
-              {#each value as task, index}
+              {#each value as taskItem, index}
                 {#if dropIndicatorPos?.index === index && dropIndicatorPos?.position === "before" && currentDragPosition === "between"}
                   <div
                     class="bg-primary-500 my-1 h-1 w-full rounded-full"
@@ -335,7 +341,8 @@
                 <div
                   class="group bg-primary-100 hover:bg-primary-200 dark:bg-primary-800/50 dark:hover:bg-primary-700/50 relative cursor-grab rounded-lg p-2 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-95 active:cursor-grabbing"
                   draggable="true"
-                  ondragstart={(e) => handleDragStart(e, task, true, index)}
+                  ondragstart={(e) =>
+                    handleDragStart(e, taskItem.name, true, index)}
                   ondragover={(e) => handleContainerDragOver(e, index)}
                   role="button"
                   tabindex="0"
@@ -343,26 +350,50 @@
                   <div class="flex items-center justify-between gap-2">
                     <div class="flex flex-1 items-center gap-3">
                       <div
-                        class="bg-primary-500 ml-3 flex h-5 w-5 items-center justify-center rounded-full font-mono text-xs font-bold text-white"
+                        class="bg-primary-500 ml-3 flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-mono text-xs font-bold text-white"
                       >
                         {index + 1}
                       </div>
                       <p
                         class="text-s text-surface-700 dark:text-surface-200 font-medium"
                       >
-                        {$t(task)}
+                        {$t(taskItem.name)}
                       </p>
                     </div>
-                    <button
-                      class="variant-filled-error btn-icon absolute top-1/2 right-2 -translate-y-1/2 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:scale-110 active:scale-95"
-                      type="button"
-                      onclick={() => removeTask(index)}
-                      title="Remove task"
+                    <div
+                      class="flex items-center gap-2"
+                      role="none"
+                      ondragstart={(e) => e.stopPropagation()}
                     >
-                      <IconX size={16} />
-                    </button>
+                      <button
+                        class="repeat-toggle shrink-0 rounded px-2 py-0.5 text-xs font-semibold transition-all duration-200"
+                        class:repeat-on={taskItem.repeat}
+                        class:repeat-off={!taskItem.repeat}
+                        type="button"
+                        title={taskItem.repeat
+                          ? $t("Click to run once only")
+                          : $t("Click to repeat")}
+                        onclick={(e) => {
+                          e.stopPropagation();
+                          toggleRepeat(index);
+                        }}
+                      >
+                        {taskItem.repeat ? $t("Repeat") : $t("Once")}
+                      </button>
+                      <button
+                        class="variant-filled-error btn-icon opacity-0 transition-all duration-200 group-hover:opacity-100 hover:scale-110 active:scale-95"
+                        type="button"
+                        onclick={(e) => {
+                          e.stopPropagation();
+                          removeTask(index);
+                        }}
+                        title="Remove task"
+                      >
+                        <IconX size={16} />
+                      </button>
+                    </div>
                   </div>
-                  <input type="hidden" value={task} />
+                  <input type="hidden" value={taskItem.name} />
                 </div>
 
                 {#if dropIndicatorPos?.index === index && dropIndicatorPos?.position === "after" && currentDragPosition === "between"}
@@ -383,3 +414,24 @@
     {/if}
   </div>
 </div>
+
+<style>
+  .repeat-on {
+    background-color: rgb(var(--color-primary-500) / 0.2);
+    color: rgb(var(--color-primary-700));
+    border: 1px solid rgb(var(--color-primary-400) / 0.5);
+  }
+  :global(.dark) .repeat-on {
+    color: rgb(var(--color-primary-300));
+    background-color: rgb(var(--color-primary-500) / 0.25);
+  }
+  .repeat-off {
+    background-color: rgb(var(--color-surface-300) / 0.4);
+    color: rgb(var(--color-surface-600));
+    border: 1px solid rgb(var(--color-surface-400) / 0.4);
+  }
+  :global(.dark) .repeat-off {
+    background-color: rgb(var(--color-surface-700) / 0.4);
+    color: rgb(var(--color-surface-400));
+  }
+</style>

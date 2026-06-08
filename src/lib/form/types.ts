@@ -22,7 +22,16 @@ interface StringChoiceValueArrayProps {
   value: string[];
 }
 
-export type TaskListProps = StringChoiceValueArrayProps;
+export interface TaskItem {
+  name: string;
+  repeat: boolean;
+}
+
+export interface TaskListProps {
+  choices: NonEmptyArray<string>;
+  value: TaskItem[];
+}
+
 export type CheckboxArrayProps = StringChoiceValueArrayProps;
 
 export interface AlnumGroupedCheckboxArrayProps extends StringChoiceValueArrayProps {
@@ -44,6 +53,16 @@ export function asNonEmptyStringArray(
   const arraySchema = asArraySchema(schema);
 
   if (!arraySchema) {
+    return null;
+  }
+
+  // For TaskList: items is an object with a "name" property referencing TaskListEnum
+  const items = arraySchema.items as any;
+  if (items?.type === "object" && items?.properties?.name?.enum) {
+    const choices = items.properties.name.enum;
+    if (isStringArray(choices) && choices.length > 0) {
+      return choices as NonEmptyArray<string>;
+    }
     return null;
   }
 

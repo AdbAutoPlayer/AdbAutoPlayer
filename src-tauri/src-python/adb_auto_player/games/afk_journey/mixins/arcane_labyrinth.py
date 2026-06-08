@@ -92,13 +92,26 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             timeout=self.min_timeout,
         )
         sleep(1)
-        hold_to_exit = self.wait_for_template(
-            "arcane_labyrinth/hold_to_exit.png",
-            crop_regions=CropRegions(right=0.5, top=0.5, bottom=0.3),
-            timeout_message="Failed to exit Arcane Labyrinth run",
-            timeout=self.fast_timeout,
-        )
-        self.hold(hold_to_exit, duration=5.0)
+        max_hold_retries = 3
+        for attempt in range(max_hold_retries):
+            hold_to_exit = self.wait_for_template(
+                "arcane_labyrinth/hold_to_exit.png",
+                crop_regions=CropRegions(right=0.5, top=0.5, bottom=0.3),
+                timeout_message="Failed to exit Arcane Labyrinth run",
+                timeout=self.fast_timeout,
+            )
+            self.hold(hold_to_exit, duration=6.0)
+            sleep(3)
+            if not self.game_find_template_match(
+                "arcane_labyrinth/hold_to_exit.png",
+                crop_regions=CropRegions(right=0.5, top=0.5, bottom=0.3),
+            ):
+                logging.debug("Arcane Labyrinth exit confirmed")
+                break
+            logging.debug(
+                f"hold_to_exit still visible after attempt {attempt + 1}, retrying"
+            )
+            sleep(1)
 
     def _add_keys_farmed(self, keys: int) -> None:
         """Logs the number of keys farmed.
@@ -237,6 +250,20 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 self._select_a_crest()
             case "arcane_labyrinth/quit.png":
                 self.tap(result)
+                sleep(1)
+                hold_to_exit = self.game_find_template_match(
+                    "arcane_labyrinth/hold_to_exit.png",
+                    crop_regions=CropRegions(right=0.5, top=0.5, bottom=0.3),
+                )
+                if hold_to_exit is not None:
+                    sleep(1)
+                    hold_to_exit = self.wait_for_template(
+                        "arcane_labyrinth/hold_to_exit.png",
+                        crop_regions=CropRegions(right=0.5, top=0.5, bottom=0.3),
+                        timeout_message="Failed to exit Arcane Labyrinth run",
+                        timeout=self.fast_timeout,
+                    )
+                    self.hold(hold_to_exit, duration=6.0)
                 return False
             case "arcane_labyrinth/tap_to_close.png":
                 self.arcane_tap_to_close_point = result

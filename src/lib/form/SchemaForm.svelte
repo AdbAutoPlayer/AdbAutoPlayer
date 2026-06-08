@@ -195,13 +195,13 @@
                 {@const choices = asNonEmptyStringArray(prop)}
 
                 <div class="field-row">
-                  {#if arraySchema && arraySchema.items.enum && Array.isArray(settingsProps.formData[key]?.[propKey]) && choices}
-                    {#if prop.formType === "TaskList"}
-                      <TaskList
-                        {choices}
-                        bind:value={settingsProps.formData[key][propKey] as any}
-                      />
-                    {:else if prop.formType === "AlnumGroupedCheckboxArray"}
+                  {#if arraySchema && prop.formType === "TaskList" && Array.isArray(settingsProps.formData[key]?.[propKey]) && choices}
+                    <TaskList
+                      {choices}
+                      bind:value={settingsProps.formData[key][propKey] as any}
+                    />
+                  {:else if arraySchema && arraySchema.items.enum && Array.isArray(settingsProps.formData[key]?.[propKey]) && choices}
+                    {#if prop.formType === "AlnumGroupedCheckboxArray"}
                       <AlnumGroupedCheckboxArray
                         title={$t(arraySchema.title ?? propKey)}
                         {choices}

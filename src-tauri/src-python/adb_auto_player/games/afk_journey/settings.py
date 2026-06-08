@@ -175,6 +175,20 @@ class DailiesSettings(BaseModel):
     duras_trials: bool = Field(
         default=True, alias="Run Dura's Trials", title="Run Dura's Trials"
     )
+    dream_realm: bool = Field(
+        default=True, alias="Run Dream Realm", title="Run Dream Realm"
+    )
+    claim_hamburger: bool = Field(
+        default=True,
+        alias="Claim Hamburger Rewards",
+        title="Claim Hamburger Rewards",
+    )
+    legend_trials: bool = Field(
+        default=True, alias="Run Legend Trials", title="Run Legend Trials"
+    )
+    afk_stages: bool = Field(
+        default=True, alias="Run AFK Stages", title="Run AFK Stages"
+    )
 
 
 class ClaimAFKRewardsSettings(BaseModel):

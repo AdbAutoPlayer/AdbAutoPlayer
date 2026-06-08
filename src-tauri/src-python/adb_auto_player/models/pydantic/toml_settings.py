@@ -48,6 +48,7 @@ class TomlSettings(BaseModel):
         This method produces the standard `model_json_schema()` of the Pydantic model,
         but injects a dynamic `TaskListEnum` definition into the schema and updates
         the `"Task List"` property in `TaskListSettings` to reference this enum.
+        Each task item is an object with a `name` (enum) and `repeat` (bool) field.
 
         Args:
             choices (list[str]): The list of allowed values for the Task List items.
@@ -59,12 +60,15 @@ class TomlSettings(BaseModel):
         defs = schema.setdefault("$defs", {})
         if "TaskListSettings" in defs and "properties" in defs["TaskListSettings"]:
             defs["TaskListSettings"]["properties"]["Task List"]["items"] = {
-                "$ref": "#/$defs/TaskListEnum"
-            }
-
-            defs["TaskListEnum"] = {
-                "title": "TaskListEnum",
-                "type": "string",
-                "enum": choices,
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "enum": choices,
+                        "title": "Task",
+                    },
+                    "repeat": {"type": "boolean", "default": True, "title": "Repeat"},
+                },
+                "required": ["name"],
             }
         return schema

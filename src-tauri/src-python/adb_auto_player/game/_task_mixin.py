@@ -36,20 +36,28 @@ class _TaskMixin(_GameBase):
             return
 
         custom_routines: dict[str, CustomRoutineEntry] = {}
-        for task in settings.tasks:
-            routine = self._get_custom_routine_for_task(task, game_commands)
+        repeat_flags: dict[str, bool] = {}
+        for task_item in settings.tasks:
+            routine = self._get_custom_routine_for_task(task_item.name, game_commands)
             if not routine:
-                logging.error(f"Task '{task}' not found")
+                logging.error(f"Task '{task_item.name}' not found")
             else:
-                custom_routines[task] = routine
+                custom_routines[task_item.name] = routine
+                repeat_flags[task_item.name] = task_item.repeat
 
         if not custom_routines:
             logging.error("No Tasks found")
             return
 
         self._execute_tasks(custom_routines)
-        while settings.repeat:
-            self._execute_tasks(custom_routines)
+        if settings.repeat:
+            repeating_routines = {
+                name: routine
+                for name, routine in custom_routines.items()
+                if repeat_flags.get(name, True)
+            }
+            while repeating_routines:
+                self._execute_tasks(repeating_routines)
 
     def _get_game_commands(self) -> dict[str, CustomRoutineEntry] | None:
         for module, cmds in CUSTOM_ROUTINE_REGISTRY.items():

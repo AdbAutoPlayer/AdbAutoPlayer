@@ -33,7 +33,12 @@ Repeat = true
 "Buy All Affinity" = false
 "Buy Discount Affinity" = true
 "Buy Temporal Essences" = false
+"Claim Hamburger Rewards" = true
 "Essence Buy Count" = 1
+"Run AFK Stages" = true
+"Run Dream Realm" = true
+"Run Dura's Trials" = true
+"Run Legend Trials" = true
 "Single Pull" = false
 
 ["Dream Realm"]
