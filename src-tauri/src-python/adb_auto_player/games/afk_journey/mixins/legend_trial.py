@@ -10,6 +10,7 @@ from adb_auto_player.exceptions import (
 )
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
+from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.util import SummaryGenerator
 
@@ -110,10 +111,18 @@ class SeasonLegendTrial(AFKJourneyBase):
                 match = self.wait_for_any_template(
                     templates=[
                         "next.png",
+                        "legend_trials/challenge_ch.png",
+                        "legend_trials/challenge_ge.png",
+                        "tap_to_close.png",
+                        "afk_stages/tap_to_close.png",
                         "legend_trials/top_floor_reached.png",
                         "legend_trials/unlocks_at_season_phase.png",
+                        "battle/victory_rewards.png",
+                        "battle/records.png",
+                        "battle/battle.png",
                     ],
                     threshold=ConfidenceValue("80%"),
+                    grayscale=True,
                 )
                 count += 1
                 if self.battle_state.section_header:
@@ -125,6 +134,23 @@ class SeasonLegendTrial(AFKJourneyBase):
                 match match.template:
                     case "next.png":
                         self.tap(match)
+                        continue
+                    case (
+                        "legend_trials/challenge_ch.png"
+                        | "legend_trials/challenge_ge.png"
+                    ):
+                        self.tap(match)
+                        continue
+                    case "tap_to_close.png" | "afk_stages/tap_to_close.png":
+                        self.tap(match)
+                        self.sleep_navigation()
+                        self._select_legend_trials_floor()
+                        continue
+                    case "battle/victory_rewards.png":
+                        self.tap(Point(x=550, y=1800))
+                        self.sleep_navigation()
+                        continue
+                    case "battle/records.png" | "battle/battle.png":
                         continue
                     case _:
                         logging.info(f"{self.battle_state.faction} Top Floor Reached")
