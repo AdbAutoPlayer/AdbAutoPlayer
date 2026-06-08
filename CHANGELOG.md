@@ -5,7 +5,6 @@
 ### Bug Fixes
 
 - **Legend Trial**: Improved battle loop reliability with additional screen handling:
-  - Added support for multi-language challenge buttons (Chinese, German).
   - Added handling for `tap_to_close` screens that appear after battle results, automatically re-selecting the current floor.
   - Added handling for `victory_rewards` screen to properly dismiss and continue.
   - Added `records` and `battle` screen recognition to avoid false exits from the battle loop.
