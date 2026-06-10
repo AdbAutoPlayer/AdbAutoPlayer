@@ -89,6 +89,15 @@ def setup_logging(handler_type: LogHandlerType, level: int | str) -> None:
         handler_type (LogHandlerType): Type of log handler to use
         level (int | str): The log level to set
     """
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")  # type: ignore
+    except AttributeError:
+        pass
+    try:
+        sys.stderr.reconfigure(encoding="utf-8")  # type: ignore
+    except AttributeError:
+        pass
+
     logger: logging.Logger = logging.getLogger()
     logger.setLevel(level)
 

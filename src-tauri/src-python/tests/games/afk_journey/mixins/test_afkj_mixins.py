@@ -180,6 +180,24 @@ class TestAFKJMixinsCoverage:
             ):
                 bot._handle_legend_trials_battle()
 
+    def test_handle_legend_trials_battle_milestone_coverage(self):
+        """Cover _handle_legend_trials_battle milestone floor popup path."""
+        bot = MockAFKJ()
+        bot.battle_state.faction = "Wilder"
+        cast(Any, bot.battle_state).section_header = "Test Tower"
+        with patch.object(bot, "_handle_battle_screen", return_value=True):
+            # First call returns 'tap_to_close.png', second call 'top_floor_reached.png'
+            match1 = MagicMock()
+            match1.template = "tap_to_close.png"
+            match2 = MagicMock()
+            match2.template = "legend_trials/top_floor_reached.png"
+            with patch.object(
+                bot, "wait_for_any_template", side_effect=[match1, match2]
+            ):
+                with patch.object(bot, "_select_legend_trials_floor") as mock_select:
+                    bot._handle_legend_trials_battle()
+                    mock_select.assert_called_once()
+
     def test_legend_trial_not_on_select_screen(self):
         """Cover line 59: navigate_to_legend_trials_select_tower when not on screen."""
         bot = MockAFKJ()
@@ -263,6 +281,36 @@ class TestAFKJMixinsCoverage:
             match = MagicMock()
             match.template = "unknown_template.png"
             with patch.object(bot, "wait_for_any_template", return_value=match):
+                bot._handle_legend_trials_battle()
+
+    def test_handle_legend_trials_battle_victory_rewards_coverage(self):
+        """Cover the case battle/victory_rewards.png in _handle_legend_trials_battle."""
+        bot = MockAFKJ()
+        bot.battle_state.faction = "Wilder"
+        with patch.object(bot, "_handle_battle_screen", return_value=True):
+            match1 = MagicMock()
+            match1.template = "battle/victory_rewards.png"
+            match2 = MagicMock()
+            match2.template = "legend_trials/top_floor_reached.png"
+            with patch.object(
+                bot, "wait_for_any_template", side_effect=[match1, match2]
+            ):
+                with patch.object(bot, "sleep_navigation") as mock_sleep:
+                    bot._handle_legend_trials_battle()
+                    mock_sleep.assert_called_once()
+
+    def test_handle_legend_trials_battle_records_coverage(self):
+        """Cover the case battle/records.png in _handle_legend_trials_battle."""
+        bot = MockAFKJ()
+        bot.battle_state.faction = "Wilder"
+        with patch.object(bot, "_handle_battle_screen", return_value=True):
+            match1 = MagicMock()
+            match1.template = "battle/records.png"
+            match2 = MagicMock()
+            match2.template = "legend_trials/top_floor_reached.png"
+            with patch.object(
+                bot, "wait_for_any_template", side_effect=[match1, match2]
+            ):
                 bot._handle_legend_trials_battle()
 
     def test_mock_afkj_unused_methods_coverage(self):
