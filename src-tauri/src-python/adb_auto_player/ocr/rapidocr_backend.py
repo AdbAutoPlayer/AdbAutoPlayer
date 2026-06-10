@@ -7,7 +7,7 @@ import numpy as np
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box, Point
 from adb_auto_player.models.ocr import OCRResult
-from rapidocr import RapidOCR
+from rapidocr import LangDet, LangRec, OCRVersion, RapidOCR
 
 from ._backend import OCRBackend
 
@@ -21,14 +21,31 @@ class RapidOCRBackend(OCRBackend):
     Uses the same OCRResult interface for compatibility.
     """
 
-    def __init__(self) -> None:
-        """Initialize RapidOCR backend (lazy-loaded on first use)."""
+    def __init__(self, params: dict[str, Any] | None = None) -> None:
+        """Initialize RapidOCR backend (lazy-loaded on first use).
+
+        Args:
+            params: Optional RapidOCR params dict (e.g. to select PP-OCRv5 models).
+        """
+        self._params = params
         self._engine: Any | None = None
+
+    @classmethod
+    def pp_ocr_v5_rec(cls) -> "RapidOCRBackend":
+        """PP-OCRv4 detection + PP-OCRv5 recognition for better name accuracy."""
+        return cls(
+            params={
+                "Det.ocr_version": OCRVersion.PPOCRV4,
+                "Det.lang_type": LangDet.CH,
+                "Rec.ocr_version": OCRVersion.PPOCRV5,
+                "Rec.lang_type": LangRec.CH,
+            }
+        )
 
     def _get_engine(self) -> Any:
         """Lazy-initialize the RapidOCR engine."""
         if self._engine is None:
-            self._engine = RapidOCR()
+            self._engine = RapidOCR(params=self._params)
         return self._engine
 
     def close(self) -> None:

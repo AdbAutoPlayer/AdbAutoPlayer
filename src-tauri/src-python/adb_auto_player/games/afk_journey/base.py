@@ -27,6 +27,8 @@ from adb_auto_player.util import SummaryGenerator
 
 from .battle_state import BattleState, Mode
 from .gui_category import AFKJCategory
+from .mixins.dream_realm import DreamRealmMixin
+from .mixins.guild_member_scan import GuildMemberScanMixin
 from .mixins.hero_scanner import HeroScannerMixin
 from .navigation import Navigation
 from .settings import Settings
@@ -40,7 +42,13 @@ from .settings import Settings
         categories=list(AFKJCategory),
     ),
 )
-class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
+class AFKJourneyBase(
+    Navigation,
+    HeroScannerMixin,
+    DreamRealmMixin,
+    GuildMemberScanMixin,
+    Game,
+):
     """AFK Journey Base Class."""
 
     def __init__(self) -> None:
@@ -694,6 +702,7 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
 
             case "battle/victory_rewards.png":
                 self.tap(Point(x=550, y=1800))
+                self.sleep_navigation()
                 result = True
 
             case "battle/power_up.png":
@@ -755,6 +764,8 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
 
     def _handle_ambiguous_result_screen(self, attempt: int) -> bool:
         """Handle ambiguous result screen."""
+        # Wait for elements to load to avoid race conditions with retry detection
+        sleep(2.0)
         # Ensure this is not a defeat screen capturing the statistics
         # icon by checking for Retry/Defeat indicators
         if retry_btn := self.game_find_template_match(
@@ -777,8 +788,10 @@ class AFKJourneyBase(Navigation, HeroScannerMixin, Game):
             return False
 
         self.tap(Point(x=950, y=1800))
+        if self.battle_state.mode == Mode.LEGEND_TRIALS:
+            self.sleep_navigation()
         # Wait for subsequent Next button and tap to proceed
-        if self.battle_state.mode in (
+        elif self.battle_state.mode in (
             Mode.AFK_STAGES,
             Mode.SEASON_AFK_STAGES,
         ):

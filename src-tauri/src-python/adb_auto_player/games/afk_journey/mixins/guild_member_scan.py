@@ -10,14 +10,14 @@ import subprocess
 import sys
 import threading
 import urllib.request
-from pathlib import Path
 from collections import Counter
 from difflib import SequenceMatcher
+from pathlib import Path
 from time import sleep
+from typing import TYPE_CHECKING
 from urllib.parse import parse_qs, urlparse
 
 import cv2
-
 from adb_auto_player.decorators import register_command
 from adb_auto_player.exceptions import AutoPlayerWarningError, GameTimeoutError
 from adb_auto_player.file_loader import SettingsLoader
@@ -30,8 +30,41 @@ from adb_auto_player.ocr import OCRBackend, RapidOCRBackend
 from adb_auto_player.ocr.qwen2vl_backend import QwenVLOCRBackend
 from adb_auto_player.template_matching import TemplateMatcher
 
+if TYPE_CHECKING:
+    from typing import Any
 
-class GuildMemberScanMixin:
+    from adb_auto_player.games.afk_journey.settings import Settings
+    from adb_auto_player.models.geometry import Point
+    from adb_auto_player.ocr import OCRBackend
+
+    class BaseClass:
+        settings: Settings
+        LANG_ERROR: str
+        min_timeout: float
+        fast_timeout: float
+        device: Any
+        template_timeout: float
+
+        def start_up(self, device_streaming: bool = True) -> None: ...
+        def navigate_to_world(self) -> None: ...
+        def _enter_dr(self) -> None: ...
+        def wait_for_template(self, *args, **kwargs) -> Any: ...
+        def tap(self, *args, **kwargs) -> None: ...
+        def swipe_left(self, *args, **kwargs) -> None: ...
+        def game_find_template_match(self, *args, **kwargs) -> Any: ...
+        def get_screenshot(self) -> Any: ...
+        def swipe_up(self, *args, **kwargs) -> None: ...
+        def sleep_action(self, *args, **kwargs) -> None: ...
+        def _load_image(self, *args, **kwargs) -> Any: ...
+        def press_back_button(self) -> None: ...
+        def navigate_to_battle_modes_screen(self) -> None: ...
+        def _find_in_battle_modes(self, *args, **kwargs) -> Any: ...
+        def sleep_navigation(self) -> None: ...
+else:
+    BaseClass = object
+
+
+class GuildMemberScanMixin(BaseClass):
     """Guild Member Scan Mixin."""
 
     # Screen region and tolerance constants
@@ -189,28 +222,48 @@ class GuildMemberScanMixin:
             index_flags += ["--index-url", index_url]
         elif extra_index_url:
             index_flags += [
-                "--extra-index-url", extra_index_url,
-                "--index-strategy", "unsafe-best-match",
+                "--extra-index-url",
+                extra_index_url,
+                "--index-strategy",
+                "unsafe-best-match",
             ]
         no_dep_flag = ["--no-deps"] if no_deps else []
 
         uv = shutil.which("uv")
         if uv:
-            reinstall_flags = [
-                f
-                for pkg in packages
-                for f in ("--reinstall-package", pkg.split(">=")[0].split("==")[0])
-            ] if reinstall else []
+            reinstall_flags = (
+                [
+                    f
+                    for pkg in packages
+                    for f in ("--reinstall-package", pkg.split(">=")[0].split("==")[0])
+                ]
+                if reinstall
+                else []
+            )
             cmd = [
-                uv, "pip", "install", "--target", str(extras_dir),
-                *reinstall_flags, *no_dep_flag, *index_flags, *packages,
+                uv,
+                "pip",
+                "install",
+                "--target",
+                str(extras_dir),
+                *reinstall_flags,
+                *no_dep_flag,
+                *index_flags,
+                *packages,
             ]
         else:
             reinstall_flag = ["--force-reinstall"] if reinstall else []
             cmd = [
-                sys.executable, "-m", "pip", "install",
-                "--target", str(extras_dir),
-                *reinstall_flag, *no_dep_flag, *index_flags, *packages,
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "--target",
+                str(extras_dir),
+                *reinstall_flag,
+                *no_dep_flag,
+                *index_flags,
+                *packages,
             ]
 
         logging.info(f"Running: {' '.join(cmd)}")
@@ -240,10 +293,11 @@ class GuildMemberScanMixin:
             hb.start()
 
             try:
-                for raw in process.stdout:  # type: ignore[union-attr]
-                    line = _ansi.sub("", raw).rstrip()
-                    if line:
-                        logging.info(f"[install] {line}")
+                if process.stdout is not None:
+                    for raw in process.stdout:
+                        line = _ansi.sub("", raw).rstrip()
+                        if line:
+                            logging.info(f"[install] {line}")
             finally:
                 _stop.set()
 
@@ -266,9 +320,9 @@ class GuildMemberScanMixin:
         """
         for dist_info in GuildMemberScanMixin._extras_dir().glob("torch-*.dist-info"):
             try:
-                for line in (dist_info / "METADATA").read_text(
-                    errors="ignore"
-                ).splitlines():
+                for line in (
+                    (dist_info / "METADATA").read_text(errors="ignore").splitlines()
+                ):
                     if line.startswith("Version:"):
                         raw = line.split(":", 1)[1].strip()
                         has_cuda = "+cu" in raw
@@ -307,9 +361,7 @@ class GuildMemberScanMixin:
             return  # Everything already correct
 
         if not confirmed:
-            logging.warning(
-                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            )
+            logging.warning("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
             logging.warning("  Qwen2-VL-2B: LARGE DOWNLOAD REQUIRED")
             logging.warning(
                 "  Installing this backend requires approximately 5 GB of data"
@@ -318,23 +370,17 @@ class GuildMemberScanMixin:
             logging.warning(
                 "  Make sure you have enough disk space and a stable connection."
             )
-            logging.warning(
-                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            )
+            logging.warning("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
             raise AutoPlayerWarningError(
                 "Qwen2-VL-2B download not confirmed. "
                 "Go to Settings → Guild Manager Scan and enable "
                 "'Confirm Qwen2-VL Download (~2.2 GB)' to proceed."
             )
 
-        logging.warning(
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        )
+        logging.warning("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         logging.warning("  Qwen2-VL-2B: starting download (~2.2 GB).")
         logging.warning("  Please do not close the app...")
-        logging.warning(
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        )
+        logging.warning("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
         # cu126 has torch 2.7+ wheels for Python 3.13 on Windows; cu124 tops at 2.6.
         cuda_index = "https://download.pytorch.org/whl/cu126"
@@ -344,8 +390,8 @@ class GuildMemberScanMixin:
             logging.info(f"{action} PyTorch with CUDA 12.6 support...")
             if not self._pip_install(
                 ["torch", "torchvision"],
-                index_url=cuda_index,   # primary index → only CUDA wheels
-                no_deps=True,           # deps (numpy etc.) already in extras_dir
+                index_url=cuda_index,  # primary index → only CUDA wheels
+                no_deps=True,  # deps (numpy etc.) already in extras_dir
                 reinstall=torch_present,
             ):
                 logging.warning(
@@ -384,8 +430,7 @@ class GuildMemberScanMixin:
             label="Guild Manager Scan",
             category=AFKJCategory.EVENTS_AND_OTHER,
             tooltip=(
-                "Scan rankings from Dream Realm and Supreme Arena "
-                "for guild management"
+                "Scan rankings from Dream Realm and Supreme Arena for guild management"
             ),
         ),
     )
@@ -416,31 +461,44 @@ class GuildMemberScanMixin:
         self._guild_members = guild_members
 
         # 1-5. Scan Dream Realm rankings
-        rankings = self._run_dream_realm_scan(
-            ocr_backend, fallback, guild_members
-        )
+        rankings = self._run_dream_realm_scan(ocr_backend, fallback, guild_members)
         self._save_rankings_to_json(rankings)
         self._save_ocr_debug()
 
-        # 6. Optionally scan Supreme Arena rankings
-        if self.settings.guild_manager_scan.scan_supreme_arena:
-            logging.info("Supreme Arena scan enabled. Starting Supreme Arena scan...")
-            try:
-                self._scan_supreme_arena(
-                    ocr_backend, fallback, guild_members
-                )
-            except Exception as e:
-                logging.error(f"Error scanning Supreme Arena: {e}")
-            self._save_ocr_debug()
+        today = datetime.datetime.now().strftime("%A")
 
-        # 7. Optionally scan Guild member activeness.
+        # 6. Optionally scan Supreme Arena rankings (Monday and Tuesday only)
+        if self.settings.guild_manager_scan.scan_supreme_arena:
+            if today in ("Monday", "Tuesday"):
+                logging.info(
+                    "Supreme Arena scan enabled. Starting Supreme Arena scan..."
+                )
+                try:
+                    self._scan_supreme_arena(ocr_backend, fallback, guild_members)
+                except Exception as e:
+                    logging.error(f"Error scanning Supreme Arena: {e}")
+                self._save_ocr_debug()
+            else:
+                logging.info(
+                    f"Supreme Arena scan skipped — today is {today} "
+                    "(runs on Monday and Tuesday only)."
+                )
+
+        # 7. Optionally scan Guild member activeness (Sunday only).
         # RapidOCR handles bbox layout; Qwen supplements for multilingual names.
         if self.settings.guild_manager_scan.scan_guild_activeness:
-            logging.info("Guild Activeness scan enabled. Starting scan...")
-            try:
-                self._scan_guild_activeness(ocr_backend, guild_members)
-            except Exception as e:
-                logging.error(f"Error scanning Guild Activeness: {e}")
+            if today == "Sunday":
+                logging.info("Guild Activeness scan enabled. Starting scan...")
+                try:
+                    self._scan_guild_activeness(ocr_backend, guild_members)
+                except Exception as e:
+                    logging.error(f"Error scanning Guild Activeness: {e}")
+                self._save_ocr_debug()
+            else:
+                logging.info(
+                    f"Guild Activeness scan skipped — today is {today} "
+                    "(runs on Sunday only)."
+                )
 
         # Clean up: go back to world
         self.navigate_to_world()
@@ -679,7 +737,8 @@ class GuildMemberScanMixin:
                 # incorrectly assigned to rank R-N (one hallucination) and then
                 # missed at rank R when processed later.
                 alt_names = [
-                    n for n in names
+                    n
+                    for n in names
                     if self._find_fuzzy_match(n, canonical_names) is None
                     and not self._name_appears_more_elsewhere(n, rank, rank_groups)
                 ]
@@ -834,38 +893,93 @@ class GuildMemberScanMixin:
     def _to_visual_latin(self, text: str) -> str:
         """Map Cyrillic characters to visually similar Latin homoglyphs."""
         mapping = {
-            "\u0430": "a", "\u0431": "6", "\u0432": "b", "\u0433": "r",
-            "\u0434": "g", "\u0435": "e", "\u0451": "e", "\u0436": "k",
-            "\u0437": "3", "\u0438": "u", "\u0439": "u", "\u043a": "k",
-            "\u043b": "n", "\u043c": "m", "\u043d": "h", "\u043e": "o",
-            "\u043f": "n", "\u0440": "p", "\u0441": "c", "\u0442": "m",
-            "\u0443": "y", "\u0444": "o", "\u0445": "x", "\u0446": "u",
-            "\u0447": "u", "\u0448": "w", "\u0449": "w", "\u044a": "b",
-            "\u044b": "bi", "\u044c": "b", "\u044d": "3", "\u044e": "io",
+            "\u0430": "a",
+            "\u0431": "6",
+            "\u0432": "b",
+            "\u0433": "r",
+            "\u0434": "g",
+            "\u0435": "e",
+            "\u0451": "e",
+            "\u0436": "k",
+            "\u0437": "3",
+            "\u0438": "u",
+            "\u0439": "u",
+            "\u043a": "k",
+            "\u043b": "n",
+            "\u043c": "m",
+            "\u043d": "h",
+            "\u043e": "o",
+            "\u043f": "n",
+            "\u0440": "p",
+            "\u0441": "c",
+            "\u0442": "m",
+            "\u0443": "y",
+            "\u0444": "o",
+            "\u0445": "x",
+            "\u0446": "u",
+            "\u0447": "u",
+            "\u0448": "w",
+            "\u0449": "w",
+            "\u044a": "b",
+            "\u044b": "bi",
+            "\u044c": "b",
+            "\u044d": "3",
+            "\u044e": "io",
             "\u044f": "r",
-            "\u0410": "A", "\u0411": "6", "\u0412": "B", "\u0413": "R",
-            "\u0414": "G", "\u0415": "E", "\u0401": "E", "\u0416": "K",
-            "\u0417": "3", "\u0418": "U", "\u0419": "U", "\u041a": "K",
-            "\u041b": "N", "\u041c": "M", "\u041d": "H", "\u041e": "O",
-            "\u041f": "N", "\u0420": "P", "\u0421": "C", "\u0422": "M",
-            "\u0423": "Y", "\u0425": "X", "\u0426": "U", "\u0427": "U",
-            "\u0428": "W", "\u0429": "W", "\u042b": "Bi", "\u042f": "R"
+            "\u0410": "A",
+            "\u0411": "6",
+            "\u0412": "B",
+            "\u0413": "R",
+            "\u0414": "G",
+            "\u0415": "E",
+            "\u0401": "E",
+            "\u0416": "K",
+            "\u0417": "3",
+            "\u0418": "U",
+            "\u0419": "U",
+            "\u041a": "K",
+            "\u041b": "N",
+            "\u041c": "M",
+            "\u041d": "H",
+            "\u041e": "O",
+            "\u041f": "N",
+            "\u0420": "P",
+            "\u0421": "C",
+            "\u0422": "M",
+            "\u0423": "Y",
+            "\u0425": "X",
+            "\u0426": "U",
+            "\u0427": "U",
+            "\u0428": "W",
+            "\u0429": "W",
+            "\u042b": "Bi",
+            "\u042f": "R",
         }
         return "".join(mapping.get(c, c) for c in text)
 
     def _strip_diacritics(self, text: str) -> str:
         """Replace non-ASCII diacritics with their base ASCII equivalents."""
         import unicodedata  # noqa: PLC0415
+
         _map = {
-            "ø": "o", "Ø": "O",
-            "ą": "a", "Ą": "A",
-            "ę": "e", "Ę": "E",
-            "ś": "s", "Ś": "S",
-            "ź": "z", "Ź": "Z",
-            "ż": "z", "Ż": "Z",
-            "ł": "l", "Ł": "L",
-            "æ": "ae", "Æ": "AE",
-            "þ": "th", "Þ": "TH",
+            "ø": "o",
+            "Ø": "O",
+            "ą": "a",
+            "Ą": "A",
+            "ę": "e",
+            "Ę": "E",
+            "ś": "s",
+            "Ś": "S",
+            "ź": "z",
+            "Ź": "Z",
+            "ż": "z",
+            "Ż": "Z",
+            "ł": "l",
+            "Ł": "L",
+            "æ": "ae",
+            "Æ": "AE",
+            "þ": "th",
+            "Þ": "TH",
             "ß": "ss",
         }
         result = []
@@ -893,17 +1007,13 @@ class GuildMemberScanMixin:
         # Hangul members only (fuzzy-ranked). This generalises to any number
         # of Hangul members (JP/KR/mixed guilds).
         _hangul_pat = re.compile(r"[가-힣ᄀ-ᇿ㄰-㆏]")
-        korean_members = [
-            m for m, _ in cleaned_members if _hangul_pat.search(m)
-        ]
+        korean_members = [m for m, _ in cleaned_members if _hangul_pat.search(m)]
         if korean_members:
             is_korean = bool(_hangul_pat.search(name))
             is_misread = name_clean in ("号1o", "号10", "号10g", "号1og", "号lo")
             _cjk_pat = re.compile(r"[一-鿿぀-ヿ豈-﫿]")
             is_cjk_misread = bool(_cjk_pat.search(name_clean)) and not any(
-                name_clean == mc
-                for _, mc in cleaned_members
-                if _cjk_pat.search(mc)
+                name_clean == mc for _, mc in cleaned_members if _cjk_pat.search(mc)
             )
             if is_korean or is_cjk_misread or is_misread:
                 if len(korean_members) == 1:
@@ -969,8 +1079,7 @@ class GuildMemberScanMixin:
             if best_ratio >= self._GUILD_NAME_CORRECTION_THRESHOLD:
                 if best_match != name:
                     logging.debug(
-                        f"Name corrected: {name!a} -> {best_match!a} "
-                        f"({best_ratio:.2f})"
+                        f"Name corrected: {name!a} -> {best_match!a} ({best_ratio:.2f})"
                     )
                 new_entry = entry.copy()
                 new_entry["Name"] = best_match
@@ -1060,7 +1169,7 @@ class GuildMemberScanMixin:
                 3: "Thursday",
                 4: "Friday",
                 5: "Saturday",
-                6: "Sunday"
+                6: "Sunday",
             }
             return weekdays[d.weekday()]
         except ValueError:
@@ -1260,8 +1369,10 @@ class GuildMemberScanMixin:
             #   stripped downstream by the bbox_rank_set filter.
             # DR first frame: cut artistic header only (y=450); list from y~820.
             llm_y_min = (
-                y_min if is_supreme_arena and is_first_frame
-                else 450 if is_first_frame
+                y_min
+                if is_supreme_arena and is_first_frame
+                else 450
+                if is_first_frame
                 else 350
             )
             scan_region = screenshot[llm_y_min : min(h, self._Y_MAX_RANKINGS), :]
@@ -1306,9 +1417,7 @@ class GuildMemberScanMixin:
                 supplemental = [
                     r
                     for r in bbox_rows
-                    if r[1]
-                    and (r[0], r[1]) not in llm_rank_names
-                    and r[1] in guild_set
+                    if r[1] and (r[0], r[1]) not in llm_rank_names and r[1] in guild_set
                 ]
                 # SA non-first: bbox null-rank supplementals accumulate
                 # x3 votes per frame and can outvote a correct Qwen reading
@@ -1319,32 +1428,34 @@ class GuildMemberScanMixin:
                     supplemental = [r for r in supplemental if r[0] is not None]
                 if self._ocr_debug is not None:
                     in_range = [
-                        b for b in bbox_ocr_all
+                        b
+                        for b in bbox_ocr_all
                         if y_min <= b.box.center.y <= self._Y_MAX_RANKINGS
                     ]
-                    self._ocr_debug.append({
-                        "backend": backend_name,
-                        "is_supreme_arena": is_supreme_arena,
-                        "is_first_frame": is_first_frame,
-                        "y_min": llm_y_min,
-                        "bbox_y_min": y_min,
-                        "bbox_raw_total": len(bbox_ocr_all),
-                        "bbox_in_range": len(in_range),
-                        "bbox_y_sample": [
-                            {"text": b.text, "cy": b.box.center.y}
-                            for b in sorted(
-                                bbox_ocr_all, key=lambda b: b.box.center.y
-                            )[:8]
-                        ],
-                        "rows": [
-                            {"rank": r, "name": n, "score": s}
-                            for r, n, s in rows
-                        ],
-                        "bbox_supplement": bbox_debug,
-                        "supplemental_added": [
-                            {"rank": r, "name": n} for r, n, _ in supplemental
-                        ],
-                    })
+                    self._ocr_debug.append(
+                        {
+                            "backend": backend_name,
+                            "is_supreme_arena": is_supreme_arena,
+                            "is_first_frame": is_first_frame,
+                            "y_min": llm_y_min,
+                            "bbox_y_min": y_min,
+                            "bbox_raw_total": len(bbox_ocr_all),
+                            "bbox_in_range": len(in_range),
+                            "bbox_y_sample": [
+                                {"text": b.text, "cy": b.box.center.y}
+                                for b in sorted(
+                                    bbox_ocr_all, key=lambda b: b.box.center.y
+                                )[:8]
+                            ],
+                            "rows": [
+                                {"rank": r, "name": n, "score": s} for r, n, s in rows
+                            ],
+                            "bbox_supplement": bbox_debug,
+                            "supplemental_added": [
+                                {"rank": r, "name": n} for r, n, _ in supplemental
+                            ],
+                        }
+                    )
                 return rows + supplemental * 3
             logging.debug(
                 f"{backend_name} failed for this frame — falling back to RapidOCR."
@@ -1359,16 +1470,18 @@ class GuildMemberScanMixin:
         )
 
         if self._ocr_debug is not None:
-            self._ocr_debug.append({
-                "is_supreme_arena": is_supreme_arena,
-                "is_first_frame": is_first_frame,
-                "y_min": y_min,
-                "all_ocr_blocks": [
-                    {"text": b.text, "cx": b.box.center.x, "cy": b.box.center.y}
-                    for b in ocr_results
-                ],
-                "rows": debug_rows,
-            })
+            self._ocr_debug.append(
+                {
+                    "is_supreme_arena": is_supreme_arena,
+                    "is_first_frame": is_first_frame,
+                    "y_min": y_min,
+                    "all_ocr_blocks": [
+                        {"text": b.text, "cx": b.box.center.x, "cy": b.box.center.y}
+                        for b in ocr_results
+                    ],
+                    "rows": debug_rows,
+                }
+            )
 
         return parsed_rows
 
@@ -1404,8 +1517,7 @@ class GuildMemberScanMixin:
             corrected.append((fixed_rank, name_q, score_q))
         if not is_first_frame and rank_set:
             corrected = [
-                (rk, nm, sc) for rk, nm, sc in corrected
-                if rk and rk in rank_set
+                (rk, nm, sc) for rk, nm, sc in corrected if rk and rk in rank_set
             ]
         # Deduplicate by rank: if Qwen assigns the same rank to two players
         # (e.g. Night=5 and Sebv=5 when Sebv is actually rank 7), prefer the
@@ -1420,9 +1532,7 @@ class GuildMemberScanMixin:
             elif nm and nm in name_rank:
                 # This name is bbox-confirmed at this rank — replace the
                 # earlier (unconfirmed) occupant.
-                idx = next(
-                    i for i, t in enumerate(deduped) if t[0] == rk
-                )
+                idx = next(i for i, t in enumerate(deduped) if t[0] == rk)
                 deduped[idx] = (rk, nm, sc)
                 seen_ranks[rk] = (rk, nm, sc)
         return deduped
@@ -1572,9 +1682,7 @@ class GuildMemberScanMixin:
             if (
                 b.box.center.y < score_y - 20
                 if score_y is not None
-                else (
-                    b.box.center.y - name_y_min < self._Y_GUILD_OFFSET
-                )
+                else (b.box.center.y - name_y_min < self._Y_GUILD_OFFSET)
             )
         ]
         if not valid:
@@ -1672,11 +1780,11 @@ class GuildMemberScanMixin:
                             threshold=ConfidenceValue("70%"),
                         )
                         if match:
-                             rank = str(possible_rank)
-                             logging.debug(
-                                 f"Detected medal rank {rank} via template matching."
-                             )
-                             break
+                            rank = str(possible_rank)
+                            logging.debug(
+                                f"Detected medal rank {rank} via template matching."
+                            )
+                            break
         return rank
 
     def _navigate_to_guild_hall(self, ocr_backend: OCRBackend) -> bool:
@@ -1709,9 +1817,7 @@ class GuildMemberScanMixin:
                     r
                     for r in ocr_results
                     if r.text.strip().lower() == "guild"
-                    and self._Y_GUILD_NAV_MIN
-                    <= r.box.center.y
-                    <= self._Y_GUILD_NAV_MAX
+                    and self._Y_GUILD_NAV_MIN <= r.box.center.y <= self._Y_GUILD_NAV_MAX
                 ),
                 None,
             )
@@ -1723,9 +1829,7 @@ class GuildMemberScanMixin:
         sleep(2.5)
         return True
 
-    def _navigate_to_guild_members_screen(
-        self, ocr_backend: OCRBackend
-    ) -> bool:
+    def _navigate_to_guild_members_screen(self, ocr_backend: OCRBackend) -> bool:
         """Navigate to the Guild Members list screen.
 
         1. Tap the 'Guild' tab in the bottom navigation bar (detected by OCR).
@@ -1770,9 +1874,7 @@ class GuildMemberScanMixin:
 
             if attempt < self._GUILD_NAV_SWIPE_MAX_ATTEMPTS:
                 # Additional swipe in case the first one wasn't enough
-                logging.warning(
-                    "Members button not found, swiping again to reveal it."
-                )
+                logging.warning("Members button not found, swiping again to reveal it.")
                 self.device.swipe(
                     Point(self._GUILD_SWIPE_SX, self._GUILD_SWIPE_SY),
                     Point(self._GUILD_SWIPE_EX, self._GUILD_SWIPE_EY),
@@ -1898,18 +2000,21 @@ class GuildMemberScanMixin:
         )
 
         if self._ocr_debug is not None:
-            self._ocr_debug.append({
-                "type": "activeness",
-                "frame": frame_label,
-                "name_blocks": [
-                    {"text": b.text, "cy": b.box.center.y} for b in name_blocks
-                ],
-                "activeness_blocks": [
-                    {"text": b.text, "cy": b.box.center.y} for b in activeness_blocks
-                ],
-                "pairs": list(pairs[:pairs_before_qwen]),
-                "qwen_recovered": list(pairs[pairs_before_qwen:]),
-            })
+            self._ocr_debug.append(
+                {
+                    "type": "activeness",
+                    "frame": frame_label,
+                    "name_blocks": [
+                        {"text": b.text, "cy": b.box.center.y} for b in name_blocks
+                    ],
+                    "activeness_blocks": [
+                        {"text": b.text, "cy": b.box.center.y}
+                        for b in activeness_blocks
+                    ],
+                    "pairs": list(pairs[:pairs_before_qwen]),
+                    "qwen_recovered": list(pairs[pairs_before_qwen:]),
+                }
+            )
         return pairs
 
     def _recover_orphaned_activeness_names(
@@ -1932,8 +2037,9 @@ class GuildMemberScanMixin:
                 continue
             cy = ab.box.center.y
             crop = screenshot[
-                max(0, cy - self._Y_ACTIVENESS_PAIR_RADIUS):
-                min(screenshot.shape[0], cy + self._Y_ACTIVENESS_PAIR_RADIUS),
+                max(0, cy - self._Y_ACTIVENESS_PAIR_RADIUS) : min(
+                    screenshot.shape[0], cy + self._Y_ACTIVENESS_PAIR_RADIUS
+                ),
                 : self._X_ACTIVENESS_MIN,
             ]
             name = qwen.extract_player_name(crop)
@@ -1950,7 +2056,7 @@ class GuildMemberScanMixin:
         r"^(officer|founder|paladin|knight|squire|member)$", re.IGNORECASE
     )
 
-    def _parse_chest_contribution_rows(
+    def _parse_chest_contribution_rows(  # noqa: PLR0912
         self,
         screenshot,
         ocr_backend: OCRBackend,
@@ -2009,7 +2115,8 @@ class GuildMemberScanMixin:
                 dist = abs(vb.box.center.y - name_y)
                 if dist <= self._Y_CHEST_PAIR_RADIUS and dist < best_dist:
                     m = self._RE_CHEST_VALUE.match(vb.text.strip())
-                    best_dist, best_val, best_idx = dist, int(m.group(1)), idx  # type: ignore[union-attr]
+                    if m is not None:
+                        best_dist, best_val, best_idx = dist, int(m.group(1)), idx
             if best_val is not None:
                 used_values.add(best_idx)
                 pairs.append((nb.text.strip(), best_val))
@@ -2018,20 +2125,22 @@ class GuildMemberScanMixin:
         self._supplement_pairs_with_qwen_chest(screenshot, pairs)
 
         if self._ocr_debug is not None:
-            self._ocr_debug.append({
-                "type": "chest",
-                "frame": frame_label,
-                "name_blocks": [
-                    {"text": b.text, "cx": b.box.center.x, "cy": b.box.center.y}
-                    for b in name_blocks
-                ],
-                "value_blocks": [
-                    {"text": b.text, "cx": b.box.center.x, "cy": b.box.center.y}
-                    for b in value_blocks
-                ],
-                "pairs_rapid": list(pairs[:pairs_before_qwen]),
-                "pairs_qwen": list(pairs[pairs_before_qwen:]),
-            })
+            self._ocr_debug.append(
+                {
+                    "type": "chest",
+                    "frame": frame_label,
+                    "name_blocks": [
+                        {"text": b.text, "cx": b.box.center.x, "cy": b.box.center.y}
+                        for b in name_blocks
+                    ],
+                    "value_blocks": [
+                        {"text": b.text, "cx": b.box.center.x, "cy": b.box.center.y}
+                        for b in value_blocks
+                    ],
+                    "pairs_rapid": list(pairs[:pairs_before_qwen]),
+                    "pairs_qwen": list(pairs[pairs_before_qwen:]),
+                }
+            )
         return pairs
 
     def _supplement_pairs_with_qwen_chest(
@@ -2084,9 +2193,7 @@ class GuildMemberScanMixin:
                 pairs.append((qname, chest_int))
                 existing_lower.add(qname.lower())
 
-    def _navigate_to_chest_contribution_ranking(
-        self, nav_backend: OCRBackend
-    ) -> bool:
+    def _navigate_to_chest_contribution_ranking(self, nav_backend: OCRBackend) -> bool:
         """From the Guild Hall, open Guild Chest and tap Contribution Ranking tab.
 
         Returns True if the Contribution Ranking screen is reached.
@@ -2116,23 +2223,21 @@ class GuildMemberScanMixin:
             (
                 r
                 for r in ocr_results
-                if ("contribution" in r.text.strip().lower()
-                    or "ranking" in r.text.strip().lower())
+                if (
+                    "contribution" in r.text.strip().lower()
+                    or "ranking" in r.text.strip().lower()
+                )
                 and r.box.center.y >= self._Y_TAB_MIN
             ),
             None,
         )
         if contrib_tab is None:
-            logging.warning(
-                "Contribution Ranking tab not found - skipping chest scan."
-            )
+            logging.warning("Contribution Ranking tab not found - skipping chest scan.")
             self.press_back_button()
             sleep(1.5)
             return False
 
-        logging.info(
-            f"Tapping Contribution Ranking tab at {contrib_tab.box.center}."
-        )
+        logging.info(f"Tapping Contribution Ranking tab at {contrib_tab.box.center}.")
         self.tap(contrib_tab.box.center)
         sleep(2)
         return True
@@ -2148,7 +2253,9 @@ class GuildMemberScanMixin:
         for scroll_idx in range(self._MAX_SCROLLS_CHEST):
             screenshot = self.get_screenshot()
             self._save_debug_screenshot(screenshot, f"chest_{scroll_idx:03d}")
-            pairs = self._parse_chest_contribution_rows(screenshot, nav_backend)
+            pairs = self._parse_chest_contribution_rows(
+                screenshot, nav_backend, frame_label=f"chest_{scroll_idx:03d}"
+            )
 
             new_this_frame = False
             for raw_name, chest_count in pairs:
@@ -2196,16 +2303,12 @@ class GuildMemberScanMixin:
                 corrected[fixed] = max(corrected.get(fixed, 0), count)
             contributions = corrected
 
-        logging.info(
-            f"Collected chest contributions for {len(contributions)} members."
-        )
+        logging.info(f"Collected chest contributions for {len(contributions)} members.")
         self.press_back_button()
         sleep(1.5)
         return contributions
 
-    def _collect_activeness_scroll_data(
-        self, ocr_backend: OCRBackend
-    ) -> list[dict]:
+    def _collect_activeness_scroll_data(self, ocr_backend: OCRBackend) -> list[dict]:
         """Scroll the Members list and return raw activeness records."""
         seen_names: set[str] = set()
         seen_index: dict[str, int] = {}
@@ -2217,7 +2320,9 @@ class GuildMemberScanMixin:
         for scroll_idx in range(self._MAX_SCROLLS_ACTIVENESS):
             screenshot = self.get_screenshot()
             self._save_debug_screenshot(screenshot, f"activeness_{scroll_idx:03d}")
-            pairs = self._parse_activeness_rows(screenshot, ocr_backend)
+            pairs = self._parse_activeness_rows(
+                screenshot, ocr_backend, frame_label=f"activeness_{scroll_idx:03d}"
+            )
 
             new_this_frame = False
             for raw_name, activeness in pairs:
@@ -2227,7 +2332,7 @@ class GuildMemberScanMixin:
                 if not name or len(name) < self._MIN_NAME_LENGTH:
                     continue
                 try:
-                    activeness_int = int(activeness)
+                    activeness_int = int(activeness) if activeness is not None else 0
                 except ValueError:
                     activeness_int = 0
                 already_seen = self._find_fuzzy_match(name, seen_names)
@@ -2295,9 +2400,7 @@ class GuildMemberScanMixin:
 
         if chest_contributions:
             for record in activeness_records:
-                record["ChestContribution"] = chest_contributions.get(
-                    record["Name"], 0
-                )
+                record["ChestContribution"] = chest_contributions.get(record["Name"], 0)
 
         logging.info(
             f"Collected activeness for {len(activeness_records)} guild members."
@@ -2345,9 +2448,7 @@ class GuildMemberScanMixin:
             name, cleaned_members, suffix_pat
         )
         return (
-            best_match
-            if best_ratio >= self._GUILD_NAME_CORRECTION_THRESHOLD
-            else name
+            best_match if best_ratio >= self._GUILD_NAME_CORRECTION_THRESHOLD else name
         )
 
     def _save_guild_activeness_to_json(self, records: list[dict]) -> None:
@@ -2399,9 +2500,7 @@ class GuildMemberScanMixin:
         try:
             reward = self.wait_for_template(
                 "supreme_arena/rankings.png",
-                timeout_message=(
-                    "Could not find Rankings button in Supreme Arena."
-                ),
+                timeout_message=("Could not find Rankings button in Supreme Arena."),
                 timeout=self.min_timeout,
             )
             self.tap(reward)
@@ -2430,12 +2529,10 @@ class GuildMemberScanMixin:
                 text = res.text.lower()
                 # Check for rankings specifically on the right sidebar (x > 800)
                 if (
-                    ("rank" in text or "classif" in text)
-                    and res.box.center.x > self._X_SIDEBAR_BOUNDARY
-                ):
+                    "rank" in text or "classif" in text
+                ) and res.box.center.x > self._X_SIDEBAR_BOUNDARY:
                     logging.info(
-                        f"Found Rankings button via OCR at {res.box.center}, "
-                        "tapping."
+                        f"Found Rankings button via OCR at {res.box.center}, tapping."
                     )
                     self.tap(res.box.center)
                     found = True
@@ -2514,8 +2611,12 @@ class GuildMemberScanMixin:
             output_dir = data_root / "data"
             os.makedirs(output_dir, exist_ok=True)
             output_file = output_dir / "ocr_debug.json"
+            payload = {
+                "api_url": self.settings.guild_manager_scan.guild_members_api_url,
+                "frames": self._ocr_debug,
+            }
             with open(output_file, mode="w", encoding="utf-8") as f:
-                json.dump(self._ocr_debug, f, indent=2, ensure_ascii=False)
+                json.dump(payload, f, indent=2, ensure_ascii=False)
             logging.info(f"OCR debug data written to {output_file}")
         except Exception as e:
             logging.warning(f"Could not write OCR debug file: {e}")

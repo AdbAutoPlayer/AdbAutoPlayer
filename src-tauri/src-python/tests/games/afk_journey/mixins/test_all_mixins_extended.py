@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, mock_open, patch
 
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.file_loader.settings_loader import SettingsLoader
@@ -9,7 +9,6 @@ from adb_auto_player.games.afk_journey.mixins.arcane_labyrinth import (
 )
 from adb_auto_player.games.afk_journey.mixins.assist import AssistMixin
 from adb_auto_player.games.afk_journey.mixins.dailies import DailiesMixin
-from adb_auto_player.games.afk_journey.mixins.dream_realm import DreamRealmMixin
 from adb_auto_player.games.afk_journey.mixins.duras_trials import DurasTrialsMixin
 from adb_auto_player.games.afk_journey.mixins.frostfire_showdown import (
     FrostfireShowdownMixin,
@@ -26,6 +25,7 @@ from adb_auto_player.games.afk_journey.mixins.titan_reaver_proxy_battle import (
 )
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box, Point
+from adb_auto_player.models.ocr import OCRResult
 from adb_auto_player.models.template_matching import TemplateMatchResult
 
 
@@ -34,7 +34,6 @@ class MockAllAFKJ(
     ArcaneLabyrinthMixin,
     AssistMixin,
     DailiesMixin,
-    DreamRealmMixin,
     DurasTrialsMixin,
     FrostfireShowdownMixin,
     HomesteadHelperMixin,
@@ -60,6 +59,7 @@ class MockAllAFKJ(
         self._settings.dailies.buy_essences = False
         self._settings.dailies.single_pull = False
         self._settings.legend_trials.towers = []
+        self._settings.guild_manager_scan.days_to_scan = 3
         self.battle_state = MagicMock()
         self.battle_state.section_header = "Test Stage"
         self._stream = MagicMock()
@@ -70,6 +70,7 @@ class MockAllAFKJ(
         self.default_threshold = ConfidenceValue("90%")
         self.LANG_ERROR = "error"
         self.BATTLE_TIMEOUT = 1
+        self._screenshot_dir = None  # disable debug screenshot saving in tests
 
     @property
     def fast_timeout(self):
@@ -167,6 +168,18 @@ class MockAllAFKJ(
         pass
 
     def _execute_single_proxy_battle(self, *args, **kwargs):
+        pass
+
+    def navigate_to_battle_modes_screen(self, *args, **kwargs):
+        pass
+
+    def _find_in_battle_modes(self, *args, **kwargs):
+        return MagicMock()
+
+    def navigate_to_world(self, *args, **kwargs):
+        pass
+
+    def sleep_action(self, *args, **kwargs):
         pass
 
 
@@ -380,3 +393,110 @@ def test_run_titan_reaver():
     with patch.object(bot, "start_up"):
         with patch.object(bot, "_execute_single_proxy_battle"):
             bot.proxy_battle()
+
+
+def test_scan_supreme_arena():
+    bot = MockAllAFKJ()
+    with (
+        patch.object(bot, "navigate_to_battle_modes_screen"),
+        patch.object(bot, "_find_in_battle_modes", return_value=Point(100, 100)),
+        patch.object(bot, "tap"),
+        patch.object(bot, "wait_for_template", return_value=Point(200, 200)),
+        patch.object(bot, "_set_guild_members_filter", return_value=True),
+        patch.object(bot, "game_find_template_match", return_value=None),
+        patch.object(
+            bot,
+            "_scan_rankings_for_current_date",
+            return_value=[{"Rank": "1", "Name": "PlayerA", "Date": "Monday"}],
+        ),
+        patch.object(
+            bot,
+            "_correct_names_with_guild_members",
+            return_value=[{"Rank": "1", "Name": "PlayerA", "Date": "Monday"}],
+        ),
+        patch("builtins.open", mock_open()),
+    ):
+        bot._scan_supreme_arena(MagicMock(), MagicMock(), [])
+
+
+def test_navigate_to_guild_members_screen_success():
+    """Guild tab found by OCR -> swipe -> Members button found -> returns True."""
+    bot = MockAllAFKJ()
+
+    guild_tab_result = OCRResult(
+        text="Guild",
+        box=Box(Point(731, 1874), 78, 32),
+        confidence=ConfidenceValue("99%"),
+    )
+    members_btn_result = OCRResult(
+        text="Members",
+        box=Box(Point(622, 276), 240, 58),
+        confidence=ConfidenceValue("99%"),
+    )
+
+    ocr_mock = MagicMock()
+    ocr_mock.detect_text_blocks.side_effect = [
+        [guild_tab_result],  # first call: looking for Guild tab
+        [members_btn_result],  # second call: looking for Members button
+    ]
+
+    with (
+        patch.object(bot, "tap"),
+        patch.object(bot.device, "swipe"),
+        patch("time.sleep"),
+    ):
+        result = bot._navigate_to_guild_members_screen(ocr_mock)
+
+    assert result is True
+
+
+def test_navigate_to_guild_members_screen_failure():
+    """Guild tab not found even after navigate_to_world -> returns False."""
+    bot = MockAllAFKJ()
+
+    ocr_mock = MagicMock()
+    ocr_mock.detect_text_blocks.return_value = []  # never finds anything
+
+    with (
+        patch.object(bot, "navigate_to_world"),
+        patch.object(bot, "tap"),
+        patch.object(bot.device, "swipe"),
+        patch("time.sleep"),
+    ):
+        result = bot._navigate_to_guild_members_screen(ocr_mock)
+
+    assert result is False
+
+
+def test_scan_guild_activeness():
+    """Full guild activeness scan: navigate succeeds, rows parsed, JSON saved."""
+    bot = MockAllAFKJ()
+
+    sample_pairs = [("BlackFriday", "1280"), ("Mikki", "1280")]
+
+    with (
+        patch.object(bot, "_navigate_to_guild_members_screen", return_value=True),
+        patch.object(
+            bot,
+            "_parse_activeness_rows",
+            side_effect=[
+                sample_pairs,
+                # remaining scrolls return empty -> triggers early stop
+                [],
+                [],
+                [],
+                [],
+                [],
+            ],
+        ),
+        patch.object(bot, "_save_guild_activeness_to_json") as mock_save,
+        patch.object(bot, "swipe_up"),
+        patch("time.sleep"),
+    ):
+        bot._scan_guild_activeness(MagicMock(), [])
+
+    mock_save.assert_called_once()
+    saved_records = mock_save.call_args[0][0]
+    assert len(saved_records) == 2
+    assert saved_records[0]["Name"] == "BlackFriday"
+    assert saved_records[0]["Activeness"] == 1280

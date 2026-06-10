@@ -26,7 +26,12 @@
       "Bash(uv sync:*)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(uvx ty:*)",
-      "Bash(grep -v \"Cannot resolve imported module \\\\`\\\\.\")"
+      "Bash(grep -v \"Cannot resolve imported module \\\\`\\\\.\")",
+      "WebFetch(domain:www.paddleocr.ai)",
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:clcozchimagtnzohuvsk.supabase.co)",
+      "PowerShell(curl.exe -s -H \"apikey: sb_publishable_LVK-OqTDRQ572wbfDaMqDQ_-7xxdv6n1\" -H \"Authorization: Bearer sb_publishable_LVK-OqTDRQ572wbfDaMqDQ_-7xxdv6n1\" \"https://clcozchimagtnzohuvsk.supabase.co/rest/v1/guild_states?id=eq.citadel-chqp&select=state&apikey=sb_publishable_LVK-OqTDRQ572wbfDaMqDQ_-7xxdv6n1\")",
+      "PowerShell(curl.exe -s -H \"apikey: sb_publishable_LVK-OqTDRQ572wbfDaMqDQ_-7xxdv6n\" -H \"Authorization: Bearer sb_publishable_LVK-OqTDRQ572wbfDaMqDQ_-7xxdv6n\" \"https://clcozchimagtnzohuvsk.supabase.co/rest/v1/guild_states?id=eq.citadel-chqp&select=state&apikey=sb_publishable_LVK-OqTDRQ572wbfDaMqDQ_-7xxdv6n\")"
     ]
   }
 }

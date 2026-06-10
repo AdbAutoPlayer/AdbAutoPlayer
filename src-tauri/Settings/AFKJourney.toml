@@ -39,6 +39,13 @@ Repeat = true
 ["Dream Realm"]
 "Spend Gold" = false
 
+["Guild Manager Scan"]
+"Guild Members API URL" = "https://clcozchimagtnzohuvsk.supabase.co/rest/v1/guild_states?id=eq.citadel-chqp&select=state&apikey=sb_publishable_LVK-OqTDRQ572wbfDaMqDQ_-7xxdv6n"
+"Days to Scan" = 1
+"Scan Supreme Arena" = true
+"Scan Guild Activeness" = false
+"Debug OCR Output" = true
+
 ["Dura's Trials"]
 Attempts = 5
 Formations = 10

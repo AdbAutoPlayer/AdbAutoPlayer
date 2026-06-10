@@ -2,16 +2,37 @@
 
 import logging
 from time import sleep
+from typing import TYPE_CHECKING
 
 from adb_auto_player.decorators import register_command, register_custom_routine_choice
 from adb_auto_player.exceptions import GameTimeoutError
-from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 
+if TYPE_CHECKING:
+    from typing import Any
 
-class DreamRealmMixin(AFKJourneyBase):
+    from adb_auto_player.games.afk_journey.settings import Settings
+
+    class BaseClass:
+        settings: Settings
+        LANG_ERROR: str
+        min_timeout: float
+        fast_timeout: float
+
+        def start_up(self, device_streaming: bool = True) -> None: ...
+        def tap(self, *args, **kwargs) -> None: ...
+        def game_find_template_match(self, *args, **kwargs) -> Any: ...
+        def _try_wait_and_tap(self, *args, **kwargs) -> Any: ...
+        def navigate_to_world(self) -> None: ...
+        def wait_for_template(self, *args, **kwargs) -> Any: ...
+        def press_back_button(self) -> None: ...
+else:
+    BaseClass = object
+
+
+class DreamRealmMixin(BaseClass):
     """Dream Realm Mixin."""
 
     def __init__(self) -> None:

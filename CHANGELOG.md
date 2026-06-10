@@ -1,11 +1,12 @@
 # Changelog
 
-## [12.9.6] - 2026-06-08
+## [12.9.7] - 2026-06-10
 
-### Bug Fixes
+### Features
 
-- **Legend Trial**: Improved battle loop reliability with additional screen handling:
-  - Added handling for `tap_to_close` screens that appear after battle results, automatically re-selecting the current floor.
-  - Added handling for `victory_rewards` screen to properly dismiss and continue.
-  - Added `records` and `battle` screen recognition to avoid false exits from the battle loop.
-  - Enabled grayscale matching for more reliable template detection.
+- **Guild Manager Scan**:
+  - Integrated Supabase guild members API configuration (`guild_members_api_url`, `days_to_scan`, `scan_supreme_arena`, `scan_guild_activeness`).
+  - Added option to save structured OCR debug results to `ocr_debug.json`.
+  - Added high-precision name extraction using the Qwen2-VL model (GPU-accelerated, lazy-loaded/installed).
+- **OCR Enhancements**:
+  - Configured `PP-OCRv5` recognition with `PP-OCRv4` detection in `RapidOCRBackend` for improved name accuracy.
