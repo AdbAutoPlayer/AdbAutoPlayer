@@ -2420,7 +2420,9 @@ class GuildMemberScanMixin:
                 sleep(2)
             except GameTimeoutError:
                 # Fallback to OCR if template fails
-                logging.warning("Could not find rankings button template, trying OCR...")
+                logging.warning(
+                    "Could not find rankings button template, trying OCR..."
+                )
             screenshot = self.get_screenshot()
             ocr_results = ocr_backend.detect_text_blocks(screenshot)
             found = False
