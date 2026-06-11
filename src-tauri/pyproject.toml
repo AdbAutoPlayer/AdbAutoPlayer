@@ -1,6 +1,6 @@
 [project]
 name = "adb-auto-player"
-version = "12.9.7"
+version = "12.9.8"
 description = ""
 readme = "README.md"
 authors = [
@@ -36,6 +36,9 @@ build-backend = "setuptools.build_meta"
 [tool.uv]
 package = true
 required-version = ">=0.9.11"
+
+[tool.pytest.ini_options]
+testpaths = ["src-python/tests"]
 
 [tool.setuptools]
 include-package-data = false
