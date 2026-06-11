@@ -37,6 +37,9 @@ build-backend = "setuptools.build_meta"
 package = true
 required-version = ">=0.9.11"
 
+[tool.pytest.ini_options]
+testpaths = ["src-python/tests"]
+
 [tool.setuptools]
 include-package-data = false
 
