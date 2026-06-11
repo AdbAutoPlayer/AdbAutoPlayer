@@ -1426,6 +1426,13 @@ class GuildMemberScanMixin(BaseClass):
                 # confirmed with an actual rank number.
                 if is_supreme_arena and not is_first_frame:
                     supplemental = [r for r in supplemental if r[0] is not None]
+
+                # Qwen row-crop recovery for names bbox misread as Latin
+                # (e.g. ОпасныйПоцык rendered in game font → OnacHbINlo1IbIK).
+                qwen_recovered = self._recover_supplement_names_qwen(
+                    screenshot, bbox_debug, guild_set, supplemental, ocr_backend
+                )
+
                 if self._ocr_debug is not None:
                     in_range = [
                         b
@@ -1454,6 +1461,7 @@ class GuildMemberScanMixin(BaseClass):
                             "supplemental_added": [
                                 {"rank": r, "name": n} for r, n, _ in supplemental
                             ],
+                            "qwen_row_recovered": qwen_recovered,
                         }
                     )
                 return rows + supplemental * 3
@@ -1536,6 +1544,61 @@ class GuildMemberScanMixin(BaseClass):
                 deduped[idx] = (rk, nm, sc)
                 seen_ranks[rk] = (rk, nm, sc)
         return deduped
+
+    def _recover_supplement_names_qwen(
+        self,
+        screenshot,
+        bbox_debug: list[dict],
+        guild_set: set[str],
+        supplemental: list,
+        ocr_backend: QwenVLOCRBackend,
+        max_recovery: int = 3,
+    ) -> list[dict]:
+        """Crop each bbox row whose name isn't in guild_set and ask Qwen.
+
+        Handles members whose name the game font renders as Latin lookalikes
+        (e.g. ОпасныйПоцык → OnacHbINlo1IbIK). Returns a list of recovered
+        entries for debug logging.
+        """
+        recovered_set: set[str] = {r[1] for r in supplemental if r[1]}
+        qwen_recovered: list[dict] = []
+        for entry in bbox_debug:
+            if len(qwen_recovered) >= max_recovery:
+                break
+            bbox_name = entry.get("name")
+            if not bbox_name or bbox_name in guild_set:
+                continue
+            entry_blocks = entry.get("blocks", [])
+            if not entry_blocks:
+                continue
+            # Use only the topmost name_guild block for Y — avoids including
+            # the guild-name row (CITADEL) which sits below the player name.
+            name_blocks = [b for b in entry_blocks if b.get("col") == "name_guild"]
+            ref_blocks = name_blocks if name_blocks else entry_blocks
+            name_cy = min(b["cy"] for b in ref_blocks)
+            name_row_half = 50
+            crop = screenshot[
+                max(0, name_cy - name_row_half) : min(
+                    screenshot.shape[0], name_cy + name_row_half
+                ),
+                self._X_RANK_BOUNDARY : self._X_SCORE_BOUNDARY,
+            ]
+            recovered = ocr_backend.extract_player_name(crop)
+            if not recovered:
+                continue
+            matched = next(
+                (m for m in guild_set if m.lower() == recovered.lower()), None
+            )
+            if matched and matched not in recovered_set:
+                rank_str = entry.get("rank")
+                score_str = next(
+                    (b["text"] for b in entry_blocks if b.get("col") == "score"),
+                    None,
+                )
+                supplemental.append((rank_str, matched, score_str))
+                recovered_set.add(matched)
+                qwen_recovered.append({"rank": rank_str, "name": matched})
+        return qwen_recovered
 
     def _parse_rankings_bbox(
         self,
