@@ -1,12 +1,9 @@
 # Changelog
 
-## [12.9.7] - 2026-06-10
+## [12.9.8] - 2026-06-11
 
 ### Features
 
 - **Guild Manager Scan**:
-  - Integrated Supabase guild members API configuration (`guild_members_api_url`, `days_to_scan`, `scan_supreme_arena`, `scan_guild_activeness`).
-  - Added option to save structured OCR debug results to `ocr_debug.json`.
-  - Added high-precision name extraction using the Qwen2-VL model (GPU-accelerated, lazy-loaded/installed).
-- **OCR Enhancements**:
-  - Configured `PP-OCRv5` recognition with `PP-OCRv4` detection in `RapidOCRBackend` for improved name accuracy.
+  - Implemented a Qwen-VL fallback recovery mechanism (`_recover_supplement_names_qwen`) in the guild member scan mixin to handle player names misread by standard OCR (e.g., Cyrillic/non-Latin characters misread as Latin lookalikes).
+  - Integrated the Qwen-VL recovered name results into the JSON debug output (`ocr_debug.json`).
