@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Shell and Tool Rules
+
+- **File listing**: use the `Glob` tool, never `dir` or `ls` in shell
+- **File search**: use the `Grep` tool, never `grep` or `rg` in shell
+- **Bash tool on Windows**: runs Git Bash — `dir` does not exist, use `ls` if a shell command is truly needed; prefer forward slashes in paths
+- **Glob paths**: always use absolute paths with forward slashes (e.g. `f:/Adbautoplayer/AdbAutoPlayer/src-tauri/...`) or patterns relative to the workspace root; backslashes break glob matching
+- **Ruff**: run as `uvx ruff check --fix` and `uvx ruff format` from the repo root `f:\Adbautoplayer\AdbAutoPlayer` — not from `src-tauri/` and not via `uv run ruff`
+- **Modules vs packages**: a Python module may be a package directory, not a `.py` file. `decorators` → `decorators/__init__.py` + `decorators/register_command.py`. When asked to read a module, use `Glob` first to check if it's a file or a directory before assuming a path like `decorators.py`
+
+---
+
 ## Markdown Rules (for editing this file)
 
 These rules must be followed every time this file is edited to avoid lint warnings:
@@ -30,6 +41,8 @@ pnpm prettier-write    # Format with Prettier + Tailwind plugin
 ```
 
 ### Python
+
+> **IMPORTANT**: `uv run ruff` fails (`ruff` not found in venv). Always use `uvx ruff` from the repo root.
 
 Run Python commands from the `src-tauri/` directory (where `pyproject.toml` lives):
 

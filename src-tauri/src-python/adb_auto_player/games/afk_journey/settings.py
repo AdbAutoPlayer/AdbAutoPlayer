@@ -188,6 +188,16 @@ class GuildManagerScanSettings(BaseModel):
             "Scan Guild member activeness scores and save to guild_activeness.json."
         ),
     )
+    ignore_day_restrictions: bool = Field(
+        default=False,
+        alias="Ignore Day Restrictions",
+        title="Ignore Day Restrictions",
+        description=(
+            "Run all enabled scans regardless of the day of week. "
+            "Use for testing only — normally SA runs Mon/Tue, "
+            "Activeness and Chest run on Sunday."
+        ),
+    )
     use_qwen2vl: bool = Field(
         default=False,
         alias="Use Qwen2-VL (GPU)",

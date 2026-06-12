@@ -10,23 +10,14 @@ from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.games.afk_journey.mixins.afk_stages import AFKStagesMixin
 from adb_auto_player.games.afk_journey.mixins.arena import ArenaMixin
-from adb_auto_player.games.afk_journey.mixins.dream_realm import DreamRealmMixin
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 
+from .dream_realm import DreamRealmMixin
 from .duras_trials import DurasTrialsMixin
 from .legend_trial import SeasonLegendTrial
-
-# from adb_auto_player.games.afk_journey.mixins import (
-#     AFKStagesMixin,
-#     ArenaMixin,
-#     DreamRealmMixin,
-#     LegendTrialMixin,
-# )
-# TODO: Horizontal imports cause circular imports.
-# We likely need more ABCs.
 
 
 class DailiesMixin(AFKJourneyBase, ABC):
