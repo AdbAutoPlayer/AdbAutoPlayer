@@ -15,17 +15,9 @@ from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 
+from .dream_realm import DreamRealmMixin
 from .duras_trials import DurasTrialsMixin
 from .legend_trial import SeasonLegendTrial
-
-# from adb_auto_player.games.afk_journey.mixins import (
-#     AFKStagesMixin,
-#     ArenaMixin,
-#     DreamRealmMixin,
-#     LegendTrialMixin,
-# )
-# TODO: Horizontal imports cause circular imports.
-# We likely need more ABCs.
 
 
 class DailiesMixin(AFKJourneyBase, ABC):
@@ -55,7 +47,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         self.claim_daily_rewards()
         self.buy_emporium()
         self.single_pull()
-        self.run_dream_realm(daily=True)
+        DreamRealmMixin().run_dream_realm(daily=True)
         ArenaMixin().run_arena() if do_arena else logging.info("Arena battle disabled.")
         self.claim_hamburger()
         if self.settings.dailies.raise_affinity:
