@@ -12,5 +12,7 @@
 
 ### Bug Fixes
 
+- **Installer**:
+  - Fixed NSIS installer failing to overwrite `AdbWinApi.dll` when `adb.exe` was still running. The installer now calls `adb.exe kill-server` on the bundled binary before writing files, without affecting system-wide ADB processes.
 - **Daily Quests**:
   - Fixed an instantiation bug in the daily quest runner where `run_dream_realm` was called on a new `DreamRealmMixin` instance instead of `self`.
