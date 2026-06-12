@@ -28,7 +28,6 @@ from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.ocr import OCRResult
 from adb_auto_player.ocr import OCRBackend, RapidOCRBackend
 from adb_auto_player.ocr.qwen2vl_backend import QwenVLOCRBackend
-from adb_auto_player.template_matching import TemplateMatcher
 
 if TYPE_CHECKING:
     from typing import Any
@@ -140,6 +139,7 @@ class GuildMemberScanMixin(BaseClass):
     _MAX_CHEST_VALUE = 200
     _MAX_SCROLLS_CHEST = 44
     _MAX_NO_NEW_CHEST = 5
+    _MAX_CHEST_NAV_RETRIES = 3
     # Rank numbers 1-N on the far left of the contribution ranking list
     _MAX_CHEST_RANK_NUMBER = 200
     # Rank badge circles sit at x≈105; member names start at x≈330+.
@@ -466,10 +466,11 @@ class GuildMemberScanMixin(BaseClass):
         self._save_ocr_debug()
 
         today = datetime.datetime.now().strftime("%A")
+        ignore_days = self.settings.guild_manager_scan.ignore_day_restrictions
 
         # 6. Optionally scan Supreme Arena rankings (Monday and Tuesday only)
         if self.settings.guild_manager_scan.scan_supreme_arena:
-            if today in ("Monday", "Tuesday"):
+            if ignore_days or today in ("Monday", "Tuesday"):
                 logging.info(
                     "Supreme Arena scan enabled. Starting Supreme Arena scan..."
                 )
@@ -487,7 +488,7 @@ class GuildMemberScanMixin(BaseClass):
         # 7. Optionally scan Guild member activeness (Sunday only).
         # RapidOCR handles bbox layout; Qwen supplements for multilingual names.
         if self.settings.guild_manager_scan.scan_guild_activeness:
-            if today == "Sunday":
+            if ignore_days or today == "Sunday":
                 logging.info("Guild Activeness scan enabled. Starting scan...")
                 try:
                     self._scan_guild_activeness(ocr_backend, guild_members)
@@ -1524,8 +1525,23 @@ class GuildMemberScanMixin(BaseClass):
                     fixed_rank = str(int(rank_q) + 1)
             corrected.append((fixed_rank, name_q, score_q))
         if not is_first_frame and rank_set:
+            # SA podium (ranks 1/2/3) is always visible — those are the true
+            # hallucinations.  For any other rank, if Qwen read a confirmed
+            # guild-member name there and bbox simply missed that row (dark
+            # avatar, OCR blind-spot), keep the entry so the member isn't lost.
+            _podium_ranks = {"1", "2", "3"}
+            guild_names: set[str] = {
+                re.sub(r"\s*[A-Za-z]\d{3,4}\s*$", "", m).strip()
+                for m in (getattr(self, "_guild_members", None) or [])
+            }
             corrected = [
-                (rk, nm, sc) for rk, nm, sc in corrected if rk and rk in rank_set
+                (rk, nm, sc)
+                for rk, nm, sc in corrected
+                if rk
+                and (
+                    rk in rank_set
+                    or (nm and nm in guild_names and rk not in _podium_ranks)
+                )
             ]
         # Deduplicate by rank: if Qwen assigns the same rank to two players
         # (e.g. Night=5 and Sebv=5 when Sebv is actually rank 7), prefer the
@@ -1788,67 +1804,13 @@ class GuildMemberScanMixin(BaseClass):
         name = self._extract_player_name(
             name_guild_blocks, valid_score_blocks, row_sorted
         )
-        rank = self._detect_medal_rank_fallback(row_sorted, screenshot, rank)
+        if rank is None and name and row_sorted:
+            ref_y = int(sum(b.box.center.y for b in row_sorted) / len(row_sorted))
+            crop_rank = self._extract_rank_from_crop(screenshot, ocr_backend, ref_y)
+            if crop_rank and int(crop_rank) <= self._MAX_RANK_NUMBER:
+                rank = crop_rank
 
         return rank, name, score
-
-    def _detect_medal_rank_fallback(
-        self,
-        row_sorted: list[OCRResult],
-        screenshot,
-        rank: str | None,
-    ) -> str | None:
-        """Fallback for Top 3 Medal Badges using template matching."""
-        if rank:
-            return rank
-        h, w = screenshot.shape[:2]
-        y_min = min(b.box.top_left.y for b in row_sorted)
-        y_max = max(b.box.top_left.y + b.box.height for b in row_sorted)
-        rank_crop = screenshot[
-            max(0, y_min - 10) : min(h, y_max + 10),
-            20 : min(w, 200),
-        ]
-        if rank_crop.size > 0:
-            for possible_rank in (1, 2, 3):
-                template_path = f"dream_realm/cup_{possible_rank}.png"
-                try:
-                    tpl_img = self._load_image(template_path)
-                except Exception:
-                    continue
-
-                if tpl_img is not None:
-                    h_c, w_c = rank_crop.shape[:2]
-                    h_t, w_t = tpl_img.shape[:2]
-
-                    # Scale down template to 80% of crop height
-                    scale = (h_c * 0.8) / h_t
-                    new_h = max(1, int(h_t * scale))
-                    new_w = max(1, int(w_t * scale))
-
-                    # Ensure the template is strictly smaller than the crop
-                    if new_h >= h_c:
-                        new_h = h_c - 1
-                    if new_w >= w_c:
-                        new_w = w_c - 1
-
-                    if new_h > 0 and new_w > 0:
-                        tpl_resized = cv2.resize(
-                            tpl_img,
-                            (new_w, new_h),
-                            interpolation=cv2.INTER_AREA,
-                        )
-                        match = TemplateMatcher.find_template_match(
-                            base_image=rank_crop,
-                            template_image=tpl_resized,
-                            threshold=ConfidenceValue("70%"),
-                        )
-                        if match:
-                            rank = str(possible_rank)
-                            logging.debug(
-                                f"Detected medal rank {rank} via template matching."
-                            )
-                            break
-        return rank
 
     def _navigate_to_guild_hall(self, ocr_backend: OCRBackend) -> bool:
         """Tap the Guild tab in the bottom nav and wait for the hall view to load.
@@ -2261,17 +2223,27 @@ class GuildMemberScanMixin(BaseClass):
 
         Returns True if the Contribution Ranking screen is reached.
         """
-        screenshot = self.get_screenshot()
-        ocr_results = nav_backend.detect_text_blocks(screenshot)
-        guild_chest_btn = next(
-            (
-                r
-                for r in ocr_results
-                if "guild" in r.text.strip().lower()
-                and "chest" in r.text.strip().lower()
-            ),
-            None,
-        )
+        guild_chest_btn = None
+        for attempt in range(self._MAX_CHEST_NAV_RETRIES):
+            screenshot = self.get_screenshot()
+            ocr_results = nav_backend.detect_text_blocks(screenshot)
+            guild_chest_btn = next(
+                (
+                    r
+                    for r in ocr_results
+                    if "guild" in r.text.strip().lower()
+                    and "chest" in r.text.strip().lower()
+                ),
+                None,
+            )
+            if guild_chest_btn is not None:
+                break
+            if attempt < self._MAX_CHEST_NAV_RETRIES - 1:
+                logging.info(
+                    "Guild Chest button not found yet, "
+                    "waiting for guild hall to load..."
+                )
+                sleep(3)
         if guild_chest_btn is None:
             logging.warning("Guild Chest button not found - skipping chest scan.")
             return False

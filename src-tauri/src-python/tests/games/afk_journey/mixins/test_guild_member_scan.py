@@ -212,6 +212,52 @@ class TestApplyBboxRankCorrections:
         )
         assert result[0][0] == "11"
 
+    def test_sa_guild_member_kept_when_bbox_misses_row(self):
+        """SA non-first: guild member kept even if bbox missed its row entirely.
+
+        Regression test for recluse (rank 74 SA) being dropped because RapidOCR
+        failed to detect its dark-avatar row while Qwen read it correctly.
+        """
+        bot = self._bot()
+        bot._guild_members = ["recluse", "Fuq"]
+        # Qwen correctly reads both; bbox only sees Fuq (missed recluse's row)
+        rows = [
+            ("74", "recluse", None),
+            ("75", "Fuq", None),
+        ]
+        bbox_rows = [("75", "Fuq", None)]
+        result = bot._apply_bbox_rank_corrections(
+            rows, bbox_rows, is_supreme_arena=True, is_first_frame=False
+        )
+        names = {r[1] for r in result}
+        ranks = {r[0] for r in result}
+        assert "recluse" in names, (
+            "recluse must be kept (guild member, non-podium rank)"
+        )
+        assert "74" in ranks
+        assert "Fuq" in names
+        assert "75" in ranks
+
+    def test_sa_podium_hallucination_still_filtered_with_guild_members(self):
+        """SA non-first: podium ranks 1/2/3 still dropped.
+
+        Dropped even if name is a guild member.
+        """
+        bot = self._bot()
+        bot._guild_members = ["Aurion", "Persephone"]
+        # Qwen hallucinates Aurion at rank 1 (podium always visible in all frames)
+        rows = [
+            ("1", "Aurion", None),  # podium hallucination
+            ("8", "Persephone", None),  # real entry
+        ]
+        bbox_rows = [("8", "Persephone", None)]
+        result = bot._apply_bbox_rank_corrections(
+            rows, bbox_rows, is_supreme_arena=True, is_first_frame=False
+        )
+        names = {r[1] for r in result}
+        assert "Aurion" not in names, "podium hallucination must still be filtered"
+        assert "Persephone" in names
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # llm_y_min logic in _parse_rankings_rows

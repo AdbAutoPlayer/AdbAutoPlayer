@@ -87,7 +87,7 @@ class QwenVLOCRBackend(OCRBackend):
             try:
                 import transformers.utils.logging as _tr_log  # type: ignore  # noqa: PLC0415
 
-                _tr_log.set_verbosity_error()
+                _tr_log.set_verbosity(50)  # CRITICAL — suppress docstring [ERROR] noise
             except Exception:
                 pass
 

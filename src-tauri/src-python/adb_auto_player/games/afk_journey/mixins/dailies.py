@@ -10,7 +10,6 @@ from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.games.afk_journey.mixins.afk_stages import AFKStagesMixin
 from adb_auto_player.games.afk_journey.mixins.arena import ArenaMixin
-from adb_auto_player.games.afk_journey.mixins.dream_realm import DreamRealmMixin
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
@@ -56,7 +55,7 @@ class DailiesMixin(AFKJourneyBase, ABC):
         self.claim_daily_rewards()
         self.buy_emporium()
         self.single_pull()
-        DreamRealmMixin().run_dream_realm(daily=True)
+        self.run_dream_realm(daily=True)
         ArenaMixin().run_arena() if do_arena else logging.info("Arena battle disabled.")
         self.claim_hamburger()
         if self.settings.dailies.raise_affinity:

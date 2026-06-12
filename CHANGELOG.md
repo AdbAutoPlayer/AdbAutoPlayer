@@ -1,9 +1,16 @@
 # Changelog
 
-## [12.9.8] - 2026-06-11
+## [12.9.9] - 2026-06-12
 
 ### Features
 
 - **Guild Manager Scan**:
-  - Implemented a Qwen-VL fallback recovery mechanism (`_recover_supplement_names_qwen`) in the guild member scan mixin to handle player names misread by standard OCR (e.g., Cyrillic/non-Latin characters misread as Latin lookalikes).
-  - Integrated the Qwen-VL recovered name results into the JSON debug output (`ocr_debug.json`).
+  - Replaced template matching for Top 3 Medal Badges with OCR rank cropping fallback.
+  - Added `ignore_day_restrictions` setting to allow running Supreme Arena and Activeness scans on any day.
+  - Handled podium rank false hallucinations in Supreme Arena scan.
+  - Implemented retries when navigating to the Guild Chest contribution ranking.
+
+### Bug Fixes
+
+- **Daily Quests**:
+  - Fixed an instantiation bug in the daily quest runner where `run_dream_realm` was called on a new `DreamRealmMixin` instance instead of `self`.
