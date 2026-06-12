@@ -226,13 +226,10 @@ def test_claim_dailies():
         patch.object(bot, "claim_daily_rewards"),
         patch.object(bot, "buy_emporium"),
         patch.object(bot, "single_pull"),
+        patch.object(bot, "run_dream_realm"),
         patch.object(bot, "claim_hamburger"),
         patch.object(bot, "swap_essences"),
-        patch("adb_auto_player.games.afk_journey.mixins.dailies.DreamRealmMixin"),
-        patch("adb_auto_player.games.afk_journey.mixins.dailies.ArenaMixin"),
-        patch("adb_auto_player.games.afk_journey.mixins.dailies.SeasonLegendTrial"),
-        patch("adb_auto_player.games.afk_journey.mixins.dailies.AFKStagesMixin"),
-        patch("adb_auto_player.games.afk_journey.mixins.dailies.DurasTrialsMixin"),
+        patch.object(bot, "push_afk_stages"),
     ):
         bot.run_dailies()
 

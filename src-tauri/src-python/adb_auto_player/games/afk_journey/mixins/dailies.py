@@ -3,25 +3,30 @@
 import logging
 from abc import ABC
 from time import sleep
+from typing import TYPE_CHECKING
 
 from adb_auto_player.decorators import register_command, register_custom_routine_choice
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
-from adb_auto_player.games.afk_journey.mixins.afk_stages import AFKStagesMixin
-from adb_auto_player.games.afk_journey.mixins.arena import ArenaMixin
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 
-from .dream_realm import DreamRealmMixin
-from .duras_trials import DurasTrialsMixin
-from .legend_trial import SeasonLegendTrial
+if TYPE_CHECKING:
+    pass
 
 
 class DailiesMixin(AFKJourneyBase, ABC):
     """Dailies Mixin."""
+
+    if TYPE_CHECKING:
+
+        def run_arena(self) -> None: ...
+        def push_duras_trials(self) -> None: ...
+        def push_legend_trials(self) -> None: ...
+        def push_afk_stages(self, season: bool = False) -> None: ...
 
     def __init__(self) -> None:
         """Initialize Dailies Mixin."""
@@ -47,8 +52,8 @@ class DailiesMixin(AFKJourneyBase, ABC):
         self.claim_daily_rewards()
         self.buy_emporium()
         self.single_pull()
-        DreamRealmMixin().run_dream_realm(daily=True)
-        ArenaMixin().run_arena() if do_arena else logging.info("Arena battle disabled.")
+        self.run_dream_realm(daily=True)
+        self.run_arena() if do_arena else logging.info("Arena battle disabled.")
         self.claim_hamburger()
         if self.settings.dailies.raise_affinity:
             self.raise_hero_affinity()
@@ -56,12 +61,12 @@ class DailiesMixin(AFKJourneyBase, ABC):
             logging.info("Affinity farming disabled.")
         self.swap_essences()
         if self.settings.dailies.duras_trials:
-            DurasTrialsMixin().push_duras_trials()
+            self.push_duras_trials()
         else:
             logging.info("Dura's Trials disabled.")
         if self.settings.legend_trials.towers:
-            SeasonLegendTrial().push_legend_trials()
-        AFKStagesMixin().push_afk_stages(season=True)
+            self.push_legend_trials()
+        self.push_afk_stages(season=True)
 
     ############################# Daily Rewards ##############################
 
