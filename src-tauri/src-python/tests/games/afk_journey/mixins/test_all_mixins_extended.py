@@ -3,13 +3,11 @@ from unittest.mock import MagicMock, mock_open, patch
 
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.file_loader.settings_loader import SettingsLoader
-from adb_auto_player.games.afk_journey.mixins.afk_stages import AFKStagesMixin
 from adb_auto_player.games.afk_journey.mixins.arcane_labyrinth import (
     ArcaneLabyrinthMixin,
 )
 from adb_auto_player.games.afk_journey.mixins.assist import AssistMixin
 from adb_auto_player.games.afk_journey.mixins.dailies import DailiesMixin
-from adb_auto_player.games.afk_journey.mixins.duras_trials import DurasTrialsMixin
 from adb_auto_player.games.afk_journey.mixins.frostfire_showdown import (
     FrostfireShowdownMixin,
 )
@@ -30,11 +28,9 @@ from adb_auto_player.models.template_matching import TemplateMatchResult
 
 
 class MockAllAFKJ(
-    AFKStagesMixin,
     ArcaneLabyrinthMixin,
     AssistMixin,
     DailiesMixin,
-    DurasTrialsMixin,
     FrostfireShowdownMixin,
     HomesteadHelperMixin,
     QuestMixin,

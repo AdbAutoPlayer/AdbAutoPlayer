@@ -1,8 +1,13 @@
 # Changelog
 
-## [12.9.10] - 2026-06-12
+## [12.9.11] - 2026-06-13
+
+### Features
+
+- **Hero Roster Scanner**:
+  - Refactored paragon lock resolution with a dynamic threshold chain to properly compute and unlock higher Paragon tiers (P1 through P4) from confirmed hero counts.
 
 ### Bug Fixes
 
-- **Daily Quests**:
-  - Fixed remaining instantiation bugs in daily quest runners (Arena, Dura's Trials, Legend Trials, AFK Stages) to correctly call subclass/instance methods on `self` instead of instantiating mixin classes directly.
+- **Dura's Trials**:
+  - Made the battle button interaction more robust by utilizing `_tap_till_template_disappears`.

@@ -11,11 +11,12 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-from adb_auto_player.games.afk_journey.services.hero_scanner import (
-    PARAGON_LOCK_THRESHOLD,
-    WHALE_THRESHOLD,
-    HeroScanner,
-)
+from adb_auto_player.games.afk_journey.services.hero_scanner import HeroScanner
+
+_SUP_TO_P1 = 25  # S+ heroes needed to unlock P1
+_P1_TO_P2 = 20  # P1 heroes needed to unlock P2
+_P2_TO_P3 = 15  # P2 heroes needed to unlock P3
+_P3_TO_P4 = 15  # P3 heroes needed to unlock P4
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -400,11 +401,11 @@ class TestResolveLockedParagons:
     def _full_data(self, heroes: list[dict]) -> dict:
         return {"heroes": heroes}
 
-    def test_pending_resolved_to_paragon4_when_whale(self, tmp_path):
+    def test_pending_resolved_to_paragon1_when_enough_sup_not_enough_p1(self, tmp_path):
         scanner = _make_scanner()
         scanner.tracker_file = str(tmp_path / "tracker.json")
-        # Build WHALE_THRESHOLD heroes at S+/P-tier + 1 P1
-        heroes = [_make_hero(f"h{i}", "Supreme+") for i in range(WHALE_THRESHOLD - 1)]
+        # 25 S+ unlocks P1, but only 1 P1 confirmed → P2 not unlocked → pending = P1
+        heroes = [_make_hero(f"h{i}", "Supreme+") for i in range(_SUP_TO_P1 - 1)]
         heroes.append(_make_hero("p1hero", "Paragon 1"))
         heroes.append(_make_hero("pending", "Pending S+/P4"))
         full_data = self._full_data(heroes)
@@ -413,9 +414,25 @@ class TestResolveLockedParagons:
         scanner.resolve_locked_paragons(full_data, global_ascend_available=False)
 
         pending = next(h for h in full_data["heroes"] if h["name"] == "pending")
-        assert pending["currentAscension"] == "Paragon 4"
+        assert pending["currentAscension"] == "Paragon 1"
 
-    def test_pending_resolved_to_supreme_plus_when_not_whale(self, tmp_path):
+    def test_pending_resolved_to_paragon2_when_enough_p1_not_enough_p2(self, tmp_path):
+        scanner = _make_scanner()
+        scanner.tracker_file = str(tmp_path / "tracker.json")
+        # 20 P1 unlocks P2, but only 1 P2 confirmed → P3 not unlocked → pending = P2
+        heroes = [_make_hero(f"s{i}", "Supreme+") for i in range(_SUP_TO_P1)]
+        heroes += [_make_hero(f"p1_{i}", "Paragon 1") for i in range(_P1_TO_P2 - 1)]
+        heroes.append(_make_hero("p2hero", "Paragon 2"))
+        heroes.append(_make_hero("pending", "Pending S+/P4"))
+        full_data = self._full_data(heroes)
+        (tmp_path / "tracker.json").write_text(json.dumps(full_data))
+
+        scanner.resolve_locked_paragons(full_data, global_ascend_available=False)
+
+        pending = next(h for h in full_data["heroes"] if h["name"] == "pending")
+        assert pending["currentAscension"] == "Paragon 2"
+
+    def test_pending_resolved_to_supreme_plus_when_not_enough_sup(self, tmp_path):
         scanner = _make_scanner()
         scanner.tracker_file = str(tmp_path / "tracker.json")
         heroes = [_make_hero(f"h{i}", "Supreme+") for i in range(5)]
@@ -428,7 +445,23 @@ class TestResolveLockedParagons:
         pending = next(h for h in full_data["heroes"] if h["name"] == "pending")
         assert pending["currentAscension"] == "Supreme+"
 
-    def test_misread_paragons_downgraded_when_not_whale(self, tmp_path):
+    def test_pending_resolved_to_paragon4_when_all_thresholds_met(self, tmp_path):
+        scanner = _make_scanner()
+        scanner.tracker_file = str(tmp_path / "tracker.json")
+        heroes = [_make_hero(f"s{i}", "Supreme+") for i in range(_SUP_TO_P1)]
+        heroes += [_make_hero(f"p1_{i}", "Paragon 1") for i in range(_P1_TO_P2)]
+        heroes += [_make_hero(f"p2_{i}", "Paragon 2") for i in range(_P2_TO_P3)]
+        heroes += [_make_hero(f"p3_{i}", "Paragon 3") for i in range(_P3_TO_P4)]
+        heroes.append(_make_hero("pending", "Pending S+/P4"))
+        full_data = self._full_data(heroes)
+        (tmp_path / "tracker.json").write_text(json.dumps(full_data))
+
+        scanner.resolve_locked_paragons(full_data, global_ascend_available=False)
+
+        pending = next(h for h in full_data["heroes"] if h["name"] == "pending")
+        assert pending["currentAscension"] == "Paragon 4"
+
+    def test_misread_paragons_downgraded_when_not_enough_sup(self, tmp_path):
         scanner = _make_scanner()
         scanner.tracker_file = str(tmp_path / "tracker.json")
         heroes = [_make_hero("misread", "Paragon 2")]
@@ -441,36 +474,67 @@ class TestResolveLockedParagons:
         assert misread["currentAscension"] == "Supreme+"
 
 
+class TestComputeLockedTier:
+    def test_returns_supreme_plus_when_no_confirmed(self):
+        scanner = _make_scanner()
+        assert scanner._compute_locked_tier([]) == "Supreme+"
+
+    def test_returns_supreme_plus_when_below_p1_threshold(self):
+        scanner = _make_scanner()
+        heroes = [_make_hero(f"h{i}", "Supreme+") for i in range(_SUP_TO_P1 - 1)]
+        assert scanner._compute_locked_tier(heroes) == "Supreme+"
+
+    def test_returns_paragon1_when_enough_sup_not_enough_p1(self):
+        scanner = _make_scanner()
+        heroes = [_make_hero(f"h{i}", "Supreme+") for i in range(_SUP_TO_P1)]
+        assert scanner._compute_locked_tier(heroes) == "Paragon 1"
+
+    def test_returns_paragon2_when_enough_p1_not_enough_p2(self):
+        scanner = _make_scanner()
+        heroes = [_make_hero(f"s{i}", "Supreme+") for i in range(_SUP_TO_P1)]
+        heroes += [_make_hero(f"p1_{i}", "Paragon 1") for i in range(_P1_TO_P2)]
+        assert scanner._compute_locked_tier(heroes) == "Paragon 2"
+
+    def test_returns_paragon3_when_enough_p2_not_enough_p3(self):
+        scanner = _make_scanner()
+        heroes = [_make_hero(f"s{i}", "Supreme+") for i in range(_SUP_TO_P1)]
+        heroes += [_make_hero(f"p1_{i}", "Paragon 1") for i in range(_P1_TO_P2)]
+        heroes += [_make_hero(f"p2_{i}", "Paragon 2") for i in range(_P2_TO_P3)]
+        assert scanner._compute_locked_tier(heroes) == "Paragon 3"
+
+    def test_returns_paragon4_when_all_thresholds_met(self):
+        scanner = _make_scanner()
+        heroes = [_make_hero(f"s{i}", "Supreme+") for i in range(_SUP_TO_P1)]
+        heroes += [_make_hero(f"p1_{i}", "Paragon 1") for i in range(_P1_TO_P2)]
+        heroes += [_make_hero(f"p2_{i}", "Paragon 2") for i in range(_P2_TO_P3)]
+        heroes += [_make_hero(f"p3_{i}", "Paragon 3") for i in range(_P3_TO_P4)]
+        assert scanner._compute_locked_tier(heroes) == "Paragon 4"
+
+    def test_p1_threshold_is_20_not_15(self):
+        scanner = _make_scanner()
+        # 25 S+ + 15 P1 → not enough for P2 (needs 20) → should return P1
+        heroes = [_make_hero(f"s{i}", "Supreme+") for i in range(_SUP_TO_P1)]
+        heroes += [_make_hero(f"p1_{i}", "Paragon 1") for i in range(15)]
+        assert scanner._compute_locked_tier(heroes) == "Paragon 1"
+
+
 class TestResolveLockedHeroes:
-    def test_locked_resolved_to_supreme_plus_when_below_threshold(self):
+    def test_locked_resolved_to_given_tier(self):
         scanner = _make_scanner()
         heroes = [_make_hero("locked", "Paragon Locked")]
-        scanner._resolve_locked_heroes(heroes)
-        assert heroes[0]["currentAscension"] == "Supreme+"
+        scanner._resolve_locked_heroes(heroes, "Paragon 2")
+        assert heroes[0]["currentAscension"] == "Paragon 2"
 
-    def test_locked_resolved_to_paragon1_when_enough_sup(self):
+    def test_locked_forced_to_paragon1_when_tier_is_supreme_plus(self):
         scanner = _make_scanner()
-        heroes = [_make_hero(f"s{i}", "Supreme+") for i in range(WHALE_THRESHOLD)]
-        heroes.append(_make_hero("locked", "Paragon Locked"))
-        scanner._resolve_locked_heroes(heroes)
-        locked = heroes[-1]
-        assert locked["currentAscension"] == "Paragon 1"
-
-    def test_locked_resolved_to_paragon2_when_enough_p1(self):
-        scanner = _make_scanner()
-        heroes = [_make_hero(f"s{i}", "Supreme+") for i in range(WHALE_THRESHOLD)]
-        heroes += [
-            _make_hero(f"p1_{i}", "Paragon 1") for i in range(PARAGON_LOCK_THRESHOLD)
-        ]
-        heroes.append(_make_hero("locked", "Paragon Locked"))
-        scanner._resolve_locked_heroes(heroes)
-        locked = heroes[-1]
-        assert locked["currentAscension"] == "Paragon 2"
+        heroes = [_make_hero("locked", "Paragon Locked")]
+        scanner._resolve_locked_heroes(heroes, "Supreme+")
+        assert heroes[0]["currentAscension"] == "Paragon 1"
 
     def test_no_locked_heroes_does_nothing(self):
         scanner = _make_scanner()
         heroes = [_make_hero("hero1", "Supreme+")]
-        scanner._resolve_locked_heroes(heroes)
+        scanner._resolve_locked_heroes(heroes, "Paragon 1")
         assert heroes[0]["currentAscension"] == "Supreme+"
 
 
@@ -501,19 +565,19 @@ class TestResolvePendingHeroes:
     def test_no_pending_returns_early(self):
         scanner = _make_scanner()
         heroes = [_make_hero("h1", "Supreme+")]
-        scanner._resolve_pending_heroes(heroes, True, False)
+        scanner._resolve_pending_heroes(heroes, "Paragon 1")
         assert heroes[0]["currentAscension"] == "Supreme+"
 
-    def test_resolves_to_paragon4_when_unlocked(self):
+    def test_resolves_to_given_tier(self):
         scanner = _make_scanner()
         heroes = [_make_hero("pending", "Pending S+/P4")]
-        scanner._resolve_pending_heroes(heroes, True, False)
-        assert heroes[0]["currentAscension"] == "Paragon 4"
+        scanner._resolve_pending_heroes(heroes, "Paragon 2")
+        assert heroes[0]["currentAscension"] == "Paragon 2"
 
-    def test_resolves_to_supreme_plus_when_locked(self):
+    def test_resolves_to_supreme_plus(self):
         scanner = _make_scanner()
         heroes = [_make_hero("pending", "Pending S+/P4")]
-        scanner._resolve_pending_heroes(heroes, False, True)
+        scanner._resolve_pending_heroes(heroes, "Supreme+")
         assert heroes[0]["currentAscension"] == "Supreme+"
 
 
