@@ -3,7 +3,6 @@
 import logging
 from abc import ABC
 from time import sleep
-from typing import TYPE_CHECKING
 
 from adb_auto_player.decorators import register_command, register_custom_routine_choice
 from adb_auto_player.exceptions import GameTimeoutError
@@ -14,19 +13,16 @@ from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 
-if TYPE_CHECKING:
-    pass
+from .afk_stages import AFKStagesMixin
+from .arena import ArenaMixin
+from .duras_trials import DurasTrialsMixin
+from .legend_trial import SeasonLegendTrial
 
 
-class DailiesMixin(AFKJourneyBase, ABC):
+class DailiesMixin(
+    ArenaMixin, DurasTrialsMixin, SeasonLegendTrial, AFKStagesMixin, AFKJourneyBase, ABC
+):
     """Dailies Mixin."""
-
-    if TYPE_CHECKING:
-
-        def run_arena(self) -> None: ...
-        def push_duras_trials(self) -> None: ...
-        def push_legend_trials(self) -> None: ...
-        def push_afk_stages(self, season: bool = False) -> None: ...
 
     def __init__(self) -> None:
         """Initialize Dailies Mixin."""
@@ -370,17 +366,17 @@ class DailiesMixin(AFKJourneyBase, ABC):
         sleep(1)
 
         logging.debug("Click Send & Receive.")
-        if not self._try_wait_and_tap(
+        if self._try_wait_and_tap(
             "dailies/hamburger/send_receive.png",
             timeout_message="Friend rewards already claimed.",
         ):
+            sleep(self.fast_timeout)
+            self.tap(Point(540, 1620))  # Close confirmation
+            sleep(1)
+        else:
             logging.info(f"Friend rewards already claimed. {self.LANG_ERROR}")
-            return
-        sleep(self.fast_timeout)
-        self.tap(Point(540, 1620))  # Close confirmation
-        sleep(1)
 
-        logging.debug("Back.")  # TODO: Create generic back method.
+        logging.debug("Back.")
         back = self.game_find_template_match("back.png")
         self.tap(back) if back else self.press_back_button()
 

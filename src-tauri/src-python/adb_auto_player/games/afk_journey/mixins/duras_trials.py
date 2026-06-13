@@ -91,8 +91,8 @@ class DurasTrialsMixin(AFKJourneyBase):
                     logging.info("Dura's Trials already cleared")
                     return False
                 case "duras_trials/battle.png":
-                    self.tap(dura_state_result)
-                    sleep(2)
+                    self._tap_till_template_disappears("duras_trials/battle.png")
+                    self.sleep_navigation()
                 case "battle/records.png":
                     # No action needed.
                     pass

@@ -29,8 +29,15 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-WHALE_THRESHOLD = 25
-PARAGON_LOCK_THRESHOLD = 15
+# (qualifying ascensions, heroes needed, tier unlocked)
+_PARAGON_THRESHOLDS: list[tuple[list[str], int, str]] = [
+    (["Supreme+", "Paragon 1", "Paragon 2", "Paragon 3", "Paragon 4"], 25, "Paragon 1"),
+    (["Paragon 1", "Paragon 2", "Paragon 3", "Paragon 4"], 20, "Paragon 2"),
+    (["Paragon 2", "Paragon 3", "Paragon 4"], 15, "Paragon 3"),
+    (["Paragon 3", "Paragon 4"], 15, "Paragon 4"),
+]
+
+_UNCERTAIN_ASCENSIONS = {"Pending S+/P4", "Paragon Locked"}
 
 ASCENSION_OCR_MAP = {
     "C '": "Paragon 1",
@@ -293,7 +300,9 @@ class HeroScanner:
         """
         heroes = full_data.get("heroes", [])
 
-        sup_and_p_count = sum(
+        # Include uncertain heroes in the potential-S+ count to avoid undercounting
+        # when many S+ heroes couldn't be confirmed individually during the scan.
+        potential_sup_count = sum(
             1
             for h in heroes
             if h.get("currentAscension")
@@ -313,39 +322,62 @@ class HeroScanner:
             for h in heroes
         )
 
-        paragon_possible = sup_and_p_count >= WHALE_THRESHOLD
-        is_paragon_unlocked = paragon_possible and (
+        _sup_threshold = _PARAGON_THRESHOLDS[0][1]
+        paragon_globally_possible = potential_sup_count >= _sup_threshold and (
             has_p123 or not global_ascend_available
         )
 
-        self._resolve_pending_heroes(
-            heroes, is_paragon_unlocked, global_ascend_available
-        )
+        confirmed = [
+            h for h in heroes if h.get("currentAscension") not in _UNCERTAIN_ASCENSIONS
+        ]
+        resolved_tier = self._compute_locked_tier(confirmed)
 
-        if not is_paragon_unlocked:
+        self._resolve_pending_heroes(heroes, resolved_tier)
+
+        if not paragon_globally_possible:
             self._downgrade_misread_paragons(heroes)
 
-        self._resolve_locked_heroes(heroes)
+        self._resolve_locked_heroes(heroes, resolved_tier)
 
         with open(self.tracker_file, "w", encoding="utf-8") as f:
             json.dump(full_data, f, indent=4, ensure_ascii=False)
 
-    def _resolve_pending_heroes(
-        self, heroes: list, is_paragon_unlocked: bool, global_ascend_available: bool
-    ) -> None:
+    def _compute_locked_tier(self, confirmed_heroes: list) -> str:
+        """Determine the ascension tier for unresolved heroes from confirmed counts.
+
+        Walks the unlock chain (S+→P1→P2→P3→P4) and returns the highest tier
+        whose requirement is met by the confirmed hero counts.
+
+        Args:
+            confirmed_heroes: Heroes whose ascension is already known (not uncertain).
+
+        Returns:
+            The ascension string all uncertain heroes should receive.
+        """
+        resolved = "Supreme+"
+        for qualifying, threshold, tier in _PARAGON_THRESHOLDS:
+            count = sum(
+                1 for h in confirmed_heroes if h.get("currentAscension") in qualifying
+            )
+            if count >= threshold:
+                resolved = tier
+            else:
+                break
+        return resolved
+
+    def _resolve_pending_heroes(self, heroes: list, resolved_tier: str) -> None:
         pending_heroes = [
             h for h in heroes if h.get("currentAscension") == "Pending S+/P4"
         ]
         if not pending_heroes:
             return
 
-        resolved_pending = "Paragon 4" if is_paragon_unlocked else "Supreme+"
         logger.info(
             f"Resolving {len(pending_heroes)} 'Pending S+/P4' heroes to "
-            f"'{resolved_pending}'."
+            f"'{resolved_tier}'."
         )
         for h in pending_heroes:
-            h["currentAscension"] = resolved_pending
+            h["currentAscension"] = resolved_tier
 
     def _downgrade_misread_paragons(self, heroes: list) -> None:
         misread_paragons = [
@@ -357,29 +389,15 @@ class HeroScanner:
         ]
         if misread_paragons:
             logger.info(
-                f"Paragon tier locked (< {WHALE_THRESHOLD} S+). Downgrading "
+                f"Paragon tier locked (< 25 S+). Downgrading "
                 f"{len(misread_paragons)} misidentified Paragon ranks to 'Supreme+'."
             )
             for h in misread_paragons:
                 h["currentAscension"] = "Supreme+"
 
-    def _resolve_locked_heroes(self, heroes: list) -> None:
-        p1_list = ["Paragon 1", "Paragon 2", "Paragon 3", "Paragon 4", "Paragon Locked"]
-        p2_list = ["Paragon 2", "Paragon 3", "Paragon 4", "Paragon Locked"]
-        sup_list = ["Supreme+", *p1_list]
-
-        sup_count = sum(1 for h in heroes if h.get("currentAscension") in sup_list)
-        p1_count = sum(1 for h in heroes if h.get("currentAscension") in p1_list)
-        p2_count = sum(1 for h in heroes if h.get("currentAscension") in p2_list)
-
-        if sup_count < WHALE_THRESHOLD:
-            resolved_locked = "Supreme+"
-        elif p1_count < PARAGON_LOCK_THRESHOLD:
-            resolved_locked = "Paragon 1"
-        elif p2_count < PARAGON_LOCK_THRESHOLD:
-            resolved_locked = "Paragon 2"
-        else:
-            resolved_locked = "Paragon 3"
+    def _resolve_locked_heroes(self, heroes: list, resolved_tier: str) -> None:
+        # Paragon Locked heroes definitively have an Ascend button — P1 minimum.
+        locked_tier = resolved_tier if "Paragon" in resolved_tier else "Paragon 1"
 
         locked_heroes = [
             h for h in heroes if h.get("currentAscension") == "Paragon Locked"
@@ -387,11 +405,10 @@ class HeroScanner:
         if locked_heroes:
             logger.info(
                 f"Resolving {len(locked_heroes)} 'Paragon Locked' heroes"
-                f" to '{resolved_locked}' "
-                f"(Counts - S+: {sup_count}, P1: {p1_count}, P2: {p2_count})"
+                f" to '{locked_tier}'"
             )
             for h in locked_heroes:
-                h["currentAscension"] = resolved_locked
+                h["currentAscension"] = locked_tier
 
     # ------------------------------------------------------------------
     # JSON persistence helpers
