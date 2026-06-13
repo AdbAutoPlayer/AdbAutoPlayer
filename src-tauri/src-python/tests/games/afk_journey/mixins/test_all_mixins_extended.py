@@ -493,3 +493,57 @@ def test_scan_guild_activeness():
     assert len(saved_records) == 2
     assert saved_records[0]["Name"] == "BlackFriday"
     assert saved_records[0]["Activeness"] == 1280
+
+
+def test_claim_friend_rewards_send_receive_found():
+    """Cover if-branch: send_receive found → sleep, tap to close, then back."""
+    bot = MockAllAFKJ()
+    with (
+        patch.object(bot, "_try_wait_and_tap", side_effect=[True, True]),
+        patch.object(bot, "press_back_button"),
+        patch("time.sleep"),
+    ):
+        bot._claim_friend_rewards()
+
+
+def test_claim_friend_rewards_already_claimed():
+    """Cover else-branch: send_receive not found → log already claimed, then back."""
+    bot = MockAllAFKJ()
+    with (
+        patch.object(bot, "_try_wait_and_tap", side_effect=[True, False]),
+        patch.object(bot, "press_back_button"),
+        patch("time.sleep"),
+    ):
+        bot._claim_friend_rewards()
+
+
+def test_claim_friend_rewards_back_button_found():
+    """Cover self.tap(back) path when back.png template is found."""
+    bot = MockAllAFKJ()
+    back_match = MagicMock()
+    with (
+        patch.object(bot, "_try_wait_and_tap", side_effect=[True, False]),
+        patch.object(bot, "game_find_template_match", return_value=back_match),
+        patch.object(bot, "tap") as mock_tap,
+        patch("time.sleep"),
+    ):
+        bot._claim_friend_rewards()
+        mock_tap.assert_called()
+
+
+def test_duras_trials_battle_case_coverage():
+    """Cover 'duras_trials/battle.png' case.
+
+    Checks _tap_till_template_disappears and sleep_navigation.
+    """
+    bot = MockAllAFKJ()
+    battle_result = MagicMock()
+    battle_result.template = "duras_trials/battle.png"
+    with (
+        patch.object(bot, "_dura_resolve_state", return_value=battle_result),
+        patch.object(bot, "_tap_till_template_disappears") as mock_tap_till,
+        patch.object(bot, "_handle_battle_screen", return_value=False),
+        patch("time.sleep"),
+    ):
+        bot._handle_dura_screen()
+        mock_tap_till.assert_called_once_with("duras_trials/battle.png")
