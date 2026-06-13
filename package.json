@@ -23,7 +23,7 @@
     "@tauri-apps/cli": "^2.11.2",
     "@types/node": "^25.9.2",
     "json-schema-to-typescript": "^15.0.4",
-    "prettier": "^3.8.3",
+    "prettier": "^3.8.4",
     "prettier-plugin-svelte": "^4.0.1",
     "prettier-plugin-tailwindcss": "^0.8.0",
     "svelte": "^5.55.9",
