@@ -24,7 +24,7 @@
     "@types/node": "^25.9.3",
     "json-schema-to-typescript": "^15.0.4",
     "prettier": "^3.8.4",
-    "prettier-plugin-svelte": "^4.0.1",
+    "prettier-plugin-svelte": "^4.1.0",
     "prettier-plugin-tailwindcss": "^0.8.0",
     "svelte": "^5.55.9",
     "svelte-check": "^4.4.8",
