@@ -13,3 +13,4 @@
   - Made the battle button interaction more robust by utilizing `_tap_till_template_disappears`.
 - **Daily Quests**:
   - Fixed a logic inversion bug when claiming friend rewards where the script failed to dismiss the confirmation popup on success.
+  - Resolved a runtime `AttributeError` by adding sibling mixins (`ArenaMixin`, `DurasTrialsMixin`, `SeasonLegendTrial`, `AFKStagesMixin`) to the base classes of `DailiesMixin` to restore them to the Method Resolution Order (MRO), and resolved MRO conflicts in tests.
