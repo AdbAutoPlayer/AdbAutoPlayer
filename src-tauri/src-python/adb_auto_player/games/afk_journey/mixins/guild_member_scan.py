@@ -537,9 +537,15 @@ class GuildMemberScanMixin(BaseClass):
         dates_to_scan = self.settings.guild_manager_scan.days_to_scan
         rankings: list[dict] = []
 
+        today = datetime.datetime.now().strftime("%A")
+        ignore_days = self.settings.guild_manager_scan.ignore_day_restrictions
+        scan_today = self.settings.guild_manager_scan.scan_dr_today_on_sunday
+        skip_today = not (scan_today and (today == "Sunday" or ignore_days))
+
         # We try for up to 5 iterations/scrolls to find and process the dates
         for _attempt in range(5):
-            if len(processed_dates) >= dates_to_scan + 1:
+            total_expected = dates_to_scan if skip_today else dates_to_scan + 1
+            if len(processed_dates) >= total_expected:
                 break
 
             date_tabs = self._find_date_tabs(ocr_backend)
@@ -558,10 +564,11 @@ class GuildMemberScanMixin(BaseClass):
                 ocr_backend,
                 fallback,
                 guild_members,
+                skip_today=skip_today,
             )
 
             # If we still need more dates, scroll the date bar to the left
-            if len(processed_dates) < dates_to_scan + 1:
+            if len(processed_dates) < total_expected:
                 logging.info("Scrolling date bar left to reveal older dates...")
                 self.swipe_left(y=758, sx=900, ex=200, duration=0.8)
                 sleep(1.5)
@@ -577,10 +584,11 @@ class GuildMemberScanMixin(BaseClass):
         ocr_backend: OCRBackend,
         fallback: OCRBackend | None = None,
         guild_members: list[str] | None = None,
+        skip_today: bool = True,
     ) -> None:
-        """Scan visible date tabs, ignoring the current day on the first view."""
+        """Scan visible date tabs, optionally ignoring the current day."""
         start_idx = 0
-        if not processed_dates:
+        if not processed_dates and skip_today:
             logging.info(
                 f"Ignoring the first date tab (current day): {date_tabs[0].text}"
             )

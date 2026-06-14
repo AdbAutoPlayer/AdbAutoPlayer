@@ -547,3 +547,92 @@ def test_duras_trials_battle_case_coverage():
     ):
         bot._handle_dura_screen()
         mock_tap_till.assert_called_once_with("duras_trials/battle.png")
+
+
+def test_run_dailies_features_disabled():
+    """Cover disabled-setting else-branches in run_dailies."""
+    bot = MockAllAFKJ()
+    bot._settings.dailies.claim_daily_rewards = False
+    bot._settings.dailies.emporium = False
+    bot._settings.dailies.dream_realm = False
+    bot._settings.dailies.hamburger = False
+    bot._settings.dailies.afk_stages = False
+    bot.run_dailies()
+
+
+def test_run_dream_realm_scan_skip_today_default():
+    """Cover skip_today logic in _run_dream_realm_scan (scan_today=False)."""
+    bot = MockAllAFKJ()
+    bot._settings.guild_manager_scan.days_to_scan = 1
+    bot._settings.guild_manager_scan.ignore_day_restrictions = False
+    bot._settings.guild_manager_scan.scan_dr_today_on_sunday = False
+    fake_tab = MagicMock()
+    ocr_mock = MagicMock()
+    with (
+        patch.object(bot, "_enter_dr"),
+        patch.object(bot, "wait_for_template", return_value=MagicMock()),
+        patch.object(bot, "_select_district_rankings", return_value=True),
+        patch.object(bot, "_find_date_tabs", return_value=[fake_tab]),
+        patch.object(bot, "_scan_visible_date_tabs"),
+        patch.object(bot, "swipe_left"),
+        patch("time.sleep"),
+    ):
+        result = bot._run_dream_realm_scan(ocr_mock, None, [])
+    assert result == []
+
+
+def test_run_dream_realm_scan_skip_today_false():
+    """Cover skip_today=False (Sunday + scan_today=True): total_expected=days+1."""
+    bot = MockAllAFKJ()
+    bot._settings.guild_manager_scan.days_to_scan = 1
+    bot._settings.guild_manager_scan.ignore_day_restrictions = False
+    bot._settings.guild_manager_scan.scan_dr_today_on_sunday = True
+    fake_tab = MagicMock()
+    ocr_mock = MagicMock()
+    with (
+        patch.object(bot, "_enter_dr"),
+        patch.object(bot, "wait_for_template", return_value=MagicMock()),
+        patch.object(bot, "_select_district_rankings", return_value=True),
+        patch.object(bot, "_find_date_tabs", return_value=[fake_tab]),
+        patch.object(bot, "_scan_visible_date_tabs"),
+        patch.object(bot, "swipe_left"),
+        patch(
+            "adb_auto_player.games.afk_journey.mixins.guild_member_scan.datetime"
+        ) as mock_dt,
+        patch("time.sleep"),
+    ):
+        mock_dt.datetime.now.return_value.strftime.return_value = "Sunday"
+        result = bot._run_dream_realm_scan(ocr_mock, None, [])
+    assert result == []
+
+
+def test_scan_visible_date_tabs_skip_today_true():
+    """Cover _scan_visible_date_tabs with skip_today=True: first tab is skipped."""
+    bot = MockAllAFKJ()
+    fake_tab = MagicMock()
+    fake_tab.text = "Monday"
+    processed: set[str] = set()
+    bot._scan_visible_date_tabs(
+        date_tabs=[fake_tab],
+        processed_dates=processed,
+        dates_to_scan=3,
+        rankings=[],
+        ocr_backend=MagicMock(),
+        skip_today=True,
+    )
+    assert "Monday" in processed
+
+
+def test_scan_visible_date_tabs_skip_today_false():
+    """Cover _scan_visible_date_tabs with skip_today=False: first tab is not skipped."""
+    bot = MockAllAFKJ()
+    processed: set[str] = set()
+    bot._scan_visible_date_tabs(
+        date_tabs=[],
+        processed_dates=processed,
+        dates_to_scan=3,
+        rankings=[],
+        ocr_backend=MagicMock(),
+        skip_today=False,
+    )
+    assert len(processed) == 0

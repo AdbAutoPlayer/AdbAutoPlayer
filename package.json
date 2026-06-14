@@ -8,7 +8,7 @@
     "@tauri-apps/plugin-updater": "~2.10.1",
     "@tauri-apps/plugin-window-state": "~2.4.1",
     "@types/json-schema": "^7.0.15",
-    "posthog-js": "^1.376.4",
+    "posthog-js": "^1.382.0",
     "tailwindcss": "^4.3.1",
     "tauri-plugin-pytauri-api": "^0.8.0"
   },
@@ -17,17 +17,17 @@
     "@skeletonlabs/skeleton": "^4.15.2",
     "@skeletonlabs/skeleton-svelte": "^4.15.2",
     "@sveltejs/adapter-static": "^3.0.10",
-    "@sveltejs/kit": "^2.61.0",
+    "@sveltejs/kit": "^2.63.1",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@tailwindcss/forms": "^0.5.11",
     "@tauri-apps/cli": "^2.11.2",
     "@types/node": "^25.9.3",
     "json-schema-to-typescript": "^15.0.4",
     "prettier": "^3.8.4",
-    "prettier-plugin-svelte": "^4.0.1",
+    "prettier-plugin-svelte": "^4.1.0",
     "prettier-plugin-tailwindcss": "^0.8.0",
-    "svelte": "^5.55.9",
-    "svelte-check": "^4.4.8",
+    "svelte": "^5.56.3",
+    "svelte-check": "^4.6.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.16",
     "vite-plugin-devtools-json": "^1.0.0"
@@ -52,5 +52,5 @@
     "tauri": "tauri"
   },
   "type": "module",
-  "version": "12.9.11"
+  "version": "12.9.12"
 }
