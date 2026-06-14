@@ -39,18 +39,30 @@ class DailiesMixin(
         ),
     )
     @register_custom_routine_choice(label="Dailies")
-    def run_dailies(self) -> None:
+    def run_dailies(self) -> None:  # noqa: PLR0912
         """Complete daily chores."""
         self.start_up(device_streaming=False)
         do_arena: bool = self.settings.dailies.arena_battle
         self.navigate_to_world()
 
-        self.claim_daily_rewards()
-        self.buy_emporium()
+        if self.settings.dailies.claim_daily_rewards:
+            self.claim_daily_rewards()
+        else:
+            logging.info("Daily rewards disabled. Skipping.")
+        if self.settings.dailies.emporium:
+            self.buy_emporium()
+        else:
+            logging.info("Mystical House disabled. Skipping.")
         self.single_pull()
-        self.run_dream_realm(daily=True)
+        if self.settings.dailies.dream_realm:
+            self.run_dream_realm(daily=True)
+        else:
+            logging.info("Dream Realm disabled. Skipping.")
         self.run_arena() if do_arena else logging.info("Arena battle disabled.")
-        self.claim_hamburger()
+        if self.settings.dailies.hamburger:
+            self.claim_hamburger()
+        else:
+            logging.info("Friend/Mail/Quest rewards disabled. Skipping.")
         if self.settings.dailies.raise_affinity:
             self.raise_hero_affinity()
         else:
@@ -62,7 +74,10 @@ class DailiesMixin(
             logging.info("Dura's Trials disabled.")
         if self.settings.legend_trials.towers:
             self.push_legend_trials()
-        self.push_afk_stages(season=True)
+        if self.settings.dailies.afk_stages:
+            self.push_afk_stages(season=True)
+        else:
+            logging.info("AFK Stages disabled. Skipping.")
 
     ############################# Daily Rewards ##############################
 

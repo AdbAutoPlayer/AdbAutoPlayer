@@ -198,6 +198,15 @@ class GuildManagerScanSettings(BaseModel):
             "Activeness and Chest run on Sunday."
         ),
     )
+    scan_dr_today_on_sunday: bool = Field(
+        default=False,
+        alias="Scan DR Today on Sunday",
+        title="Scan DR Today on Sunday",
+        description=(
+            "On Sundays, also scan today's Dream Realm rankings "
+            "(current day tab) in addition to past days."
+        ),
+    )
     use_qwen2vl: bool = Field(
         default=False,
         alias="Use Qwen2-VL (GPU)",
@@ -235,18 +244,29 @@ class GuildManagerScanSettings(BaseModel):
 class DailiesSettings(BaseModel):
     """Dailies Settings model."""
 
-    buy_discount_affinity: bool = Field(default=True, alias="Buy Discount Affinity")
-    buy_all_affinity: bool = Field(default=False, alias="Buy All Affinity")
+    claim_daily_rewards: bool = Field(
+        default=True, alias="Claim Daily Rewards", title="Claim Daily Rewards"
+    )
+    emporium: bool = Field(default=True, alias="Mystical House", title="Mystical House")
     single_pull: bool = Field(default=False, alias="Single Pull")
+    dream_realm: bool = Field(default=True, alias="Dream Realm", title="Dream Realm")
     arena_battle: bool = Field(default=False, alias="Arena Battle")
-    buy_essences: bool = Field(default=False, alias="Buy Temporal Essences")
-    essence_buy_count: int = Field(default=1, ge=1, le=4, alias="Essence Buy Count")
+    hamburger: bool = Field(
+        default=True,
+        alias="Claim Friend/Mail/Quest Rewards",
+        title="Claim Friend/Mail/Quest Rewards",
+    )
     raise_affinity: bool = Field(
         default=True, alias="Collect Affinity", title="Collect Affinity"
     )
     duras_trials: bool = Field(
         default=True, alias="Run Dura's Trials", title="Run Dura's Trials"
     )
+    afk_stages: bool = Field(default=True, alias="AFK Stages", title="AFK Stages")
+    buy_discount_affinity: bool = Field(default=True, alias="Buy Discount Affinity")
+    buy_all_affinity: bool = Field(default=False, alias="Buy All Affinity")
+    buy_essences: bool = Field(default=False, alias="Buy Temporal Essences")
+    essence_buy_count: int = Field(default=1, ge=1, le=4, alias="Essence Buy Count")
 
 
 class ClaimAFKRewardsSettings(BaseModel):
