@@ -160,35 +160,124 @@ class DreamRealmSettings(BaseModel):
     spend_gold: bool = Field(default=False, alias="Spend Gold", title="Spend Gold")
 
 
+class GuildManagerScanSettings(BaseModel):
+    """Guild Manager Scan Settings model."""
+
+    guild_members_api_url: str = Field(
+        default="",
+        alias="Guild Members API URL",
+        title="Guild Members API URL",
+        description=(
+            "REST API URL returning a Supabase guild state JSON. "
+            "Must start with "
+            "https://clcozchimagtnzohuvsk.supabase.co/rest/v1/guild_states. "
+            "Get your API URL/key from https://afkj-guildmanager.vercel.app/"
+        ),
+    )
+    days_to_scan: int = Field(
+        default=3,
+        ge=1,
+        le=3,
+        alias="Days to Scan",
+        title="Days to Scan",
+        description="Number of past days to scan (1 to 3 days ago).",
+    )
+    scan_supreme_arena: bool = Field(
+        default=False,
+        alias="Scan Supreme Arena",
+        title="Scan Supreme Arena",
+        description="Scan Supreme Arena rankings on Mondays and Tuesdays.",
+    )
+    scan_guild_activeness: bool = Field(
+        default=False,
+        alias="Scan Guild Activeness",
+        title="Scan Guild Activeness",
+        description=(
+            "Scan Guild member activeness scores and save to guild_activeness.json."
+        ),
+    )
+    ignore_day_restrictions: bool = Field(
+        default=False,
+        alias="Ignore Day Restrictions",
+        title="Ignore Day Restrictions",
+        description=(
+            "Run all enabled scans regardless of the day of week. "
+            "Use for testing only — normally SA runs Mon/Tue, "
+            "Activeness and Chest run on Sunday."
+        ),
+    )
+    scan_dr_today_on_sunday: bool = Field(
+        default=False,
+        alias="Scan DR Today on Sunday",
+        title="Scan DR Today on Sunday",
+        description=(
+            "On Sundays, also scan today's Dream Realm rankings "
+            "(current day tab) in addition to past days."
+        ),
+    )
+    use_qwen2vl: bool = Field(
+        default=False,
+        alias="Use Qwen2-VL (GPU)",
+        title="Use Qwen2-VL (GPU)",
+        description=(
+            "High-precision name extraction using Qwen2-VL-2B. Requires a "
+            "CUDA-capable GPU and an internet connection. "
+            "WARNING: first-time setup will download ~2.2 GB of data "
+            "(PyTorch + model weights). "
+            "After enabling this, also check 'Confirm Qwen2-VL Download' to proceed."
+        ),
+    )
+    confirm_qwen2vl_download: bool = Field(
+        default=False,
+        alias="Confirm Qwen2-VL Download (~2.2 GB)",
+        title="Confirm Qwen2-VL Download (~2.2 GB)",
+        description=(
+            "Check this box to confirm you have read the warning above and "
+            "agree to download approximately 2.2 GB of data on the next scan run. "
+            "Has no effect if 'Use Qwen2-VL (GPU)' is disabled or already installed."
+        ),
+    )
+    debug_ocr: bool = Field(
+        default=False,
+        alias="Debug OCR Output",
+        title="Debug OCR Output",
+        description=(
+            "Write raw OCR detection data to Settings/data/ocr_debug.json after "
+            "each scan. Enable this if names are missing or misread and share the "
+            "file for troubleshooting. Has no effect on scan results."
+        ),
+    )
+
+
 class DailiesSettings(BaseModel):
     """Dailies Settings model."""
 
-    buy_discount_affinity: bool = Field(default=True, alias="Buy Discount Affinity")
-    buy_all_affinity: bool = Field(default=False, alias="Buy All Affinity")
+    claim_daily_rewards: bool = Field(
+        default=True, alias="Claim Daily Rewards", title="Claim Daily Rewards"
+    )
+    emporium: bool = Field(default=True, alias="Mystical House", title="Mystical House")
     single_pull: bool = Field(default=False, alias="Single Pull")
+    dream_realm: bool = Field(default=True, alias="Dream Realm", title="Dream Realm")
     arena_battle: bool = Field(default=False, alias="Arena Battle")
-    buy_essences: bool = Field(default=False, alias="Buy Temporal Essences")
-    essence_buy_count: int = Field(default=1, ge=1, le=4, alias="Essence Buy Count")
+    hamburger: bool = Field(
+        default=True,
+        alias="Claim Friend/Mail/Quest Rewards",
+        title="Claim Friend/Mail/Quest Rewards",
+    )
     raise_affinity: bool = Field(
         default=True, alias="Collect Affinity", title="Collect Affinity"
     )
     duras_trials: bool = Field(
         default=True, alias="Run Dura's Trials", title="Run Dura's Trials"
     )
-    dream_realm: bool = Field(
-        default=True, alias="Run Dream Realm", title="Run Dream Realm"
-    )
-    claim_hamburger: bool = Field(
-        default=True,
-        alias="Claim Hamburger Rewards",
-        title="Claim Hamburger Rewards",
-    )
     legend_trials: bool = Field(
         default=True, alias="Run Legend Trials", title="Run Legend Trials"
     )
-    afk_stages: bool = Field(
-        default=True, alias="Run AFK Stages", title="Run AFK Stages"
-    )
+    afk_stages: bool = Field(default=True, alias="AFK Stages", title="AFK Stages")
+    buy_discount_affinity: bool = Field(default=True, alias="Buy Discount Affinity")
+    buy_all_affinity: bool = Field(default=False, alias="Buy All Affinity")
+    buy_essences: bool = Field(default=False, alias="Buy Temporal Essences")
+    essence_buy_count: int = Field(default=1, ge=1, le=4, alias="Essence Buy Count")
 
 
 class ClaimAFKRewardsSettings(BaseModel):
@@ -261,6 +350,11 @@ class Settings(TomlSettings):
         default_factory=DreamRealmSettings,
         alias="Dream Realm",
         title="Dream Realm",
+    )
+    guild_manager_scan: GuildManagerScanSettings = Field(
+        default_factory=GuildManagerScanSettings,
+        alias="Guild Manager Scan",
+        title="Guild Manager Scan",
     )
     homestead: HomesteadSettings = Field(
         default_factory=HomesteadSettings,

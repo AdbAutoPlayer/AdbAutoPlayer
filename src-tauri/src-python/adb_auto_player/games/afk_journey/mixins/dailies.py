@@ -8,28 +8,20 @@ from adb_auto_player.decorators import register_command, register_custom_routine
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
-from adb_auto_player.games.afk_journey.mixins.afk_stages import AFKStagesMixin
-from adb_auto_player.games.afk_journey.mixins.arena import ArenaMixin
-from adb_auto_player.games.afk_journey.mixins.dream_realm import DreamRealmMixin
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 
+from .afk_stages import AFKStagesMixin
+from .arena import ArenaMixin
 from .duras_trials import DurasTrialsMixin
 from .legend_trial import SeasonLegendTrial
 
-# from adb_auto_player.games.afk_journey.mixins import (
-#     AFKStagesMixin,
-#     ArenaMixin,
-#     DreamRealmMixin,
-#     LegendTrialMixin,
-# )
-# TODO: Horizontal imports cause circular imports.
-# We likely need more ABCs.
 
-
-class DailiesMixin(AFKJourneyBase, ABC):
+class DailiesMixin(
+    ArenaMixin, DurasTrialsMixin, SeasonLegendTrial, AFKStagesMixin, AFKJourneyBase, ABC
+):
     """Dailies Mixin."""
 
     def __init__(self) -> None:
@@ -47,41 +39,47 @@ class DailiesMixin(AFKJourneyBase, ABC):
         ),
     )
     @register_custom_routine_choice(label="Dailies")
-    def run_dailies(self) -> None:
+    def run_dailies(self) -> None:  # noqa: PLR0912
         """Complete daily chores."""
         self.start_up(device_streaming=False)
         do_arena: bool = self.settings.dailies.arena_battle
         self.navigate_to_world()
 
-        self.claim_daily_rewards()
-        self.buy_emporium()
+        if self.settings.dailies.claim_daily_rewards:
+            self.claim_daily_rewards()
+        else:
+            logging.info("Daily rewards disabled. Skipping.")
+        if self.settings.dailies.emporium:
+            self.buy_emporium()
+        else:
+            logging.info("Mystical House disabled. Skipping.")
         self.single_pull()
         if self.settings.dailies.dream_realm:
-            DreamRealmMixin().run_dream_realm(daily=True)
+            self.run_dream_realm(daily=True)
         else:
-            logging.info("Dream Realm disabled.")
-        ArenaMixin().run_arena() if do_arena else logging.info("Arena battle disabled.")
-        if self.settings.dailies.claim_hamburger:
+            logging.info("Dream Realm disabled. Skipping.")
+        self.run_arena() if do_arena else logging.info("Arena battle disabled.")
+        if self.settings.dailies.hamburger:
             self.claim_hamburger()
         else:
-            logging.info("Claim Hamburger Rewards disabled.")
+            logging.info("Friend/Mail/Quest rewards disabled. Skipping.")
         if self.settings.dailies.raise_affinity:
             self.raise_hero_affinity()
         else:
             logging.info("Affinity farming disabled.")
         self.swap_essences()
         if self.settings.dailies.duras_trials:
-            DurasTrialsMixin().push_duras_trials()
+            self.push_duras_trials()
         else:
             logging.info("Dura's Trials disabled.")
         if self.settings.dailies.legend_trials and self.settings.legend_trials.towers:
-            SeasonLegendTrial().push_legend_trials()
+            self.push_legend_trials()
         elif not self.settings.dailies.legend_trials:
             logging.info("Legend Trials disabled.")
         if self.settings.dailies.afk_stages:
-            AFKStagesMixin().push_afk_stages(season=True)
+            self.push_afk_stages(season=True)
         else:
-            logging.info("AFK Stages disabled.")
+            logging.info("AFK Stages disabled. Skipping.")
 
     ############################# Daily Rewards ##############################
 
@@ -385,17 +383,17 @@ class DailiesMixin(AFKJourneyBase, ABC):
         sleep(1)
 
         logging.debug("Click Send & Receive.")
-        if not self._try_wait_and_tap(
+        if self._try_wait_and_tap(
             "dailies/hamburger/send_receive.png",
             timeout_message="Friend rewards already claimed.",
         ):
+            sleep(self.fast_timeout)
+            self.tap(Point(540, 1620))  # Close confirmation
+            sleep(1)
+        else:
             logging.info(f"Friend rewards already claimed. {self.LANG_ERROR}")
-            return
-        sleep(self.fast_timeout)
-        self.tap(Point(540, 1620))  # Close confirmation
-        sleep(1)
 
-        logging.debug("Back.")  # TODO: Create generic back method.
+        logging.debug("Back.")
         back = self.game_find_template_match("back.png")
         self.tap(back) if back else self.press_back_button()
 

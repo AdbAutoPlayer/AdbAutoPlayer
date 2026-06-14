@@ -1,6 +1,6 @@
 [project]
 name = "workspace"
-version = "12.9.6"
+version = "12.9.12"
 requires-python = ">=3.11"
 dependencies = [
     "pytest-cov>=7.1.0",
@@ -24,6 +24,9 @@ members = ["src-tauri"]
 
 [tool.uv.sources]
 adb-auto-player = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = ["src-tauri/src-python/tests"]
 
 
 [tool.pyright]

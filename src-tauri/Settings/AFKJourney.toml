@@ -29,20 +29,31 @@ Repeat = true
 "Task List" = []
 
 [Dailies]
-"Arena Battle" = false
-"Buy All Affinity" = false
-"Buy Discount Affinity" = true
-"Buy Temporal Essences" = false
-"Claim Hamburger Rewards" = true
-"Essence Buy Count" = 1
-"Run AFK Stages" = true
-"Run Dream Realm" = true
-"Run Dura's Trials" = true
-"Run Legend Trials" = true
+"Claim Daily Rewards" = true
+"Mystical House" = true
 "Single Pull" = false
+"Dream Realm" = true
+"Arena Battle" = false
+"Claim Friend/Mail/Quest Rewards" = true
+"Collect Affinity" = true
+"Run Dura's Trials" = true
+"AFK Stages" = true
+"Buy Discount Affinity" = true
+"Buy All Affinity" = false
+"Buy Temporal Essences" = false
+"Essence Buy Count" = 1
+"Run Legend Trials" = true
 
 ["Dream Realm"]
 "Spend Gold" = false
+
+["Guild Manager Scan"]
+"Guild Members API URL" = "https://clcozchimagtnzohuvsk.supabase.co/rest/v1/guild_states?id=eq.citadel-chqp&select=state&apikey=sb_publishable_LVK-OqTDRQ572wbfDaMqDQ_-7xxdv6n"
+"Days to Scan" = 1
+"Scan Supreme Arena" = true
+"Scan Guild Activeness" = false
+"Scan DR Today on Sunday" = false
+"Debug OCR Output" = true
 
 ["Dura's Trials"]
 Attempts = 5

@@ -89,6 +89,20 @@ class IPCModelConverter:
             scanner_opt = menu_options.pop(scanner_idx)
             menu_options.append(scanner_opt)
 
+        # Move Dream Realm after AFK Stages
+        dr_idx = next(
+            (i for i, o in enumerate(menu_options) if o.label == "Dream Realm"), -1
+        )
+        afk_idx = next(
+            (i for i, o in enumerate(menu_options) if o.label == "AFK Stages"), -1
+        )
+        if dr_idx != -1 and afk_idx != -1 and dr_idx < afk_idx:
+            dr_opt = menu_options.pop(dr_idx)
+            afk_idx = next(
+                i for i, o in enumerate(menu_options) if o.label == "AFK Stages"
+            )
+            menu_options.insert(afk_idx + 1, dr_opt)
+
         return menu_options
 
     @staticmethod
