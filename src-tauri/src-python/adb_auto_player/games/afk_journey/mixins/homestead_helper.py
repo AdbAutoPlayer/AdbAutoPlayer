@@ -44,18 +44,50 @@ class HomesteadHelperMixin(AFKJourneyBase):
         "homestead/forge_button.png",
     )
 
+    # Templates - greyed-out action button (a required ingredient is missing and
+    # can itself be crafted). Appears in the centre action-button slot.
+    HOMESTEAD_GRAY_ACTION_BUTTON_TEMPLATES: ClassVar[tuple[str, ...]] = (
+        "homestead/gray_make_button.png",
+        "homestead/gray_alchem_button.png",
+        "homestead/gray_forge_button.png",
+    )
+
+    # Templates - ingredient crafting screen (reached after tapping the grey
+    # action button and following the missing-ingredient popup arrow).
+    HOMESTEAD_INGREDIENT_ACTION_BUTTON_TEMPLATES: ClassVar[tuple[str, ...]] = (
+        "homestead/ingredient_smelt_button.png",
+        "homestead/ingredient_shape_button.png",
+        "homestead/ingredient_refine_button.png",
+    )
+    HOMESTEAD_INGREDIENT_TAP_TO_CLOSE_TEMPLATE = "homestead/ingredient_tap_to_close.png"
+
     # Fixed tap point for the multiplier button (cycles x1 -> x5 -> x10)
     HOMESTEAD_MULTIPLIER_BUTTON_POINT = Point(760, 1660)
     # Fixed tap point for the action button (Make / Alchemize / Forge)
     HOMESTEAD_ACTION_BUTTON_POINT = Point(540, 1680)
+    # Fixed tap point for the greyed-out action button (centre slot).
+    HOMESTEAD_GRAY_ACTION_BUTTON_POINT = Point(520, 1675)
+    # Fixed tap point for the ingredient crafting action button (Smelt/Shape/...).
+    HOMESTEAD_INGREDIENT_ACTION_BUTTON_POINT = Point(631, 1811)
+    # Tap point to dismiss the "Tap to close" rewards popup (bottom of screen).
+    HOMESTEAD_TAP_TO_CLOSE_POINT = Point(540, 1800)
     # Fixed tap point for the Requests world-icon (always at same position)
     HOMESTEAD_REQUESTS_POINT = Point(60, 1245)
+
+    # Ingredient-crafting slider geometry. The handle starts at the far left
+    # (value 0); dragging right increases the craft amount. The track spans
+    # roughly x=250..900. We pull ~20% of the way to queue a small batch.
+    HOMESTEAD_SLIDER_Y = 1582
+    HOMESTEAD_SLIDER_START_X = 245
+    HOMESTEAD_SLIDER_END_X = 375
 
     # Tuning
     HOMESTEAD_MINE_SCROLL_ATTEMPTS = 5
     HOMESTEAD_HARVEST_TIMEOUT = 30
     HOMESTEAD_OUTER_LOOP_LIMIT = 15
     HOMESTEAD_INNER_LOOP_LIMIT = 25
+    # Abort ingredient crafting if nothing progresses within this many seconds.
+    HOMESTEAD_INGREDIENT_CRAFT_TIMEOUT = 30
 
     @register_command(
         name="HomesteadOrdersHelper",
@@ -321,19 +353,37 @@ class HomesteadHelperMixin(AFKJourneyBase):
     def _handle_crafting_to_max(self) -> None:
         """Wait for crafting screen, cycle multiplier to x10, press action button.
 
+        If the action button is greyed out, a required ingredient is missing and
+        must be crafted first. In that case we follow the missing-ingredient
+        popup into the ingredient crafting screen, craft a small batch, and
+        return — the caller will re-enter the original craft afterwards.
+
         Raises:
             GameTimeoutError: if the crafting screen never loads or crafting
                 does not complete within the timeout — the caller should stop
                 the mode rather than loop indefinitely.
         """
         action_templates = list(self.HOMESTEAD_ACTION_BUTTON_TEMPLATES)
+        gray_templates = list(self.HOMESTEAD_GRAY_ACTION_BUTTON_TEMPLATES)
+
         logging.info("Waiting for crafting screen to load...")
-        self.wait_for_any_template(
-            templates=action_templates,
+        # The action button may be coloured (ready) or grey (ingredient missing).
+        result = self.wait_for_any_template(
+            templates=action_templates + gray_templates,
             timeout=30,
         )
 
         sleep(2)  # let the UI fully settle
+
+        # A grey action button means a required ingredient is missing but can be
+        # crafted. Handle that sub-flow and bail out of the normal craft path.
+        if result.template in gray_templates:
+            logging.info(
+                "Greyed-out action button detected - a required ingredient is "
+                "missing. Navigating to ingredient crafting."
+            )
+            self._handle_missing_ingredient_craft()
+            return
 
         # Cycle x1 -> x5 -> x10 with exactly 2 taps.
         for tap_num in range(2):
@@ -347,13 +397,125 @@ class HomesteadHelperMixin(AFKJourneyBase):
 
         # The action button is replaced by a different button while crafting.
         # Sleep briefly to let the UI swap, then wait for the action button
-        # to reappear — that signals crafting is complete.
+        # to reappear — that signals crafting is complete. Once a batch is
+        # crafted a previously available ingredient may run out, so the button
+        # can come back greyed-out instead of coloured.
         sleep(5)
         logging.info("Waiting for crafting to complete...")
-        self.wait_for_any_template(
-            templates=action_templates,
+        result = self.wait_for_any_template(
+            templates=action_templates + gray_templates,
             timeout=30,
         )
 
         SummaryGenerator.increment("Homestead Orders Helper", "Items Crafted")
         logging.info("Crafting done.")
+
+        # Crafting consumed the last of an ingredient: the button is now grey.
+        # Craft the missing ingredient before returning to the caller.
+        if result.template in gray_templates:
+            logging.info(
+                "Action button greyed-out after crafting - a required "
+                "ingredient ran out. Navigating to ingredient crafting."
+            )
+            self._handle_missing_ingredient_craft()
+
+    # ------------------------------------------------------------------ #
+    #  Missing-ingredient crafting                                         #
+    # ------------------------------------------------------------------ #
+
+    def _handle_missing_ingredient_craft(self) -> None:
+        """Craft a missing ingredient via the grey action-button sub-flow.
+
+        Flow:
+            1. Tap the grey action button -> a popup like the missing-resource
+               one appears; tap its arrow to navigate to ingredient crafting.
+            2. On the ingredient crafting screen, drag the amount slider ~20%
+               to the right and press the green action button (Smelt/Shape/...).
+            3. A "Tap to close" rewards popup appears; tap the bottom of the
+               screen to dismiss it.
+            4. Press back to return to the homestead world view.
+
+        If nothing progresses within ``HOMESTEAD_INGREDIENT_CRAFT_TIMEOUT``
+        seconds the sub-flow is aborted and we simply press back so the caller
+        can recover.
+        """
+        # Tap the grey action button to open the missing-ingredient popup.
+        logging.info("Tapping greyed-out action button.")
+        self.tap(self.HOMESTEAD_GRAY_ACTION_BUTTON_POINT)
+        sleep(2)
+
+        # The popup mirrors the missing-resource one: tap its arrow to navigate.
+        arrow = self.game_find_template_match(
+            template=self.HOMESTEAD_MISSING_RESOURCES_TEMPLATE
+        )
+        if arrow is not None:
+            logging.info("Tapping popup arrow to navigate to ingredient crafting.")
+            self.tap(arrow)
+        else:
+            logging.warning(
+                "Missing-ingredient popup arrow not found - aborting ingredient craft."
+            )
+            self.press_back_button()
+            sleep(2)
+            return
+
+        # Wait for the ingredient crafting screen (its green action button).
+        ingredient_buttons = list(self.HOMESTEAD_INGREDIENT_ACTION_BUTTON_TEMPLATES)
+        try:
+            self.wait_for_any_template(
+                templates=ingredient_buttons,
+                timeout=self.HOMESTEAD_INGREDIENT_CRAFT_TIMEOUT,
+                timeout_message="Ingredient crafting screen did not load.",
+            )
+        except GameTimeoutError:
+            logging.warning(
+                "Ingredient crafting screen did not load within %ds - aborting.",
+                self.HOMESTEAD_INGREDIENT_CRAFT_TIMEOUT,
+            )
+            self.press_back_button()
+            sleep(2)
+            return
+
+        sleep(1.5)  # let the screen settle before grabbing the slider
+
+        # Drag the amount slider ~20% to the right (from 0).
+        logging.info("Dragging amount slider to the right.")
+        self.device.swipe(
+            Point(self.HOMESTEAD_SLIDER_START_X, self.HOMESTEAD_SLIDER_Y),
+            Point(self.HOMESTEAD_SLIDER_END_X, self.HOMESTEAD_SLIDER_Y),
+            duration=0.6,
+        )
+        sleep(1.5)
+
+        # Press the green action button (Smelt / Shape / Refine).
+        logging.info("Pressing ingredient craft button.")
+        self.tap(self.HOMESTEAD_INGREDIENT_ACTION_BUTTON_POINT)
+
+        # Wait for the "Tap to close" rewards popup, then dismiss it.
+        try:
+            self.wait_for_template(
+                template=self.HOMESTEAD_INGREDIENT_TAP_TO_CLOSE_TEMPLATE,
+                threshold=ConfidenceValue("60%"),
+                grayscale=True,
+                timeout=self.HOMESTEAD_INGREDIENT_CRAFT_TIMEOUT,
+                timeout_message="Ingredient craft did not complete.",
+            )
+        except GameTimeoutError:
+            logging.warning(
+                "Ingredient craft did not complete within %ds - aborting.",
+                self.HOMESTEAD_INGREDIENT_CRAFT_TIMEOUT,
+            )
+            self.press_back_button()
+            sleep(2)
+            return
+
+        logging.info("Dismissing 'Tap to close' popup.")
+        self.tap(self.HOMESTEAD_TAP_TO_CLOSE_POINT)
+        sleep(2)
+
+        SummaryGenerator.increment("Homestead Orders Helper", "Ingredients Crafted")
+
+        # Navigate back to the homestead world view.
+        logging.info("Returning from ingredient crafting.")
+        self.press_back_button()
+        sleep(2)
