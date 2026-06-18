@@ -597,7 +597,7 @@ def test_run_dream_realm_scan_skip_today_false():
         patch.object(bot, "_scan_visible_date_tabs"),
         patch.object(bot, "swipe_left"),
         patch(
-            "adb_auto_player.games.afk_journey.mixins.guild_member_scan.datetime"
+            "adb_auto_player.games.afk_journey.mixins._guild_scan_rankings.datetime"
         ) as mock_dt,
         patch("time.sleep"),
     ):
@@ -669,7 +669,7 @@ def test_run_dream_realm_scan_skip_today_false_via_ignore_days():
         patch.object(bot, "_scan_visible_date_tabs"),
         patch.object(bot, "swipe_left"),
         patch(
-            "adb_auto_player.games.afk_journey.mixins.guild_member_scan.datetime"
+            "adb_auto_player.games.afk_journey.mixins._guild_scan_rankings.datetime"
         ) as mock_dt,
         patch("time.sleep"),
     ):

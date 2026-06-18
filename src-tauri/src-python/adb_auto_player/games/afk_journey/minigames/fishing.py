@@ -80,6 +80,10 @@ class Fishing(AFKJourneyBase):
         ):
             self.close_fish_catch_popup()
             return self.i_am_in_emberlight_festival_fishing_screen()
+
+        if self._close_treasure_found_popup():
+            return self.i_am_in_emberlight_festival_fishing_screen()
+
         return False
 
     def close_fish_catch_popup(self) -> None:
@@ -87,6 +91,18 @@ class Fishing(AFKJourneyBase):
         # clicking somewhere at the bottom-ish of the screen seems safer
         self.tap(Point(500, 1700))
         sleep(2)
+
+    def _close_treasure_found_popup(self) -> bool:
+        if self.find_any_template(
+            ["tap_to_close", "quests/tap_to_close"],
+            crop_regions=CropRegions(top=0.8),
+            threshold=ConfidenceValue("70%"),
+        ):
+            logging.info("Pearl Tycoon Treasure Found popup detected, dismissing.")
+            self.tap(Point(500, 1700))
+            sleep(2)
+            return True
+        return False
 
     def fishing(self) -> None:
         if self.i_am_in_emberlight_festival_fishing_screen():
@@ -177,6 +193,8 @@ class Fishing(AFKJourneyBase):
                 return self._i_am_in_the_fishing_screen()
 
         except GameTimeoutError:
+            if self._close_treasure_found_popup():
+                return self._i_am_in_the_fishing_screen()
             return False
 
         if self.fishing_mode == FishingMode.NORMAL:
