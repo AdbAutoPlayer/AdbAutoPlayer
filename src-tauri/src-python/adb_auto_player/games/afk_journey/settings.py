@@ -160,11 +160,13 @@ class GuildManagerScanSettings(BaseModel):
         alias="Guild Members API URL",
         title="Guild Members API URL",
         description=(
-            "REST API URL returning a Supabase guild state JSON. "
-            "Must start with "
-            "https://clcozchimagtnzohuvsk.supabase.co/rest/v1/guild_states. "
-            "Get your API URL/key from https://afkj-guildmanager.vercel.app/"
+            "REST API URL returning a Supabase guild state JSON "
+            "(https://<project>.supabase.co/rest/v1/guild_states). "
+            "Get your API URL from the Guild Manager webapp."
         ),
+        json_schema_extra={
+            "link": "https://afkj-guildmanager.vercel.app/",
+        },
     )
     days_to_scan: int = Field(
         default=3,

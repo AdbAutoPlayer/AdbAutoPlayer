@@ -1,10 +1,13 @@
 # Changelog
 
-## [12.9.12] - 2026-06-14
+## [12.9.13] - 2026-06-19
 
 ### Features
 
-- **Daily Quests**:
-  - Added settings toggles to selectively enable/disable specific tasks in Dailies: Claim Daily Rewards, Mystical House (Emporium), Dream Realm, Hamburger Menu, and AFK Stages.
-- **Guild Manager Scan**:
-  - Added option to include today's Dream Realm rankings scan on Sunday ("Scan DR Today on Sunday").
+- **Settings / UI**:
+  - Generalised API validation checks for the Guild Members API URL in Settings to allow any Supabase project subdomain.
+
+### Fixes
+
+- **Minigames / Fishing**:
+  - Added detection and automatic dismissal of the "Pearl Tycoon Treasure Found" popup when fishing.
