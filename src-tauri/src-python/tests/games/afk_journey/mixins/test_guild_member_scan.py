@@ -4,11 +4,16 @@ Covers the pure-data methods (no device/screenshot needed):
 - _canonicalize_observations: ranking deduplication and Cyrillic handling
 - _apply_bbox_rank_corrections: SA podium filter + rank deduplication
 - llm_y_min logic in _parse_rankings_rows: correct crop per frame type
+- _torch_metadata: prefers CUDA dist-info over CPU-only when both present
 """
 
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import numpy as np
+from adb_auto_player.games.afk_journey.mixins._guild_scan_setup import (
+    _GuildScanSetupMixin,
+)
 from adb_auto_player.games.afk_journey.mixins.guild_member_scan import (
     GuildMemberScanMixin,
 )
@@ -392,3 +397,44 @@ class TestSupplementalNullRankFilter:
         sebv_entries = [r for r in result if r[1] == "Sebv"]
         assert len(sebv_entries) >= 1
         assert sebv_entries[0][0] == "12"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# _torch_metadata
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def _make_dist_info(tmp_path: Path, version: str) -> None:
+    dist_info = tmp_path / f"torch-{version}.dist-info"
+    dist_info.mkdir()
+    (dist_info / "METADATA").write_text(f"Metadata-Version: 2.1\nVersion: {version}\n")
+
+
+class TestTorchMetadata:
+    def test_cuda_only(self, tmp_path):
+        _make_dist_info(tmp_path, "2.12.0+cu126")
+        with patch.object(_GuildScanSetupMixin, "_extras_dir", return_value=tmp_path):
+            has_cuda, ver = _GuildScanSetupMixin._torch_metadata()
+        assert has_cuda is True
+        assert ver == (2, 12)
+
+    def test_cpu_only(self, tmp_path):
+        _make_dist_info(tmp_path, "2.12.0")
+        with patch.object(_GuildScanSetupMixin, "_extras_dir", return_value=tmp_path):
+            has_cuda, ver = _GuildScanSetupMixin._torch_metadata()
+        assert has_cuda is False
+        assert ver == (2, 12)
+
+    def test_both_cpu_and_cuda_prefers_cuda(self, tmp_path):
+        _make_dist_info(tmp_path, "2.12.0")
+        _make_dist_info(tmp_path, "2.12.0+cu126")
+        with patch.object(_GuildScanSetupMixin, "_extras_dir", return_value=tmp_path):
+            has_cuda, ver = _GuildScanSetupMixin._torch_metadata()
+        assert has_cuda is True
+        assert ver == (2, 12)
+
+    def test_missing_returns_false(self, tmp_path):
+        with patch.object(_GuildScanSetupMixin, "_extras_dir", return_value=tmp_path):
+            has_cuda, ver = _GuildScanSetupMixin._torch_metadata()
+        assert has_cuda is False
+        assert ver == (0, 0)
