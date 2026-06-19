@@ -410,6 +410,84 @@ def _make_dist_info(tmp_path: Path, version: str) -> None:
     (dist_info / "METADATA").write_text(f"Metadata-Version: 2.1\nVersion: {version}\n")
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# _recover_supplement_names_qwen — fuzzy fallback
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class TestRecoverSupplementNamesQwen:
+    """_recover_supplement_names_qwen falls back to fuzzy matching."""
+
+    def _bot(self):
+        return _GuildScan()
+
+    def test_fuzzy_match_used_when_exact_match_fails(self):
+        """Garbled Cyrillic from Qwen is recovered via fuzzy matching."""
+        bot = self._bot()
+        screenshot = np.zeros((1920, 1080, 3), dtype=np.uint8)
+        guild_set = {"ОпасныйПоцык", "Sacrifar"}
+
+        garbled = "OnacHbINlo1IbIK"
+        bbox_debug = [
+            {
+                "name": garbled,
+                "rank": "29",
+                "blocks": [
+                    {
+                        "text": garbled,
+                        "cx": 330,
+                        "cy": 500,
+                        "col": "name_guild",
+                    }
+                ],
+            }
+        ]
+        supplemental: list = []
+        mock_qwen = MagicMock(spec=QwenVLOCRBackend)
+        mock_qwen.extract_player_name.return_value = garbled
+
+        with patch.object(bot, "_correct_single_name", return_value="ОпасныйПоцык"):
+            bot._recover_supplement_names_qwen(
+                screenshot, bbox_debug, guild_set, supplemental, mock_qwen
+            )
+
+        assert len(supplemental) == 1
+        assert supplemental[0][0] == "29"
+        assert supplemental[0][1] == "ОпасныйПоцык"
+
+    def test_no_entry_when_fuzzy_returns_same_as_input(self):
+        """If fuzzy returns the same string, nothing is added."""
+        bot = self._bot()
+        screenshot = np.zeros((1920, 1080, 3), dtype=np.uint8)
+        guild_set = {"ОпасныйПоцык", "Sacrifar"}
+
+        unknown = "CompletelyUnknownPlayer"
+        bbox_debug = [
+            {
+                "name": unknown,
+                "rank": "99",
+                "blocks": [
+                    {
+                        "text": unknown,
+                        "cx": 330,
+                        "cy": 500,
+                        "col": "name_guild",
+                    }
+                ],
+            }
+        ]
+        supplemental: list = []
+        mock_qwen = MagicMock(spec=QwenVLOCRBackend)
+        mock_qwen.extract_player_name.return_value = unknown
+
+        with patch.object(bot, "_correct_single_name", return_value=unknown):
+            bot._recover_supplement_names_qwen(
+                screenshot, bbox_debug, guild_set, supplemental, mock_qwen
+            )
+
+        assert len(supplemental) == 0
+
+
 class TestTorchMetadata:
     def test_cuda_only(self, tmp_path):
         _make_dist_info(tmp_path, "2.12.0+cu126")
