@@ -205,6 +205,65 @@ def test_run_arcane_labyrinth():
             bot.handle_arcane_labyrinth()
 
 
+def test_select_a_crest_confirm_timeout_swallowed():
+    """GameTimeoutError from wait_for_template (confirm) is silently swallowed."""
+    bot = MockAllAFKJ()
+    crest_result = MagicMock()
+    crest_result.template = "arcane_labyrinth/rarity/rare.png"
+
+    with (
+        patch.object(bot, "wait_for_any_template", return_value=crest_result),
+        patch.object(
+            bot,
+            "wait_for_template",
+            side_effect=GameTimeoutError("confirm not found"),
+        ),
+        patch.object(bot, "tap") as mock_tap,
+        patch("time.sleep"),
+    ):
+        bot._select_a_crest()
+
+    mock_tap.assert_called_once_with(crest_result)
+
+
+def test_select_a_crest_confirm_found_taps_twice():
+    """When confirm template is found, tap is called for both the crest and confirm."""
+    bot = MockAllAFKJ()
+    crest_result = MagicMock()
+    crest_result.template = "arcane_labyrinth/rarity/rare.png"
+    confirm_result = MagicMock()
+
+    with (
+        patch.object(bot, "wait_for_any_template", return_value=crest_result),
+        patch.object(bot, "wait_for_template", return_value=confirm_result),
+        patch.object(bot, "tap") as mock_tap,
+        patch("time.sleep"),
+    ):
+        bot._select_a_crest()
+
+    assert mock_tap.call_count == 2
+    mock_tap.assert_any_call(crest_result)
+    mock_tap.assert_any_call(confirm_result)
+
+
+def test_handle_arcane_labyrinth_confirm_taps_directly():
+    """confirm.png case: tap(result) called directly, _select_a_crest NOT called."""
+    bot = MockAllAFKJ()
+    confirm_result = MagicMock()
+    confirm_result.template = "arcane_labyrinth/confirm.png"
+
+    with (
+        patch.object(bot, "wait_for_any_template", return_value=confirm_result),
+        patch.object(bot, "tap") as mock_tap,
+        patch.object(bot, "_select_a_crest") as mock_select,
+    ):
+        result = bot._handle_arcane_labyrinth()
+
+    assert result is True
+    mock_tap.assert_called_once_with(confirm_result)
+    mock_select.assert_not_called()
+
+
 def test_assist_synergy_corrupt_creature():
     bot = MockAllAFKJ()
     with patch.object(bot, "start_up"):

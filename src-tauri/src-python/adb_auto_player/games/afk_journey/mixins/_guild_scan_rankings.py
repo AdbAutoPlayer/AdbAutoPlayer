@@ -633,6 +633,10 @@ class _GuildScanRankingsMixin(_GuildScanNamesMixin):
             matched = next(
                 (m for m in guild_set if m.lower() == recovered.lower()), None
             )
+            if matched is None:
+                matched_fuzzy = self._correct_single_name(recovered, list(guild_set))
+                if matched_fuzzy != recovered:
+                    matched = matched_fuzzy
             if matched and matched not in recovered_set:
                 rank_str = entry.get("rank")
                 score_str = next(

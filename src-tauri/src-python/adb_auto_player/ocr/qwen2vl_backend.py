@@ -68,24 +68,35 @@ class QwenVLOCRBackend(OCRBackend):
                 )
         return self._device
 
-    def _download_model_if_needed(self) -> None:
+    def _download_model_if_needed(self, force_redownload: bool = False) -> None:
         """Download model weights from HuggingFace with heartbeat progress logging.
 
-        Checks the local HuggingFace cache first; if the weights are already
-        present the method returns immediately. Otherwise ``snapshot_download``
-        is called in the foreground while a background thread emits a log line
-        every 30 s so the UI does not appear frozen.
+        Checks the local HuggingFace cache first; if both ``config.json`` and
+        ``model.safetensors.index.json`` are present the method returns
+        immediately. Passing ``force_redownload=True`` skips the cache check so
+        that ``snapshot_download`` re-fetches any missing or incomplete files.
+        A background thread emits a log line every 30 s so the UI does not
+        appear frozen during a long download.
         """
-        try:
-            from huggingface_hub import (  # type: ignore  # noqa: PLC0415
-                try_to_load_from_cache,
-            )
+        if not force_redownload:
+            try:
+                from huggingface_hub import (  # type: ignore  # noqa: PLC0415
+                    try_to_load_from_cache,
+                )
 
-            cached = try_to_load_from_cache(self.MODEL_ID, "config.json")
-            if cached is not None:
-                return
-        except Exception:
-            pass
+                config_cached = try_to_load_from_cache(self.MODEL_ID, "config.json")
+                weights_cached = try_to_load_from_cache(
+                    self.MODEL_ID, "model.safetensors.index.json"
+                )
+                if config_cached is not None and weights_cached is not None:
+                    return
+                if config_cached is not None:
+                    logger.warning(
+                        "Qwen2-VL-2B: partial download detected "
+                        "(config present but weight index missing) — re-downloading."
+                    )
+            except Exception:
+                pass
 
         logger.info(
             "Qwen2-VL-2B: model weights not found in local cache — "
@@ -157,21 +168,39 @@ class QwenVLOCRBackend(OCRBackend):
                 f"Initializing Qwen2-VL-2B on {device} (model: {self.MODEL_ID})..."
             )
             self._download_model_if_needed()
-            self._processor = Qwen2VLProcessor.from_pretrained(
-                self.MODEL_ID, trust_remote_code=True, local_files_only=True
-            )
             dtype = torch.float16 if device == "cuda" else torch.float32
-            # low_cpu_mem_usage=True loads each layer directly to the target
-            # device (GPU) without staging the full model in CPU RAM first,
-            # avoiding Windows "paging file too small" errors (OS error 1455).
-            self._model = Qwen2VLForConditionalGeneration.from_pretrained(
-                self.MODEL_ID,
-                torch_dtype=dtype,
-                device_map="auto" if device == "cuda" else device,
-                trust_remote_code=True,
-                low_cpu_mem_usage=True,
-                local_files_only=True,
-            )
+            try:
+                self._processor = Qwen2VLProcessor.from_pretrained(
+                    self.MODEL_ID, trust_remote_code=True, local_files_only=True
+                )
+                # low_cpu_mem_usage=True loads each layer directly to the target
+                # device (GPU) without staging the full model in CPU RAM first,
+                # avoiding Windows "paging file too small" errors (OS error 1455).
+                self._model = Qwen2VLForConditionalGeneration.from_pretrained(
+                    self.MODEL_ID,
+                    torch_dtype=dtype,
+                    device_map="auto" if device == "cuda" else device,
+                    trust_remote_code=True,
+                    low_cpu_mem_usage=True,
+                    local_files_only=True,
+                )
+            except OSError:
+                logger.warning(
+                    "Qwen2-VL-2B: incomplete local files detected — "
+                    "re-downloading missing weights and retrying."
+                )
+                self._download_model_if_needed(force_redownload=True)
+                self._processor = Qwen2VLProcessor.from_pretrained(
+                    self.MODEL_ID, trust_remote_code=True, local_files_only=True
+                )
+                self._model = Qwen2VLForConditionalGeneration.from_pretrained(
+                    self.MODEL_ID,
+                    torch_dtype=dtype,
+                    device_map="auto" if device == "cuda" else device,
+                    trust_remote_code=True,
+                    low_cpu_mem_usage=True,
+                    local_files_only=True,
+                )
             self._model.eval()
             logger.info("Qwen2-VL-2B initialized successfully.")
             return True
