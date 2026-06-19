@@ -280,7 +280,11 @@ class _GuildScanSetupMixin(BaseClass):
 
         Reads the text file only — no .pyd loading, so the file stays unlocked
         for reinstall. Returns (False, (0, 0)) if metadata is not found.
+        Iterates all torch dist-infos and prefers a CUDA build over a CPU-only
+        one so that a stale CPU dist-info does not mask an already-installed
+        CUDA torch (can happen when --target reinstall leaves both behind).
         """
+        best: tuple[bool, tuple[int, int]] | None = None
         for dist_info in _GuildScanSetupMixin._extras_dir().glob("torch-*.dist-info"):
             try:
                 for line in (
@@ -293,10 +297,16 @@ class _GuildScanSetupMixin(BaseClass):
                         parts = base.split(".")
                         major = int(parts[0]) if len(parts) > 0 else 0
                         minor = int(parts[1]) if len(parts) > 1 else 0
-                        return has_cuda, (major, minor)
+                        candidate: tuple[bool, tuple[int, int]] = (
+                            has_cuda,
+                            (major, minor),
+                        )
+                        if best is None or (has_cuda and not best[0]):
+                            best = candidate
+                        break
             except Exception:
                 pass
-        return False, (0, 0)
+        return best if best is not None else (False, (0, 0))
 
     @staticmethod
     def _torch_has_cuda() -> bool:
