@@ -99,6 +99,10 @@ _generate_profile_state_update_model: {
 input: void | undefined
 output: ProfileStateUpdate
 }
+save_log_file: {
+input: SaveLogFileBody
+output: string
+}
 }
 export interface StartTaskBody {
 profile_index: ProfileIndex
@@ -113,6 +117,11 @@ profile_index: ProfileIndex1
 export interface CacheClear {
 profile_index: ProfileIndex2
 trigger: Trigger
+[k: string]: unknown
+}
+export interface SaveLogFileBody {
+content: string
+filename: string
 [k: string]: unknown
 }
 /**
