@@ -194,13 +194,16 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
             self._add_keys_farmed(9)
 
         self.tap(result)
-        sleep(1)
-        confirm = self.game_find_template_match(
-            "arcane_labyrinth/confirm.png",
-            crop_regions=CropRegions(left=0.2, right=0.2, top=0.8),
-        )
-        if confirm:
+        sleep(0.5)
+        try:
+            confirm = self.wait_for_template(
+                "arcane_labyrinth/confirm.png",
+                crop_regions=CropRegions(left=0.2, right=0.2, top=0.8),
+                timeout=5,
+            )
             self.tap(confirm)
+        except GameTimeoutError:
+            pass
 
     def _handle_arcane_labyrinth(self) -> bool:
         """Handle Arcane Labyrinth."""
@@ -246,8 +249,10 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                     if monotonic() - start_time > self.BATTLE_TIMEOUT:
                         raise GameTimeoutError(self.BATTLE_TIMEOUT_ERROR_MESSAGE)
 
-            case "arcane_labyrinth/select_a_crest.png" | "arcane_labyrinth/confirm.png":
+            case "arcane_labyrinth/select_a_crest.png":
                 self._select_a_crest()
+            case "arcane_labyrinth/confirm.png":
+                self.tap(result)
             case "arcane_labyrinth/quit.png":
                 self.tap(result)
                 sleep(1)

@@ -205,6 +205,65 @@ def test_run_arcane_labyrinth():
             bot.handle_arcane_labyrinth()
 
 
+def test_select_a_crest_confirm_timeout_swallowed():
+    """GameTimeoutError from wait_for_template (confirm) is silently swallowed."""
+    bot = MockAllAFKJ()
+    crest_result = MagicMock()
+    crest_result.template = "arcane_labyrinth/rarity/rare.png"
+
+    with (
+        patch.object(bot, "wait_for_any_template", return_value=crest_result),
+        patch.object(
+            bot,
+            "wait_for_template",
+            side_effect=GameTimeoutError("confirm not found"),
+        ),
+        patch.object(bot, "tap") as mock_tap,
+        patch("time.sleep"),
+    ):
+        bot._select_a_crest()
+
+    mock_tap.assert_called_once_with(crest_result)
+
+
+def test_select_a_crest_confirm_found_taps_twice():
+    """When confirm template is found, tap is called for both the crest and confirm."""
+    bot = MockAllAFKJ()
+    crest_result = MagicMock()
+    crest_result.template = "arcane_labyrinth/rarity/rare.png"
+    confirm_result = MagicMock()
+
+    with (
+        patch.object(bot, "wait_for_any_template", return_value=crest_result),
+        patch.object(bot, "wait_for_template", return_value=confirm_result),
+        patch.object(bot, "tap") as mock_tap,
+        patch("time.sleep"),
+    ):
+        bot._select_a_crest()
+
+    assert mock_tap.call_count == 2
+    mock_tap.assert_any_call(crest_result)
+    mock_tap.assert_any_call(confirm_result)
+
+
+def test_handle_arcane_labyrinth_confirm_taps_directly():
+    """confirm.png case: tap(result) called directly, _select_a_crest NOT called."""
+    bot = MockAllAFKJ()
+    confirm_result = MagicMock()
+    confirm_result.template = "arcane_labyrinth/confirm.png"
+
+    with (
+        patch.object(bot, "wait_for_any_template", return_value=confirm_result),
+        patch.object(bot, "tap") as mock_tap,
+        patch.object(bot, "_select_a_crest") as mock_select,
+    ):
+        result = bot._handle_arcane_labyrinth()
+
+    assert result is True
+    mock_tap.assert_called_once_with(confirm_result)
+    mock_select.assert_not_called()
+
+
 def test_assist_synergy_corrupt_creature():
     bot = MockAllAFKJ()
     with patch.object(bot, "start_up"):
@@ -599,7 +658,7 @@ def test_run_dream_realm_scan_skip_today_false():
         patch.object(bot, "_scan_visible_date_tabs"),
         patch.object(bot, "swipe_left"),
         patch(
-            "adb_auto_player.games.afk_journey.mixins.guild_member_scan.datetime"
+            "adb_auto_player.games.afk_journey.mixins._guild_scan_rankings.datetime"
         ) as mock_dt,
         patch("time.sleep"),
     ):
@@ -638,3 +697,43 @@ def test_scan_visible_date_tabs_skip_today_false():
         skip_today=False,
     )
     assert len(processed) == 0
+
+
+def test_scan_visible_date_tabs_already_processed():
+    """Cover short-circuit branch when processed_dates is non-empty."""
+    bot = MockAllAFKJ()
+    processed: set[str] = {"Monday"}
+    bot._scan_visible_date_tabs(
+        date_tabs=[],
+        processed_dates=processed,
+        dates_to_scan=3,
+        rankings=[],
+        ocr_backend=MagicMock(),
+        skip_today=True,
+    )
+    assert processed == {"Monday"}
+
+
+def test_run_dream_realm_scan_skip_today_false_via_ignore_days():
+    """Cover ignore_days=True branch in skip_today computation (today != Sunday)."""
+    bot = MockAllAFKJ()
+    bot._settings.guild_manager_scan.days_to_scan = 1
+    bot._settings.guild_manager_scan.ignore_day_restrictions = True
+    bot._settings.guild_manager_scan.scan_dr_today_on_sunday = True
+    fake_tab = MagicMock()
+    ocr_mock = MagicMock()
+    with (
+        patch.object(bot, "_enter_dr"),
+        patch.object(bot, "wait_for_template", return_value=MagicMock()),
+        patch.object(bot, "_select_district_rankings", return_value=True),
+        patch.object(bot, "_find_date_tabs", return_value=[fake_tab]),
+        patch.object(bot, "_scan_visible_date_tabs"),
+        patch.object(bot, "swipe_left"),
+        patch(
+            "adb_auto_player.games.afk_journey.mixins._guild_scan_rankings.datetime"
+        ) as mock_dt,
+        patch("time.sleep"),
+    ):
+        mock_dt.datetime.now.return_value.strftime.return_value = "Monday"
+        result = bot._run_dream_realm_scan(ocr_mock, None, [])
+    assert result == []

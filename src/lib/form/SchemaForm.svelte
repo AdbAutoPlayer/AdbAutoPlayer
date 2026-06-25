@@ -331,6 +331,9 @@
                             </button>
                           {/if}
                         </div>
+                        {#if prop.link}
+                          <a href={prop.link} class="field-link">{prop.link}</a>
+                        {/if}
                       {/if}
                     </div>
                   {/if}
@@ -621,6 +624,19 @@
     border-color: var(--accent);
     background: var(--bg-1);
     box-shadow: 0 0 0 2px var(--accent-ghost);
+  }
+
+  .field-link {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--accent);
+    text-decoration: none;
+    word-break: break-all;
+  }
+
+  .field-link:hover {
+    text-decoration: underline;
   }
 
   .input-with-button {
