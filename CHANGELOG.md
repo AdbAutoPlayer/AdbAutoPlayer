@@ -1,18 +1,14 @@
 # Changelog
 
-## [12.9.15] - 2026-06-19
+## [12.9.16] - 2026-06-26
 
 ### Features
 
-- **OCR / Qwen2-VL**:
-  - Added heartbeat progress logging when downloading Qwen2-VL model weights from HuggingFace to prevent the UI from appearing frozen.
-  - Automatically detect and recover from corrupt or incomplete local Qwen2-VL model files by triggering a re-download when initialization fails.
-  - Improved Qwen2-VL ranking scan supplemental name recovery by falling back to fuzzy matching when an exact match fails.
+- **Log Export**:
+  - Log files are now saved directly to `~/Downloads/` via the Python backend instead of using a browser blob download.
+  - After saving, the file is automatically revealed in the system file manager.
 
 ### Fixes
 
-- **Dependency Management**:
-  - Improved PyTorch version/metadata detection to prefer CUDA builds over CPU-only ones, preventing stale CPU metadata from masking valid CUDA installations.
-- **Arcane Labyrinth**:
-  - Improved boss crest confirmation reliability by waiting up to 5s for the confirm button to appear.
-  - Fixed direct confirmation button handler by tapping the confirm button directly instead of entering the select crest subroutine.
+- **AFK Journey**:
+  - Improved formation change detection reliability by tightening the ROI crop region and raising the confidence threshold from 80% to 95%.

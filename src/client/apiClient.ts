@@ -79,3 +79,10 @@ export async function _generateProfileStateUpdateModel(
 ): Promise<Commands["_generate_profile_state_update_model"]["output"]> {
     return await pyInvoke("_generate_profile_state_update_model", body, options);
 }
+
+export async function saveLogFile(
+    body: Commands["save_log_file"]["input"],
+    options?: InvokeOptions
+): Promise<Commands["save_log_file"]["output"]> {
+    return await pyInvoke("save_log_file", body, options);
+}

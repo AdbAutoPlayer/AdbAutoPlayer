@@ -54,6 +54,7 @@ class HeroesEnum(StrEnum):
     Indris = auto()
     Isabelle = auto()
     Kafra = auto()
+    Kazim = auto()
     Koko = auto()
     Kordan = auto()
     Korin = auto()

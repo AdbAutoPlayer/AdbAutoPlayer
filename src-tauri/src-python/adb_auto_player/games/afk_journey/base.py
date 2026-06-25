@@ -340,8 +340,8 @@ class AFKJourneyBase(
                 self.sleep_action()  # Internal animation timing, keep short
                 self.wait_for_roi_change(
                     start_image=start_image,
-                    crop_regions=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.8),
-                    threshold=ConfidenceValue("80%"),
+                    crop_regions=CropRegions(left=0.2, right=0.2, top=0.15, bottom=0.2),
+                    threshold=ConfidenceValue("95%"),
                     timeout=self.min_timeout,
                     timeout_message=(
                         f"Formation #{self.battle_state.formation_num} not found"
