@@ -3,7 +3,6 @@
 import logging
 import re
 from collections.abc import Callable
-from time import sleep
 from typing import ClassVar
 
 import cv2
@@ -48,12 +47,10 @@ class HomesteadHelperMixin(AFKJourneyBase):
 
     # Template polling controls.
     PRODUCTION_ACTION_BUTTON_ATTEMPTS = 10
-    PRODUCTION_ACTION_BUTTON_DELAY = 3
 
     # Crafting controls.
     CRAFT_ITEM_POINT = Point(530, 1700)
     SELECT_ITEM_OFFSET = Offset(0, 345)
-    CRAFTING_REQUESTS_INITIAL_WAIT = 7
     CRAFTING_STOCK_SLICE = (923, 915, 80, 50)
     CRAFTING_REQUEST_SLICE = (953, 975, 50, 50)
 
@@ -139,7 +136,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
             ),
         )
         self.tap(building_button)
-        sleep(2)
+        self.sleep_navigation()
         # Static UI: tap the entry point, then wait for the production action button.
         self.tap(self.PRODUCTION_BUILDING_ENTRY_POINT)
         for _ in range(self.PRODUCTION_ACTION_BUTTON_ATTEMPTS):
@@ -147,13 +144,12 @@ class HomesteadHelperMixin(AFKJourneyBase):
                 list(self.PRODUCTION_ACTION_BUTTON_TEMPLATES)
             ):
                 self.tap(production_button)
-                sleep(3)
+                self.sleep_navigation()
                 return True
-            sleep(self.PRODUCTION_ACTION_BUTTON_DELAY)
+            self.sleep_action()
         logging.warning(
-            "Production action button not found after %ss; stopping run.",
-            self.PRODUCTION_ACTION_BUTTON_ATTEMPTS
-            * self.PRODUCTION_ACTION_BUTTON_DELAY,
+            "Production action button not found after %s attempts; stopping run.",
+            self.PRODUCTION_ACTION_BUTTON_ATTEMPTS,
         )
         return False
 
@@ -180,24 +176,24 @@ class HomesteadHelperMixin(AFKJourneyBase):
                 logging.warning(failure_log)
                 if on_retry is not None:
                     on_retry()
-                sleep(2)
+                self.sleep_action()
 
     def _open_homestead_overview(self) -> None:
         """Open the Homestead overview using the overview button."""
-        sleep(2)  # allow UI to settle before matching
+        self.sleep_action()
         overview_check = self.wait_for_template(
             template=self.HOMESTEAD_OVERVIEW_CHECK_TEMPLATE,
             timeout=self.navigation_timeout,
             timeout_message="Failed to find Homestead overview button.",
         )
         self.tap(overview_check)
-        sleep(2)
+        self.sleep_action()
 
     def _enter_production_buildings_section(self) -> None:
         """Enter the production buildings section from overview."""
         # Enter buildings from overview (tap fixed coordinates).
         self.tap(self.HOMESTEAD_BUILDINGS_SECTION_POINT)
-        sleep(2)
+        self.sleep_action()
 
         def open_production() -> None:
             production_button = self.wait_for_template(
@@ -206,14 +202,14 @@ class HomesteadHelperMixin(AFKJourneyBase):
                 timeout_message="Failed to find Homestead production button.",
             )
             self.tap(production_button)
-            sleep(2)
+            self.sleep_action()
 
         self._with_retries(
             action=open_production,
             failure_log="Failed to enter production buildings, retrying from overview.",
             on_retry=lambda: (
                 self.tap(self.HOMESTEAD_BUILDINGS_SECTION_POINT),
-                sleep(2),
+                self.sleep_action(),
             ),  # ty: ignore[invalid-argument-type]
         )
 
@@ -229,6 +225,15 @@ class HomesteadHelperMixin(AFKJourneyBase):
         """
         crafted = 0
         ocr = TesseractBackend(config=TesseractConfig(psm=PSM.SINGLE_LINE))
+        try:
+            self.wait_for_template(
+                template=self.CRAFTING_REQUESTS_TEMPLATE,
+                timeout=self.navigation_timeout,
+                timeout_message="Requests section not found.",
+            )
+        except GameTimeoutError:
+            self._return_to_production_building_selection()
+            return crafted, False
         while True:
             request_icon = self.game_find_template_match(
                 template=self.CRAFTING_REQUESTS_TEMPLATE,
@@ -239,7 +244,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
 
             request_target = request_icon.box.center + self.SELECT_ITEM_OFFSET
             self.tap(request_target)
-            sleep(4)
+            self.sleep_navigation()
 
             stock_count, request_count = self._get_crafting_counts(ocr)
             if stock_count is None or request_count is None:
@@ -280,31 +285,24 @@ class HomesteadHelperMixin(AFKJourneyBase):
         self.navigate_to_homestead()
         self.navigate_to_homestead_overview()
 
-    def _wait_for_crafting_deck(
-        self,
-        *,
-        initial_wait: int | None = None,
-    ) -> None:
+    def _wait_for_crafting_deck(self) -> None:
         """Wait for crafting deck after starting a craft."""
-        initial_wait = (
-            self.CRAFTING_REQUESTS_INITIAL_WAIT
-            if initial_wait is None
-            else initial_wait
-        )
-        sleep(initial_wait)
+        self.sleep_navigation()
+        self.sleep_navigation()
+        self.sleep_navigation()
 
         while True:
             if self.game_find_template_match(
                 template=self.CRAFTING_DECK_TEMPLATE,
             ):
                 return
-            sleep(3)
+            self.sleep_action()
 
     def _return_to_requests_list(self) -> None:
         self.press_back_button()
-        sleep(4)
+        self.sleep_navigation()
         self.press_back_button()
-        sleep(4)
+        self.sleep_navigation()
 
     def _get_crafting_counts(
         self,
@@ -352,7 +350,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
             return 0
 
         self.tap(order_complete.box.center + self.ORDER_COMPLETE_MAIN_OFFSET)
-        sleep(2)
+        self.sleep_action()
         return self._sell_completed_orders()
 
     def _sell_completed_orders(self) -> int:
@@ -365,14 +363,14 @@ class HomesteadHelperMixin(AFKJourneyBase):
             if order_complete is None:
                 break
             self.tap(order_complete.box.center + self.ORDER_COMPLETE_OFFSET)
-            sleep(4)
+            self.sleep_navigation()
             self.tap(self.ORDER_SELL_POINT)
-            sleep(4)
+            self.sleep_navigation()
             self.tap(self.ORDER_SELL_POINT)
-            sleep(4)
+            self.sleep_navigation()
             if not self.handle_popup_messages():
                 self.tap(self.POPUP_DISMISS_POINT)
-                sleep(4)
+                self.sleep_navigation()
             sold_count += 1
             SummaryGenerator.increment("Homestead Orders Helper", "Orders Sold")
         return sold_count

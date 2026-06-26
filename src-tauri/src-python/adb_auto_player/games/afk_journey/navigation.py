@@ -106,10 +106,11 @@ class Navigation(PopupMessageHandler, ABC):
     ) -> Overview | None:
         templates = Navigation._get_overview_navigation_templates()
         result = self.find_any_template(templates)
+        going_to_homestead = overview == Overview.HOMESTEAD
 
         if result is None:
             # Try to handle any popups that might be blocking navigation
-            if self.handle_popup_messages():
+            if self.handle_popup_messages(navigate_to_homestead=going_to_homestead):
                 self.sleep_navigation()
             else:
                 # Still nothing found, try hitting back
@@ -131,7 +132,9 @@ class Navigation(PopupMessageHandler, ABC):
                 self.tap(self.CENTER_POINT)
                 self.sleep_navigation()
             case "navigation/confirm.png":
-                self._handle_navigation_confirm(result)
+                self._handle_navigation_confirm(
+                    result, navigate_to_homestead=going_to_homestead
+                )
             case "navigation/dotdotdot.png" | "popup/quick_purchase.png":
                 self.press_back_button()
                 self.sleep_action()
@@ -175,8 +178,12 @@ class Navigation(PopupMessageHandler, ABC):
         self.sleep_navigation()
         return None
 
-    def _handle_navigation_confirm(self, result: TemplateMatchResult) -> None:
-        if not self.handle_popup_messages():
+    def _handle_navigation_confirm(
+        self,
+        result: TemplateMatchResult,
+        navigate_to_homestead: bool = False,
+    ) -> None:
+        if not self.handle_popup_messages(navigate_to_homestead=navigate_to_homestead):
             self.tap(result)
             self.sleep_action()
 
