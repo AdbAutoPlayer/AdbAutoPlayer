@@ -4,12 +4,19 @@ import logging
 import os
 import re
 import socket
+from typing import TypedDict
 
 import psutil
 from adb_auto_player.device.adb.adb_client import AdbClientHelper
 
+
+class _EmulatorInfo(TypedDict):
+    ports: list[int]
+    name: str
+
+
 # Known emulators and their process names / common ports
-EMULATORS = {
+EMULATORS: dict[str, _EmulatorInfo] = {
     "dnplayer.exe": {
         "ports": [5555, 5557, 5559, 5561, 5563],
         "name": "LDPlayer",
@@ -108,7 +115,7 @@ def _get_bluestacks_ports() -> set[int]:
 
 def scan_emulator_ports() -> list[str]:
     """Scan for active emulator ADB ports on loopback."""
-    candidate_ports = set()
+    candidate_ports: set[int] = set()
 
     # 1. Process scanning
     running_emulators, proc_ports = _get_running_emulators_and_ports()

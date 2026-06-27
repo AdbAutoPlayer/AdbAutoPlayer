@@ -511,6 +511,24 @@ async def cache_clear(
     _cache_clear(CacheGroup.GAME_SETTINGS, body.profile_index)
 
 
+class SaveLogFileBody(BaseModel):
+    content: str
+    filename: str
+
+
+@commands.command()
+async def save_log_file(body: SaveLogFileBody) -> str:
+    downloads = Path.home() / "Downloads"
+    save_dir = (
+        downloads
+        if downloads.exists() and downloads.is_dir()
+        else Path(tempfile.gettempdir())
+    )
+    save_path = save_dir / body.filename
+    save_path.write_text(body.content, encoding="utf-8")
+    return str(save_path)
+
+
 def _model_gen_command_error() -> NoReturn:
     raise RuntimeError(
         "This function exists to generate TypeScript bindings and should not be called."

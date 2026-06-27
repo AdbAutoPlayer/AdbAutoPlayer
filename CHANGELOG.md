@@ -1,18 +1,21 @@
 # Changelog
 
-## [12.9.15] - 2026-06-19
-
-### Features
-
-- **OCR / Qwen2-VL**:
-  - Added heartbeat progress logging when downloading Qwen2-VL model weights from HuggingFace to prevent the UI from appearing frozen.
-  - Automatically detect and recover from corrupt or incomplete local Qwen2-VL model files by triggering a re-download when initialization fails.
-  - Improved Qwen2-VL ranking scan supplemental name recovery by falling back to fuzzy matching when an exact match fails.
+## [12.9.17] - 2026-06-26
 
 ### Fixes
 
-- **Dependency Management**:
-  - Improved PyTorch version/metadata detection to prefer CUDA builds over CPU-only ones, preventing stale CPU metadata from masking valid CUDA installations.
-- **Arcane Labyrinth**:
-  - Improved boss crest confirmation reliability by waiting up to 5s for the confirm button to appear.
-  - Fixed direct confirmation button handler by tapping the confirm button directly instead of entering the select crest subroutine.
+- **AFK Journey**:
+  - Fixed Homestead Orders Helper not entering the Homestead: the
+    "Heading to Homestead now?" popup was dismissed instead of
+    confirmed during navigation.
+  - Fixed Homestead overview button not matching the current game UI
+    (updated template to match the dark panel background).
+  - Fixed World navigation button falling below the confidence
+    threshold due to a blue badge added in a recent game update
+    (replaced template with a tighter crop that excludes the badge).
+  - Replaced all hardcoded `sleep()` delays in Homestead Orders
+    Helper with `sleep_action()` / `sleep_navigation()` so users can
+    tune timing via Advanced Settings to match their hardware speed.
+  - Homestead Orders Helper now waits for the Requests screen to
+    fully load before checking for crafting requests, preventing
+    false negatives on slower hardware.

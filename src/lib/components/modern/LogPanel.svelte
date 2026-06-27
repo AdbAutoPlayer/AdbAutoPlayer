@@ -3,6 +3,7 @@
   import { onMount, tick } from "svelte";
   import { listen } from "@tauri-apps/api/event";
   import { revealItemInDir } from "@tauri-apps/plugin-opener";
+  import { saveLogFile } from "$pytauri/apiClient";
   import { homeDir } from "@tauri-apps/api/path";
   import { profiles, settings, ui } from "$lib/stores.svelte";
   import { EventNames } from "$lib/log/eventNames";
@@ -153,7 +154,7 @@
     return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
   }
 
-  function handleExport() {
+  async function handleExport() {
     if (currentEntries.length === 0) return;
     const logText = currentEntries
       .map(
@@ -161,15 +162,13 @@
           `[${fmtTime(e.timestamp)}] [${(e as any).level || "INFO"}] ${e.message.replace(/<[^>]*>/g, "")}`,
       )
       .join("\n");
-    const blob = new Blob([logText], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `adbautoplayer-log-profile-${profileIndex}-${new Date().toISOString().slice(0, 10)}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const filename = `adbautoplayer-log-profile-${profileIndex}-${new Date().toISOString().slice(0, 10)}.txt`;
+    try {
+      const savedPath = await saveLogFile({ content: logText, filename });
+      await revealItemInDir(savedPath);
+    } catch (e) {
+      console.error("Failed to export log:", e);
+    }
   }
 
   const isTaskRunning = $derived(!!profiles.states[profileIndex]?.active_task);
