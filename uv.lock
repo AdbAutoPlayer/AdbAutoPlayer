@@ -30,7 +30,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "adbutils", specifier = ">=2.12.0,<3" },
-    { name = "anyio", specifier = ">=4.14.0,<5" },
+    { name = "anyio", specifier = ">=4.14.1,<5" },
     { name = "av", specifier = ">=17.1.0,<18" },
     { name = "numpy", specifier = ">=2.4.6,<2.5" },
     { name = "onnxruntime", specifier = ">=1.27.0" },
@@ -40,7 +40,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.13.4,<3" },
     { name = "pytauri", specifier = "==0.8.*" },
     { name = "pytesseract", specifier = ">=0.3.13,<0.4" },
-    { name = "rapidocr", specifier = ">=3.8.4" },
+    { name = "rapidocr", specifier = ">=3.9.0" },
 ]
 
 [[package]]
