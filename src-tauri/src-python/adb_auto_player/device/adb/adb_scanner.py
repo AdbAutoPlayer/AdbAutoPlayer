@@ -4,12 +4,19 @@ import logging
 import os
 import re
 import socket
+from typing import TypedDict
 
 import psutil
 from adb_auto_player.device.adb.adb_client import AdbClientHelper
 
+
+class _EmulatorInfo(TypedDict):
+    ports: list[int]
+    name: str
+
+
 # Known emulators and their process names / common ports
-EMULATORS = {
+EMULATORS: dict[str, _EmulatorInfo] = {
     "dnplayer.exe": {
         "ports": [5555, 5557, 5559, 5561, 5563],
         "name": "LDPlayer",
