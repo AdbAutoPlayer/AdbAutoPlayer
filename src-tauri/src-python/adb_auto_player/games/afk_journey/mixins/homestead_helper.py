@@ -309,7 +309,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
             self.tap(self.HOMESTEAD_REQUESTS_POINT)
             sleep(2)
 
-            crafted_this_round = self._quick_select_loop()
+            crafted_this_round = self._fulfill_requests_best_first()
 
             if crafted_this_round:
                 # After a crafting trip the bot may still be inside the crafting
@@ -326,7 +326,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
 
         logging.info("Homestead requests: reached outer loop limit.")
 
-    def _quick_select_loop(self) -> bool:
+    def _fulfill_requests_best_first(self) -> bool:
         """Fulfill requests best-first until a craft cycle or exhaustion.
 
         Each iteration compares the four request portraits by their Wish Point
@@ -360,15 +360,18 @@ class HomesteadHelperMixin(AFKJourneyBase):
                 exhausted.add(selected)
             # DELIVERED: loop again and re-compare the remaining requests.
 
-        logging.info("Quick Select inner loop limit reached.")
+        logging.info("Request fulfillment inner loop limit reached.")
         return False
 
-    def _read_request_wish_points(self) -> dict[int, int]:
+    def _read_request_wish_points(self, exclude: set[int]) -> dict[int, int]:
         """Tap each request portrait and OCR its Wish Point reward value.
+
+        Args:
+            exclude: Portrait indices to skip (already exhausted this visit).
 
         Returns:
             Mapping of portrait index (0-based) to Wish Point value. Portraits
-            whose number could not be read are omitted.
+            in ``exclude`` or whose number could not be read are omitted.
         """
         backend = getattr(self, "_homestead_ocr_backend", None)
         if backend is None:
@@ -378,6 +381,8 @@ class HomesteadHelperMixin(AFKJourneyBase):
         x1, y1, x2, y2 = self.HOMESTEAD_WISH_POINT_CROP
         values: dict[int, int] = {}
         for index, point in enumerate(self.HOMESTEAD_REQUEST_PORTRAIT_POINTS):
+            if index in exclude:
+                continue
             self.tap(point)
             # The Basic Rewards panel animates in after selecting a portrait, so
             # the number is briefly blank. Retry until it is readable.
@@ -408,8 +413,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
         Returns:
             The selected portrait index, or None if no request could be read.
         """
-        values = self._read_request_wish_points()
-        candidates = {i: v for i, v in values.items() if i not in exclude}
+        candidates = self._read_request_wish_points(exclude=exclude)
         if not candidates:
             logging.info("No selectable requests with a readable reward.")
             return None
