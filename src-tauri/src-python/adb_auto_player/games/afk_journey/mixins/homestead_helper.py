@@ -1,6 +1,8 @@
 """Homestead helper mixin."""
 
 import logging
+import re
+from enum import Enum
 from time import sleep
 from typing import ClassVar
 
@@ -12,7 +14,16 @@ from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.ocr import RapidOCRBackend
 from adb_auto_player.util import SummaryGenerator
+
+
+class _RequestFulfillment(Enum):
+    """Outcome of attempting to fulfill a single homestead request."""
+
+    DELIVERED = "delivered"
+    CRAFTED = "crafted"
+    NOTHING = "nothing"
 
 
 class HomesteadHelperMixin(AFKJourneyBase):
@@ -73,6 +84,31 @@ class HomesteadHelperMixin(AFKJourneyBase):
     HOMESTEAD_TAP_TO_CLOSE_POINT = Point(540, 1800)
     # Fixed tap point for the Requests world-icon (always at same position)
     HOMESTEAD_REQUESTS_POINT = Point(60, 1245)
+
+    # The four request NPC portraits at the bottom of the Requests view. Tapping
+    # one selects that request and updates the "Basic Rewards" panel at the top.
+    HOMESTEAD_REQUEST_PORTRAIT_POINTS: ClassVar[tuple[Point, ...]] = (
+        Point(270, 1815),
+        Point(452, 1815),
+        Point(640, 1815),
+        Point(822, 1815),
+    )
+    # Crop region (x1, y1, x2, y2) of the Wish Point reward number shown under
+    # "Basic Rewards" (left reward card) for the currently selected request.
+    # The number's vertical position varies (~y=768 for most requests, ~y=819
+    # for the request pre-selected when the view opens), so the crop is tall
+    # enough to cover both. The x range fits 3-5 digit centre-aligned values
+    # while staying clear of the Ancient Coin number on the right card.
+    HOMESTEAD_WISH_POINT_CROP: ClassVar[tuple[int, int, int, int]] = (
+        190,
+        745,
+        330,
+        850,
+    )
+    # After selecting a portrait the Basic Rewards panel animates in, so the
+    # number is briefly blank. Retry the OCR read a few times until it appears.
+    HOMESTEAD_WISH_POINT_READ_ATTEMPTS = 5
+    HOMESTEAD_WISH_POINT_READ_DELAY = 0.6
 
     # Ingredient-crafting slider geometry. The handle starts at the far left
     # (value 0); dragging right increases the craft amount. The track spans
@@ -248,7 +284,13 @@ class HomesteadHelperMixin(AFKJourneyBase):
     # ------------------------------------------------------------------ #
 
     def _handle_homestead_requests(self) -> None:
-        """Repeatedly open Requests and use Quick Select to fulfill orders."""
+        """Repeatedly open Requests, pick the best-rewarded order and fulfill it.
+
+        Each time the Requests view is entered, the four request portraits are
+        compared by their Wish Point reward and the highest one is selected
+        before fulfilling. After a craft trip the view is re-entered and the
+        comparison is repeated.
+        """
         logging.info("Handling homestead requests...")
 
         for _outer in range(self.HOMESTEAD_OUTER_LOOP_LIMIT):
@@ -276,75 +318,170 @@ class HomesteadHelperMixin(AFKJourneyBase):
                 self._ensure_in_homestead()
                 continue
 
-            if not crafted_this_round:
-                # No missing-resource craft needed - nothing left to do.
-                logging.info("No orders remaining - done.")
-                self.press_back_button()
-                sleep(2)
-                return
+            # No missing-resource craft needed - nothing left to do.
+            logging.info("No orders remaining - done.")
+            self.press_back_button()
+            sleep(2)
+            return
 
         logging.info("Homestead requests: reached outer loop limit.")
 
     def _quick_select_loop(self) -> bool:
-        """Run Quick Select until a missing-resource case triggers a craft cycle.
+        """Fulfill requests best-first until a craft cycle or exhaustion.
+
+        Each iteration compares the four request portraits by their Wish Point
+        reward, selects the highest and fulfills it once. Requests that cannot
+        be progressed are skipped for the remainder of this Requests visit.
 
         Returns:
             True  if a crafting trip was made (caller should re-enter Requests).
-            False if nothing more to do in this session.
+            False if nothing more to do in this Requests visit.
         """
+        exhausted: set[int] = set()
+        portrait_count = len(self.HOMESTEAD_REQUEST_PORTRAIT_POINTS)
+
         for _ in range(self.HOMESTEAD_INNER_LOOP_LIMIT):
-            quick_select = self.game_find_template_match(
-                template=self.HOMESTEAD_QUICK_SELECT_TEMPLATE
-            )
-            if quick_select is None:
-                logging.info("Quick Select not visible - no more orders.")
+            if len(exhausted) >= portrait_count:
+                logging.info("All requests exhausted - no more orders.")
                 return False
 
-            self.tap(quick_select)
-            sleep(2)
+            selected = self._select_best_request(exclude=exhausted)
+            if selected is None:
+                logging.info("No selectable request - no more orders.")
+                return False
 
-            # Check if the insufficient-resources popup appeared.
-            missing_arrow = self.game_find_template_match(
-                template=self.HOMESTEAD_MISSING_RESOURCES_TEMPLATE
-            )
-            if missing_arrow is not None:
-                logging.info("Insufficient resources - navigating to crafting.")
-                self.tap(missing_arrow)
-                sleep(2)
-                self._handle_crafting_to_max()
+            result = self._fulfill_selected_request()
+
+            if result is _RequestFulfillment.CRAFTED:
                 return True  # caller will call _ensure_in_homestead() then retry
-
-            # No missing-resources popup: check for Deliver button.
-            deliver = self.game_find_template_match(
-                template=self.HOMESTEAD_DELIVER_TEMPLATE
-            )
-            if deliver is not None:
-                logging.info("Deliver button found - tapping.")
-                self.tap(deliver)
-                sleep(3)  # wait for reward popup to appear
-                # Tap the lower half of the screen to dismiss the reward popup.
-                self.tap(Point(540, 1400))
-                # Wait for Quick Select to reappear.
-                try:
-                    self.wait_for_template(
-                        template=self.HOMESTEAD_QUICK_SELECT_TEMPLATE,
-                        timeout=15,
-                        timeout_message="Quick Select did not reappear after delivery.",
-                    )
-                except Exception:
-                    logging.warning("Quick Select did not reappear after delivery.")
-                SummaryGenerator.increment(
-                    "Homestead Orders Helper", "Orders Delivered"
-                )
-                continue
-
-            # Nothing matched - press back to close any unexpected screen and
-            # let the outer loop re-enter Requests.
-            logging.debug("No Quick Select, Deliver or missing-resource popup found.")
-            return False
+            if result is _RequestFulfillment.NOTHING:
+                # This request cannot be progressed right now; skip it and try
+                # the next-best one in the following iteration.
+                exhausted.add(selected)
+            # DELIVERED: loop again and re-compare the remaining requests.
 
         logging.info("Quick Select inner loop limit reached.")
         return False
+
+    def _read_request_wish_points(self) -> dict[int, int]:
+        """Tap each request portrait and OCR its Wish Point reward value.
+
+        Returns:
+            Mapping of portrait index (0-based) to Wish Point value. Portraits
+            whose number could not be read are omitted.
+        """
+        backend = getattr(self, "_homestead_ocr_backend", None)
+        if backend is None:
+            backend = RapidOCRBackend()
+            self._homestead_ocr_backend = backend
+
+        x1, y1, x2, y2 = self.HOMESTEAD_WISH_POINT_CROP
+        values: dict[int, int] = {}
+        for index, point in enumerate(self.HOMESTEAD_REQUEST_PORTRAIT_POINTS):
+            self.tap(point)
+            # The Basic Rewards panel animates in after selecting a portrait, so
+            # the number is briefly blank. Retry until it is readable.
+            value: int | None = None
+            for _ in range(self.HOMESTEAD_WISH_POINT_READ_ATTEMPTS):
+                sleep(self.HOMESTEAD_WISH_POINT_READ_DELAY)
+                crop = self.get_screenshot()[y1:y2, x1:x2]
+                digits = re.sub(r"\D", "", backend.extract_text(crop))
+                if digits:
+                    value = int(digits)
+                    break
+            if value is not None:
+                values[index] = value
+                logging.debug("Request %d Wish Points: %d", index + 1, value)
+            else:
+                logging.debug("Request %d Wish Points unreadable.", index + 1)
+        return values
+
+    def _select_best_request(self, exclude: set[int]) -> int | None:
+        """Select the request with the highest Wish Point reward.
+
+        Reads all four request portraits, taps the one with the highest Wish
+        Point value (ignoring any in ``exclude``) and returns its index.
+
+        Args:
+            exclude: Portrait indices to skip (already exhausted this visit).
+
+        Returns:
+            The selected portrait index, or None if no request could be read.
+        """
+        values = self._read_request_wish_points()
+        candidates = {i: v for i, v in values.items() if i not in exclude}
+        if not candidates:
+            logging.info("No selectable requests with a readable reward.")
+            return None
+
+        best_index = max(candidates, key=lambda i: candidates[i])
+        logging.info(
+            "Selecting request %d (Wish Points: %d).",
+            best_index + 1,
+            candidates[best_index],
+        )
+        self.tap(self.HOMESTEAD_REQUEST_PORTRAIT_POINTS[best_index])
+        sleep(1.5)  # let the selection settle before Quick Select
+        return best_index
+
+    def _fulfill_selected_request(self) -> _RequestFulfillment:
+        """Fulfill the currently selected request once via Quick Select.
+
+        Taps Quick Select and then either crafts a missing resource or delivers
+        the order. Exactly one Quick Select action is handled so the caller can
+        re-compare request rewards afterwards.
+
+        Returns:
+            CRAFTED  if a craft trip was started (caller should re-enter).
+            DELIVERED if an order was delivered.
+            NOTHING  if there was nothing to do for this request.
+        """
+        quick_select = self.game_find_template_match(
+            template=self.HOMESTEAD_QUICK_SELECT_TEMPLATE
+        )
+        if quick_select is None:
+            logging.info("Quick Select not visible for this request.")
+            return _RequestFulfillment.NOTHING
+
+        self.tap(quick_select)
+        sleep(2)
+
+        # Check if the insufficient-resources popup appeared.
+        missing_arrow = self.game_find_template_match(
+            template=self.HOMESTEAD_MISSING_RESOURCES_TEMPLATE
+        )
+        if missing_arrow is not None:
+            logging.info("Insufficient resources - navigating to crafting.")
+            self.tap(missing_arrow)
+            sleep(2)
+            self._handle_crafting_to_max()
+            return _RequestFulfillment.CRAFTED
+
+        # No missing-resources popup: check for Deliver button.
+        deliver = self.game_find_template_match(
+            template=self.HOMESTEAD_DELIVER_TEMPLATE
+        )
+        if deliver is not None:
+            logging.info("Deliver button found - tapping.")
+            self.tap(deliver)
+            sleep(3)  # wait for reward popup to appear
+            # Tap the lower half of the screen to dismiss the reward popup.
+            self.tap(Point(540, 1400))
+            # Wait for Quick Select to reappear.
+            try:
+                self.wait_for_template(
+                    template=self.HOMESTEAD_QUICK_SELECT_TEMPLATE,
+                    timeout=15,
+                    timeout_message="Quick Select did not reappear after delivery.",
+                )
+            except Exception:
+                logging.warning("Quick Select did not reappear after delivery.")
+            SummaryGenerator.increment("Homestead Orders Helper", "Orders Delivered")
+            return _RequestFulfillment.DELIVERED
+
+        # Nothing matched for this request.
+        logging.debug("No Deliver or missing-resource popup found for this request.")
+        return _RequestFulfillment.NOTHING
 
     # ------------------------------------------------------------------ #
     #  Crafting multiplier                                                 #
