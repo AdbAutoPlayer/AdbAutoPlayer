@@ -9,11 +9,6 @@ class TaskItem(BaseModel):
     name: str = Field(alias="name", title="name")
     repeat: bool = Field(default=True, alias="repeat", title="repeat")
 
-    @classmethod
-    def from_name(cls, name: str) -> "TaskItem":
-        """Create a TaskItem from a plain task name string."""
-        return cls(name=name)
-
 
 class TaskListSettings(BaseModel):
     """Task Lists."""

@@ -56,7 +56,7 @@ export function asNonEmptyStringArray(
     return null;
   }
 
-  // For TaskList: items is an object with a "name" property referencing TaskListEnum
+  // For TaskList: items is an object with a "name" property holding the enum
   const items = arraySchema.items as any;
   if (items?.type === "object" && items?.properties?.name?.enum) {
     const choices = items.properties.name.enum;

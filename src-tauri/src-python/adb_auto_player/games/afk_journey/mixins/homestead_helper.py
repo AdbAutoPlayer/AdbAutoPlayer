@@ -338,13 +338,8 @@ class HomesteadHelperMixin(AFKJourneyBase):
             False if nothing more to do in this Requests visit.
         """
         exhausted: set[int] = set()
-        portrait_count = len(self.HOMESTEAD_REQUEST_PORTRAIT_POINTS)
 
         for _ in range(self.HOMESTEAD_INNER_LOOP_LIMIT):
-            if len(exhausted) >= portrait_count:
-                logging.info("All requests exhausted - no more orders.")
-                return False
-
             selected = self._select_best_request(exclude=exhausted)
             if selected is None:
                 logging.info("No selectable request - no more orders.")

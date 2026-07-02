@@ -43,18 +43,19 @@ class TomlSettings(BaseModel):
     def generate_model_json_schema_with_task_list_choices(
         self, choices: list[str]
     ) -> dict[str, Any]:
-        """Generate the JSON schema for the model with dynamic Task List enum choices.
+        """Generate the JSON schema for the model with dynamic Task List choices.
 
         This method produces the standard `model_json_schema()` of the Pydantic model,
-        but injects a dynamic `TaskListEnum` definition into the schema and updates
-        the `"Task List"` property in `TaskListSettings` to reference this enum.
-        Each task item is an object with a `name` (enum) and `repeat` (bool) field.
+        but replaces the `"Task List"` items in `TaskListSettings` with an object
+        whose `name` field is an enum of the given choices and whose `repeat`
+        field is a boolean. Each task item is an object with a `name` (enum) and
+        `repeat` (bool) field.
 
         Args:
             choices (list[str]): The list of allowed values for the Task List items.
 
         Returns:
-            dict[str, Any]: A JSON Schema dict with the `TaskListEnum` choices applied.
+            dict[str, Any]: A JSON Schema dict with the Task List choices applied.
         """
         schema = self.model_json_schema()
         defs = schema.setdefault("$defs", {})
