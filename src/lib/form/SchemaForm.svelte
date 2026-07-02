@@ -102,7 +102,10 @@
   function resolveRef(prop: any, rootSchema: JSONSchema) {
     if ("$ref" in prop && typeof prop.$ref === "string") {
       const refName = prop.$ref.replace("#/$defs/", "");
-      return rootSchema.$defs?.[refName] ?? prop;
+      const resolved = rootSchema.$defs?.[refName] ?? prop;
+      // Preserve field-level metadata (title, description, default) over the definition
+      const { $ref: _, ...fieldOverrides } = prop;
+      return { ...resolved, ...fieldOverrides };
     }
 
     if (prop.type === "array" && prop.items?.$ref) {
@@ -192,13 +195,13 @@
                 {@const choices = asNonEmptyStringArray(prop)}
 
                 <div class="field-row">
-                  {#if arraySchema && arraySchema.items.enum && Array.isArray(settingsProps.formData[key]?.[propKey]) && choices}
-                    {#if prop.formType === "TaskList"}
-                      <TaskList
-                        {choices}
-                        bind:value={settingsProps.formData[key][propKey] as any}
-                      />
-                    {:else if prop.formType === "AlnumGroupedCheckboxArray"}
+                  {#if arraySchema && prop.formType === "TaskList" && Array.isArray(settingsProps.formData[key]?.[propKey]) && choices}
+                    <TaskList
+                      {choices}
+                      bind:value={settingsProps.formData[key][propKey] as any}
+                    />
+                  {:else if arraySchema && arraySchema.items.enum && Array.isArray(settingsProps.formData[key]?.[propKey]) && choices}
+                    {#if prop.formType === "AlnumGroupedCheckboxArray"}
                       <AlnumGroupedCheckboxArray
                         title={$t(arraySchema.title ?? propKey)}
                         {choices}

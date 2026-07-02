@@ -6,6 +6,7 @@ from adb_auto_player.decorators import register_command, register_custom_routine
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.games.afk_journey.settings import OpponentPosition
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 
@@ -68,23 +69,65 @@ class SupremeArenaMixin(AFKJourneyBase):
         """
         try:
             logging.debug("Tapping Challenge or Continue to enter opponent selection.")
-            btn = self.wait_for_any_template(
-                templates=["supreme_arena/challenge.png", "arena/continue.png"],
-                timeout=self.min_timeout,
-                timeout_message="Failed to find Challenge or Continue button.",
-            )
+            # Loop to dismiss any intermediate screens (reward popups, daily rewards,
+            # battle-modes list, etc.) before reaching Challenge / Continue.
+            btn = None
+            for _ in range(5):
+                btn = self.wait_for_any_template(
+                    templates=[
+                        "supreme_arena/challenge.png",
+                        "arena/continue.png",
+                        "tap_to_close.png",
+                        "supreme_arena/daily_rewards.png",
+                        "battle_modes/supreme_arena.png",
+                    ],
+                    timeout=self.min_timeout,
+                    timeout_message="Failed to find Challenge or Continue button.",
+                )
+                if btn.template in (
+                    "supreme_arena/challenge.png",
+                    "arena/continue.png",
+                ):
+                    break
+                logging.debug(f"Dismissing intermediate screen: {btn.template}")
+                self.tap(btn)
+                self.sleep_navigation()
+            else:
+                raise GameTimeoutError(
+                    "Failed to reach Challenge button after dismissing popups."
+                )
             self.sleep_navigation()
             self.tap(btn)
+            self.sleep_navigation()
 
             logging.debug("Waiting for Select Opponent screen.")
-            result = self.wait_for_any_template(
-                templates=[
+            result = None
+            for _ in range(5):
+                result = self.wait_for_any_template(
+                    templates=[
+                        "supreme_arena/select_opponent.png",
+                        "supreme_arena/no_attempts_popup.png",
+                        "tap_to_close.png",
+                        "supreme_arena/daily_rewards.png",
+                    ],
+                    timeout=self.min_timeout,
+                    timeout_message="Failed to find Select Opponent screen.",
+                )
+                if result.template in (
                     "supreme_arena/select_opponent.png",
                     "supreme_arena/no_attempts_popup.png",
-                ],
-                timeout=self.min_timeout,
-                timeout_message="Failed to find Select Opponent screen.",
-            )
+                ):
+                    break
+                logging.debug(
+                    "Dismissing intermediate screen after tapping Challenge: "
+                    f"{result.template}"
+                )
+                self.tap(result)
+                self.sleep_navigation()
+            else:
+                raise GameTimeoutError(
+                    "Failed to reach Select Opponent screen after dismissing popups."
+                )
 
             if "no_attempts_popup" in result.template:
                 logging.info(
@@ -93,8 +136,14 @@ class SupremeArenaMixin(AFKJourneyBase):
                 self.tap(Point(485, 1250))  # Tap X to cancel purchase
                 return False
 
-            logging.debug("Tapping leftmost opponent card.")
-            self.tap(Point(165, 950))
+            position = self.settings.supreme_arena.opponent_position
+            opponent_x = {
+                OpponentPosition.Left: 165,
+                OpponentPosition.Middle: 540,
+                OpponentPosition.Right: 915,
+            }[position]
+            logging.debug(f"Tapping {position} opponent card.")
+            self.tap(Point(opponent_x, 950))
 
             logging.debug("Waiting for Challenge! button on opponent detail screen.")
             challenge = self.wait_for_template(
@@ -122,6 +171,7 @@ class SupremeArenaMixin(AFKJourneyBase):
                 timeout_message="Failed to find Next button (1/2).",
             )
             self.tap(next1)
+            self.sleep_navigation()
 
             logging.debug("Tapping Next (2/2).")
             next2 = self.wait_for_template(
@@ -161,6 +211,18 @@ class SupremeArenaMixin(AFKJourneyBase):
             self.sleep_navigation()
             self.tap(done)
             self.sleep_navigation()
+            # Dismiss any post-battle reward level popup (may appear with a short delay)
+            try:
+                tap_close = self.wait_for_any_template(
+                    templates=["tap_to_close.png"],
+                    timeout=self.fast_timeout,
+                    timeout_message="No post-battle popup found.",
+                )
+                logging.debug("Dismissing post-battle reward popup.")
+                self.tap(tap_close)
+                self.sleep_navigation()
+            except GameTimeoutError:
+                pass
             return True
         except GameTimeoutError as fail:
             logging.error(fail)

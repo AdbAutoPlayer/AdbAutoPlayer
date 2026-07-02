@@ -72,8 +72,10 @@ class DailiesMixin(
             self.push_duras_trials()
         else:
             logging.info("Dura's Trials disabled.")
-        if self.settings.legend_trials.towers:
+        if self.settings.dailies.legend_trials and self.settings.legend_trials.towers:
             self.push_legend_trials()
+        elif not self.settings.dailies.legend_trials:
+            logging.info("Legend Trials disabled.")
         if self.settings.dailies.afk_stages:
             self.push_afk_stages(season=True)
         else:

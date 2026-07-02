@@ -13,6 +13,7 @@ from adb_auto_player.games.afk_journey.minigames.matching_cards import MatchingC
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
+from adb_auto_player.models.image_manipulation import CropRegions
 
 _GENERIC_HOLD_CENTER_TOLERANCE = 50
 
@@ -181,6 +182,8 @@ class QuestMixin(AFKJourneyBase, ABC):
             "quests/start_battle",
             "quests/claim",
             "quests/questrewards",
+            "quests/continue_main_quest",
+            "quests/quest_dialogue",
             "quests/tap_to_close",
             "quests/tap_to_close_dark",
             "quests/unlocked",
@@ -188,10 +191,10 @@ class QuestMixin(AFKJourneyBase, ABC):
             "back",
         ]
 
-        if self._handle_holding_buttons():
-            return True
-
-        if self._handle_dialogue_buttons(buttons):
+        # Dialogue/button checks run BEFORE the gesture check so that conversation
+        # quest choices are handled immediately (the gesture button is always
+        # visible in the UI overlay and would otherwise fire on every iteration)
+        if self._handle_holding_buttons() or self._handle_dialogue_buttons(buttons):
             return True
 
         # Gesture quest: open the emote menu then click the quest-marked gesture
@@ -202,6 +205,23 @@ class QuestMixin(AFKJourneyBase, ABC):
         if gesture_button is not None:
             self._handle_gesture_quest(gesture_button)
             return True
+
+        # Transform quest: the game shows no on-screen gesture prompt, so detect
+        # the quest tracker text and proactively open the gesture menu.
+        transform_active = self.find_any_template(
+            ["quests/transform_quest"],
+            threshold=ConfidenceValue("80%"),
+            grayscale=True,
+        )
+        if transform_active is not None:
+            gesture_button_low = self.find_any_template(
+                ["quests/gesture_button"],
+                threshold=ConfidenceValue("65%"),
+            )
+            if gesture_button_low is not None:
+                logging.info("Transform quest detected — opening gesture menu")
+                self._handle_gesture_quest(gesture_button_low)
+                return True
 
         # Check for the big "Track" button (diamond/rombo) with a lower threshold
         # due to its semi-transparent background
@@ -218,16 +238,19 @@ class QuestMixin(AFKJourneyBase, ABC):
         if self._handle_special_quest_actions():
             return True
 
-        # Finally we click the quest tracker text to auto-path. We return False
+        # Finally we click the quest nav icon to auto-path. We return False
         # as we need to increment the counter in case we get stuck clicking it
-        questbook_match = self.find_any_template(
-            ["quests/questbook"],
-            threshold=ConfidenceValue("80%"),
-        )
-        if path and questbook_match is not None:
-            logging.info("Auto-pathing")
-            self.tap(Point(questbook_match.x + 200, questbook_match.y))
-            sleep(10)
+        if path:
+            nav_match = self.find_any_template(
+                ["quests/quest_nav", "quests/quest_nav_alt"],
+                threshold=ConfidenceValue("75%"),
+                grayscale=True,
+                crop_regions=CropRegions(left="44%", top="13%", bottom="75%"),
+            )
+            if nav_match is not None:
+                logging.info("Auto-pathing")
+                self.tap(nav_match, scale=True)
+                sleep(10)
 
         return False
 
@@ -356,6 +379,32 @@ class QuestMixin(AFKJourneyBase, ABC):
                     sleep(2)
             return
 
+        if self.find_any_template(
+            ["quests/transform_quest"],
+            threshold=ConfidenceValue("80%"),
+            grayscale=True,
+        ):
+            logging.info("Transform quest — opening gesture menu")
+            self.tap(gesture_button, scale=True)
+            sleep(2)
+            magic_tab = self.find_any_template(
+                ["quests/gesture_magic_tab"],
+                threshold=ConfidenceValue("80%"),
+            )
+            if magic_tab is not None:
+                logging.info("Navigating to Magic tab")
+                self.tap(magic_tab, scale=True)
+                sleep(1)
+            wolf_form = self.find_any_template(
+                ["quests/gesture_wolf_form"],
+                threshold=ConfidenceValue("80%"),
+            )
+            if wolf_form is not None:
+                logging.info("Clicking Wolf Form (Transform)")
+                self.tap(wolf_form, scale=True)
+                sleep(2)
+            return
+
         logging.info("Gesture quest — opening emote menu")
         self.tap(gesture_button, scale=True)
         sleep(2)
@@ -363,6 +412,7 @@ class QuestMixin(AFKJourneyBase, ABC):
             [
                 "quests/gesture_quest_marker_blue",
                 "quests/gesture_quest_marker_orange",
+                "quests/gesture_quest_marker_orange_v2",
             ],
             threshold=ConfidenceValue("80%"),
         )
