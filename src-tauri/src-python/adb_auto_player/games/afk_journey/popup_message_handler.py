@@ -78,7 +78,7 @@ arcane_labyrinth_messages = [
         text="End the exploration",
         confirm_button_template="arcane_labyrinth/hold_to_exit.png",
         hold_to_confirm=True,
-        hold_duration_seconds=5.0,
+        hold_duration_seconds=6.0,
     ),
 ]
 

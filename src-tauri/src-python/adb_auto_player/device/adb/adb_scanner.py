@@ -115,7 +115,7 @@ def _get_bluestacks_ports() -> set[int]:
 
 def scan_emulator_ports() -> list[str]:
     """Scan for active emulator ADB ports on loopback."""
-    candidate_ports = set()
+    candidate_ports: set[int] = set()
 
     # 1. Process scanning
     running_emulators, proc_ports = _get_running_emulators_and_ports()
