@@ -235,7 +235,11 @@ class HomesteadHelperMixin(AFKJourneyBase):
         # Scroll down until a Mine building card is visible.
         mine = None
         for _ in range(self.HOMESTEAD_MINE_SCROLL_ATTEMPTS):
-            mine = self.game_find_template_match(template=self.HOMESTEAD_MINE_TEMPLATE)
+            mine = self.game_find_template_match(
+                template=self.HOMESTEAD_MINE_TEMPLATE,
+                threshold=ConfidenceValue("75%"),
+                grayscale=True,
+            )
             if mine is not None:
                 break
             self.swipe_up(x=540, sy=1500, ey=700)
