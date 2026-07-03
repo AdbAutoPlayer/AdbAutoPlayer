@@ -42,6 +42,7 @@ Repeat = true
 "Buy All Affinity" = false
 "Buy Temporal Essences" = false
 "Essence Buy Count" = 1
+"Run Legend Trials" = true
 
 ["Dream Realm"]
 "Spend Gold" = false

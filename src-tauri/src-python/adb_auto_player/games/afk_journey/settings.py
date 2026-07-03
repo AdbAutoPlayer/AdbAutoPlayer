@@ -30,6 +30,14 @@ class OCREngine(StrEnum):
     RapidOCR = "RapidOCR"
 
 
+class OpponentPosition(StrEnum):
+    """Which opponent card to select in Supreme Arena."""
+
+    Left = "Left"
+    Middle = "Middle"
+    Right = "Right"
+
+
 # Models
 class GeneralSettings(BaseModel):
     """General Settings model."""
@@ -264,6 +272,9 @@ class DailiesSettings(BaseModel):
     duras_trials: bool = Field(
         default=True, alias="Run Dura's Trials", title="Run Dura's Trials"
     )
+    legend_trials: bool = Field(
+        default=True, alias="Run Legend Trials", title="Run Legend Trials"
+    )
     afk_stages: bool = Field(default=True, alias="AFK Stages", title="AFK Stages")
     buy_discount_affinity: bool = Field(default=True, alias="Buy Discount Affinity")
     buy_all_affinity: bool = Field(default=False, alias="Buy All Affinity")
@@ -297,6 +308,12 @@ class SupremeArenaSettings(BaseModel):
     """Supreme Arena Settings model."""
 
     attempts: PositiveInt = Field(default=5, alias="Attempts", title="Attempts")
+    opponent_position: OpponentPosition = Field(
+        default=OpponentPosition.Left,
+        alias="Opponent Position",
+        title="Opponent Position",
+        description="Which opponent card to select: Left (weakest), Middle, or Right.",
+    )
 
 
 class Settings(TomlSettings):

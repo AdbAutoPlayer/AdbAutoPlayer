@@ -325,8 +325,10 @@ def test_run_hero_scanner():
 def test_run_homestead_helper():
     bot = MockAllAFKJ()
     with patch.object(bot, "start_up"):
-        with patch.object(bot, "navigate_to_homestead"):
-            bot.navigate_production_buildings_for_crafting()
+        with patch.object(bot, "_ensure_in_homestead"):
+            with patch.object(bot, "_collect_homestead_resources"):
+                with patch.object(bot, "_handle_homestead_requests"):
+                    bot.homestead_orders_helper()
 
 
 def test_run_quests():

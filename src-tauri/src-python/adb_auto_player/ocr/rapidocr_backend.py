@@ -7,7 +7,7 @@ import numpy as np
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box, Point
 from adb_auto_player.models.ocr import OCRResult
-from rapidocr import LangDet, LangRec, OCRVersion, RapidOCR
+from rapidocr import EngineType, LangDet, LangRec, ModelType, OCRVersion, RapidOCR
 
 from ._backend import OCRBackend
 
@@ -32,13 +32,20 @@ class RapidOCRBackend(OCRBackend):
 
     @classmethod
     def pp_ocr_v5_rec(cls) -> "RapidOCRBackend":
-        """PP-OCRv4 detection + PP-OCRv5 recognition for better name accuracy."""
+        """PP-OCRv4 detection + PP-OCRv5 recognition for better name accuracy.
+
+        Explicitly sets engine_type and model_type required by rapidocr>=3.9.0.
+        """
         return cls(
             params={
+                "Det.engine_type": EngineType.ONNXRUNTIME,
                 "Det.ocr_version": OCRVersion.PPOCRV4,
                 "Det.lang_type": LangDet.CH,
+                "Det.model_type": ModelType.SMALL,
+                "Rec.engine_type": EngineType.ONNXRUNTIME,
                 "Rec.ocr_version": OCRVersion.PPOCRV5,
                 "Rec.lang_type": LangRec.CH,
+                "Rec.model_type": ModelType.SMALL,
             }
         )
 

@@ -384,6 +384,47 @@ uv run pytest tests/games/afk_journey/mixins/test_guild_member_scan.py::TestCano
 
 ---
 
+## Debugging Workflow
+
+Before editing code based on an initial diagnosis, confirm the root cause —
+especially for timing, detection, or emulator bugs where the obvious fix is
+often wrong (e.g., formation detection was a similarity-threshold issue, not a
+crop region; emulator slowness is configurable via `template_timeout`).
+
+- Read all relevant files and logs first.
+- List candidate root causes with evidence.
+- Present the top hypothesis with supporting code references and wait for user
+  confirmation before making any edit.
+
+## Testing
+
+- After any refactor or file split, run the full test suite and verify all
+  tests pass before declaring done.
+- For every bug fix, add a regression test covering the changed branch.
+- Never declare a task complete without showing the final pass count.
+
+```bash
+# from src-tauri/
+uv run pytest --cov --cov-branch
+```
+
+## Changelog & Release
+
+- Keep changelog entries focused: only include changes the user confirmed.
+- Do **not** auto-add `Dependencies`, `type-fix`, or internal-noise sections
+  unless the user asks for them.
+- When bumping a version, draft the changelog and show it to the user for
+  approval before committing.
+
+## GitHub Issues
+
+- When fixing a GitHub issue, read the **full** issue body **and all comments**
+  before proposing a fix.
+- Check whether the reporter or another contributor already suggested an
+  approach and consider it first.
+
+---
+
 ## Known Quirks / Gotchas
 
 ### CJK / Korean characters in OCR and file edits
