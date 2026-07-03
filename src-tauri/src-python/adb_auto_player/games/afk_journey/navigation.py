@@ -334,11 +334,7 @@ class Navigation(PopupMessageHandler, ABC):
         attempt = 0
         max_attempts = 3
         while True:
-            # Must navigate to WORLD (not just current overview) because the
-            # Battle Modes button only exists in the world view. Starting from
-            # homestead (e.g. Resonating Hall) and tapping BATTLE_MODES_POINT
-            # would otherwise hit a homestead building instead.
-            self.navigate_to_world()
+            _ = self.navigate_to_current_overview()
             self.sleep_action()
             try:
                 self._navigate_to_battle_modes_screen()
