@@ -41,11 +41,11 @@ class RapidOCRBackend(OCRBackend):
                 "Det.engine_type": EngineType.ONNXRUNTIME,
                 "Det.ocr_version": OCRVersion.PPOCRV4,
                 "Det.lang_type": LangDet.CH,
-                "Det.model_type": ModelType.SMALL,
+                "Det.model_type": ModelType.MOBILE,
                 "Rec.engine_type": EngineType.ONNXRUNTIME,
                 "Rec.ocr_version": OCRVersion.PPOCRV5,
                 "Rec.lang_type": LangRec.CH,
-                "Rec.model_type": ModelType.SMALL,
+                "Rec.model_type": ModelType.MOBILE,
             }
         )
 
