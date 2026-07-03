@@ -1,8 +1,8 @@
 # Changelog
 
-## [12.9.18] - 2026-06-28
+## [12.9.19] - 2026-07-03
 
-### Features
+### Bug Fixes
 
 - **AFK Journey**:
-  - Added Lamentis and Peggy to the excluded heroes list.
+  - Fixed Guild Manager Scan crashing with `RapidOCR detection failed: Invalid OCR configuration` after upgrading to `rapidocr>=3.9.0`, which requires `engine_type` and `model_type` to be explicitly set when using custom OCR params.
