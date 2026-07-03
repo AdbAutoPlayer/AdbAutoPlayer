@@ -332,7 +332,9 @@
                           {/if}
                         </div>
                         {#if prop.link}
-                          <a href={prop.link} class="field-link">{prop.link}</a>
+                          <a href={prop.link} class="field-link" target="_blank"
+                            >{prop.link}</a
+                          >
                         {/if}
                       {/if}
                     </div>

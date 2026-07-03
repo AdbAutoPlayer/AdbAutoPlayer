@@ -10,7 +10,7 @@ members = [
 
 [[package]]
 name = "adb-auto-player"
-version = "12.9.18"
+version = "12.9.19"
 source = { editable = "src-tauri" }
 dependencies = [
     { name = "adbutils" },
