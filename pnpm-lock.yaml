@@ -70,14 +70,14 @@ importers:
         specifier: ^15.0.4
         version: 15.0.4
       prettier:
-        specifier: ^3.8.4
-        version: 3.8.4
+        specifier: ^3.9.4
+        version: 3.9.4
       prettier-plugin-svelte:
         specifier: ^4.1.1
-        version: 4.1.1(prettier@3.8.4)(svelte@5.56.4(@typescript-eslint/types@8.58.0))
+        version: 4.1.1(prettier@3.9.4)(svelte@5.56.4(@typescript-eslint/types@8.58.0))
       prettier-plugin-tailwindcss:
         specifier: ^0.8.0
-        version: 0.8.0(prettier-plugin-svelte@4.1.1(prettier@3.8.4)(svelte@5.56.4(@typescript-eslint/types@8.58.0)))(prettier@3.8.4)
+        version: 0.8.0(prettier-plugin-svelte@4.1.1(prettier@3.9.4)(svelte@5.56.4(@typescript-eslint/types@8.58.0)))(prettier@3.9.4)
       svelte:
         specifier: ^5.56.4
         version: 5.56.4(@typescript-eslint/types@8.58.0)
@@ -963,8 +963,8 @@ packages:
       prettier-plugin-svelte:
         optional: true
 
-  prettier@3.8.4:
-    resolution: {integrity: sha512-N2MylSdi48+5N/6S5j+maeHbUSIzzZ5uOcX5Hm4QpV8Dkb1HFjfAKTKX6yNPJQD9AhcT3ifHNB66tWTTJDi11Q==}
+  prettier@3.9.4:
+    resolution: {integrity: sha512-yWG/o/4oJfo036EKAfK6ACAoDOfHeRHx4tuxkfBZiauURiaSmYwlpOr5LQqKtIkRD2z1PLteme2WoxEnj4tHTg==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -1009,9 +1009,6 @@ packages:
   svelte@5.56.4:
     resolution: {integrity: sha512-/d0QHehmRuJW8gVz395MTkPcPozxzdjBMBE8oEYGz8O3b9KTMzzQ9ZHJQLuFKOHOPQbU6kx/X4iid/EBBzH7iw==}
     engines: {node: '>=18'}
-
-  tailwindcss@4.3.1:
-    resolution: {integrity: sha512-hk+TB1m+K8CYNrP6rjQaq/Y+4Zylwpa87mLYBKCunwnnQ9p+fHb7kmSfGqyEJoxF/O6CDyABWVFEafNSYKll+Q==}
 
   tailwindcss@4.3.2:
     resolution: {integrity: sha512-WtctNNSH8A9jlMIqxzuYumOHU5uGZyRv0Q5svQl+oEPy5w84YpBxdb7MdqyiSPQge5jTJ6zFQLq0PFygdccSBA==}
@@ -1904,7 +1901,7 @@ snapshots:
       js-yaml: 4.1.1
       lodash: 4.18.1
       minimist: 1.2.8
-      prettier: 3.8.4
+      prettier: 3.9.4
       tinyglobby: 0.2.16
 
   kleur@4.1.5: {}
@@ -2001,18 +1998,18 @@ snapshots:
 
   preact@10.29.2: {}
 
-  prettier-plugin-svelte@4.1.1(prettier@3.8.4)(svelte@5.56.4(@typescript-eslint/types@8.58.0)):
+  prettier-plugin-svelte@4.1.1(prettier@3.9.4)(svelte@5.56.4(@typescript-eslint/types@8.58.0)):
     dependencies:
-      prettier: 3.8.4
+      prettier: 3.9.4
       svelte: 5.56.4(@typescript-eslint/types@8.58.0)
 
-  prettier-plugin-tailwindcss@0.8.0(prettier-plugin-svelte@4.1.1(prettier@3.8.4)(svelte@5.56.4(@typescript-eslint/types@8.58.0)))(prettier@3.8.4):
+  prettier-plugin-tailwindcss@0.8.0(prettier-plugin-svelte@4.1.1(prettier@3.9.4)(svelte@5.56.4(@typescript-eslint/types@8.58.0)))(prettier@3.9.4):
     dependencies:
-      prettier: 3.8.4
+      prettier: 3.9.4
     optionalDependencies:
-      prettier-plugin-svelte: 4.1.1(prettier@3.8.4)(svelte@5.56.4(@typescript-eslint/types@8.58.0))
+      prettier-plugin-svelte: 4.1.1(prettier@3.9.4)(svelte@5.56.4(@typescript-eslint/types@8.58.0))
 
-  prettier@3.8.4: {}
+  prettier@3.9.4: {}
 
   proxy-compare@3.0.1: {}
 
@@ -2088,8 +2085,6 @@ snapshots:
       zimmerframe: 1.1.4
     transitivePeerDependencies:
       - '@typescript-eslint/types'
-
-  tailwindcss@4.3.1: {}
 
   tailwindcss@4.3.2: {}
 
