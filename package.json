@@ -9,7 +9,7 @@
     "@tauri-apps/plugin-window-state": "~2.4.1",
     "@types/json-schema": "^7.0.15",
     "posthog-js": "^1.391.2",
-    "tailwindcss": "^4.3.2",
+    "tailwindcss": "^4.3.3",
     "tauri-plugin-pytauri-api": "^0.8.0"
   },
   "description": "",
