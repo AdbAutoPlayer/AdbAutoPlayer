@@ -34,6 +34,7 @@ if TYPE_CHECKING:
 
         def start_up(self, device_streaming: bool = True) -> None: ...
         def navigate_to_world(self) -> None: ...
+        def navigate_to_afk_stages_screen(self) -> None: ...
         def _enter_dr(self) -> None: ...
         def wait_for_template(self, *args, **kwargs) -> Any: ...
         def tap(self, *args, **kwargs) -> None: ...
@@ -72,6 +73,7 @@ class _GuildScanSetupMixin(BaseClass):
     _Y_GUILD_OFFSET = 45
     _Y_GUILD_OFFSET_PARTIAL = 25
     _Y_ROW_ALIGNMENT_TOLERANCE = 80
+    _Y_SAME_LINE_TOLERANCE = 20
     _MIN_ROW_BLOCKS = 2
     _MAX_RANK_NUMBER = 500
     _MAX_DATE_LEN = 8
@@ -115,6 +117,17 @@ class _GuildScanSetupMixin(BaseClass):
     _MAX_CHEST_RANK_NUMBER = 200
     _X_CHEST_RANK_BADGE_MAX = 200
     _RE_CHEST_VALUE = re.compile(r"^\D{0,3}(\d+)$")
+
+    # AFK Stage Season Phase Rankings scan constants.
+    # The tab bar shows the current (highest-numbered) phase on the left and
+    # older phases to the right (confirmed on a live device: "Phase 2" sits
+    # left of "Phase 1"), so revealing older/lower-numbered phases beyond
+    # what's visible means tapping the right-hand arrow, not the left.
+    _Y_MIN_PHASE_TAB = 700
+    _Y_MAX_PHASE_TAB = 800
+    _RE_PHASE_TAB = re.compile(r"(?i)phase\s*([0-9lIoO]+)")
+    _PHASE_DIGIT_TRANSLATION = str.maketrans("lIoO", "1100")
+    _PHASE_TAB_OLDER_ARROW = (1023, 746)
 
     def __init__(self) -> None:
         """Initialize _GuildScanSetupMixin."""

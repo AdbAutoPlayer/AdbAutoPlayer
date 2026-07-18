@@ -198,6 +198,26 @@ class GuildManagerScanSettings(BaseModel):
             "Scan Guild member activeness scores and save to guild_activeness.json."
         ),
     )
+    scan_afk_stages_rankings: bool = Field(
+        default=False,
+        alias="Scan AFK Stages Rankings",
+        title="Scan AFK Stages Rankings",
+        description=(
+            "Scan Season AFK Stage Phase Rankings for guild members and save to "
+            "afk_stages_rankings.json."
+        ),
+    )
+    afk_stages_phases_to_scan: int = Field(
+        default=1,
+        ge=1,
+        le=3,
+        alias="AFK Stage Phases to Scan",
+        title="AFK Stage Phases to Scan",
+        description=(
+            "Scan Season AFK Stage rankings from Phase 1 up to this phase number. "
+            "E.g. 2 scans both Phase 1 and Phase 2."
+        ),
+    )
     ignore_day_restrictions: bool = Field(
         default=False,
         alias="Ignore Day Restrictions",
