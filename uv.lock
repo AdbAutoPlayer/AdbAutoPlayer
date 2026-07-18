@@ -10,7 +10,7 @@ members = [
 
 [[package]]
 name = "adb-auto-player"
-version = "12.9.20"
+version = "12.9.21"
 source = { editable = "src-tauri" }
 dependencies = [
     { name = "adbutils" },
@@ -1208,7 +1208,7 @@ wheels = [
 
 [[package]]
 name = "workspace"
-version = "12.9.20"
+version = "12.9.21"
 source = { virtual = "." }
 dependencies = [
     { name = "onnxruntime" },

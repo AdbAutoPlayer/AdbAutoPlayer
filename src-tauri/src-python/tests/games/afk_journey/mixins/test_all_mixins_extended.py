@@ -676,7 +676,7 @@ def test_scan_visible_date_tabs_skip_today_true():
     bot._scan_visible_date_tabs(
         date_tabs=[fake_tab],
         processed_dates=processed,
-        dates_to_scan=3,
+        total_expected=4,
         rankings=[],
         ocr_backend=MagicMock(),
         skip_today=True,
@@ -691,7 +691,7 @@ def test_scan_visible_date_tabs_skip_today_false():
     bot._scan_visible_date_tabs(
         date_tabs=[],
         processed_dates=processed,
-        dates_to_scan=3,
+        total_expected=3,
         rankings=[],
         ocr_backend=MagicMock(),
         skip_today=False,
@@ -706,7 +706,7 @@ def test_scan_visible_date_tabs_already_processed():
     bot._scan_visible_date_tabs(
         date_tabs=[],
         processed_dates=processed,
-        dates_to_scan=3,
+        total_expected=4,
         rankings=[],
         ocr_backend=MagicMock(),
         skip_today=True,
@@ -737,3 +737,52 @@ def test_run_dream_realm_scan_skip_today_false_via_ignore_days():
         mock_dt.datetime.now.return_value.strftime.return_value = "Monday"
         result = bot._run_dream_realm_scan(ocr_mock, None, [])
     assert result == []
+
+
+def test_run_dream_realm_scan_scans_configured_number_of_days():
+    """Regression: days_to_scan=3 must actually scan 3 real days, not 2.
+
+    Bug: total_expected didn't account for the unscanned "today" tab
+    (a placeholder occupying one processed_dates slot when skip_today=True),
+    so the outer loop stopped one real day short of the configured count.
+    """
+    bot = MockAllAFKJ()
+    bot._settings.guild_manager_scan.days_to_scan = 3
+    bot._settings.guild_manager_scan.ignore_day_restrictions = False
+    bot._settings.guild_manager_scan.scan_dr_today_on_sunday = False
+
+    fake_tabs = []
+    for name in ["Today", "Mon", "Sun", "Sat", "Fri"]:
+        tab = MagicMock()
+        tab.text = name
+        fake_tabs.append(tab)
+
+    scanned_dates: list[str] = []
+
+    def fake_scan_current_date(weekday_name, ocr_backend, fallback=None, **kwargs):
+        scanned_dates.append(weekday_name)
+        return [{"Date": weekday_name, "Rank": "1", "Name": "X"}]
+
+    with (
+        patch.object(bot, "_enter_dr"),
+        patch.object(bot, "wait_for_template", return_value=MagicMock()),
+        patch.object(bot, "_select_district_rankings", return_value=True),
+        patch.object(bot, "_find_date_tabs", return_value=fake_tabs),
+        patch.object(bot, "_set_guild_members_filter", return_value=True),
+        patch.object(bot, "game_find_template_match", return_value=None),
+        patch.object(bot, "tap"),
+        patch.object(bot, "_date_to_english_weekday", side_effect=lambda d: d),
+        patch.object(
+            bot,
+            "_scan_rankings_for_current_date",
+            side_effect=fake_scan_current_date,
+        ),
+        patch.object(
+            bot, "_correct_names_with_guild_members", side_effect=lambda r, g: r
+        ),
+        patch("time.sleep"),
+    ):
+        result = bot._run_dream_realm_scan(MagicMock(), None, [])
+
+    assert scanned_dates == ["Mon", "Sun", "Sat"]
+    assert len(result) == 3

@@ -9,6 +9,7 @@ from adb_auto_player.exceptions import AutoPlayerWarningError
 from adb_auto_player.file_loader import SettingsLoader
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models.decorators import GUIMetadata
+from adb_auto_player.ocr import OCRBackend
 
 from ._guild_scan_activeness import _GuildScanActivenessMixin
 
@@ -59,6 +60,17 @@ class GuildMemberScanMixin(_GuildScanActivenessMixin):
         self._save_rankings_to_json(rankings)
         self._save_ocr_debug()
 
+        self._run_optional_guild_scans(ocr_backend, fallback, guild_members)
+
+        self.navigate_to_world()
+
+    def _run_optional_guild_scans(
+        self,
+        ocr_backend: OCRBackend,
+        fallback: OCRBackend | None,
+        guild_members: list[str],
+    ) -> None:
+        """Run the Supreme Arena, Guild Activeness, and AFK Stages scans if enabled."""
         today = datetime.datetime.now().strftime("%A")
         ignore_days = self.settings.guild_manager_scan.ignore_day_restrictions
 
@@ -92,4 +104,10 @@ class GuildMemberScanMixin(_GuildScanActivenessMixin):
                     "(runs on Sunday only)."
                 )
 
-        self.navigate_to_world()
+        if self.settings.guild_manager_scan.scan_afk_stages_rankings:
+            logging.info("AFK Stages Ranking scan enabled. Starting scan...")
+            try:
+                self._scan_afk_stages_rankings(ocr_backend, fallback, guild_members)
+            except Exception as e:
+                logging.error(f"Error scanning AFK Stages Rankings: {e}")
+            self._save_ocr_debug()

@@ -31,6 +31,8 @@ class _GuildScanNamesMixin(_GuildScanSetupMixin):
             else:
                 unranked.append(name)
 
+        self._merge_truncated_rank_duplicates(rank_groups)
+
         results: list[dict] = []
         canonical_names: set[str] = set()
 
@@ -87,6 +89,43 @@ class _GuildScanNamesMixin(_GuildScanSetupMixin):
         )
         logging.info(f"Canonicalized {len(results)} entries for {date_name}.")
         return results
+
+    def _merge_truncated_rank_duplicates(
+        self, rank_groups: dict[str, list[str]]
+    ) -> None:
+        """Merge a rank whose observations are a truncated misread of a longer rank.
+
+        OCR badge noise (e.g. garbled characters merging into the digits)
+        drops a trailing digit far more often than it invents one — "288"
+        misread as "28" rather than the other way round. When the same name
+        dominates both a rank and a longer rank sharing the same leading
+        digits, an exact tie between them would otherwise be broken by
+        preferring the smaller (wrong, truncated) rank number, and the
+        longer (correct) rank would be silently dropped entirely as an
+        already-claimed duplicate. Fold the short group into the long one
+        instead of letting them compete as separate ranks.
+        """
+        for short_rank in list(rank_groups):
+            short_names = rank_groups.get(short_rank)
+            if not short_names or not short_rank.isdigit():
+                continue
+            short_top = Counter(n.lower() for n in short_names).most_common(1)[0][0]
+            for long_rank in list(rank_groups):
+                if (
+                    long_rank == short_rank
+                    or not long_rank.isdigit()
+                    or len(long_rank) <= len(short_rank)
+                    or not long_rank.startswith(short_rank)
+                ):
+                    continue
+                long_names = rank_groups.get(long_rank)
+                if not long_names:
+                    continue
+                long_top = Counter(n.lower() for n in long_names).most_common(1)[0][0]
+                if long_top == short_top:
+                    rank_groups[long_rank] = long_names + short_names
+                    del rank_groups[short_rank]
+                    break
 
     def _group_by_similarity(self, names: list[str]) -> list[list[str]]:
         """Cluster names into groups where each pair is fuzzy-similar."""
