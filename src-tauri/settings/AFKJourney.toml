@@ -1,9 +1,10 @@
 ["AFK Stages"]
-Attempts = 5
+Attempts = 2
 Formations = 10
 "Skip Manual Formations" = false
+"Run Manual Formations Last" = false
 "Spend Gold" = false
-"Start with current Formation" = true
+"Start with current Formation" = false
 "Suggested Formations" = true
 
 ["Arcane Labyrinth"]
@@ -14,9 +15,9 @@ Difficulty = 13
 "Claim Stage Rewards" = false
 
 ["Custom Routine 1"]
-"Display Name" = ""
+"Display Name" = "Push Stages"
 Repeat = true
-"Task List" = []
+"Task List" = ["Season AFK Stages", "AFK Stages", "Claim AFK Rewards", "Equip new Equipment"]
 
 ["Custom Routine 2"]
 "Display Name" = ""
@@ -54,6 +55,11 @@ Repeat = true
 "Scan Guild Activeness" = false
 "Scan DR Today on Sunday" = false
 "Debug OCR Output" = true
+"Scan AFK Stages Rankings" = false
+"AFK Stage Phases to Scan" = 1
+"Ignore Day Restrictions" = false
+"Use Qwen2-VL (GPU)" = false
+"Confirm Qwen2-VL Download (~2.2 GB)" = false
 
 ["Dura's Trials"]
 Attempts = 5
@@ -61,10 +67,13 @@ Formations = 10
 "Spend Gold" = false
 "Start with current Formation" = true
 "Suggested Formations" = true
+"Skip Manual Formations" = false
+"Run Manual Formations Last" = true
 
 [General]
 "Assist Limit" = 20
 "Exclude Heroes" = []
+"OCR Engine" = "Tesseract"
 
 ["Legend Trial"]
 Attempts = 5
@@ -73,6 +82,7 @@ Formations = 10
 "Spend Gold" = false
 "Start with current Formation" = true
 "Suggested Formations" = true
+"Run Manual Formations Last" = true
 Towers = [
     "Lightbearer",
     "Wilder",
@@ -82,3 +92,16 @@ Towers = [
 
 ["Titan Reaver Proxy Battles"]
 "Titan Reaver Proxy Battle Limit" = 50
+
+["Ravaged Realm"]
+Squads = ["Lightbearer", "Wilder", "Graveborn", "Mauler"]
+Attempts = 5
+"Suggested Formations" = true
+"Spend Gold" = false
+
+[Homestead]
+"Craft Item Limit" = 80
+
+["Supreme Arena"]
+Attempts = 5
+"Opponent Position" = "Left"
