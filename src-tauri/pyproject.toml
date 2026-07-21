@@ -11,15 +11,15 @@ requires-python = ">=3.11"
 dependencies = [
     "pytauri == 0.8.*",
     "pydantic>=2.13.4,<3",
-    "anyio>=4.14.1,<5",
+    "anyio>=4.14.2,<5",
     "adbutils>=2.12.0,<3",
     "opencv-python>=4.13.0.92,<5",
     "av>=17.1.0,<18",
-    "pillow>=12.1.1,<13",
+    "pillow>=12.3.0,<13",
     "pytesseract>=0.3.13,<0.4",
     "psutil>=7.2.2,<8",
     "numpy>=2.4.6,<2.5",
-    "rapidocr>=3.9.0",
+    "rapidocr>=3.9.1",
     "onnxruntime>=1.27.0"
 ]
 
@@ -30,7 +30,7 @@ adb-auto-player = "adb_auto_player.main_cli:main"
 ext_mod = "adb_auto_player.ext_mod"
 
 [build-system]
-requires = ["setuptools >= 80", "setuptools-scm>=10.2.0"]
+requires = ["setuptools >= 83.0.0", "setuptools-scm>=10.2.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.uv]
