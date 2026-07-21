@@ -65,14 +65,16 @@ class _ScreenshotMixin(_GameBase):
         if self._stream:
             image = self._stream.get_latest_frame()
             if image is not None:
-                return Color.to_bgr(image)
+                return self._apply_vertical_offset(Color.to_bgr(image))
 
         max_retries = 3
         for attempt in range(max_retries):
             try:
                 data = self.device.screenshot()
                 if isinstance(data, bytes):
-                    return IO.get_bgr_np_array_from_png_bytes(data)
+                    return self._apply_vertical_offset(
+                        IO.get_bgr_np_array_from_png_bytes(data)
+                    )
             except (OSError, ValueError) as e:
                 logging.debug(
                     f"Attempt {attempt + 1}/{max_retries}: "
@@ -83,6 +85,32 @@ class _ScreenshotMixin(_GameBase):
         raise GenericAdbUnrecoverableError(
             f"Screenshots cannot be recorded from device: {self.device.identifier}"
         )
+
+    @staticmethod
+    def _apply_vertical_offset(image: np.ndarray) -> np.ndarray:
+        """Shift screenshot content to correct for device-specific misalignment.
+
+        Some devices render game content a fixed number of pixels lower or
+        higher than the hardcoded screen regions assume (e.g. a status bar or
+        camera cutout that isn't accounted for after a `wm size` override).
+        `vertical_offset` compensates: positive means real content sits that
+        many pixels lower than expected, so the top is cropped off and the
+        freed rows are padded back at the bottom (and vice versa for
+        negative), keeping the image shape unchanged for downstream OCR and
+        template-matching code. Coordinates read from the corrected image are
+        translated back to real device coordinates before tapping/swiping,
+        see `_InputMixin._apply_vertical_offset`.
+        """
+        offset = SettingsLoader.adb_settings().device.vertical_offset
+        if offset == 0:
+            return image
+        if offset > 0:
+            cropped = image[offset:, :]
+            pad = np.repeat(image[-1:, :], offset, axis=0)
+            return np.concatenate([cropped, pad], axis=0)
+        cropped = image[:offset, :]
+        pad = np.repeat(image[:1, :], -offset, axis=0)
+        return np.concatenate([pad, cropped], axis=0)
 
     def _check_screenshot_matches_display_resolution(
         self, device_streaming_check: bool = False

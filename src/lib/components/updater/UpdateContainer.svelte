@@ -1,5 +1,6 @@
 <script lang="ts">
   import { check, Update } from "@tauri-apps/plugin-updater";
+  import { relaunch } from "@tauri-apps/plugin-process";
   import { Progress } from "@skeletonlabs/skeleton-svelte";
   import { onDestroy, onMount } from "svelte";
   import Download from "$lib/components/icons/lucide/Download.svelte";
@@ -84,6 +85,10 @@
           break;
       }
     });
+
+    // downloadAndInstall() only resolves once the update is fully installed,
+    // so relaunching here restarts into the new version on every platform.
+    await relaunch();
   }
 
   onMount(() => {

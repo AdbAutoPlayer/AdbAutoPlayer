@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from enum import StrEnum, auto
 from time import sleep
 
+from adb_auto_player.file_loader import SettingsLoader
 from adb_auto_player.models.geometry import Coordinates, Point
 
 from ._base import _GameBase
@@ -85,9 +86,23 @@ class _InputMixin(_GameBase):
         log_message: str | None = None,
     ) -> None:
         """Internal click method — logging should be handled by the caller."""
-        self.device.tap(coordinates)
+        self.device.tap(self._apply_vertical_offset(coordinates))
         if log_message is not None:
             logging.debug(log_message)
+
+    @staticmethod
+    def _apply_vertical_offset(coordinates: Coordinates) -> Coordinates:
+        """Translate a screenshot-space point to real device coordinates.
+
+        Counterpart to `_ScreenshotMixin._apply_vertical_offset`: OCR/template
+        coordinates are computed from the offset-corrected screenshot, so
+        `vertical_offset` must be added back before sending a real tap/swipe
+        to the device.
+        """
+        offset = SettingsLoader.adb_settings().device.vertical_offset
+        if offset == 0:
+            return coordinates
+        return Point(coordinates.x, coordinates.y + offset)
 
     def press_back_button(self) -> None:
         """Press the device back button."""
@@ -203,8 +218,8 @@ class _InputMixin(_GameBase):
 
         logging.debug(f"swipe_{direction} - from ({sx}, {sy}) to ({ex}, {ey})")
         self.device.swipe(
-            Point(sx, sy),
-            Point(ex, ey),
+            self._apply_vertical_offset(Point(sx, sy)),
+            self._apply_vertical_offset(Point(ex, ey)),
             duration=params.duration,
         )
 
@@ -223,7 +238,7 @@ class _InputMixin(_GameBase):
             blocking (bool, optional): Whether the call blocks.
             log (bool, optional): Log the hold command.
         """
-        point = Point(coordinates.x, coordinates.y)
+        point = self._apply_vertical_offset(Point(coordinates.x, coordinates.y))
 
         if log:
             logging.debug(

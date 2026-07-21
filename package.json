@@ -5,6 +5,7 @@
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-notification": "~2.3.3",
     "@tauri-apps/plugin-opener": "^2.5.4",
+    "@tauri-apps/plugin-process": "~2.3.1",
     "@tauri-apps/plugin-updater": "~2.10.1",
     "@tauri-apps/plugin-window-state": "~2.4.1",
     "@types/json-schema": "^7.0.15",
@@ -52,5 +53,5 @@
     "tauri": "tauri"
   },
   "type": "module",
-  "version": "12.9.21"
+  "version": "12.9.22"
 }

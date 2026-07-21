@@ -340,8 +340,52 @@ class _GuildScanRankingsMixin(_GuildScanNamesMixin):
             best_group = max(y_groups, key=len)
             date_tabs = sorted(best_group, key=lambda r: r.box.center.x)
 
+        if not date_tabs:
+            self._suggest_vertical_offset(ocr_results)
+
         logging.info(f"Found {len(date_tabs)} date tabs: {[r.text for r in date_tabs]}")
         return date_tabs
+
+    def _suggest_vertical_offset(self, ocr_results: list[OCRResult]) -> None:
+        """Look for date-shaped text outside the expected screen region.
+
+        When no date tabs are found where expected, some devices render the
+        UI shifted vertically (e.g. a `wm size` override with a different
+        aspect ratio than the physical panel). Re-checking the OCR results
+        already collected — without the Y-region filter — surfaces a
+        concrete pixel offset to try instead of leaving the user to guess.
+        """
+        stray = [
+            res
+            for res in ocr_results
+            if self._is_date_string(res.text)
+            and not (self._Y_MIN_DATE <= res.box.center.y <= self._Y_MAX_DATE)
+        ]
+        if not stray:
+            return
+
+        nearest = min(
+            stray,
+            key=lambda r: min(
+                abs(r.box.center.y - self._Y_MIN_DATE),
+                abs(r.box.center.y - self._Y_MAX_DATE),
+            ),
+        )
+        nearest_edge = (
+            self._Y_MIN_DATE
+            if abs(nearest.box.center.y - self._Y_MIN_DATE)
+            <= abs(nearest.box.center.y - self._Y_MAX_DATE)
+            else self._Y_MAX_DATE
+        )
+        suggested_offset = nearest.box.center.y - nearest_edge
+        logging.warning(
+            f"Found date-like text '{nearest.text}' outside the expected "
+            f"screen region (Y {self._Y_MIN_DATE}-{self._Y_MAX_DATE}), at "
+            f"Y={nearest.box.center.y}. Your device's display may be "
+            "misaligned — try setting ADB Settings -> Device -> "
+            f"Vertical Screen Offset to approximately {suggested_offset} "
+            "and running the scan again."
+        )
 
     def _is_guild_members_option(self, text: str) -> bool:
         text_lower = text.lower()
@@ -719,15 +763,20 @@ class _GuildScanRankingsMixin(_GuildScanNamesMixin):
         ]
         row_blocks.sort(key=lambda r: r.box.center.y)
 
+        # Gap-based clustering: row_blocks is sorted by Y ascending, so a block
+        # can only ever belong to the most recently opened group. Comparing
+        # against that group's *last* block (not its first) avoids anchor
+        # drift — a stray block near the top of a row used to lock the
+        # group's window in place, so a legitimate block just outside that
+        # fixed window (but close to its actual neighbor) wrongly started a
+        # new group, splitting one row into two.
         rows_grouped: list[list] = []
         for res in row_blocks:
-            for group in rows_grouped:
-                if (
-                    abs(group[0].box.center.y - res.box.center.y)
-                    < self._Y_ROW_ALIGNMENT_TOLERANCE
-                ):
-                    group.append(res)
-                    break
+            if rows_grouped and (
+                res.box.center.y - rows_grouped[-1][-1].box.center.y
+                < self._Y_ROW_ALIGNMENT_TOLERANCE
+            ):
+                rows_grouped[-1].append(res)
             else:
                 rows_grouped.append([res])
 
