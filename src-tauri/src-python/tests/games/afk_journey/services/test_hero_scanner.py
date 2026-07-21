@@ -7,11 +7,15 @@ a real device, Tauri window, or network connection.
 from __future__ import annotations
 
 import json
+import logging
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 from adb_auto_player.games.afk_journey.services.hero_scanner import HeroScanner
+from adb_auto_player.models import ConfidenceValue
+from adb_auto_player.models.geometry import Box, Point
+from adb_auto_player.models.ocr import OCRResult
 
 _SUP_TO_P1 = 25  # S+ heroes needed to unlock P1
 _P1_TO_P2 = 20  # P1 heroes needed to unlock P2
@@ -676,3 +680,73 @@ class TestLoadTracker:
         f.write_text("{not valid json")
         result = scanner._load_tracker(str(f))
         assert result == {}
+
+
+# ---------------------------------------------------------------------------
+# _suggest_vertical_offset
+# ---------------------------------------------------------------------------
+
+
+def _ocr_result(text: str, center_y: int, center_x: int = 500) -> OCRResult:
+    box = Box(Point(center_x - 50, center_y - 20), width=100, height=40)
+    return OCRResult(text=text, confidence=ConfidenceValue("99%"), box=box)
+
+
+class TestSuggestVerticalOffset:
+    def test_logs_hint_for_text_outside_name_region(self, caplog):
+        scanner = _make_scanner()
+        screenshot = np.zeros((10, 10, 3), dtype=np.uint8)
+        stray = _ocr_result("Aurorasomething", center_y=250)
+
+        with patch(
+            "adb_auto_player.games.afk_journey.services.hero_scanner."
+            "RapidOCRBackend.pp_ocr_v5_rec"
+        ) as mock_factory:
+            mock_backend = MagicMock()
+            mock_backend.detect_text_blocks.return_value = [stray]
+            mock_factory.return_value = mock_backend
+
+            with caplog.at_level(logging.WARNING):
+                scanner._suggest_vertical_offset(screenshot)
+
+        assert "Vertical Screen Offset" in caplog.text
+        assert "50" in caplog.text
+
+    def test_silent_when_nothing_outside_region(self, caplog):
+        scanner = _make_scanner()
+        screenshot = np.zeros((10, 10, 3), dtype=np.uint8)
+        in_range = _ocr_result("Lumont", center_y=130)
+
+        with patch(
+            "adb_auto_player.games.afk_journey.services.hero_scanner."
+            "RapidOCRBackend.pp_ocr_v5_rec"
+        ) as mock_factory:
+            mock_backend = MagicMock()
+            mock_backend.detect_text_blocks.return_value = [in_range]
+            mock_factory.return_value = mock_backend
+
+            with caplog.at_level(logging.WARNING):
+                scanner._suggest_vertical_offset(screenshot)
+
+        assert caplog.text == ""
+
+    def test_only_logs_once_per_scan(self, caplog):
+        scanner = _make_scanner()
+        screenshot = np.zeros((10, 10, 3), dtype=np.uint8)
+        stray = _ocr_result("Aurorasomething", center_y=250)
+
+        with patch(
+            "adb_auto_player.games.afk_journey.services.hero_scanner."
+            "RapidOCRBackend.pp_ocr_v5_rec"
+        ) as mock_factory:
+            mock_backend = MagicMock()
+            mock_backend.detect_text_blocks.return_value = [stray]
+            mock_factory.return_value = mock_backend
+
+            with caplog.at_level(logging.WARNING):
+                scanner._suggest_vertical_offset(screenshot)
+                caplog.clear()
+                scanner._suggest_vertical_offset(screenshot)
+
+        assert caplog.text == ""
+        assert scanner._offset_hint_logged is True

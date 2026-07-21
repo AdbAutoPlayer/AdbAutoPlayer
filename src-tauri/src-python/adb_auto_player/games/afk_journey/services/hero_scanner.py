@@ -22,6 +22,7 @@ import cv2
 import numpy as np
 from adb_auto_player.file_loader.settings_loader import SettingsLoader
 from adb_auto_player.models.geometry import Point
+from adb_auto_player.ocr import RapidOCRBackend
 from rapidocr import RapidOCR
 
 if TYPE_CHECKING:
@@ -74,6 +75,13 @@ COORD_BTN_ASCEND = (350, 1830)
 COORD_BTN_BACK_PANEL = (100, 1830)
 REGION_ASCEND_LINE = (50, 800, 980, 550)
 
+# Expected hero-name region (see `_get_precise_name_crop`), used as the
+# reference band for the vertical-offset diagnostic hint.
+_NAME_ROI_Y_MIN = 60
+_NAME_ROI_Y_MAX = 200
+_NAME_ROI_X_MIN = 110
+_NAME_ROI_X_MAX = 950
+
 
 class HeroScanner:
     """Encapsulates all hero-scanning logic for AFK Journey.
@@ -93,6 +101,7 @@ class HeroScanner:
         self.hero_synonyms: dict = {}
         self.canonical_hero_names: list[str] = []
         self.tracker_file: str = ""
+        self._offset_hint_logged: bool = False
 
     # ------------------------------------------------------------------
     # Public entry point
@@ -111,6 +120,7 @@ class HeroScanner:
                 total_heroes = 200
 
         limit: int = total_heroes
+        self._offset_hint_logged = False
 
         template_url = (
             f"https://afkj-tracker.vercel.app/data/heroes-template.json"
@@ -753,6 +763,7 @@ class HeroScanner:
             logger.debug(
                 f"Super-Vision identification failed. Combined Raw: {raw_names}"
             )
+            self._suggest_vertical_offset(screenshot)
 
         asc_img = screenshot[crop_asc[1] : crop_asc[3], crop_asc[0] : crop_asc[2]]
         asc_img_scaled = cv2.resize(
@@ -790,6 +801,59 @@ class HeroScanner:
             "ex_weapon": ex,
             "raw_ex": raw_ex_combined,
         }
+
+    def _suggest_vertical_offset(self, screenshot: np.ndarray) -> None:
+        """Look for readable text outside the expected hero-name region.
+
+        Hero identification relies on a hardcoded crop (see
+        `_get_precise_name_crop`, roughly Y 60-200). On some devices the
+        game UI renders shifted vertically (e.g. a `wm size` override with
+        an aspect ratio that doesn't match the physical panel), so the crop
+        misses the name entirely. This runs a broader, box-aware OCR pass
+        once per scan and — if it finds text just outside the expected
+        band — logs a concrete pixel offset to try instead of leaving the
+        user to guess.
+        """
+        if self._offset_hint_logged:
+            return
+        self._offset_hint_logged = True
+
+        results = RapidOCRBackend.pp_ocr_v5_rec().detect_text_blocks(screenshot)
+        candidates = [
+            r
+            for r in results
+            if len(r.text.strip()) >= 3  # noqa: PLR2004
+            and r.box.center.y < _NAME_ROI_Y_MAX + 200
+            and r.box.right >= _NAME_ROI_X_MIN
+            and r.box.left <= _NAME_ROI_X_MAX
+            and not (_NAME_ROI_Y_MIN <= r.box.center.y <= _NAME_ROI_Y_MAX)
+        ]
+        if not candidates:
+            return
+
+        nearest = min(
+            candidates,
+            key=lambda r: min(
+                abs(r.box.center.y - _NAME_ROI_Y_MIN),
+                abs(r.box.center.y - _NAME_ROI_Y_MAX),
+            ),
+        )
+        nearest_edge = (
+            _NAME_ROI_Y_MIN
+            if abs(nearest.box.center.y - _NAME_ROI_Y_MIN)
+            <= abs(nearest.box.center.y - _NAME_ROI_Y_MAX)
+            else _NAME_ROI_Y_MAX
+        )
+        suggested_offset = nearest.box.center.y - nearest_edge
+        logger.warning(
+            f"Hero name identification is failing, and text "
+            f"('{nearest.text}') was found outside the expected name "
+            f"region (Y {_NAME_ROI_Y_MIN}-{_NAME_ROI_Y_MAX}), at "
+            f"Y={nearest.box.center.y}. Your device's display may be "
+            "misaligned — try setting ADB Settings -> Device -> "
+            f"Vertical Screen Offset to approximately {suggested_offset} "
+            "and running the scan again."
+        )
 
     # ------------------------------------------------------------------
     # Hero name matching

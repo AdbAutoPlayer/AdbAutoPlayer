@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "adb-auto-player"
-version = "12.9.21"
+version = "12.9.22"
 dependencies = [
  "chrono",
  "pyo3",
@@ -16,6 +16,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-notification",
  "tauri-plugin-opener",
+ "tauri-plugin-process",
  "tauri-plugin-pytauri",
  "tauri-plugin-single-instance",
  "tauri-plugin-updater",
@@ -4152,6 +4153,16 @@ dependencies = [
  "url",
  "windows",
  "zbus",
+]
+
+[[package]]
+name = "tauri-plugin-process"
+version = "2.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d55511a7bf6cd70c8767b02c97bf8134fa434daf3926cfc1be0a0f94132d165a"
+dependencies = [
+ "tauri",
+ "tauri-plugin",
 ]
 
 [[package]]

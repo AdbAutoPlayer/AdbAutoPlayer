@@ -8,6 +8,7 @@ from .toml_settings import TomlSettings
 PortInt = Annotated[int, Field(ge=1024, le=65535)]
 FPSInt = Annotated[int, Field(ge=1, le=60)]
 NonNegativeInt = Annotated[int, Field(ge=0)]
+VerticalOffsetInt = Annotated[int, Field(ge=-500, le=500)]
 
 
 class AdvancedSettings(BaseModel):
@@ -29,6 +30,10 @@ class DeviceSettings(BaseModel):
     streaming: bool = Field(True, title="Real-time Display Streaming")
     streaming_fps: FPSInt = Field(30, title="Streaming FPS")
     use_wm_resize: bool = Field(False, title="Resize Display (Phone/Tablet)")
+    vertical_offset: VerticalOffsetInt = Field(
+        0,
+        title="Vertical Screen Offset (px)",
+    )
 
 
 class AdbSettings(TomlSettings):

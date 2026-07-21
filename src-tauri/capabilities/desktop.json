@@ -2,7 +2,8 @@
   "identifier": "desktop-capability",
   "permissions": [
     "updater:default",
-    "window-state:default"
+    "window-state:default",
+    "process:allow-restart"
   ],
   "platforms": [
     "macOS",
