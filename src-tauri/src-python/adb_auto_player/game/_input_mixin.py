@@ -94,10 +94,10 @@ class _InputMixin(_GameBase):
     def _apply_vertical_offset(coordinates: Coordinates) -> Coordinates:
         """Translate a screenshot-space point to real device coordinates.
 
-        Counterpart to `_ScreenshotMixin._apply_vertical_offset`: OCR/template
-        coordinates are computed from the offset-corrected screenshot, so
-        `vertical_offset` must be added back before sending a real tap/swipe
-        to the device.
+        Counterpart to `_ScreenshotMixin._apply_vertical_offset_to_screenshot`:
+        OCR/template coordinates are computed from the offset-corrected
+        screenshot, so `vertical_offset` must be added back before sending a
+        real tap/swipe to the device.
         """
         offset = SettingsLoader.adb_settings().device.vertical_offset
         if offset == 0:
