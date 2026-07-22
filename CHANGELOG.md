@@ -1,22 +1,8 @@
 # Changelog
 
-## [12.9.22] - 2026-07-22
-
-### Features
-
-- **Device Settings**:
-  - Added **Vertical Screen Offset** (`vertical_offset`) setting (Phone/Tablet)
-    to correct screen cropping and click coordinates for devices with display
-    alignment issues or unhandled aspect ratios.
-  - Added automatic diagnostic detection that logs suggested Vertical Screen
-    Offset values when expected screen regions (such as hero names or ranking
-    date tabs) fail to match.
-- **Updater**:
-  - Integrated automatic application relaunch after updates are installed.
+## [12.9.23] - 2026-07-22
 
 ### Bug Fixes
 
-- **AFK Journey**:
-  - **Guild Manager Scan**: Refactored OCR row grouping to use gap-based
-    clustering relative to neighboring text blocks, preventing anchor drift from
-    wrongly splitting single rows into multiple lines.
+- **Game Engine**:
+  - Renamed `_ScreenshotMixin._apply_vertical_offset` to `_apply_vertical_offset_to_screenshot` to prevent method name collision in `Game`'s MRO with `_InputMixin._apply_vertical_offset`.

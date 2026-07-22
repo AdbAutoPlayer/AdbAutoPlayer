@@ -65,14 +65,14 @@ class _ScreenshotMixin(_GameBase):
         if self._stream:
             image = self._stream.get_latest_frame()
             if image is not None:
-                return self._apply_vertical_offset(Color.to_bgr(image))
+                return self._apply_vertical_offset_to_screenshot(Color.to_bgr(image))
 
         max_retries = 3
         for attempt in range(max_retries):
             try:
                 data = self.device.screenshot()
                 if isinstance(data, bytes):
-                    return self._apply_vertical_offset(
+                    return self._apply_vertical_offset_to_screenshot(
                         IO.get_bgr_np_array_from_png_bytes(data)
                     )
             except (OSError, ValueError) as e:
@@ -87,7 +87,7 @@ class _ScreenshotMixin(_GameBase):
         )
 
     @staticmethod
-    def _apply_vertical_offset(image: np.ndarray) -> np.ndarray:
+    def _apply_vertical_offset_to_screenshot(image: np.ndarray) -> np.ndarray:
         """Shift screenshot content to correct for device-specific misalignment.
 
         Some devices render game content a fixed number of pixels lower or
@@ -100,6 +100,11 @@ class _ScreenshotMixin(_GameBase):
         template-matching code. Coordinates read from the corrected image are
         translated back to real device coordinates before tapping/swiping,
         see `_InputMixin._apply_vertical_offset`.
+
+        Named distinctly from `_InputMixin._apply_vertical_offset` (not just
+        `_apply_vertical_offset`) because `Game` inherits from both mixins;
+        an identical method name on both would collide in the MRO and one
+        would silently shadow the other.
         """
         offset = SettingsLoader.adb_settings().device.vertical_offset
         if offset == 0:
