@@ -696,7 +696,7 @@ class TestSuggestVerticalOffset:
     def test_logs_hint_for_text_outside_name_region(self, caplog):
         scanner = _make_scanner()
         screenshot = np.zeros((10, 10, 3), dtype=np.uint8)
-        stray = _ocr_result("Aurorasomething", center_y=250)
+        stray = _ocr_result("Aurorasomething", center_y=310)
 
         with patch(
             "adb_auto_player.games.afk_journey.services.hero_scanner."
@@ -733,7 +733,7 @@ class TestSuggestVerticalOffset:
     def test_only_logs_once_per_scan(self, caplog):
         scanner = _make_scanner()
         screenshot = np.zeros((10, 10, 3), dtype=np.uint8)
-        stray = _ocr_result("Aurorasomething", center_y=250)
+        stray = _ocr_result("Aurorasomething", center_y=310)
 
         with patch(
             "adb_auto_player.games.afk_journey.services.hero_scanner."

@@ -303,6 +303,7 @@
         settings: newSettings,
       });
       await applySettings(savedSettings);
+      profiles.setStates(profiles.states.filter((_, i) => i !== index));
       profiles.select(newActive);
       void logInfo(`Deleted profile at index ${index}`);
     } catch (error) {

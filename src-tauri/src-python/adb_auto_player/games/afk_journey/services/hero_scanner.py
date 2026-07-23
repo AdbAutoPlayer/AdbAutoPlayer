@@ -78,7 +78,7 @@ REGION_ASCEND_LINE = (50, 800, 980, 550)
 # Expected hero-name region (see `_get_precise_name_crop`), used as the
 # reference band for the vertical-offset diagnostic hint.
 _NAME_ROI_Y_MIN = 60
-_NAME_ROI_Y_MAX = 200
+_NAME_ROI_Y_MAX = 260
 _NAME_ROI_X_MIN = 110
 _NAME_ROI_X_MAX = 950
 
@@ -701,9 +701,9 @@ class HeroScanner:
     # ------------------------------------------------------------------
 
     def _get_precise_name_crop(self, screenshot: np.ndarray) -> np.ndarray:
-        roi_y_start, roi_y_end = 60, 200
-        roi_x_start, roi_x_end = 110, 950
-        wide_crop = screenshot[roi_y_start:roi_y_end, roi_x_start:roi_x_end]
+        wide_crop = screenshot[
+            _NAME_ROI_Y_MIN:_NAME_ROI_Y_MAX, _NAME_ROI_X_MIN:_NAME_ROI_X_MAX
+        ]
 
         gray = cv2.cvtColor(wide_crop, cv2.COLOR_BGR2GRAY)
         _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -758,6 +758,7 @@ class HeroScanner:
 
         raw_names = [raw_name_a, raw_name_b, raw_name_c]
         name = self._match_hero_name(raw_names)
+        logger.debug(f"Hero name OCR readings: {raw_names} -> Matched: '{name}'")
 
         if name == "Unknown":
             logger.debug(
@@ -942,17 +943,25 @@ class HeroScanner:
                 if (len(pattern) < 5 and token == pattern) or (  # noqa: PLR2004
                     len(pattern) >= 5 and pattern in token  # noqa: PLR2004
                 ):
-                    synonym_matches.append((len(pattern), canonical))
+                    synonym_matches.append(
+                        (len(pattern), canonical, pattern_raw, token)
+                    )
 
         for pattern_raw, canonical in self.hero_synonyms.items():
             pattern = re.sub(r"[^a-zA-Z0-9]", "", pattern_raw).lower()
             if len(pattern) >= 4 and pattern in text_clean:  # noqa: PLR2004
-                synonym_matches.append((len(pattern), canonical))
+                synonym_matches.append(
+                    (len(pattern), canonical, pattern_raw, text_clean)
+                )
 
         if synonym_matches:
             synonym_matches.sort(key=lambda x: x[0], reverse=True)
-            best_name = synonym_matches[0][1]
-            logger.debug(f"MATCH STRATEGY: [SYNONYM-BEST] '{best_name}'")
+            _, best_name, winning_pattern, matched_against = synonym_matches[0]
+            logger.debug(
+                f"MATCH STRATEGY: [SYNONYM-BEST] '{best_name}' "
+                f"(synonym '{winning_pattern}' matched against "
+                f"'{matched_against}')"
+            )
             return best_name
         return None
 

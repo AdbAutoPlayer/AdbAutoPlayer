@@ -305,46 +305,86 @@ class _GuildScanRankingsMixin(_GuildScanNamesMixin):
         screenshot = self.get_screenshot()
         ocr_results = ocr_backend.detect_text_blocks(screenshot)
 
-        date_tabs = []
+        date_tabs = self._group_date_tab_candidates(
+            ocr_results, self._Y_MIN_DATE, self._Y_MAX_DATE
+        )
+
+        if not date_tabs:
+            # The expected screen region can be wrong for reasons that have
+            # nothing to do with device-level display misalignment (e.g. a
+            # dynamic-height event banner pushing this one screen's content
+            # down). Re-search the whole screenshot before ever asking the
+            # user to touch a global setting.
+            fallback_tabs = self._group_date_tab_candidates(ocr_results)
+            if fallback_tabs:
+                logging.info(
+                    "Date tabs not found in the expected screen region "
+                    f"(Y {self._Y_MIN_DATE}-{self._Y_MAX_DATE}); found them "
+                    f"at Y={fallback_tabs[0].box.center.y} instead and used "
+                    "that position directly for this scan."
+                )
+                date_tabs = fallback_tabs
+            else:
+                self._suggest_vertical_offset(ocr_results)
+
+        logging.info(f"Found {len(date_tabs)} date tabs: {[r.text for r in date_tabs]}")
+        return date_tabs
+
+    def _group_date_tab_candidates(
+        self,
+        ocr_results: list[OCRResult],
+        y_min: int | None = None,
+        y_max: int | None = None,
+    ) -> list[OCRResult]:
+        """Find the largest row of horizontally-aligned date-like OCR results.
+
+        Args:
+            ocr_results: OCR text blocks detected on the full screenshot.
+            y_min: Minimum Y-coordinate to consider, or None for no lower bound.
+            y_max: Maximum Y-coordinate to consider, or None for no upper bound.
+
+        Returns:
+            The best-aligned group of date tabs, sorted left-to-right, or an
+            empty list if none were found.
+        """
+        candidates = []
         for res in ocr_results:
             y = res.box.center.y
-            if self._Y_MIN_DATE <= y <= self._Y_MAX_DATE:
-                if self._is_date_string(res.text):
-                    if (
-                        res.box.left >= self._X_MIN_DATE_TAB
-                        and res.box.right <= self._X_MAX_DATE_TAB
-                    ):
-                        date_tabs.append(res)
-                    else:
-                        logging.debug(
-                            f"Ignoring date tab '{res.text}' because it is "
-                            f"partially cut off (left={res.box.left}, "
-                            f"right={res.box.right})."
-                        )
+            if y_min is not None and y < y_min:
+                continue
+            if y_max is not None and y > y_max:
+                continue
+            if not self._is_date_string(res.text):
+                continue
+            if not (
+                res.box.left >= self._X_MIN_DATE_TAB
+                and res.box.right <= self._X_MAX_DATE_TAB
+            ):
+                logging.debug(
+                    f"Ignoring date tab '{res.text}' because it is "
+                    f"partially cut off (left={res.box.left}, "
+                    f"right={res.box.right})."
+                )
+                continue
+            candidates.append(res)
 
-        y_groups = []
-        for res in date_tabs:
-            added = False
+        y_groups: list[list[OCRResult]] = []
+        for res in candidates:
             for group in y_groups:
                 if (
                     abs(group[0].box.center.y - res.box.center.y)
                     < self._Y_DATE_ALIGNMENT_TOLERANCE
                 ):
                     group.append(res)
-                    added = True
                     break
-            if not added:
+            else:
                 y_groups.append([res])
 
-        if y_groups:
-            best_group = max(y_groups, key=len)
-            date_tabs = sorted(best_group, key=lambda r: r.box.center.x)
+        if not y_groups:
+            return []
 
-        if not date_tabs:
-            self._suggest_vertical_offset(ocr_results)
-
-        logging.info(f"Found {len(date_tabs)} date tabs: {[r.text for r in date_tabs]}")
-        return date_tabs
+        best_group = max(y_groups, key=len)
+        return sorted(best_group, key=lambda r: r.box.center.x)
 
     def _suggest_vertical_offset(self, ocr_results: list[OCRResult]) -> None:
         """Look for date-shaped text outside the expected screen region.

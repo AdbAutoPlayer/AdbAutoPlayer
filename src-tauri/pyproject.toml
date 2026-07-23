@@ -1,6 +1,6 @@
 [project]
 name = "adb-auto-player"
-version = "12.9.23"
+version = "12.9.24"
 description = ""
 readme = "README.md"
 authors = [

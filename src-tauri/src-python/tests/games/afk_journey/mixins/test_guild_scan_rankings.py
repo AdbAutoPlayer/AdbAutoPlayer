@@ -65,6 +65,56 @@ def test_suggest_vertical_offset_silent_when_date_text_already_in_range(caplog):
     assert caplog.text == ""
 
 
+def test_find_date_tabs_falls_back_to_full_screen_search(caplog):
+    """A screen-specific shift (e.g. an event banner) must self-correct.
+
+    Regression: recommending the global Vertical Screen Offset for a shift
+    that only affects this one screen breaks taps everywhere else in the
+    game. `_find_date_tabs` must find the row wherever it actually is before
+    ever suggesting that setting.
+    """
+    bot = _Stub()
+    below_window_y = bot._Y_MAX_DATE + 83
+    row = [
+        _block("11/18", x=250, center_y=below_window_y),
+        _block("11/19", x=450, center_y=below_window_y),
+        _block("11/20", x=650, center_y=below_window_y),
+    ]
+    bot.get_screenshot = MagicMock(return_value=np.zeros((1920, 1080, 3)))
+    ocr_backend = MagicMock()
+    ocr_backend.detect_text_blocks.return_value = row
+
+    with caplog.at_level(logging.INFO):
+        date_tabs = bot._find_date_tabs(ocr_backend)
+
+    assert [r.text for r in date_tabs] == ["11/18", "11/19", "11/20"]
+    assert "Vertical Screen Offset" not in caplog.text
+    assert "found them at" in caplog.text
+
+
+def test_find_date_tabs_suggests_offset_when_row_not_found_anywhere(caplog):
+    """No usable date-tab row anywhere: fall back to the diagnostic hint.
+
+    A stray date-shaped block outside the date-tab X-range (`_X_MIN_DATE_TAB`)
+    isn't a usable row match, but `_suggest_vertical_offset` doesn't filter on
+    X and still surfaces it — preserving the original diagnostic for a real
+    device-level `wm size` mismatch.
+    """
+    bot = _Stub()
+    bot.get_screenshot = MagicMock(return_value=np.zeros((1920, 1080, 3)))
+    ocr_backend = MagicMock()
+    ocr_backend.detect_text_blocks.return_value = [
+        _block("11/20", x=50, center_y=bot._Y_MAX_DATE + 50),
+    ]
+
+    with caplog.at_level(logging.INFO):
+        date_tabs = bot._find_date_tabs(ocr_backend)
+
+    assert date_tabs == []
+    assert "Vertical Screen Offset" in caplog.text
+    assert "found them at" not in caplog.text
+
+
 def test_parse_rankings_bbox_does_not_split_row_on_stray_score_label():
     """Regression: a stray label near a row's top edge split it in two.
 

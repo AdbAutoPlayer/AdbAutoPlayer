@@ -1,8 +1,10 @@
 # Changelog
 
-## [12.9.23] - 2026-07-22
+## [12.9.24] - 2026-07-23
 
 ### Bug Fixes
 
-- **Game Engine**:
-  - Renamed `_ScreenshotMixin._apply_vertical_offset` to `_apply_vertical_offset_to_screenshot` to prevent method name collision in `Game`'s MRO with `_InputMixin._apply_vertical_offset`.
+- **AFK Journey**:
+  - Improved `_find_date_tabs` logic and hero scanner ROI bounds to self-correct date tabs and log OCR hero readings accurately.
+- **UI**:
+  - Fixed active profile state synchronization during profile deletion in `+layout.svelte`.
