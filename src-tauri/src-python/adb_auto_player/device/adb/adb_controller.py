@@ -115,6 +115,30 @@ class AdbController:
         self._ensure_display_ids_resolved(package_name_prefixes or [])
         return self.d.screenshot(display_id=self._screenshot_display_id)
 
+    @property
+    def screenshot_display_id(self) -> str | None:
+        """Physical display id resolved by `resolve_display_targeting`, if any.
+
+        Used by `DeviceStream` to pass `screenrecord --display-id`, so streamed
+        frames come from the same display `screenshot()` and `tap()`/etc. target.
+        """
+        return self._screenshot_display_id
+
+    def resolve_display_targeting(self, package_name_prefixes: list[str]) -> None:
+        """Resolve and cache display ids up front, before streaming may start.
+
+        `screenshot()` also resolves lazily on first call, but `DeviceStream`
+        captures frames independently via `screenrecord` and never calls
+        `screenshot()` — so on devices with multiple displays, calling this once
+        during game startup (before `DeviceStream` is created) ensures streamed
+        frames, screenshots, and input all agree on which display is the game's,
+        instead of only screenshots/input being fixed when streaming is off.
+
+        Args:
+            package_name_prefixes: Prefixes identifying the game's Android package.
+        """
+        self._ensure_display_ids_resolved(package_name_prefixes)
+
     def _ensure_display_ids_resolved(self, package_name_prefixes: list[str]) -> None:
         """Resolve and cache the game's display ids, once, if not already done."""
         if self._display_ids_resolved:

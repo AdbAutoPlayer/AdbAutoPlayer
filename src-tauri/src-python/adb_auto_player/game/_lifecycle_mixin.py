@@ -23,6 +23,7 @@ class _LifecycleMixin(_GameBase):
         """
         self._set_device_resolution()
         self._check_requirements()
+        self.device.resolve_display_targeting(self.package_name_prefixes)
         self._start_device_streaming(device_streaming=device_streaming)
         self._check_screenshot_matches_display_resolution(device_streaming_check=False)
 

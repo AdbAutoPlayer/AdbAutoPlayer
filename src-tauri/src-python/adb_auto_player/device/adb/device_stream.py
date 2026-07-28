@@ -190,17 +190,26 @@ class DeviceStream:
 
     def _handle_stream(self) -> None:
         """Generic stream handler."""
+        # Keep the streamed display in sync with screenshot()/tap() on devices
+        # that expose more than one virtual display (see
+        # AdbController.resolve_display_targeting) — otherwise `screenrecord`
+        # defaults to "the primary display", which is not guaranteed to be the
+        # one actually running the game.
+        display_id = self.controller.screenshot_display_id
+        display_args = [f"--display-id {display_id}"] if display_id else []
+
+        parts = ["screenrecord", "--output-format=h264"]
         if self._is_bluestacks:
-            base_cmd = "screenrecord --output-format=h264"
+            parts.extend(display_args)
         else:
             try:
                 res = self.controller.get_display_info().resolution
-                size_str = f"--size {res.width}x{res.height}"
+                parts.append(f"--size {res.width}x{res.height}")
             except Exception:
-                size_str = ""
-            base_cmd = (
-                f"screenrecord --output-format=h264 {size_str} --bit-rate 2000000"
-            ).strip()
+                pass
+            parts.extend(display_args)
+            parts.append("--bit-rate 2000000")
+        base_cmd = " ".join(parts)
 
         cmdargs = (
             f"{base_cmd} --time-limit=1 -" if self._use_time_limit else f"{base_cmd} -"
