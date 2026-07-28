@@ -50,47 +50,77 @@ class AdbDeviceWrapper:
         return output
 
     @adb_retry
-    def screenshot(self) -> str | bytes:
+    def screenshot(self, display_id: str | None = None) -> str | bytes:
         """Screenshot.
+
+        Args:
+            display_id: Physical display id (as reported by
+                `dumpsys SurfaceFlinger --display-id`) to capture from. Pass None to let
+                adb pick its default display.
 
         Returns:
             str | bytes: Adb screencap response this can be a message too.
         """
-        with self.d.shell("screencap -p", stream=True) as c:
+        cmd = "screencap -p" if display_id is None else f"screencap -p -d {display_id}"
+        with self.d.shell(cmd, stream=True) as c:
             return c.read_until_close(encoding=None)
 
+    @staticmethod
+    def _input_cmdargs(display_id: str | None, *args: str) -> list[str]:
+        """Build an `input` shell command, optionally targeting a specific display.
+
+        Args:
+            display_id: WM logical display id (see `dumpsys window displays`), or None
+                to let Android route the event to whichever display currently has
+                input focus.
+            *args: The `input` subcommand and its arguments, e.g. "tap", x, y.
+        """
+        cmdargs = ["input"]
+        if display_id is not None:
+            cmdargs.extend(["-d", display_id])
+        cmdargs.extend(args)
+        return cmdargs
+
     @adb_retry
-    def tap(self, x: str, y: str) -> None:
+    def tap(self, x: str, y: str, display_id: str | None = None) -> None:
         """Tap.
 
         Args:
             x: x coordinate
             y: y coordinate
+            display_id: WM logical display id to target, or None for the default.
         """
         with self.d.shell(
-            [
-                "input",
-                "tap",
-                x,
-                y,
-            ],
+            self._input_cmdargs(display_id, "tap", x, y),
             timeout=3,  # if the click didn't happen in 3 seconds it's never happening
             stream=True,
         ) as connection:
             connection.read_until_close()
 
     @adb_retry
-    def keyevent(self, key: str) -> None:
+    def keyevent(self, key: str, display_id: str | None = None) -> None:
         """Key event.
 
         Args:
             key: key code
+            display_id: WM logical display id to target, or None for the default.
         """
-        with self.d.shell(["input", "keyevent", key], stream=True) as connection:
+        with self.d.shell(
+            self._input_cmdargs(display_id, "keyevent", key), stream=True
+        ) as connection:
             connection.read_until_close()
 
     @adb_retry
-    def swipe(self, sx: str, sy: str, ex: str, ey: str, duration: str) -> None:
+    def swipe(
+        self,
+        sx: str,
+        sy: str,
+        ex: str,
+        ey: str,
+        duration: str,
+        *,
+        display_id: str | None = None,
+    ) -> None:
         """Swipe from sx, sy to ex, ey over duration ms.
 
         Args:
@@ -99,17 +129,10 @@ class AdbDeviceWrapper:
             ex: end X-coordinate.
             ey: end Y-coordinate.
             duration: Swipe duration in milliseconds.
+            display_id: WM logical display id to target, or None for the default.
         """
         with self.d.shell(
-            [
-                "input",
-                "swipe",
-                sx,
-                sy,
-                ex,
-                ey,
-                duration,
-            ],
+            self._input_cmdargs(display_id, "swipe", sx, sy, ex, ey, duration),
             stream=True,
         ) as connection:
             connection.read_until_close()

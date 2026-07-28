@@ -20,6 +20,12 @@ class AdbController:
     def __init__(self):
         """Init."""
         self.d = AdbDeviceWrapper.create_from_settings()
+        # Physical display id (for `screencap -d`) and WM logical display id (for
+        # `input -d`) of the display hosting the game, resolved lazily on first use.
+        # See `_resolve_display_ids`.
+        self._screenshot_display_id: str | None = None
+        self._input_display_id: str | None = None
+        self._display_ids_resolved: bool = False
 
     def set_display_size(self, display_size: str) -> None:
         """Set display size.
@@ -95,9 +101,84 @@ class AdbController:
         self.d.shell("wm size reset")
         logging.info(f"Reset Display Size for Device: {self.d.serial}")
 
-    def screenshot(self) -> str | bytes:
-        """Take screenshot."""
-        return self.d.screenshot()
+    def screenshot(self, package_name_prefixes: list[str] | None = None) -> str | bytes:
+        """Take screenshot.
+
+        Args:
+            package_name_prefixes: Prefixes identifying the game's Android package.
+                Used once (result is cached for this controller's lifetime) to pick the
+                right display when the device exposes more than one, e.g. some
+                emulators create a separate virtual display per running app and the
+                unspecified/default display for `screencap` is not guaranteed to be the
+                one actually running the game.
+        """
+        self._ensure_display_ids_resolved(package_name_prefixes or [])
+        return self.d.screenshot(display_id=self._screenshot_display_id)
+
+    def _ensure_display_ids_resolved(self, package_name_prefixes: list[str]) -> None:
+        """Resolve and cache the game's display ids, once, if not already done."""
+        if self._display_ids_resolved:
+            return
+        self._screenshot_display_id, self._input_display_id = self._resolve_display_ids(
+            package_name_prefixes
+        )
+        self._display_ids_resolved = True
+
+    def _resolve_display_ids(
+        self, package_name_prefixes: list[str]
+    ) -> tuple[str | None, str | None]:
+        """Find the display currently hosting the game.
+
+        Only relevant on devices/emulators that expose more than one display; on a
+        normal single-display device this returns (None, None) immediately. Needed
+        because on multi-display devices/emulators (observed on MuMuPlayer's Android
+        15 image) neither `screencap` nor `input` reliably default to the display
+        actually running the game: `screencap` may capture an unrelated idle display,
+        and `input` follows whichever display currently has system input focus, which
+        can drift to a different display (e.g. the home screen) mid-session.
+
+        Returns:
+            tuple[str | None, str | None]: (physical display id for `screencap -d`,
+                WM logical display id for `input -d`), or (None, None) to fall back to
+                adb's defaults.
+        """
+        display_output = self.d.shell("dumpsys display")
+        if not isinstance(display_output, str):
+            return None, None
+
+        # e.g. "displayId=2, uniqueId='local:4619827767814508545'"
+        viewports = re.findall(
+            r"displayId=(\d+), uniqueId='local:(\d+)'", display_output
+        )
+        if len(viewports) <= 1 or not package_name_prefixes:
+            return None, None
+        wm_id_to_physical_id = dict(viewports)
+
+        window_output = self.d.shell("dumpsys window displays")
+        if not isinstance(window_output, str):
+            return None, None
+
+        current_wm_id: str | None = None
+        for line in window_output.splitlines():
+            display_match = re.match(r"\s*Display:\s*mDisplayId=(\d+)", line)
+            if display_match:
+                current_wm_id = display_match.group(1)
+                continue
+            if (
+                current_wm_id is not None
+                and "visible=true" in line
+                and any(prefix in line for prefix in package_name_prefixes)
+            ):
+                physical_id = wm_id_to_physical_id.get(current_wm_id)
+                if physical_id:
+                    logging.info(
+                        "Multiple displays detected, targeting display "
+                        f"{current_wm_id} (physical id {physical_id}) for "
+                        "screenshots and input"
+                    )
+                    return physical_id, current_wm_id
+
+        return None, None
 
     def stop_game(self, package_name: str) -> None:
         """Stop game."""
@@ -137,7 +218,9 @@ class AdbController:
         Args:
             coordinates (Coordinates): Point to click on.
         """
-        self.d.tap(str(coordinates.x), str(coordinates.y))
+        self.d.tap(
+            str(coordinates.x), str(coordinates.y), display_id=self._input_display_id
+        )
 
     def click(
         self,
@@ -148,11 +231,11 @@ class AdbController:
 
     def press_back_button(self) -> None:
         """Presses the back button."""
-        self.d.keyevent("4")  # alternative 111
+        self.d.keyevent("4", display_id=self._input_display_id)  # alternative 111
 
     def press_enter(self) -> None:
         """Press enter button."""
-        self.d.keyevent("66")  # alternative 108
+        self.d.keyevent("66", display_id=self._input_display_id)  # alternative 108
 
     def swipe(
         self,
@@ -173,6 +256,7 @@ class AdbController:
             str(end_point.x),
             str(end_point.y),
             str(int(duration * 1000)),
+            display_id=self._input_display_id,
         )
 
     def hold(
@@ -187,11 +271,16 @@ class AdbController:
 
     def hold_down(self, coordinates: Coordinates) -> None:
         """Press down at the given coordinates."""
-        self.d.shell(f"input motionevent DOWN {coordinates.as_adb_shell_str()}")
+        self.d.shell(self._motion_event_cmd("DOWN", coordinates))
 
     def hold_release(self, coordinates: Coordinates) -> None:
         """Release touch at the given coordinates."""
-        self.d.shell(f"input motionevent UP {coordinates.as_adb_shell_str()}")
+        self.d.shell(self._motion_event_cmd("UP", coordinates))
+
+    def _motion_event_cmd(self, action: str, coordinates: Coordinates) -> str:
+        display_flag = f"-d {self._input_display_id} " if self._input_display_id else ""
+        coords = coordinates.as_adb_shell_str()
+        return f"input {display_flag}motionevent {action} {coords}"
 
     @property
     @register_cache(CacheGroup.ADB)

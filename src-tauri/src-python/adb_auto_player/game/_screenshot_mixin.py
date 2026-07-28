@@ -70,7 +70,7 @@ class _ScreenshotMixin(_GameBase):
         max_retries = 3
         for attempt in range(max_retries):
             try:
-                data = self.device.screenshot()
+                data = self.device.screenshot(self.package_name_prefixes)
                 if isinstance(data, bytes):
                     return self._apply_vertical_offset_to_screenshot(
                         IO.get_bgr_np_array_from_png_bytes(data)
