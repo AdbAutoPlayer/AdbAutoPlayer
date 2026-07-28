@@ -3,6 +3,7 @@
 import importlib.util
 import json
 import logging
+import os
 import re
 import threading
 from typing import Any
@@ -137,6 +138,14 @@ class QwenVLOCRBackend(OCRBackend):
         if self._model_load_failed or not self._is_available:
             return False
         try:
+            # The bundled extras env ships both torch's and paddle's copies of
+            # libiomp5md.dll; transformers' optional-backend probing can load
+            # paddle's after torch's is already resident, and Intel's OpenMP
+            # runtime doesn't tolerate two copies in one process — it has been
+            # observed crashing with STATUS_ACCESS_VIOLATION inside
+            # torch_cpu.dll. Must be set before the first `import torch` below.
+            os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+
             import logging as _logging  # noqa: PLC0415
 
             # Silence HTTP and auth noise using each library's own verbosity API.

@@ -3,8 +3,10 @@
 Covers:
 - _download_model_if_needed: partial-download detection via dual-file cache check
 - _init_model: OSError from from_pretrained triggers force re-download and retry
+- _init_model: KMP_DUPLICATE_LIB_OK is set before torch is imported
 """
 
+import os
 from unittest.mock import MagicMock, PropertyMock, call, patch
 
 from adb_auto_player.ocr.qwen2vl_backend import QwenVLOCRBackend
@@ -147,3 +149,82 @@ class TestInitModel:
 
         assert result is False
         assert backend._model_load_failed is True
+
+
+class TestKmpDuplicateLibWorkaround:
+    """Regression test for the torch_cpu.dll access-violation crash.
+
+    The bundled extras env ships both torch's and paddle's copies of
+    libiomp5md.dll; transformers' optional-backend probing can load paddle's
+    after torch's is already resident, and Intel's OpenMP runtime doesn't
+    tolerate two copies in one process. `KMP_DUPLICATE_LIB_OK=TRUE` must be
+    set before the first `import torch`.
+    """
+
+    def test_init_model_sets_kmp_duplicate_lib_ok(self, monkeypatch):
+        monkeypatch.delenv("KMP_DUPLICATE_LIB_OK", raising=False)
+        backend = QwenVLOCRBackend()
+
+        mock_proc_cls = MagicMock()
+        mock_model_cls = MagicMock()
+        mock_model_cls.from_pretrained.return_value = MagicMock()
+        sys_mocks = {
+            "torch": MagicMock(
+                cuda=MagicMock(is_available=MagicMock(return_value=False)),
+                backends=MagicMock(
+                    mps=MagicMock(is_available=MagicMock(return_value=False))
+                ),
+            ),
+            "transformers": MagicMock(
+                Qwen2VLProcessor=mock_proc_cls,
+                Qwen2VLForConditionalGeneration=mock_model_cls,
+            ),
+        }
+
+        with (
+            patch.dict("sys.modules", sys_mocks),
+            patch.object(
+                type(backend),
+                "_is_available",
+                new_callable=PropertyMock,
+                return_value=True,
+            ),
+            patch.object(backend, "_download_model_if_needed"),
+        ):
+            backend._init_model()
+
+        assert os.environ.get("KMP_DUPLICATE_LIB_OK") == "TRUE"
+
+    def test_does_not_override_an_existing_value(self, monkeypatch):
+        """A user-set value (e.g. "FALSE" to keep the safety check) is respected."""
+        monkeypatch.setenv("KMP_DUPLICATE_LIB_OK", "FALSE")
+        backend = QwenVLOCRBackend()
+
+        mock_proc_cls = MagicMock()
+        mock_proc_cls.from_pretrained.side_effect = OSError("boom")
+        sys_mocks = {
+            "torch": MagicMock(
+                cuda=MagicMock(is_available=MagicMock(return_value=False)),
+                backends=MagicMock(
+                    mps=MagicMock(is_available=MagicMock(return_value=False))
+                ),
+            ),
+            "transformers": MagicMock(
+                Qwen2VLProcessor=mock_proc_cls,
+                Qwen2VLForConditionalGeneration=MagicMock(),
+            ),
+        }
+
+        with (
+            patch.dict("sys.modules", sys_mocks),
+            patch.object(
+                type(backend),
+                "_is_available",
+                new_callable=PropertyMock,
+                return_value=True,
+            ),
+            patch.object(backend, "_download_model_if_needed"),
+        ):
+            backend._init_model()
+
+        assert os.environ.get("KMP_DUPLICATE_LIB_OK") == "FALSE"
