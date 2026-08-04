@@ -127,3 +127,6 @@ class HeroesEnum(StrEnum):
     Zorya = auto()
     Hammie = auto()
     Chippy = auto()
+    Orion = auto()
+    Rolan = auto()
+    Voracia = auto()
