@@ -62,6 +62,7 @@ class Navigation(PopupMessageHandler, ABC):
                 self._handle_restart(Navigation._get_overview_navigation_templates())
             elif attempts >= restart_attempts and not restart_attempted:
                 logging.warning("Failed to navigate to default state.")
+                self.capture_debug_screenshot("navigation_failed")
                 self._handle_restart(Navigation._get_overview_navigation_templates())
                 restart_attempted = True
             elif attempts >= max_attempts:

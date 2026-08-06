@@ -528,6 +528,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
 
         if result is None:
             logging.warning("Could not resolve best gate")
+            self.capture_debug_screenshot("arcane_labyrinth_gate_unresolved")
             self.tap(swords)
             return
 

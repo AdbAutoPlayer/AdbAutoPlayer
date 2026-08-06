@@ -116,6 +116,7 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase):
             raise e
         except Exception as e:
             logging.error(f"Unexpected error in proxy battle automation: {e}")
+            self.capture_debug_screenshot("titan_reaver_proxy_battle_unexpected_error")
 
     def _execute_single_proxy_battle(self) -> bool:
         """Execute a single proxy battle.
@@ -239,4 +240,5 @@ class TitanReaverProxyBattleMixin(AFKJourneyBase):
 
         except GameTimeoutError:
             logging.warning(f"No {description} found within timeout")
+            self.capture_debug_screenshot("titan_reaver_proxy_battle_template_timeout")
             return False

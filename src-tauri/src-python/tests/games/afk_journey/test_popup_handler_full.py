@@ -225,6 +225,41 @@ class TestPopupHandlerFullCoverage:
                 result = handler.handle_popup_messages()
                 assert result is False
 
+    def test_unknown_popup_saves_debug_screenshot(self, tmp_path):
+        """Unrecognized popups (empty or non-matching OCR) save a screenshot."""
+        handler = MockHandler()
+        screenshot = np.zeros((100, 100, 3), dtype=np.uint8)
+        preprocess_result = PopupPreprocessResult(
+            original_image=screenshot,
+            cropped_image=np.zeros((50, 50, 3)),
+            crop_offset=Point(0, 0),
+            button=TemplateMatchResult(
+                template="navigation/confirm.png",
+                confidence=ConfidenceValue(0.9),
+                box=Box(Point(0, 0), 10, 10),
+            ),
+        )
+        with patch(
+            "adb_auto_player.game._screenshot_mixin.SettingsLoader.get_app_config_dir",
+            return_value=tmp_path,
+        ):
+            result = handler._get_popup_message_from_ocr_results([], preprocess_result)
+
+        assert result is None
+        saved_dir = tmp_path / "data" / "screenshots" / "unknown_popups"
+        assert saved_dir.exists()
+        assert len(list(saved_dir.glob("unknown_popups_*.png"))) == 1
+
+    def test_unknown_popup_screenshot_save_failure_is_logged(self, caplog):
+        """A failure to save the debug screenshot must not raise."""
+        handler = MockHandler()
+        with patch(
+            "adb_auto_player.game._screenshot_mixin.SettingsLoader.get_app_config_dir",
+            side_effect=RuntimeError("App Config Dir undefined"),
+        ):
+            handler.save_debug_screenshot(np.zeros((10, 10, 3)), "unknown_popups")
+        assert "Could not save debug screenshot" in caplog.text
+
     def test_mock_handler_unused_methods_coverage(self):
         """Call all stubbed methods in MockHandler for coverage."""
         handler = MockHandler()

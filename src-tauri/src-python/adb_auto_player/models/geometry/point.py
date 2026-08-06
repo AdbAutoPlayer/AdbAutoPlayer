@@ -19,7 +19,7 @@ class Point(Coordinates):
         self._x = int(x)
         self._y = int(y)
         if self._x < 0 or self._y < 0:
-            logging.warning(f"Clamping negative Point coordinates: x={x}, y={y} to 0")
+            logging.debug(f"Clamping negative Point coordinates: x={x}, y={y} to 0")
             self._x = max(0, self._x)
             self._y = max(0, self._y)
 

@@ -5,7 +5,7 @@ Covers `_ScreenshotMixin._apply_vertical_offset_to_screenshot`
 inverse, applied before tapping/swiping/holding on the real device).
 """
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 from adb_auto_player.game._input_mixin import _InputMixin
@@ -86,6 +86,38 @@ class TestInputVerticalOffset:
             mock_settings.return_value.device.vertical_offset = -40
             result = _InputMixin._apply_vertical_offset(point)
         assert (result.x, result.y) == (100, 160)
+
+
+class TestSaveDebugScreenshot:
+    """Tests for `_ScreenshotMixin.save_debug_screenshot`."""
+
+    def test_saves_screenshot_to_category_subfolder(self, tmp_path):
+        # _ScreenshotMixin's _GameBase parent is abstract; the method under
+        # test doesn't touch `self`, so a mock instance is enough here.
+        mock_instance = MagicMock(spec=_ScreenshotMixin)
+        screenshot = np.zeros((10, 10, 3), dtype=np.uint8)
+        with patch(
+            "adb_auto_player.game._screenshot_mixin.SettingsLoader.get_app_config_dir",
+            return_value=tmp_path,
+        ):
+            _ScreenshotMixin.save_debug_screenshot(
+                mock_instance, screenshot, "navigation_failed"
+            )
+
+        saved_dir = tmp_path / "data" / "screenshots" / "navigation_failed"
+        assert saved_dir.exists()
+        assert len(list(saved_dir.glob("navigation_failed_*.png"))) == 1
+
+    def test_save_failure_is_logged_not_raised(self, caplog):
+        mock_instance = MagicMock(spec=_ScreenshotMixin)
+        with patch(
+            "adb_auto_player.game._screenshot_mixin.SettingsLoader.get_app_config_dir",
+            side_effect=RuntimeError("App Config Dir undefined"),
+        ):
+            _ScreenshotMixin.save_debug_screenshot(
+                mock_instance, np.zeros((10, 10, 3)), "navigation_failed"
+            )
+        assert "Could not save debug screenshot" in caplog.text
 
 
 class _CombinedLikeGame(_InputMixin, _ScreenshotMixin):
