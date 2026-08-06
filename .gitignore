@@ -54,5 +54,6 @@ vite.config.ts.timestamp-*
 /data/heroes-template.json
 /data/afkj_tracker_backup.json
 /data/afkj_tracker_corretto.json
+**/data/screenshots/
 /src-tauri/src-python/scratch/
 /scratch/

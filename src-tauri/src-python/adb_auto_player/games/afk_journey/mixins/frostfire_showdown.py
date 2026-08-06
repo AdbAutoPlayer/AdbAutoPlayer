@@ -610,4 +610,5 @@ class FrostfireShowdownMixin(AFKJourneyBase, ABC):
                 return True
 
         logging.warning("Something went wrong detecting battle results!")
+        self.capture_debug_screenshot("frostfire_showdown_battle_result_unknown")
         return False

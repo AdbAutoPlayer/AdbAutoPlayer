@@ -221,12 +221,15 @@ class PopupMessageHandler(Game, ABC):
         return result
 
     def _get_popup_message_from_ocr_results(
-        self, ocr_results: list[OCRResult]
+        self,
+        ocr_results: list[OCRResult],
+        preprocess_result: PopupPreprocessResult,
     ) -> PopupMessage | None:
         for result in ocr_results:
             if matching_popup := PopupMessageHandler._find_matching_popup(result.text):
                 return matching_popup
 
+        self.save_debug_screenshot(preprocess_result.original_image, "unknown_popups")
         logging.warning(
             "Unknown popup detected, "
             f"please post on Discord so it can be added: {ocr_results}"
@@ -253,7 +256,9 @@ class PopupMessageHandler(Game, ABC):
             result.with_offset(preprocess_result.crop_offset) for result in ocr_results
         ]
 
-        matching_popup = self._get_popup_message_from_ocr_results(ocr_results)
+        matching_popup = self._get_popup_message_from_ocr_results(
+            ocr_results, preprocess_result
+        )
         if not matching_popup:
             return None
 

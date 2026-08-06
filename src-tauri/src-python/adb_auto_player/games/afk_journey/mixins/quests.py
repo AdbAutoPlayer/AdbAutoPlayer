@@ -75,6 +75,7 @@ class QuestMixin(AFKJourneyBase, ABC):
             )
             if blocked is not None:
                 logging.error("Non-automatable quest found: " + blocked.template)
+                self.capture_debug_screenshot("quests_non_automatable_blocker")
                 break
 
             # Sometimes autopathing multiple times disables the action button when you

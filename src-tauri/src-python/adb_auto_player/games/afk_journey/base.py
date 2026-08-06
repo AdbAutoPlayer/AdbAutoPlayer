@@ -713,6 +713,7 @@ class AFKJourneyBase(
                 logging.error(
                     "Network Error or Battle data differs between client and server"
                 )
+                self.capture_debug_screenshot("battle_result_network_error_confirm")
                 self.tap(match)
                 self.sleep_navigation()
 

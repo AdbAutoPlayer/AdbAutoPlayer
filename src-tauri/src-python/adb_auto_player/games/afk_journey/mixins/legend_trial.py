@@ -80,6 +80,7 @@ class SeasonLegendTrial(AFKJourneyBase):
                 timeout_message=f"{faction}s Tower not found",
             ):
                 logging.error(f"{faction}s Tower not found")
+                self.capture_debug_screenshot("legend_trial_tower_not_found")
                 continue
             try:
                 self._select_legend_trials_floor()

@@ -1,9 +1,11 @@
 """Screenshot and device-stream mixin."""
 
+import datetime
 import logging
 import sys
 from time import sleep
 
+import cv2
 import numpy as np
 from adb_auto_player.device.adb import DeviceStream
 from adb_auto_player.exceptions import (
@@ -170,6 +172,48 @@ class _ScreenshotMixin(_GameBase):
             "https://AdbAutoPlayer.github.io/AdbAutoPlayer/user-guide/"
             "troubleshoot.html#this-bot-only-works-in-portrait-mode"
         )
+
+    def save_debug_screenshot(self, screenshot: np.ndarray, category: str) -> None:
+        """Save a screenshot for offline troubleshooting of an unexpected state.
+
+        Intended for warning/error paths where the game reached a state the
+        automation logic didn't recognize (unmatched popup, failed
+        navigation, unresolved template, etc.) so a bug report includes the
+        actual screen instead of just a log line. Never raises — a failure
+        to save debug output must not interrupt the automation it's
+        diagnosing.
+
+        Args:
+            screenshot: Image to save, typically the full device screenshot.
+            category: Subfolder grouping related captures, e.g.
+                "unknown_popups" or "navigation_failed".
+        """
+        try:
+            screenshot_dir = (
+                SettingsLoader.get_app_config_dir() / "data" / "screenshots" / category
+            )
+            screenshot_dir.mkdir(parents=True, exist_ok=True)
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+            cv2.imwrite(str(screenshot_dir / f"{category}_{timestamp}.png"), screenshot)
+        except Exception as e:
+            logging.warning(f"Could not save debug screenshot ({category}): {e}")
+
+    def capture_debug_screenshot(self, category: str) -> None:
+        """Capture and save the current screen for offline troubleshooting.
+
+        Convenience wrapper around `save_debug_screenshot` for call sites
+        that don't already have a screenshot in hand. Never raises.
+
+        Args:
+            category: Subfolder grouping related captures, e.g.
+                "navigation_failed".
+        """
+        try:
+            screenshot = self.get_screenshot()
+        except Exception as e:
+            logging.warning(f"Could not capture debug screenshot ({category}): {e}")
+            return
+        self.save_debug_screenshot(screenshot, category)
 
     def _start_device_streaming(self, device_streaming: bool = True) -> None:
         if not device_streaming:
