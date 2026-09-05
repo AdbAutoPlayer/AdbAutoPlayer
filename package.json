@@ -3,7 +3,7 @@
     "@js-joda/core": "^6.1.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tauri-apps/api": "^2.11.1",
-    "@tauri-apps/plugin-notification": "~2.3.3",
+    "@tauri-apps/plugin-notification": "~2.4.0",
     "@tauri-apps/plugin-opener": "^2.5.5",
     "@tauri-apps/plugin-process": "~2.3.1",
     "@tauri-apps/plugin-updater": "~2.10.1",
