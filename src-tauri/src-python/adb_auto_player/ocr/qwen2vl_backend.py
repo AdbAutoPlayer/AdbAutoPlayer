@@ -179,8 +179,13 @@ class QwenVLOCRBackend(OCRBackend):
             self._download_model_if_needed()
             dtype = torch.float16 if device == "cuda" else torch.float32
             try:
+                logger.debug("Qwen2-VL-2B: loading processor...")
                 self._processor = Qwen2VLProcessor.from_pretrained(
                     self.MODEL_ID, trust_remote_code=True, local_files_only=True
+                )
+                logger.debug(
+                    "Qwen2-VL-2B: processor loaded, loading model weights "
+                    f"(device_map={'auto' if device == 'cuda' else device})..."
                 )
                 # low_cpu_mem_usage=True loads each layer directly to the target
                 # device (GPU) without staging the full model in CPU RAM first,
@@ -193,6 +198,7 @@ class QwenVLOCRBackend(OCRBackend):
                     low_cpu_mem_usage=True,
                     local_files_only=True,
                 )
+                logger.debug("Qwen2-VL-2B: model weights loaded.")
             except OSError:
                 logger.warning(
                     "Qwen2-VL-2B: incomplete local files detected — "
@@ -210,6 +216,7 @@ class QwenVLOCRBackend(OCRBackend):
                     low_cpu_mem_usage=True,
                     local_files_only=True,
                 )
+            logger.debug("Qwen2-VL-2B: calling model.eval()...")
             self._model.eval()
             logger.info("Qwen2-VL-2B initialized successfully.")
             return True

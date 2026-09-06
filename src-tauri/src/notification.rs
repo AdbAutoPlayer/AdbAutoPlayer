@@ -8,10 +8,10 @@ use tauri_plugin_notification::NotificationExt;
 #[derive(Debug, Deserialize)]
 struct TaskCompletedPayload {
     msg: Option<String>,
-    exit_code: Option<i32>,
+    exit_code: Option<i64>,
 }
 
-const SIGTERM_EXIT_CODE: i32 = -15;
+const SIGTERM_EXIT_CODE: i64 = -15;
 
 pub fn setup_task_completed_listener(app: &mut App) -> tauri::Result<()> {
     let app_handle = app.handle().clone();

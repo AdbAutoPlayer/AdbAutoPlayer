@@ -4,6 +4,7 @@
 
 # Register global exception hook at the very beginning to capture
 # any startup or import errors.
+import os
 import sys
 import tempfile
 import traceback
@@ -18,6 +19,14 @@ def _write_crash_log(exc_type, exc_value, exc_tb) -> None:
 
 
 sys.excepthook = _write_crash_log
+
+# Guild scan's extras env can carry both torch's and (a stale) paddle's copy
+# of libiomp5md.dll; if a paddle-linked package gets imported before torch,
+# Intel's OpenMP runtime can hard-crash the process with
+# STATUS_ACCESS_VIOLATION when torch loads its own copy. Must be set before
+# any import in this process (including the reimport multiprocessing does in
+# spawned task subprocesses) that might pull in either DLL.
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
 
 import asyncio
 import logging
@@ -69,6 +78,16 @@ from pytauri import (
 
 PYTAURI_GEN_TS = getenv("VIRTUAL_ENV_PROMPT") == "AdbAutoPlayer"
 SIGTERM_EXIT_CODE = -15
+
+# Windows STATUS_ACCESS_VIOLATION (0xC0000005), as returned by a task process
+# that hard-crashed natively (e.g. a GPU/driver init race in torch/CUDA).
+# Python reports it as the raw unsigned DWORD; some environments have been
+# observed reporting the equivalent signed 32-bit value instead, so both
+# forms are checked. This crash has been observed to be transient - retrying
+# the same task a couple of times tends to succeed - so it is retried
+# automatically instead of being surfaced as a final failure immediately.
+_STATUS_ACCESS_VIOLATION_EXIT_CODES = (0xC0000005, 0xC0000005 - 2**32)
+_MAX_CRASH_RETRIES = 2
 
 commands: Commands = Commands(experimental_gen_ts=PYTAURI_GEN_TS)
 
@@ -262,54 +281,70 @@ async def start_task(
         logging.warning("Task is already running!")
         return
 
-    log_queue = Queue()
-    summary_queue = Queue(maxsize=2)
-    task_summary_queues[body.profile_index] = summary_queue
+    exit_code: int | None = None
+    summary_msg: str | None = None
 
-    listener = QueueListener(
-        log_queue, TauriQueueHandler(app_handle, body.profile_index)
-    )
-    task_listeners[body.profile_index] = listener
-    listener.start()
+    for attempt in range(_MAX_CRASH_RETRIES + 1):
+        log_queue = Queue()
+        summary_queue = Queue(maxsize=2)
+        task_summary_queues[body.profile_index] = summary_queue
 
-    task_process = Process(
-        target=run_task,
-        args=(
-            " ".join(body.args),
-            log_queue,
-            summary_queue,
-            _base_app_config_dir / f"{body.profile_index}",
-            _base_resource_dir,
-        ),
-    )
+        listener = QueueListener(
+            log_queue, TauriQueueHandler(app_handle, body.profile_index)
+        )
+        task_listeners[body.profile_index] = listener
+        listener.start()
 
-    task_processes[body.profile_index] = task_process
-    task_labels[body.profile_index] = body.label
-    task_process.start()
+        task_process = Process(
+            target=run_task,
+            args=(
+                " ".join(body.args),
+                log_queue,
+                summary_queue,
+                _base_app_config_dir / f"{body.profile_index}",
+                _base_resource_dir,
+            ),
+        )
 
-    while task_process and task_process.is_alive():
-        await asyncio.sleep(0.5)
+        task_processes[body.profile_index] = task_process
+        task_labels[body.profile_index] = body.label
+        task_process.start()
 
-    task_processes[body.profile_index] = None
-    task_labels[body.profile_index] = None
+        while task_process and task_process.is_alive():
+            await asyncio.sleep(0.5)
 
-    listener = task_listeners.get(body.profile_index, None)
-    if listener:
-        listener.stop()
-        task_listeners[body.profile_index] = None
+        task_processes[body.profile_index] = None
+        task_labels[body.profile_index] = None
 
-    # Get summary from queue
-    summary_msg = None
-    while not summary_queue.empty():
-        try:
-            summary_msg = summary_queue.get_nowait()
-        except Exception as e:
-            print(f"[ERROR] {e}")
+        listener = task_listeners.get(body.profile_index, None)
+        if listener:
+            listener.stop()
+            task_listeners[body.profile_index] = None
+
+        # Get summary from queue
+        summary_msg = None
+        while not summary_queue.empty():
+            try:
+                summary_msg = summary_queue.get_nowait()
+            except Exception as e:
+                print(f"[ERROR] {e}")
+                break
+
+        task_summary_queues[body.profile_index] = None
+
+        exit_code = task_process.exitcode
+
+        if (
+            exit_code not in _STATUS_ACCESS_VIOLATION_EXIT_CODES
+            or attempt == _MAX_CRASH_RETRIES
+        ):
             break
 
-    task_summary_queues[body.profile_index] = None
-
-    exit_code = task_process.exitcode
+        logging.warning(
+            "Task process crashed with STATUS_ACCESS_VIOLATION (0xC0000005) - "
+            f"this is usually a transient GPU/driver init race. Retrying "
+            f"({attempt + 2}/{_MAX_CRASH_RETRIES + 1})..."
+        )
 
     Emitter.emit(
         app_handle,

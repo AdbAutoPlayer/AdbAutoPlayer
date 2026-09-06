@@ -132,3 +132,4 @@ class HeroesEnum(StrEnum):
     Voracia = auto()
     Taichi_and_Agumon = auto()
     Yamato_and_Gabumon = auto()
+    Eryndor = auto()

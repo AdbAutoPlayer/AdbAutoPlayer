@@ -10,6 +10,7 @@ from adb_auto_player.decorators import register_command, register_custom_routine
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.games.afk_journey.settings import HomesteadCraftStopCondition
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
@@ -24,6 +25,7 @@ class _RequestFulfillment(Enum):
     DELIVERED = "delivered"
     CRAFTED = "crafted"
     NOTHING = "nothing"
+    BLOCKED = "blocked"
 
 
 class HomesteadHelperMixin(AFKJourneyBase):
@@ -46,6 +48,15 @@ class HomesteadHelperMixin(AFKJourneyBase):
     )
 
     # Templates - crafting multiplier & action
+    # Full-screen modal ("Insufficient resources. You can obtain them from: ...")
+    # shown when the item being crafted needs a resource this bot cannot
+    # produce (e.g. Essence from a Hero Ascension building). Distinct from
+    # HOMESTEAD_MISSING_RESOURCES_TEMPLATE, which is the small in-context
+    # arrow popup on the greyed-out action button.
+    HOMESTEAD_INSUFFICIENT_RESOURCES_TEMPLATE = (
+        "homestead/insufficient_resources_popup.png"
+    )
+    HOMESTEAD_INSUFFICIENT_RESOURCES_CLOSE_POINT = Point(540, 1307)
     HOMESTEAD_MULTIPLIER_X10_TEMPLATE = "homestead/multiplier_x10.png"
     HOMESTEAD_MULTIPLIER_STATE_TEMPLATE = "homestead/multiplier_state.png"
     HOMESTEAD_CRAFTING_SCREEN_TEMPLATE = "homestead/crafting_screen_check.png"
@@ -110,6 +121,18 @@ class HomesteadHelperMixin(AFKJourneyBase):
     HOMESTEAD_WISH_POINT_READ_ATTEMPTS = 5
     HOMESTEAD_WISH_POINT_READ_DELAY = 0.6
 
+    # Crop region (x1, y1, x2, y2) of the Stamina counter ("4800/5000") shown
+    # top-right of the Homestead overview screen, next to the green flame icon.
+    HOMESTEAD_STAMINA_CROP: ClassVar[tuple[int, int, int, int]] = (760, 15, 950, 70)
+
+    # Multiplier x10 is always selected before crafting (see
+    # _handle_crafting_to_max), so one successful craft action produces this
+    # many items.
+    HOMESTEAD_CRAFT_BATCH_SIZE = 10
+    # Stamina cost of one craft batch (x10) - fixed at 10 per item regardless
+    # of the recipe, confirmed by the user against the live game.
+    HOMESTEAD_STAMINA_COST_PER_BATCH = 100
+
     # Ingredient-crafting slider geometry. The handle starts at the far left
     # (value 0); dragging right increases the craft amount. The track spans
     # roughly x=250..900. We pull ~20% of the way to queue a small batch.
@@ -124,6 +147,10 @@ class HomesteadHelperMixin(AFKJourneyBase):
     HOMESTEAD_INNER_LOOP_LIMIT = 25
     # Abort ingredient crafting if nothing progresses within this many seconds.
     HOMESTEAD_INGREDIENT_CRAFT_TIMEOUT = 30
+    # Stop the whole Requests loop after this many "Insufficient resources"
+    # blocks (a resource this bot cannot produce), rather than repeatedly
+    # re-selecting the same unfulfillable request.
+    HOMESTEAD_MAX_BLOCKED_CRAFTS = 2
 
     @register_command(
         name="HomesteadOrdersHelper",
@@ -304,7 +331,24 @@ class HomesteadHelperMixin(AFKJourneyBase):
         """
         logging.info("Handling homestead requests...")
 
+        self._homestead_crafted_count = 0
+        self._homestead_blocked_craft_count = 0
+
         for _outer in range(self.HOMESTEAD_OUTER_LOOP_LIMIT):
+            # Checked before every craft trip (including the first) so the
+            # stop condition can't be overshot by a trip that was never
+            # guarded - checking only after a trip would let the very first
+            # one through even if it were already at/past the limit.
+            if self._homestead_craft_stop_condition_reached():
+                logging.info("Homestead craft stop condition reached - done.")
+                return
+            if self._homestead_blocked_craft_count >= self.HOMESTEAD_MAX_BLOCKED_CRAFTS:
+                logging.info(
+                    "Repeatedly blocked on a resource this bot cannot "
+                    "produce - stopping to avoid spinning on it."
+                )
+                return
+
             # Verify Requests icon is visible before tapping fixed coordinate.
             requests_visible = self.game_find_template_match(
                 template=self.HOMESTEAD_REQUESTS_TEMPLATE,
@@ -337,6 +381,69 @@ class HomesteadHelperMixin(AFKJourneyBase):
 
         logging.info("Homestead requests: reached outer loop limit.")
 
+    def _homestead_craft_stop_condition_reached(self) -> bool:
+        """Check whether the configured Homestead craft stop condition is met.
+
+        Called before every craft trip. In Stamina mode this predicts the
+        *next* batch rather than reacting after the fact: a craft always
+        costs a fixed ``HOMESTEAD_STAMINA_COST_PER_BATCH`` regardless of the
+        item, so whether it would undershoot the target is already knowable
+        beforehand - checking only after a trip would let one final,
+        unguarded trip overshoot the target.
+
+        Returns:
+            True if crafting should stop (item count reached, or the next
+                batch would take Stamina below the target).
+        """
+        settings = self.settings.homestead
+
+        if settings.craft_stop_condition == HomesteadCraftStopCondition.ITEM_COUNT:
+            if self._homestead_crafted_count >= settings.craft_item_limit:
+                logging.info(
+                    "Craft item limit reached: %d/%d",
+                    self._homestead_crafted_count,
+                    settings.craft_item_limit,
+                )
+                return True
+            return False
+
+        current_stamina = self._read_homestead_stamina()
+        if current_stamina is None:
+            return False
+
+        stamina_after_next_batch = (
+            current_stamina - self.HOMESTEAD_STAMINA_COST_PER_BATCH
+        )
+        if stamina_after_next_batch < settings.craft_stamina_target:
+            logging.info(
+                "Next craft batch would take Stamina to %d, below the %d "
+                "target - stopping.",
+                stamina_after_next_batch,
+                settings.craft_stamina_target,
+            )
+            return True
+        return False
+
+    def _read_homestead_stamina(self) -> int | None:
+        """Read the current Stamina value from the Homestead overview screen.
+
+        Returns:
+            The current Stamina amount, or None if it could not be read.
+        """
+        backend = getattr(self, "_homestead_ocr_backend", None)
+        if backend is None:
+            backend = RapidOCRBackend()
+            self._homestead_ocr_backend = backend
+
+        x1, y1, x2, y2 = self.HOMESTEAD_STAMINA_CROP
+        crop = self.get_screenshot()[y1:y2, x1:x2]
+        text = backend.extract_text(crop).strip()
+        match = re.match(r"^(\d+)/(\d+)$", text)
+        if match is None:
+            logging.debug("Could not read Homestead Stamina from OCR text: %r", text)
+            return None
+        return int(match.group(1))
+
     def _fulfill_requests_best_first(self) -> bool:
         """Fulfill requests best-first until a craft cycle or exhaustion.
 
@@ -360,6 +467,14 @@ class HomesteadHelperMixin(AFKJourneyBase):
 
             if result is _RequestFulfillment.CRAFTED:
                 return True  # caller will call _ensure_in_homestead() then retry
+            if result is _RequestFulfillment.BLOCKED:
+                # Needs a resource this bot cannot produce. The crafting
+                # screen visit still navigated us away from Requests, so the
+                # caller must re-enter like a normal craft trip.
+                self._homestead_blocked_craft_count = (
+                    getattr(self, "_homestead_blocked_craft_count", 0) + 1
+                )
+                return True
             if result is _RequestFulfillment.NOTHING:
                 # This request cannot be progressed right now; skip it and try
                 # the next-best one in the following iteration.
@@ -464,8 +579,9 @@ class HomesteadHelperMixin(AFKJourneyBase):
             logging.info("Insufficient resources - navigating to crafting.")
             self.tap(missing_arrow)
             sleep(2)
-            self._handle_crafting_to_max()
-            return _RequestFulfillment.CRAFTED
+            if self._handle_crafting_to_max():
+                return _RequestFulfillment.CRAFTED
+            return _RequestFulfillment.BLOCKED
 
         # No missing-resources popup: check for Deliver button.
         deliver = self.game_find_template_match(
@@ -497,13 +613,26 @@ class HomesteadHelperMixin(AFKJourneyBase):
     #  Crafting multiplier                                                 #
     # ------------------------------------------------------------------ #
 
-    def _handle_crafting_to_max(self) -> None:
+    def _handle_crafting_to_max(self) -> bool:
         """Wait for crafting screen, cycle multiplier to x10, press action button.
 
         If the action button is greyed out, a required ingredient is missing and
         must be crafted first. In that case we follow the missing-ingredient
         popup into the ingredient crafting screen, craft a small batch, and
         return — the caller will re-enter the original craft afterwards.
+
+        Some ingredients are produced by a different Homestead building than
+        the one being crafted (e.g. Essence from the Essence Crucible). The
+        game surfaces this as a full-screen "Insufficient resources" modal
+        instead of greying out the action button. It links to that other
+        building, which shares the same slider + Smelt/Shape/Refine layout as
+        the ingredient-crafting screen, so it is handled the same way.
+
+        Returns:
+            True if a craft batch (item or intermediate ingredient) actually
+                completed. False if blocked - the modal had no navigation
+                link, or the linked building's craft did not complete - the
+                caller should not retry this request.
 
         Raises:
             GameTimeoutError: if the crafting screen never loads or crafting
@@ -512,15 +641,23 @@ class HomesteadHelperMixin(AFKJourneyBase):
         """
         action_templates = list(self.HOMESTEAD_ACTION_BUTTON_TEMPLATES)
         gray_templates = list(self.HOMESTEAD_GRAY_ACTION_BUTTON_TEMPLATES)
+        blocking_templates = (
+            action_templates
+            + gray_templates
+            + [self.HOMESTEAD_INSUFFICIENT_RESOURCES_TEMPLATE]
+        )
 
         logging.info("Waiting for crafting screen to load...")
         # The action button may be coloured (ready) or grey (ingredient missing).
         result = self.wait_for_any_template(
-            templates=action_templates + gray_templates,
+            templates=blocking_templates,
             timeout=30,
         )
 
         sleep(2)  # let the UI fully settle
+
+        if result.template == self.HOMESTEAD_INSUFFICIENT_RESOURCES_TEMPLATE:
+            return self._handle_insufficient_resources_popup()
 
         # A grey action button means a required ingredient is missing but can be
         # crafted. Handle that sub-flow and bail out of the normal craft path.
@@ -530,7 +667,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
                 "missing. Navigating to ingredient crafting."
             )
             self._handle_missing_ingredient_craft()
-            return
+            return True
 
         # Cycle x1 -> x5 -> x10 with exactly 2 taps.
         for tap_num in range(2):
@@ -546,15 +683,23 @@ class HomesteadHelperMixin(AFKJourneyBase):
         # Sleep briefly to let the UI swap, then wait for the action button
         # to reappear — that signals crafting is complete. Once a batch is
         # crafted a previously available ingredient may run out, so the button
-        # can come back greyed-out instead of coloured.
+        # can come back greyed-out instead of coloured. A required resource can
+        # also turn out to be insufficient only once the craft is attempted.
         sleep(5)
         logging.info("Waiting for crafting to complete...")
         result = self.wait_for_any_template(
-            templates=action_templates + gray_templates,
+            templates=blocking_templates,
             timeout=30,
         )
 
+        if result.template == self.HOMESTEAD_INSUFFICIENT_RESOURCES_TEMPLATE:
+            return self._handle_insufficient_resources_popup()
+
         SummaryGenerator.increment("Homestead Orders Helper", "Items Crafted")
+        self._homestead_crafted_count = (
+            getattr(self, "_homestead_crafted_count", 0)
+            + self.HOMESTEAD_CRAFT_BATCH_SIZE
+        )
         logging.info("Crafting done.")
 
         # Crafting consumed the last of an ingredient: the button is now grey.
@@ -565,6 +710,40 @@ class HomesteadHelperMixin(AFKJourneyBase):
                 "ingredient ran out. Navigating to ingredient crafting."
             )
             self._handle_missing_ingredient_craft()
+        return True
+
+    def _handle_insufficient_resources_popup(self) -> bool:
+        """Follow the "Insufficient resources" modal's link and refine a batch.
+
+        The modal links to the Homestead building that produces the missing
+        ingredient (e.g. Essence Crucible). That building shares the ordinary
+        ingredient-crafting screen's layout, so the same slider-drag-and-Refine
+        flow is reused via ``_craft_ingredient_batch``. Falls back to simply
+        dismissing the modal if it has no navigation link.
+
+        Returns:
+            True if a batch was refined - the caller should retry the
+                original request afterwards. False if the modal could only be
+                dismissed, or the linked building's craft did not complete.
+        """
+        arrow = self.game_find_template_match(
+            template=self.HOMESTEAD_MISSING_RESOURCES_TEMPLATE
+        )
+        if arrow is None:
+            logging.warning(
+                "Insufficient resources popup had no navigation link - "
+                "dismissing without crafting."
+            )
+            self.tap(self.HOMESTEAD_INSUFFICIENT_RESOURCES_CLOSE_POINT)
+            sleep(2)
+            return False
+
+        logging.info(
+            "Insufficient resources popup - navigating to the linked "
+            "production building to refine a batch."
+        )
+        self.tap(arrow)
+        return self._craft_ingredient_batch()
 
     # ------------------------------------------------------------------ #
     #  Missing-ingredient crafting                                         #
@@ -576,15 +755,11 @@ class HomesteadHelperMixin(AFKJourneyBase):
         Flow:
             1. Tap the grey action button -> a popup like the missing-resource
                one appears; tap its arrow to navigate to ingredient crafting.
-            2. On the ingredient crafting screen, drag the amount slider ~20%
-               to the right and press the green action button (Smelt/Shape/...).
-            3. A "Tap to close" rewards popup appears; tap the bottom of the
-               screen to dismiss it.
-            4. Press back to return to the homestead world view.
+            2. Drag the amount slider and refine a batch via
+               ``_craft_ingredient_batch``.
 
-        If nothing progresses within ``HOMESTEAD_INGREDIENT_CRAFT_TIMEOUT``
-        seconds the sub-flow is aborted and we simply press back so the caller
-        can recover.
+        If the popup's arrow cannot be found the sub-flow is aborted and we
+        simply press back so the caller can recover.
         """
         # Tap the grey action button to open the missing-ingredient popup.
         logging.info("Tapping greyed-out action button.")
@@ -595,10 +770,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
         arrow = self.game_find_template_match(
             template=self.HOMESTEAD_MISSING_RESOURCES_TEMPLATE
         )
-        if arrow is not None:
-            logging.info("Tapping popup arrow to navigate to ingredient crafting.")
-            self.tap(arrow)
-        else:
+        if arrow is None:
             logging.warning(
                 "Missing-ingredient popup arrow not found - aborting ingredient craft."
             )
@@ -606,7 +778,35 @@ class HomesteadHelperMixin(AFKJourneyBase):
             sleep(2)
             return
 
-        # Wait for the ingredient crafting screen (its green action button).
+        logging.info("Tapping popup arrow to navigate to ingredient crafting.")
+        self.tap(arrow)
+        self._craft_ingredient_batch()
+
+    def _craft_ingredient_batch(self) -> bool:
+        """Drag the amount slider and refine a batch on an ingredient screen.
+
+        Assumes a navigation arrow was just tapped to reach a Homestead
+        production-building screen (slider + Smelt/Shape/Refine button) -
+        either the ordinary ingredient-crafting screen, or another building
+        linked from the "Insufficient resources" modal (e.g. Essence Crucible).
+
+        Flow:
+            1. Wait for the screen to load (its green action button).
+            2. Drag the amount slider ~20% to the right and press the action
+               button.
+            3. A "Tap to close" rewards popup appears; tap the bottom of the
+               screen to dismiss it.
+            4. Press back to return to the homestead world view.
+
+        If nothing progresses within ``HOMESTEAD_INGREDIENT_CRAFT_TIMEOUT``
+        seconds the sub-flow is aborted and we simply press back so the caller
+        can recover.
+
+        Returns:
+            True if a batch was refined and its reward popup was dismissed.
+                False if the screen never loaded or the craft did not
+                complete within the timeout.
+        """
         ingredient_buttons = list(self.HOMESTEAD_INGREDIENT_ACTION_BUTTON_TEMPLATES)
         try:
             self.wait_for_any_template(
@@ -621,7 +821,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
             )
             self.press_back_button()
             sleep(2)
-            return
+            return False
 
         sleep(1.5)  # let the screen settle before grabbing the slider
 
@@ -654,7 +854,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
             )
             self.press_back_button()
             sleep(2)
-            return
+            return False
 
         logging.info("Dismissing 'Tap to close' popup.")
         self.tap(self.HOMESTEAD_TAP_TO_CLOSE_POINT)
@@ -666,3 +866,4 @@ class HomesteadHelperMixin(AFKJourneyBase):
         logging.info("Returning from ingredient crafting.")
         self.press_back_button()
         sleep(2)
+        return True

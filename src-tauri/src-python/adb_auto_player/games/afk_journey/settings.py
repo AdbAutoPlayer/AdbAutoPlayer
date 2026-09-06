@@ -38,6 +38,13 @@ class OpponentPosition(StrEnum):
     Right = "Right"
 
 
+class HomesteadCraftStopCondition(StrEnum):
+    """When to stop crafting in the Homestead Orders Helper."""
+
+    ITEM_COUNT = "Item Count"
+    STAMINA_CONSUMED = "Stamina Consumed"
+
+
 # Models
 class GeneralSettings(BaseModel):
     """General Settings model."""
@@ -309,10 +316,25 @@ class ClaimAFKRewardsSettings(BaseModel):
 class HomesteadSettings(BaseModel):
     """Homestead Settings model."""
 
+    craft_stop_condition: HomesteadCraftStopCondition = Field(
+        default=HomesteadCraftStopCondition.ITEM_COUNT,
+        alias="Craft Stop Condition",
+        title="Craft Stop Condition",
+        description=(
+            "Stop crafting after a fixed number of items, or once Stamina "
+            "drops to a target value."
+        ),
+    )
     craft_item_limit: PositiveInt = Field(
         default=80,
         alias="Craft Item Limit",
         title="Craft Item Limit",
+    )
+    craft_stamina_target: Annotated[int, Field(ge=0, le=50000)] = Field(
+        default=4000,
+        alias="Craft Stamina Target",
+        title="Craft Stamina Target",
+        description="Stop crafting once Stamina drops to or below this value.",
     )
 
 

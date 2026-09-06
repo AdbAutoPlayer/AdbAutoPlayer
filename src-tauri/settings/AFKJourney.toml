@@ -100,7 +100,9 @@ Attempts = 5
 "Spend Gold" = false
 
 [Homestead]
+"Craft Stop Condition" = "Item Count"
 "Craft Item Limit" = 80
+"Craft Stamina Target" = 4000
 
 ["Supreme Arena"]
 Attempts = 5
