@@ -160,7 +160,6 @@ def scan_emulator_ports() -> list[str]:
             logging.debug(f"Failed to connect to device {device_id}: {e}")
 
     # De-duplicate preserving order
-    seen = set()
-    result = [d for d in active_devices if not (d in seen or seen.add(d))]
+    result = list(dict.fromkeys(active_devices))
     logging.info(f"Discovered active ADB devices: {result}")
     return result
