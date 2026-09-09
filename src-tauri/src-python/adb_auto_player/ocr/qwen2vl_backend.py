@@ -69,14 +69,47 @@ class QwenVLOCRBackend(OCRBackend):
                 )
         return self._device
 
+    def _weight_shards_cached(self, index_path: str) -> bool:
+        """Check that every weight shard referenced by the safetensors index is cached.
+
+        ``try_to_load_from_cache`` treats the presence of
+        ``model.safetensors.index.json`` as proof the download is complete, but
+        a truncated/interrupted download can leave that index present while one
+        or more of the shard files it references
+        (``model-0000X-of-0000Y.safetensors``) are missing or corrupt. Loading a
+        model with a missing/corrupt shard has been observed to crash the
+        process natively (STATUS_ACCESS_VIOLATION) instead of raising a
+        catchable exception, so this must be verified before ``from_pretrained``
+        is ever called.
+        """
+        from huggingface_hub import (  # type: ignore  # noqa: PLC0415
+            try_to_load_from_cache,
+        )
+
+        try:
+            with open(index_path, encoding="utf-8") as f:
+                index = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            return False
+
+        shard_files = set(index.get("weight_map", {}).values())
+        if not shard_files:
+            return False
+
+        return all(
+            try_to_load_from_cache(self.MODEL_ID, shard) is not None
+            for shard in shard_files
+        )
+
     def _download_model_if_needed(self, force_redownload: bool = False) -> None:
         """Download model weights from HuggingFace with heartbeat progress logging.
 
-        Checks the local HuggingFace cache first; if both ``config.json`` and
-        ``model.safetensors.index.json`` are present the method returns
-        immediately. Passing ``force_redownload=True`` skips the cache check so
-        that ``snapshot_download`` re-fetches any missing or incomplete files.
-        A background thread emits a log line every 30 s so the UI does not
+        Checks the local HuggingFace cache first; if ``config.json``,
+        ``model.safetensors.index.json``, and every weight shard the index
+        references are present, the method returns immediately. Passing
+        ``force_redownload=True`` skips the cache check so that
+        ``snapshot_download`` re-fetches any missing or incomplete files. A
+        background thread emits a log line every 30 s so the UI does not
         appear frozen during a long download.
         """
         if not force_redownload:
@@ -86,12 +119,18 @@ class QwenVLOCRBackend(OCRBackend):
                 )
 
                 config_cached = try_to_load_from_cache(self.MODEL_ID, "config.json")
-                weights_cached = try_to_load_from_cache(
+                index_cached = try_to_load_from_cache(
                     self.MODEL_ID, "model.safetensors.index.json"
                 )
-                if config_cached is not None and weights_cached is not None:
-                    return
-                if config_cached is not None:
+                if config_cached is not None and index_cached is not None:
+                    if self._weight_shards_cached(index_cached):
+                        return
+                    logger.warning(
+                        "Qwen2-VL-2B: partial download detected "
+                        "(index present but weight shard(s) missing) — "
+                        "re-downloading."
+                    )
+                elif config_cached is not None:
                     logger.warning(
                         "Qwen2-VL-2B: partial download detected "
                         "(config present but weight index missing) — re-downloading."

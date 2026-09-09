@@ -1,42 +1,139 @@
 """Unit tests for QwenVLOCRBackend partial-download fix.
 
 Covers:
-- _download_model_if_needed: partial-download detection via dual-file cache check
+- _download_model_if_needed: partial-download detection via cache + shard check
+- _weight_shards_cached: verifies every shard in the safetensors index is cached
 - _init_model: OSError from from_pretrained triggers force re-download and retry
 - _init_model: KMP_DUPLICATE_LIB_OK is set before torch is imported
 """
 
+import json
 import os
 from unittest.mock import MagicMock, PropertyMock, call, patch
 
 from adb_auto_player.ocr.qwen2vl_backend import QwenVLOCRBackend
 
+_SHARD_A = "model-00001-of-00002.safetensors"
+_SHARD_B = "model-00002-of-00002.safetensors"
 
-def _hf_mock(config_result, weights_result):
+
+def _write_index(tmp_path, shards=(_SHARD_A, _SHARD_B)):
+    """Write a minimal model.safetensors.index.json to tmp_path and return its path.
+
+    Args:
+        tmp_path: pytest tmp_path fixture directory to write into.
+        shards: shard filenames to reference from the index's weight_map.
+    """
+    index_path = tmp_path / "model.safetensors.index.json"
+    weight_map = {f"layer.{i}.weight": shard for i, shard in enumerate(shards)}
+    index_path.write_text(json.dumps({"weight_map": weight_map}), encoding="utf-8")
+    return str(index_path)
+
+
+def _hf_mock(config_result, index_result, shard_results=None):
     """Return a minimal huggingface_hub module mock.
 
     Args:
         config_result: value returned for the config.json cache check.
-        weights_result: value returned for the weight-index cache check.
+        index_result: value returned for the weight-index cache check.
+        shard_results: dict mapping shard filename to its cache-check result,
+            used for calls made while verifying individual weight shards.
     """
     mock = MagicMock()
-    mock.try_to_load_from_cache.side_effect = [config_result, weights_result]
+
+    def side_effect(_model_id, filename):
+        if filename == "config.json":
+            return config_result
+        if filename == "model.safetensors.index.json":
+            return index_result
+        return (shard_results or {}).get(filename)
+
+    mock.try_to_load_from_cache.side_effect = side_effect
     return mock
+
+
+class TestWeightShardsCached:
+    def _backend(self):
+        return QwenVLOCRBackend()
+
+    def test_all_shards_cached_returns_true(self, tmp_path):
+        backend = self._backend()
+        index_path = _write_index(tmp_path)
+        mock_hf = _hf_mock(
+            "/cache/config.json",
+            index_path,
+            shard_results={
+                _SHARD_A: "/cache/" + _SHARD_A,
+                _SHARD_B: "/cache/" + _SHARD_B,
+            },
+        )
+
+        with patch.dict("sys.modules", {"huggingface_hub": mock_hf}):
+            assert backend._weight_shards_cached(index_path) is True
+
+    def test_missing_shard_returns_false(self, tmp_path):
+        backend = self._backend()
+        index_path = _write_index(tmp_path)
+        mock_hf = _hf_mock(
+            "/cache/config.json",
+            index_path,
+            shard_results={_SHARD_A: "/cache/" + _SHARD_A, _SHARD_B: None},
+        )
+
+        with patch.dict("sys.modules", {"huggingface_hub": mock_hf}):
+            assert backend._weight_shards_cached(index_path) is False
+
+    def test_unreadable_index_returns_false(self, tmp_path):
+        backend = self._backend()
+        missing_path = str(tmp_path / "does-not-exist.json")
+        mock_hf = _hf_mock("/cache/config.json", missing_path)
+
+        with patch.dict("sys.modules", {"huggingface_hub": mock_hf}):
+            assert backend._weight_shards_cached(missing_path) is False
 
 
 class TestDownloadModelIfNeeded:
     def _backend(self):
         return QwenVLOCRBackend()
 
-    def test_both_files_cached_skips_download(self):
-        """Both config.json and weight index cached → snapshot_download not called."""
+    def test_both_files_and_shards_cached_skips_download(self, tmp_path):
+        """config.json, weight index, and every shard cached → no download."""
         backend = self._backend()
-        mock_hf = _hf_mock("/cache/config.json", "/cache/index.json")
+        index_path = _write_index(tmp_path)
+        mock_hf = _hf_mock(
+            "/cache/config.json",
+            index_path,
+            shard_results={
+                _SHARD_A: "/cache/" + _SHARD_A,
+                _SHARD_B: "/cache/" + _SHARD_B,
+            },
+        )
 
         with patch.dict("sys.modules", {"huggingface_hub": mock_hf}):
             backend._download_model_if_needed()
 
         mock_hf.snapshot_download.assert_not_called()
+
+    def test_missing_shard_triggers_redownload(self, tmp_path):
+        """Index present but a referenced shard is missing → download triggered.
+
+        Regression test: STATUS_ACCESS_VIOLATION crashes were traced to
+        from_pretrained loading a corrupt/incomplete shard because the old
+        cache check only looked at config.json + the index file, never the
+        shards the index references.
+        """
+        backend = self._backend()
+        index_path = _write_index(tmp_path)
+        mock_hf = _hf_mock(
+            "/cache/config.json",
+            index_path,
+            shard_results={_SHARD_A: "/cache/" + _SHARD_A, _SHARD_B: None},
+        )
+
+        with patch.dict("sys.modules", {"huggingface_hub": mock_hf}):
+            backend._download_model_if_needed()
+
+        mock_hf.snapshot_download.assert_called_once_with(QwenVLOCRBackend.MODEL_ID)
 
     def test_only_config_cached_triggers_download(self):
         """config.json cached but weight index missing → download triggered."""

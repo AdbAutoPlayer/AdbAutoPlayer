@@ -28,6 +28,15 @@ sys.excepthook = _write_crash_log
 # spawned task subprocesses) that might pull in either DLL.
 os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
 
+# This process has no attached console (launched by Tauri), so sys.stderr is
+# not a normal flushable stream there. tqdm's progress bars (used by both
+# huggingface_hub downloads and transformers' weight loading) call
+# sys.stderr.flush() directly and raise OSError: [Errno 22] Invalid argument
+# in that environment, crashing Qwen2-VL initialization. Disabling progress
+# bars entirely avoids that code path; must be set before huggingface_hub or
+# transformers are first imported, since the setting is read once at import.
+os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
+
 import asyncio
 import logging
 import multiprocessing
