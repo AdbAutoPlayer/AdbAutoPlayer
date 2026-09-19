@@ -36,8 +36,8 @@ importers:
         specifier: ^7.0.15
         version: 7.0.15
       posthog-js:
-        specifier: ^1.428.11
-        version: 1.428.11
+        specifier: ^1.433.6
+        version: 1.433.6
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
@@ -153,8 +153,14 @@ packages:
   '@posthog/core@1.53.2':
     resolution: {integrity: sha512-Knx8442G2LyPVIzLvhcBX/TIdeHpZhrYrtZou3Uw8FWfbr9gQtQeOZDCog3MWcDxJ+4vAnMAAOzf5cYpc7Gxyw==}
 
+  '@posthog/core@1.54.5':
+    resolution: {integrity: sha512-7N/Su3EnQpGaPSYgB7Ha0UQms47GObytCvuFjcKgSTEVlUWKO42hs38Zhb5O1S5VTxK1vPzavomieoGVrCOiZg==}
+
   '@posthog/types@1.411.1':
     resolution: {integrity: sha512-Gd7tnSYctcSXup3naVlAgavvenByRao6rsSYdMgWgP35KE9jFn+rMHNRJeI5LNjJuLzMXHEVcgzAN7xcATefdw==}
+
+  '@posthog/types@1.412.2':
+    resolution: {integrity: sha512-taxTh8o6n7ZVlC8qBypZvF+6w7/18yNkS9XDiGCbutGTKqIljfzYi/7pumgwN3mcnl/n0e9A+JhF05+nLd4Xaw==}
 
   '@rolldown/binding-android-arm-eabi@1.2.7':
     resolution: {integrity: sha512-EypzgnYCwyVY4NDHKzGmNJT5b+XaQEBniHxsMdeIQLB/tcCzZnhqrzHpZFbX9iaxx+5RiB8caATBtfvZP7zVxQ==}
@@ -983,8 +989,8 @@ packages:
     resolution: {integrity: sha512-RRuzqDtt5Y9h3quz5hWhK+TPnsmVs6WwSU6LkJMeY4HstUEDuYTG8UJSdawMRzmzAtV+KEoG8N3Qg2qLy5vM/A==}
     engines: {node: ^10 || ^12 || >=14}
 
-  posthog-js@1.428.11:
-    resolution: {integrity: sha512-98hMmCYgEclXefLmDHSaZIFzGS2D/1ypytNG51WJsWSJkEznyx6JlizT6m+aVqCXh0SR4u8TEvdloFoxCbP3UQ==}
+  posthog-js@1.433.6:
+    resolution: {integrity: sha512-wGCGLHTDxwwWefyJ02tZaw3zVOURqidzGL9Ytv4MTbNuCo12X511TvLV1k+QLiohsB+aZ0c84K5o0clGqn0qgA==}
     peerDependencies:
       '@types/react': '>=16.8.0'
       react: '>=16.8.0'
@@ -1274,7 +1280,13 @@ snapshots:
     dependencies:
       '@posthog/types': 1.411.1
 
+  '@posthog/core@1.54.5':
+    dependencies:
+      '@posthog/types': 1.412.2
+
   '@posthog/types@1.411.1': {}
+
+  '@posthog/types@1.412.2': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.7':
     optional: true
@@ -2133,11 +2145,11 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  posthog-js@1.428.11:
+  posthog-js@1.433.6:
     dependencies:
       '@posthog/browser-common': 0.8.3
-      '@posthog/core': 1.53.2
-      '@posthog/types': 1.411.1
+      '@posthog/core': 1.54.5
+      '@posthog/types': 1.412.2
       core-js: 3.50.0
       dompurify: 3.4.15
       fflate: 0.4.9
