@@ -201,6 +201,7 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
         self._recover_orphaned_activeness_names(
             screenshot, activeness_blocks, used_activeness_indices, pairs
         )
+        self._supplement_pairs_with_qwen_activeness(screenshot, pairs)
 
         if self._ocr_debug is not None:
             self._ocr_debug.append(
@@ -244,6 +245,55 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
             name = qwen.extract_player_name(crop)
             if name and self._is_valid_activeness_name(name):
                 pairs.append((name.strip(), ab.text.strip()))
+
+    def _supplement_pairs_with_qwen_activeness(
+        self,
+        screenshot,
+        pairs: list[tuple[str | None, str | None]],
+    ) -> None:
+        """Add Qwen-detected activeness rows RapidOCR missed entirely.
+
+        RapidOCR's PP-OCRv5 recognition model cannot read Korean Hangul or
+        Cyrillic script at all, so those rows produce no name AND no
+        activeness block — `_recover_orphaned_activeness_names` never
+        triggers because there's no orphaned value to anchor a crop on.
+        Ask Qwen to read the whole frame instead, mirroring
+        `_supplement_pairs_with_qwen_chest`.
+        """
+        qwen: QwenVLOCRBackend | None = getattr(self, "_activeness_qwen", None)
+        if qwen is None:
+            return
+        qwen_pairs = qwen.extract_activeness_from_screenshot(screenshot)
+        if not qwen_pairs:
+            return
+        guild_members: list[str] = getattr(self, "_guild_members", None) or []
+        suffix_pat = re.compile(r"\b[A-Za-z]?\d{3,4}\b")
+        cleaned_members = [
+            self._clean_member_name(m, suffix_pat) for m in guild_members
+        ]
+        existing_lower = {n.lower() for n, _ in pairs if n}
+        for qname, qact in qwen_pairs:
+            if not qname or len(qname) < self._MIN_NAME_LENGTH:
+                continue
+            if any(
+                SequenceMatcher(None, qname.lower(), e).ratio()
+                >= self._FUZZY_DEDUP_THRESHOLD
+                for e in existing_lower
+            ):
+                continue
+            if guild_members:
+                qname_clean = self._clean_member_name(qname, suffix_pat)
+                best_ratio = max(
+                    (
+                        SequenceMatcher(None, qname_clean, cm).ratio()
+                        for cm in cleaned_members
+                    ),
+                    default=0.0,
+                )
+                if best_ratio < self._GUILD_NAME_CORRECTION_THRESHOLD:
+                    continue
+            pairs.append((qname, qact))
+            existing_lower.add(qname.lower())
 
     _RE_CHEST_LABEL = re.compile(
         r"chest\s*contribution|contribution\s*ranking|guild\s*chest"
@@ -508,12 +558,35 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
         sleep(1.5)
         return contributions
 
-    def _collect_activeness_scroll_data(self, ocr_backend: OCRBackend) -> list[dict]:
-        """Scroll the Members list and return raw activeness records."""
+    def _collect_activeness_scroll_data(
+        self,
+        ocr_backend: OCRBackend,
+        guild_members: list[str] | None = None,
+    ) -> list[dict]:
+        """Scroll the Members list and return raw activeness records.
+
+        When `guild_members` is given, each observed name is corrected
+        against the roster *before* dedup instead of after. Raw-text fuzzy
+        dedup (`_find_fuzzy_match`) is too coarse for short guild-tagged
+        names — e.g. "CTL|Jaz" vs "CTL|Arnz" scores 0.80 similarity purely
+        from the shared "CTL|" prefix and short length, well above the 0.75
+        dedup threshold, so the second name observed would silently get
+        merged into the first player's record and vanish from the output.
+        Matching each observation to its exact roster name first (ratio 1.0
+        for a clean read) makes dedup an exact-string lookup for recognized
+        members, sidestepping that collision entirely.
+        """
         seen_names: set[str] = set()
         seen_index: dict[str, int] = {}
         records: list[dict] = []
         no_new_count = 0
+
+        suffix_pat = re.compile(r"\b[A-Za-z]?\d{3,4}\b")
+        cleaned_members = (
+            [(m, self._clean_member_name(m, suffix_pat)) for m in guild_members]
+            if guild_members
+            else []
+        )
 
         sleep(10)
 
@@ -535,7 +608,21 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
                     activeness_int = int(activeness) if activeness is not None else 0
                 except ValueError:
                     activeness_int = 0
-                already_seen = self._find_fuzzy_match(name, seen_names)
+
+                matched_canonical = False
+                if cleaned_members:
+                    best_match, best_ratio = self._find_best_member_match(
+                        name, cleaned_members, suffix_pat
+                    )
+                    if best_ratio >= self._GUILD_NAME_CORRECTION_THRESHOLD:
+                        name = best_match
+                        matched_canonical = True
+
+                already_seen = (
+                    (name if name in seen_index else None)
+                    if matched_canonical
+                    else self._find_fuzzy_match(name, seen_names)
+                )
                 if already_seen is None:
                     seen_names.add(name)
                     seen_index[name] = len(records)
@@ -586,7 +673,9 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
             return
 
         logging.info("Scanning Guild Members activeness...")
-        activeness_records = self._collect_activeness_scroll_data(ocr_backend)
+        activeness_records = self._collect_activeness_scroll_data(
+            ocr_backend, guild_members
+        )
 
         if guild_members:
             activeness_records = self._filter_and_correct_activeness_records(
@@ -594,8 +683,18 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
             )
 
         if chest_contributions:
+            existing_names = {record["Name"] for record in activeness_records}
             for record in activeness_records:
                 record["ChestContribution"] = chest_contributions.get(record["Name"], 0)
+            for name, count in chest_contributions.items():
+                if name not in existing_names:
+                    activeness_records.append(
+                        {"Name": name, "Activeness": 0, "ChestContribution": count}
+                    )
+                    logging.info(
+                        f"Activeness: added {name!r} from chest-only detection "
+                        "(no activeness row was captured for this member)."
+                    )
 
         logging.info(
             f"Collected activeness for {len(activeness_records)} guild members."

@@ -556,6 +556,49 @@ def test_scan_guild_activeness():
     assert saved_records[0]["Activeness"] == 1280
 
 
+def test_scan_guild_activeness_backfills_chest_only_members():
+    """A member the chest scan found but the activeness scan missed entirely.
+
+    Must still appear in the output, not be silently dropped.
+
+    Regression: the chest-merge step used to only enrich existing activeness
+    records with a ChestContribution field, never add a record for a member
+    who has chest data but no activeness row (e.g. a Korean/Cyrillic name
+    RapidOCR can't read in the Members list but Qwen recovered in the
+    separate Chest Contribution scan).
+    """
+    bot = MockAllAFKJ()
+
+    with (
+        patch.object(bot, "_navigate_to_guild_hall", return_value=True),
+        patch.object(
+            bot,
+            "_scan_guild_chest_contributions",
+            return_value={"BlackFriday": 175, "CTL | 이른봄날": 161},
+        ),
+        patch.object(bot, "_navigate_to_guild_members_screen", return_value=True),
+        patch.object(
+            bot,
+            "_collect_activeness_scroll_data",
+            return_value=[{"Name": "BlackFriday", "Activeness": 1280}],
+        ),
+        patch.object(
+            bot,
+            "_filter_and_correct_activeness_records",
+            side_effect=lambda records, _members: records,
+        ),
+        patch.object(bot, "_save_guild_activeness_to_json") as mock_save,
+    ):
+        bot._scan_guild_activeness(MagicMock(), ["BlackFriday", "CTL | 이른봄날"])
+
+    mock_save.assert_called_once()
+    saved_records = mock_save.call_args[0][0]
+    by_name = {r["Name"]: r for r in saved_records}
+    assert by_name["BlackFriday"]["ChestContribution"] == 175
+    assert by_name["CTL | 이른봄날"]["Activeness"] == 0
+    assert by_name["CTL | 이른봄날"]["ChestContribution"] == 161
+
+
 def test_claim_friend_rewards_send_receive_found():
     """Cover if-branch: send_receive found → sleep, tap to close, then back."""
     bot = MockAllAFKJ()

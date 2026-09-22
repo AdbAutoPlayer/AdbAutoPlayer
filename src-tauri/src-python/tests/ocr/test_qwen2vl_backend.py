@@ -4,6 +4,8 @@ Covers:
 - _download_model_if_needed: partial-download detection via cache + shard check
 - _weight_shards_cached: verifies every shard in the safetensors index is cached
 - _init_model: OSError from from_pretrained triggers force re-download and retry
+- _init_model: Windows commitment-limit OSError (1455) retries without
+  re-downloading, since it is a memory-pressure error unrelated to file state
 - _init_model: KMP_DUPLICATE_LIB_OK is set before torch is imported
 """
 
@@ -168,6 +170,24 @@ class TestDownloadModelIfNeeded:
         mock_hf.try_to_load_from_cache.assert_not_called()
 
 
+class TestIsCommitmentLimitError:
+    def test_matches_via_winerror_attribute(self):
+        error = OSError("paging file too small")
+        error.winerror = 1455
+        assert QwenVLOCRBackend._is_commitment_limit_error(error) is True
+
+    def test_matches_via_message_when_winerror_missing(self):
+        """Some Rust-originated OSErrors don't populate .winerror."""
+        error = OSError(
+            "Il file di paging è troppo piccolo per essere completato. (os error 1455)"
+        )
+        assert QwenVLOCRBackend._is_commitment_limit_error(error) is True
+
+    def test_unrelated_oserror_does_not_match(self):
+        error = OSError("file not found")
+        assert QwenVLOCRBackend._is_commitment_limit_error(error) is False
+
+
 class TestInitModel:
     def _make_sys_mocks(self, proc_cls, model_cls):
         """Return sys.modules patches for torch and transformers.
@@ -246,6 +266,50 @@ class TestInitModel:
 
         assert result is False
         assert backend._model_load_failed is True
+
+    def test_commitment_limit_error_retries_without_redownload(self):
+        """Windows error 1455 (commitment limit) must not trigger a re-download.
+
+        Regression test: the paging-file-too-small error was previously
+        misdiagnosed as "incomplete local files" by the generic `except
+        OSError` handler, wasting a full ~2.2 GB re-download that could not
+        fix a system memory-pressure issue and failed identically on retry.
+        """
+        backend = QwenVLOCRBackend()
+
+        commitment_limit_error = OSError(
+            "Il file di paging è troppo piccolo per essere completato. (os error 1455)"
+        )
+        commitment_limit_error.winerror = 1455
+
+        mock_proc_cls = MagicMock()
+        mock_proc_cls.from_pretrained.side_effect = [
+            commitment_limit_error,
+            MagicMock(),
+        ]
+        mock_model_inst = MagicMock()
+        mock_model_cls = MagicMock()
+        mock_model_cls.from_pretrained.return_value = mock_model_inst
+
+        sys_mocks = self._make_sys_mocks(mock_proc_cls, mock_model_cls)
+
+        with (
+            patch.dict("sys.modules", sys_mocks),
+            patch.object(
+                type(backend),
+                "_is_available",
+                new_callable=PropertyMock,
+                return_value=True,
+            ),
+            patch.object(backend, "_download_model_if_needed") as mock_dl,
+            patch("gc.collect") as mock_gc_collect,
+        ):
+            result = backend._init_model()
+
+        assert result is True
+        mock_dl.assert_called_once_with()
+        mock_gc_collect.assert_called_once()
+        mock_model_inst.eval.assert_called_once()
 
 
 class TestKmpDuplicateLibWorkaround:

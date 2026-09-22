@@ -124,6 +124,15 @@ class HomesteadHelperMixin(AFKJourneyBase):
     # Crop region (x1, y1, x2, y2) of the Stamina counter ("4800/5000") shown
     # top-right of the Homestead overview screen, next to the green flame icon.
     HOMESTEAD_STAMINA_CROP: ClassVar[tuple[int, int, int, int]] = (760, 15, 950, 70)
+    # The Stamina counter is read right after returning to the homestead
+    # overview, where the UI may still be settling (same class of transient
+    # blank frame as the Wish Point panel below). A single OCR pass can also
+    # misread a digit and still produce a plausible (wrong) number, so a
+    # value is only trusted once two attempts agree - a stop-condition check
+    # that fails open on one bad read can let a craft trip through that
+    # should have been blocked.
+    HOMESTEAD_STAMINA_READ_ATTEMPTS = 5
+    HOMESTEAD_STAMINA_READ_DELAY = 0.6
 
     # Multiplier x10 is always selected before crafting (see
     # _handle_crafting_to_max), so one successful craft action produces this
@@ -427,22 +436,45 @@ class HomesteadHelperMixin(AFKJourneyBase):
     def _read_homestead_stamina(self) -> int | None:
         """Read the current Stamina value from the Homestead overview screen.
 
+        Retries until two attempts agree on the same value, since the UI may
+        still be settling right after navigating back to the overview (a
+        transient blank frame, same issue the Wish Point reader retries
+        around), and a single OCR pass can misread a digit and still produce
+        a plausible-looking but wrong number. Requiring agreement between two
+        reads catches that case, which a plain retry-until-readable would not
+        (the read isn't empty, just incorrect).
+
         Returns:
-            The current Stamina amount, or None if it could not be read.
+            The current Stamina amount, or None if it could not be confirmed.
         """
-        backend = getattr(self, "_homestead_ocr_backend", None)
+        backend = getattr(self, "_homestead_stamina_ocr_backend", None)
         if backend is None:
-            backend = RapidOCRBackend()
-            self._homestead_ocr_backend = backend
+            backend = RapidOCRBackend.pp_ocr_v5_rec()
+            self._homestead_stamina_ocr_backend = backend
 
         x1, y1, x2, y2 = self.HOMESTEAD_STAMINA_CROP
-        crop = self.get_screenshot()[y1:y2, x1:x2]
-        text = backend.extract_text(crop).strip()
-        match = re.match(r"^(\d+)/(\d+)$", text)
-        if match is None:
-            logging.debug("Could not read Homestead Stamina from OCR text: %r", text)
-            return None
-        return int(match.group(1))
+        last_candidate: int | None = None
+        for attempt in range(self.HOMESTEAD_STAMINA_READ_ATTEMPTS):
+            crop = self.get_screenshot()[y1:y2, x1:x2]
+            text = backend.extract_text(crop).strip()
+            match = re.match(r"^(\d+)/(\d+)$", text)
+            current_candidate = int(match.group(1)) if match is not None else None
+
+            if current_candidate is not None:
+                if current_candidate == last_candidate:
+                    return current_candidate
+                last_candidate = current_candidate
+
+            if attempt + 1 < self.HOMESTEAD_STAMINA_READ_ATTEMPTS:
+                sleep(self.HOMESTEAD_STAMINA_READ_DELAY)
+
+        logging.debug(
+            "Could not confirm Homestead Stamina after %d attempts "
+            "(last candidate: %r).",
+            self.HOMESTEAD_STAMINA_READ_ATTEMPTS,
+            last_candidate,
+        )
+        return None
 
     def _fulfill_requests_best_first(self) -> bool:
         """Fulfill requests best-first until a craft cycle or exhaustion.
@@ -703,8 +735,20 @@ class HomesteadHelperMixin(AFKJourneyBase):
         logging.info("Crafting done.")
 
         # Crafting consumed the last of an ingredient: the button is now grey.
-        # Craft the missing ingredient before returning to the caller.
+        # Craft the missing ingredient before returning to the caller - unless
+        # the stop condition was already reached by the batch that just
+        # completed. Without this re-check a single "trip" could spend two
+        # craft batches against a budget that only accounted for one
+        # (the pre-trip check in _homestead_craft_stop_condition_reached),
+        # overshooting a Stamina target that was already within one batch's
+        # reach.
         if result.template in gray_templates:
+            if self._homestead_craft_stop_condition_reached():
+                logging.info(
+                    "Craft stop condition reached after this batch - "
+                    "skipping the automatic missing-ingredient craft."
+                )
+                return True
             logging.info(
                 "Action button greyed-out after crafting - a required "
                 "ingredient ran out. Navigating to ingredient crafting."

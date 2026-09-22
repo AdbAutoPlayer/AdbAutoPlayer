@@ -609,6 +609,146 @@ class TestRecoverSupplementNamesQwen:
         assert len(supplemental) == 0
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# _collect_activeness_scroll_data — roster correction before dedup
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class TestCollectActivenessScrollDataRosterDedup:
+    """Regression: short "CTL|X" tag-prefixed names must not collide.
+
+    Raw-text fuzzy dedup ("_find_fuzzy_match", threshold 0.75) previously
+    ran before roster correction. Short guild-tagged names score deceptively
+    high pure SequenceMatcher similarity purely from the shared "CTL|"
+    prefix and short overall length — e.g. "ctl|jaz" vs "ctl|arnz" = 0.80,
+    "ctl|boki" vs "ctl|bork" = 0.875, "ctl|brew" vs "ctl|bork" = 0.75 — all
+    at or above the threshold, so the second real member observed would
+    silently get merged into the first one's record and vanish from the
+    final guild_activeness.json. Correcting each observation against the
+    roster first turns dedup into an exact-string lookup for recognized
+    members, which does not suffer from this collision.
+    """
+
+    def _bot(self):
+        return _GuildScan()
+
+    def test_short_ctl_tag_names_kept_distinct(self):
+        bot = self._bot()
+        guild_members = [
+            "CTL | Arnz",
+            "CTL | Jaz",
+            "CTL | BORK",
+            "CTL | Boki",
+            "CTL|Brew",
+        ]
+        frame_pairs = [
+            [
+                ("CTL|Arnz", "500"),
+                ("CTL|Jaz", "460"),
+                ("CTL|BORK", "700"),
+                ("CTL|Boki", "300"),
+                ("CTL|Brew", "250"),
+            ],
+            [],
+            [],
+            [],
+            [],
+            [],
+        ]
+
+        bot.get_screenshot = MagicMock(return_value=None)
+        bot._save_debug_screenshot = MagicMock()
+        bot.swipe_up = MagicMock()
+        with (
+            patch.object(bot, "_parse_activeness_rows", side_effect=frame_pairs),
+            patch("time.sleep"),
+        ):
+            records = bot._collect_activeness_scroll_data(MagicMock(), guild_members)
+
+        by_name = {r["Name"]: r["Activeness"] for r in records}
+        assert by_name["CTL | Arnz"] == 500
+        assert by_name["CTL | Jaz"] == 460
+        assert by_name["CTL | BORK"] == 700
+        assert by_name["CTL | Boki"] == 300
+        assert by_name["CTL|Brew"] == 250
+
+    def test_without_guild_members_falls_back_to_raw_fuzzy_dedup(self):
+        """No roster available: behaves exactly as before (raw fuzzy dedup)."""
+        bot = self._bot()
+        frame_pairs = [[("Sacrifar", "820")], [], [], [], [], []]
+
+        bot.get_screenshot = MagicMock(return_value=None)
+        bot._save_debug_screenshot = MagicMock()
+        bot.swipe_up = MagicMock()
+        with (
+            patch.object(bot, "_parse_activeness_rows", side_effect=frame_pairs),
+            patch("time.sleep"),
+        ):
+            records = bot._collect_activeness_scroll_data(MagicMock(), None)
+
+        assert records == [{"Name": "Sacrifar", "Activeness": 820}]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# _supplement_pairs_with_qwen_activeness — whole-frame recovery for scripts
+# RapidOCR cannot read at all (Korean Hangul, Cyrillic)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class TestSupplementPairsWithQwenActiveness:
+    def _bot(self):
+        return _GuildScan()
+
+    def test_adds_row_rapidocr_missed_entirely(self):
+        """A Korean name RapidOCR never detected (no name, no value block).
+
+        Gets recovered via Qwen's whole-frame extraction.
+        """
+        bot = self._bot()
+        bot._guild_members = ["CTL | 이른봄날", "Sacrifar"]
+        mock_qwen = MagicMock()
+        mock_qwen.extract_activeness_from_screenshot.return_value = [
+            ("CTL | 이른봄날", "657")
+        ]
+        bot._activeness_qwen = mock_qwen
+
+        pairs: list = [("Sacrifar", "820")]
+        bot._supplement_pairs_with_qwen_activeness(screenshot=None, pairs=pairs)
+
+        assert ("CTL | 이른봄날", "657") in pairs
+
+    def test_noop_when_no_qwen_backend(self):
+        bot = self._bot()
+        bot._activeness_qwen = None
+        pairs = [("Sacrifar", "820")]
+        bot._supplement_pairs_with_qwen_activeness(screenshot=None, pairs=pairs)
+        assert pairs == [("Sacrifar", "820")]
+
+    def test_duplicate_of_existing_pair_skipped(self):
+        bot = self._bot()
+        bot._guild_members = ["Sacrifar"]
+        mock_qwen = MagicMock()
+        mock_qwen.extract_activeness_from_screenshot.return_value = [
+            ("Sacrifar", "820")
+        ]
+        bot._activeness_qwen = mock_qwen
+        pairs = [("Sacrifar", "820")]
+        bot._supplement_pairs_with_qwen_activeness(screenshot=None, pairs=pairs)
+        assert pairs == [("Sacrifar", "820")]
+
+    def test_non_guild_name_below_threshold_discarded(self):
+        bot = self._bot()
+        bot._guild_members = ["Sacrifar"]
+        mock_qwen = MagicMock()
+        mock_qwen.extract_activeness_from_screenshot.return_value = [
+            ("CompletelyUnrelatedText", "820")
+        ]
+        bot._activeness_qwen = mock_qwen
+        pairs: list = []
+        bot._supplement_pairs_with_qwen_activeness(screenshot=None, pairs=pairs)
+        assert pairs == []
+
+
 class TestTorchMetadata:
     def test_cuda_only(self, tmp_path):
         _make_dist_info(tmp_path, "2.12.0+cu126")

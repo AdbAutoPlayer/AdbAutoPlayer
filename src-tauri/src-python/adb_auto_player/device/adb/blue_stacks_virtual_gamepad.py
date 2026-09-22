@@ -81,6 +81,18 @@ class BlueStacksVirtualGamepad(InputDevice):
         def hold_right(self, magnitude=1.0):
             self._hold(self._parent.ABS_MAX, self._parent.CENTER, magnitude)
 
+        def hold_up_left(self, magnitude=1.0):
+            self._hold(self._parent.ABS_MIN, self._parent.ABS_MIN, magnitude)
+
+        def hold_up_right(self, magnitude=1.0):
+            self._hold(self._parent.ABS_MAX, self._parent.ABS_MIN, magnitude)
+
+        def hold_down_left(self, magnitude=1.0):
+            self._hold(self._parent.ABS_MIN, self._parent.ABS_MAX, magnitude)
+
+        def hold_down_right(self, magnitude=1.0):
+            self._hold(self._parent.ABS_MAX, self._parent.ABS_MAX, magnitude)
+
         def up(self, duration=1.0, magnitude=1.0):
             self.hold_up(magnitude)
             time.sleep(duration)
@@ -98,6 +110,26 @@ class BlueStacksVirtualGamepad(InputDevice):
 
         def right(self, duration=1.0, magnitude=1.0):
             self.hold_right(magnitude)
+            time.sleep(duration)
+            self.release()
+
+        def up_left(self, duration=1.0, magnitude=1.0):
+            self.hold_up_left(magnitude)
+            time.sleep(duration)
+            self.release()
+
+        def up_right(self, duration=1.0, magnitude=1.0):
+            self.hold_up_right(magnitude)
+            time.sleep(duration)
+            self.release()
+
+        def down_left(self, duration=1.0, magnitude=1.0):
+            self.hold_down_left(magnitude)
+            time.sleep(duration)
+            self.release()
+
+        def down_right(self, duration=1.0, magnitude=1.0):
+            self.hold_down_right(magnitude)
             time.sleep(duration)
             self.release()
 
