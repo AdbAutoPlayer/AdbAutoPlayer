@@ -173,7 +173,7 @@ class TestDownloadModelIfNeeded:
 class TestIsCommitmentLimitError:
     def test_matches_via_winerror_attribute(self):
         error = OSError("paging file too small")
-        error.winerror = 1455
+        setattr(error, "winerror", 1455)
         assert QwenVLOCRBackend._is_commitment_limit_error(error) is True
 
     def test_matches_via_message_when_winerror_missing(self):
@@ -280,7 +280,7 @@ class TestInitModel:
         commitment_limit_error = OSError(
             "Il file di paging è troppo piccolo per essere completato. (os error 1455)"
         )
-        commitment_limit_error.winerror = 1455
+        setattr(commitment_limit_error, "winerror", 1455)
 
         mock_proc_cls = MagicMock()
         mock_proc_cls.from_pretrained.side_effect = [
