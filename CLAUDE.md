@@ -96,35 +96,38 @@ Android Device
 ### Frontend (`src/`)
 
 - `src/lib/form/` — Dynamic JSON Schema form renderer; game settings are rendered entirely from Pydantic model schemas, not hardcoded components.
-- `src/lib/stores.ts` — Global Svelte stores for app state (selected game, profile, running task, logs).
+- `src/lib/stores.svelte.ts` — Global Svelte stores for app state (selected game, profile, running task, logs).
 - `src/client/` — Auto-generated TypeScript client from PyTauri IPC definitions. **Do not edit manually.**
 - SvelteKit is configured as a static SPA (no SSR); all routing is client-side for Tauri compatibility.
 
 ### Rust (`src-tauri/src/`)
 
-- Thin command layer that delegates to Python via PyTauri plugin.
+- Embeds the Python interpreter via PyO3 (`ext_mod` module in `lib.rs`) and wires up Tauri plugins (updater, tray, single-instance, notifications, window-state).
 - Handles window management, system tray, and the auto-updater.
-- Commands defined in `commands.rs` map directly to Python callables.
+- Owns only a small set of its own Tauri commands, registered in `lib.rs`'s `invoke_handler!`: `show_window` (window.rs), and filesystem-backed settings I/O in `commands.rs`/`settings.rs` (`save_settings`, `delete_profile_settings`, `get_app_settings_form`, `save_app_settings`). It does **not** dispatch generic calls to Python — see below.
 
 ### Python (`src-tauri/src-python/adb_auto_player/`)
 
 | Module | Role |
 | --- | --- |
-| `game.py` | `Game` base class composed from mixins (`_InputMixin`, `_ScreenshotMixin`, `_TemplateMixin`, `_LifecycleMixin`, `_TaskMixin`). All tap/swipe/OCR/template-match helpers live here. |
-| `games/` | Concrete game implementations (e.g., `afk_journey/base.py`). Each subclasses `Game` and uses further mixins for large feature areas. |
+| `game/` | `Game` base class (`game.py`) composed from mixins in the same package (`_input_mixin.py`, `_screenshot_mixin.py`, `_template_mixin.py`, `_lifecycle_mixin.py`, `_task_mixin.py`, `_base.py`). All tap/swipe/OCR/template-match helpers live here. |
+| `games/` | Concrete game implementations: `afk_journey/` (largest, most actively developed), `blue_protocol_star_resonance/`, `guitar_girl/`. Each subclasses `Game` and uses further mixins for large feature areas. |
 | `device/adb/` | `AdbController` and `DeviceStream` — wraps adbutils for input injection and screen capture. |
 | `ocr/` | OCR via RapidOCR + ONNX runtime. |
 | `template_matching/` | OpenCV template matching with confidence scoring. |
 | `models/` | Pydantic models for device info, geometry (`Point`, `Coordinates`), IPC payloads. |
-| `registries/` | `GAME_REGISTRY` and `CUSTOM_ROUTINE_REGISTRY` — games and routines are auto-discovered at runtime. |
-| `file_loader/` | TOML-based settings with per-profile support. Settings live in `src-tauri/Settings/`. |
+| `registries/` | `GAME_REGISTRY`, `COMMAND_REGISTRY`, `CUSTOM_ROUTINE_REGISTRY`, `CACHE_REGISTRY` — games, commands, routines, and profile-aware caches are auto-discovered at runtime. |
+| `decorators/` | Package (not a single file): `register_game.py`, `register_command.py`, `register_custom_routine_choice.py`, `register_lru_cache.py` (exports `register_cache`, used for profile-aware caching). |
+| `file_loader/` | `SettingsLoader` — resolves per-profile settings/resource paths and loads TOML settings. |
 | `ipc/` | IPC data models (`GameGUIOptions`, `LogMessage`) shared between Python and the frontend. |
-| `tauri_context/` | Helpers that bridge Python game metadata into UI-renderable form structures. |
+| `tauri_context/` | Helpers that bridge Python game metadata into UI-renderable form structures; also holds `profile_aware_cache`. |
 | `main_cli.py` | Entry point for standalone CLI mode (no Tauri window). |
+| `__main__.py` | The actual PyTauri app entry point — builds the `Commands()` object, registers `start_task`/`stop_task`/`debug`/etc., and implements the multiprocessing task-execution model (see IPC section below). |
 
 ### Settings System
 
-- Per-profile TOML files under `src-tauri/Settings/{profile_index}/`.
+- Default/template TOML files (seed values for new profiles) live in `src-tauri/settings/` (**lowercase** — `ADB.toml`, `AFKJourney.toml`, `App.toml`).
+- Actual per-profile runtime settings are written by the Rust `save_settings` command to the OS app-config dir, at `{app_config_dir}/{profile_index}/*.toml` — **not** under `src-tauri/`. `SettingsLoader.set_app_config_dir()` points Python at this directory on every task/command invocation (see `tauri_profile_aware_command` in `__main__.py`).
 - Pydantic models validate and document all settings.
 - Changing a setting model in Python automatically updates the JSON Schema the frontend renders — no frontend code change needed.
 
@@ -136,7 +139,7 @@ To add a new game:
 2. Decorate it with `@register_game()` — supplies game metadata and the Pydantic settings class.
 3. Decorate task methods with `@register_command()` — wires them into the UI menu with optional labels/tooltips.
 4. For alternate task variants, use `@register_custom_routine_choice()` on methods.
-5. Add a TOML settings template under `src-tauri/Settings/`.
+5. Add a TOML settings template under `src-tauri/settings/`.
 
 All three decorator types are required to fully wire a game into the UI. The auto-discovery (`load_modules` + `discover_and_add_games`) picks up any decorated classes automatically — no manual registry edits needed.
 
@@ -204,10 +207,13 @@ if count > _MAX_RETRIES:
 - `tests/**/*.py` — D101–D103, PLR0913, PLR2004 ignored
 - `__main__.py` — D101–D103, PLW0603 ignored
 
-### IPC & Real-Time Logging
+### IPC & Task Execution Model
 
-- Tasks run in separate Python processes; logs are streamed to the UI via PyTauri `Emitter` events (`log-message`, `task-completed`).
-- `CacheGroup` enum controls profile-aware cache invalidation to prevent async race conditions.
+- **Most PyTauri commands live in Python, not Rust.** `__main__.py` builds its own `pytauri.Commands()` object and registers `start_task`, `stop_task`, `debug`, and cache/metadata commands via `@commands.command()` / the `@tauri_profile_aware_command` wrapper. Rust's `commands.rs`/`settings.rs` only own settings-file I/O and window control (see Rust section above) — Python registers the rest of the IPC surface independently, it is not routed through Rust.
+- `start_task` spawns each task in its own `multiprocessing.Process` (`run_task`), never in-process — this isolates task crashes from the main app. Logs cross the process boundary via a `multiprocessing.Queue` + `QueueListener`, which re-emits each record as a `log-message` event through PyTauri's `Emitter`.
+- Task lookup uses `Execute.find_command_and_execute(command, get_game_tasks())`; `get_game_tasks()` (`task_loader.py`) joins `COMMAND_REGISTRY` with `GAME_REGISTRY` to group commands by game.
+- A task process that exits with `STATUS_ACCESS_VIOLATION` (`0xC0000005`) is auto-retried up to `_MAX_CRASH_RETRIES` (2) times before surfacing as a failure — this is a known transient GPU/driver init race (seen with torch/CUDA), not a bug to chase on sight.
+- `task-completed` and `all-tasks-completed` events tell the frontend when a task, or all running tasks, finish. `CacheGroup` (`CACHE_REGISTRY`) controls profile-aware cache invalidation to prevent async race conditions between profiles.
 
 ---
 
@@ -251,13 +257,16 @@ src-tauri/src-python/adb_auto_player/models/template_matching/
 src-tauri/src-python/adb_auto_player/ipc/                    # shared Python↔frontend models
 src-tauri/src-python/adb_auto_player/registries/registries.py
 
-# Decorators
-src-tauri/src-python/adb_auto_player/decorators.py           # register_game, register_command, register_custom_routine_choice
+# Decorators (package, not a single file)
+src-tauri/src-python/adb_auto_player/decorators/register_game.py
+src-tauri/src-python/adb_auto_player/decorators/register_command.py
+src-tauri/src-python/adb_auto_player/decorators/register_custom_routine_choice.py
+src-tauri/src-python/adb_auto_player/decorators/register_lru_cache.py  # register_cache
 
-# Settings (TOML templates)
-src-tauri/Settings/App.toml
-src-tauri/Settings/ADB.toml
-src-tauri/Settings/AFKJourney.toml
+# Settings (TOML templates — note lowercase dir name)
+src-tauri/settings/App.toml
+src-tauri/settings/ADB.toml
+src-tauri/settings/AFKJourney.toml
 
 # Tests
 src-tauri/src-python/tests/test_game.py

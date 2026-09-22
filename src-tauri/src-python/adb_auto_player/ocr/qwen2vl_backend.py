@@ -1,5 +1,6 @@
 """Qwen2-VL-2B OCR backend for high-precision name extraction on GPU."""
 
+import gc
 import importlib.util
 import json
 import logging
@@ -15,6 +16,8 @@ from adb_auto_player.models.ocr import OCRResult
 from ._backend import OCRBackend
 
 logger = logging.getLogger(__name__)
+
+_WINDOWS_ERROR_COMMITMENT_LIMIT = 1455
 
 
 class QwenVLOCRBackend(OCRBackend):
@@ -171,6 +174,41 @@ class QwenVLOCRBackend(OCRBackend):
         finally:
             _stop.set()
 
+    @staticmethod
+    def _is_commitment_limit_error(error: OSError) -> bool:
+        """Return True if ``error`` is Windows' "paging file too small" error.
+
+        This occurs when the system doesn't have enough free virtual memory
+        (RAM + page file) to satisfy a large allocation — e.g. memory-mapping
+        a multi-gigabyte safetensors shard while other memory-heavy
+        applications (an Android emulator, a browser) are running. It is
+        unrelated to the downloaded files being incomplete or corrupt, so
+        re-downloading the model weights will not fix it.
+        """
+        winerror = getattr(error, "winerror", None)
+        return winerror == _WINDOWS_ERROR_COMMITMENT_LIMIT or str(
+            _WINDOWS_ERROR_COMMITMENT_LIMIT
+        ) in str(error)
+
+    def _load_processor_and_model(self, dtype: Any, device: str) -> None:
+        """Load the processor and model weights from the local cache."""
+        from transformers import (  # type: ignore  # noqa: PLC0415
+            Qwen2VLForConditionalGeneration,
+            Qwen2VLProcessor,
+        )
+
+        self._processor = Qwen2VLProcessor.from_pretrained(
+            self.MODEL_ID, trust_remote_code=True, local_files_only=True
+        )
+        self._model = Qwen2VLForConditionalGeneration.from_pretrained(
+            self.MODEL_ID,
+            torch_dtype=dtype,
+            device_map="auto" if device == "cuda" else device,
+            trust_remote_code=True,
+            low_cpu_mem_usage=True,
+            local_files_only=True,
+        )
+
     def _init_model(self) -> bool:
         if self._model is not None:
             return True
@@ -206,55 +244,43 @@ class QwenVLOCRBackend(OCRBackend):
             # Use direct imports to bypass AutoClass requirements checking,
             # which can fail when packages are installed in a non-standard path.
             import torch  # type: ignore  # noqa: PLC0415
-            from transformers import (  # type: ignore  # noqa: PLC0415
-                Qwen2VLForConditionalGeneration,
-                Qwen2VLProcessor,
-            )
 
             device = self._get_device()
             logger.info(
                 f"Initializing Qwen2-VL-2B on {device} (model: {self.MODEL_ID})..."
             )
             self._download_model_if_needed()
+            # low_cpu_mem_usage=True loads each layer directly to the target
+            # device (GPU) without staging the full model in CPU RAM first, but
+            # safetensors still memory-maps each shard file, which can still
+            # trip Windows' commitment limit (OS error 1455) under memory
+            # pressure from other running applications.
             dtype = torch.float16 if device == "cuda" else torch.float32
             try:
-                logger.debug("Qwen2-VL-2B: loading processor...")
-                self._processor = Qwen2VLProcessor.from_pretrained(
-                    self.MODEL_ID, trust_remote_code=True, local_files_only=True
-                )
-                logger.debug(
-                    "Qwen2-VL-2B: processor loaded, loading model weights "
-                    f"(device_map={'auto' if device == 'cuda' else device})..."
-                )
-                # low_cpu_mem_usage=True loads each layer directly to the target
-                # device (GPU) without staging the full model in CPU RAM first,
-                # avoiding Windows "paging file too small" errors (OS error 1455).
-                self._model = Qwen2VLForConditionalGeneration.from_pretrained(
-                    self.MODEL_ID,
-                    torch_dtype=dtype,
-                    device_map="auto" if device == "cuda" else device,
-                    trust_remote_code=True,
-                    low_cpu_mem_usage=True,
-                    local_files_only=True,
-                )
+                logger.debug("Qwen2-VL-2B: loading processor and model weights...")
+                self._load_processor_and_model(dtype, device)
                 logger.debug("Qwen2-VL-2B: model weights loaded.")
-            except OSError:
-                logger.warning(
-                    "Qwen2-VL-2B: incomplete local files detected — "
-                    "re-downloading missing weights and retrying."
-                )
-                self._download_model_if_needed(force_redownload=True)
-                self._processor = Qwen2VLProcessor.from_pretrained(
-                    self.MODEL_ID, trust_remote_code=True, local_files_only=True
-                )
-                self._model = Qwen2VLForConditionalGeneration.from_pretrained(
-                    self.MODEL_ID,
-                    torch_dtype=dtype,
-                    device_map="auto" if device == "cuda" else device,
-                    trust_remote_code=True,
-                    low_cpu_mem_usage=True,
-                    local_files_only=True,
-                )
+            except OSError as e:
+                if self._is_commitment_limit_error(e):
+                    logger.warning(
+                        "Qwen2-VL-2B: not enough system memory available to "
+                        "load the model right now (Windows error 1455 — "
+                        "commitment limit). This is unrelated to the "
+                        "downloaded files; close other memory-heavy "
+                        "applications (emulator, browser, etc.) if this keeps "
+                        "happening. Retrying once without re-downloading..."
+                    )
+                    gc.collect()
+                    if device == "cuda":
+                        torch.cuda.empty_cache()
+                    self._load_processor_and_model(dtype, device)
+                else:
+                    logger.warning(
+                        "Qwen2-VL-2B: incomplete local files detected — "
+                        "re-downloading missing weights and retrying."
+                    )
+                    self._download_model_if_needed(force_redownload=True)
+                    self._load_processor_and_model(dtype, device)
             logger.debug("Qwen2-VL-2B: calling model.eval()...")
             self._model.eval()
             logger.info("Qwen2-VL-2B initialized successfully.")

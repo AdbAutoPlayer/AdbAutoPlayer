@@ -31,17 +31,101 @@ class _Stub(HomesteadHelperMixin):
 
 
 class TestReadHomesteadStamina:
-    def test_parses_current_value_from_slash_format(self):
+    def test_confirms_value_once_two_reads_agree(self):
         bot = _Stub()
-        bot._homestead_ocr_backend = MagicMock(extract_text=lambda _: "4800/5000")
+        bot._homestead_stamina_ocr_backend = MagicMock(
+            extract_text=lambda _: "4800/5000"
+        )
 
         assert bot._read_homestead_stamina() == 4800
 
     def test_returns_none_when_unreadable(self):
         bot = _Stub()
-        bot._homestead_ocr_backend = MagicMock(extract_text=lambda _: "")
+        bot._homestead_stamina_ocr_backend = MagicMock(extract_text=lambda _: "")
 
-        assert bot._read_homestead_stamina() is None
+        with patch("adb_auto_player.games.afk_journey.mixins.homestead_helper.sleep"):
+            assert bot._read_homestead_stamina() is None
+
+    def test_retries_after_a_transient_blank_read(self):
+        """Regression test: one blank OCR read must not give up immediately.
+
+        Previously a single unreadable frame (e.g. the UI still settling
+        right after navigating back to the homestead overview) made this
+        return None outright, which the stop-condition check treats as
+        "not reached" - silently letting a craft trip through that should
+        have been blocked.
+        """
+        bot = _Stub()
+        bot._homestead_stamina_ocr_backend = MagicMock(
+            extract_text=MagicMock(side_effect=["", "4100/5000", "4100/5000"])
+        )
+
+        with patch("adb_auto_player.games.afk_journey.mixins.homestead_helper.sleep"):
+            assert bot._read_homestead_stamina() == 4100
+
+    def test_returns_none_after_exhausting_all_attempts(self):
+        bot = _Stub()
+        bot._homestead_stamina_ocr_backend = MagicMock(
+            extract_text=MagicMock(return_value="")
+        )
+
+        with patch(
+            "adb_auto_player.games.afk_journey.mixins.homestead_helper.sleep"
+        ) as mock_sleep:
+            assert bot._read_homestead_stamina() is None
+
+        assert (
+            bot._homestead_stamina_ocr_backend.extract_text.call_count
+            == bot.HOMESTEAD_STAMINA_READ_ATTEMPTS
+        )
+        assert mock_sleep.call_count == bot.HOMESTEAD_STAMINA_READ_ATTEMPTS - 1
+
+    def test_a_single_misread_does_not_get_trusted(self):
+        """Regression test: one plausible-but-wrong OCR read is not trusted.
+
+        Previously any single successful regex match was returned
+        immediately, so a garbled digit (a successful read, not an empty
+        one - retrying-on-empty doesn't catch this) could report a Stamina
+        value higher than reality, letting the stop-condition check think
+        there was still margin for another craft batch when there wasn't.
+        """
+        bot = _Stub()
+        bot._homestead_stamina_ocr_backend = MagicMock(
+            extract_text=MagicMock(side_effect=["4300/5000", "4100/5000", "4100/5000"])
+        )
+
+        with patch("adb_auto_player.games.afk_journey.mixins.homestead_helper.sleep"):
+            assert bot._read_homestead_stamina() == 4100
+
+    def test_persistent_disagreement_returns_none(self):
+        bot = _Stub()
+        bot._homestead_stamina_ocr_backend = MagicMock(
+            extract_text=MagicMock(
+                side_effect=[
+                    "4300/5000",
+                    "4100/5000",
+                    "4250/5000",
+                    "4180/5000",
+                    "4090/5000",
+                ]
+            )
+        )
+
+        with patch("adb_auto_player.games.afk_journey.mixins.homestead_helper.sleep"):
+            assert bot._read_homestead_stamina() is None
+
+    def test_uses_the_higher_accuracy_engine_by_default(self):
+        bot = _Stub()
+
+        with patch(
+            "adb_auto_player.games.afk_journey.mixins.homestead_helper.RapidOCRBackend"
+        ) as mock_backend_cls:
+            mock_backend_cls.pp_ocr_v5_rec.return_value = MagicMock(
+                extract_text=lambda _: "4800/5000"
+            )
+            assert bot._read_homestead_stamina() == 4800
+
+        mock_backend_cls.pp_ocr_v5_rec.assert_called_once()
 
 
 class TestHomesteadCraftStopConditionReached:
@@ -200,6 +284,63 @@ class TestHandleCraftingToMax:
         ):
             assert bot._handle_crafting_to_max() is True
 
+        assert bot._homestead_crafted_count == bot.HOMESTEAD_CRAFT_BATCH_SIZE
+
+    def test_grey_button_after_craft_runs_ingredient_craft_when_stop_not_reached(self):
+        """A second craft batch is only spent while still under the target."""
+        bot = _Stub()
+        ready_result = MagicMock(template=bot.HOMESTEAD_ACTION_BUTTON_TEMPLATES[0])
+        grey_result = MagicMock(template=bot.HOMESTEAD_GRAY_ACTION_BUTTON_TEMPLATES[0])
+
+        with (
+            patch.object(
+                bot, "wait_for_any_template", side_effect=[ready_result, grey_result]
+            ),
+            patch.object(bot, "tap"),
+            patch.object(
+                bot, "_homestead_craft_stop_condition_reached", return_value=False
+            ),
+            patch.object(
+                bot, "_handle_missing_ingredient_craft"
+            ) as mock_ingredient_craft,
+            patch("adb_auto_player.games.afk_journey.mixins.homestead_helper.sleep"),
+        ):
+            assert bot._handle_crafting_to_max() is True
+
+        mock_ingredient_craft.assert_called_once()
+
+    def test_grey_button_after_craft_skips_ingredient_craft_when_stop_reached(self):
+        """Regression test: a trip must not spend a second, unbudgeted batch.
+
+        Previously, if the action button came back grey after a successful
+        craft (a required ingredient ran out), the bot would immediately
+        craft that ingredient too - a second Stamina-consuming batch within
+        the same trip that the pre-trip stop-condition check never budgeted
+        for. That let a single trip overshoot a Stamina target that was
+        already within one batch's reach (e.g. target 4100, starting at
+        4200: the pre-trip check only ruled out going below 4100 with *one*
+        batch, but two batches landed at 4000).
+        """
+        bot = _Stub()
+        ready_result = MagicMock(template=bot.HOMESTEAD_ACTION_BUTTON_TEMPLATES[0])
+        grey_result = MagicMock(template=bot.HOMESTEAD_GRAY_ACTION_BUTTON_TEMPLATES[0])
+
+        with (
+            patch.object(
+                bot, "wait_for_any_template", side_effect=[ready_result, grey_result]
+            ),
+            patch.object(bot, "tap"),
+            patch.object(
+                bot, "_homestead_craft_stop_condition_reached", return_value=True
+            ),
+            patch.object(
+                bot, "_handle_missing_ingredient_craft"
+            ) as mock_ingredient_craft,
+            patch("adb_auto_player.games.afk_journey.mixins.homestead_helper.sleep"),
+        ):
+            assert bot._handle_crafting_to_max() is True
+
+        mock_ingredient_craft.assert_not_called()
         assert bot._homestead_crafted_count == bot.HOMESTEAD_CRAFT_BATCH_SIZE
 
 
