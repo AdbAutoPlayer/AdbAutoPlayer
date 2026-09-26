@@ -1,16 +1,14 @@
 # Changelog
 
-## [12.12.2] - 2026-09-22
+## [12.12.3] - 2026-09-26
 
 ### Added
 
-- **AFK Journey**: Added Senea and Aster to the hero list.
+- **AFK Journey**: Added Karma to the hero list.
 
 ### Bug Fixes
 
-- **Guild Scan (Activeness)**: Korean Hangul and Cyrillic guild member names, which RapidOCR cannot read at all, were skipped entirely by the Members-list scan (no name and no activeness block for the orphaned-name recovery pass to anchor on). Qwen2-VL is now used to supplement the scan with those missed rows.
-- **Guild Scan (Activeness)**: Guild-tagged names with short shared prefixes could score above the fuzzy-dedup threshold and get silently merged into a single record. Observed names are now matched against the exact roster before dedup is applied.
-- **Guild Scan (Activeness)**: Members with a chest contribution but no captured activeness row were dropped from the output; they're now included with `Activeness: 0`.
-- **Homestead Helper**: Fixed a craft overshoot where, after an automatic missing-ingredient craft, a second craft batch could run past the configured Stamina stop condition; the condition is now re-checked before that follow-up craft.
-- **Homestead Helper**: Fixed intermittent misreads of the Stamina counter by requiring two consecutive OCR reads to agree before trusting the value.
-- **OCR (Qwen2-VL)**: Distinguished Windows' "paging file too small" error (commitment limit, OS error 1455) from incomplete/corrupted downloaded model weights. The backend now frees memory and retries loading in place instead of needlessly re-downloading the model.
+- **Dura's Trials**: When Dura's Trials is locked (listed under "Coming Soon" in Battle Modes), the task failed with "Failed to tap: battle_modes/duras_trials.png, Template still visible." and aborted the whole Dailies run. It is now detected, skipped with a warning, and Dailies continue with the next step.
+- **Navigation (Resonating Hall)**: The World overview was not recognized at night (the Homestead button moved to the bottom-right and the day/night icon doesn't match the moon-only variant), so navigating to the Resonating Hall never tapped its button and timed out 3 times. This affected Equip new Equipment and every other task going through the Resonating Hall.
+- **Equip new Equipment**: After "Open all" the equipment rewards screen is now closed via its "Tap to close" hint instead of a single blind tap, which could leave the screen open and cost a full template timeout. The "Open all" retry loop is now correctly capped at 3 attempts.
+- **ADB**: The "Multiple displays detected, targeting display …" message is now logged at debug level instead of info.

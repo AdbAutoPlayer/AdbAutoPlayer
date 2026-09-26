@@ -4,6 +4,7 @@ from enum import StrEnum, auto
 
 from adb_auto_player.exceptions import (
     AutoPlayerError,
+    AutoPlayerWarningError,
     GameActionFailedError,
     GameNotRunningOrFrozenError,
     GameTimeoutError,
@@ -292,7 +293,9 @@ class Navigation(PopupMessageHandler, ABC):
                     "navigation/homestead/world.png",
                     "navigation/time_of_day.png",
                 ],
-                crop_regions=CropRegions(left=0.6, bottom=0.6),
+                # Full-height right strip: homestead_enter sits bottom-right,
+                # time_of_day top-right (and fails to match at night).
+                crop_regions=CropRegions(left=0.6),
             )
             is not None
         )
@@ -385,6 +388,11 @@ class Navigation(PopupMessageHandler, ABC):
             template="battle_modes/duras_trials.png",
             timeout_message="Dura's Trials not found.",
         )
+        coming_soon = self.game_find_template_match("battle_modes/coming_soon.png")
+        if self._is_in_coming_soon_section(result, coming_soon):
+            raise AutoPlayerWarningError(
+                "Dura's Trials is not available yet (Coming Soon), skipping."
+            )
         self._tap_till_template_disappears(result.template)
         self.sleep_action()
 
@@ -405,6 +413,16 @@ class Navigation(PopupMessageHandler, ABC):
             raise e
         self.sleep_action()
         return
+
+    @staticmethod
+    def _is_in_coming_soon_section(
+        entry: TemplateMatchResult, coming_soon: TemplateMatchResult | None
+    ) -> bool:
+        # Locked modes are listed below the "Coming Soon" header; their label
+        # looks identical to the unlocked one, so position is the only signal.
+        if coming_soon is None:
+            return False
+        return coming_soon.box.center.y < entry.box.center.y
 
     def _find_in_battle_modes(
         self, template: str, timeout_message: str

@@ -30,6 +30,11 @@ class EquipNewEquipment(AFKJourneyBase):
         "equipment/marksman.png",
         "equipment/tank.png",
     )
+    _TAP_TO_CLOSE_TEMPLATES = (
+        "tap_to_close.png",
+        "quests/tap_to_close.png",
+        "afk_stages/tap_to_close.png",
+    )
     _EQUIPMENT_TEMPLATE_THRESHOLD = ConfidenceValue("80%")
     _EQUIPMENT_TEMPLATE_CROP_REGIONS = CropRegions(
         top="40%",
@@ -175,6 +180,22 @@ class EquipNewEquipment(AFKJourneyBase):
         sleep(3)
         return
 
+    def _close_open_all_rewards(self, open_all: TemplateMatchResult) -> None:
+        # "Open all" shows the obtained Equipment with a "Tap to close" hint.
+        # A single blind tap after a fixed sleep can land during the reveal
+        # animation and leave the screen open, so tap until the hint is gone.
+        # TODO: confirm which template matches (no screenshot yet); the blind
+        # tap below is the previous behaviour, kept as fallback.
+        try:
+            tap_to_close = self.wait_for_any_template(
+                templates=list(self._TAP_TO_CLOSE_TEMPLATES),
+                timeout=self.fast_timeout,
+            )
+            self._tap_till_template_disappears(tap_to_close.template, tap_delay=2.0)
+        except AutoPlayerError:
+            sleep(2)
+            self.tap(open_all)
+
     def _navigate_to_equipment_screen(self) -> None:
         max_count = 3
         count = 0
@@ -206,12 +227,10 @@ class EquipNewEquipment(AFKJourneyBase):
                     result.template == "equipment/open_all.png"
                     and open_all_count < max_open_all_count
                 ):
-                    count += 1
+                    open_all_count += 1
                     logging.info("Opening Equipment Chests.")
                     self.tap(result)
-                    # Close the next Popup showing the Equipment
-                    sleep(2)
-                    self.tap(result)
+                    self._close_open_all_rewards(result)
                     result = self.wait_for_any_template(
                         templates=templates,
                         crop_regions=self._EQUIPMENT_TEMPLATE_CROP_REGIONS,

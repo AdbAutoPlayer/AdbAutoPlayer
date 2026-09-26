@@ -135,3 +135,4 @@ class HeroesEnum(StrEnum):
     Eryndor = auto()
     Senea = auto()
     Aster = auto()
+    Karma = auto()

@@ -34,7 +34,11 @@ class DurasTrialsMixin(AFKJourneyBase):
         """Push Dura's Trials."""
         self.start_up()
         self.battle_state.mode = Mode.DURAS_TRIALS
-        self.navigate_to_duras_trials_screen()
+        try:
+            self.navigate_to_duras_trials_screen()
+        except AutoPlayerWarningError as e:
+            logging.warning(f"{e}")
+            return
 
         try:
             self._handle_dura_screen()

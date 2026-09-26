@@ -1,12 +1,18 @@
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import cv2
+import numpy as np
+from adb_auto_player.exceptions import AutoPlayerWarningError
 from adb_auto_player.games.afk_journey.navigation import Navigation, Overview
+from adb_auto_player.image_manipulation import Cropping
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box, Point
 from adb_auto_player.models.template_matching.template_match_result import (
     TemplateMatchResult,
 )
+from adb_auto_player.template_matching.template_matcher import TemplateMatcher
 
 
 class MockNavigation(Navigation):
@@ -246,6 +252,119 @@ class TestFindInBattleModes(unittest.TestCase):
         )
 
         self.mock_swipe_up.assert_not_called()
+
+
+def _match(template: str, y: int) -> TemplateMatchResult:
+    return TemplateMatchResult(
+        template=template,
+        confidence=ConfidenceValue(1.0),
+        box=Box(Point(30, y), 260, 50),
+    )
+
+
+class TestDurasTrialsComingSoon(unittest.TestCase):
+    """Regression: locked Dura's Trials sits under the "Coming Soon" header.
+
+    Its label is identical to the unlocked one, so tapping it did nothing and
+    `_tap_till_template_disappears` raised GameActionFailedError, aborting
+    the whole Dailies run.
+    """
+
+    def setUp(self):
+        self.nav = MockNavigation.__new__(MockNavigation)
+        self.mock_game_find_template_match = MagicMock()
+        self.mock_find_in_battle_modes = MagicMock()
+        self.mock_tap_till_disappears = MagicMock()
+        self.nav.game_find_template_match = self.mock_game_find_template_match
+        self.nav.navigate_to_battle_modes_screen = MagicMock()
+        self.nav._find_in_battle_modes = self.mock_find_in_battle_modes
+        self.nav._tap_till_template_disappears = self.mock_tap_till_disappears
+        self.nav.sleep_action = MagicMock()
+        self.nav.tap = MagicMock()
+        self.nav.wait_for_template = MagicMock()
+
+    def test_entry_below_header_is_locked(self):
+        self.assertTrue(
+            Navigation._is_in_coming_soon_section(
+                _match("battle_modes/duras_trials.png", 1420),
+                _match("battle_modes/coming_soon.png", 988),
+            )
+        )
+
+    def test_entry_above_header_is_unlocked(self):
+        self.assertFalse(
+            Navigation._is_in_coming_soon_section(
+                _match("battle_modes/duras_trials.png", 800),
+                _match("battle_modes/coming_soon.png", 988),
+            )
+        )
+
+    def test_no_header_is_unlocked(self):
+        self.assertFalse(
+            Navigation._is_in_coming_soon_section(
+                _match("battle_modes/duras_trials.png", 1420), None
+            )
+        )
+
+    def test_navigate_raises_warning_when_locked(self):
+        dura = _match("battle_modes/duras_trials.png", 1420)
+        header = _match("battle_modes/coming_soon.png", 988)
+        # stop_condition (not on Dura screen) -> None, then the header lookup.
+        self.mock_game_find_template_match.side_effect = [None, header]
+        self.mock_find_in_battle_modes.return_value = dura
+
+        with self.assertRaises(AutoPlayerWarningError):
+            self.nav.navigate_to_duras_trials_screen()
+
+        self.mock_tap_till_disappears.assert_not_called()
+
+    def test_navigate_taps_when_unlocked(self):
+        dura = _match("battle_modes/duras_trials.png", 1420)
+        self.mock_game_find_template_match.side_effect = [None, None]
+        self.mock_find_in_battle_modes.return_value = dura
+
+        self.nav.navigate_to_duras_trials_screen()
+
+        self.mock_tap_till_disappears.assert_called_once_with(dura.template)
+
+
+_DATA_DIR = Path(__file__).parent / "data"
+_TEMPLATE_DIR = (
+    Path(__file__).parents[3] / "adb_auto_player/games/afk_journey/templates"
+)
+
+
+def _imread(path: Path) -> np.ndarray:
+    image = cv2.imread(str(path))
+    assert image is not None, f"Could not read {path}"
+    return image
+
+
+class TestIsInOverviewNight(unittest.TestCase):
+    """Regression: `_is_in_overview` returned False in the World at night.
+
+    Its crop kept only the top-right quadrant, but homestead_enter moved to the
+    bottom-right and time_of_day does not match the night-only moon icon.
+    `navigate_to_resonating_hall` then never tapped the Resonating Hall button
+    and timed out 3 times (seen after "Opening Equipment Chests").
+    """
+
+    def setUp(self):
+        self.screenshot = _imread(_DATA_DIR / "world_overview_night.png")
+        self.nav = MockNavigation.__new__(MockNavigation)
+        self.nav.find_any_template = MagicMock(side_effect=self._find_any_template)
+
+    def _find_any_template(self, templates, crop_regions, **_):
+        cropped = Cropping.crop(self.screenshot, crop_regions)
+        for template in templates:
+            if TemplateMatcher.find_template_match(
+                cropped.image, _imread(_TEMPLATE_DIR / template)
+            ):
+                return template
+        return None
+
+    def test_world_at_night_is_overview(self):
+        self.assertTrue(self.nav._is_in_overview())
 
 
 if __name__ == "__main__":
