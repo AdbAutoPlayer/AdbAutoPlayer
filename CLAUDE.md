@@ -436,6 +436,33 @@ uv run pytest --cov --cov-branch
 
 ## Known Quirks / Gotchas
 
+### Manual ADB screenshots on multi-display emulators (MuMuPlayer)
+
+- **Bundled `adb.exe` paths** (use these directly with Bash, no need for `adb` on PATH):
+  - `src-tauri/src-python/adb_auto_player/binaries/adb.exe` (the one the app itself ships/uses)
+  - `.venv/Lib/site-packages/adbutils/binaries/adb.exe` and `src-tauri/pyembed/python/Lib/site-packages/adbutils/binaries/adb.exe` (vendored copies, equivalent)
+- List devices with `adb devices -l`; if empty, the emulator's adb server needs reconnecting: `adb connect 127.0.0.1:<port>` (common local ports: `5555`/`5557`/`7555`).
+- **MuMuPlayer's Android 15 image exposes 3+ virtual displays** (`mumuscreen000/001/002`). A plain `device.screenshot()` (adbutils) or `screencap` with no `-d` can grab an idle/wrong display (e.g. the home screen launcher) instead of the one running the game — this is not a template-matching or resolution bug, it's a capture-target bug. See `[[project_mumuplayer_multi_display_fix]]` memory for the in-app `AdbController` fix; when scripting ad hoc (outside the app, e.g. to capture a new template), resolve it manually:
+  - Find which WM display currently hosts the game (`visible=true` task for the game's package):
+
+    ```bash
+    adb -s 127.0.0.1:5557 shell dumpsys window displays | grep -E "Display:|mCurrentFocus"
+    ```
+
+  - Map that WM `mDisplayId` to its physical id via `uniqueId` (needed because `screencap -d` and `input -d` take different id spaces):
+
+    ```bash
+    adb -s 127.0.0.1:5557 shell dumpsys display | grep -i mViewports
+    ```
+
+  - Capture from that exact physical display:
+
+    ```bash
+    adb -s 127.0.0.1:5557 exec-out screencap -p -d <physical_id> > out.png
+    ```
+
+  - Re-verify the display mapping on every new session/reconnect — it is not guaranteed stable across emulator restarts.
+
 ### CJK / Korean characters in OCR and file edits
 
 - The guild scan OCR (`guild_member_scan.py`) handles Korean and CJK member names (e.g. `이른봄날`, `典明`, `旅人`). RapidOCR may output heuristic variants like `弓号言l0` → `이른봄날`; diacritics stripping is applied on both the OCR output and the guild member name before comparison.

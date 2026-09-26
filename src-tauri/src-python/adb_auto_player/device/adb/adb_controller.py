@@ -234,7 +234,7 @@ class AdbController:
             ):
                 physical_id = wm_id_to_physical_id.get(current_wm_id)
                 if physical_id:
-                    logging.info(
+                    logging.debug(
                         "Multiple displays detected, targeting display "
                         f"{current_wm_id} (physical id {physical_id}) for "
                         "screenshots and input"
