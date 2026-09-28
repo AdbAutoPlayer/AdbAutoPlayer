@@ -36,10 +36,39 @@ class DeviceSettings(BaseModel):
     )
 
 
+class WirelessDebuggingSettings(BaseModel):
+    """Android 11+ Wireless Debugging settings model."""
+
+    enabled: bool = Field(
+        False,
+        title="Enable Wireless Debugging (Android 11+)",
+        description=(
+            "When the Device ID cannot be reached, find the phone on the local "
+            "network (its port changes on every reboot) and pair it if needed."
+        ),
+    )
+    pairing_address: str = Field(
+        "",
+        title="Pairing Address (IP:Port)",
+        description=(
+            "Shown under 'Pair device with pairing code'. Only needed the first "
+            "time; can be cleared once paired."
+        ),
+    )
+    pairing_code: str = Field(
+        "",
+        title="Pairing Code",
+        description="6-digit code shown under 'Pair device with pairing code'.",
+    )
+
+
 class AdbSettings(TomlSettings):
     """Adb settings model."""
 
     device: DeviceSettings = Field(default_factory=DeviceSettings, title="Device")
+    wireless_debugging: WirelessDebuggingSettings = Field(
+        default_factory=WirelessDebuggingSettings, title="Wireless Debugging"
+    )
     advanced: AdvancedSettings = Field(
         default_factory=AdvancedSettings, title="Advanced"
     )

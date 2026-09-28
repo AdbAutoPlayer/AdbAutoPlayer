@@ -1,5 +1,7 @@
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import cv2
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.games.afk_journey.custom_routine.equip_new_equipment import (
     EquipNewEquipment,
@@ -7,7 +9,14 @@ from adb_auto_player.games.afk_journey.custom_routine.equip_new_equipment import
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.geometry import Box, Point
 from adb_auto_player.models.template_matching import TemplateMatchResult
+from adb_auto_player.template_matching.template_matcher import TemplateMatcher
 
+_DATA_DIR = Path(__file__).parent / "data"
+_TEMPLATE_DIR = (
+    Path(__file__).parents[3] / "adb_auto_player/games/afk_journey/templates"
+)
+_STRIP_TOP = 1700
+_CENTER_TOLERANCE_PX = 20
 _SLEEP = "adb_auto_player.games.afk_journey.custom_routine.equip_new_equipment.sleep"
 
 
@@ -61,21 +70,41 @@ def test_close_rewards_taps_tap_to_close_until_gone():
     bot._tap_till_template_disappears = tap_till_disappears
     bot.wait_for_any_template = MagicMock(return_value=_match("tap_to_close.png"))
 
-    bot._close_open_all_rewards(_match("equipment/open_all.png"))
+    bot._close_open_all_rewards()
 
     tap_till_disappears.assert_called_once_with("tap_to_close.png", tap_delay=2.0)
     tap.assert_not_called()
 
 
-def test_close_rewards_falls_back_to_blind_tap():
-    """No "Tap to close" template matched: keep the previous blind tap."""
+def test_close_rewards_fallback_taps_bottom_not_open_all():
+    """Regression: the old blind tap reused the "Open all" position.
+
+    On the "Treasure Obtained" grid that spot is an Equipment card, so the tap
+    opened its detail popup instead of closing the rewards screen.
+    """
     bot = _Stub.__new__(_Stub)
-    open_all = _match("equipment/open_all.png")
     tap = MagicMock()
     bot.tap = tap
     bot.wait_for_any_template = MagicMock(side_effect=GameTimeoutError("nope"))
 
-    with patch(_SLEEP):
-        bot._close_open_all_rewards(open_all)
+    bot._close_open_all_rewards()
 
-    tap.assert_called_once_with(open_all)
+    tap.assert_called_once_with(EquipNewEquipment._TAP_TO_CLOSE_POINT)
+
+
+def test_tap_to_close_template_matches_treasure_obtained_screen():
+    """The first tap-to-close template matches the real rewards screen."""
+    # Bottom strip (y 1700-1920) of a 1080x1920 "Treasure Obtained" capture.
+    strip = cv2.imread(str(_DATA_DIR / "equipment_treasure_obtained_bottom.png"))
+    template = cv2.imread(
+        str(_TEMPLATE_DIR / EquipNewEquipment._TAP_TO_CLOSE_TEMPLATES[0])
+    )
+    assert strip is not None
+    assert template is not None
+
+    match = TemplateMatcher.find_template_match(strip, template)
+
+    assert match is not None
+    center = EquipNewEquipment._TAP_TO_CLOSE_POINT
+    assert abs(match.box.center.x - center.x) < _CENTER_TOLERANCE_PX
+    assert abs(match.box.center.y + _STRIP_TOP - center.y) < _CENTER_TOLERANCE_PX

@@ -14,6 +14,10 @@ export async function applySettingsFromFile() {
 
 export async function applySettings(newSettings: AppSettings) {
   settings.setSettings(newSettings);
+  const profileCount = newSettings.profiles?.profiles?.length;
+  if (profileCount !== undefined && profiles.states.length > profileCount) {
+    profiles.setStates(profiles.states.slice(0, profileCount));
+  }
   if (newSettings.profiles?.active_profile !== undefined) {
     profiles.select(newSettings.profiles.active_profile);
   }

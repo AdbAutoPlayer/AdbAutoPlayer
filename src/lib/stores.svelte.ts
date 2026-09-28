@@ -4,6 +4,8 @@ class ProfileStore {
   active = $state<number>(0);
   states = $state<ProfileState[]>([]);
   timestamp = $state<number | null>(null);
+  // ms; profile state events requested before this may carry a stale index.
+  listChangedAt = 0;
 
   select(index: number) {
     this.active = index;
@@ -57,6 +59,13 @@ const defaultUiState = {
   accentHue: 272,
   customizerOpen: false,
   taskViewVariant: "cards" as "cards" | "palette" | "accordion",
+  // Seasonal event modes most users don't need; applies until the user
+  // hides/unhides any card, after which their saved list is used.
+  hiddenTasks: [
+    "AFK Journey::FrostfireShowdown",
+    "AFK Journey::SunlitShowdown",
+  ] as string[],
+  showHiddenTasks: false,
 };
 
 class UiStore {
@@ -68,6 +77,8 @@ class UiStore {
   accentHue = $state(defaultUiState.accentHue);
   customizerOpen = $state(defaultUiState.customizerOpen);
   taskViewVariant = $state(defaultUiState.taskViewVariant);
+  hiddenTasks = $state<string[]>([...defaultUiState.hiddenTasks]);
+  showHiddenTasks = $state(defaultUiState.showHiddenTasks);
 
   constructor() {
     if (typeof window !== "undefined") {
@@ -82,6 +93,10 @@ class UiStore {
           if (parsed.accentHue !== undefined) this.accentHue = parsed.accentHue;
           if (parsed.taskViewVariant !== undefined)
             this.taskViewVariant = parsed.taskViewVariant;
+          if (Array.isArray(parsed.hiddenTasks))
+            this.hiddenTasks = parsed.hiddenTasks;
+          if (parsed.showHiddenTasks !== undefined)
+            this.showHiddenTasks = parsed.showHiddenTasks;
         }
       } catch (e) {
         console.error("Failed to load uiState from localStorage", e);
@@ -98,6 +113,8 @@ class UiStore {
           theme: this.theme,
           accentHue: this.accentHue,
           taskViewVariant: this.taskViewVariant,
+          hiddenTasks: this.hiddenTasks,
+          showHiddenTasks: this.showHiddenTasks,
         };
         localStorage.setItem("uiState", JSON.stringify(stateToSave));
       } catch (e) {
@@ -140,6 +157,22 @@ class UiStore {
 
   setTaskViewVariant(variant: "cards" | "palette" | "accordion") {
     this.taskViewVariant = variant;
+    this.save();
+  }
+
+  isTaskHidden(taskKey: string | undefined): boolean {
+    return taskKey !== undefined && this.hiddenTasks.includes(taskKey);
+  }
+
+  toggleTaskHidden(taskKey: string) {
+    this.hiddenTasks = this.isTaskHidden(taskKey)
+      ? this.hiddenTasks.filter((key) => key !== taskKey)
+      : [...this.hiddenTasks, taskKey];
+    this.save();
+  }
+
+  setShowHiddenTasks(show: boolean) {
+    this.showHiddenTasks = show;
     this.save();
   }
 }

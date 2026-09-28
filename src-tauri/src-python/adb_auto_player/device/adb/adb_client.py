@@ -1,4 +1,5 @@
 import logging
+import time
 from logging import DEBUG, WARNING
 
 from adb_auto_player.decorators import register_cache
@@ -10,6 +11,10 @@ from adbutils import AdbClient, AdbDevice, AdbError
 from adbutils._proto import AdbDeviceInfo
 
 from .adb_utils import _set_adb_path
+from .wireless_debugging import discover_connect_addresses, pair_device
+
+_MDNS_DISCOVERY_ATTEMPTS = 3
+_MDNS_DISCOVERY_INTERVAL_SECONDS = 1.0
 
 
 class AdbClientHelper:
@@ -148,6 +153,8 @@ def _resolve_device(
     """
     device_id = SettingsLoader.adb_settings().device.id
     device: AdbDevice | None = _connect_to_device(client, device_id)
+    if device is None:
+        device = _try_wireless_debugging(client, device_id)
     devices: list[AdbDeviceInfo] = _get_devices(client)
 
     if not device and not SettingsLoader.adb_settings().advanced.auto_resolve_device:
@@ -185,6 +192,60 @@ def _resolve_device(
 
     logging.debug(f"Connected to Device: {device.serial}")
     return device
+
+
+def _try_wireless_debugging(client: AdbClient, device_id: str) -> AdbDevice | None:
+    """Find (and pair if needed) a phone using Android 11+ Wireless Debugging.
+
+    The connect port changes every time Wireless Debugging is toggled or the phone
+    reboots, so the configured Device ID quickly goes stale. Paired phones announce
+    their current address via mDNS; unpaired ones are paired with the configured
+    pairing code first.
+    """
+    settings = SettingsLoader.adb_settings().wireless_debugging
+    if not settings.enabled:
+        return None
+
+    device = _connect_to_discovered_device(client, device_id, attempts=1)
+    if device is not None:
+        return device
+
+    if not settings.pairing_address or not settings.pairing_code:
+        logging.debug(
+            "Wireless Debugging: no paired device found and no pairing code set."
+        )
+        return None
+
+    if not pair_device(
+        settings.pairing_address, settings.pairing_code, client.host, client.port
+    ):
+        return None
+
+    # The phone takes a moment to show up in mDNS after pairing.
+    return _connect_to_device(client, device_id) or _connect_to_discovered_device(
+        client, device_id, attempts=_MDNS_DISCOVERY_ATTEMPTS
+    )
+
+
+def _connect_to_discovered_device(
+    client: AdbClient, device_id: str, attempts: int
+) -> AdbDevice | None:
+    # Prefer an address on the same host as the configured Device ID.
+    preferred_host = device_id.rsplit(":", 1)[0]
+    for attempt in range(attempts):
+        if attempt:
+            time.sleep(_MDNS_DISCOVERY_INTERVAL_SECONDS)
+        addresses = discover_connect_addresses(client.host, client.port)
+        addresses.sort(key=lambda a: a.rsplit(":", 1)[0] != preferred_host)
+        for address in addresses:
+            device = _connect_to_device(client, address)
+            if device is not None:
+                logging.info(
+                    f"Wireless Debugging: connected to {address}. "
+                    f"You can set it as Device ID in the ADB Settings."
+                )
+                return device
+    return None
 
 
 def _try_common_ports_and_device_ids(

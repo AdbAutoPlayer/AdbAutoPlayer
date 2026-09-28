@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { MenuButton } from "$lib/menu/model";
+  import { ui } from "$lib/stores.svelte";
   import TaskFilters from "./TaskFilters.svelte";
   import TaskVariantRenderer from "./TaskVariantRenderer.svelte";
 
@@ -13,9 +14,19 @@
 
   let query = $state("");
 
+  // A running task stays visible even if hidden, so it can still be stopped.
+  const isVisible = (b: MenuButton) =>
+    ui.showHiddenTasks || b.isProcessRunning || !ui.isTaskHidden(b.taskKey);
+
+  const hiddenCount = $derived(
+    buttons.filter((b) => ui.isTaskHidden(b.taskKey)).length,
+  );
+
   const filteredButtons = $derived(
-    buttons.filter((b) =>
-      b.option.label.toLowerCase().includes(query.toLowerCase()),
+    buttons.filter(
+      (b) =>
+        isVisible(b) &&
+        b.option.label.toLowerCase().includes(query.toLowerCase()),
     ),
   );
 
@@ -43,7 +54,7 @@
 </script>
 
 <div class="task-grid-container">
-  <TaskFilters bind:query />
+  <TaskFilters bind:query {hiddenCount} />
   <TaskVariantRenderer
     {activeCategories}
     {categorizedButtons}

@@ -88,6 +88,16 @@
           ) {
             return;
           }
+          // A slow state request (e.g. a profile without a device) can answer
+          // after its profile was deleted and would re-add or overwrite a row.
+          const profileCount =
+            settings.settings?.profiles?.profiles?.length ?? 1;
+          if (
+            event.payload.index >= profileCount ||
+            event.payload.timestamp < profiles.listChangedAt
+          ) {
+            return;
+          }
           profiles.states[event.payload.index] = {
             game_menu: event.payload.state.game_menu,
             active_task: event.payload.state.active_task,
@@ -276,7 +286,10 @@
     }
   }
 
+  let deletingProfile = false;
+
   async function handleDeleteProfile(index: number) {
+    if (deletingProfile) return;
     if (!settings.settings || !settings.settings.profiles?.profiles) return;
     const currentProfiles = settings.settings.profiles.profiles;
     if (currentProfiles.length <= 1) return;
@@ -288,6 +301,15 @@
     } else if (newActive > index) {
       newActive--;
     }
+
+    // Remove the row right away so the UI doesn't look like the click was
+    // ignored; restored below if deleting fails.
+    const previousStates = profiles.states;
+    const previousActive = profiles.active;
+    deletingProfile = true;
+    profiles.listChangedAt = Date.now();
+    profiles.setStates(previousStates.filter((_, i) => i !== index));
+    profiles.select(newActive);
 
     try {
       // Profile settings folders are named after array position, not a
@@ -311,11 +333,14 @@
         settings: newSettings,
       });
       await applySettings(savedSettings);
-      profiles.setStates(profiles.states.filter((_, i) => i !== index));
       profiles.select(newActive);
       void logInfo(`Deleted profile at index ${index}`);
     } catch (error) {
+      profiles.setStates(previousStates);
+      profiles.select(previousActive);
       void logError(`Failed to delete profile: ${error}`);
+    } finally {
+      deletingProfile = false;
     }
   }
 

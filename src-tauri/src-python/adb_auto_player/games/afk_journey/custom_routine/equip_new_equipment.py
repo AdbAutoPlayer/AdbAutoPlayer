@@ -22,6 +22,7 @@ from ..base import AFKJourneyBase
 
 class EquipNewEquipment(AFKJourneyBase):
     _EQUIPMENT_POINT = Point(970, 1660)
+    _TAP_TO_CLOSE_POINT = Point(540, 1814)
     _EQUIPMENT_TEMPLATES = (
         "equipment/support.png",
         "equipment/mage.png",
@@ -180,12 +181,10 @@ class EquipNewEquipment(AFKJourneyBase):
         sleep(3)
         return
 
-    def _close_open_all_rewards(self, open_all: TemplateMatchResult) -> None:
-        # "Open all" shows the obtained Equipment with a "Tap to close" hint.
-        # A single blind tap after a fixed sleep can land during the reveal
-        # animation and leave the screen open, so tap until the hint is gone.
-        # TODO: confirm which template matches (no screenshot yet); the blind
-        # tap below is the previous behaviour, kept as fallback.
+    def _close_open_all_rewards(self) -> None:
+        # "Open all" shows a "Treasure Obtained" grid with a "Tap to close" hint
+        # at the bottom. Tapping where "Open all" was lands on an Equipment card
+        # of that grid and opens its detail popup instead of closing the screen.
         try:
             tap_to_close = self.wait_for_any_template(
                 templates=list(self._TAP_TO_CLOSE_TEMPLATES),
@@ -193,8 +192,7 @@ class EquipNewEquipment(AFKJourneyBase):
             )
             self._tap_till_template_disappears(tap_to_close.template, tap_delay=2.0)
         except AutoPlayerError:
-            sleep(2)
-            self.tap(open_all)
+            self.tap(self._TAP_TO_CLOSE_POINT)
 
     def _navigate_to_equipment_screen(self) -> None:
         max_count = 3
@@ -230,7 +228,7 @@ class EquipNewEquipment(AFKJourneyBase):
                     open_all_count += 1
                     logging.info("Opening Equipment Chests.")
                     self.tap(result)
-                    self._close_open_all_rewards(result)
+                    self._close_open_all_rewards()
                     result = self.wait_for_any_template(
                         templates=templates,
                         crop_regions=self._EQUIPMENT_TEMPLATE_CROP_REGIONS,

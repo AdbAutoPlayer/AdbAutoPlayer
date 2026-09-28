@@ -40,6 +40,7 @@
           .map((menuOption) => ({
             callback: () => callStartTask(menuOption),
             isProcessRunning: menuOption.label === activeTask,
+            taskKey: `${gameMenu.game_title}::${menuOption.args.join(" ")}`,
             option: {
               ...menuOption,
               label: menuOption.custom_label ?? menuOption.label,
