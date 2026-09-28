@@ -18,12 +18,12 @@ Run AdbAutoPlayer on a real Android phone **without a USB cable**. The phone and
 
 ## Before You Start
 
-| Requirement                     | Details                                                                                                                                  |
-|---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| **Android 11 or newer**         | Wireless debugging does not exist on older versions. On Android 10 or older, use the [USB guide](real-phone-guide.md) instead.            |
-| **Developer options enabled**   | Follow [Step 1 of the Real Phone Guide](real-phone-guide.md#step-1-enable-developer-options) (tap "Build number" 7 times).              |
-| **Same network**                | The phone must be on **Wi-Fi**, connected to the **same router** as the PC. The PC itself can use Wi-Fi **or** an Ethernet cable.       |
-| **A home/private network**      | Guest networks and public Wi-Fi (hotels, cafés, schools) usually block devices from seeing each other. Use your normal home network.    |
+| Requirement                   | Details                                                                                                                              |
+|-------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| **Android 11 or newer**       | Wireless debugging does not exist on older versions. On Android 10 or older, use the [USB guide](real-phone-guide.md) instead.       |
+| **Developer options enabled** | Follow [Step 1 of the Real Phone Guide](real-phone-guide.md#step-1-enable-developer-options) (tap "Build number" 7 times).           |
+| **Same network**              | The phone must be on **Wi-Fi**, connected to the **same router** as the PC. The PC itself can use Wi-Fi **or** an Ethernet cable.    |
+| **A home/private network**    | Guest networks and public Wi-Fi (hotels, cafés, schools) usually block devices from seeing each other. Use your normal home network. |
 
 > [!NOTE]
 > You only need to **pair** once. After that, turning Wireless debugging on is enough.
@@ -60,8 +60,11 @@ You are now on the **Wireless debugging** screen. Near the top it shows **"IP ad
 > [!IMPORTANT]
 > **Keep this popup open** until pairing is finished. The code and port stop working as soon as the popup closes. Opening it again gives you a **new** code and port.
 
+<!-- -->
+
 > [!WARNING]
 > The popup's **IP address & Port** is **not** the same as the one on the main Wireless debugging screen: the IP is the same but the **port is different**.
+>
 > - Popup (pairing) → goes in **Pairing Address**
 > - Main screen (Step 1) → goes in **Device ID**
 
@@ -86,9 +89,11 @@ You should see all of these:
 
 - **On the phone:** the pairing popup closes by itself, and your PC appears under **"Paired devices"** on the Wireless debugging screen.
 - **In the AdbAutoPlayer log:**
-  ```
+
+  ```text
   Wireless Debugging: paired with 192.168.1.50:41001
   ```
+
 - **In the profile list (left sidebar):** your profile shows the phone's address instead of **"no device"**.
 
 When it works:
@@ -105,10 +110,10 @@ Clearing them stops the app from retrying an old, expired code when the phone is
 
 The bot is designed for a **1080x1920** portrait screen. Most phones have a different resolution, so in **ADB Settings → Device**:
 
-| Setting                           | What to do                                                                                              |
-|-----------------------------------|---------------------------------------------------------------------------------------------------------|
-| **Resize Display (Phone/Tablet)** | Turn **ON**. The bot changes the phone's display size to 1080x1920 when it starts.                      |
-| **Vertical Screen Offset (px)**   | Leave at **0** unless the bot taps in the wrong place (see the warning below).                          |
+| Setting                           | What to do                                                                         |
+|-----------------------------------|------------------------------------------------------------------------------------|
+| **Resize Display (Phone/Tablet)** | Turn **ON**. The bot changes the phone's display size to 1080x1920 when it starts. |
+| **Vertical Screen Offset (px)**   | Leave at **0** unless the bot taps in the wrong place (see the warning below).     |
 
 To give the phone its normal resolution back, use the **Reset Display Size** button shown in ADB Settings.
 
@@ -116,10 +121,12 @@ To give the phone its normal resolution back, use the **Reset Display Size** but
 > **Vertical Screen Offset: when taps or text reading are slightly off**
 >
 > On some phones, after **Resize Display**, the game is drawn a little **higher or lower** than the bot expects. This is usually caused by the status bar, a notch or the camera cutout. When this happens you will notice that:
+>
 > - taps land **a bit above or below** the button they were meant for;
 > - scans (for example guild or hero scans) **miss rows or read the wrong text**.
 >
 > **Vertical Screen Offset** corrects this. It shifts everything the bot sees and taps by that many pixels:
+>
 > - **positive** value (e.g. `40`): the game content is **lower** than expected;
 > - **negative** value (e.g. `-40`): the game content is **higher** than expected.
 >
@@ -133,9 +140,11 @@ To give the phone its normal resolution back, use the **Reset Display Size** but
 
 - **Turn Wireless debugging on** each time you want to use the bot. Many phones switch it **off after a restart** or when you join a different Wi-Fi network. You do **not** need to pair again.
 - **The port changes** every time Wireless debugging is turned on, so your saved Device ID gets outdated. With **Enable Wireless Debugging** ON, AdbAutoPlayer finds the new port by itself. The log then shows:
-  ```
+
+  ```text
   Wireless Debugging: connected to 192.168.1.50:40211. You can set it as Device ID in the ADB Settings.
   ```
+
   Updating the Device ID is optional, but it makes connecting faster.
 - **The Scan button** next to Device ID also finds the phone (with the option ON and saved). It suggests the **first** device found: if an emulator is running too, it may suggest the emulator instead.
 - **Keep the phone awake and charging** during long runs. Enable **"Stay awake"** in Developer options, and keep the phone cool (see the [Real Phone Guide](real-phone-guide.md#important-considerations)).
@@ -148,17 +157,17 @@ To give the phone its normal resolution back, use the **Reset Display Size** but
 
 ## Troubleshooting
 
-| Problem                                                                                               | Solution                                                                                                                                                                                                                                             |
-|-------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **"Wireless debugging" is missing** in Developer options                                              | The phone runs Android 10 or older. Use the [USB guide](real-phone-guide.md).                                                                                                                                                                        |
-| The switch turns **off by itself** right after turning it on                                           | The phone is not on Wi-Fi (mobile data does not work). Connect to Wi-Fi and try again.                                                                                                                                                               |
-| Log: *"pairing with … failed: … protocol fault"* or *"connection refused"*                           | The pairing popup was closed, so the code expired. Open **"Pair device with pairing code"** again and enter the **new** code **and** port, then save. Leave the popup open.                                                                            |
-| Log: *"pairing with … failed: Wrong password"*                                                        | The code was mistyped. Use the code currently shown in the popup.                                                                                                                                                                                    |
-| Pairing succeeded but the profile still shows **"no device"**                                          | Check that **Device ID** holds the address from the **main** Wireless debugging screen, **not** the popup's pairing address.                                                                                                                      |
-| Worked yesterday, **not today**                                                                       | Turn Wireless debugging back on. Make sure **Enable Wireless Debugging** is ON so the new port is found automatically, or copy the new "IP address & Port" into Device ID.                                                                          |
-| The app **never finds the phone**, and the Scan button finds nothing                                  | The PC and the phone are probably on different networks: a guest network, a second router or mesh node with its own network, a VPN on the PC, or "AP/client isolation" turned on in the router. Put both on the same home network. As a fallback, copy the phone's "IP address & Port" into **Device ID** by hand. |
-| Windows asks whether **adb.exe** may use the network                                                  | Click **Allow** (tick private networks). If you clicked Cancel before, allow `adb.exe` in *Windows Security → Firewall → Allow an app through firewall*.                                                                                           |
-| Taps are **slightly above/below** the buttons                                                          | Adjust the [Vertical Screen Offset](#step-4-screen-settings-for-real-phones).                                                                                                                                                                        |
-| The phone disconnects when the screen turns off                                                       | Enable **"Stay awake"** in Developer options and keep the phone charging. Turn off battery optimisation for Wi-Fi if your phone has that option.                                                                                                     |
+| Problem                                                                    | Solution                                                                                                                                                                                                                                                                                                           |
+|----------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **"Wireless debugging" is missing** in Developer options                   | The phone runs Android 10 or older. Use the [USB guide](real-phone-guide.md).                                                                                                                                                                                                                                      |
+| The switch turns **off by itself** right after turning it on               | The phone is not on Wi-Fi (mobile data does not work). Connect to Wi-Fi and try again.                                                                                                                                                                                                                             |
+| Log: *"pairing with … failed: … protocol fault"* or *"connection refused"* | The pairing popup was closed, so the code expired. Open **"Pair device with pairing code"** again and enter the **new** code **and** port, then save. Leave the popup open.                                                                                                                                        |
+| Log: *"pairing with … failed: Wrong password"*                             | The code was mistyped. Use the code currently shown in the popup.                                                                                                                                                                                                                                                  |
+| Pairing succeeded but the profile still shows **"no device"**              | Check that **Device ID** holds the address from the **main** Wireless debugging screen, **not** the popup's pairing address.                                                                                                                                                                                       |
+| Worked yesterday, **not today**                                            | Turn Wireless debugging back on. Make sure **Enable Wireless Debugging** is ON so the new port is found automatically, or copy the new "IP address & Port" into Device ID.                                                                                                                                         |
+| The app **never finds the phone**, and the Scan button finds nothing       | The PC and the phone are probably on different networks: a guest network, a second router or mesh node with its own network, a VPN on the PC, or "AP/client isolation" turned on in the router. Put both on the same home network. As a fallback, copy the phone's "IP address & Port" into **Device ID** by hand. |
+| Windows asks whether **adb.exe** may use the network                       | Click **Allow** (tick private networks). If you clicked Cancel before, allow `adb.exe` in *Windows Security → Firewall → Allow an app through firewall*.                                                                                                                                                           |
+| Taps are **slightly above/below** the buttons                              | Adjust the [Vertical Screen Offset](#step-4-screen-settings-for-real-phones).                                                                                                                                                                                                                                      |
+| The phone disconnects when the screen turns off                            | Enable **"Stay awake"** in Developer options and keep the phone charging. Turn off battery optimisation for Wi-Fi if your phone has that option.                                                                                                                                                                   |
 
 Still stuck? See the general [Troubleshooting](troubleshoot.md) page, then click **Show Debug info** in the app and include the log when asking for help.
