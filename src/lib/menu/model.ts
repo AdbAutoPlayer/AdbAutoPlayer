@@ -6,6 +6,8 @@ export interface MenuButton {
   alwaysEnabled?: boolean;
   isProcessRunning: boolean;
   option: MenuOption;
+  // Stable id ("<game>::<command>") used to hide the card; unset = not hideable.
+  taskKey?: string;
 }
 
 export interface SettingsProps {

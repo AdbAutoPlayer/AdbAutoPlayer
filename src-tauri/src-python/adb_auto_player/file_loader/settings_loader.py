@@ -8,6 +8,7 @@ from adb_auto_player.models.decorators import CacheGroup
 from adb_auto_player.models.pydantic import (
     AdbSettings,
 )
+from adb_auto_player.registries import CACHE_REGISTRY
 from adb_auto_player.tauri_context import profile_aware_cache
 
 _profile_app_config_dir: contextvars.ContextVar[Path | None] = contextvars.ContextVar(
@@ -71,29 +72,30 @@ class SettingsLoader:
     @profile_aware_cache(maxsize=1)
     def adb_settings() -> AdbSettings:
         """Locate and load the general settings AdbAutoPlayer.toml file."""
-        from adb_auto_player.decorators import register_cache  # noqa: PLC0415
-
-        @register_cache(CacheGroup.ADB_SETTINGS)
-        def _load():
-            settings_file_path = SettingsLoader.settings_dir() / "ADB.toml"
-            logging.debug(f"Python AdbAutoPlayer.toml path: {settings_file_path}")
-            return AdbSettings.from_toml(settings_file_path)
-
-        return _load()
+        settings_file_path = SettingsLoader.settings_dir() / "ADB.toml"
+        logging.debug(f"Python AdbAutoPlayer.toml path: {settings_file_path}")
+        return AdbSettings.from_toml(settings_file_path)
 
     @staticmethod
     @profile_aware_cache(maxsize=1)
     def app_settings():
         """Locate and load the general application settings AdbAutoPlayer.toml file."""
-        from adb_auto_player.decorators import register_cache  # noqa: PLC0415
         from adb_auto_player.models.pydantic.app_settings import (  # noqa: PLC0415
             AppSettings,
         )
 
-        @register_cache(CacheGroup.APP_SETTINGS)
-        def _load():
-            settings_file_path = SettingsLoader.settings_dir() / "AdbAutoPlayer.toml"
-            logging.debug(f"Python AdbAutoPlayer.toml path: {settings_file_path}")
-            return AppSettings.from_toml(settings_file_path)
+        settings_file_path = SettingsLoader.settings_dir() / "AdbAutoPlayer.toml"
+        logging.debug(f"Python AdbAutoPlayer.toml path: {settings_file_path}")
+        return AppSettings.from_toml(settings_file_path)
 
-        return _load()
+
+# Registered here instead of with @register_cache: importing
+# adb_auto_player.decorators from this module is a circular import.
+# The cached wrappers themselves must be registered (not an inner loader),
+# otherwise saving the settings never invalidates them.
+CACHE_REGISTRY.setdefault(CacheGroup.ADB_SETTINGS, []).append(
+    (SettingsLoader.adb_settings, True)
+)
+CACHE_REGISTRY.setdefault(CacheGroup.APP_SETTINGS, []).append(
+    (SettingsLoader.app_settings, True)
+)

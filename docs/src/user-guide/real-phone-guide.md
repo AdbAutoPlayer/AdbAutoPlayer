@@ -2,6 +2,9 @@
 
 A comprehensive guide to enable USB debugging on popular Android phone brands for AdbAutoPlayer.
 
+> [!TIP]
+> On **Android 11 or newer** you can skip the cable: see [Wireless Debugging (Wi-Fi)](wireless-debugging.md).
+
 ---
 
 ## Table of Contents
@@ -34,6 +37,7 @@ A comprehensive guide to enable USB debugging on popular Android phone brands fo
 | Setting                           | Description                                                              |
 |-----------------------------------|--------------------------------------------------------------------------|
 | **Resize Display (Phone/Tablet)** | Enable this - Changes your display size to 1080x1920 when the bot starts |
+| **Vertical Screen Offset (px)**   | Leave at 0 - only change it if taps land slightly above/below buttons, see [Vertical Screen Offset](wireless-debugging.md#step-4-screen-settings-for-real-phones) |
 
 ---
 

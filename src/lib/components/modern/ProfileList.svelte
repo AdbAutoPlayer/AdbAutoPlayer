@@ -1,6 +1,6 @@
 <script lang="ts">
   import { t } from "$lib/i18n/i18n";
-  import { profiles } from "$lib/stores.svelte";
+  import { profiles, settings } from "$lib/stores.svelte";
 
   interface Props {
     collapsed: boolean;
@@ -13,6 +13,12 @@
     $props();
 
   const profileList = $derived(profiles.states);
+
+  function profileName(index: number) {
+    return (
+      settings.settings?.profiles?.profiles?.[index] ?? `Profile ${index + 1}`
+    );
+  }
 
   function getStatus(index: number) {
     const p = profiles.states[index];
@@ -32,15 +38,8 @@
   <div class="list">
     {#each profiles.states as _, i}
       {@const p = profiles.states[i]}
-      {@const pName = profiles.states[i]?.device_id
-        ? `Profile ${i + 1}`
-        : "Default"}
-      {@const displayProfileName = profiles.states[i]
-        ? `Profile ${i + 1}`
-        : "Profile"}
       {@const status = getStatus(i)}
       {@const selected = i === profiles.active}
-      {@const profileName = profiles.states[i] ? `Profile ${i + 1}` : "Profile"}
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
@@ -67,7 +66,7 @@
         </div>
         <div class="info">
           <div class="name-row">
-            <div class="name">Profile {i + 1}</div>
+            <div class="name">{profileName(i)}</div>
           </div>
           <div class="device">
             {p?.device_id || $t("no device")}
@@ -93,7 +92,7 @@
             title={$t("Rename profile")}
             onclick={(e) => {
               e.stopPropagation();
-              const currentName = `Profile ${i + 1}`;
+              const currentName = profileName(i);
               const newName = prompt(
                 $t("Enter new profile name:"),
                 currentName,
@@ -155,7 +154,7 @@
         class="rail-btn"
         class:selected
         onclick={() => onSelectProfile(i)}
-        title={`Profile ${i + 1} — ${profiles.states[i]?.device_id || $t("offline")}`}
+        title={`${profileName(i)} — ${profiles.states[i]?.device_id || $t("offline")}`}
       >
         <svg
           viewBox="0 0 24 24"

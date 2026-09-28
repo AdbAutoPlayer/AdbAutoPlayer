@@ -107,6 +107,8 @@ class AFKJourneyBase(
                 return getattr(self.settings.legend_trials, attribute)
             case Mode.RAVAGED_REALM:
                 return getattr(self.settings.ravaged_realm, attribute)
+            case Mode.UNION_CAMPAIGN:
+                return getattr(self.settings.union_campaign, attribute)
             case _:
                 return getattr(self.settings.afk_stages, attribute)
 

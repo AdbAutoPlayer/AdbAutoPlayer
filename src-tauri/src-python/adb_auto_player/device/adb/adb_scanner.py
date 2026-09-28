@@ -1,4 +1,4 @@
-"""ADB device and port scanner for running emulators."""
+"""ADB device and port scanner for running emulators and Wireless Debugging."""
 
 import logging
 import os
@@ -8,6 +8,12 @@ from typing import TypedDict
 
 import psutil
 from adb_auto_player.device.adb.adb_client import AdbClientHelper
+from adb_auto_player.device.adb.wireless_debugging import (
+    discover_connect_services,
+    is_same_device,
+)
+from adb_auto_player.file_loader import SettingsLoader
+from adbutils import AdbClient
 
 
 class _EmulatorInfo(TypedDict):
@@ -159,7 +165,29 @@ def scan_emulator_ports() -> list[str]:
         except Exception as e:
             logging.debug(f"Failed to connect to device {device_id}: {e}")
 
+    # 7. Paired phones announced via Wireless Debugging (opt-in)
+    if SettingsLoader.adb_settings().wireless_debugging.enabled:
+        active_devices.extend(_scan_wireless_devices(client, active_devices))
+
     # De-duplicate preserving order
     result = list(dict.fromkeys(active_devices))
     logging.info(f"Discovered active ADB devices: {result}")
     return result
+
+
+def _scan_wireless_devices(client: AdbClient, known_serials: list[str]) -> list[str]:
+    """Connect to paired phones found via mDNS that are not listed yet.
+
+    adb may have auto-connected a paired phone under its mDNS serial
+    (`adb-<id>._adb-tls-connect._tcp`); that phone is not listed twice.
+    """
+    found: list[str] = []
+    for service in discover_connect_services(client.host, client.port):
+        if any(is_same_device(serial, service) for serial in known_serials):
+            continue
+        try:
+            if AdbClientHelper.get_adb_device(service.address) is not None:
+                found.append(service.address)
+        except Exception as e:
+            logging.debug(f"Failed to connect to device {service.address}: {e}")
+    return found

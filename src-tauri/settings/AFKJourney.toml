@@ -70,6 +70,14 @@ Formations = 10
 "Skip Manual Formations" = false
 "Run Manual Formations Last" = true
 
+["Union Campaign"]
+Attempts = 5
+Formations = 10
+"Start with current Formation" = true
+"Suggested Formations" = true
+"Skip Manual Formations" = false
+"Run Manual Formations Last" = true
+
 [General]
 "Assist Limit" = 20
 "Exclude Heroes" = []

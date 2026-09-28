@@ -9,3 +9,8 @@ streaming = true
 streaming_fps = 30
 use_wm_resize = false
 vertical_offset = 0
+
+[wireless_debugging]
+enabled = false
+pairing_address = ""
+pairing_code = ""

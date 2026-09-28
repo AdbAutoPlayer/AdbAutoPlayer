@@ -71,12 +71,6 @@ You can decide what format it should be stored in, in the Settings too.
 
 ___
 
-### Physical Device Setup
-**Topics Needed:**
-- Wireless debugging setup
-
-___
-
 ### Custom Routine Documentation
 **Content Needed:**
 - Feature explanation and workflow

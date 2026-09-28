@@ -5,6 +5,7 @@ from typing import Annotated
 
 from adb_auto_player.models.pydantic import TaskListSettings, TomlSettings
 from pydantic import BaseModel, Field
+from pydantic.json_schema import SkipJsonSchema
 
 from .heroes import HeroesEnum
 
@@ -134,6 +135,15 @@ class DurasTrialsSettings(BattleAllowsManualSettings):
     """Dura's Trials Settings model."""
 
     pass
+
+
+class UnionCampaignSettings(BattleAllowsManualSettings):
+    """Union Campaign Settings model."""
+
+    # Union Campaign has no paid attempts: hide the option from the UI and the
+    # saved TOML, but keep the attribute (always False) for the shared battle
+    # logic. No alias, so a stray "Spend Gold" key in the TOML is ignored.
+    spend_gold: SkipJsonSchema[bool] = Field(default=False, exclude=True)
 
 
 class LegendTrialsSettings(BattleAllowsManualSettings):
@@ -379,6 +389,11 @@ class Settings(TomlSettings):
         default_factory=DurasTrialsSettings,
         alias="Dura's Trials",
         title="Dura's Trials",
+    )
+    union_campaign: UnionCampaignSettings = Field(
+        default_factory=UnionCampaignSettings,
+        alias="Union Campaign",
+        title="Union Campaign",
     )
     legend_trials: LegendTrialsSettings = Field(
         default_factory=LegendTrialsSettings,

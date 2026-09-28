@@ -414,6 +414,62 @@ class Navigation(PopupMessageHandler, ABC):
         self.sleep_action()
         return
 
+    def navigate_to_union_campaign_screen(self) -> None:
+        """Navigate to the Union Campaign floor screen (Battle Modes > Guild Mode)."""
+        logging.info("Navigating to Union Campaign screen")
+
+        def stop_condition() -> bool:
+            match = self.game_find_template_match(
+                template="union_campaign/current_label.png",
+                crop_regions=CropRegions(left=0.2, right=0.2, top=0.55, bottom=0.15),
+            )
+            return match is not None
+
+        if stop_condition():
+            return
+
+        self.navigate_to_battle_modes_screen()
+
+        # The Guild Mode tab pill only needs tapping if its content (the Union
+        # Campaign card) isn't already showing - e.g. Guild Mode was already
+        # the active tab from a previous visit. Its pill also renders
+        # differently active vs. inactive, so this also sidesteps needing a
+        # second template for the active-tab appearance.
+        if (
+            self.game_find_template_match(template="battle_modes/union_campaign.png")
+            is None
+        ):
+            try:
+                guild_mode_tab = self.wait_for_template(
+                    "battle_modes/guild_mode_tab.png",
+                    crop_regions=CropRegions(top=0.75, bottom=0.05),
+                    timeout=self.template_timeout,
+                )
+            except GameTimeoutError as e:
+                self.capture_debug_screenshot("guild_mode_tab_not_found")
+                raise GameTimeoutError("Could not find Guild Mode tab.") from e
+            self.tap(guild_mode_tab)
+            self.sleep_navigation()
+
+        result = self._find_in_battle_modes(
+            template="battle_modes/union_campaign.png",
+            timeout_message="Could not find Union Campaign Label",
+        )
+        self._tap_till_template_disappears(result.template)
+        self.sleep_navigation()
+
+        try:
+            self.wait_for_template(
+                template="union_campaign/current_label.png",
+                crop_regions=CropRegions(left=0.2, right=0.2, top=0.55, bottom=0.15),
+                timeout=self.template_timeout,
+                diagnostic_recheck=True,
+            )
+        except GameTimeoutError as e:
+            self.capture_debug_screenshot("union_campaign_screen_not_found")
+            raise e
+        self.sleep_action()
+
     @staticmethod
     def _is_in_coming_soon_section(
         entry: TemplateMatchResult, coming_soon: TemplateMatchResult | None
