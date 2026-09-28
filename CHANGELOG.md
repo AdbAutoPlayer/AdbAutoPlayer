@@ -4,7 +4,7 @@
 
 ### Added
 
-- **AFK Journey – Union Campaign**: New task (Game Modes, also available in Custom Routines) that pushes Union Campaign floors from Battle Modes > Guild Mode. It supports the usual battle options (Attempts, Formations, Suggested/Manual Formations). There are no paid attempts, so it has no "Spend Gold" option, and it never taps "Sweep".
+- **AFK Journey – Union Campaign**: New task (Game Modes, also available in Custom Routines) that pushes Union Campaign floors from Battle Modes > Guild Mode. It supports the usual battle options (Attempts, Formations, Suggested/Manual Formations). It never taps "Sweep".
 - **ADB – Wireless Debugging (Android 11+)**: New "Wireless Debugging" section in the ADB Settings. When the configured Device ID can't be reached, the app finds the phone on the local network via mDNS (the port changes on every reboot or toggle) and pairs it with the pairing address and code if needed. Paired phones also show up in the device scan. A new [Wireless Debugging (Wi-Fi)](docs/src/user-guide/wireless-debugging.md) guide covers the setup.
 - **UI – Hide tasks**: Task cards can now be hidden with the eye button. A "Hidden (n)" toggle in the toolbar shows them again. Frostfire Showdown and Sunlit Showdown are hidden by default. A running task stays visible so it can still be stopped.
 
