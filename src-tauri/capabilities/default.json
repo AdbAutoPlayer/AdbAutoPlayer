@@ -5,6 +5,14 @@
   "permissions": [
     "core:default",
     "opener:default",
+    {
+      "allow": [
+        {
+          "path": "$APPCONFIG/**"
+        }
+      ],
+      "identifier": "opener:allow-open-path"
+    },
     "pytauri:default",
     "core:app:allow-default-window-icon"
   ],
