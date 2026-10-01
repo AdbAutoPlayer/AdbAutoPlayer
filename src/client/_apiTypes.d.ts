@@ -103,6 +103,10 @@ save_log_file: {
 input: SaveLogFileBody
 output: string
 }
+get_debug_screenshots_dir: {
+input: ProfileContext
+output: string
+}
 }
 export interface StartTaskBody {
 profile_index: ProfileIndex

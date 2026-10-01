@@ -3,6 +3,7 @@
 import logging
 import math
 import random
+import re
 from abc import ABC
 from time import sleep
 
@@ -14,8 +15,13 @@ from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.ocr import RapidOCRBackend
 
 _GENERIC_HOLD_CENTER_TOLERANCE = 50
+# Title banner of the battle formation screen: "AFK Stage 261",
+# "Season <name> Stage 536". Story battles show "Battle Story" instead.
+_FORMATION_TITLE_CROP = (250, 20, 830, 115)  # x1, y1, x2, y2
+_AFK_STAGE_TITLE_PATTERN = re.compile(r"\bStage\s*\d+", re.IGNORECASE)
 
 
 class QuestMixin(AFKJourneyBase, ABC):
@@ -116,6 +122,9 @@ class QuestMixin(AFKJourneyBase, ABC):
         if not homestead_button:
             # Attempt to close any full screen flavour text
             logging.info("Clearing full screen popup")
+            # Blind tap sits next to the Battle tab: keep the screen that
+            # triggered it so bug reports show what was actually there
+            self.capture_debug_screenshot("quests_blind_popup_tap")
             self.tap(Point(550, 1825))
             sleep(2)
             back_arrow = self.game_find_template_match("quests/back_arrow.png")
@@ -325,6 +334,13 @@ class QuestMixin(AFKJourneyBase, ABC):
         )
         if result is None:
             return False
+        if result.template == "quests/start_battle" and self._is_afk_stages_screen():
+            # Same green "Battle" button as AFK Stages: without this check the
+            # loop would Battle -> Back -> Battle forever on the wrong screen
+            logging.warning("AFK Stages screen detected — returning to world")
+            self.capture_debug_screenshot("quests_afk_stages_detected")
+            self.navigate_to_world()
+            return True
         logging.info(
             "Clicking button: "
             + result.template.split("/")[-1].replace("_", " ").capitalize()
@@ -343,6 +359,16 @@ class QuestMixin(AFKJourneyBase, ABC):
         else:
             sleep(1)
         return True
+
+    def _is_afk_stages_screen(self) -> bool:
+        """Return True if the formation screen belongs to AFK Stages."""
+        backend = getattr(self, "_quest_title_ocr_backend", None)
+        if backend is None:
+            backend = RapidOCRBackend.pp_ocr_v5_rec()
+            self._quest_title_ocr_backend = backend
+        x1, y1, x2, y2 = _FORMATION_TITLE_CROP
+        title = backend.extract_text(self.get_screenshot()[y1:y2, x1:x2])
+        return is_afk_stage_title(title)
 
     def _handle_gesture_quest(self, gesture_button) -> None:
         """Open emote menu and click the appropriate quest gesture."""
@@ -441,3 +467,15 @@ class QuestMixin(AFKJourneyBase, ABC):
             return True
 
         return False
+
+
+def is_afk_stage_title(title: str) -> bool:
+    """Return True if an OCR'd formation title is an AFK Stages title.
+
+    Args:
+        title: Text read from the formation screen title banner.
+
+    Returns:
+        True for "AFK Stage N" / "Season <name> Stage N", False otherwise.
+    """
+    return _AFK_STAGE_TITLE_PATTERN.search(title) is not None

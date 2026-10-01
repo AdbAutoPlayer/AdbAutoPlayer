@@ -86,3 +86,10 @@ export async function saveLogFile(
 ): Promise<Commands["save_log_file"]["output"]> {
     return await pyInvoke("save_log_file", body, options);
 }
+
+export async function getDebugScreenshotsDir(
+    body: Commands["get_debug_screenshots_dir"]["input"],
+    options?: InvokeOptions
+): Promise<Commands["get_debug_screenshots_dir"]["output"]> {
+    return await pyInvoke("get_debug_screenshots_dir", body, options);
+}
