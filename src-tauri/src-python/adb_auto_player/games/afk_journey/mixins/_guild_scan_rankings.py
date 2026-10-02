@@ -18,9 +18,12 @@ from adb_auto_player.ocr.qwen2vl_backend import QwenVLOCRBackend
 
 from ._guild_scan_identity import _GuildScanIdentityMixin
 
-_HANGUL_RE = re.compile(r"[가-힣ᄀ-ᇿ㄰-㆏]")
-_CJK_RE = re.compile(r"[一-鿿぀-ヿ豈-﫿]")
-_CYRILLIC_RE = re.compile(r"[Ѐ-ӿ]")
+_HANGUL_RE = re.compile(r"[\uac00-\ud7a3\u1100-\u11ff\u3130-\u318f]")
+# Escaped on purpose: written as literals, the compatibility ideograph
+# U+F900 gets NFC-normalized to U+8C48 by editors, and the range then
+# swallows every Hangul syllable.
+_CJK_RE = re.compile(r"[\u4e00-\u9fff\u3040-\u30ff\uf900-\ufaff]")
+_CYRILLIC_RE = re.compile(r"[\u0400-\u04ff]")
 # The "H125" guild-slot badge after a name, as the per-script models read it:
 # "H25", "25", "<Cyrillic en>125" or "(125" (badge edge).
 _NAME_BADGE_SUFFIX_RE = re.compile(r"\s*[A-Za-z\u041d\u043d]?\(?\d{1,4}\s*$")

@@ -13,6 +13,7 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 from adb_auto_player.games.afk_journey.mixins._guild_scan_rankings import (
+    _CJK_RE,
     _CYRILLIC_RE,
     _HANGUL_RE,
 )
@@ -159,6 +160,27 @@ def _engines(bot, korean="", cyrillic=""):
         engines[label] = engine
     bot._script_ocr = engines
     return engines
+
+
+class TestScriptRegexRanges:
+    def test_cjk_range_excludes_hangul(self):
+        """The compatibility range must start at U+F900, not U+8C48.
+
+        Written as a literal, U+F900 got NFC-normalized to U+8C48 and the
+        range swallowed every Hangul syllable (CodeQL py/overly-large-range).
+        """
+        assert _CJK_RE.search("가") is None  # first Hangul syllable
+        assert _CJK_RE.search("힣") is None  # last Hangul syllable
+        assert _CJK_RE.search("") is None  # Private Use Area
+        assert _CJK_RE.search("豈") is not None  # compatibility ideograph
+        assert _CJK_RE.search("一") is not None
+        assert _CJK_RE.search("あ") is not None  # hiragana
+
+    def test_hangul_and_cyrillic_ranges(self):
+        assert _HANGUL_RE.search("가힣") is not None
+        assert _HANGUL_RE.search("一") is None
+        assert _CYRILLIC_RE.search("Ж") is not None
+        assert _CYRILLIC_RE.search("Z") is None
 
 
 class TestExtractScriptName:
