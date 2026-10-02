@@ -16,10 +16,22 @@ from adb_auto_player.models.ocr import OCRResult
 from adb_auto_player.ocr import OCRBackend, RapidOCRBackend
 from adb_auto_player.ocr.qwen2vl_backend import QwenVLOCRBackend
 
-from ._guild_scan_names import _GuildScanNamesMixin
+from ._guild_scan_identity import _GuildScanIdentityMixin
+
+_HANGUL_RE = re.compile(r"[가-힣ᄀ-ᇿ㄰-㆏]")
+_CJK_RE = re.compile(r"[一-鿿぀-ヿ豈-﫿]")
+_CYRILLIC_RE = re.compile(r"[Ѐ-ӿ]")
+# The "H125" guild-slot badge after a name, as the per-script models read it:
+# "H25", "25", "<Cyrillic en>125" or "(125" (badge edge).
+_NAME_BADGE_SUFFIX_RE = re.compile(r"\s*[A-Za-z\u041d\u043d]?\(?\d{1,4}\s*$")
+# Scripts the CH model can't read, each re-read with its own recognition model.
+_RECOVERY_SCRIPTS = (
+    ("korean", _HANGUL_RE, RapidOCRBackend.pp_ocr_v5_korean_rec),
+    ("cyrillic", _CYRILLIC_RE, RapidOCRBackend.pp_ocr_v5_cyrillic_rec),
+)
 
 
-class _GuildScanRankingsMixin(_GuildScanNamesMixin):
+class _GuildScanRankingsMixin(_GuildScanIdentityMixin):
     """Dream Realm and Supreme Arena rankings scanning and OCR parsing."""
 
     def _run_dream_realm_scan(
@@ -204,6 +216,7 @@ class _GuildScanRankingsMixin(_GuildScanNamesMixin):
             self.swipe_up(x=540, sy=1300, ey=1050, duration=1.2)
             sleep(2.5)
 
+        observations = self._apply_identity_labels(observations)
         return self._canonicalize_observations(observations, date_name)
 
     def _save_rankings_to_json(self, rankings: list[dict]) -> None:
@@ -510,6 +523,9 @@ class _GuildScanRankingsMixin(_GuildScanNamesMixin):
             y_min = 700
         elif is_first_frame:
             y_min = 820
+        if is_first_frame:
+            self._prev_ranking_blocks = []
+            self._identity_cache = {}
 
         if isinstance(ocr_backend, QwenVLOCRBackend):
             h = screenshot.shape[0]
@@ -549,6 +565,7 @@ class _GuildScanRankingsMixin(_GuildScanNamesMixin):
                 rows = self._apply_bbox_rank_corrections(
                     rows, bbox_rows, is_supreme_arena, is_first_frame
                 )
+                rows = self._carry_identity_labels(rows, bbox_rows)
                 llm_rank_names = {(rk, n) for rk, n, _ in rows if n}
                 supplemental = [
                     r
@@ -704,17 +721,6 @@ class _GuildScanRankingsMixin(_GuildScanNamesMixin):
                 seen_ranks[rk] = (rk, nm, sc)
         return deduped
 
-    @staticmethod
-    def _normalize_name_key(name: str) -> str:
-        """Collapse whitespace and case so OCR spacing variants compare equal.
-
-        Qwen and RapidOCR frequently disagree on whether there's a space
-        around "|" in tags like "CTL | Boki" vs "CTL|Boki" — an exact-string
-        comparison would treat these as different players and silently skip
-        the bbox rank correction.
-        """
-        return re.sub(r"\s+", "", name).lower()
-
     def _recover_supplement_names_qwen(
         self,
         screenshot,
@@ -803,6 +809,19 @@ class _GuildScanRankingsMixin(_GuildScanNamesMixin):
         ]
         row_blocks.sort(key=lambda r: r.box.center.y)
 
+        # The player's own row is pinned over the list (top or bottom edge)
+        # once it scrolls out of view. It never moves while the list scrolls,
+        # and being within the row gap tolerance of the partially-covered row
+        # beneath it, it gets merged into that row ("Loki" at rank 26). In a
+        # scrolling list only an overlay stays put, so drop blocks identical to
+        # one at the same position in the previous frame.
+        prev_blocks = getattr(self, "_prev_ranking_blocks", None) or []
+        self._prev_ranking_blocks = row_blocks
+        if prev_blocks:
+            row_blocks = [
+                b for b in row_blocks if not self._is_static_block(b, prev_blocks)
+            ]
+
         # Gap-based clustering: row_blocks is sorted by Y ascending, so a block
         # can only ever belong to the most recently opened group. Comparing
         # against that group's *last* block (not its first) avoids anchor
@@ -830,6 +849,14 @@ class _GuildScanRankingsMixin(_GuildScanNamesMixin):
                 debug_rows.append({"skipped": skipped_reason, "blocks": blocks_info})
                 continue
             result = self._parse_single_row(row_sorted, screenshot, ocr_backend, idx)
+            if not is_supreme_arena:
+                result = self._recover_script_name(
+                    result, row_sorted, screenshot, ocr_backend
+                )
+            # Supreme Arena rows open the same profile panel on tap.
+            result = self._identify_duplicate_row(
+                result, row_sorted, y_min, ocr_backend, screenshot
+            )
             parsed_rows.append(result)
             debug_rows.append(
                 {
@@ -841,6 +868,172 @@ class _GuildScanRankingsMixin(_GuildScanNamesMixin):
             )
 
         return parsed_rows, debug_rows, ocr_results
+
+    def _is_static_block(self, block: OCRResult, prev_blocks: list[OCRResult]) -> bool:
+        """Return True if `block` sits unchanged at the same spot in `prev_blocks`."""
+        tol = self._STATIC_BLOCK_TOLERANCE
+        return any(
+            p.text == block.text
+            and abs(p.box.center.x - block.box.center.x) <= tol
+            and abs(p.box.center.y - block.box.center.y) <= tol
+            for p in prev_blocks
+        )
+
+    def _roster_recovery_scripts(self) -> list[tuple]:
+        """Return the `_RECOVERY_SCRIPTS` entries used by some roster name."""
+        roster = getattr(self, "_guild_members", None) or []
+        return [
+            entry
+            for entry in _RECOVERY_SCRIPTS
+            if any(entry[1].search(m) for m in roster)
+        ]
+
+    def _needs_name_recovery(self, name: str | None, scripts: list[tuple]) -> bool:
+        """Return True if `name` may be a name in a script the CH model can't read.
+
+        Covers names RapidOCR never detected (None), pseudo-CJK misreads of
+        Hangul ("丘号" for "도로롱"), Latin lookalikes of Cyrillic ("CKnTaJe"
+        for "Скиталец") and symbol noise ("STH|∈∈|02" for "라이키키") —
+        anything not in those scripts that matches no other roster member.
+        """
+        if name is None:
+            return True
+        if any(regex.search(name) for _, regex, _ in scripts):
+            return False
+        roster = getattr(self, "_guild_members", None) or []
+        name_key = self._normalize_name_key(name)
+        if any(self._normalize_name_key(m) == name_key for m in roster):
+            return False
+        others = [
+            m for m in roster if not any(regex.search(m) for _, regex, _ in scripts)
+        ]
+        if not others:
+            return True
+        # Not just "no match": a weak one too. "Lnac" (a misread of "Диас")
+        # still scores 0.67 against "Liano", just above the 0.65 correction
+        # threshold, so it would be kept as a wrong-but-plausible read.
+        suffix_pat = re.compile(r"\b[A-Za-z]?\d{3,4}\b")
+        cleaned = [(m, self._clean_member_name(m, suffix_pat)) for m in others]
+        _, ratio = self._find_best_member_match(name, cleaned, suffix_pat)
+        return ratio < self._NAME_RECOVERY_CONFIDENT_RATIO
+
+    def _recover_script_name(
+        self,
+        result: tuple[str | None, str | None, str | None],
+        row_sorted: list[OCRResult],
+        screenshot,
+        ocr_backend: OCRBackend,
+    ) -> tuple[str | None, str | None, str | None]:
+        """Re-read the name line with the Korean / Cyrillic models when needed.
+
+        The CH recognition model has no Hangul or Cyrillic in its dictionary,
+        and its detector often misses Hangul-only name lines entirely. The
+        name line is located from the rank badge (or the score) instead of
+        relying on a detected name block. A pseudo-CJK name that the Korean
+        model can't turn into Hangul is dropped rather than force-matched to a
+        Korean member, which used to attribute every such row to the same
+        person. When the badge wasn't detected either, the rank is re-read
+        from the badge crop once the name is known.
+        """
+        rank, name, score = result
+        scripts = self._roster_recovery_scripts()
+        if not scripts or not self._needs_name_recovery(name, scripts):
+            return result
+
+        for script in scripts:
+            label = script[0]
+            recovered = self._read_script_name_line(row_sorted, screenshot, script)
+            if recovered:
+                logging.debug(
+                    f"{label} OCR recovered rank {rank}: {name!a} -> {recovered!a}"
+                )
+                if rank is None:
+                    rank = self._rank_from_badge_crop(
+                        row_sorted, screenshot, ocr_backend
+                    )
+                return rank, recovered, score
+        has_korean = any(label == "korean" for label, _, _ in scripts)
+        if name and has_korean and _CJK_RE.search(name):
+            return rank, None, score
+        return result
+
+    def _rank_from_badge_crop(
+        self, row_sorted: list[OCRResult], screenshot, ocr_backend: OCRBackend
+    ) -> str | None:
+        ref_y = int(sum(b.box.center.y for b in row_sorted) / len(row_sorted))
+        rank = self._extract_rank_from_crop(screenshot, ocr_backend, ref_y)
+        if rank and int(rank) <= self._MAX_RANK_NUMBER:
+            return rank
+        return None
+
+    def _read_script_name_line(
+        self,
+        row_sorted: list[OCRResult],
+        screenshot,
+        script: tuple,
+    ) -> str | None:
+        """OCR the row's name line with one script's model; return the name."""
+        rank_blocks, _, score_blocks = self._classify_row_blocks(row_sorted)
+        digit_scores = [b for b in score_blocks if any(c.isdigit() for c in b.text)]
+        if rank_blocks:
+            name_cy = rank_blocks[0].box.center.y - self._NAME_ABOVE_RANK_OFFSET
+        elif digit_scores:
+            name_cy = digit_scores[0].box.center.y - self._NAME_ABOVE_SCORE_OFFSET
+        else:
+            return None
+        return self._read_script_text_at(
+            screenshot, name_cy, (self._X_NAME_CROP_MIN, self._X_SCORE_BOUNDARY), script
+        )
+
+    def _read_script_text_at(
+        self, screenshot, name_cy: int, x_range: tuple[int, int], script: tuple
+    ) -> str | None:
+        """Read the text line centred on `name_cy` with one script's model.
+
+        Args:
+            screenshot: Full screenshot.
+            name_cy: Y centre of the name line.
+            x_range: (left, right) bounds of the name line.
+            script: A `_RECOVERY_SCRIPTS` entry (label, regex, factory).
+
+        Returns:
+            The name in that script, or None if the model read none.
+        """
+        label, regex, factory = script
+        if not hasattr(self, "_script_ocr"):
+            self._script_ocr: dict[str, RapidOCRBackend] = {}
+        if label not in self._script_ocr:
+            self._script_ocr[label] = factory()
+        engine = self._script_ocr[label]
+        h = screenshot.shape[0]
+        best: str | None = None
+        # A tight crop reads cleanest, but a short name can lose a syllable
+        # at that height ("리" for "유리"); keep the longest read.
+        for half_height in self._NAME_CROP_HALF_HEIGHTS:
+            crop = screenshot[
+                max(0, name_cy - half_height) : min(h, name_cy + half_height),
+                x_range[0] : x_range[1],
+            ]
+            if crop.size == 0:
+                continue
+            name = self._extract_script_name(engine.recognize_line(crop), regex)
+            if name and (best is None or len(name) > len(best)):
+                best = name
+        return best
+
+    @staticmethod
+    def _extract_script_name(text: str, regex: re.Pattern) -> str | None:
+        """Return the span of `text` written in `regex`'s script, badge stripped.
+
+        The models read e.g. "또깅H25", "AN무이미H25" (avatar noise on the
+        left), "Скиталец(25" (the "H125" badge on the
+        right).
+        """
+        text = _NAME_BADGE_SUFFIX_RE.sub("", text.strip())
+        hits = [i for i, c in enumerate(text) if regex.match(c)]
+        if not hits:
+            return None
+        return text[hits[0] : hits[-1] + 1].strip() or None
 
     def _row_skip_reason(
         self, row_sorted: list[OCRResult], is_supreme_arena: bool

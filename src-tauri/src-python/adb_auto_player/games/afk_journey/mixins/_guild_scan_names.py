@@ -3,6 +3,7 @@
 import json
 import logging
 import re
+import unicodedata
 import urllib.request
 from collections import Counter
 from difflib import SequenceMatcher
@@ -35,6 +36,7 @@ class _GuildScanNamesMixin(_GuildScanSetupMixin):
 
         results: list[dict] = []
         canonical_names: set[str] = set()
+        roster_keys = self._roster_name_keys()
 
         def _agreement(r: str) -> float:
             names = rank_groups[r]
@@ -52,11 +54,14 @@ class _GuildScanNamesMixin(_GuildScanSetupMixin):
             canonical = self._pick_canonical_name(names)
             if not canonical:
                 continue
-            if self._find_fuzzy_match(canonical, canonical_names) is not None:
+            if (
+                self._find_covering_name(canonical, canonical_names, roster_keys)
+                is not None
+            ):
                 alt_names = [
                     n
                     for n in names
-                    if self._find_fuzzy_match(n, canonical_names) is None
+                    if self._find_covering_name(n, canonical_names, roster_keys) is None
                     and not self._name_appears_more_elsewhere(n, rank, rank_groups)
                 ]
                 canonical = self._pick_canonical_name(alt_names)
@@ -79,7 +84,10 @@ class _GuildScanNamesMixin(_GuildScanSetupMixin):
             canonical = self._pick_canonical_name(group)
             if not canonical:
                 continue
-            if self._find_fuzzy_match(canonical, canonical_names) is not None:
+            if (
+                self._find_covering_name(canonical, canonical_names, roster_keys)
+                is not None
+            ):
                 continue
             canonical_names.add(canonical)
             results.append({"Date": date_name, "Rank": "", "Name": canonical})
@@ -192,6 +200,47 @@ class _GuildScanNamesMixin(_GuildScanSetupMixin):
             if r != rank
         )
 
+    @staticmethod
+    def _normalize_name_key(name: str) -> str:
+        """Collapse whitespace and case so OCR spacing variants compare equal.
+
+        Qwen and RapidOCR frequently disagree on whether there's a space
+        around "|" in tags like "CTL | Boki" vs "CTL|Boki" — an exact-string
+        comparison would treat these as different players and silently skip
+        the bbox rank correction.
+        """
+        return re.sub(r"\s+", "", name).lower()
+
+    def _roster_name_keys(self) -> set[str]:
+        """Return normalized roster name keys, guild-slot code stripped."""
+        return {
+            self._normalize_name_key(re.sub(r"\s*[A-Za-z]\d{3,4}\s*$", "", m))
+            for m in (getattr(self, "_guild_members", None) or [])
+        }
+
+    def _find_covering_name(
+        self, name: str, seen_names: set[str], roster_keys: set[str]
+    ) -> str | None:
+        """Like `_find_fuzzy_match`, but two distinct roster members never collide.
+
+        Short names that differ by one letter ("Toki" vs "Loki") score exactly
+        the 0.75 dedup threshold, so the second member was dropped as an OCR
+        variant of the first. When both names are exact roster entries they
+        are two players, not one misread.
+        """
+        match = self._find_fuzzy_match(name, seen_names)
+        if match is None:
+            return None
+        name_key = self._normalize_name_key(name)
+        match_key = self._normalize_name_key(match)
+        if (
+            name_key != match_key
+            and name_key in roster_keys
+            and match_key in roster_keys
+        ):
+            return None
+        return match
+
     def _find_fuzzy_match(self, name: str, seen_names: set[str]) -> str | None:
         """Return the matched seen name if similar to `name`, else None."""
         name_lower = name.lower()
@@ -217,11 +266,10 @@ class _GuildScanNamesMixin(_GuildScanSetupMixin):
             with urllib.request.urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
             if data and isinstance(data, list) and "state" in data[0]:
-                names = [
-                    p["name"]
-                    for p in data[0]["state"].get("players", [])
-                    if p.get("name")
+                self._guild_roster = [
+                    p for p in data[0]["state"].get("players", []) if p.get("name")
                 ]
+                names = [p["name"] for p in self._guild_roster]
                 logging.info(f"Fetched {len(names)} guild members for name correction.")
                 return names
         except Exception as e:
@@ -366,9 +414,15 @@ class _GuildScanNamesMixin(_GuildScanSetupMixin):
                 if len(korean_members) == 1:
                     return korean_members[0], 1.0
                 best_k, best_k_ratio = korean_members[0], 0.0
+                # Compare on jamo (NFD splits each syllable block into its
+                # letters): a one-letter OCR slip ("또강" vs "또깅") then still
+                # shares most of the string instead of a whole syllable.
+                name_jamo = unicodedata.normalize("NFD", name_clean)
                 for km in korean_members:
                     kmc = self._clean_member_name(km, suffix_pat)
-                    r = SequenceMatcher(None, name_clean, kmc).ratio()
+                    r = SequenceMatcher(
+                        None, name_jamo, unicodedata.normalize("NFD", kmc)
+                    ).ratio()
                     if r > best_k_ratio:
                         best_k_ratio, best_k = r, km
                 return best_k, max(best_k_ratio, 0.7)

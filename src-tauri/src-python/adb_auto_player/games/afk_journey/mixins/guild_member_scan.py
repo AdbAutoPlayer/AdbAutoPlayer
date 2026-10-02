@@ -53,8 +53,10 @@ class GuildMemberScanMixin(_GuildScanActivenessMixin):
             if self._screenshot_dir.exists():
                 shutil.rmtree(self._screenshot_dir)
             self._screenshot_dir.mkdir(parents=True, exist_ok=True)
+        self._guild_roster: list[dict] = []
         guild_members = self._fetch_guild_members()
         self._guild_members = guild_members
+        self._analyze_duplicate_names(self._guild_roster)
 
         rankings = self._run_dream_realm_scan(ocr_backend, fallback, guild_members)
         self._save_rankings_to_json(rankings)

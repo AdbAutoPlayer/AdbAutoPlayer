@@ -173,7 +173,7 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
 
         name_blocks.sort(key=lambda b: b.box.center.y)
 
-        pairs: list[tuple[str | None, str | None]] = []
+        located: list[tuple[str, str, int]] = []
         used_activeness_indices: set[int] = set()
 
         for nb in name_blocks:
@@ -193,9 +193,17 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
 
             if best_act is not None and best_idx >= 0:
                 used_activeness_indices.add(best_idx)
-                pairs.append((nb.text.strip(), best_act))
+                located.append((nb.text.strip(), best_act, name_y))
             else:
-                pairs.append((nb.text.strip(), "0"))
+                located.append((nb.text.strip(), "0", name_y))
+
+        self._recover_activeness_script_names(
+            screenshot, activeness_blocks, used_activeness_indices, located
+        )
+        pairs: list[tuple[str | None, str | None]] = [
+            (self._identify_activeness_namesake(name, name_y, screenshot), act)
+            for name, act, name_y in located
+        ]
 
         pairs_before_qwen = len(pairs)
         self._recover_orphaned_activeness_names(
@@ -220,6 +228,64 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
                 }
             )
         return pairs
+
+    def _recover_activeness_script_names(
+        self,
+        screenshot,
+        activeness_blocks: list,
+        used_indices: set[int],
+        located: list[tuple[str, str, int]],
+    ) -> None:
+        """Re-read Korean / Cyrillic names with their own recognition models.
+
+        Same problem as on the rankings: the CH model reads Hangul as noise
+        ("CTL0✨" for "CTL | 이른봄날") or not at all, leaving the value
+        orphaned. Misread names are replaced in place; orphaned values get
+        their name read from the line above them (no Qwen needed).
+        """
+        scripts = self._roster_recovery_scripts()
+        if not scripts:
+            return
+        for i, (name, act, name_y) in enumerate(located):
+            if self._needs_name_recovery(name, scripts):
+                recovered = self._read_activeness_script_name(screenshot, name_y)
+                if recovered:
+                    located[i] = (recovered, act, name_y)
+        if getattr(self, "_activeness_qwen", None) is not None:
+            return  # Qwen handles orphaned values in _recover_orphaned_...
+        for idx, ab in enumerate(activeness_blocks):
+            if idx in used_indices:
+                continue
+            name_y = ab.box.center.y - self._ACTIVENESS_VALUE_BELOW_NAME
+            recovered = self._read_activeness_script_name(screenshot, name_y)
+            if recovered:
+                used_indices.add(idx)
+                located.append((recovered, ab.text.strip(), name_y))
+
+    def _read_activeness_script_name(self, screenshot, name_y: int) -> str | None:
+        for script in self._roster_recovery_scripts():
+            name = self._read_script_text_at(
+                screenshot, name_y, self._X_ACTIVENESS_NAME_RANGE, script
+            )
+            if name:
+                return name
+        return None
+
+    def _identify_activeness_namesake(self, name: str, name_y: int, screenshot) -> str:
+        """Tag a member sharing their name with another via the profile panel."""
+        roster = getattr(self, "_guild_members", None) or []
+        if not roster:
+            return name
+        canonical = self._correct_single_name(
+            re.sub(r"\s*[A-Za-z]?\d{3,4}\s*$", "", name).strip(), roster
+        )
+        if not self._duplicate_group(canonical):
+            return name
+        if not hasattr(self, "_rapidocr_supplement"):
+            self._rapidocr_supplement = RapidOCRBackend()
+        return self._identify_member_by_avatar(
+            canonical, name_y, screenshot, self._rapidocr_supplement
+        )
 
     def _recover_orphaned_activeness_names(
         self,
@@ -610,7 +676,9 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
                     activeness_int = 0
 
                 matched_canonical = False
-                if cleaned_members:
+                if self._split_identity_label(name):
+                    matched_canonical = True
+                elif cleaned_members:
                     best_match, best_ratio = self._find_best_member_match(
                         name, cleaned_members, suffix_pat
                     )
@@ -682,12 +750,19 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
                 activeness_records, guild_members
             )
 
+        activeness_records = self._export_activeness_identities(activeness_records)
+
         if chest_contributions:
             existing_names = {record["Name"] for record in activeness_records}
             for record in activeness_records:
+                if self._duplicate_group(record["Name"]):
+                    # The chest ranking opens no profile panel, so a shared
+                    # name's value can't be attributed: leave it to be entered
+                    # by hand instead of giving both members the same number.
+                    continue
                 record["ChestContribution"] = chest_contributions.get(record["Name"], 0)
             for name, count in chest_contributions.items():
-                if name not in existing_names:
+                if name not in existing_names and not self._duplicate_group(name):
                     activeness_records.append(
                         {"Name": name, "Activeness": 0, "ChestContribution": count}
                     )
@@ -701,6 +776,18 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
         )
         self._save_guild_activeness_to_json(activeness_records)
 
+    def _export_activeness_identities(self, records: list[dict]) -> list[dict]:
+        """Turn identity labels back into the plain name plus the roster "Id"."""
+        exported = []
+        for record in records:
+            ident = self._split_identity_label(record["Name"])
+            exported.append(
+                {**record, "Name": ident[0], "Id": ident[1]} if ident else record
+            )
+        identified = {r["Name"] for r in exported if "Id" in r}
+        # An unidentified sighting of a namesake can't be attributed.
+        return [r for r in exported if "Id" in r or r["Name"] not in identified]
+
     def _filter_and_correct_activeness_records(
         self,
         records: list[dict],
@@ -713,6 +800,9 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
         ]
         corrected: list[dict] = []
         for entry in records:
+            if self._split_identity_label(entry["Name"]):
+                corrected.append(entry)
+                continue
             best_match, best_ratio = self._find_best_member_match(
                 entry["Name"], cleaned_members, suffix_pat
             )

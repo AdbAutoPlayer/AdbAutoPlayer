@@ -31,8 +31,8 @@ class RapidOCRBackend(OCRBackend):
         self._engine: Any | None = None
 
     @classmethod
-    def pp_ocr_v5_rec(cls) -> "RapidOCRBackend":
-        """PP-OCRv4 detection + PP-OCRv5 recognition for better name accuracy.
+    def _pp_ocr_v5(cls, lang: LangRec) -> "RapidOCRBackend":
+        """PP-OCRv4 detection + PP-OCRv5 recognition for the given language.
 
         Explicitly sets engine_type and model_type required by rapidocr>=3.9.0.
         """
@@ -44,10 +44,33 @@ class RapidOCRBackend(OCRBackend):
                 "Det.model_type": ModelType.MOBILE,
                 "Rec.engine_type": EngineType.ONNXRUNTIME,
                 "Rec.ocr_version": OCRVersion.PPOCRV5,
-                "Rec.lang_type": LangRec.CH,
+                "Rec.lang_type": lang,
                 "Rec.model_type": ModelType.MOBILE,
             }
         )
+
+    @classmethod
+    def pp_ocr_v5_rec(cls) -> "RapidOCRBackend":
+        """PP-OCRv4 detection + PP-OCRv5 recognition for better name accuracy."""
+        return cls._pp_ocr_v5(LangRec.CH)
+
+    @classmethod
+    def pp_ocr_v5_korean_rec(cls) -> "RapidOCRBackend":
+        """PP-OCRv5 Korean recognition for Hangul text.
+
+        The default Chinese recognition model cannot output Hangul at all, so
+        Korean names come back as pseudo-CJK noise (e.g. "丘号" for "도로롱").
+        """
+        return cls._pp_ocr_v5(LangRec.KOREAN)
+
+    @classmethod
+    def pp_ocr_v5_cyrillic_rec(cls) -> "RapidOCRBackend":
+        """PP-OCRv5 Cyrillic recognition.
+
+        The Chinese model reads the game font's Cyrillic as Latin lookalikes
+        (e.g. "CKnTaJe" for "Скиталец", "XapaJ" for "Харэл").
+        """
+        return cls._pp_ocr_v5(LangRec.CYRILLIC)
 
     def _get_engine(self) -> Any:
         """Lazy-initialize the RapidOCR engine."""
@@ -89,6 +112,27 @@ class RapidOCRBackend(OCRBackend):
                     texts.append(line)
             return " ".join(texts).strip()
         return ""
+
+    def recognize_line(self, image: np.ndarray) -> str:
+        """Recognize a crop that holds a single text line, skipping detection.
+
+        Detection can split one line into fragments (e.g. a Hangul syllable
+        cut off from its neighbours); running recognition alone on a tight
+        line crop avoids that.
+
+        Args:
+            image: Crop containing exactly one line of text.
+
+        Returns:
+            Recognized text, or an empty string on failure.
+        """
+        try:
+            result = self._get_engine()(image, use_det=False, use_cls=False)
+        except Exception as e:
+            logger.error(f"RapidOCR recognition failed: {e}")
+            return ""
+        txts = getattr(result, "txts", None)
+        return txts[0].strip() if txts else ""
 
     def detect_text_blocks(
         self,
