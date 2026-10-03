@@ -9,8 +9,11 @@ Built from a user's debug run (guild "Yggdrasil", RapidOCR only, no Qwen):
 - "Toki" dropped as a fuzzy duplicate of "Loki" (ratio exactly 0.75)
 """
 
+import re
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import adb_auto_player
 import numpy as np
 from adb_auto_player.games.afk_journey.mixins._guild_scan_rankings import (
     _CJK_RE,
@@ -169,17 +172,32 @@ class TestScriptRegexRanges:
         Written as a literal, U+F900 got NFC-normalized to U+8C48 and the
         range swallowed every Hangul syllable (CodeQL py/overly-large-range).
         """
-        assert _CJK_RE.search("가") is None  # first Hangul syllable
-        assert _CJK_RE.search("힣") is None  # last Hangul syllable
-        assert _CJK_RE.search("") is None  # Private Use Area
-        assert _CJK_RE.search("豈") is not None  # compatibility ideograph
-        assert _CJK_RE.search("一") is not None
-        assert _CJK_RE.search("あ") is not None  # hiragana
+        assert _CJK_RE.search(chr(0xAC00)) is None  # first Hangul syllable
+        assert _CJK_RE.search(chr(0xD7A3)) is None  # last Hangul syllable
+        assert _CJK_RE.search(chr(0xE000)) is None  # Private Use Area
+        assert _CJK_RE.search(chr(0xF900)) is not None  # compatibility ideograph
+        assert _CJK_RE.search(chr(0x4E00)) is not None  # first CJK unified ideograph
+        assert _CJK_RE.search(chr(0x3042)) is not None  # hiragana
+
+    def test_no_literal_non_ascii_range_endpoints_in_package(self):
+        """Ranges must use escapes: literal endpoints get NFC-normalized.
+
+        Both guild scan copies of the CJK range had U+F900 silently turned
+        into U+8C48.
+        """
+        literal_range = re.compile(r"[^\x00-\x7f]-|-[^\x00-\x7f]")
+        offenders = [
+            f"{path.name}:{n}"
+            for path in Path(adb_auto_player.__file__).parent.rglob("*.py")
+            for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
+            if "re.compile" in line and literal_range.search(line)
+        ]
+        assert offenders == []
 
     def test_hangul_and_cyrillic_ranges(self):
-        assert _HANGUL_RE.search("가힣") is not None
-        assert _HANGUL_RE.search("一") is None
-        assert _CYRILLIC_RE.search("Ж") is not None
+        assert _HANGUL_RE.search(chr(0xAC00) + chr(0xD7A3)) is not None
+        assert _HANGUL_RE.search(chr(0x4E00)) is None
+        assert _CYRILLIC_RE.search(chr(0x0416)) is not None
         assert _CYRILLIC_RE.search("Z") is None
 
 

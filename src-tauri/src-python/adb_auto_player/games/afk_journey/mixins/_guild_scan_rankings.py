@@ -842,35 +842,90 @@ class _GuildScanRankingsMixin(_GuildScanIdentityMixin):
             else:
                 rows_grouped.append([res])
 
-        parsed_rows: list[tuple[str | None, str | None, str | None]] = []
+        parsed: list[tuple[tuple, list[OCRResult]]] = []
         debug_rows: list[dict] = []
         for idx, row in enumerate(rows_grouped):
             row_sorted = sorted(row, key=lambda r: r.box.center.x)
             skipped_reason = self._row_skip_reason(row_sorted, is_supreme_arena)
-            blocks_info = self._debug_blocks(row_sorted)
             if skipped_reason:
-                debug_rows.append({"skipped": skipped_reason, "blocks": blocks_info})
+                debug_rows.append(
+                    {
+                        "skipped": skipped_reason,
+                        "blocks": self._debug_blocks(row_sorted),
+                    }
+                )
                 continue
             result = self._parse_single_row(row_sorted, screenshot, ocr_backend, idx)
-            if not is_supreme_arena:
-                result = self._recover_script_name(
-                    result, row_sorted, screenshot, ocr_backend
-                )
-            # Supreme Arena rows open the same profile panel on tap.
-            result = self._identify_duplicate_row(
-                result, row_sorted, y_min, ocr_backend, screenshot
+            parsed.append((result, row_sorted))
+
+        results = self._fix_frame_ranks([result for result, _ in parsed])
+
+        parsed_rows: list[tuple[str | None, str | None, str | None]] = []
+        for ranked, (_, row_sorted) in zip(results, parsed, strict=True):
+            # Supreme Arena rows share the DR row geometry (name line above the
+            # rank badge) and open the same profile panel on tap.
+            recovered = self._recover_script_name(
+                ranked, row_sorted, screenshot, ocr_backend
             )
-            parsed_rows.append(result)
+            final = self._identify_duplicate_row(
+                recovered, row_sorted, y_min, ocr_backend, screenshot
+            )
+            parsed_rows.append(final)
             debug_rows.append(
                 {
-                    "rank": result[0],
-                    "name": result[1],
-                    "score": result[2],
-                    "blocks": blocks_info,
+                    "rank": final[0],
+                    "name": final[1],
+                    "score": final[2],
+                    "blocks": self._debug_blocks(row_sorted),
                 }
             )
 
         return parsed_rows, debug_rows, ocr_results
+
+    @staticmethod
+    def _fix_frame_ranks(rows: list[tuple]) -> list[tuple]:
+        """Make the frame's ranks consistent with their top-to-bottom order.
+
+        Ranks only grow down the list, so a rank breaking that order is a
+        misread badge: "171" cut off at the bottom edge read as "7", or "8"
+        read as "80". Keep the longest increasing run (smallest ranks on a
+        tie, since an extra digit is the likelier misread) and drop the rest.
+        Then fill a missing rank the order pins down exactly: one row between
+        ranks p and p+2 is p+1, a row right above rank 2 is rank 1 (the gold
+        podium badges are often unreadable).
+        """
+        ranks: dict[int, int] = {
+            i: int(r[0]) for i, r in enumerate(rows) if r[0] and str(r[0]).isdigit()
+        }
+        ranked = list(ranks)
+        # best[i] = (run length, -sum of ranks) of the best run ending at i
+        best: dict[int, tuple[int, int]] = {}
+        prev: dict[int, int | None] = {}
+        for i in ranked:
+            best[i], prev[i] = (1, -ranks[i]), None
+            for j in ranked:
+                if j >= i or ranks[j] >= ranks[i]:
+                    continue
+                cand = (best[j][0] + 1, best[j][1] - ranks[i])
+                if cand > best[i]:
+                    best[i], prev[i] = cand, j
+        keep: set[int] = set()
+        node = max(ranked, key=lambda i: best[i]) if ranked else None
+        while node is not None:
+            keep.add(node)
+            node = prev[node]
+
+        fixed = [(r[0] if i in keep else None, r[1], r[2]) for i, r in enumerate(rows)]
+        for i, (rank, name, score) in enumerate(fixed):
+            if rank:
+                continue
+            above = fixed[i - 1][0] if i > 0 else None
+            below = fixed[i + 1][0] if i + 1 < len(fixed) else None
+            if below == "2" and i == 0:
+                fixed[i] = ("1", name, score)
+            elif above and below and int(below) - int(above) == 2:  # noqa: PLR2004
+                fixed[i] = (str(int(above) + 1), name, score)
+        return fixed
 
     def _is_static_block(self, block: OCRResult, prev_blocks: list[OCRResult]) -> bool:
         """Return True if `block` sits unchanged at the same spot in `prev_blocks`."""
@@ -901,7 +956,11 @@ class _GuildScanRankingsMixin(_GuildScanIdentityMixin):
         """
         if name is None:
             return True
-        if any(regex.search(name) for _, regex, _ in scripts):
+        if any(regex.search(name) for _, regex, _ in scripts) and not (
+            _CJK_RE.search(name)
+        ):
+            # A real Hangul/Cyrillic name never mixes in kanji or kana; "오望外"
+            # is a half-misread "모험가".
             return False
         roster = getattr(self, "_guild_members", None) or []
         name_key = self._normalize_name_key(name)
@@ -976,12 +1035,16 @@ class _GuildScanRankingsMixin(_GuildScanIdentityMixin):
         script: tuple,
     ) -> str | None:
         """OCR the row's name line with one script's model; return the name."""
-        rank_blocks, _, score_blocks = self._classify_row_blocks(row_sorted)
+        rank_blocks, name_blocks, score_blocks = self._classify_row_blocks(row_sorted)
         digit_scores = [b for b in score_blocks if any(c.isdigit() for c in b.text)]
         if rank_blocks:
             name_cy = rank_blocks[0].box.center.y - self._NAME_ABOVE_RANK_OFFSET
         elif digit_scores:
             name_cy = digit_scores[0].box.center.y - self._NAME_ABOVE_SCORE_OFFSET
+        elif name_blocks:
+            # Supreme Arena has no score column; with the badge unread too, the
+            # topmost name/guild block is the best remaining anchor.
+            name_cy = min(b.box.center.y for b in name_blocks)
         else:
             return None
         return self._read_script_text_at(
@@ -1125,6 +1188,15 @@ class _GuildScanRankingsMixin(_GuildScanIdentityMixin):
                 else (b.box.center.y - name_y_min < self._Y_GUILD_OFFSET)
             )
         ]
+        # A stray short block (e.g. a "6" from the avatar frame) a bit above
+        # the real name would otherwise be picked as the topmost line.
+        plausible = [
+            b
+            for b in valid
+            if len(re.sub(r"\s*[A-Za-z]\d{3,4}\s*$", "", b.text.strip()))
+            >= self._MIN_NAME_LENGTH
+        ]
+        valid = plausible or valid
         if not valid:
             return None
         # The name and its guild-slot code (e.g. "G439") sometimes land in two
@@ -1138,8 +1210,11 @@ class _GuildScanRankingsMixin(_GuildScanIdentityMixin):
         same_line = [
             b for b in valid if b.box.center.y - top_y < self._Y_SAME_LINE_TOLERANCE
         ]
-        name = min(same_line, key=lambda b: b.box.center.x).text.strip()
-        name = re.sub(r"\s*[A-Za-z]\d{3,4}\s*$", "", name).strip()
+        chosen = min(same_line, key=lambda b: b.box.center.x)
+        name = re.sub(r"\s*[A-Za-z]\d{3,4}\s*$", "", chosen.text.strip()).strip()
+        if chosen.box.left < self._X_RANK_BOUNDARY:
+            # The rank badge merged into the name block ("414Inacu125").
+            name = re.sub(r"^\d+", "", name).strip()
         if not name or len(name) < self._MIN_NAME_LENGTH:
             return None
         if sum(1 for c in name if c.isalnum()) / len(name) < self._MIN_NAME_ALNUM_RATIO:
@@ -1181,6 +1256,16 @@ class _GuildScanRankingsMixin(_GuildScanIdentityMixin):
             if rank_digits and int(rank_digits) <= self._MAX_RANK_NUMBER:
                 rank = rank_digits
 
+        if rank_blocks:
+            # The name line sits above the rank badge's centre, the guild line
+            # below it; without a score column to tell them apart (Supreme
+            # Arena), an undetected name used to leave "Yggdrasil" as the name.
+            rank_y = min(rank_blocks, key=lambda b: b.box.center.x).box.center.y
+            name_guild_blocks = [
+                b
+                for b in name_guild_blocks
+                if b.box.center.y <= rank_y + self._NAME_MAX_BELOW_RANK
+            ]
         name = self._extract_player_name(
             name_guild_blocks, valid_score_blocks, row_sorted
         )
