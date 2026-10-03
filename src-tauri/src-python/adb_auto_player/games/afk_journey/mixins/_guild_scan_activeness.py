@@ -171,31 +171,39 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
             ):
                 name_blocks.append(b)
 
+        # Role labels ("Guildmate", "Vice-" / "Leader") sit in the avatar
+        # column, left of where any name starts.
+        name_blocks = [
+            b for b in name_blocks if b.box.center.x >= self._X_ACTIVENESS_NAME_MIN
+        ]
         name_blocks.sort(key=lambda b: b.box.center.y)
 
-        located: list[tuple[str, str, int]] = []
-        used_activeness_indices: set[int] = set()
+        # Each value sits one line below its name: give every value the name
+        # block closest to that spot. Going name by name instead let a role
+        # label just above the name ("Leader" for "Zerelior") claim it first.
+        value_by_name: dict[int, int] = {}
+        for idx, ab in enumerate(activeness_blocks):
+            expected_y = ab.box.center.y - self._ACTIVENESS_VALUE_BELOW_NAME
+            candidates = [
+                (abs(nb.box.center.y - expected_y), n)
+                for n, nb in enumerate(name_blocks)
+                if n not in value_by_name
+                and abs(nb.box.center.y - expected_y) <= self._ACTIVENESS_PAIR_TOLERANCE
+            ]
+            if candidates:
+                value_by_name[min(candidates)[1]] = idx
 
-        for nb in name_blocks:
-            name_y = nb.box.center.y
-
-            best_act: str | None = None
-            best_dist = float("inf")
-            best_idx = -1
-            for idx, ab in enumerate(activeness_blocks):
-                if idx in used_activeness_indices:
-                    continue
-                dist = abs(ab.box.center.y - name_y)
-                if dist <= self._Y_ACTIVENESS_PAIR_RADIUS and dist < best_dist:
-                    best_dist = dist
-                    best_act = ab.text.strip()
-                    best_idx = idx
-
-            if best_act is not None and best_idx >= 0:
-                used_activeness_indices.add(best_idx)
-                located.append((nb.text.strip(), best_act, name_y))
-            else:
-                located.append((nb.text.strip(), "0", name_y))
+        used_activeness_indices: set[int] = set(value_by_name.values())
+        located: list[tuple[str, str, int]] = [
+            (
+                nb.text.strip(),
+                activeness_blocks[value_by_name[n]].text.strip()
+                if n in value_by_name
+                else "0",
+                nb.box.center.y,
+            )
+            for n, nb in enumerate(name_blocks)
+        ]
 
         self._recover_activeness_script_names(
             screenshot, activeness_blocks, used_activeness_indices, located
@@ -371,6 +379,30 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
         r"^(officer|founder|paladin|knight|squire|member)$", re.IGNORECASE
     )
 
+    def _chest_value(self, text: str) -> int | None:
+        """Parse a chest count, e.g. "116", "￥8", or "4115" for "115".
+
+        The arrow icon left of the number is sometimes read as a leading "4",
+        turning 115 into an impossible 4115; drop leading digits until the
+        count is plausible again.
+        """
+        m = self._RE_CHEST_VALUE.match(text)
+        if m is None:
+            return None
+        digits = m.group(1)
+        while digits and int(digits) > self._MAX_CHEST_VALUE:
+            digits = digits[1:]
+        return int(digits) if digits else None
+
+    def _read_chest_script_name(self, screenshot, name_y: int) -> str | None:
+        for script in self._roster_recovery_scripts():
+            name = self._read_script_text_at(
+                screenshot, name_y, self._X_CHEST_NAME_RANGE, script
+            )
+            if name:
+                return name
+        return None
+
     def _parse_chest_contribution_rows(  # noqa: PLR0912
         self,
         screenshot,
@@ -389,11 +421,9 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
         name_blocks = []
         for b in area:
             t = b.text.strip()
-            m = self._RE_CHEST_VALUE.match(t)
             if (
                 b.box.center.x > self._X_CHEST_NAME_MAX
-                and m is not None
-                and 0 <= int(m.group(1)) <= self._MAX_CHEST_VALUE
+                and self._chest_value(t) is not None
                 and not self._RE_CHEST_LABEL.search(t)
             ):
                 value_blocks.append(b)
@@ -413,22 +443,46 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
             name_blocks.append(b)
 
         name_blocks.sort(key=lambda b: b.box.center.y)
+
+        # Each value sits ~45 px below its name, while the role tag
+        # ("Co-leader", "Elder", "Guildmate") sits just ~12 px below the value:
+        # matching the nearest block let the role tag claim the value. Give
+        # every value the name block closest to where its name must be.
+        value_by_name: dict[int, int] = {}
+        for idx, vb in enumerate(value_blocks):
+            expected_y = vb.box.center.y - self._CHEST_VALUE_BELOW_NAME
+            candidates = [
+                (abs(nb.box.center.y - expected_y), n)
+                for n, nb in enumerate(name_blocks)
+                if n not in value_by_name
+                and abs(nb.box.center.y - expected_y) <= self._CHEST_PAIR_TOLERANCE
+            ]
+            if candidates:
+                value_by_name[min(candidates)[1]] = idx
+
+        scripts = self._roster_recovery_scripts()
         pairs: list[tuple[str, int]] = []
-        used_values: set[int] = set()
-        for nb in name_blocks:
-            name_y = nb.box.center.y
-            best_val, best_dist, best_idx = None, float("inf"), -1
+        for n, nb in enumerate(name_blocks):
+            if n not in value_by_name:
+                continue
+            value = self._chest_value(value_blocks[value_by_name[n]].text.strip())
+            if value is None:
+                continue
+            name = nb.text.strip()
+            if scripts and self._needs_name_recovery(name, scripts):
+                name = self._read_chest_script_name(screenshot, nb.box.center.y) or name
+            pairs.append((name, value))
+        if scripts:
+            # A Hangul-only name is often not detected at all: read the name
+            # line above each value left without a name.
             for idx, vb in enumerate(value_blocks):
-                if idx in used_values:
+                if idx in value_by_name.values():
                     continue
-                dist = abs(vb.box.center.y - name_y)
-                if dist <= self._Y_CHEST_PAIR_RADIUS and dist < best_dist:
-                    m = self._RE_CHEST_VALUE.match(vb.text.strip())
-                    if m is not None:
-                        best_dist, best_val, best_idx = dist, int(m.group(1)), idx
-            if best_val is not None:
-                used_values.add(best_idx)
-                pairs.append((nb.text.strip(), best_val))
+                value = self._chest_value(vb.text.strip())
+                name_y = vb.box.center.y - self._CHEST_VALUE_BELOW_NAME
+                name = self._read_chest_script_name(screenshot, name_y)
+                if value is not None and name:
+                    pairs.append((name, value))
 
         pairs_before_qwen = len(pairs)
         self._supplement_pairs_with_qwen_chest(screenshot, pairs)
@@ -565,6 +619,9 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
         seen_names: set[str] = set()
         contributions: dict[str, int] = {}
         no_new_count = 0
+        # "Toki" vs "Loki" is exactly the 0.75 dedup threshold: two roster
+        # members must never be merged as one misread.
+        roster_keys = self._roster_name_keys()
 
         for scroll_idx in range(self._MAX_SCROLLS_CHEST):
             screenshot = self.get_screenshot()
@@ -578,7 +635,7 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
                 name = re.sub(r"\s*[A-Za-z]?\d{3,4}\s*$", "", raw_name).strip()
                 if not name or len(name) < self._MIN_NAME_LENGTH:
                     continue
-                if self._find_fuzzy_match(name, seen_names) is None:
+                if self._find_covering_name(name, seen_names, roster_keys) is None:
                     seen_names.add(name)
                     contributions[name] = chest_count
                     new_this_frame = True
@@ -761,8 +818,13 @@ class _GuildScanActivenessMixin(_GuildScanRankingsMixin):
                     # by hand instead of giving both members the same number.
                     continue
                 record["ChestContribution"] = chest_contributions.get(record["Name"], 0)
+            roster = set(guild_members or [])
             for name, count in chest_contributions.items():
-                if name not in existing_names and not self._duplicate_group(name):
+                if (
+                    name not in existing_names
+                    and name in roster
+                    and not self._duplicate_group(name)
+                ):
                     activeness_records.append(
                         {"Name": name, "Activeness": 0, "ChestContribution": count}
                     )

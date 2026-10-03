@@ -401,14 +401,26 @@ class _GuildScanNamesMixin(_GuildScanSetupMixin):
     ) -> tuple[str, float]:
         """Find the closest guild member match and returns (best_match, ratio)."""
         name_clean = self._clean_member_name(name, suffix_pat)
-        _hangul_pat = re.compile(r"[가-힣ᄀ-ᇿ㄰-㆏]")
+        _hangul_pat = re.compile(r"[\uac00-\ud7a3\u1100-\u11ff\u3130-\u318f]")
         korean_members = [m for m, _ in cleaned_members if _hangul_pat.search(m)]
         if korean_members:
             is_korean = bool(_hangul_pat.search(name))
             is_misread = name_clean in ("号1o", "号10", "号10g", "号1og", "号lo")
-            _cjk_pat = re.compile(r"[一-鿿぀-ヿ豈-﫿]")
-            is_cjk_misread = bool(_cjk_pat.search(name_clean)) and not any(
-                name_clean == mc for _, mc in cleaned_members if _cjk_pat.search(mc)
+            _cjk_pat = re.compile(r"[\u4e00-\u9fff\u3040-\u30ff\uf900-\ufaff]")
+            # A Latin name with a stray CJK-looking glyph (an online/status
+            # icon read as "金" / "中") is not a misread Korean name.
+            is_cjk_misread = (
+                bool(_cjk_pat.search(name_clean))
+                and not re.search(r"[a-z]{2,}", name_clean)
+                # Nor is a slightly misread Japanese/Chinese member name
+                # ("は一ちゃんφ" for "はーちゃん"): only force a Korean match when
+                # no kana/kanji member is a plausible read.
+                and not any(
+                    SequenceMatcher(None, name_clean, mc).ratio()
+                    >= self._GUILD_NAME_CORRECTION_THRESHOLD
+                    for _, mc in cleaned_members
+                    if _cjk_pat.search(mc)
+                )
             )
             if is_korean or is_cjk_misread or is_misread:
                 if len(korean_members) == 1:
