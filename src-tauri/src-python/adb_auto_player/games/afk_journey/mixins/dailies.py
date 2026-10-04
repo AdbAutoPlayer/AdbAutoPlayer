@@ -8,6 +8,7 @@ from adb_auto_player.decorators import register_command, register_custom_routine
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.games.afk_journey.base import AFKJourneyBase
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
+from adb_auto_player.games.afk_journey.services import HeroScanner
 from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
@@ -17,6 +18,12 @@ from .afk_stages import AFKStagesMixin
 from .arena import ArenaMixin
 from .duras_trials import DurasTrialsMixin
 from .legend_trial import SeasonLegendTrial
+
+_UNKNOWN_HERO = "Unknown"
+_LAST_AFFINITY_HERO = "Chippy"
+# Headroom over the downloaded hero list for heroes not yet in the tracker
+_AFFINITY_EXTRA_HEROES = 20
+_HERO_NAME_READ_ATTEMPTS = 2
 
 
 class DailiesMixin(
@@ -491,6 +498,14 @@ class DailiesMixin(
 
     def raise_hero_affinity(self) -> None:
         """Raise hero affinity with 3 clicks per day."""
+        # Every hero is verified by name (same OCR as the AFKJ tracker scan)
+        # before tapping: blind taps off the hero screen used to land in the
+        # shop and loop for hours waiting for Chippy
+        scanner = HeroScanner(self)
+        if not scanner.load_hero_names():
+            logging.error("Could not load the hero list. Skipping affinity.")
+            return
+
         self.navigate_to_world()
         sleep(5)
 
@@ -502,11 +517,41 @@ class DailiesMixin(
         self.tap(Point(130, 1040))
         sleep(5)
 
-        while not self.game_find_template_match("dailies/resonating_hall/chippy.png"):
+        max_heroes = len(scanner.canonical_hero_names) + _AFFINITY_EXTRA_HEROES
+        for _ in range(max_heroes):
+            hero = self._read_affinity_hero(scanner)
+            if hero == _UNKNOWN_HERO:
+                # Usually a popup opened by a stray tap: back closes it
+                logging.warning("Not on a hero screen. Pressing back to recover.")
+                self.capture_debug_screenshot("affinity_not_on_hero_screen")
+                self.press_back_button()
+                sleep(2)
+                hero = self._read_affinity_hero(scanner)
+            if hero == _UNKNOWN_HERO:
+                logging.error("Not on a hero screen. Stopping affinity.")
+                self.navigate_to_world()
+                return
+            logging.debug(f"Raising affinity: {hero}")
             self._click_hero()
-        self._click_hero()  # Give Chippy some love too.
+            if hero == _LAST_AFFINITY_HERO:
+                logging.info("Done raising affinity.")
+                return
 
-        logging.info("Done raising affinity.")
+        logging.error(f"{_LAST_AFFINITY_HERO} not reached after {max_heroes} heroes.")
+        self.capture_debug_screenshot("affinity_limit_reached")
+        self.navigate_to_world()
+
+    def _read_affinity_hero(self, scanner: HeroScanner) -> str:
+        """Return the hero on screen, retrying once for slow transitions."""
+        for attempt in range(_HERO_NAME_READ_ATTEMPTS):
+            if self.game_find_template_match("dailies/resonating_hall/chippy.png"):
+                return _LAST_AFFINITY_HERO
+            hero = scanner.read_hero_name(self.get_screenshot())
+            if hero != _UNKNOWN_HERO:
+                return hero
+            if attempt + 1 < _HERO_NAME_READ_ATTEMPTS:
+                sleep(1)
+        return _UNKNOWN_HERO
 
     def _click_hero(self) -> None:
         """Click a hero for affinity and go next."""

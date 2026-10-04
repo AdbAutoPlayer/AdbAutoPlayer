@@ -122,51 +122,12 @@ class HeroScanner:
         limit: int = total_heroes
         self._offset_hint_logged = False
 
-        template_url = (
-            f"https://afkj-tracker.vercel.app/data/heroes-template.json"
-            f"?v={int(time.perf_counter())}"
-        )
-        synonyms_url = (
-            f"https://afkj-tracker.vercel.app/data/hero_synonyms.json"
-            f"?v={int(time.perf_counter())}"
-        )
-
         data_root = SettingsLoader.get_app_config_dir()
-        template_file = data_root / "data" / "heroes-template.json"
-        synonyms_file = data_root / "data" / "hero_synonyms.json"
         backup_file = data_root / "data" / "afkj_tracker_backup.json"
-
-        # 1A. Download synonyms
-        try:
-            logger.info(f"Downloading synonyms from: {synonyms_url}")
-            os.makedirs(synonyms_file.parent, exist_ok=True)
-            with (
-                urllib.request.urlopen(synonyms_url) as response,
-                open(synonyms_file, "wb") as out_file,
-            ):
-                shutil.copyfileobj(response, out_file)
-            logger.info(f"Synonyms downloaded to {synonyms_file}")
-            self._load_synonyms()
-        except Exception as e:
-            logger.error(f"Failed to download synonyms: {e}")
-
-        # 1B. Download template
-        try:
-            logger.info(f"Downloading template from: {template_url}")
-            os.makedirs(template_file.parent, exist_ok=True)
-            with (
-                urllib.request.urlopen(template_url) as response,
-                open(template_file, "wb") as out_file,
-            ):
-                shutil.copyfileobj(response, out_file)
-            logger.info(f"Template downloaded to {template_file}")
-        except Exception as e:
-            logger.error(f"Failed to download template: {e}")
-            if not template_file.exists():
-                logger.error(
-                    "Template file missing and download failed. Aborting scan."
-                )
-                return
+        template_file = self._download_reference_data()
+        if template_file is None:
+            logger.error("Template file missing and download failed. Aborting scan.")
+            return
 
         self.tracker_file = str(template_file)
 
@@ -294,6 +255,84 @@ class HeroScanner:
             "https://afkj-tracker.vercel.app/ using the file at this path:"
         )
         logger.info(f">>> {backup_file} <<<", extra={"no_sanitize": True})
+
+    def load_hero_names(self) -> bool:
+        """Download (or reuse cached) tracker data and load the hero name list.
+
+        Returns:
+            True if hero names are available for matching, False otherwise.
+        """
+        template_file = self._download_reference_data()
+        if template_file is None:
+            return False
+        full_data = self._load_tracker(str(template_file))
+        self.canonical_hero_names = [h["name"] for h in full_data.get("heroes", [])]
+        return bool(self.canonical_hero_names)
+
+    def read_hero_name(self, screenshot: np.ndarray) -> str:
+        """Identify the hero shown on a hero detail screen.
+
+        Args:
+            screenshot: Full device screenshot.
+
+        Returns:
+            The canonical hero name, or "Unknown" if it is not a hero screen
+            or the name could not be matched.
+        """
+        name, _ = self._read_hero_name(screenshot, fast=True)
+        return name
+
+    def _download_reference_data(self) -> Path | None:
+        """Download synonyms and the hero template from the AFKJ tracker.
+
+        Falls back to the previously downloaded template when offline.
+
+        Returns:
+            Path to the hero template file, or None if none is available.
+        """
+        template_url = (
+            f"https://afkj-tracker.vercel.app/data/heroes-template.json"
+            f"?v={int(time.perf_counter())}"
+        )
+        synonyms_url = (
+            f"https://afkj-tracker.vercel.app/data/hero_synonyms.json"
+            f"?v={int(time.perf_counter())}"
+        )
+
+        data_root = SettingsLoader.get_app_config_dir()
+        template_file = data_root / "data" / "heroes-template.json"
+        synonyms_file = data_root / "data" / "hero_synonyms.json"
+
+        # Download synonyms
+        try:
+            logger.info(f"Downloading synonyms from: {synonyms_url}")
+            os.makedirs(synonyms_file.parent, exist_ok=True)
+            with (
+                urllib.request.urlopen(synonyms_url) as response,
+                open(synonyms_file, "wb") as out_file,
+            ):
+                shutil.copyfileobj(response, out_file)
+            logger.info(f"Synonyms downloaded to {synonyms_file}")
+            self._load_synonyms()
+        except Exception as e:
+            logger.error(f"Failed to download synonyms: {e}")
+
+        # Download template
+        try:
+            logger.info(f"Downloading template from: {template_url}")
+            os.makedirs(template_file.parent, exist_ok=True)
+            with (
+                urllib.request.urlopen(template_url) as response,
+                open(template_file, "wb") as out_file,
+            ):
+                shutil.copyfileobj(response, out_file)
+            logger.info(f"Template downloaded to {template_file}")
+        except Exception as e:
+            logger.error(f"Failed to download template: {e}")
+            if not template_file.exists():
+                return None
+
+        return template_file
 
     # ------------------------------------------------------------------
     # Post-scan resolution helpers
@@ -734,11 +773,13 @@ class HeroScanner:
 
         return wide_crop[p_y : p_y + p_h, p_x : p_x + p_w]
 
-    def _process_hero_screen(self, screenshot: np.ndarray) -> dict:
-        """Extract name, ascension and EX level from a hero detail screen."""
-        crop_asc = (5, 5, 130, 170)
-        crop_ex = (10, 1400, 450, 1650)
+    def _read_hero_name(
+        self, screenshot: np.ndarray, fast: bool = False
+    ) -> tuple[str, list[str]]:
+        """OCR the hero name with three preprocessing variants and match it.
 
+        With fast=True the extra variants only run if the first one fails.
+        """
         name_img = self._get_precise_name_crop(screenshot)
         name_img_scaled = cv2.resize(
             name_img, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC
@@ -746,6 +787,10 @@ class HeroScanner:
         gray_name = cv2.cvtColor(name_img_scaled, cv2.COLOR_BGR2GRAY)
 
         raw_name_a = self._ocr_text_rapid(gray_name)
+        if fast:
+            name = self._match_hero_name([raw_name_a])
+            if name != "Unknown":
+                return name, [raw_name_a]
 
         _, thresh_name = cv2.threshold(
             gray_name, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
@@ -759,6 +804,14 @@ class HeroScanner:
         raw_names = [raw_name_a, raw_name_b, raw_name_c]
         name = self._match_hero_name(raw_names)
         logger.debug(f"Hero name OCR readings: {raw_names} -> Matched: '{name}'")
+        return name, raw_names
+
+    def _process_hero_screen(self, screenshot: np.ndarray) -> dict:
+        """Extract name, ascension and EX level from a hero detail screen."""
+        crop_asc = (5, 5, 130, 170)
+        crop_ex = (10, 1400, 450, 1650)
+
+        name, raw_names = self._read_hero_name(screenshot)
 
         if name == "Unknown":
             logger.debug(
