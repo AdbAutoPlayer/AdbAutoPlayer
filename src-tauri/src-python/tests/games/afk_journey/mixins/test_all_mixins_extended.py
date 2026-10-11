@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
@@ -80,11 +81,11 @@ class MockAllAFKJ(
     def settings(self):
         return self._settings
 
-    @property
+    @cached_property
     def template_dir(self):
         return MagicMock()
 
-    @property
+    @cached_property
     def _hero_scanner(self):
         return MagicMock()
 

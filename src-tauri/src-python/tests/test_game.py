@@ -3,6 +3,7 @@
 import math
 import time
 import unittest
+from functools import cached_property
 from pathlib import Path
 from typing import cast
 from unittest.mock import DEFAULT, MagicMock, patch
@@ -34,7 +35,7 @@ class MockSettings(BaseModel):
 class MockGame(Game):
     """Mock Game class."""
 
-    @property
+    @cached_property
     def template_dir(self) -> Path:
         """Mocked method."""
         return TEST_DATA_DIR
