@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { profiles } from "$lib/stores.svelte";
+  import { profiles } from "#lib/stores.svelte.ts";
 
   const awake = "/images/3583082.png";
   const sleep = "/images/3583083.png";

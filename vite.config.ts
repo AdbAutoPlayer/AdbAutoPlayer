@@ -20,13 +20,8 @@ export default defineConfig({
         pages: "dist",
         fallback: "index.html",
       }),
-      // `alias` is deprecated in SvelteKit 3 in favour of `#lib`-style
-      // subpath imports, and `$lib` is no longer built in; kept as aliases
-      // so the existing imports keep working until they are migrated.
-      alias: {
-        $lib: "src/lib",
-        $pytauri: "src/client",
-      },
+      // `#lib/...` and `#pytauri/...` imports are Node subpath imports,
+      // declared in package.json "imports" (SvelteKit 3 dropped `$lib`)
     }),
     devtoolsJson(),
   ],

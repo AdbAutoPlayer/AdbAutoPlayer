@@ -1,5 +1,5 @@
 <script lang="ts">
-  import IconHelpCircle from "$lib/components/icons/feather/IconHelpCircle.svelte";
+  import IconHelpCircle from "#lib/components/icons/feather/IconHelpCircle.svelte";
 </script>
 
 <div class="fixed top-0 right-0 z-50 m-2 cursor-pointer select-none">

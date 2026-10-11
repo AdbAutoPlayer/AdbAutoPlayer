@@ -1,19 +1,19 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import { profiles, settings, ui } from "$lib/stores.svelte";
-  import { showErrorToast } from "$lib/toast/toast-error";
-  import { t } from "$lib/i18n/i18n";
-  import type { MenuOption } from "$pytauri/_apiTypes";
+  import { profiles, settings, ui } from "#lib/stores.svelte.ts";
+  import { showErrorToast } from "#lib/toast/toast-error.ts";
+  import { t } from "#lib/i18n/i18n.ts";
+  import type { MenuOption } from "#pytauri/_apiTypes.d.ts";
 
-  import type { MenuButton } from "$lib/menu/model";
+  import type { MenuButton } from "#lib/menu/model.ts";
   import {
     debug,
     getProfileState,
     startTask,
     stopTask,
-  } from "$pytauri/apiClient";
-  import Hero from "$lib/components/modern/Hero.svelte";
-  import TaskGrid from "$lib/components/modern/TaskGrid.svelte";
+  } from "#pytauri/apiClient.ts";
+  import Hero from "#lib/components/modern/Hero.svelte";
+  import TaskGrid from "#lib/components/modern/TaskGrid.svelte";
 
   const currentProfileState = $derived(profiles.states[profiles.active]);
 

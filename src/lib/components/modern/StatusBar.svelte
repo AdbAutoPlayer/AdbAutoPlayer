@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { t } from "$lib/i18n/i18n";
-  import { profiles, settings } from "$lib/stores.svelte";
+  import { t } from "#lib/i18n/i18n.ts";
+  import { profiles, settings } from "#lib/stores.svelte.ts";
 
   interface Props {
     theme: "dark" | "light";

@@ -1,10 +1,10 @@
-import { appLocale } from "$lib/i18n/i18n";
-import type { AppSettings } from "$pytauri/_apiTypes";
-import { getLocaleOrDefault } from "$lib/i18n/locales";
+import { appLocale } from "#lib/i18n/i18n.ts";
+import type { AppSettings } from "#pytauri/_apiTypes.d.ts";
+import { getLocaleOrDefault } from "#lib/i18n/locales.ts";
 import { invoke } from "@tauri-apps/api/core";
-import { settings, profiles } from "$lib/stores.svelte";
-import { showErrorToast } from "$lib/toast/toast-error";
-import type { RustSettingsFormResponse } from "$lib/menu/model";
+import { settings, profiles } from "#lib/stores.svelte.ts";
+import { showErrorToast } from "#lib/toast/toast-error.ts";
+import type { RustSettingsFormResponse } from "#lib/menu/model.ts";
 
 export async function applySettingsFromFile() {
   const data: RustSettingsFormResponse = await invoke("get_app_settings_form");

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { MenuButton } from "$lib/menu/model";
+  import type { MenuButton } from "#lib/menu/model.ts";
 
   let {
     disabled,
@@ -8,7 +8,7 @@
     disabled: boolean;
     menuButton: MenuButton;
   } = $props();
-  import { t } from "$lib/i18n/i18n";
+  import { t } from "#lib/i18n/i18n.ts";
 </script>
 
 <button

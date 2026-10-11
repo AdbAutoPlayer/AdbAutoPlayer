@@ -1,17 +1,17 @@
 <script lang="ts">
   import { Dialog, Portal } from "@skeletonlabs/skeleton-svelte";
-  import IconX from "$lib/components/icons/feather/IconX.svelte";
-  import { t } from "$lib/i18n/i18n";
+  import IconX from "#lib/components/icons/feather/IconX.svelte";
+  import { t } from "#lib/i18n/i18n.ts";
   import { invoke } from "@tauri-apps/api/core";
-  import { showErrorToast } from "$lib/toast/toast-error";
-  import { settings, profiles } from "$lib/stores.svelte";
+  import { showErrorToast } from "#lib/toast/toast-error.ts";
+  import { settings, profiles } from "#lib/stores.svelte.ts";
   import type {
     RustSettingsFormResponse,
     SettingsProps,
-  } from "$lib/menu/model";
-  import Menu from "$lib/components/icons/lucide/Menu.svelte";
-  import { applySettings } from "$lib/utils/settings";
-  import type { AppSettings } from "$pytauri/_apiTypes";
+  } from "#lib/menu/model.ts";
+  import Menu from "#lib/components/icons/lucide/Menu.svelte";
+  import { applySettings } from "#lib/utils/settings.ts";
+  import type { AppSettings } from "#pytauri/_apiTypes.d.ts";
 
   let {
     settingsProps = $bindable(),

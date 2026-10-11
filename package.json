@@ -33,6 +33,11 @@
     "vite": "^8.3.2",
     "vite-plugin-devtools-json": "^1.1.0"
   },
+  "imports": {
+    "#lib": "./src/lib",
+    "#lib/*": "./src/lib/*",
+    "#pytauri/*": "./src/client/*"
+  },
   "license": "MIT",
   "name": "adb-auto-player",
   "pnpm": {

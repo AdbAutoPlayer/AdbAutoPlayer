@@ -1,8 +1,8 @@
 <script lang="ts">
-  import IconX from "$lib/components/icons/feather/IconX.svelte";
-  import IconArrowDown from "$lib/components/icons/feather/IconArrowDown.svelte";
-  import IconArrowUp from "$lib/components/icons/feather/IconArrowUp.svelte";
-  import type { TextDisplayCardItem } from "$lib/log/logHelper";
+  import IconX from "#lib/components/icons/feather/IconX.svelte";
+  import IconArrowDown from "#lib/components/icons/feather/IconArrowDown.svelte";
+  import IconArrowUp from "#lib/components/icons/feather/IconArrowUp.svelte";
+  import type { TextDisplayCardItem } from "#lib/log/logHelper.ts";
 
   type TextDisplayCardProps = {
     entries?: TextDisplayCardItem[];

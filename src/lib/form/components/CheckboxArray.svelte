@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { t } from "$lib/i18n/i18n";
-  import { updateCheckboxArray } from "$lib/form/checkboxHelper";
-  import type { CheckboxArrayProps } from "$lib/form/types";
+  import { t } from "#lib/i18n/i18n.ts";
+  import { updateCheckboxArray } from "#lib/form/checkboxHelper.ts";
+  import type { CheckboxArrayProps } from "#lib/form/types.ts";
 
   let { choices, value = $bindable() }: CheckboxArrayProps = $props();
 

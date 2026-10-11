@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { TextDisplayCardItem } from "$lib/log/logHelper";
+  import type { TextDisplayCardItem } from "#lib/log/logHelper.ts";
   import { Instant } from "@js-joda/core";
 
   interface Props {

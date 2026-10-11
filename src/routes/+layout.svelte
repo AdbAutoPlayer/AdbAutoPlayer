@@ -2,34 +2,34 @@
   import "../app.css";
 
   import { onMount, onDestroy } from "svelte";
-  import { setupExternalLinkHandler } from "$lib/utils/external-links";
-  import { applySettingsFromFile, applySettings } from "$lib/utils/settings";
+  import { setupExternalLinkHandler } from "#lib/utils/external-links.ts";
+  import { applySettingsFromFile, applySettings } from "#lib/utils/settings.ts";
   import { invoke } from "@tauri-apps/api/core";
-  import { toaster } from "$lib/toast/toaster-svelte";
+  import { toaster } from "#lib/toast/toaster-svelte.ts";
   import { Toast } from "@skeletonlabs/skeleton-svelte";
-  import { initPostHog } from "$lib/utils/posthog";
-  import { logInfo, logError } from "$lib/log/log-events";
+  import { initPostHog } from "#lib/utils/posthog.ts";
+  import { logInfo, logError } from "#lib/log/log-events.ts";
   import { getVersion } from "@tauri-apps/api/app";
-  import { profiles, settings, ui } from "$lib/stores.svelte";
+  import { profiles, settings, ui } from "#lib/stores.svelte.ts";
   import { listen } from "@tauri-apps/api/event";
-  import { EventNames } from "$lib/log/eventNames";
+  import { EventNames } from "#lib/log/eventNames.ts";
   import type {
     ProfileStateUpdate,
     AppSettings,
     Trigger,
     MenuOption,
-  } from "$pytauri/_apiTypes";
-  import UpdateContainer from "$lib/components/updater/UpdateContainer.svelte";
-  import StatusBar from "$lib/components/modern/StatusBar.svelte";
-  import ProfileSidebar from "$lib/components/modern/ProfileSidebar.svelte";
-  import LogPanel from "$lib/components/modern/LogPanel.svelte";
-  import ThemeCustomizer from "$lib/components/modern/ThemeCustomizer.svelte";
-  import SchemaForm from "$lib/form/SchemaForm.svelte";
+  } from "#pytauri/_apiTypes.d.ts";
+  import UpdateContainer from "#lib/components/updater/UpdateContainer.svelte";
+  import StatusBar from "#lib/components/modern/StatusBar.svelte";
+  import ProfileSidebar from "#lib/components/modern/ProfileSidebar.svelte";
+  import LogPanel from "#lib/components/modern/LogPanel.svelte";
+  import ThemeCustomizer from "#lib/components/modern/ThemeCustomizer.svelte";
+  import SchemaForm from "#lib/form/SchemaForm.svelte";
   import type {
     SettingsProps,
     PydanticSettingsFormResponse,
     RustSettingsFormResponse,
-  } from "$lib/menu/model";
+  } from "#lib/menu/model.ts";
   import {
     getAdbSettingsForm,
     getGameSettingsForm,
@@ -37,8 +37,8 @@
     cacheClear,
     debug,
     startTask,
-  } from "$pytauri/apiClient";
-  import { t } from "$lib/i18n/i18n";
+  } from "#pytauri/apiClient.ts";
+  import { t } from "#lib/i18n/i18n.ts";
 
   let { children } = $props();
 

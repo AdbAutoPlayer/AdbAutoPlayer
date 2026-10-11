@@ -1,4 +1,4 @@
-import type { MenuOption } from "$pytauri/_apiTypes";
+import type { MenuOption } from "#pytauri/_apiTypes.d.ts";
 import type { JSONSchema } from "json-schema-to-typescript";
 
 export interface MenuButton {

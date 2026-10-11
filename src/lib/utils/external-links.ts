@@ -1,5 +1,5 @@
 // @ts-ignore
-import { showErrorToast } from "$lib/toast/toast-error";
+import { showErrorToast } from "#lib/toast/toast-error.ts";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
 export function shouldOpenExternally(url: string): boolean {

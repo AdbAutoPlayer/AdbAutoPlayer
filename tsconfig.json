@@ -11,5 +11,13 @@
     "sourceMap": true,
     "strict": true
   },
-  "extends": "./.svelte-kit/tsconfig.json"
+  "exclude": [
+    "src/service-worker"
+  ],
+  "extends": "$app/tsconfig",
+  "include": [
+    "src",
+    "test",
+    "*"
+  ]
 }

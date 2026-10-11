@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { t } from "$lib/i18n/i18n";
-  import { profiles, settings, ui } from "$lib/stores.svelte";
+  import { t } from "#lib/i18n/i18n.ts";
+  import { profiles, settings, ui } from "#lib/stores.svelte.ts";
   import { onMount, onDestroy } from "svelte";
-  import type { MenuButton } from "$lib/menu/model";
+  import type { MenuButton } from "#lib/menu/model.ts";
 
   interface Props {
     onStop: () => void;

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { MenuButton } from "$lib/menu/model";
-  import { ui } from "$lib/stores.svelte";
+  import type { MenuButton } from "#lib/menu/model.ts";
+  import { ui } from "#lib/stores.svelte.ts";
   import TaskFilters from "./TaskFilters.svelte";
   import TaskVariantRenderer from "./TaskVariantRenderer.svelte";
 

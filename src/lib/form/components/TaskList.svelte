@@ -1,9 +1,9 @@
 <script lang="ts">
-  import IconX from "$lib/components/icons/feather/IconX.svelte";
-  import { t } from "$lib/i18n/i18n";
+  import IconX from "#lib/components/icons/feather/IconX.svelte";
+  import { t } from "#lib/i18n/i18n.ts";
   import SettingsSectionHeader from "./SettingsSectionHeader.svelte";
-  import NoOptionsAvailable from "$lib/components/generic/NoOptionsAvailable.svelte";
-  import type { TaskItem, TaskListProps } from "$lib/form/types";
+  import NoOptionsAvailable from "#lib/components/generic/NoOptionsAvailable.svelte";
+  import type { TaskItem, TaskListProps } from "#lib/form/types.ts";
 
   let { choices, value = $bindable() }: TaskListProps = $props();
 
