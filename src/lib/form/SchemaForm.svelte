@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { t } from "$lib/i18n/i18n";
+  import { t } from "#lib/i18n/i18n.ts";
   import { onMount } from "svelte";
-  import { showErrorToast } from "$lib/toast/toast-error";
+  import { showErrorToast } from "#lib/toast/toast-error.ts";
   import type { JSONSchema } from "json-schema-to-typescript";
-  import CheckboxArray from "$lib/form/components/CheckboxArray.svelte";
-  import ImageCheckboxArray from "$lib/form/components/ImageCheckboxArray.svelte";
-  import AlnumGroupedCheckboxArray from "$lib/form/components/AlnumGroupedCheckboxArray.svelte";
-  import TaskList from "$lib/form/components/TaskList.svelte";
-  import type { SettingsProps } from "$lib/menu/model";
-  import StringArray from "$lib/form/components/StringArray.svelte";
-  import { asArraySchema, asNonEmptyStringArray } from "$lib/form/types";
-  import { scanEmulatorPorts } from "$pytauri/apiClient";
-  import { profiles } from "$lib/stores.svelte";
-  import { toaster } from "$lib/toast/toaster-svelte";
+  import CheckboxArray from "#lib/form/components/CheckboxArray.svelte";
+  import ImageCheckboxArray from "#lib/form/components/ImageCheckboxArray.svelte";
+  import AlnumGroupedCheckboxArray from "#lib/form/components/AlnumGroupedCheckboxArray.svelte";
+  import TaskList from "#lib/form/components/TaskList.svelte";
+  import type { SettingsProps } from "#lib/menu/model.ts";
+  import StringArray from "#lib/form/components/StringArray.svelte";
+  import { asArraySchema, asNonEmptyStringArray } from "#lib/form/types.ts";
+  import { scanEmulatorPorts } from "#pytauri/apiClient.ts";
+  import { profiles } from "#lib/stores.svelte.ts";
+  import { toaster } from "#lib/toast/toaster-svelte.ts";
 
   let {
     settingsProps = $bindable(),

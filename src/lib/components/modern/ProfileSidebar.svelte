@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { profiles, settings } from "$lib/stores.svelte";
+  import { profiles, settings } from "#lib/stores.svelte.ts";
   import { invoke } from "@tauri-apps/api/core";
-  import { applySettings } from "$lib/utils/settings";
-  import type { AppSettings } from "$pytauri/_apiTypes";
+  import { applySettings } from "#lib/utils/settings.ts";
+  import type { AppSettings } from "#pytauri/_apiTypes.d.ts";
   import ProfileList from "./ProfileList.svelte";
   import ProfileControls from "./ProfileControls.svelte";
   import ProfileState from "./ProfileState.svelte";

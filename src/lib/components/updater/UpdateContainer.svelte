@@ -3,14 +3,14 @@
   import { relaunch } from "@tauri-apps/plugin-process";
   import { Progress } from "@skeletonlabs/skeleton-svelte";
   import { onDestroy, onMount } from "svelte";
-  import Download from "$lib/components/icons/lucide/Download.svelte";
+  import Download from "#lib/components/icons/lucide/Download.svelte";
   import { Dialog, Portal } from "@skeletonlabs/skeleton-svelte";
-  import IconX from "$lib/components/icons/feather/IconX.svelte";
-  import { t } from "$lib/i18n/i18n";
+  import IconX from "#lib/components/icons/feather/IconX.svelte";
+  import { t } from "#lib/i18n/i18n.ts";
   import { emit } from "@tauri-apps/api/event";
-  import { settings } from "$lib/stores.svelte";
+  import { settings } from "#lib/stores.svelte.ts";
   import { get } from "svelte/store";
-  import { toaster } from "$lib/toast/toaster-svelte";
+  import { toaster } from "#lib/toast/toaster-svelte.ts";
 
   let checkUpdateTimeout: ReturnType<typeof setTimeout> | undefined;
   let update: Update | null = $state(null);

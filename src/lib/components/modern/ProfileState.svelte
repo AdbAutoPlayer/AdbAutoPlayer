@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { t } from "$lib/i18n/i18n";
+  import { t } from "#lib/i18n/i18n.ts";
 
   interface Props {
     collapsed: boolean;

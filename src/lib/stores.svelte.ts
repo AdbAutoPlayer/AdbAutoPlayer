@@ -1,4 +1,4 @@
-import type { AppSettings, ProfileState } from "$pytauri/_apiTypes";
+import type { AppSettings, ProfileState } from "#pytauri/_apiTypes.d.ts";
 
 class ProfileStore {
   active = $state<number>(0);

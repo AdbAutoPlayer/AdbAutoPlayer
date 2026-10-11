@@ -1,4 +1,4 @@
-import { EventNames } from "$lib/log/eventNames";
+import { EventNames } from "#lib/log/eventNames.ts";
 import { emit } from "@tauri-apps/api/event";
 
 export async function logDebug(message: string) {

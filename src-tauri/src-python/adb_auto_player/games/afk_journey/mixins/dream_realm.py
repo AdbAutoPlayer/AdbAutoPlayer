@@ -16,10 +16,14 @@ if TYPE_CHECKING:
     from adb_auto_player.games.afk_journey.settings import Settings
 
     class BaseClass:
-        settings: Settings
         LANG_ERROR: str
-        min_timeout: float
-        fast_timeout: float
+
+        @property
+        def settings(self) -> Settings: ...
+        @property
+        def min_timeout(self) -> float: ...
+        @property
+        def fast_timeout(self) -> float: ...
 
         def start_up(self, device_streaming: bool = True) -> None: ...
         def tap(self, *args, **kwargs) -> None: ...

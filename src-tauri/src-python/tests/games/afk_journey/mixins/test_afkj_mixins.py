@@ -1,3 +1,4 @@
+from functools import cached_property
 from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
@@ -37,7 +38,7 @@ class MockAFKJ(ArenaMixin, SeasonLegendTrial):
     def settings(self):
         return self._settings
 
-    @property
+    @cached_property
     def template_dir(self):
         return MagicMock()
 

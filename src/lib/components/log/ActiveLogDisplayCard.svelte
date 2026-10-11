@@ -1,15 +1,15 @@
 <script lang="ts">
-  import TextDisplayCard from "$lib/components/generic/TextDisplayCard.svelte";
-  import { EventNames } from "$lib/log/eventNames";
+  import TextDisplayCard from "#lib/components/generic/TextDisplayCard.svelte";
+  import { EventNames } from "#lib/log/eventNames.ts";
   import { Instant } from "@js-joda/core";
   import {
     formatMessage,
     logMessageToTextDisplayCardItem,
-  } from "$lib/log/logHelper";
-  import type { TextDisplayCardItem } from "$lib/log/logHelper";
+  } from "#lib/log/logHelper.ts";
+  import type { TextDisplayCardItem } from "#lib/log/logHelper.ts";
   import { onMount } from "svelte";
   import { listen } from "@tauri-apps/api/event";
-  import { settings } from "$lib/stores.svelte";
+  import { settings } from "#lib/stores.svelte.ts";
 
   interface TaskCompletedEvent {
     profile_index: number;

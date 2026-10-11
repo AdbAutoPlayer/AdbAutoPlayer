@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { showErrorToast } from "$lib/toast/toast-error";
-  import type { StringValueArrayProps } from "$lib/form/types";
-  import { t } from "$lib/i18n/i18n";
+  import { showErrorToast } from "#lib/toast/toast-error.ts";
+  import type { StringValueArrayProps } from "#lib/form/types.ts";
+  import { t } from "#lib/i18n/i18n.ts";
 
   let { value = $bindable(), minItems }: StringValueArrayProps = $props();
 

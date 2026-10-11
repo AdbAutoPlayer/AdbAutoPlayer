@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { t } from "$lib/i18n/i18n";
-  import type { MenuButton } from "$lib/menu/model";
-  import { ui } from "$lib/stores.svelte";
+  import { t } from "#lib/i18n/i18n.ts";
+  import type { MenuButton } from "#lib/menu/model.ts";
+  import { ui } from "#lib/stores.svelte.ts";
   import TaskCard from "./TaskCard.svelte";
 
   interface Props {

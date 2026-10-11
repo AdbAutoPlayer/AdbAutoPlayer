@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, mock_open, patch
 
 from adb_auto_player.exceptions import GenericAdbUnrecoverableError
 from adb_auto_player.models.commands import Command
-from adb_auto_player.util.execute import Execute
+from adb_auto_player.util.execute import Execute, _WatchdogState
 
 
 class TestExecuteRestart(unittest.TestCase):
@@ -212,6 +212,62 @@ class TestExecuteRestart(unittest.TestCase):
             self.assertIsInstance(result, Exception)
             self.assertEqual(str(result), "Normal error")
             mock_instance.restart_game.assert_called_once()
+
+    def test_nested_call_restarts_on_outer_watchdog_timeout(self) -> None:
+        """Regression: custom routines nest `Execute.function` calls.
+
+        The outer (routine) watchdog fired, but the KeyboardInterrupt was
+        caught by the inner (task) call, whose own timeout flag was False, so
+        it was treated as a manual Ctrl+C and the app exited instead of
+        restarting the game. Only one watchdog must run and the timeout flag
+        must be shared across nesting levels.
+        """
+        mock_instance = MagicMock()
+
+        def stuck_then_ok(_instance) -> None:
+            if mock_instance.restart_game.call_count == 0:
+                # Simulate the outer watchdog firing while the task is stuck
+                _WatchdogState.timeout_triggered = True
+                raise KeyboardInterrupt
+
+        inner_task = MagicMock(side_effect=stuck_then_ok)
+
+        def routine() -> None:
+            error = Execute.function(
+                callable_function=inner_task, instance=mock_instance
+            )
+            assert error is None
+
+        app_settings = {
+            "advanced": {"restart_stuck_task": True, "restart_stuck_task_after_mins": 5}
+        }
+
+        with (
+            patch("time.sleep", return_value=None),
+            patch(
+                "adb_auto_player.util.execute.tomllib.load", return_value=app_settings
+            ),
+            patch("builtins.open", mock_open()),
+            patch(
+                "adb_auto_player.file_loader.SettingsLoader.get_app_config_dir",
+                return_value=Path("dummy"),
+            ),
+            patch("pathlib.Path.exists", return_value=True),
+            patch("adb_auto_player.util.execute.threading.Thread") as mock_thread,
+            patch(
+                "adb_auto_player.util.execute.sys.exit", side_effect=SystemExit
+            ) as mock_exit,
+        ):
+            result = Execute.function(callable_function=routine)
+
+        self.assertIsNone(result)
+        mock_exit.assert_not_called()
+        mock_instance.restart_game.assert_called_once()
+        self.assertEqual(inner_task.call_count, 2)
+        # Only the outermost call starts a watchdog thread
+        mock_thread.assert_called_once()
+        self.assertFalse(_WatchdogState.active)
+        self.assertFalse(_WatchdogState.timeout_triggered)
 
 
 if __name__ == "__main__":

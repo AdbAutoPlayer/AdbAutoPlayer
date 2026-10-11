@@ -1,7 +1,7 @@
-import { capitalizeError } from "$lib/utils/string";
-import { toaster } from "$lib/toast/toaster-svelte";
-import { logError } from "$lib/log/log-events";
-import { reportError } from "$lib/utils/error-reporting";
+import { capitalizeError } from "#lib/utils/string.ts";
+import { toaster } from "#lib/toast/toaster-svelte.ts";
+import { logError } from "#lib/log/log-events.ts";
+import { reportError } from "#lib/utils/error-reporting.ts";
 
 type ErrorToastOptions = {
   title?: string;

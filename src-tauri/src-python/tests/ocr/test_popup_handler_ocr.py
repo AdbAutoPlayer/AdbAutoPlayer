@@ -1,3 +1,4 @@
+from functools import cached_property
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -20,7 +21,7 @@ class MockPopupHandler(PopupMessageHandler):
     def settings(self):
         return self._settings
 
-    @property
+    @cached_property
     def template_dir(self):
         return MagicMock()
 

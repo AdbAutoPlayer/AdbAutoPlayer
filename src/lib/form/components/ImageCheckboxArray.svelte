@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { t } from "$lib/i18n/i18n";
-  import { updateCheckboxArray } from "$lib/form/checkboxHelper";
-  import NoOptionsAvailable from "$lib/components/generic/NoOptionsAvailable.svelte";
-  import type { ImageCheckboxArrayProps } from "$lib/form/types";
+  import { t } from "#lib/i18n/i18n.ts";
+  import { updateCheckboxArray } from "#lib/form/checkboxHelper.ts";
+  import NoOptionsAvailable from "#lib/components/generic/NoOptionsAvailable.svelte";
+  import type { ImageCheckboxArrayProps } from "#lib/form/types.ts";
 
   let {
     choices,
