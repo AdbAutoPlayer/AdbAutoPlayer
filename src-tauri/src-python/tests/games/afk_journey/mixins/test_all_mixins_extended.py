@@ -62,6 +62,7 @@ class MockAllAFKJ(
         self._stream = MagicMock()
         self._device = MagicMock()
         self._device.get_running_app.return_value = "com.farlightgames.igame.gp"
+        self._device.get_resumed_apps.return_value = ["com.farlightgames.igame.gp"]
         self._target_package_name = "com.farlightgames.igame.gp"
         self._failed_hero_teams = []
         self.default_threshold = ConfidenceValue("90%")
