@@ -3,7 +3,7 @@
 import logging
 from time import perf_counter
 
-from adb_auto_player.exceptions import GameNotRunningOrFrozenError
+from adb_auto_player.exceptions import GameNotRunningOrFrozenError, GameStartError
 from adb_auto_player.models.geometry import PointOutsideDisplay
 
 from ._base import _GameBase
@@ -23,17 +23,22 @@ class _LifecycleMixin(_GameBase):
         """
         self._set_device_resolution()
         self._check_requirements()
+
+        # Start the game before targeting a display: on multi-display emulators
+        # the game's display only exists while it runs, otherwise screenshots,
+        # input and the stream would all bind to the home launcher's display.
+        if not self.is_game_running():
+            logging.warning("Game is not running, trying to start the game.")
+            self.start_game()
+            if not self.is_game_running():
+                raise GameNotRunningOrFrozenError(
+                    "Game could not be started, exiting..."
+                )
+            self.device.reset_display_targeting()
+
         self.device.resolve_display_targeting(self.package_name_prefixes)
         self._start_device_streaming(device_streaming=device_streaming)
         self._check_screenshot_matches_display_resolution(device_streaming_check=False)
-
-        if self.is_game_running():
-            return
-
-        logging.warning("Game is not running, trying to start the game.")
-        self.start_game()
-        if not self.is_game_running():
-            raise GameNotRunningOrFrozenError("Game could not be started, exiting...")
 
     def force_stop_game(self) -> None:
         """Force-stop the game process."""
@@ -42,10 +47,11 @@ class _LifecycleMixin(_GameBase):
         self.device.stop_game(self._target_package_name)
 
     def is_game_running(self) -> bool:
-        """Return True if the game process is currently active."""
-        if app := self.device.get_running_app():
-            if self._target_package_name:
-                return app == self._target_package_name
+        """Return True if the game is a resumed activity on any display."""
+        apps = self.device.get_resumed_apps()
+        if self._target_package_name:
+            return self._target_package_name in apps
+        for app in apps:
             if any(pn in app for pn in self.package_name_prefixes):
                 self._target_package_name = app
                 return True
@@ -58,8 +64,29 @@ class _LifecycleMixin(_GameBase):
             GameStartError: Game cannot be started.
         """
         if not self._target_package_name:
-            return
+            # The game was never seen running (e.g. it was already closed when
+            # the task started), so look the package up among installed apps.
+            self._target_package_name = self._find_installed_package()
+        if not self._target_package_name:
+            raise GameStartError(
+                f"Game is not installed, no package matches: "
+                f"{', '.join(self.package_name_prefixes)}"
+            )
         self.device.start_game(self._target_package_name)
+
+    def _find_installed_package(self) -> str | None:
+        """Return the installed package matching `package_name_prefixes`.
+
+        An exact match wins over longer variants, e.g. the global
+        `com.farlightgames.igame.gp` over `com.farlightgames.igame.gp.vn`.
+        """
+        for prefix in self.package_name_prefixes:
+            packages = self.device.get_installed_packages(prefix)
+            if prefix in packages:
+                return prefix
+            if packages:
+                return packages[0]
+        return None
 
     def restart_game(self) -> None:
         """Force-stop then relaunch the game."""

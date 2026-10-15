@@ -121,6 +121,46 @@ class AdbController:
             return app
         return None
 
+    def get_resumed_apps(self) -> list[str]:
+        """Get the packages of every resumed activity, across all displays.
+
+        Multi-display emulators (e.g. MuMuPlayer on Android 15) keep the home
+        launcher resumed on display 0 while the game runs on another display,
+        so the first `ResumedActivity` line is not guaranteed to be the game.
+
+        Returns:
+            list[str]: Unique package names, in `dumpsys` order.
+        """
+        output = str(
+            self.d.shell(
+                "dumpsys activity activities | grep ResumedActivity | "
+                'cut -d "{" -f2 | cut -d \' \' -f3 | cut -d "/" -f1',
+            )
+        )
+        apps: list[str] = []
+        for line in output.splitlines():
+            app = line.strip()
+            if app and app not in apps:
+                apps.append(app)
+        return apps
+
+    def get_installed_packages(self, name_filter: str) -> list[str]:
+        """Get installed packages whose name contains `name_filter`.
+
+        Args:
+            name_filter: Substring the package name must contain.
+
+        Returns:
+            list[str]: Matching package names.
+        """
+        output = str(self.d.shell(["pm", "list", "packages", name_filter]))
+        packages: list[str] = []
+        for line in output.splitlines():
+            package = line.strip().removeprefix("package:")
+            if name_filter in package:
+                packages.append(package)
+        return packages
+
     def reset_display_size(self) -> None:
         """Resets the display size of the device to its original size."""
         self.d.shell("wm size reset")

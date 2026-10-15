@@ -23,7 +23,11 @@ import tomllib
 from collections.abc import Callable
 from typing import Any, cast
 
-from adb_auto_player.exceptions import AutoPlayerError, GenericAdbUnrecoverableError
+from adb_auto_player.exceptions import (
+    AutoPlayerError,
+    GameNotRunningOrFrozenError,
+    GenericAdbUnrecoverableError,
+)
 from adb_auto_player.file_loader import SettingsLoader
 from adb_auto_player.models.commands import Command
 
@@ -303,8 +307,13 @@ class Execute:
                         print(summary)
                     sys.exit(0)
                 except Exception as e:
+                    # A closed game is always restarted, even without the
+                    # stuck-task watchdog: it is not a task failure.
+                    game_closed = isinstance(e, GameNotRunningOrFrozenError)
                     # java.lang.SecurityException should always be fatal
-                    if timeout_enabled and "java.lang.SecurityException" not in str(e):
+                    if (
+                        timeout_enabled or game_closed
+                    ) and "java.lang.SecurityException" not in str(e):
                         logging.warning(
                             f"Task failed with error: {e}. "
                             "Restarting game and retrying..."

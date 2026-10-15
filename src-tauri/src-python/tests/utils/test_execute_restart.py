@@ -2,7 +2,10 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
-from adb_auto_player.exceptions import GenericAdbUnrecoverableError
+from adb_auto_player.exceptions import (
+    GameNotRunningOrFrozenError,
+    GenericAdbUnrecoverableError,
+)
 from adb_auto_player.models.commands import Command
 from adb_auto_player.util.execute import Execute, _WatchdogState
 
@@ -98,6 +101,65 @@ class TestExecuteRestart(unittest.TestCase):
             self.assertTrue(result)
             self.assertEqual(mock_action.call_count, 2)
             mock_instance.restart_game.assert_called_once()
+
+    def test_closed_game_restarts_without_stuck_task_watchdog(self) -> None:
+        """Regression: the emulator closing the game must restart it.
+
+        MuMuPlayer can close the game on its own. With "Restart stuck task"
+        disabled the task used to just fail; a closed game is not a stuck task,
+        so it is always restarted and the task retried.
+        """
+        mock_action = MagicMock(
+            side_effect=[GameNotRunningOrFrozenError("Game was closed"), None]
+        )
+        mock_instance = MagicMock()
+
+        app_settings = {"advanced": {"restart_stuck_task": False}}
+
+        with (
+            patch("time.sleep", return_value=None),
+            patch(
+                "adb_auto_player.util.execute.tomllib.load", return_value=app_settings
+            ),
+            patch("builtins.open", mock_open()),
+            patch(
+                "adb_auto_player.file_loader.SettingsLoader.get_app_config_dir",
+                return_value=Path("dummy"),
+            ),
+            patch("pathlib.Path.exists", return_value=True),
+        ):
+            result = Execute.function(
+                callable_function=mock_action, instance=mock_instance
+            )
+
+        self.assertIsNone(result)
+        self.assertEqual(mock_action.call_count, 2)
+        mock_instance.restart_game.assert_called_once()
+
+    def test_other_errors_not_restarted_without_stuck_task_watchdog(self) -> None:
+        """Without the watchdog, ordinary task errors are still not retried."""
+        mock_action = MagicMock(side_effect=Exception("Normal error"))
+        mock_instance = MagicMock()
+
+        app_settings = {"advanced": {"restart_stuck_task": False}}
+
+        with (
+            patch(
+                "adb_auto_player.util.execute.tomllib.load", return_value=app_settings
+            ),
+            patch("builtins.open", mock_open()),
+            patch(
+                "adb_auto_player.file_loader.SettingsLoader.get_app_config_dir",
+                return_value=Path("dummy"),
+            ),
+            patch("pathlib.Path.exists", return_value=True),
+        ):
+            result = Execute.function(
+                callable_function=mock_action, instance=mock_instance
+            )
+
+        self.assertIsInstance(result, Exception)
+        mock_instance.restart_game.assert_not_called()
 
     def test_fatal_exception_not_restarted(self) -> None:
         """Test that fatal exceptions are not caught by restart logic."""

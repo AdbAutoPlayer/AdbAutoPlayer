@@ -3,13 +3,14 @@
 import datetime
 import logging
 import sys
-from time import sleep
+from time import monotonic, sleep
 
 import cv2
 import numpy as np
 from adb_auto_player.device.adb import DeviceStream
 from adb_auto_player.exceptions import (
     AutoPlayerWarningError,
+    GameNotRunningOrFrozenError,
     GenericAdbUnrecoverableError,
     UnsupportedResolutionError,
 )
@@ -19,9 +20,16 @@ from adb_auto_player.models.device import Resolution
 
 from ._base import _GameBase
 
+# How often `get_screenshot()` checks that the game is still in the foreground.
+# Some emulators (e.g. MuMuPlayer) can close the game on their own; without this
+# check, task loops keep matching templates against the home launcher.
+_GAME_RUNNING_CHECK_INTERVAL_SECONDS = 30.0
+
 
 class _ScreenshotMixin(_GameBase):
     """Mixin providing screenshot capture and H264 device-stream management."""
+
+    _last_game_running_check: float | None = None
 
     def start_stream(self) -> None:
         """Start the H264 device stream."""
@@ -63,7 +71,10 @@ class _ScreenshotMixin(_GameBase):
 
         Raises:
             GenericAdbUnrecoverableError: Screenshot cannot be captured.
+            GameNotRunningOrFrozenError: The game was closed.
         """
+        self._raise_if_game_closed()
+
         if self._stream:
             image = self._stream.get_latest_frame()
             if image is not None:
@@ -84,9 +95,40 @@ class _ScreenshotMixin(_GameBase):
                 )
                 sleep(0.1)
 
+        # Multi-display emulators (e.g. MuMuPlayer) remove the game's virtual
+        # display when the game closes, so `screencap -d` fails before the
+        # periodic check would notice: report the closure, not an ADB failure.
+        self._raise_if_game_closed(force=True)
         raise GenericAdbUnrecoverableError(
             f"Screenshots cannot be recorded from device: {self.device.identifier}"
         )
+
+    def _raise_if_game_closed(self, force: bool = False) -> None:
+        """Raise if the game is no longer running, at most once per interval.
+
+        Only active once the game has been seen running (`_target_package_name`
+        is set), so startup code that screenshots before launching the game is
+        not affected.
+
+        Args:
+            force: Check now, ignoring the interval since the last check.
+
+        Raises:
+            GameNotRunningOrFrozenError: The game was closed.
+        """
+        if not self._target_package_name:
+            return
+        now = monotonic()
+        if (
+            not force
+            and self._last_game_running_check is not None
+            and now - self._last_game_running_check
+            < _GAME_RUNNING_CHECK_INTERVAL_SECONDS
+        ):
+            return
+        self._last_game_running_check = now
+        if not self.is_game_running():
+            raise GameNotRunningOrFrozenError("Game was closed")
 
     @staticmethod
     def _apply_vertical_offset_to_screenshot(image: np.ndarray) -> np.ndarray:
