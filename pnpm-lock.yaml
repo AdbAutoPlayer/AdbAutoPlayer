@@ -94,8 +94,8 @@ importers:
         specifier: ^8.3.4
         version: 8.3.4(@types/node@26.6.4)(jiti@2.7.0)
       vite-plugin-devtools-json:
-        specifier: ^1.1.0
-        version: 1.1.0(vite@8.3.4(@types/node@26.6.4)(jiti@2.7.0))
+        specifier: ^1.1.2
+        version: 1.1.2(vite@8.3.4(@types/node@26.6.4)(jiti@2.7.0))
 
 packages:
 
@@ -1147,8 +1147,8 @@ packages:
     resolution: {integrity: sha512-6ZxzVpzDXDa3bJWaHilVayA+BH/1zmxCJoVgvmqJnid/gPoKHxUrS/aC/T6LGQtNHT+XHG9fXPJB4d+IrU30Ew==}
     hasBin: true
 
-  vite-plugin-devtools-json@1.1.0:
-    resolution: {integrity: sha512-Fy9nMgMudGzDtUh1tGL7v0WAH0gsnZcZu2LFr/+1YxvYaJnxgbqRqv4jLU2tn5L9oqSaETHVCdDo9f8mSCQEZQ==}
+  vite-plugin-devtools-json@1.1.2:
+    resolution: {integrity: sha512-C8AdDdRniqUxA1XT2Gqny/j3hGFx5NwlfJPVEvdMVo1qeO/44Ado361sLm3DDwNxPLZnPHQHgeEIMULl7dN9Pw==}
     peerDependencies:
       vite: ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
 
@@ -2259,7 +2259,7 @@ snapshots:
 
   uuid@14.0.1: {}
 
-  vite-plugin-devtools-json@1.1.0(vite@8.3.4(@types/node@26.6.4)(jiti@2.7.0)):
+  vite-plugin-devtools-json@1.1.2(vite@8.3.4(@types/node@26.6.4)(jiti@2.7.0)):
     dependencies:
       uuid: 14.0.1
       vite: 8.3.4(@types/node@26.6.4)(jiti@2.7.0)
