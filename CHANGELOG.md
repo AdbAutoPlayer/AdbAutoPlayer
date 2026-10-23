@@ -1,9 +1,11 @@
 # Changelog
 
-## [12.13.6] - 2026-10-15
+## [12.13.7] - 2026-10-23
+
+### New Features
+
+- **AFK Journey – New heroes**: Added Estrilda, Marene and Baden to the hero list, so they can be recognized and selected.
 
 ### Bug Fixes
 
-- **Game closed by the emulator**: If the emulator closes the game during a task (e.g. MuMuPlayer), the game is now restarted and the task resumes, instead of continuing on the home screen.
-- **Game not running at start**: A game that was already closed when a task started is now launched automatically.
-- **Multi-display emulators**: The game is now found on any display, so screenshots and taps no longer go to the home screen.
+- **AFK Journey – Hero names**: Corrected the spelling of Isabella (previously "Isabelle") and Sylphira (previously "Sylphyra"), including their template images.
