@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@js-joda/core": "^6.1.0",
+    "@js-joda/core": "^6.3.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-notification": "~2.4.0",
