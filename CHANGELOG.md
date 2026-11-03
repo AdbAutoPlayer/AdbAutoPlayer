@@ -1,11 +1,7 @@
 # Changelog
 
-## [12.13.7] - 2026-10-23
+## [12.13.8] - 2026-11-03
 
 ### New Features
 
-- **AFK Journey – New heroes**: Added Estrilda, Marene and Baden to the hero list, so they can be recognized and selected.
-
-### Bug Fixes
-
-- **AFK Journey – Hero names**: Corrected the spelling of Isabella (previously "Isabelle") and Sylphira (previously "Sylphyra"), including their template images.
+- **AFK Journey – Union Campaign**: The game now shows a Skip button during combat after the first fight; it is tapped automatically whenever it is available.

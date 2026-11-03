@@ -357,3 +357,39 @@ class TestSweepIsNeverAutomated:
         source = Path(union_campaign_module.__file__).read_text(encoding="utf-8")
 
         assert re.search(r"sweep.{0,30}\.png|\.png.{0,30}sweep", source, re.I) is None
+
+
+class TestTapLiveBattleSkip:
+    def test_taps_skip_in_union_campaign(self):
+        bot = _Stub()
+        bot.battle_state.mode = Mode.UNION_CAMPAIGN
+        skip = MagicMock(template="battle/skip.png")
+
+        with (
+            patch.object(bot, "find_any_template", return_value=skip),
+            patch.object(bot, "tap") as mock_tap,
+        ):
+            assert bot._tap_live_battle_skip(np.zeros((10, 10, 3))) is True
+
+        mock_tap.assert_called_once()
+
+    def test_no_skip_found_returns_false(self):
+        bot = _Stub()
+        bot.battle_state.mode = Mode.UNION_CAMPAIGN
+
+        with (
+            patch.object(bot, "find_any_template", return_value=None),
+            patch.object(bot, "tap") as mock_tap,
+        ):
+            assert bot._tap_live_battle_skip(np.zeros((10, 10, 3))) is False
+
+        mock_tap.assert_not_called()
+
+    def test_other_modes_never_search(self):
+        bot = _Stub()
+        bot.battle_state.mode = Mode.AFK_STAGES
+
+        with patch.object(bot, "find_any_template") as mock_find:
+            assert bot._tap_live_battle_skip(np.zeros((10, 10, 3))) is False
+
+        mock_find.assert_not_called()

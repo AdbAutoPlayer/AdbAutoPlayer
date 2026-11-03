@@ -6,6 +6,7 @@ from datetime import timedelta
 from time import monotonic, sleep
 from typing import Any
 
+import numpy as np
 from adb_auto_player.decorators import register_cache, register_game
 from adb_auto_player.exceptions import (
     AutoPlayerWarningError,
@@ -649,6 +650,28 @@ class AFKJourneyBase(
 
         return False
 
+    def _tap_live_battle_skip(self, screenshot: np.ndarray) -> bool:
+        """Tap the in-battle Skip button if the current mode has one and it shows.
+
+        Union Campaign offers Skip during combat after the first fight.
+
+        Args:
+            screenshot: Current screenshot to search.
+
+        Returns:
+            True if Skip was found and tapped.
+        """
+        if self.battle_state.mode != Mode.UNION_CAMPAIGN:
+            return False
+        match = self.find_any_template(
+            templates=["battle/skip.png", "battle/skip_orange.png"],
+            screenshot=screenshot,
+        )
+        if match is None:
+            return False
+        self.tap(match, log_message="Battle skip button found, tapping")
+        return True
+
     def _wait_for_battle_over_template(
         self,
         freeze_check_timeout: float = timedelta(seconds=60).total_seconds(),
@@ -667,6 +690,12 @@ class AFKJourneyBase(
                 )
                 if match is not None:
                     return match
+
+                if self._tap_live_battle_skip(screenshot):
+                    prev_crop = None
+                    no_change_detected_since = None
+                    sleep(1)
+                    continue
 
                 curr_crop: CropResult = Cropping.crop(screenshot, roi_crop)
 
