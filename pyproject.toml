@@ -1,6 +1,6 @@
 [project]
 name = "workspace"
-version = "12.13.7"
+version = "12.13.8"
 requires-python = ">=3.11"
 dependencies = [
     "pytest-cov>=7.1.0",
@@ -78,6 +78,7 @@ ignore = [
     # PLR0913 is simply too annoying in practise we have a lot of optionals that
     # can be nice to have but not used all the time.
     "PLR0913", # too-many-arguments
+    "PLR0917", # too-many-positional-arguments (same rationale as PLR0913)
     # This one frequently leads to weird rabbit holes...
     "PLW0108", # unnecessary-lambda
 ]

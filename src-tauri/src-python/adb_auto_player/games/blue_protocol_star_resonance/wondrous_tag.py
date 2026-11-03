@@ -67,7 +67,7 @@ class WondrousTag(BlueProtocolStarResonance):
             self.tap(Point(1845, 55))
         return
 
-    def get_wondrous_tag_interact_option(self) -> None | Box:
+    def get_wondrous_tag_interact_option(self) -> Box | None:
         exact_keywords = ["Wondrous", "Tag", "Wondrous Tag"]
 
         for label in self.get_interact_options():

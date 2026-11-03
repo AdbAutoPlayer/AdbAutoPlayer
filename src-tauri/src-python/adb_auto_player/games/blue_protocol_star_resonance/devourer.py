@@ -122,7 +122,7 @@ class Devourer(BlueProtocolStarResonance):
                     return True
         return False
 
-    def get_dungeon_start_interact_option(self) -> None | Box:
+    def get_dungeon_start_interact_option(self) -> Box | None:
         exact_keywords = ["Investigate"]
         for label in self.get_interact_options(expected_number_of_options=1):
             for keyword in exact_keywords:
@@ -131,7 +131,7 @@ class Devourer(BlueProtocolStarResonance):
 
         return None
 
-    def get_devourer_interact_option(self) -> None | Box:
+    def get_devourer_interact_option(self) -> Box | None:
         exact_keywords = ["Devourer", "Cage", "Devourer Cage"]
 
         for label in self.get_interact_options(expected_number_of_options=1):
