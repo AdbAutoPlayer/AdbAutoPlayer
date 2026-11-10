@@ -139,3 +139,4 @@ class HeroesEnum(StrEnum):
     Estrilda = auto()
     Marene = auto()
     Baden = auto()
+    Thane = auto()

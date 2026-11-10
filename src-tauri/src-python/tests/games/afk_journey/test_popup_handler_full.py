@@ -275,3 +275,11 @@ class TestPopupHandlerFullCoverage:
         handler.find_any_template(["test.png"])
         handler.wait_for_template("test.png")
         handler.wait_for_any_template(["test.png"])
+
+
+def test_process_cards_popup_is_recognised_and_declined():
+    popup = PopupMessageHandler._find_matching_popup(
+        "You have Process Cards available to now?"
+    )
+    assert popup is not None
+    assert popup.confirm_button_template == "navigation/x.png"

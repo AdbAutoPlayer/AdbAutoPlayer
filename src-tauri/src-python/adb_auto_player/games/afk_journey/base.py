@@ -34,6 +34,9 @@ from .mixins.hero_scanner import HeroScannerMixin
 from .navigation import Navigation
 from .settings import Settings
 
+_BATTLE_START_TAP_COUNT = 3
+_BATTLE_START_MIN_TAP_DELAY = 2.0
+
 
 @register_game(
     name="AFK Journey",
@@ -509,11 +512,18 @@ class AFKJourneyBase(
         try:
             # Tap immediately to avoid skipping due to visual glitches
             self.tap(Point(x=850, y=1780))
+            # The battle loading screen can keep the start button's template
+            # visible for a long time. Spread the retap attempts over the
+            # template timeout so raising that setting gives it more time.
             self._tap_coordinates_till_template_disappears(
                 coordinates=Point(x=850, y=1780),
                 template=result.template,
                 crop_regions=CropRegions(top=0.5),
-                delay=2.0,
+                delay=max(
+                    _BATTLE_START_MIN_TAP_DELAY,
+                    self.template_timeout / _BATTLE_START_TAP_COUNT,
+                ),
+                max_tap_count=_BATTLE_START_TAP_COUNT,
             )
         except GameActionFailedError:
             logging.warning("Failed to start Battle, are no Heroes selected?")

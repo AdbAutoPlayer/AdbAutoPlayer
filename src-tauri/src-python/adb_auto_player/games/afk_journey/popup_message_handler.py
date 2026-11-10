@@ -163,6 +163,16 @@ ravaged_realm_messages = [
     ),
 ]
 
+homestead_messages = [
+    PopupMessage(
+        # "You have Process Cards available to ... now?" (shown when entering a
+        # crafting building). Layout unconfirmed (no screenshot yet); we decline
+        # so the crafting flow can continue.
+        text="You have Process Cards available",
+        confirm_button_template="navigation/x.png",
+    ),
+]
+
 HEAD_FROM_WORLD_TO_HOMESTEAD_MESSAGE = PopupMessage(
     # Heading to the Homestead now. Continue?
     text="Heading to Homestead now",
@@ -187,6 +197,7 @@ popup_messages: list[PopupMessage] = (
     + fishing_messages
     + legend_trial_messages
     + ravaged_realm_messages
+    + homestead_messages
     + [
         HEAD_FROM_HOMESTEAD_TO_WORLD_MESSAGE,
         HEAD_FROM_WORLD_TO_HOMESTEAD_MESSAGE,
