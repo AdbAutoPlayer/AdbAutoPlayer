@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock, patch
 
 import numpy as np
+import pytest
 from adb_auto_player.exceptions import GameTimeoutError
 from adb_auto_player.games.afk_journey.mixins.homestead_helper import (
     HomesteadHelperMixin,
@@ -431,3 +432,99 @@ class TestHandleHomesteadRequestsStopCondition:
         mock_find.assert_not_called()
         mock_tap.assert_not_called()
         mock_fulfill.assert_not_called()
+
+
+class TestEnsureInHomesteadLoadingScreen:
+    """World -> Homestead shows a loading screen; back must not be pressed."""
+
+    _MOD = "adb_auto_player.games.afk_journey.mixins.homestead_helper"
+
+    def test_waits_through_loading_screen_without_pressing_back(self):
+        bot = _Stub()
+        # 1st call: initial overview check (not there yet),
+        # then 3 polls while loading, then the overview appears.
+        overview = [None, None, None, None, MagicMock()]
+        bot.game_find_template_match = MagicMock(side_effect=overview)
+        bot.find_any_template = MagicMock(return_value=MagicMock())
+        bot.tap = MagicMock()
+        bot.press_back_button = MagicMock()
+
+        with patch(f"{self._MOD}.sleep"):
+            bot._ensure_in_homestead()
+
+        bot.tap.assert_called_once()
+        bot.press_back_button.assert_not_called()
+
+    def test_wait_for_overview_returns_false_after_timeout(self):
+        bot = _Stub()
+        bot.game_find_template_match = MagicMock(return_value=None)
+        start = 1000.0
+        ticks = [start, start + 1, start + bot.HOMESTEAD_ENTER_LOAD_TIMEOUT + 1]
+
+        with (
+            patch(f"{self._MOD}.sleep"),
+            patch(f"{self._MOD}.monotonic", side_effect=ticks),
+        ):
+            assert bot._wait_for_homestead_overview() is False
+
+
+class TestWaitForCraftingScreen:
+    def test_dismisses_popup_then_finds_screen(self):
+        bot = _Stub()
+        found = MagicMock()
+        bot.wait_for_any_template = MagicMock(
+            side_effect=[GameTimeoutError("covered"), found]
+        )
+        bot.handle_popup_messages = MagicMock(return_value=True)
+
+        assert bot._wait_for_crafting_screen(["a.png"]) is found
+        bot.handle_popup_messages.assert_called_once()
+
+    def test_raises_after_all_attempts(self):
+        bot = _Stub()
+        bot.wait_for_any_template = MagicMock(side_effect=GameTimeoutError("x"))
+        bot.handle_popup_messages = MagicMock(return_value=False)
+
+        with pytest.raises(GameTimeoutError):
+            bot._wait_for_crafting_screen(["a.png"])
+        assert (
+            bot.wait_for_any_template.call_count == bot.HOMESTEAD_CRAFT_SCREEN_ATTEMPTS
+        )
+
+
+class TestEnsureInHomesteadAfterRestart:
+    _MOD = "adb_auto_player.games.afk_journey.mixins.homestead_helper"
+
+    def _bot(self):
+        bot = _Stub()
+        bot.tap = MagicMock()
+        bot.press_back_button = MagicMock()
+        bot.sleep_navigation = MagicMock()
+        bot.CENTER_POINT = MagicMock()
+        return bot
+
+    def test_taps_game_entry_screen_instead_of_back(self):
+        bot = self._bot()
+        # overview: no (attempt 1), then yes (attempt 2)
+        bot.game_find_template_match = MagicMock(side_effect=[None, MagicMock()])
+        # enter button: none; notice screen: present
+        bot.find_any_template = MagicMock(side_effect=[None, MagicMock()])
+        bot.handle_popup_messages = MagicMock(return_value=False)
+
+        with patch(f"{self._MOD}.sleep"):
+            bot._ensure_in_homestead()
+
+        bot.tap.assert_called_once_with(bot.CENTER_POINT)
+        bot.press_back_button.assert_not_called()
+
+    def test_dismisses_popup_instead_of_back(self):
+        bot = self._bot()
+        bot.game_find_template_match = MagicMock(side_effect=[None, MagicMock()])
+        bot.find_any_template = MagicMock(return_value=None)
+        bot.handle_popup_messages = MagicMock(return_value=True)
+
+        with patch(f"{self._MOD}.sleep"):
+            bot._ensure_in_homestead()
+
+        bot.handle_popup_messages.assert_called_once_with(navigate_to_homestead=True)
+        bot.press_back_button.assert_not_called()

@@ -3,7 +3,7 @@
 import logging
 import re
 from enum import Enum
-from time import sleep
+from time import monotonic, sleep
 from typing import ClassVar
 
 from adb_auto_player.decorators import register_command, register_custom_routine_choice
@@ -15,6 +15,7 @@ from adb_auto_player.models import ConfidenceValue
 from adb_auto_player.models.decorators import GUIMetadata
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
+from adb_auto_player.models.template_matching import TemplateMatchResult
 from adb_auto_player.ocr import RapidOCRBackend
 from adb_auto_player.util import SummaryGenerator
 
@@ -152,6 +153,13 @@ class HomesteadHelperMixin(AFKJourneyBase):
     # Tuning
     HOMESTEAD_MINE_SCROLL_ATTEMPTS = 5
     HOMESTEAD_HARVEST_TIMEOUT = 30
+    # World -> Homestead has a loading screen; wait this long for the overview.
+    # Crafting screen wait: popups (e.g. Process Cards) may cover it, so retry
+    # after dismissing them.
+    HOMESTEAD_CRAFT_SCREEN_TIMEOUT = 15
+    HOMESTEAD_CRAFT_SCREEN_ATTEMPTS = 3
+    HOMESTEAD_ENTER_MIN_WAIT = 4
+    HOMESTEAD_ENTER_LOAD_TIMEOUT = 30
     HOMESTEAD_OUTER_LOOP_LIMIT = 15
     HOMESTEAD_INNER_LOOP_LIMIT = 25
     # Abort ingredient crafting if nothing progresses within this many seconds.
@@ -212,7 +220,26 @@ class HomesteadHelperMixin(AFKJourneyBase):
                     "Tapping homestead enter button (attempt %d).", attempt + 1
                 )
                 self.tap(enter)
-                sleep(4)  # wait for homestead to load
+                # The game shows a loading screen between World and Homestead.
+                # Pressing back while it loads would be mistaken for a
+                # sub-screen, so wait for the overview before looping again.
+                if self._wait_for_homestead_overview():
+                    logging.info("Entered homestead.")
+                    return
+                continue
+
+            # After a game restart we may sit on the Game Entry Screen
+            # ("Tap to enter"); back does nothing there.
+            if self.find_any_template(["navigation/notice.png"]) is not None:
+                logging.info("Game entry screen detected - tapping to enter.")
+                self.tap(self.CENTER_POINT)
+                self.sleep_navigation()
+                continue
+
+            # A known popup may be covering the screen; dismiss it instead of
+            # pressing back (which does not close it).
+            if self.handle_popup_messages(navigate_to_homestead=True):
+                self.sleep_navigation()
                 continue
 
             # We are inside a sub-screen (crafting, requests, etc.).
@@ -230,6 +257,22 @@ class HomesteadHelperMixin(AFKJourneyBase):
                 sleep(2)
 
         raise GameTimeoutError("Could not navigate to homestead after 10 attempts.")
+
+    def _wait_for_homestead_overview(self) -> bool:
+        """Wait for the homestead overview after tapping the enter button.
+
+        Returns:
+            True if the overview appeared within the load timeout.
+        """
+        sleep(self.HOMESTEAD_ENTER_MIN_WAIT)
+        deadline = monotonic() + self.HOMESTEAD_ENTER_LOAD_TIMEOUT
+        while monotonic() < deadline:
+            if self.game_find_template_match(
+                template=self.HOMESTEAD_OVERVIEW_CHECK_TEMPLATE
+            ):
+                return True
+            sleep(1)
+        return False
 
     # ------------------------------------------------------------------ #
     #  Resource collection                                                 #
@@ -681,10 +724,7 @@ class HomesteadHelperMixin(AFKJourneyBase):
 
         logging.info("Waiting for crafting screen to load...")
         # The action button may be coloured (ready) or grey (ingredient missing).
-        result = self.wait_for_any_template(
-            templates=blocking_templates,
-            timeout=30,
-        )
+        result = self._wait_for_crafting_screen(blocking_templates)
 
         sleep(2)  # let the UI fully settle
 
@@ -755,6 +795,32 @@ class HomesteadHelperMixin(AFKJourneyBase):
             )
             self._handle_missing_ingredient_craft()
         return True
+
+    def _wait_for_crafting_screen(self, templates: list[str]) -> TemplateMatchResult:
+        """Wait for the crafting screen, dismissing known popups that cover it.
+
+        Args:
+            templates: Templates that signal the crafting screen is ready.
+
+        Returns:
+            The matched template.
+
+        Raises:
+            GameTimeoutError: if the screen never appears after all attempts.
+        """
+        for attempt in range(self.HOMESTEAD_CRAFT_SCREEN_ATTEMPTS):
+            try:
+                return self.wait_for_any_template(
+                    templates=templates,
+                    timeout=self.HOMESTEAD_CRAFT_SCREEN_TIMEOUT,
+                )
+            except GameTimeoutError:
+                if attempt == self.HOMESTEAD_CRAFT_SCREEN_ATTEMPTS - 1:
+                    raise
+                # e.g. "You have Process Cards available ... now?" covers the
+                # screen; dismiss it and look again.
+                self.handle_popup_messages()
+        raise GameTimeoutError("Crafting screen did not load.")  # pragma: no cover
 
     def _handle_insufficient_resources_popup(self) -> bool:
         """Follow the "Insufficient resources" modal's link and refine a batch.
